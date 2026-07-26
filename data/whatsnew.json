@@ -6947,5 +6947,210 @@
         }
       }
     ]
+  },
+  "2.15.0": {
+    "date": "2026-07-27",
+    "items": [
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Meet TigerData+",
+          "fr": "Voici TigerData+",
+          "de": "Darf ich vorstellen: TigerData+",
+          "es": "Te presentamos TigerData+",
+          "it": "Ecco TigerData+",
+          "zh": "认识一下 TigerData+",
+          "pt": "Conheça o TigerData+",
+          "pt-pt": "Apresentamos o TigerData+",
+          "pl": "Poznaj TigerData+"
+        },
+        "body": {
+          "en": "A new kind of spool: no chip, nothing to stick on, and yet it knows exactly which real filament it is — brand, colour, temperatures, all of it. Digital spools finally stop being vague.",
+          "fr": "Un nouveau genre de bobine : pas de puce, rien à coller, et pourtant elle sait exactement quel filament elle est — marque, couleur, températures, tout. Les bobines numériques arrêtent enfin d'être floues.",
+          "de": "Eine neue Art Spule: kein Chip, nichts zum Aufkleben — und trotzdem weiß sie genau, welches Filament sie ist: Marke, Farbe, Temperaturen, alles. Digitale Spulen hören endlich auf, vage zu sein.",
+          "es": "Un nuevo tipo de bobina: sin chip, sin nada que pegar, y aun así sabe exactamente qué filamento es — marca, color, temperaturas, todo. Las bobinas digitales dejan por fin de ser vagas.",
+          "it": "Un nuovo tipo di bobina: niente chip, niente da attaccare, eppure sa esattamente che filamento è — marca, colore, temperature, tutto. Le bobine digitali smettono finalmente di essere vaghe.",
+          "zh": "一种全新的料卷：没有芯片，什么都不用贴，却清楚知道自己是哪一款耗材 —— 品牌、颜色、温度，全都有。数字料卷终于不再含糊。",
+          "pt": "Um novo tipo de rolo: sem chip, sem nada para colar, e mesmo assim sabe exatamente qual filamento ele é — marca, cor, temperaturas, tudo. Os rolos digitais finalmente deixam de ser vagos.",
+          "pt-pt": "Um novo tipo de bobina: sem chip, sem nada para colar, e ainda assim sabe exatamente que filamento é — marca, cor, temperaturas, tudo. As bobinas digitais deixam finalmente de ser vagas.",
+          "pl": "Nowy rodzaj szpuli: żadnego chipa, nic do naklejania, a mimo to wie dokładnie, jakim filamentem jest — marka, kolor, temperatury, wszystko. Cyfrowe szpule wreszcie przestają być mgliste."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "The whole catalogue, right here",
+          "fr": "Tout le catalogue, ici même",
+          "de": "Der ganze Katalog, direkt hier",
+          "es": "Todo el catálogo, aquí mismo",
+          "it": "Tutto il catalogo, proprio qui",
+          "zh": "整个产品库，就在这儿",
+          "pt": "O catálogo inteiro, bem aqui",
+          "pt-pt": "O catálogo inteiro, aqui mesmo",
+          "pl": "Cały katalog, tu i teraz"
+        },
+        "body": {
+          "en": "Search the official filament catalogue without leaving the app, then add the one you want in a single tap — colours, temperatures, diameter, all already filled in. You type nothing.",
+          "fr": "Cherche ton filament dans le catalogue officiel sans quitter l'app, puis ajoute-le d'un tap — couleurs, températures, diamètre, tout est déjà rempli. Toi, tu ne tapes rien.",
+          "de": "Durchsuch den offiziellen Filament-Katalog, ohne die App zu verlassen, und füg deins mit einem Tipp hinzu — Farben, Temperaturen, Durchmesser, alles schon ausgefüllt. Du tippst gar nichts.",
+          "es": "Busca tu filamento en el catálogo oficial sin salir de la app y añádelo con un toque — colores, temperaturas, diámetro, todo ya relleno. Tú no escribes nada.",
+          "it": "Cerca il tuo filamento nel catalogo ufficiale senza uscire dall'app e aggiungilo con un tocco — colori, temperature, diametro, già tutto compilato. Tu non scrivi niente.",
+          "zh": "不用离开应用就能搜索官方耗材库，看中哪卷点一下就加进来 —— 颜色、温度、线径全都填好了，你一个字都不用打。",
+          "pt": "Procure seu filamento no catálogo oficial sem sair do app e adicione num toque — cores, temperaturas, diâmetro, tudo já preenchido. Você não digita nada.",
+          "pt-pt": "Procura o teu filamento no catálogo oficial sem sair da app e adiciona-o com um toque — cores, temperaturas, diâmetro, já tudo preenchido. Tu não escreves nada.",
+          "pl": "Przeszukaj oficjalny katalog filamentów bez wychodzenia z aplikacji i dodaj swój jednym dotknięciem — kolory, temperatury, średnica, wszystko już wypełnione. Ty nie wpisujesz nic."
+        }
+      },
+      {
+        "icon": "plus",
+        "title": {
+          "en": "Bought another one? One tap.",
+          "fr": "Une bobine de plus ? Un tap.",
+          "de": "Noch eine Spule? Ein Tipp.",
+          "es": "¿Otra bobina? Un toque.",
+          "it": "Un'altra bobina? Un tocco.",
+          "zh": "又买了一卷？点一下。",
+          "pt": "Comprou mais um? Um toque.",
+          "pt-pt": "Compraste mais uma? Um toque.",
+          "pl": "Kolejna szpula? Jedno dotknięcie."
+        },
+        "body": {
+          "en": "The little + now sits on every card showing a filament, so adding another spool of something you already own takes one tap, wherever you happen to be looking.",
+          "fr": "Le petit + est maintenant sur toutes les cards qui montrent un filament : ajouter une bobine de plus de ce que tu as déjà prend un tap, d'où que tu regardes.",
+          "de": "Das kleine + sitzt jetzt auf jeder Karte, die ein Filament zeigt. Noch eine Spule von etwas, das du schon hast, ist ein Tipp — egal, wo du gerade hinschaust.",
+          "es": "El pequeño + está ahora en todas las tarjetas que muestran un filamento: añadir otra bobina de algo que ya tienes es un toque, mires donde mires.",
+          "it": "Il piccolo + ora sta su ogni scheda che mostra un filamento: aggiungere un'altra bobina di qualcosa che hai già è un tocco, da qualunque parte tu stia guardando.",
+          "zh": "那个小小的 + 现在出现在每一张耗材卡片上，同款再添一卷只要一下，你在哪儿看着都行。",
+          "pt": "O pequeno + agora está em todo card que mostra um filamento: adicionar mais um rolo do que você já tem é um toque, de onde quer que você esteja olhando.",
+          "pt-pt": "O pequeno + está agora em todos os cartões que mostram um filamento: acrescentar mais uma bobina do que já tens é um toque, estejas a olhar para onde estiveres.",
+          "pl": "Mały + jest teraz na każdej karcie pokazującej filament: dorzucenie kolejnej szpuli czegoś, co już masz, to jedno dotknięcie — gdziekolwiek akurat patrzysz."
+        }
+      },
+      {
+        "icon": "cart",
+        "title": {
+          "en": "Straight to the shop",
+          "fr": "Direction la boutique",
+          "de": "Direkt in den Shop",
+          "es": "Directo a la tienda",
+          "it": "Dritto al negozio",
+          "zh": "直达店铺",
+          "pt": "Direto para a loja",
+          "pt-pt": "Direto para a loja",
+          "pl": "Prosto do sklepu"
+        },
+        "body": {
+          "en": "Filaments with a shop link get a green cart button that takes you there. No link yet? The button takes you to where you'd add one, so it always goes somewhere.",
+          "fr": "Les filaments qui ont un lien d'achat gagnent un bouton panier vert qui t'y emmène. Pas encore de lien ? Le bouton t'emmène là où tu peux l'ajouter. Il mène toujours quelque part.",
+          "de": "Filamente mit Kauflink bekommen einen grünen Warenkorb-Button, der dich hinbringt. Noch kein Link? Dann bringt er dich dahin, wo du einen einträgst. Er führt immer irgendwohin.",
+          "es": "Los filamentos con enlace de compra estrenan un botón de carrito verde que te lleva allí. ¿Aún sin enlace? El botón te lleva a donde añadirlo. Siempre lleva a alguna parte.",
+          "it": "I filamenti con un link d'acquisto guadagnano un pulsante carrello verde che ti ci porta. Ancora nessun link? Il pulsante ti porta dove aggiungerlo. Porta sempre da qualche parte.",
+          "zh": "有购买链接的耗材多了一个绿色购物车按钮，点它直接过去。还没链接？按钮就带你去填。反正总能去到某处。",
+          "pt": "Filamentos com link de compra ganham um botão de carrinho verde que te leva lá. Ainda sem link? O botão te leva até onde adicionar um. Ele sempre leva a algum lugar.",
+          "pt-pt": "Os filamentos com link de compra ganham um botão de carrinho verde que te leva lá. Ainda sem link? O botão leva-te ao sítio onde o acrescentas. Leva sempre a algum lado.",
+          "pl": "Filamenty z linkiem do zakupu dostają zielony przycisk koszyka, który tam prowadzi. Nie ma jeszcze linku? Przycisk zabiera cię tam, gdzie go dodasz. Zawsze gdzieś prowadzi."
+        }
+      },
+      {
+        "icon": "clock",
+        "title": {
+          "en": "Which one did you buy last?",
+          "fr": "Laquelle tu as achetée en dernier ?",
+          "de": "Welche hast du zuletzt gekauft?",
+          "es": "¿Cuál compraste la última?",
+          "it": "Quale hai comprato per ultima?",
+          "zh": "哪一卷是最近买的？",
+          "pt": "Qual você comprou por último?",
+          "pt-pt": "Qual compraste por último?",
+          "pl": "Która przyjechała ostatnia?"
+        },
+        "body": {
+          "en": "When identical spools are stacked together, each one now says when it turned up — just now, 3 days ago, 2 months ago. The old one finally stops hiding among the new.",
+          "fr": "Quand des bobines identiques sont empilées ensemble, chacune dit maintenant quand elle est arrivée — à l'instant, il y a 3 jours, il y a 2 mois. La vieille arrête enfin de se cacher parmi les neuves.",
+          "de": "Wenn identische Spulen zusammen gestapelt sind, sagt jetzt jede, wann sie aufgetaucht ist — gerade eben, vor 3 Tagen, vor 2 Monaten. Die alte versteckt sich endlich nicht mehr zwischen den neuen.",
+          "es": "Cuando hay bobinas idénticas apiladas juntas, cada una dice ahora cuándo llegó — ahora mismo, hace 3 días, hace 2 meses. La vieja deja por fin de esconderse entre las nuevas.",
+          "it": "Quando bobine identiche sono impilate insieme, ognuna dice ora quando è arrivata — proprio ora, 3 giorni fa, 2 mesi fa. La vecchia smette finalmente di nascondersi tra le nuove.",
+          "zh": "同款料卷叠在一起时，每一卷现在都会说自己什么时候来的 —— 刚刚、3 天前、2 个月前。老的那卷终于藏不住了。",
+          "pt": "Quando rolos idênticos ficam empilhados juntos, cada um agora diz quando chegou — agora mesmo, 3 dias atrás, 2 meses atrás. O velho finalmente para de se esconder entre os novos.",
+          "pt-pt": "Quando há bobinas iguais empilhadas juntas, cada uma diz agora quando chegou — agora mesmo, há 3 dias, há 2 meses. A velha deixa finalmente de se esconder entre as novas.",
+          "pl": "Gdy identyczne szpule leżą na jednym stosie, każda mówi teraz, kiedy się pojawiła — przed chwilą, 3 dni temu, 2 miesiące temu. Stara wreszcie przestaje ukrywać się wśród nowych."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "Finding your empty spool got quicker",
+          "fr": "Retrouver ta bobine vide, plus vite",
+          "de": "Die leere Spule findest du schneller",
+          "es": "Encontrar tu bobina vacía, más rápido",
+          "it": "Trovare la bobina vuota, più in fretta",
+          "zh": "找空卷轴，更快了",
+          "pt": "Achar seu carretel vazio, mais rápido",
+          "pt-pt": "Encontrar a bobina vazia, mais depressa",
+          "pl": "Pustą szpulę znajdziesz szybciej"
+        },
+        "body": {
+          "en": "The container list is sorted A to Z instead of in the order they were added, so your brand is where you'd expect it. Inslogic and Jayo joined the party.",
+          "fr": "La liste des conteneurs est classée de A à Z au lieu de l'ordre d'arrivée : ta marque est là où tu l'attends. Inslogic et Jayo ont rejoint la fête.",
+          "de": "Die Behälterliste ist von A bis Z sortiert statt nach Eingangsdatum — deine Marke steht da, wo du sie erwartest. Inslogic und Jayo sind neu dabei.",
+          "es": "La lista de contenedores va de la A a la Z en vez del orden en que se añadieron: tu marca está donde la esperas. Inslogic y Jayo se apuntan.",
+          "it": "La lista dei contenitori va dalla A alla Z invece che nell'ordine in cui sono stati aggiunti: la tua marca è dove te l'aspetti. Inslogic e Jayo si uniscono al gruppo.",
+          "zh": "料盘列表改成 A 到 Z 排序，不再按添加顺序，你的品牌就在你以为的位置。Inslogic 和 Jayo 也来了。",
+          "pt": "A lista de recipientes vai de A a Z em vez da ordem em que foram adicionados: sua marca está onde você espera. Inslogic e Jayo entraram na festa.",
+          "pt-pt": "A lista de recipientes vai de A a Z em vez da ordem por que foram acrescentados: a tua marca está onde esperas. Inslogic e Jayo juntaram-se à festa.",
+          "pl": "Lista pojemników jest ułożona od A do Z zamiast w kolejności dodawania — twoja marka jest tam, gdzie się jej spodziewasz. Inslogic i Jayo dołączyli do towarzystwa."
+        }
+      },
+      {
+        "icon": "list",
+        "title": {
+          "en": "Lists that admit there's more",
+          "fr": "Des listes qui avouent qu'il y en a plus",
+          "de": "Listen, die zugeben, dass da noch mehr ist",
+          "es": "Listas que admiten que hay más",
+          "it": "Liste che ammettono che c'è dell'altro",
+          "zh": "会承认下面还有的列表",
+          "pt": "Listas que admitem que tem mais",
+          "pt-pt": "Listas que admitem que há mais",
+          "pl": "Listy, które przyznają, że jest więcej"
+        },
+        "body": {
+          "en": "Long lists used to end abruptly with nothing saying you could keep going. They now fade at the edges, and dropdowns got their scrollbar back.",
+          "fr": "Les longues listes s'arrêtaient net, sans rien dire qu'on pouvait continuer. Elles s'estompent maintenant sur les bords, et les menus déroulants ont récupéré leur barre de défilement.",
+          "de": "Lange Listen hörten einfach auf, ohne zu verraten, dass es weitergeht. Jetzt blenden sie an den Rändern aus, und Auswahlmenüs haben ihren Scrollbalken zurück.",
+          "es": "Las listas largas se cortaban en seco sin avisar de que había más abajo. Ahora se difuminan en los bordes, y los desplegables recuperan su barra de desplazamiento.",
+          "it": "Le liste lunghe finivano di colpo, senza dire che si poteva continuare. Ora sfumano ai bordi, e i menu a tendina si riprendono la barra di scorrimento.",
+          "zh": "长列表以前戛然而止，也不说下面还有。现在边缘会淡出，下拉菜单也把滚动条要回来了。",
+          "pt": "Listas longas paravam do nada, sem avisar que dava para continuar. Agora elas desvanecem nas bordas, e os menus suspensos recuperaram a barra de rolagem.",
+          "pt-pt": "As listas compridas acabavam de repente, sem dizer que dava para continuar. Agora esbatem-se nas margens, e os menus pendentes recuperaram a barra de deslocamento.",
+          "pl": "Długie listy urywały się nagle, nie zdradzając, że da się przewijać dalej. Teraz wygaszają się przy krawędziach, a rozwijane menu odzyskały pasek przewijania."
+        }
+      },
+      {
+        "icon": "download",
+        "title": {
+          "en": "Half a spool is no spool",
+          "fr": "Une demi-bobine, c'est pas une bobine",
+          "de": "Eine halbe Spule ist keine Spule",
+          "es": "Media bobina no es una bobina",
+          "it": "Mezza bobina non è una bobina",
+          "zh": "半卷不算一卷",
+          "pt": "Meio rolo não é um rolo",
+          "pt-pt": "Meia bobina não é uma bobina",
+          "pl": "Pół szpuli to nie szpula"
+        },
+        "body": {
+          "en": "Importing a file full of spools now turns away the ones missing what a chip needs, and tells you how many — instead of quietly letting broken ones in.",
+          "fr": "Importer un fichier plein de bobines écarte maintenant celles à qui il manque ce qu'il faut pour une puce, et te dit combien — au lieu de laisser passer les bancales en douce.",
+          "de": "Beim Import einer Datei voller Spulen fliegen jetzt die raus, denen fehlt, was ein Chip braucht — und du erfährst, wie viele. Statt dass kaputte still durchrutschen.",
+          "es": "Importar un archivo lleno de bobinas ahora rechaza las que no llevan lo que un chip necesita, y te dice cuántas — en vez de colar las rotas sin decir nada.",
+          "it": "Importare un file pieno di bobine ora scarta quelle a cui manca ciò che serve a un chip, e ti dice quante — invece di far passare quelle rotte in silenzio.",
+          "zh": "导入一整个文件的料卷时，缺了芯片所需信息的会被挡下，并告诉你挡了几卷 —— 不再让残缺的悄悄混进来。",
+          "pt": "Importar um arquivo cheio de rolos agora barra os que não têm o que um chip precisa, e diz quantos — em vez de deixar os quebrados passarem caladinhos.",
+          "pt-pt": "Importar um ficheiro cheio de bobinas trava agora as que não têm o que um chip precisa, e diz-te quantas — em vez de deixar passar as estragadas sem dizer nada.",
+          "pl": "Import pliku pełnego szpul odrzuca teraz te, którym brakuje tego, czego potrzebuje chip, i mówi ile — zamiast po cichu przepuszczać zepsute."
+        }
+      }
+    ]
   }
 }

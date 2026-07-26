@@ -1278,6 +1278,59 @@ ipcMain.handle('rfid:lookup-product', async (_evt, productId) => {
   }
 });
 
+// ── Catalogue list — pull the WHOLE TigerTag+ product catalogue ─────────────
+// The renderer is a browser context and this is a cross-origin POST, so it has
+// to live here (same reason as `rfid:refresh-api` / `rfid:lookup-product`).
+//
+// Paged with `per_page: 1000`, following the envelope's `nextPage` until it
+// comes back null — the catalogue grows daily, so nothing about its size is
+// hard-coded. The renderer caches the result and searches it in memory; this
+// endpoint is only ever hit to (re)build that local cache.
+//
+// `PAGE_CAP` is a runaway guard, not a catalogue limit: at 1000 items a page it
+// allows 100 000 products, far beyond today's ~2 700, and only exists so a
+// server-side paging bug can't spin here forever.
+// Returns { ok: true, items, itemsTotal } | { ok: false, error }
+const XANO_PRODUCT_ALL_URL = 'https://api.tigertag.io/api:tigertag/product/get/all';
+ipcMain.handle('catalog:fetch-all', async () => {
+  const PAGE_CAP = 100;
+  const PER_PAGE = 1000;
+  try {
+    const items = [];
+    let page = 1;
+    let itemsTotal = 0;
+    for (let guard = 0; guard < PAGE_CAP; guard++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      let env;
+      try {
+        const resp = await fetch(XANO_PRODUCT_ALL_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ per_page: PER_PAGE, page }),
+          signal: controller.signal,
+        });
+        if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
+        env = await resp.json();
+      } finally {
+        clearTimeout(timer);
+      }
+      if (!env || !Array.isArray(env.items)) return { ok: false, error: 'bad_envelope' };
+      items.push(...env.items);
+      if (Number.isFinite(env.itemsTotal)) itemsTotal = env.itemsTotal;
+      // `nextPage` is null on the last page — the only stop condition that
+      // survives the catalogue growing between two syncs.
+      if (env.nextPage == null) break;
+      page = env.nextPage;
+    }
+    log.info(`[catalog] fetched ${items.length}/${itemsTotal || items.length} products`);
+    return { ok: true, items, itemsTotal: itemsTotal || items.length };
+  } catch (e) {
+    log.warn(`[catalog] fetch-all failed: ${e.message}`);
+    return { ok: false, error: e.message };
+  }
+});
+
 // Helper — split 80-byte user-data buffer into page descriptors.
 // If oldUserBytes is provided, only includes pages where bytes differ (surgical mode).
 // Page index is absolute (starts at 4 = chip page 0x04).

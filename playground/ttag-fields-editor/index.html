@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>.ttag field contract — per product type</title>
+<style>
+  :root{
+    --primary:#ff7a18; --bg:#f3f4f6; --surface:#fff; --surface-2:#f6f7f9;
+    --border:#e3e6ea; --text:#1c2024; --muted:#6b7280;
+    --req:#dc2626; --opt:#6b7280; --na:#b45309; --chip:#0f9d58;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+       background:var(--bg);color:var(--text);padding-bottom:96px}
+  header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--border)}
+  .htop{padding:12px 22px 8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  h1{font-size:16px;margin:0;font-weight:700}
+  h1 small{font-weight:500;color:var(--muted);font-size:12px;margin-left:8px}
+  #search{flex:1;min-width:170px;max-width:240px;height:34px;padding:0 12px;border-radius:9px;
+          border:1px solid var(--border);background:var(--surface-2);font:inherit;font-size:13px}
+  #search:focus{outline:none;border-color:var(--primary);background:var(--surface)}
+  .counts{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+  .cnt{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid var(--border);
+       background:var(--surface-2);white-space:nowrap}
+  .cnt b{font-variant-numeric:tabular-nums}
+  .cnt.req{color:var(--req)} .cnt.opt{color:var(--opt)} .cnt.na{color:var(--na)} .cnt.chip{color:var(--chip)}
+  .tabs{display:flex;gap:6px;padding:4px 22px 12px;flex-wrap:wrap;align-items:center}
+  .tab{font:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:10px;border:1px solid var(--border);
+       background:var(--surface-2);color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:7px}
+  .tab .id{font-family:var(--mono);font-size:11px;opacity:.8}
+  .tab[aria-selected="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
+  .tab .dot{width:7px;height:7px;border-radius:50%}
+  .tab .dot.ratified{background:#16a34a} .tab .dot.draft{background:#f59e0b}
+  .tab[aria-selected="true"] .dot{outline:1px solid rgba(255,255,255,.6)}
+  .statusbtn{font:inherit;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;border:1px dashed var(--border);
+             background:var(--surface);color:var(--muted);cursor:pointer;margin-left:6px}
+
+  main{max-width:1180px;margin:0 auto;padding:18px 22px}
+  .band{margin:22px 0 12px;padding:12px 16px;border-radius:12px}
+  .band:first-child{margin-top:0}
+  .band h2{font-size:14px;margin:0 0 2px;font-weight:800}
+  .band p{margin:0;font-size:12px;opacity:.92}
+  .band--env{background:#fff4ea;border:1px solid #ffd6b0;color:#9a4a05}
+  .band--rec{background:#eef1f5;border:1px solid #d7dee7;color:#475569}
+
+  .cat{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:14px;overflow:hidden}
+  .cat > h3{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
+            margin:0;padding:11px 16px;background:var(--surface-2);border-bottom:1px solid var(--border);
+            display:flex;align-items:center;gap:10px}
+  .cat > h3 .bulk{margin-left:auto;display:flex;gap:4px}
+  .cat > h3 .bulk button{font:inherit;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+      padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer}
+  .cat > h3 .bulk button:hover{border-color:var(--primary);color:var(--primary)}
+
+  .row{padding:10px 16px;border-bottom:1px solid var(--border)}
+  .row:last-child{border-bottom:none}
+  .row:hover{background:var(--surface-2)}
+  .row.hide{display:none}
+  .line{display:grid;grid-template-columns:158px 120px minmax(150px,1fr) 90px auto;gap:10px;align-items:center}
+  .fname{font-family:var(--mono);font-size:12px;background:var(--surface-2);border:1px solid var(--border);
+         border-radius:5px;padding:2px 7px;justify-self:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .ftype{font-family:var(--mono);font-size:11px;color:#0369a1;background:#eff8ff;border:1px solid #cde5f7;
+         border-radius:5px;padding:2px 7px;justify-self:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .cmt{width:100%;min-width:0;height:31px;padding:0 9px;border-radius:8px;border:1px dashed var(--border);
+       background:var(--surface-2);font:inherit;font-size:12px;color:var(--text)}
+  .cmt::placeholder{color:#aab2bd}
+  .cmt:focus{outline:none;border-style:solid;border-color:var(--primary);background:var(--surface)}
+  .cmt.has{border-style:solid;border-color:var(--primary);background:#fff8f2}
+  .chipbtn{font:inherit;font-size:10px;font-weight:800;letter-spacing:.04em;padding:6px 8px;border-radius:7px;
+           border:1px solid var(--border);background:var(--surface-2);color:var(--muted);cursor:pointer;white-space:nowrap}
+  .chipbtn[aria-pressed="true"]{background:#dcf3e6;border-color:#8fd3ad;color:#0b6b3d}
+  .chipbtn:disabled{opacity:.45;cursor:not-allowed}
+  .seg{display:flex;border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--surface-2)}
+  .seg button{font:inherit;font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;
+              padding:6px 9px;border:none;background:transparent;color:var(--muted);cursor:pointer;white-space:nowrap;
+              border-right:1px solid var(--border)}
+  .seg button:last-child{border-right:none}
+  .seg button:hover{background:var(--surface)}
+  .seg button[aria-pressed="true"]{color:#fff}
+  .seg button[data-v="REQUIRED"][aria-pressed="true"]{background:var(--req)}
+  .seg button[data-v="OPTIONAL"][aria-pressed="true"]{background:var(--opt)}
+  .seg button[data-v="NA"][aria-pressed="true"]{background:var(--na)}
+  .note{font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:6px;padding-left:2px}
+  .mods{display:inline-flex;gap:4px;margin-right:6px;vertical-align:middle}
+  .mod{font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 5px;border-radius:4px}
+  .mod.san{background:#fef3c7;color:#92400e} .mod.ovr{background:#e0e7ff;color:#3730a3} .mod.ign{background:#e5e7eb;color:#4b5563}
+  .todo{background:#fee2e2;color:#991b1b;font-size:9px;font-weight:800;padding:2px 5px;border-radius:4px}
+
+  footer{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--border);
+         padding:12px 22px;display:flex;gap:10px;align-items:center;z-index:20}
+  footer .hint{font-size:12px;color:var(--muted);margin-right:auto}
+  .btn{font:inherit;font-size:13px;font-weight:600;padding:9px 16px;border-radius:10px;
+       border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn--primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn--primary:hover{filter:brightness(1.06);color:#fff}
+  .flash{color:var(--primary);font-weight:700;font-size:12px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="htop">
+    <h1>.ttag field contract <small>rules per product type — header shared</small></h1>
+    <input id="search" type="search" placeholder="Filter fields…" autocomplete="off">
+    <div class="counts" id="counts"></div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<main id="main"></main>
+
+<footer>
+  <span class="hint" id="hint">Choices &amp; notes auto-save in this browser.</span>
+  <button class="btn" id="btnReset">Reset active type</button>
+  <button class="btn" id="btnCopy">Copy Markdown</button>
+  <button class="btn btn--primary" id="btnDownload">Download TTAG-FIELDS.md</button>
+</footer>
+
+<script>
+// ── Product types ────────────────────────────────────────────────────────────
+// The record CONTRACT (required/optional/N-A) is PER TYPE. The envelope, the
+// field list, the data types and the on-chip mapping are SHARED. Only Filament
+// (142) is ratified today; the importer accepts only 142 for now.
+const TYPES = [
+  { id:142, name:"Filament" },
+  { id:116, name:"Accessories" },
+  { id:41,  name:"Spare Part" },
+  { id:173, name:"Resin" },
+];
+const DEFAULT_TYPE = 142;
+
+// ── Fields ───────────────────────────────────────────────────────────────────
+// `t` type · `chip` written to chip (shared) · `s` = the ratified FILAMENT
+// contract (other types start as a copy) · `mods`/`note`/`todo` shared.
+const DATA = [
+ { band:"env", cat:"Envelope — the wrapper around records[]", env:true, rows:[
+   { f:"format", t:"string", chip:false, s:"REQUIRED", mods:[], note:'Literal `"tigertag"`. Any other value rejects the whole file.' },
+   { f:"kind", t:"string", chip:false, s:"REQUIRED", mods:[], note:'Literal `"ttag"`. Any other value rejects the whole file.' },
+   { f:"version", t:"int", chip:false, s:"REQUIRED", mods:[], note:"Integer ≥ 1 and ≤ the reader's supported version (currently 1)." },
+   { f:"records", t:"array<object>", chip:false, s:"REQUIRED", mods:[], note:"Non-empty array of material records." },
+   { f:"exportedAt", t:"string (ISO 8601)", chip:false, s:"OPTIONAL", mods:[], note:"Export date, ISO 8601 string — NOT epoch-ms. Informational." },
+   { f:"exportedBy", t:"string (uid)", chip:false, s:"OPTIONAL", mods:[], note:"Exporting account uid. UX hint for Restore/Import; never a security boundary." },
+   { f:"rfidBackups", t:"object<uid,object>", chip:false, s:"OPTIONAL", mods:[], note:"Map chip UID → signed factory dump. TigerTag+ only. Restored in Restore, dropped in Import." },
+ ]},
+
+ { band:"rec", cat:"Header — same for every product type", rows:[
+   { f:"uid", t:"string (hex | TigerData_…)", chip:true, s:"REQUIRED", mods:[], note:"Chip hardware UID in hex, or `TigerData_<id>` for a chipless material. Firestore doc id. Never emit a legacy `CLOUD_`." },
+   { f:"id_type", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Product type id — references `id_type.json` (142 Filament · 116 Accessories · 41 Spare Part · 173 Resin). This value selects which contract below applies. Import accepts 142 only for now." },
+   { f:"id_brand", t:"uint16 (0–65535) · ref", chip:true, s:"REQUIRED", mods:[], note:"Brand id — references `id_brand.json`." },
+   { f:"id_material", t:"uint16 (0–65535) · ref", chip:true, s:"REQUIRED", mods:[], note:"Material id — references `id_material.json`." },
+   { f:"id_version", t:"string (derived)", chip:false, s:"OPTIONAL", mods:[], note:"NOT a stored field: the version/tier NAME (e.g. \"TigerTag\", \"TigerTag+\") DERIVED from id_tigertag via id_version.json. A record normally omits it." },
+   { f:"id_tigertag", t:"uint32 (0–4294967295) · ref", chip:true, s:"REQUIRED", mods:["ovr"], note:"The chip's tag id (bytes 0-3). References id_version.json — its value maps to the version/tier (e.g. 3155151767 = TigerTag+). A chipless material carries a random nonce (so it resolves to no tier); the real chip's id replaces it on programming, and Import always mints a fresh random one." },
+   { f:"id_product", t:"uint32 (0–4294967295)", chip:true, s:"OPTIONAL", mods:["ovr"], note:"Catalogue product id — look up a real one in the public catalogue at https://tigersystem.io/fr/catalog. When unknown it MUST be `4294967295` (`0xFFFFFFFF`, the “generic” sentinel), never absent. Import always resets it to that value." },
+   { f:"timestamp", t:"uint32 (0–4294967295, chip epoch)", chip:true, s:"REQUIRED", mods:[], note:"Chip encode timestamp — SECONDS since 2000-01-01 (TigerTag chip epoch, not Unix, not Firestore)." },
+ ]},
+
+ { band:"rec", cat:"Filament identity", rows:[
+   { f:"id_aspect1", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Primary aspect id — references `id_aspect.json` (one shared file for both aspects)." },
+   { f:"id_aspect2", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Secondary aspect id — same `id_aspect.json`." },
+   { f:"id_diameter", t:"uint8 (0–255) · ref | 0", chip:true, s:"REQUIRED", mods:[], note:"Diameter id — references `id_diameter.json`, or `0` when the material has no diameter." },
+   { f:"id_measure_unit", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Unit id — references `id_measure_unit.json`. Gives `measure` its meaning (g, kg, ml, L…)." },
+ ]},
+ { band:"rec", cat:"Quantity", rows:[
+   { f:"measure", t:"uint24 (0–16777215)", chip:true, s:"REQUIRED", mods:["san"], note:"A bare quantity with NO unit of its own — the unit comes from `id_measure_unit`. Clamped finite ≥ 0." },
+ ]},
+ { band:"rec", cat:"Colour", rows:[
+   { f:"color_r", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:["san"], note:"Primary colour, red." },
+   { f:"color_g", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:["san"], note:"Primary colour, green." },
+   { f:"color_b", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:["san"], note:"Primary colour, blue." },
+   { f:"color_a", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:["san"], note:"Primary colour, alpha." },
+   { f:"color_r2", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Second colour, red. Absent or empty ⇒ `0`." },
+   { f:"color_g2", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Second colour, green. Absent or empty ⇒ `0`." },
+   { f:"color_b2", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Second colour, blue. Absent or empty ⇒ `0`." },
+   { f:"color_r3", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Third colour, red. Absent or empty ⇒ `0`." },
+   { f:"color_g3", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Third colour, green. Absent or empty ⇒ `0`." },
+   { f:"color_b3", t:"uint8 (0–255)", chip:true, s:"OPTIONAL", mods:["san"], note:"Third colour, blue. Absent or empty ⇒ `0`." },
+   { f:"color_name", t:"string (≤28 B UTF-8)", chip:true, s:"OPTIONAL", mods:[], note:"Free description stored ON the chip in a fixed 28-byte UTF-8 slot. On-chip yet optional." },
+ ]},
+ { band:"rec", cat:"Raw chip data slots", rows:[
+   { f:"data1", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 1. REQUIRED for Filament (the diameter id, default `56` = 1.75 mm) — its requiredness depends on id_type (Optional for Resin, where it means Mixing Time). Same chip byte as id_diameter for Filament." },
+   { f:"data2", t:"uint16 (0–65535)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 2. Absent or empty ⇒ `0`." },
+   { f:"data3", t:"uint16 (0–65535)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 3. Absent or empty ⇒ `0`." },
+   { f:"data4", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 4. Absent or empty ⇒ `0`." },
+   { f:"data5", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 5. Absent or empty ⇒ `0`." },
+   { f:"data6", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 6. Absent or empty ⇒ `0`." },
+   { f:"data7", t:"uint8 (0–255)", chip:true, s:"REQUIRED", mods:[], note:"Raw chip slot 7. Absent or empty ⇒ `0`." },
+ ]},
+
+ { band:"rec", cat:"Derived quantity", rows:[
+   { f:"measure_gr", t:"number (grams)", chip:false, s:"OPTIONAL", mods:["san"], note:"Grams, DERIVED from the on-chip `measure` + `id_measure_unit` (1 kg ⇒ 1000 g). Already implemented and used across the app. A producer never needs to send it — the app computes it." },
+   { f:"measure_ml", t:"number (millilitres)", chip:false, s:"OPTIONAL", mods:[], note:"Millilitres, derived from the SAME source (`measure` + `id_measure_unit`, 1 L ⇒ 1000 ml) — the volume counterpart of `measure_gr` for liquid products that report a volume (some liquids still report a mass → `measure_gr`). New: the derivation mechanism exists; this ml output isn't wired up yet." },
+   { f:"capacity", t:"number", chip:false, s:"OPTIONAL", mods:[], note:"Last-resort capacity fallback in the Import weight-reset chain." },
+ ]},
+ { band:"rec", cat:"Derived & display", rows:[
+   { f:"online_color_list", t:"string (hex)", chip:false, s:"OPTIONAL", mods:[], note:"Hex colour string (e.g. `00A046`), derived from the chip colour bytes." },
+   { f:"online_color_type", t:"uint", chip:false, s:"OPTIONAL", mods:[], note:"Mono / dual / tri / rainbow discriminator." },
+   { f:"material", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Human material label resolved for display." },
+   { f:"series", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Product series label." },
+   { f:"name", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Product name." },
+   { f:"label", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Free-text label." },
+   { f:"message", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Free-text message." },
+ ]},
+ { band:"rec", cat:"Inventory state", rows:[
+   { f:"weight_available", t:"number (grams)", chip:false, s:"OPTIONAL", mods:["ovr","san"], note:"Remaining grams. Import resets it to capacity, so it only matters for Restore." },
+   { f:"container_id", t:"uint (ref)", chip:false, s:"OPTIONAL", mods:[], note:"Container from the bundled catalogue — needed for gross→net weighing." },
+   { f:"container_weight", t:"number (grams)", chip:false, s:"OPTIONAL", mods:[], note:"Empty-container grams; may be a per-account calibrated value." },
+   { f:"TD", t:"uint16 (0–65535, /10 = mm)", chip:true, s:"OPTIONAL", mods:["san"], note:"Transmission Density (measured by a TD1S). On the chip at byte offset 44 as a uint16, divided by 10 = mm. Clamped to [0.1, 100] when > 0, else null." },
+ ]},
+ { band:"rec", cat:"References & tags", rows:[
+   { f:"sku", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Product reference (SKU)." },
+   { f:"barcode", t:"string (digits only)", chip:false, s:"OPTIONAL", mods:[], note:"EAN / barcode — digits only, no letters or separators." },
+   { f:"info1", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Free-text slot 1." },
+   { f:"info2", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Free-text slot 2." },
+   { f:"info3", t:"string", chip:false, s:"OPTIONAL", mods:[], note:"Free-text slot 3." },
+   { f:"tags", t:"array<string>", chip:false, s:"OPTIONAL", mods:[], note:"A plain JSON array of strings — Studio filters it to strings on read (`data.tags.filter(x => typeof x === \"string\")`). No separator-joined form." },
+ ]},
+ { band:"rec", cat:"Links — all untrusted", rows:[
+   { f:"url_img", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"Product image URL. Non-http(s) scheme dropped on import." },
+   { f:"url_img_user", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"User's own image URL. Non-http(s) scheme dropped on import." },
+   { f:"LinkTDS", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"Technical datasheet URL." },
+   { f:"LinkMSDS", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"Safety datasheet URL." },
+   { f:"LinkYoutube", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"Video URL." },
+   { f:"LinkREACH", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"REACH compliance URL." },
+   { f:"LinkROHS", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"RoHS compliance URL." },
+   { f:"LinkFOOD", t:"string (http/https URL)", chip:false, s:"OPTIONAL", mods:["san"], note:"Food-contact compliance URL." },
+ ]},
+ { band:"rec", cat:"Relations & state", rows:[
+   { f:"twin_tag_uid", t:"string (hex UID)", chip:false, s:"OPTIONAL", mods:[], note:"Partner chip's hex UID. Twins only: reciprocity expected, both records in the same file — a half-twin is refused." },
+   { f:"rfidBackup", t:"bool", chip:false, s:"OPTIONAL", mods:["ovr"], note:"`true` only for TigerTag+, with a matching `rfidBackups` entry keyed by this record's uid. The dump is the chip's user memory pages `0x04`–`0x27` (= 4–39 decimal, 144 bytes — the full NTAG213 user memory), stored in the envelope. Import forces `false`." },
+   { f:"rfidListed", t:"bool", chip:false, s:"OPTIONAL", mods:["ovr"], note:"Deleted on import." },
+   { f:"deleted", t:"bool | null", chip:false, s:"OPTIONAL", mods:["ovr"], note:"Reset to `null` on import/restore. Never ship a deleted record." },
+   { f:"deleted_at", t:"epoch-ms | null", chip:false, s:"OPTIONAL", mods:["ovr"], note:"Reset to `null` on import/restore." },
+ ]},
+ { band:"rec", cat:"Storage placement — carried, never applied", rows:[
+   { f:"rack", t:"object", chip:false, s:"OPTIONAL", mods:["ign"], note:"Rack placement object. Never inherited on import." },
+   { f:"rack_id", t:"string", chip:false, s:"OPTIONAL", mods:["ign"], note:"Rack id. Not applied on import." },
+   { f:"level", t:"uint", chip:false, s:"OPTIONAL", mods:["ign"], note:"Shelf level. Not applied on import." },
+   { f:"position", t:"uint", chip:false, s:"OPTIONAL", mods:["ign"], note:"Slot position. Not applied on import." },
+ ]},
+ { band:"rec", cat:"Firestore stamps", rows:[
+   { f:"updatedAt", t:"epoch-ms", chip:false, s:"OPTIONAL", mods:["ovr"], note:"Stamped fresh on write. Firestore Timestamps serialise as epoch-ms." },
+   { f:"updated_at", t:"epoch-ms", chip:false, s:"OPTIONAL", mods:[], note:"Legacy stamp." },
+   { f:"last_update", t:"epoch-ms", chip:false, s:"OPTIONAL", mods:[], note:"Legacy stamp." },
+   { f:"needUpdateAt", t:"epoch-ms", chip:false, s:"OPTIONAL", mods:[], note:"Auxiliary stamp." },
+ ]},
+];
+
+const BANDS = {
+  env:{ title:"Envelope — shared across every product type", desc:"File-level wrapper, validated before any record is read. Not part of a record, never on a chip. Identical for all types." },
+  rec:{ title:"Record fields", desc:"The Header block is the same for every type; the rest of the contract (Required / Optional / N-A) is set PER TYPE — pick a type above." },
+};
+const VALUES = ["REQUIRED","OPTIONAL","NA"];
+const VLABEL = { REQUIRED:"Required", OPTIONAL:"Optional", NA:"N/A" };
+const MOD_LABEL = { san:"SANITIZED", ovr:"OVERWRITTEN ON IMPORT", ign:"IGNORED" };
+const KEY = "ttagFieldContract.v4";
+
+// Shared bits
+const CHIP = {}, FIELDS = [];
+DATA.forEach(c => c.rows.forEach(r => { CHIP[r.f] = !!r.chip; FIELDS.push(r.f); }));
+
+// Per-type contract deltas from the Filament default (founder-provided).
+const CONTRACT_OVERRIDES = {
+  173: { id_aspect2:"OPTIONAL", id_diameter:"OPTIONAL", data1:"OPTIONAL" },   // Resin — data1 = Mixing Time, not a diameter
+};
+function freshState(){
+  const chip = { ...CHIP };
+  const contract = {};
+  TYPES.forEach(ty => { contract[ty.id] = {}; DATA.forEach(c => c.rows.forEach(r => { contract[ty.id][r.f] = r.s; }));
+    Object.assign(contract[ty.id], CONTRACT_OVERRIDES[ty.id] || {}); });
+  const status = {}; TYPES.forEach(ty => status[ty.id] = ty.id === DEFAULT_TYPE ? "ratified" : "draft");
+  return { chip, contract, status };
+}
+let state = freshState();
+// Notes are PER TYPE — data1..7 (and any field) can mean something different per
+// product type. Filament (142) data slots are pre-seeded with their known meaning.
+let comments = {};   // { [typeId]: { [field]: text } }
+let active = DEFAULT_TYPE;
+const SEED_SLOTS = {
+  142: { data1:"Diameter ID (mm)", data2:"Nozzle Temp Min (°C)", data3:"Nozzle Temp Max (°C)",
+         data4:"Dry Temp (°C)", data5:"Dry Time (hours)", data6:"Bed Temp Min (°C)", data7:"Bed Temp Max (°C)" },
+  173: { data1:"Mixing Time (minute)", data2:"Work Temp Min (°C)", data3:"Work Temp Max (°C)",
+         data4:"Curing Temp (°C)", data5:"Curing Time (min)", data6:"Wash Temp (°C)", data7:"Wash Time (min)" },
+};
+try {
+  const s = JSON.parse(localStorage.getItem(KEY) || "null");
+  if (s){ if (s.chip) state.chip = { ...state.chip, ...s.chip };
+    if (s.contract) TYPES.forEach(ty => { if (s.contract[ty.id]) state.contract[ty.id] = { ...state.contract[ty.id], ...s.contract[ty.id] }; });
+    if (s.status) state.status = { ...state.status, ...s.status };
+    if (s.active) active = s.active;
+    const cm = s.comments || {};
+    const perType = Object.keys(cm).length && Object.keys(cm).every(k => /^\d+$/.test(k));
+    comments = perType ? cm : { [DEFAULT_TYPE]: cm };   // migrate a legacy flat map into type 142
+  }
+} catch (_) {}
+for (const tid in SEED_SLOTS){ comments[tid] = comments[tid] || {};
+  for (const k in SEED_SLOTS[tid]) if (!comments[tid][k]) comments[tid][k] = SEED_SLOTS[tid][k]; }
+const cmt = f => (comments[active] && comments[active][f]) || "";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const val = f => state.contract[active][f];   // active-type contract for a field
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML =
+    TYPES.map(ty => `<button class="tab" role="tab" data-type="${ty.id}" aria-selected="${active===ty.id}">
+        <span class="dot ${state.status[ty.id]}"></span>${esc(ty.name)} <span class="id">${ty.id}</span></button>`).join("")
+    + `<button class="statusbtn" id="statusToggle">${state.status[active]==="ratified"?"● ratified":"○ draft — mark ratified"}</button>`;
+}
+
+function render(){
+  renderTabs();
+  let html = "", lastBand = null;
+  DATA.forEach(c => {
+    if (c.band !== lastBand){ const b = BANDS[c.band];
+      html += `<div class="band band--${c.band}"><h2>${esc(b.title)}</h2><p>${esc(b.desc)}</p></div>`; lastBand = c.band; }
+    html += `<section class="cat"><h3>${esc(c.cat)}
+        <span class="bulk">${VALUES.map(v=>`<button data-bulkcat="${esc(c.cat)}" data-v="${v}">${VLABEL[v]}</button>`).join("")}</span></h3>
+      ${c.rows.map(r => {
+        const cv = c.env ? r.s : val(r.f);
+        return `<div class="row" data-search="${esc((r.f+" "+r.t).toLowerCase())}">
+          <div class="line">
+            <code class="fname" title="${esc(r.f)}">${esc(r.f)}</code>
+            <code class="ftype" title="${esc(r.t)}">${esc(r.t)}</code>
+            <input class="cmt${cmt(r.f)?" has":""}" data-c="${esc(r.f)}" value="${esc(cmt(r.f))}" placeholder="Why? — meaning for this type…" autocomplete="off">
+            <button class="chipbtn" data-chip="${esc(r.f)}" aria-pressed="${!!state.chip[r.f]}" ${c.env?"disabled":""}>${state.chip[r.f]?"ON CHIP":"OFF CHIP"}</button>
+            <div class="seg">${VALUES.map(v=>`<button data-k="${esc(r.f)}" data-v="${v}" ${c.env?"disabled":""} aria-pressed="${cv===v}">${VLABEL[v]}</button>`).join("")}</div>
+          </div>
+          <div class="note">${r.mods.length?`<span class="mods">${r.mods.map(m=>`<span class="mod ${m}">${MOD_LABEL[m]}</span>`).join("")}</span>`:""}${r.todo?`<span class="todo">TO CONFIRM</span> `:""}${esc(r.note)}${r.todo?` <em>${esc(r.todo)}</em>`:""}</div>
+        </div>`;
+      }).join("")}
+    </section>`;
+  });
+  document.getElementById("main").innerHTML = html;
+  counts();
+}
+
+function counts(){
+  let req=0, opt=0, na=0, chip=0, chipReq=0, todo=0;
+  DATA.forEach(c => c.rows.forEach(r => {
+    if (c.env) return;
+    const v = val(r.f);
+    if (v==="REQUIRED") req++; else if (v==="OPTIONAL") opt++; else na++;
+    if (state.chip[r.f]){ chip++; if (v==="REQUIRED") chipReq++; }
+    if (r.todo) todo++;
+  }));
+  const ty = TYPES.find(t=>t.id===active);
+  document.getElementById("counts").innerHTML =
+    `<span class="cnt" style="color:#111"><b>${esc(ty.name)}</b> · ${state.status[active]}</span>
+     <span class="cnt req"><b>${req}</b> req</span>
+     <span class="cnt opt"><b>${opt}</b> opt</span>
+     ${na?`<span class="cnt na"><b>${na}</b> n/a</span>`:""}
+     <span class="cnt chip"><b>${chip}</b> on chip</span>
+     ${todo?`<span class="cnt" style="color:#991b1b"><b>${todo}</b> to confirm</span>`:""}`;
+}
+
+function save(){ localStorage.setItem(KEY, JSON.stringify({ ...state, comments, active })); }
+function flash(m){ const h=document.getElementById("hint"), o=h.textContent;
+  h.innerHTML=`<span class="flash">${esc(m)}</span>`; setTimeout(()=>{h.textContent=o;},2200); }
+
+document.addEventListener("input", e => {
+  const c = e.target.closest(".cmt"); if (!c) return;
+  const v = c.value.trim(); comments[active] = comments[active] || {};
+  if (v) comments[active][c.dataset.c]=v; else delete comments[active][c.dataset.c];
+  c.classList.toggle("has", !!v); save();
+});
+
+document.addEventListener("click", e => {
+  const tab = e.target.closest(".tab");
+  if (tab){ active = +tab.dataset.type; save(); render(); applyFilter(); return; }
+  if (e.target.id === "statusToggle"){ state.status[active] = state.status[active]==="ratified"?"draft":"ratified"; save(); render(); applyFilter(); return; }
+  const bulk = e.target.closest("[data-bulkcat]");
+  if (bulk){ const cat = DATA.find(c=>c.cat===bulk.dataset.bulkcat); if (cat.env) return;
+    cat.rows.forEach(r=>{ state.contract[active][r.f] = bulk.dataset.v; }); save(); render(); applyFilter(); return; }
+  const chipBtn = e.target.closest("[data-chip]");
+  if (chipBtn && !chipBtn.disabled){ const f=chipBtn.dataset.chip; state.chip[f]=!state.chip[f];
+    chipBtn.setAttribute("aria-pressed", String(state.chip[f])); chipBtn.textContent = state.chip[f]?"ON CHIP":"OFF CHIP"; save(); counts(); return; }
+  const b = e.target.closest(".seg button");
+  if (b && !b.disabled){ state.contract[active][b.dataset.k] = b.dataset.v;
+    b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed", String(x===b))); save(); counts(); }
+});
+
+function applyFilter(){
+  const q = document.getElementById("search").value.trim().toLowerCase();
+  document.querySelectorAll(".row").forEach(r => r.classList.toggle("hide", !!q && !r.dataset.search.includes(q)));
+  document.querySelectorAll(".cat").forEach(c => c.style.display = [...c.querySelectorAll(".row")].some(r=>!r.classList.contains("hide")) ? "" : "none");
+}
+document.getElementById("search").addEventListener("input", applyFilter);
+document.getElementById("btnReset").addEventListener("click", () => {
+  const ty = TYPES.find(t=>t.id===active);
+  if (!confirm(`Reset the ${ty.name} (${ty.id}) contract to the ratified Filament defaults? (notes kept)`)) return;
+  DATA.forEach(c => c.rows.forEach(r => { state.contract[active][r.f] = r.s; }));
+  save(); render(); applyFilter(); flash(`${ty.name} reset.`);
+});
+
+// ── Markdown regeneration — a matrix with one column per product type ─────────
+function markdown(){
+  const modTxt = m => m.map(x=>`**${MOD_LABEL[x]}**`).join(", ");
+  const cell = (c,r,tyId) => c.env ? r.s : state.contract[tyId][r.f];
+  const shortC = v => v==="REQUIRED" ? "**Req**" : v==="OPTIONAL" ? "Opt" : "—";
+
+  let out = `# \`.ttag\` field contract — per product type
+
+\`.ttag\` is the **export and import** format of the TigerTag ecosystem, whose job is to carry
+everything needed to **create a TigerTag / TigerTag+ chip**. The **envelope, the field list, the data
+types and the on-chip mapping are shared**; the **Required / Optional / N-A contract is set per
+product type** (\`id_type\`). Today only **Filament (142)** is ratified and the importer accepts only
+142; the other types are drafts to be defined.
+
+Each field has three independent properties — **Type** (wire format), **On chip** (written to the
+physical chip), **Contract** (per type). They are genuinely independent: \`color_name\` is on the chip
+yet optional.
+
+## Product types
+
+| id | Name | Status |
+|---|---|---|
+${TYPES.map(ty=>`| \`${ty.id}\` | ${ty.name} | ${state.status[ty.id]}${ty.id===DEFAULT_TYPE?" · importer-accepted":""} |`).join("\n")}
+
+## Legend
+
+| Marker | Meaning |
+|---|---|
+| **Req** | REQUIRED — a well-formed record MUST carry it. |
+| Opt | OPTIONAL — free to omit; passed through verbatim. |
+| — | N/A — the field is not used for that product type. |
+| **SANITIZED** | Untrusted input — scheme-checked / clamped before any write. |
+| **OVERWRITTEN ON IMPORT** | Replaced by Studio in Import mode; only matters for Restore. |
+| **IGNORED** | Carried in the file but not applied to the importing account. |
+
+> Envelope \`exportedAt\` is an **ISO 8601 string**; timestamps inside \`records[]\` serialise as
+> **epoch-ms**; the chip's \`timestamp\` is **seconds since 2000-01-01**.
+`;
+  const typeCols = TYPES.map(t=>`${t.name} (${t.id})`).join(" | ");
+  let lastBand = null;
+  DATA.forEach(c => {
+    if (c.band !== lastBand){ const b = BANDS[c.band];
+      out += `\n---\n\n# ${b.title}\n\n${b.desc}\n`; lastBand = c.band; }
+    const cols = ["Field","Type","On chip", ...TYPES.map(t=>`${t.name} (${t.id})`), "Notes"];
+    out += `\n## ${c.cat}\n\n| ${cols.join(" | ")} |\n| ${cols.map(()=>"---").join(" | ")} |\n`;
+    c.rows.forEach(r => {
+      const onChip = c.env ? "—" : (state.chip[r.f] ? "**yes**" : "no");
+      let note = (r.todo?`**TO CONFIRM —** ${r.todo} `:"") + r.note;
+      if (r.mods.length) note = `${modTxt(r.mods)}. ${note}`;
+      const cells = [`\`${r.f}\``, `\`${r.t}\``, onChip, ...TYPES.map(t=>shortC(cell(c,r,t.id))), note.replace(/\|/g,"\\|")];
+      out += `| ${cells.join(" | ")} |\n`;
+    });
+  });
+
+  // Chip data slots carry a DIFFERENT payload per product type — spell it out.
+  const anyNote = t => DATA.some(c => c.rows.some(r => comments[t] && comments[t][r.f]));
+  const SLOTS = ["data1","data2","data3","data4","data5","data6","data7"];
+  out += `\n---\n\n## Chip data slots — meaning per product type\n\nThe seven raw chip slots hold a type-specific payload. Same bytes on the chip, different meaning:\n\n`;
+  out += `| Slot | ${TYPES.map(t=>`${t.name} (${t.id})`).join(" | ")} |\n| ${["---",...TYPES.map(()=>"---")].join(" | ")} |\n`;
+  SLOTS.forEach(sl => {
+    out += `| \`${sl}\` | ${TYPES.map(t=>((comments[t.id]&&comments[t.id][sl])||"—").replace(/\|/g,"\\|")).join(" | ")} |\n`;
+  });
+
+  // Any other per-type notes the founder wrote (non-slot).
+  const extra = TYPES.map(t => {
+    const rows = DATA.flatMap(c => c.rows).filter(r => !SLOTS.includes(r.f) && comments[t.id] && comments[t.id][r.f]);
+    return rows.length ? `\n**${t.name} (${t.id})**\n\n${rows.map(r=>`- \`${r.f}\` — ${comments[t.id][r.f]}`).join("\n")}\n` : "";
+  }).join("");
+  if (extra.trim()) out += `\n---\n\n## Other per-type notes\n${extra}`;
+  // Per-type minimal record
+  out += `\n---\n\n## Minimal well-formed record, per type\n`;
+  TYPES.forEach(ty => {
+    const req = []; DATA.forEach(c => { if (!c.env) c.rows.forEach(r => { if (state.contract[ty.id][r.f]==="REQUIRED") req.push(r.f); }); });
+    out += `\n**${ty.name} (${ty.id})** — ${state.status[ty.id]}: ${req.map(f=>`\`${f}\``).join(", ")}.\n`;
+  });
+  out += `\nPlus a valid envelope for every type: \`format\`, \`kind\`, \`version\`, \`records\`.\n`;
+  out += `\n---\n\n## Editing this contract\n
+\`playground/ttag-fields-editor/index.html\` — standalone page (no deps, no server). Pick a product
+type tab, then set each field's type, on-chip and Required/Optional/N-A. It regenerates this document:
+**Download TTAG-FIELDS.md** and drop it into \`docs/\`.\n`;
+  return out;
+}
+
+document.getElementById("btnCopy").addEventListener("click", () =>
+  navigator.clipboard.writeText(markdown()).then(()=>flash("Markdown copied.")));
+document.getElementById("btnDownload").addEventListener("click", () => {
+  const blob = new Blob([markdown()], { type:"text/markdown" });
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "TTAG-FIELDS.md";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href); flash("Downloaded — drop it into docs/");
+});
+
+render(); applyFilter();
+</script>
+</body>
+</html>

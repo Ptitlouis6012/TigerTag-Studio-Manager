@@ -240,6 +240,41 @@ Every release ships the **same changes described three times**, at three altitud
 
 ---
 
+## 📐 `.ttag` field contract — the source of truth, edited via a dev tool
+
+The `.ttag` interchange format (export/import — see the *`.ttag`* entries in the CODEMAP and
+`docs/TTAG-EXPORT-BRIEF.md`) has a **field-level contract**: for every field, its wire **type**,
+whether it is written **on the chip**, and whether it is **Required / Optional / N-A** — and that
+last axis is **per product type** (`id_type`: 142 Filament, 116 Accessories, 41 Spare Part, 173
+Resin, more to come). The three axes are independent (e.g. `color_name` is on-chip yet optional).
+
+**The contract is NOT hand-edited in Markdown. It is authored in a dedicated dev tool:**
+
+> **`playground/ttag-fields-editor/index.html`** — a standalone, dependency-free page (open it in a
+> browser, no server). The founder toggles each field's on-chip flag and per-type contract, annotates
+> a per-type "Why" note (e.g. the meaning of `data1`–`data7`, which differs per type), and clicks
+> **Download** to regenerate **`docs/TTAG-FIELDS.md`** verbatim. This is the deliberate,
+> everyone-agrees workflow for evolving the contract — when an anomaly is found, or a new product
+> type needs its rules.
+
+**`docs/TTAG-FIELDS.md` is the generated source of truth** (chip byte layout comes from
+`renderer/rfid_protocol/tigertag/parser.js` + the `saveAddProduct` schema; don't invent ranges — read
+them there). **Studio's importer must match it**: the record validation
+(`_ttagRecordValid` / `_ttagMaterialValid` / `TTAG_REQUIRED_NUM` in `renderer/inventory.js`) enforces
+the ratified **Filament (142)** required set, and the importer currently **accepts only `id_type ==
+142`** (other types are drafts). When the founder hands back an updated `TTAG-FIELDS.md`:
+
+1. **Re-align the importer** to the new contract (required set, per-type gates), keeping the
+   "refuse-and-count, never silently import bad data" behaviour.
+2. **Drop the regenerated `docs/TTAG-FIELDS.md`** into the repo.
+3. **Propagate** the format changes to TigerSystem-Docs (`ttag-format` spec) and the mobile app as
+   relevant (same reflex as the Firestore-schema propagation rule).
+
+Never change the importer's contract on your own initiative — the tool + `docs/TTAG-FIELDS.md` are
+the authority; a code change follows a founder-ratified contract, not the reverse.
+
+---
+
 ## Stack
 Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js`. Renderer: `renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js`. Preload bridge: `preload.js`.
 

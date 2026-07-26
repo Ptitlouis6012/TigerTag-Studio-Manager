@@ -38,7 +38,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 
 ---
 
-## App bootstrap, static server, splash & main window (L1-442)
+## App bootstrap, static server, splash & main window (L143-381)
 
 | L | What | Anchors |
 |---|---|---|
@@ -47,21 +47,22 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 311-335 | UID hex→decimal + TigerTag SDK payload builder | `normalizeUid`, `_sdkPayload` |
 | 336-442 | `BrowserWindow` creation, preload wiring, CSP, devtools | `createWindow` |
 
-## NFC / RFID reader + chip write (L443-1137)
+## NFC / RFID reader + chip write (L526-1337)
 
 | L | What | Anchors / IPC |
 |---|---|---|
 | 443-625 | Reader connect/disconnect lifecycle, card-present events, auto-read | `_onNfcMessage`, `initNFC` |
 | 626-716 | USB scale (Dymo M-series) — HID open + hot-plug poll, frame decode, `usb-scale-update` / `usb-scale-data` events, `usb-scale:state` IPC | `_scaleDecode`, `_tryOpenScale`, `initUsbScale` |
 | 717-1137 | IPC: `rfid:read-now` / `rfid:write-now` / `rfid:repair` (restore from backup) / `rfid:format` (reinitialize via `TigerTag.asInit`) / `rfid:encode-cloud` / `rfid:burn-one` / `rfid:refresh-api` / `rfid:lookup-product`; surgical page diff before write | `_pagesFromBytes`, `_pagesToWrite` |
+| 1281-1333 | IPC `catalog:fetch-all` — pages the WHOLE product catalogue (`product/get/all`, `per_page` 1000, follows `nextPage`) so the renderer can cache and search it offline | `XANO_PRODUCT_ALL_URL` |
 
-## TD1S color sensor (L1138-1379)
+## TD1S color sensor (L1353-1353)
 
 | L | What | Anchors / IPC |
 |---|---|---|
 | 1138-1379 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
 
-## Auto-updater + migration gate (L1380-1553)
+## Auto-updater + migration gate (L1599-1650)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -75,7 +76,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 1554-1702 | Google OAuth loopback sign-in (`auth:google-loopback`); `shell:open-external` | — |
 | 1703-1749 | Detached camera-wall `BrowserWindow` (`cam:open-detached`); `update:check-now` | — |
 
-## Printer discovery probes (L1750-2471)
+## Printer discovery probes (L2094-2478)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -103,7 +104,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 2661-2733 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
 | 2734-2765 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L2766-3019)
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3121-3121)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -111,7 +112,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 2826-2910 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
 | 2911-3019 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags | — |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3020-3343)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L3507-3515)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -120,7 +121,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3213-3235 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3236-3343 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L3344-3986)
+## Anycubic cloud — REST + cloud MQTT (L3660-4021)
 
 | L | What | Anchors / IPC |
 |---|---|---|

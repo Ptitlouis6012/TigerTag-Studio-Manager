@@ -28,6 +28,19 @@
      Favorite, so filtering by it is a no-op; only the ❤ Love filter is useful. */
   body.products-filters .csel:has(> #typeFilter),
   body.products-filters #likeFilter { display: none; }
+  /* Search views browse the OFFICIAL catalogue, not the user's stock: a brand
+     list built from owned spools, a material/tag/aspect drawn from the same, or
+     a ❤/★ flag have no meaning over 2 700 catalogue products. EVERY stock filter
+     is hidden and the catalogue's own set (#cvFilters) takes their place, right
+     of the search bar. */
+  body.catalog-filters .inv-filter-group { display: none; }
+  /* …and the catalogue set only ever shows in those views. */
+  #cvFilters { display: none; }
+  body.catalog-filters #cvFilters { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  /* These are the app's custom dropdowns (_enhanceSelect), so they already look
+     exactly like the inventory filters. Only the disabled Series needs saying:
+     the component mirrors options, not the <select>'s disabled state. */
+  #cvFilters .csel.is-disabled .csel-btn { opacity: .5; pointer-events: none; }
 
   .printers-section {
     display: flex; flex-direction: column; gap: 10px;
@@ -2303,7 +2316,10 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 }
 .pt-wrap::-webkit-scrollbar { width: 0; height: 0; }
 .pt-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13.5px; }
-.pt-head { position: sticky; top: 0; background: var(--surface-2); z-index: 1; }
+/* z-index 20, matching the inventory table's own thead: it must sit ABOVE the
+   row selection checkboxes (`.sel-check` is z-index 4), otherwise a row
+   scrolling under the sticky header shows its checkbox on top of it. */
+.pt-head { position: sticky; top: 0; background: var(--surface-2); z-index: 20; }
 .pt-th { padding: 9px 12px; text-align: left; font-size: 12px; font-weight: 600;
          text-transform: uppercase; letter-spacing: .03em;
          color: var(--muted); border-bottom: 1px solid var(--border); white-space: nowrap; }

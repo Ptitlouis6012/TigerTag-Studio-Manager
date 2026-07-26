@@ -65,7 +65,7 @@
   {
     "id": "esun_masterspool_black",
     "brandId": 47930,
-    "brand": "eSUN",
+    "brand": "eSun",
     "label": "Standard",
     "type": "plastic",
     "container_weight": 225,
@@ -299,7 +299,7 @@
   {
     "id": "giantarm_transparent",
     "brandId": 49784,
-    "brand": "GIANTARN",
+    "brand": "GIANTARM",
     "label": "Transparent",
     "type": "plastic",
     "container_weight": 180,
@@ -407,7 +407,7 @@
   {
     "id": "prusa_carton_core",
     "brandId": 46392,
-    "brand": "Prusa",
+    "brand": "Prusament",
     "label": "Black",
     "type": "Masterspool",
     "container_weight": 205,
@@ -424,7 +424,7 @@
   },
   {
     "id": "formfutura_carton",
-    "brandId": 51857,
+    "brandId": 53043,
     "brand": "Formfutura",
     "label": "Standard",
     "type": "cardboard",
@@ -439,5 +439,23 @@
     "type": "cardboard",
     "container_weight": 142,
     "img": "../assets/img/spool_filament/wanhao_carton.png"
+  },
+  {
+    "id": "inslogic_masterspool_black",
+    "brandId": 2049,
+    "brand": "Inslogic",
+    "label": "Black",
+    "type": "Masterspool",
+    "container_weight": 232,
+    "img": "../assets/img/spool_filament/inslogic_masterspool_black.png"
+  },
+  {
+    "id": "jayo_plastic_black",
+    "brandId": 7812,
+    "brand": "Jayo",
+    "label": "Black",
+    "type": "plastic",
+    "container_weight": 127,
+    "img": "../assets/img/spool_filament/jayo_plastic_black.png"
   }
 ]

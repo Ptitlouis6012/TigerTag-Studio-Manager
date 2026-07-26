@@ -10,12 +10,12 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.14.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.15.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
 - **Entry point**: `main.js` (Electron main process)
-- **Renderer**: `renderer/inventory.html` + `renderer/inventory.js` (a single ES module, ~28 500 lines, already importing ~29 sub-modules) + modular CSS in `renderer/css/`
+- **Renderer**: `renderer/inventory.html` + `renderer/inventory.js` (a single ES module, ~30 900 lines, already importing ~29 sub-modules) + modular CSS in `renderer/css/`
 - **Preload bridge**: `preload.js` — exposes IPC handlers to renderer via `window.electronAPI`
 - **NFC**: `services/nfc-process.js` runs as a `utilityProcess` (not a Worker Thread) to avoid SIGABRT on macOS; communicates via IPC
 - **Printer integrations**: `renderer/printers/<brand>/index.js` — one file per brand, loaded dynamically
@@ -98,13 +98,22 @@ Chipless spools have `spoolId` starting with `TigerData_` (minted for new entrie
 
 ## Spool tiers (user-facing vocabulary)
 
-Three tiers, visible as badges throughout the UI:
+Four tiers, visible as badges throughout the UI:
 
 | Tier | What it is | Data |
 |---|---|---|
 | **TigerData** | fully digital, no physical chip | `spoolId` = `TigerData_<id>` (or legacy `CLOUD_<id>`); `r.isCloud === true` |
+| **TigerData+** | fully digital, but tied to a real catalogue product | `r.isCloud && id_product ∉ {0, 0xFFFFFFFF}` → `r.isCloudPlus === true` |
 | **TigerTag** | a written NFC chip | `spoolId` = chip UID |
 | **TigerTag+** | a certified chip with a signed factory dump | UID + a `backup` hex dump in `rfidList` |
+
+**TigerData+ is DERIVED, never stored** (`_hasRealProductId` + `normalizeRow.isCloudPlus`) — there is no field, no
+doc-id prefix and no `protocol` value of its own: `protocol` stays `"TigerData"` for every chipless spool, so the
+version filter and the telemetry rollup are unaffected. It is emphatically **not** a TigerTag+ — no chip, no UID —
+so a TigerData+ keeps the chipless `id_tigertag` nonce (`_catChiplessNonce` re-rolls off the version table, which
+guarantees the row can never read as Plus) and gets its own badge (`.tag-cloud-plus`: the white chipless capsule
+with an amber accent, never a gold fill). New spools of this tier are counted by `cloudPlusAddedTotal`, separate
+from `cloudAddedTotal`.
 
 **TigerData was called "TigerCloud" until v2.13.0.** As of v2.14.0 the rename reaches stored values too:
 `normalizeRow` computes `protocol: "TigerData"` for chipless (so `syncSpoolMirrors` writes it to every doc), and
@@ -113,6 +122,26 @@ still recognised forever by `_isChiplessId`, no server sweep). **One value stays
 telemetry rollup key** (`functions/index.js` buckets chipless under `"TigerCloud"`, derived from the id prefix, not
 the field) — kept stable so historical analytics don't fragment. So: doc field + display + filter = `TigerData`;
 only the analytics bucket key is still `TigerCloud`.
+
+## Product catalogue — local cache + Search view (v2.15.0)
+
+The official TigerTag+ product catalogue (~2 700 products, growing daily) is **imported once, in full**, and every
+search / filter / sort then runs **in memory** — the network is touched only to rebuild the cache, plus one
+`product/get` per product actually opened (session-cached). Main process: IPC `catalog:fetch-all` (`main.js`) pages
+`POST product/get/all` with `per_page` 1000, following `env.nextPage` until null — the page cap is a runaway guard,
+NOT a catalogue-size limit, so never treat it as one. Renderer: cached in `localStorage` under `tigertag.catalog`,
+self-refreshing past 24 h, force-rebuilt by *Re-sync the catalogue* in Settings → Tools.
+
+The **Search** view segment (`_isCatalogMode`, `renderCatalogView`, `#invCatalogView`) renders that cache through the
+app's own shells — `.inv-grid`/`.spool-card` for the grid, a real `<table>` in `.table-wrap` for the list — with
+Type · Brand · Series · Material · Sort filters at parity with the public catalogue page.
+
+**One builder feeds both the preview and the write**: `_catalogDocFromApi(api, productId, cloudId)` (over the shared
+`_productApiFields`, extracted out of `_convertToPlus`). Selecting a product renders its Product card from that doc as
+a `cloudSeed`, so the card previews exactly what an add would store; the square `+` calls `_catalogCreate(productId)`,
+which writes the SAME doc. A click never creates. `_catIsCreatable` allows **Filament (142) only** — `data1`–`data7`
+are per product type and only Filament is ratified in `docs/TTAG-FIELDS.md`; every other type is browsable and
+refused with a plain-language message rather than written half-wrong.
 
 ## Inventory interchange — `.ttag` files (v2.14.0)
 

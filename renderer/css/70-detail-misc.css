@@ -86,6 +86,7 @@
   .icon-bug       { -webkit-mask-image: url('../../assets/svg/icons/icon_bug.svg');          mask-image: url('../../assets/svg/icons/icon_bug.svg'); }
   .icon-filter    { -webkit-mask-image: url('../../assets/svg/icons/icon_filter.svg');       mask-image: url('../../assets/svg/icons/icon_filter.svg'); }
   .icon-gift      { -webkit-mask-image: url('../../assets/svg/icons/icon_gift.svg');         mask-image: url('../../assets/svg/icons/icon_gift.svg'); }
+  .icon-grid      { -webkit-mask-image: url('../../assets/svg/icons/icon_grid.svg');         mask-image: url('../../assets/svg/icons/icon_grid.svg'); }
   .icon-grip      { -webkit-mask-image: url('../../assets/svg/icons/icon_grip.svg');         mask-image: url('../../assets/svg/icons/icon_grip.svg'); }
   /* Official "Buy me a coffee" brand button — wraps the untouched PNG wordmark
      (assets/svg/logos/logo_buymeacoffee.png). Shared by the What's New footer
@@ -720,11 +721,20 @@
      would otherwise have no edge to sit on. */
   .tag-cloud {
     background: linear-gradient(180deg, #ffffff, #eceff4);
-    border-color: #cbd3dd;
     color: #4a5462;
     transition: filter .12s;
   }
   .tag-cloud:hover { filter: brightness(.985); }
+  /* TigerData+ — chipless like TigerData, so it KEEPS the white-metal capsule and
+     its no-relief flatness; it simply carries a real catalogue product, like a
+     TigerTag+ does. The gold rung's amber is borrowed as an ACCENT only (border +
+     type), never as a fill: a filled gold capsule would read as a TigerTag+, which
+     this is not — no chip, no UID. So the ladder still reads white → silver → gold,
+     and this rung says "chipless, yet identified". Always applied alongside
+     .tag-cloud, which supplies the geometry and the fill. */
+  .tag-cloud-plus {
+    color: #7a5a05;
+  }
 
   /* One shared capsule for the three tiers — identical geometry, only the fill and
      the hairline border change, so they read as one family. A real 1px border is
@@ -738,6 +748,14 @@
     letter-spacing: .01em; white-space: nowrap;
     vertical-align: middle; user-select: none;
   }
+  /* Per-tier hairline, declared AFTER the shared capsule on purpose: that rule's
+     `border` SHORTHAND resets the colour to transparent, so a border-color set in
+     the tier rules above it never survived. Both edges had silently been invisible
+     — the white capsule lost the stronger edge it needs to sit on a white card
+     (since v2.13.0), and TigerData+ its amber accent, which is the only thing
+     saying "chipless, yet identified". */
+  .tag-cloud      { border-color: #cbd3dd; }
+  .tag-cloud-plus { border-color: #f0b429; }
   .tag-twin { background: linear-gradient(90deg,#3d8ef0,#7ab4ff); color:#fff; font-size:10px; padding:2px 7px; border-radius:999px; font-weight:700; letter-spacing:.03em; display:inline-flex; align-items:center; gap:3px; margin-left:4px; }
 
   /* ── view toggle ── */
@@ -1025,11 +1043,35 @@
     position: absolute; top: calc(100% + 6px); left: 0; min-width: 100%; max-width: 260px;
     z-index: 600; background: var(--surface); border: 1px solid var(--border);
     border-radius: 12px; box-shadow: 0 14px 36px rgba(0,0,0,.22);
-    padding: 5px; max-height: 340px; overflow-y: auto; overscroll-behavior: contain;
+    padding: 5px; overflow: hidden;
     animation: cselPop .12s ease;
-    scrollbar-width: none;   /* Firefox — hide the scrollbar, keep the scroll */
   }
-  .csel-pop::-webkit-scrollbar { width: 0; height: 0; }   /* Chromium/WebKit */
+  /* The list scrolls, not the popup: the scroll-fade is a mask and a mask clips
+     to the border box, so masking the popup itself would erase its drop shadow.
+     Keeping the shadow on the outer box and the scroll (plus the mask) on this
+     inner one gives the cue without losing the elevation. */
+  .csel-pop-list {
+    max-height: 340px; overflow-y: auto; overscroll-behavior: contain;
+    /* This list KEEPS its scrollbar, unlike the rest of the app. A fade only
+       reads as "there is more" when an item is visibly cut in half — land the
+       cut between two rows and it says nothing at all. The scrollbar is the one
+       cue that is unconditional, and it also answers "where am I" and "how much
+       is left", which a fade never can. Slim and on-theme so it stays quiet. */
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+  }
+  .csel-pop-list::-webkit-scrollbar { width: 10px; }
+  .csel-pop-list::-webkit-scrollbar-track { background: transparent; }
+  .csel-pop-list::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 42%, transparent);
+    border-radius: 5px;
+    border: 3px solid transparent;   /* inset the thumb without a wrapper */
+    background-clip: content-box;
+  }
+  .csel-pop-list:hover::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--muted) 68%, transparent);
+    background-clip: content-box;
+  }
   @keyframes cselPop { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
   .csel-opt {
     display: block; width: 100%; text-align: left; white-space: nowrap;
@@ -1303,7 +1345,17 @@
   .pv-fav-grid { margin-top: 0; }
 
   /* ── Favorites table ── */
-  .pv-table-wrap { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  /* Same recipe as the inventory `.table-wrap`: the bordered, rounded box IS the
+     scroller. That is what keeps the corners rounded while scrolling (the box
+     clips its own content), pins the sticky <thead> INSIDE it, and lets the
+     scroll-fade sit on the very element that overflows — flush under the header
+     and only as wide as the table, never across the whole view. */
+  .pv-table-wrap {
+    flex: 1; min-height: 0; overflow: auto;
+    border: 1px solid var(--border); border-radius: 12px; background: var(--surface);
+    scrollbar-width: none;
+  }
+  .pv-table-wrap::-webkit-scrollbar { width: 0; height: 0; }
   .pv-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   .pv-table thead th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); background: var(--surface-2); white-space: nowrap; }
   .pv-trow { cursor: pointer; border-bottom: 1px solid var(--border); transition: background .12s; }
@@ -1371,7 +1423,6 @@
   /* Icon-only buttons — center the picto and keep them compact/square-ish. */
   .view-toggle button { height: 30px; min-width: 34px; padding: 0 9px; font-size: 13px; border: none; background: transparent; color: var(--muted); border-radius: 8px; transition: color .18s ease; display: inline-flex; align-items: center; justify-content: center; }
   .view-toggle button .icon { background-color: currentColor; }   /* follow muted → active text colour */
-  .view-toggle .vt-glyph { font-size: 16px; line-height: 1; }     /* the ⊞ grid glyph (no dedicated icon) */
   /* Since the buttons are icon-only, a custom bubble names the view on hover —
      appears after a 1s dwell (delayed fade-IN), disappears instantly on leave.
      Reads the already-localised aria-label; no native title tooltip. */
@@ -4009,7 +4060,6 @@
     transition: background-color .15s, color .15s;
   }
   .lv-layout-btn .icon { background-color: currentColor; }
-  .lv-layout-btn .vt-glyph { font-size: 15px; line-height: 1; }
   .lv-layout-btn.is-active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
   /* Grid mode — cards reuse .inv-grid / .spool-card, with a hover remove (✕). */
   .lv-grid { margin-top: 12px; }
@@ -4217,3 +4267,85 @@
   }
   .atl-new:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }
   .atl-new .icon { background-color: var(--primary); }
+
+/* ══ Search views — the official TigerTag+ catalogue as grid / table ═════════
+   Reads the local catalogue cache, not the user's stock. Both layouts REUSE the
+   app's own shells rather than restating them: the grid is `.inv-grid` +
+   `.spool-card`, the table is `.table-wrap` + a real <table> with the shared
+   `.sel-cell` selection column. */
+/* The page itself never scrolls (`html, body { overflow: hidden }` in 00-base),
+   so every view has to BE its own scroller — same recipe as .inv-products-view
+   and .inv-printer-view. Without `flex:1; min-height:0; overflow-y:auto` the
+   list is simply clipped and the wheel does nothing. */
+.inv-catalog-view {
+  margin-top: 12px;
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  scrollbar-width: none;                /* Firefox */
+}
+.inv-catalog-view::-webkit-scrollbar { width: 0; height: 0; }   /* Chromium */
+.cv-count {
+  display: none;
+  font-size: 12px; font-weight: 600; color: var(--muted);
+  white-space: nowrap; padding-right: 4px;
+}
+body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
+/* Table — a REAL table in the app's `.table-wrap` shell (see _catViewTableHTML),
+   with the always-on selection column, so it inherits the shared table CSS
+   wholesale. The wrap keeps `.table-wrap`'s own `overflow: auto`, i.e. the
+   bordered rounded box IS the scroller — same recipe as the inventory and
+   Favorites tables. That is what keeps its corners rounded while scrolling (a
+   header pinned to the OUTER view would escape the rounded box and square them
+   off) and puts the scroll-fade on the element that actually overflows. */
+.inv-catalog-view .cv-table-wrap { flex: 1; min-height: 0; margin-top: 0; }
+.inv-catalog-view .cv-row { cursor: pointer; }
+.inv-catalog-view .cv-sentinel td { height: 1px; padding: 0; border: 0; }
+
+/* Grid — REUSES `.spool-card` for the card AND `.inv-grid` for the container
+   (both applied in _catViewCardHTML / _catViewSearch), so a catalogue card is
+   literally the same object at literally the same size as an owned-spool card:
+   full-bleed square photo on top, padded body below, identical track and gap.
+   Nothing about the sizing is restated here — that is the whole point. */
+/* Colour dot sits inline before the name, like the inventory card's. */
+.inv-catalog-view .card-name { display: flex; align-items: center; gap: 6px; }
+.inv-catalog-view .card-name .color-circle { margin-right: 0; flex: 0 0 auto; }
+
+/* Sentinel — invisible; its only job is to tell the observer to append more. */
+.inv-catalog-view .cv-sentinel { height: 1px; grid-column: 1 / -1; }
+
+
+/* Search views: the Product card carries the one control that writes — a square
+   `+` in the actions row, reusing the app's existing "+ material" affordance
+   (.flag-toggle--addmat). Only the result line lives further down. */
+.pc-cat-add-btn:disabled { opacity: .45; cursor: not-allowed; }
+.pc-cat-add-btn.is-busy { opacity: .6; pointer-events: none; }
+.pc-cat-add:has(.pc-cat-msg:empty) { display: none; }
+.pc-cat-msg .alert { margin-top: 0; }
+
+/* Catalogue row thumbnail — colour underneath, photo on top. The colour is the
+   element's own background so it paints before the image arrives (and remains
+   if the image errors out and removes itself). */
+.inv-catalog-view .cv-thumb {
+  position: relative; display: inline-block; flex: 0 0 auto;
+  border-radius: 6px; overflow: hidden; vertical-align: middle;
+}
+.inv-catalog-view .cv-thumb-logo {
+  position: absolute; top: 8%; right: 8%; width: 42%; opacity: .55;
+}
+.inv-catalog-view .cv-thumb-img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+}
+
+/* Product card — the shopping button. Plain while the product has no buy link
+   (it then opens the Reorder card to create one); Shopify green once it has one,
+   reusing the exact colour of the Reorder card's own shop button so the two read
+   as the same thing in two places. */
+.flag-toggle--buy.is-buy { background: #5e8e3e; border-color: #5e8e3e; }
+.flag-toggle--buy.is-buy .icon { background-color: #fff; }
+.flag-toggle--buy.is-buy:hover { filter: brightness(1.06); }
+
+/* Grouped-spools deck: when each spool arrived. Every member is the same
+   filament, so the date is what tells a fresh one from an old one. */
+.gp-member-added { font-size: 11px; color: var(--muted); margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

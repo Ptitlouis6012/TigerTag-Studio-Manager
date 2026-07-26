@@ -213,6 +213,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   lookupProduct: (productId) =>
     ipcRenderer.invoke('rfid:lookup-product', productId),
 
+  // Pull the WHOLE product catalogue (all pages) so the renderer can cache it
+  // and search it in memory. Only called to (re)build that local cache.
+  // Returns { ok: true, items, itemsTotal } | { ok: false, error }
+  fetchCatalogAll: () =>
+    ipcRenderer.invoke('catalog:fetch-all'),
+
   // Report a physical-chip event (read / write / reset / recycle) to the TigerTag
   // Xano analytics table — same table and shape as the mobile app. `send`, not
   // `invoke`: fire-and-forget by construction, so it can never block or slow a

@@ -193,7 +193,7 @@
             <span class="vtg-label"><span data-i18n="viewGroupInventory">Inventory</span></span>
             <div class="view-toggle">
               <span class="view-toggle-ind" aria-hidden="true"></span>
-              <button id="btnViewGrid" data-i18n-aria="btnViewGrid"><span class="vt-glyph">⊞</span></button>
+              <button id="btnViewGrid" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
               <button id="btnViewTable" class="active" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
               <button id="btnViewRack" data-i18n-aria="btnViewRack"><span class="icon icon-package icon-13"></span></button>
             </div>
@@ -203,7 +203,7 @@
             <span class="vtg-label"><span data-i18n="viewGroupFavorites">Favorites</span></span>
             <div class="view-toggle">
               <span class="view-toggle-ind" aria-hidden="true"></span>
-              <button id="btnViewFavesGrid" data-i18n-aria="btnViewGrid"><span class="vt-glyph">⊞</span></button>
+              <button id="btnViewFavesGrid" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
               <button id="btnViewFavesTable" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
               <button id="btnViewOrder" data-i18n-aria="btnViewOrder"><span class="icon icon-cart icon-13"></span><span class="view-order-badge" id="viewOrderBadge" hidden>0</span></button>
             </div>
@@ -221,9 +221,20 @@
             <span class="vtg-label"><span data-i18n="viewGroupPrinters">Printers</span></span>
             <div class="view-toggle vtg-printers">
               <span class="view-toggle-ind" aria-hidden="true"></span>
-              <button id="btnViewPrinter" data-i18n-aria="btnViewGrid"><span class="vt-glyph">⊞</span></button>
+              <button id="btnViewPrinter" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
               <button id="btnViewPrinterTable" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
               <button id="btnViewCam" data-i18n-aria="btnViewCam"><span class="icon icon-eye-on icon-13"></span></button>
+            </div>
+          </div>
+          <!-- Search — the official TigerTag+ catalogue, not the user's stock.
+               Same grid/table pair as the other segments. -->
+          <span class="vtg-sep" id="vtgSepCatalog" aria-hidden="true"></span>
+          <div class="vtg-group" id="vtgCatalog">
+            <span class="vtg-label"><span data-i18n="viewGroupSearch">Search</span></span>
+            <div class="view-toggle">
+              <span class="view-toggle-ind" aria-hidden="true"></span>
+              <button id="btnViewCatalogGrid" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
+              <button id="btnViewCatalogTable" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
             </div>
           </div>
         </div>
@@ -244,6 +255,19 @@
             <span class="icon icon-backup icon-13"></span>
             <span data-i18n="ttagImportShort">Import</span>
           </button>
+          <!-- Browse the TigerTag+ product catalogue and create a ready-made
+               TigerData+ from a real product. Same visibility rule as the .ttag
+               bar buttons (inventory table/grid, own account) — driven by
+               _syncInvBarButtons. -->
+          <button id="btnAddFromCatalogue" class="inv-add-btn inv-ttag-btn" type="button">
+            <span class="icon icon-search icon-13"></span>
+            <span data-i18n="catalogBtn">From Catalogue</span>
+          </button>
+          <!-- Search views: how many catalogue PRODUCTS the current filters
+               match. Sits in the actions row (not under the search bar) so it
+               reads as a headline figure, like the stat tiles above. Shown only
+               in those views, via `body.catalog-filters`. -->
+          <div class="cv-count" id="catalogViewStatus"></div>
           <button id="btnAddProduct" class="inv-add-btn" type="button">
             <span class="icon icon-plus icon-13"></span>
             <span data-i18n="addProductBtn">Material</span>
@@ -296,6 +320,22 @@
             <option value="" data-i18n="filterAllTags">All</option>
           </select>
         </div>
+        <!-- Search-view filters — same set as the public catalogue page
+             (tigersystem.io/…/catalog): Type · Brand · Material · Series · Sort,
+             each option carrying its count. Series stays disabled until a brand
+             is picked, since a series only means something within one brand.
+             They sit here, right of the search bar, in place of the stock
+             filters (which describe the user's own spools, not the catalogue);
+             shown only in the Search views via `body.catalog-filters`. -->
+        <div class="cv-filter-group" id="cvFilters">
+          <select id="cvType" class="inv-brand-filter"></select>
+          <select id="cvBrand" class="inv-brand-filter"></select>
+          <!-- Series sits right after Brand because it is scoped BY it — the two
+               read as one narrowing step. -->
+          <select id="cvSeries" class="inv-brand-filter" disabled></select>
+          <select id="cvMaterial" class="inv-brand-filter"></select>
+          <select id="cvSort" class="inv-brand-filter"></select>
+        </div>
         <!-- Grid-only sort control, pushed to the far right (table view sorts
              via its column headers). Separated from the filter cluster. -->
         <div class="inv-grid-sort" id="gridSortWrap" hidden>
@@ -347,6 +387,13 @@
       <div id="invProductsView" class="inv-products-view hidden"></div>
       <!-- Lists (Amazon-style wishlists) view — populated by renderListsView(). -->
       <div id="invListsView" class="inv-lists-view hidden"></div>
+
+      <!-- Search — the official TigerTag+ catalogue (grid or table), rendered by
+           renderCatalogView() from the LOCAL cache. Picking a product only
+           selects it; the action bar below is what creates a TigerData+. -->
+      <div id="invCatalogView" class="inv-catalog-view hidden">
+        <div class="cv-body" id="catalogViewBody"></div>
+      </div>
 
       <!-- Floating bulk-action bar — appears in multi-select mode once ≥1 spool
            is selected. Delete is a press-and-hold (hard delete, irreversible). -->
@@ -509,6 +556,11 @@
           <button class="ghost sm" id="btnTD1S"><span class="td1s-dev-icon"></span><span>Open TD1S panel</span></button>
           <button class="ghost sm" id="btnRfidTest"><span class="icon icon-nfc icon-13"></span><span>Open NFC tester</span></button>
           <button class="ghost sm" id="btnReportProblem"><span class="icon icon-info icon-13"></span><span data-i18n="errReportBtn">Report a problem</span></button>
+          <!-- Force a catalogue re-sync. The local copy refreshes on its own once
+               a day; this is for when a product was just published and you do not
+               want to wait for that. -->
+          <button class="ghost sm" id="btnCatalogResync"><span class="icon icon-refresh icon-13"></span><span data-i18n="stgCatalogResync">Re-sync the catalogue</span></button>
+          <p class="stg-row-help" id="stgCatalogResyncState"></p>
         </div>
       </div>
     </section>

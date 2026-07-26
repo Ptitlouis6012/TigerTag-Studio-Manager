@@ -44,6 +44,10 @@ Manage your spool inventory, connect your 3D printers, and keep everything in sy
 
 Tiger Studio Manager is an Electron desktop app that bridges your physical filament collection with the TigerTag cloud. Scan a spool's NFC chip, see its full profile (material, color, weight, print settings), update its weight on the scale, and push filament data directly to your connected printers — all in one window.
 
+Since **2.15.0** it does not even need a chip to know what a spool is: the official product catalogue is searchable
+from inside the app, and any product in it can be added as a **TigerData+** — a fully-digital spool carrying that
+product's real identity. Buy a chip when you want one on the shelf; until then, the app is no longer guessing.
+
 It works standalone (no reader needed), but unlocks its full potential with:
 - an **ACR122U NFC reader** for automatic spool identification, chip encoding and Cloud-to-chip promotion
 - a **TigerScale** ESP32 scale for live weight tracking
@@ -108,9 +112,12 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - Weight tracking — slider or manual entry; instant cloud sync after update
 - **Container weight calibration** — correct a container's empty weight against your own scale, with a guided "how to measure" step; kept on your account and applied to every spool in that container (the bundled catalogue is never modified)
 - **TigerData** — create fully-digital spools with no chip; promote to a real chip later, atomically
+- **TigerData+** *(new in 2.15.0)* — a fully-digital spool that is nonetheless tied to a **real product in the official catalogue**: the exact brand, colour, material, temperatures, diameter, SKU and EAN, straight from the source instead of from whatever you typed. No chip to buy, nothing to stick on — and it is not a TigerTag+, so it carries its own badge and never pretends to be one
+- **Catalogue search** *(new in 2.15.0)* — browse the whole official TigerTag+ catalogue from inside the app, in grid or list, filtered by type, brand, series and material. Pick a product to see its real spec sheet, then add it as a TigerData+ in one click, already filled in. The catalogue is downloaded once and searched locally, so it is instant and works offline
 - Custom product image for DIY & Cloud spools
 - Manufacturing date, twin-tag detection and manual repair
 - Spool toolbox — scan color (TD1S), scan TD, link twin, remove from rack, delete
+- **One action row on every card** — the product card, the spool detail and the stack of identical spools all offer the same buttons, including a shopping button that opens the shop when the filament has a buy link (and takes you to where you'd add one when it hasn't)
 - **Multi-select** — tick several spools (or printers) and delete them together, with a hold-to-confirm
 - **Guided chip update** — a step-by-step panel to re-write an existing chip: place it on the reader, UID-match check, verified write
 - **Export / import `.ttag` files** — back up a spool or a whole selection to a portable file, keep it, carry it on a USB stick or share it, then import it back anywhere. Works for TigerData, TigerTag and TigerTag+ alike; import through a validate → preview → accept flow and choose **Restore** (put everything back exactly as it was) or **Import** (fresh spools you own). Pull in several files at once by browsing, pasting a link, or dragging them onto the window

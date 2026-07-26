@@ -792,7 +792,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _syncSearchPlaceholder() {
     const el = $("searchInv");
     if (!el) return;
-    el.placeholder = t(_isPrinterMode(state.viewMode) ? "searchPlaceholderPrinter" : "searchPlaceholder");
+    el.placeholder = t(_isCatalogMode(state.viewMode) ? "catalogSearchPh"
+                     : _isPrinterMode(state.viewMode) ? "searchPlaceholderPrinter"
+                     : "searchPlaceholder");
   }
 
   /* ── helpers ── */
@@ -836,6 +838,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const d = new Date((ts + CHIP_EPOCH_OFFSET) * 1000);
     return isNaN(d.getTime()) ? null : d.toLocaleDateString();
   }
+  // Chip timestamp (seconds since 2000) → epoch ms, so `timeAgo` can read it.
+  // Carries the same defence as fmtChipTs: some old Cloud docs stored a plain
+  // Unix timestamp here, which would otherwise land 30 years in the future.
+  function chipTsToMs(ts) {
+    if (!ts) return null;
+    if (ts > 1400000000) ts -= CHIP_EPOCH_OFFSET;
+    const ms = (ts + CHIP_EPOCH_OFFSET) * 1000;
+    return Number.isFinite(ms) ? ms : null;
+  }
+
   function setLoading(btn, on) { if (!btn) return; btn.classList.toggle("loading", !!on); btn.disabled = !!on; }
 
   /* Press-and-hold "destructive action" pattern — replaces a confirm() popup.
@@ -1023,6 +1035,67 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   // Expose for inline handlers / external use
   window.openDiagnosticModal = openDiagnosticModal;
+  /* ── Scroll fade ("scroll shadow") ─────────────────────────────────────────
+     Fades the bottom edge of a scroller that still has content below, so a list
+     whose scrollbar we hide still LOOKS scrollable. Idempotent — calling it
+     again on the same element only refreshes the state.
+
+     Returns the update function: call it after re-rendering the scroller's
+     content, since neither `scroll` nor a resize of the element itself fires
+     when only the content height changed.
+
+     opts.top — also fade the top edge. Off by default: a sticky <thead> already
+     covers that edge, and fading it would dim the header itself.
+  */
+  function _wireScrollFade(el, { top = false, threshold = 2 } = {}) {
+    if (!el) return () => {};
+    const update = () => {
+      el.classList.toggle("can-up", el.scrollTop > threshold);
+      el.classList.toggle("can-down",
+        el.scrollTop + el.clientHeight < el.scrollHeight - threshold);
+    };
+    if (top) {
+      el.classList.add("sf-top");
+      // A STICKY <thead> owns the top of the scrollport — start the fade below it
+      // so the header stays crisp while the rows slide under it. Measured, not
+      // hard-coded: the height moves with font and locale. Re-measured on every
+      // call because switching a view between grid and table makes the header
+      // appear or vanish; a non-sticky (or absent) header means no offset, and
+      // the rule degrades to a plain top fade.
+      // NB: the app makes the CELLS sticky (`thead th { position: sticky }`), not
+      // the <thead> — so the position has to be read off a th, while the height
+      // still comes from the thead.
+      const head = el.querySelector("thead");
+      // Two conventions live in this app: the inventory tables make the header
+      // CELLS sticky (`thead th`), the printers table makes the `<thead>` itself
+      // sticky (`.pt-head`). Accept either — reading only the cell missed the
+      // printers list, which then faded its own header instead of the rows.
+      const pinned = [head, head?.querySelector("th")]
+        .some(n => n && getComputedStyle(n).position === "sticky");
+      // …and it only pins to THIS scroller when nothing between them establishes
+      // a scrollport of its own — an `overflow: hidden/auto` wrapper would trap
+      // the sticky there and it would scroll away with the content, in which case
+      // offsetting the fade would aim it at a header that isn't there.
+      let trapped = false;
+      for (let n = head?.parentElement; n && n !== el; n = n.parentElement) {
+        const ov = getComputedStyle(n).overflow;
+        if (ov !== "visible" && ov !== "clip") { trapped = true; break; }
+      }
+      el.style.setProperty("--sf-top-offset",
+        (pinned && !trapped ? head.offsetHeight : 0) + "px");
+    }
+    if (!el._sfUpdate) {
+      el.classList.add("scroll-fade");
+      el.addEventListener("scroll", update, { passive: true });
+      // The element getting shorter/taller changes what fits — the content
+      // changing is the caller's job to report (see the returned updater).
+      try { new ResizeObserver(update).observe(el); } catch (_) {}
+    }
+    el._sfUpdate = update;
+    update();
+    return update;
+  }
+
   function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]);
   }
@@ -1529,6 +1602,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // still on every chipless doc created before the rename — see
     // `_isChiplessId`. No migration: both are chipless forever.
     const isCloud = _isChiplessId(spoolId);
+    // TigerData+ — a chipless spool that nonetheless carries a REAL catalogue
+    // product id (born from the catalogue browser). It is NOT a TigerTag+:
+    // there is no chip and therefore no UID, so `id_tigertag` stays the
+    // chipless nonce and `isPlus` stays false. DERIVED, never stored — the
+    // pair (chipless id, real id_product) IS the definition, so no field can
+    // drift out of sync with it. A plain TigerData has id_product unset.
+    const isCloudPlus = isCloud && _hasRealProductId(data.id_product);
     const mat = materialFull(data.id_material);
     return {
       spoolId: String(spoolId),
@@ -1568,6 +1648,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       userImg: !!data.url_img_user,
       isPlus,
       isCloud,
+      isCloudPlus,
       series: data.series || null,
       label: data.label && data.label !== "--" ? data.label : null,
       productName: data.name && data.name !== "--" ? data.name : null,
@@ -1906,6 +1987,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _isChiplessId(id) {
     const s = String(id || "");
     return s.startsWith(CHIPLESS_PREFIX) || s.startsWith("CLOUD_");
+  }
+  // A "real" catalogue product id — i.e. the doc points at an actual entry of
+  // the TigerTag+ catalogue. Both `0` and `0xFFFFFFFF` mean "unset": the chip
+  // schema writes the latter on creation, older/partial docs can carry the
+  // former. Used to derive the TigerData+ tier (see normalizeRow).
+  const ID_PRODUCT_UNSET_U32 = 4294967295;   // 0xFFFFFFFF
+  function _hasRealProductId(v) {
+    const n = Number(v);
+    return Number.isFinite(n) && n !== 0 && n !== ID_PRODUCT_UNSET_U32;
   }
   // Mint a chipless doc id — `TigerData_` + 10 random decimal digits. The
   // 10-digit nonce gives ~10^10 unique ids per second of clock.
@@ -3696,6 +3786,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Settings takes over the right side — close any open side card first.
     _closeAllSidePanels();
     $("settingsPanel").classList.add("open"); $("settingsOverlay").classList.add("open");
+    // The catalogue cache may have been loaded (or aged) since the last open —
+    // the Tools line reports how old it is, so refresh it on the way in.
+    _catalogLoadCacheIfNeeded();
+    _catalogResyncState();
     _layoutSettingsStack();
   }
   function closeSettings() {
@@ -3824,7 +3918,41 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // export in the detail toolbox.
   $("btnInvExportTtag")?.addEventListener("click", () => _exportSelectedTtag().catch(e => reportError("ttag.exportSel", e)));
   _wireTtagDropZone();
-  _syncTtagBarButtons();
+  _syncInvBarButtons();
+
+  /* ── "From Catalogue" → the Search views ────────────────────────────────
+     The button is a shortcut INTO the Search segment, not a modal of its own:
+     the views do everything the old modal did and more (grid, real table,
+     Product card, the catalogue's own filters), so keeping a second browser
+     would have meant two search UIs to keep in step. */
+  $("btnAddFromCatalogue")?.addEventListener("click", () => setViewMode("catalogTable"));
+
+  /* ── Settings → Tools: force a catalogue re-sync ────────────────────────────
+     The local copy refreshes on its own once a day; this is the escape hatch for
+     "a product was published five minutes ago". Reports the cache's age when
+     idle so the user can tell whether a re-sync is even worth it. */
+  function _catalogResyncState() {
+    const el = $("stgCatalogResyncState");
+    if (!el) return;
+    if (_catalogSyncing) { el.textContent = t("catalogSyncing"); return; }
+    if (!_catalogFetchedAt) { el.textContent = t("stgCatalogNeverSynced"); return; }
+    el.textContent = t("stgCatalogSyncedAgo",
+      { n: _catalogIndex.length, ago: timeAgo(_catalogFetchedAt) });
+  }
+  $("btnCatalogResync")?.addEventListener("click", async () => {
+    const btn = $("btnCatalogResync");
+    if (!btn || _catalogSyncing) return;
+    btn.disabled = true;
+    _catalogResyncState();
+    try {
+      await _catalogSync({ force: true });
+      // Whatever view is on screen should show the fresh list straight away.
+      if (_isCatalogMode(state.viewMode)) _catViewSearch();
+    } finally {
+      btn.disabled = false;
+      _catalogResyncState();
+    }
+  });
 
   // Settings → Data → "Copy API URL"
   // Builds and copies a self-contained URL that scripts (HA, cron, Spoolman
@@ -4176,7 +4304,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       icon: "package", titleKey: "notifMakerworldTitle", textKey: "notifMakerworldText",
     },
     shop: {
-      url: "https://tigertag.io/collections/tigertag-rfid-maker",
+      url: "https://shop.tigersystem.io/collections/tigertag-rfid-maker",
       btnId: "sbShopBtn", seen: "shopSeen", clickedAt: "shopClickedAt",
       icon: "shopify", titleKey: "notifShopTitle", textKey: "notifShopText",
     },
@@ -5932,8 +6060,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function renderStats() {
     const all = deduplicateTwins(state.rows.slice()); const active = all.filter(r => !r.deleted);
     const plus  = active.filter(r => r.isPlus);
-    const cloud = active.filter(r => r.isCloud);
-    const diy   = active.length - plus.length - cloud.length;
+    // `isCloudPlus` is a SUBSET of `isCloud` (chipless + a real id_product), so the
+    // plain TigerData count has to exclude it or the two tiles would double-count
+    // the same spools and the four tiers would no longer sum to the inventory.
+    const cloudPlus = active.filter(r => r.isCloudPlus);
+    const cloud = active.filter(r => r.isCloud && !r.isCloudPlus);
+    const diy   = active.length - plus.length - cloud.length - cloudPlus.length;
     const totalW = active.reduce((s, r) => s + (Number(r.weightAvailable)||0), 0);
     const el = $("sbStats");
     if (!all.length) { el.classList.add("hidden"); return; }
@@ -5970,6 +6102,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // Tier tiles read as the capability ladder, cheapest first: no chip →
       // chip → chip + online layer.
       { key: "cloud",  label: '<span class="tag-cloud">TigerData</span>', mini: t("statCloudMini"), num: cloud.length, fmt: intFmt, filter: "TigerData", cloud: true },
+      // TigerData+ — chipless like its neighbour, but tied to a real catalogue
+      // product. Its own tile because that is the whole point of the tier: how much
+      // of your digital-only stock the app can actually identify. `filter` stays
+      // "TigerData": `r.protocol` is "TigerData" for every chipless spool, so the
+      // version dropdown lights BOTH tiles — which is honest, they are one protocol.
+      { key: "cloudplus", label: '<span class="tag-cloud tag-cloud-plus">TigerData+</span>', mini: t("statCloudPlusMini"), num: cloudPlus.length, fmt: intFmt, filter: "TigerData", cloud: true },
       { key: "diy",    label: '<span class="tag-diy">TigerTag</span>',        mini: t("statDiyMini"),   num: diy,          fmt: intFmt, filter: "TigerTag" },
       { key: "plus",   label: '<span class="tag-plus">TigerTag+</span>',      mini: t("statPlusMini"),  num: plus.length,  fmt: intFmt, filter: "TigerTag+" },
     ];
@@ -6436,10 +6574,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     };
     const close = () => { pop.hidden = true; wrap.classList.remove("csel--open"); };
     const open = () => {
-      pop.innerHTML = Array.from(sel.options).map((o, i) =>
-        `<button type="button" class="csel-opt${i === sel.selectedIndex ? " is-sel" : ""}" data-i="${i}">${esc(o.text)}</button>`).join("");
+      // The options live in an INNER scroller so the popup keeps its drop shadow:
+      // the scroll-fade is a mask, and a mask clips to the border box — applied
+      // to the popup itself it would erase the shadow painted outside it.
+      pop.innerHTML = `<div class="csel-pop-list">` + Array.from(sel.options).map((o, i) =>
+        `<button type="button" class="csel-opt${i === sel.selectedIndex ? " is-sel" : ""}" data-i="${i}">${esc(o.text)}</button>`).join("") + `</div>`;
       pop.hidden = false; wrap.classList.add("csel--open");
       pop.querySelector(".is-sel")?.scrollIntoView({ block: "nearest" });
+      // A long option list scrolls, but its scrollbar is hidden — without a cue
+      // there is nothing to say the list continues past the last visible row.
+      // Both edges: the top one is what says "you have already scrolled past
+      // some". The scrollbar above is the primary cue; this just softens the cut.
+      _wireScrollFade(pop.querySelector(".csel-pop-list"), { top: true });
     };
     btn.addEventListener("click", e => { e.stopPropagation(); pop.hidden ? open() : close(); });
     pop.addEventListener("click", e => {
@@ -6462,6 +6608,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Products group: liked/favorite as grid or table, plus the "To order" cart.
   const _isProductsMode = m => m === "favesGrid" || m === "favesTable" || m === "order";
   const _isListsMode = m => m === "lists";
+  // Search group: the official TigerTag+ catalogue, browsed as grid or table.
+  // These views read the LOCAL catalogue cache, never state.rows — they show
+  // products that exist in the world, not spools the user owns.
+  const _isCatalogMode = m => m === "catalogGrid" || m === "catalogTable";
 
   // All rows that should ever be present in the grid / table DOM — i.e.
   // everything EXCEPT hard-deleted docs and the secondary tag of a twin pair.
@@ -6480,6 +6630,31 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     renderFriendBanner();
     _refreshGroupPanelIfOpen(); // keep an open group panel's weights live
     _checkLowStockNotifs();     // raise / clear below-min-stock alerts
+
+    // ── Search views — the official catalogue ────────────────────────────────
+    // Independent from the user's inventory (they read the catalogue cache, not
+    // state.rows), so they render BEFORE any loading / empty handling — an empty
+    // stock is still a perfectly good moment to browse the catalogue. Handled in
+    // one place so every other branch below can assume it owns the card body.
+    if (_isCatalogMode(state.viewMode)) {
+      $("card-welcome").classList.add("hidden");
+      $("card-inv").classList.remove("hidden");
+      $("invTableWrap").classList.add("hidden");
+      $("invGrid").classList.add("hidden");
+      $("invRackView")?.classList.add("hidden");
+      $("invPrinterView")?.classList.add("hidden");
+      $("invProductsView")?.classList.add("hidden");
+      $("invListsView")?.classList.add("hidden");
+      $("invEmpty").classList.add("hidden");
+      $("mainResult").innerHTML = "";
+      $("invCatalogView")?.classList.remove("hidden");
+      renderCatalogView();
+      return;
+    }
+    $("invCatalogView")?.classList.add("hidden");
+    // Leaving the Search views: the Product card was describing a CATALOGUE
+    // product, which no other view can show — take it away with them.
+    if (_catViewSelectedId) { _catViewSelectedId = null; closeProductCard(); }
 
     // ── Loading or truly empty → dedicated welcome card ──────────────────────
     // In friendView, keep card-inv visible so the banner stays; show spinner there
@@ -7014,14 +7189,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   // Tier badge shown next to a row everywhere we display its origin:
-  //   • TigerCloud — doc-only, no physical chip yet (CLOUD_ prefix)
+  //   • TigerData      — doc-only, no physical chip yet (chipless prefix)
+  //   • TigerData+     — chipless too, but carrying a real catalogue product
+  //                      (created from the catalogue browser). No chip, no UID.
   //   • TigerTag+      — chip linked to an online catalog product (url_img set)
   //   • TigerTag       — bare chip / DIY entry
-  // Cloud takes precedence over Plus because a CLOUD_ doc cannot also be a
+  // Chipless takes precedence over Plus because a chipless doc cannot also be a
   // chip-on-shelf — the prefix flips to a real hex UID the moment a chip
   // is programmed.
   function tierBadgeHTML(r, extraClass = "", { backup = true } = {}) {
-    if (r.isCloud) return `<span class="tag-cloud${extraClass ? " " + extraClass : ""}">TigerData</span>`;
+    if (r.isCloud) {
+      const cls = r.isCloudPlus ? "tag-cloud tag-cloud-plus" : "tag-cloud";
+      return `<span class="${cls}${extraClass ? " " + extraClass : ""}">${r.isCloudPlus ? "TigerData+" : "TigerData"}</span>`;
+    }
     if (r.isPlus) {
       // Green round badge (white shield) right after the TigerTag+ badge when
       // this plus is backed up — same style as the detail-panel badge.
@@ -8362,6 +8542,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       place(card);
     });
     existing.forEach((el, k) => { if (!seen.has(k)) el.remove(); });
+    // Card count changed — refresh the scroll-fade. The grid has no sticky
+    // header, so both edges fade here.
+    _wireScrollFade($("invGrid"), { top: true });
   }
 
   // Spool ids of the group currently shown in the group panel (used to decide
@@ -8393,8 +8576,39 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="gp-member-sub">${esc(materialWithAspect(r))} · ${esc(v(r.brand))}</div>
         <div class="gp-member-weight">${wTxt}</div>
         ${bar}
+        ${_gpAddedHTML(r)}
       </div>`;
   }
+  // "Added <ago>" — the deck lists spools of the SAME filament, so the only thing
+  // telling them apart is when each one arrived. `chipTimestamp` is the doc's own
+  // stamp: set once when the spool is created and left alone afterwards (a real
+  // chip rewrites it at burn time, which is still "when this spool started").
+  function _gpAddedHTML(r) {
+    const ms = chipTsToMs(r.chipTimestamp);
+    if (!ms) return "";
+    return `<div class="gp-member-added" title="${esc(fmtChipTs(r.chipTimestamp) || "")}">${
+      esc(t("gpAdded", { ago: timeAgo(ms) }))}</div>`;
+  }
+
+  /* Show the spool that was just added ──────────────────────────────────────
+     A creation is a Firestore write: the row only exists once the snapshot comes
+     back (local writes echo almost immediately, but not synchronously). Wait for
+     it, then open the grouped-spools deck on its identity — that deck is where
+     the new spool is visible next to the ones already owned.
+
+     Keyed by IDENTITY, not by doc id, because the caller does not always learn
+     the new id (the "+ Material" path returns a count). `keepSingletons` so the
+     deck opens even when this is the first spool of that filament. */
+  function _revealAddedSpool(key, { tries = 24 } = {}) {
+    if (!key) return;
+    const look = () => {
+      const found = state.rows.some(x => !x.deleted && _spoolGroupKey(x) === key);
+      if (found) { _openGroupPanel(key, { keepSingletons: true }); return; }
+      if (--tries > 0) setTimeout(look, 120);
+    };
+    look();
+  }
+
   function _createGroupMemberCard(r) {
     const card = document.createElement("div");
     card.className = "spool-card gp-member";
@@ -8870,6 +9084,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       });
     });
     existing.forEach((el, k) => { if (!seen.has(k)) el.remove(); });
+    // Row count changed — re-evaluate the scroll-fade. Both edges, like the
+    // grid; the top fade starts under the sticky thead (see _wireScrollFade).
+    _wireScrollFade($("invTableWrap"), { top: true });
   }
 
   // ── Multi-select / bulk delete ──────────────────────────────────────────
@@ -9288,7 +9505,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Changing the top view SEGMENT (Inventory / Favorites / Lists / Printers) resets
     // the active search + filters — they belong to the segment you were in. Switching
     // WITHIN a segment (grid↔table↔cart, etc.) keeps them.
-    const _seg = m => _isPrinterMode(m) ? "prn" : _isProductsMode(m) ? "prod" : _isListsMode(m) ? "list" : "inv";
+    const _seg = m => _isPrinterMode(m) ? "prn" : _isProductsMode(m) ? "prod"
+                    : _isListsMode(m) ? "list" : _isCatalogMode(m) ? "cat" : "inv";
     if (prevMode && _seg(prevMode) !== _seg(mode)) _clearSearchFilters();
     // Selection is per-context (materials vs printers) — crossing contexts clears
     // it (never linked). Switching within a context (table↔grid) keeps it.
@@ -9315,6 +9533,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("btnViewPrinter")?.classList.toggle("active",      mode === "printer");
     $("btnViewPrinterTable")?.classList.toggle("active", mode === "printer-table");
     $("btnViewCam")?.classList.toggle("active",          mode === "printer-cam");
+    $("btnViewCatalogGrid")?.classList.toggle("active",  mode === "catalogGrid");
+    $("btnViewCatalogTable")?.classList.toggle("active", mode === "catalogTable");
     // Force-open + animate the side panel ONLY when transitioning INTO rack
     // mode from another view. Re-clicking Storage while already in Storage
     // is a no-op for the panel.
@@ -9350,7 +9570,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       _addLbl.dataset.i18n = _key;
       _addLbl.textContent  = t(_key);
     }
-    _syncTtagBarButtons();    // .ttag Export/Import: inventory (table/grid) only
+    _syncInvBarButtons();    // .ttag Export/Import: inventory (table/grid) only
     _syncSearchPlaceholder(); // materials ↔ printer search hint
     // Right-of-search selectors: in the printer grid/table swap them to printer
     // brand + tag (materials-only Material / Version selects hidden via the body
@@ -9362,6 +9582,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // but hide the Version filter (no per-version notion for a product identity).
     document.body.classList.toggle("products-filters", _isProductsMode(mode) || _isListsMode(mode));
     document.body.classList.toggle("lists-view", _isListsMode(mode));
+    // Search views browse the OFFICIAL catalogue, not the user's stock, so every
+    // stock-derived selector beside the search bar is meaningless there.
+    document.body.classList.toggle("catalog-filters", _isCatalogMode(mode));
     // Cam view: the search bar + Scan/Add buttons are useless there, so hide
     // them (via #card-inv.is-cam-view) and surface the cam-wall "Detach" button
     // in the actions slot instead.
@@ -10067,6 +10290,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("btnViewPrinter")?.addEventListener("click",      () => setViewMode("printer"));
   $("btnViewPrinterTable")?.addEventListener("click", () => setViewMode("printer-table"));
   $("btnViewCam")?.addEventListener("click",          () => setViewMode("printer-cam"));
+  // Changing the brand re-scopes Series, so its previous value must go.
+  $("cvBrand")?.addEventListener("change", () => {
+    const s = $("cvSeries"); if (s) s.value = "";
+    _catViewSearch();
+  });
+  ["cvType", "cvMaterial", "cvSeries", "cvSort"].forEach(id =>
+    $(id)?.addEventListener("change", _catViewSearch));
+  $("btnViewCatalogGrid")?.addEventListener("click",  () => setViewMode("catalogGrid"));
+  $("btnViewCatalogTable")?.addEventListener("click", () => setViewMode("catalogTable"));
+  // Delegated on the stable container — cards/rows are rebuilt on every query.
+  $("catalogViewBody")?.addEventListener("click", e => {
+    const el = e.target.closest?.(".cv-card, .cv-row");
+    if (el?.dataset.id) _catViewSelect(el.dataset.id);
+  });
+  // Grid cards are role="button" divs (see _catViewCardHTML), so they need the
+  // activation keys a real button would have given for free.
+  $("catalogViewBody")?.addEventListener("keydown", e => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const el = e.target.closest?.(".cv-card");
+    if (!el?.dataset.id) return;
+    e.preventDefault();
+    _catViewSelect(el.dataset.id);
+  });
 
   // ── Group-identical-spools toggle ──────────────────────────────────────────
   // Reflect the active state on the button + only show it in Table/Grid modes
@@ -10101,6 +10347,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Initialise Add button label for storage mode on first load
     const _al = $("btnAddProduct")?.querySelector("[data-i18n]");
     if (_al) { _al.dataset.i18n = "addRackBtn"; _al.textContent = t("addRackBtn"); }
+  }
+  else if (_isCatalogMode(state.viewMode)) {
+    // Restore a saved Search view: light its button and drop the stock-only
+    // selectors, exactly as setViewMode would have.
+    $("btnViewTable").classList.remove("active");
+    $(state.viewMode === "catalogGrid" ? "btnViewCatalogGrid" : "btnViewCatalogTable")?.classList.add("active");
+    document.body.classList.add("catalog-filters");
   }
   else if (state.viewMode === "printer") {
     $("btnViewPrinter")?.classList.add("active"); $("btnViewTable").classList.remove("active");
@@ -10184,6 +10437,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // is sufficient.
   function _onFilterChange() {
     if (state.viewMode === "rack") { applyRackSearchDim(); return; }
+    // Search views: the query is the catalogue query — re-run our own engine
+    // rather than filtering spool rows that aren't on screen.
+    if (_isCatalogMode(state.viewMode)) { _catViewSearch(); return; }
     if (state.viewMode === "grid" || state.viewMode === "table") {
       applyInventoryFilter();
       return;
@@ -10297,7 +10553,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     else { state.tagFilter = v; _onFilterChange(); }
   });
   // Replace the native OS dropdowns of the toolbar filters with app-styled popups.
-  ["brandFilter", "materialFilter", "aspectFilter", "typeFilter", "tagFilter", "gridSort"].forEach(id => _enhanceSelect($(id)));
+  ["brandFilter", "materialFilter", "aspectFilter", "typeFilter", "tagFilter", "gridSort",
+   // Search-view filters — same app-styled dropdown as every other filter, so
+   // the two view families are visually indistinguishable.
+   "cvType", "cvBrand", "cvMaterial", "cvSeries", "cvSort"].forEach(id => _enhanceSelect($(id)));
+  // Field name on the button while nothing is picked — same convention as the
+  // inventory / printer filters (see `cselShort` above).
+  Object.entries({ cvType: "thType", cvBrand: "thBrand", cvMaterial: "thMaterial",
+                   cvSeries: "thSeries", cvSort: "sortBy" }).forEach(([id, key]) => {
+    const el = $(id); if (el) { el.dataset.cselShort = key; el._cselRefresh?.(); }
+  });
   // Same treatment for the Add-product panel's identity selects (Brand/Material
   // use their own bottom-sheets; these are the plain <select>s). The button
   // mirrors the .adp-select look; only the OS option list is replaced.
@@ -10929,6 +11194,39 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
+  // ── Catalogue payload → inventory-doc fields ─────────────────────────────
+  // The ONE mapping from a `product/get` response to the doc fields a catalogue
+  // product contributes. Shared by BOTH consumers so they can never drift:
+  //   • _convertToPlus       — an existing spool becomes a TigerTag+
+  //   • _catalogCreateTigerDataPlus — a brand-new chipless TigerData+
+  // Only the *catalogue-sourced* fields live here; identity ids, colours as
+  // RGB, measures and data slots are the caller's business (they differ: a
+  // conversion must not clobber what the chip already says).
+  function _productApiFields(api) {
+    const out = {};
+    if (!api) return out;
+    if (api.name)                        out.name              = api.name;
+    if (api.sku)                         out.sku               = api.sku;
+    if (api.barcode)                     out.barcode           = api.barcode;
+    if (api.series)                      out.series            = api.series;
+    if (api.images?.main_src)            out.url_img           = api.images.main_src;
+    if (api.filament?.color)             out.online_color      = api.filament.color;
+    if (api.filament?.color_info?.colors?.length)
+                                         out.online_color_list = api.filament.color_info.colors;
+    if (api.filament?.color_info?.type)  out.online_color_type = api.filament.color_info.type;
+    if (api.links?.tds)                  out.LinkTDS           = api.links.tds;
+    if (api.links?.msds)                 out.LinkMSDS          = api.links.msds;
+    if (api.links?.rohs)                 out.LinkROHS          = api.links.rohs;
+    if (api.links?.reach)                out.LinkREACH         = api.links.reach;
+    if (api.links?.tips)                 out.LinkTIPS          = api.links.tips;
+    if (api.links?.food)                 out.LinkFOOD          = api.links.food;
+    if (api.links?.youtube)              out.LinkYoutube       = api.links.youtube;
+    if (api.filament?.refill)            out.info1             = true;
+    if (api.filament?.recycled)          out.info2             = true;
+    if (api.filament?.filled)            out.info3             = true;
+    return out;
+  }
+
   // ── Convert TigerTag → TigerTag+ ─────────────────────────────────────────
   // Step 1: validate product_id against the catalogue API, show a preview.
   let _convertApiCache = null; // holds last valid api response for _convertToPlus
@@ -10986,26 +11284,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (confirm) confirm.disabled = true;
     try {
       const ID_TIGERTAG_PLUS = 0xBC0FCB97; // 3155151767
-      const update = { id_product: productId, id_tigertag: ID_TIGERTAG_PLUS };
-      if (api.name)                        update.name              = api.name;
-      if (api.sku)                         update.sku               = api.sku;
-      if (api.barcode)                     update.barcode           = api.barcode;
-      if (api.series)                      update.series            = api.series;
-      if (api.images?.main_src)            update.url_img           = api.images.main_src;
-      if (api.filament?.color)             update.online_color      = api.filament.color;
-      if (api.filament?.color_info?.colors?.length)
-                                           update.online_color_list = api.filament.color_info.colors;
-      if (api.filament?.color_info?.type)  update.online_color_type = api.filament.color_info.type;
-      if (api.links?.tds)                  update.LinkTDS           = api.links.tds;
-      if (api.links?.msds)                 update.LinkMSDS          = api.links.msds;
-      if (api.links?.rohs)                 update.LinkROHS          = api.links.rohs;
-      if (api.links?.reach)                update.LinkREACH         = api.links.reach;
-      if (api.links?.tips)                 update.LinkTIPS          = api.links.tips;
-      if (api.links?.food)                 update.LinkFOOD          = api.links.food;
-      if (api.links?.youtube)              update.LinkYoutube       = api.links.youtube;
-      if (api.filament?.refill)            update.info1             = true;
-      if (api.filament?.recycled)          update.info2             = true;
-      if (api.filament?.filled)            update.info3             = true;
+      // Note the id_tigertag flip: THIS path produces a real TigerTag+ (the
+      // spool has a chip). The catalogue path deliberately does NOT set it —
+      // a TigerData+ has no chip, so it keeps its chipless nonce.
+      const update = {
+        id_product: productId,
+        id_tigertag: ID_TIGERTAG_PLUS,
+        ..._productApiFields(api),
+      };
       update.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       const uid = fbAuth().currentUser?.uid;
       if (!uid) return;
@@ -11020,6 +11306,748 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (confirm) confirm.disabled = false;
     }
   }
+
+  /* ══ Catalogue browser → create a TigerData+ ═══════════════════════════════
+     IMPORT-ALL-ONCE. The whole product catalogue is pulled once through the
+     main process (`catalog:fetch-all`), cached in localStorage, and from then
+     on every search and filter runs IN MEMORY right here — we own the search
+     engine, the API owns nothing but the raw list. After the first sync the
+     feature is autonomous: the network is touched again only to REBUILD the
+     cache (manual refresh, or once it ages past CATALOG_TTL_MS), plus the one
+     `lookupProduct` detail call made at creation time.
+
+     Only Filament products are indexed. `data1`–`data7` carry per-product-type
+     meanings (docs/TTAG-FIELDS.md) and Filament (142) is the only ratified
+     contract — the same reason the .ttag importer accepts 142 alone. The few
+     Resin entries carry a `resin` block instead of `filament` (no nozzle /
+     dryer / bed at all), so they are skipped rather than written with filament
+     slot semantics, which would be wrong data under the contract.
+  */
+  const CATALOG_LS_KEY = "tigertag.catalog";
+  // The catalogue gains products every day, so a day-old cache is the most that
+  // can go by unnoticed. Settings → Tools has a button to force it sooner.
+  const CATALOG_TTL_MS = 24 * 3600 * 1000;
+  let _catalogIndex     = [];    // [{ it, hay }] — hay = precomputed search haystack
+  let _catalogFetchedAt = 0;
+  let _catalogSyncing   = false;
+  let _catalogBusy      = false; // a creation is in flight
+
+  // Settings can report the cache's age before the Search views are ever opened,
+  // so make sure it has been read off disk at least once.
+  function _catalogLoadCacheIfNeeded() {
+    if (!_catalogIndex.length) _catalogLoadCache();
+  }
+
+  // ── Local cache ──────────────────────────────────────────────────────────
+  function _catalogLoadCache() {
+    try {
+      const raw = localStorage.getItem(CATALOG_LS_KEY);
+      if (!raw) return false;
+      const c = JSON.parse(raw);
+      if (!c || c.v !== 1 || !Array.isArray(c.items)) return false;
+      _catalogFetchedAt = Number(c.fetchedAt) || 0;
+      _catalogBuildIndex(c.items);
+      return _catalogIndex.length > 0;
+    } catch (_) { return false; }
+  }
+  function _catalogSaveCache(items) {
+    try {
+      localStorage.setItem(CATALOG_LS_KEY, JSON.stringify({ v: 1, fetchedAt: Date.now(), items }));
+    } catch (e) {
+      // Quota exceeded / storage disabled. The in-memory index still works for
+      // this session and the user simply re-syncs next launch — never fatal.
+      console.warn("[catalog] cache not persisted:", e?.name || e?.message);
+    }
+  }
+
+  // Precompute one lowercase haystack per item so a keystroke costs a substring
+  // scan, not a rebuild — the list is ~2 700 items and grows daily.
+  function _catalogBuildIndex(items) {
+    _catalogIndex = (items || [])
+      .filter(it => it && it.id != null)
+      .map(it => ({
+        it: { ...it, ..._catSplitTitle(it.title) },
+        hay: [it.brand, it.title, it.material, it.sku, it.measure]
+               .filter(Boolean).join(" ").toLowerCase(),
+      }));
+  }
+  // Every product type is BROWSABLE, but only Filament can be turned into a
+  // TigerData+: `data1`–`data7` carry per-type meanings and Filament (142) is
+  // the only ratified contract (docs/TTAG-FIELDS.md). A resin carries a `resin`
+  // block and has no nozzle / dryer / bed at all, so filling the filament slots
+  // from it would write plainly wrong data. Creation refuses instead.
+  const CATALOG_CREATABLE_TYPE = "Filament";
+  function _catIsCreatable(it) {
+    return String(it?.product_type || CATALOG_CREATABLE_TYPE) === CATALOG_CREATABLE_TYPE;
+  }
+
+  // The LIST endpoint gives one `title` where the detail endpoint gives `series`
+  // and `name` separately ("CarbonX CF-PLA - Black"). Split on the LAST " - " so
+  // a series that itself contains one survives ("CarbonX - PA12+CF - Black" →
+  // series "CarbonX - PA12+CF", name "Black"). Verified against the detail
+  // endpoint, and every one of the catalogue's titles carries the separator.
+  // Derived once here rather than on every re-render — rows redraw on each
+  // keystroke, the index is built once per sync.
+  function _catSplitTitle(title) {
+    const s = String(title || "").trim();
+    const i = s.lastIndexOf(" - ");
+    return i > 0
+      ? { _series: s.slice(0, i).trim(), _name: s.slice(i + 3).trim() }
+      : { _series: s, _name: "" };
+  }
+
+  async function _catalogSync({ force = false } = {}) {
+    if (_catalogSyncing) return;
+    // A fresh cache means no network at all — the whole point of import-all-once.
+    if (!force && _catalogIndex.length && (Date.now() - _catalogFetchedAt) < CATALOG_TTL_MS) return;
+    if (!window.electronAPI?.fetchCatalogAll) return;
+    _catalogSyncing = true;
+    _catViewSyncStatus();
+    _catalogResyncState();
+    try {
+      const res = await window.electronAPI.fetchCatalogAll();
+      if (res?.ok && Array.isArray(res.items) && res.items.length) {
+        _catalogFetchedAt = Date.now();
+        _catalogBuildIndex(res.items);
+        _catalogSaveCache(res.items);
+        if (_isCatalogMode(state.viewMode)) _catViewSearch();
+      } else if (!_catalogIndex.length) {
+        // Only surface a failure when there is nothing cached to fall back on.
+        _catViewSetStatus(t("catalogSyncError"));
+      }
+    } catch (e) {
+      console.warn("[catalog] sync failed:", e?.message);
+      if (!_catalogIndex.length) _catViewSetStatus(t("catalogSyncError"));
+    } finally {
+      _catalogSyncing = false;
+      _catViewSyncStatus();
+      _catalogResyncState();
+    }
+  }
+
+  // ── Search engine (ours, in memory) ──────────────────────────────────────
+  // Every whitespace-separated token must appear somewhere in the item's
+  // haystack (AND semantics), so "bambu pla black" narrows the way a user
+  // expects regardless of field order. Facets are exact matches on the raw
+  // catalogue strings, so they never disagree with what the list displays.
+  // The engine itself, extracted so the modal AND the Search views run the exact
+  // same matching — one place to change how the catalogue is searched.
+  function _catalogFilter(query, fBrand = "", fMat = "") {
+    const toks = String(query || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return _catalogIndex.filter(e => {
+      if (fBrand && e.it.brand !== fBrand) return false;
+      if (fMat   && e.it.material !== fMat) return false;
+      for (const tk of toks) if (!e.hay.includes(tk)) return false;
+      return true;
+    }).map(e => e.it);
+  }
+
+
+
+  // The catalogue ships #RRGGBB / #RRGGBBAA and CSS understands 8-digit hex
+  // natively, so the only job here is to REFUSE anything that isn't a hex
+  // colour — the value goes straight into a style attribute.
+  function _catCssColor(hex) {
+    return /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(String(hex || "")) ? String(hex) : "#888888";
+  }
+
+  // Adapt a catalogue item to the minimal shape `colorBg` / `colorCircleHTML`
+  // read, so the catalogue draws the SAME colour circle as the rest of the app
+  // (mono, bi/tri slices, gradient, conic) instead of a private swatch.
+  // No translation needed: the catalogue's `color_info.type` vocabulary
+  // (mono | multi | gradient | conic_gradient) is already the one `colorBg`
+  // speaks — `multi` falls through to its equal-slices conic branch.
+  function _catColorRow(it) {
+    const ci = it?.color_info || {};
+    const list = (Array.isArray(ci.colors) && ci.colors.length)
+      ? ci.colors
+      : [it?.color].filter(Boolean);
+    return {
+      colorList: list,
+      colorType: ci.type || null,
+      // `colorBg` drops unparsable entries from colorList, but its last-resort
+      // branch drops colorHex straight into a style attribute — sanitise it.
+      colorHex: it?.color ? _catCssColor(it.color) : null,
+      aspect1: null, aspect2: null,
+    };
+  }
+
+
+
+
+
+
+  /* ── Catalogue names → reference-DB ids ────────────────────────────────────
+     The catalogue speaks in NAMES ("3DXTech", "PLA", "1.75"); the chip schema
+     speaks in NUMERIC ids. Resolve against the bundled reference DB
+     (assets/db/tigertag/*.json, already loaded into state.db).
+
+     BEST-EFFORT by design: an unresolved name leaves that id at 0 (= unset)
+     rather than guessing wrong. `id_product` is always set, so a later
+     "Refresh from API" — or promoting the spool to a real chip — reconciles the
+     rest. Measured against the live catalogue: brand 99.9 %, material 100 %,
+     type 100 %, so the fallback is the exception, not the rule.
+  */
+  function _catByName(key, name, fields = ["label", "name"]) {
+    const s = String(name ?? "").trim().toLowerCase();
+    if (!s) return 0;
+    const list = state.db?.[key] || [];
+    for (const f of fields) {
+      const hit = list.find(x => String(x?.[f] ?? "").trim().toLowerCase() === s);
+      if (hit) return hit.id;
+    }
+    return 0;
+  }
+  // Material: the catalogue's `material` is sometimes the precise grade
+  // ("PLA Marble", which has its own entry) and sometimes just the family
+  // ("PLA"). Exact label wins; otherwise fall back to the family via
+  // `material_type`, preferring the canonical grade (the entry whose label IS
+  // the family) over an arbitrary filled variant like "PLA-CF".
+  function _catMaterialId(name) {
+    const s = String(name ?? "").trim().toLowerCase();
+    if (!s) return 0;
+    const list = state.db?.material || [];
+    const lbl = x => String(x?.label ?? "").trim().toLowerCase();
+    const fam = x => String(x?.material_type ?? "").trim().toLowerCase();
+    const exact = list.find(x => lbl(x) === s);
+    if (exact) return exact.id;
+    const fams = list.filter(x => fam(x) === s);
+    if (!fams.length) return 0;
+    return (fams.find(x => lbl(x) === fam(x)) || fams[0]).id;
+  }
+  function _catAspectColorCount(id) {
+    return Number((state.db?.aspect || []).find(x => x.id === id)?.color_count) || 0;
+  }
+  // "#RRGGBB" or "#RRGGBBAA" → {r,g,b,a}. Alpha defaults to opaque, matching the
+  // chip schema's `color_a: 255`.
+  function _catHexToRgba(hex) {
+    const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/i.exec(String(hex || ""));
+    if (!m) return { r: 128, g: 128, b: 128, a: 255 };
+    return {
+      r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16),
+      a: m[4] != null ? parseInt(m[4], 16) : 255,
+    };
+  }
+  // A chipless spool must never CLAIM to be a chip: if the random nonce happened
+  // to land on a real version id, `versionName()` would resolve it and flip
+  // `isPlus` on. Astronomically unlikely, cheap to rule out.
+  function _catChiplessNonce() {
+    for (let i = 0; i < 8; i++) {
+      const n = Math.floor(Math.random() * ID_PRODUCT_UNSET_U32);
+      if (!versionName(n)) return n;
+    }
+    return Math.floor(Math.random() * ID_PRODUCT_UNSET_U32);
+  }
+
+  /* ── Catalogue product → the canonical chip doc ────────────────────────────
+     THE single mapping from a `product/get` payload to the inventory document a
+     TigerData+ is made of. Two callers, one truth:
+       • _catalogCreate      — writes it to Firestore
+       • _catViewProductCard — feeds it to the Product card as a `cloudSeed`, so
+                               the side-card previews EXACTLY what an add would
+                               store (colours, temps, diameter, SKU/EAN, ids).
+     `cloudId` is the chipless doc id the row will carry; callers that only want
+     to preview can pass a throwaway one.
+  */
+  function _catalogDocFromApi(api, productId, cloudId) {
+    const fil = api.filament || {};
+
+    const unitId     = _catByName("unit", fil.measure_unit) || 21;   // default g
+    const measure    = Number(fil.measure_value ?? fil.grams);
+    const hasMeasure = Number.isFinite(measure) && measure > 0;
+    const grams      = hasMeasure ? _adpToGrams(measure, unitId) : null;
+
+    // Colours — `color_info.colors` is the authority, `color` the shorthand.
+    const colors = (Array.isArray(fil.color_info?.colors) && fil.color_info.colors.length)
+      ? fil.color_info.colors
+      : [fil.color || api.color].filter(Boolean);
+    const slots = Math.max(1, Math.min(3, colors.length));
+    const c1 = _catHexToRgba(colors[0] || api.color);
+
+    // aspect2 ANNOUNCES the colour-slot count in the chip schema (Bicolor 252,
+    // Tricolor 24, Rainbow 145). Keep the catalogue's own aspect when it already
+    // agrees with how many colours we actually got; otherwise the count wins, so
+    // the slots written can never contradict what aspect2 claims.
+    const asp1 = _catByName("aspect", fil.aspect1) || 104;   // default Basic
+    let   asp2 = _catByName("aspect", fil.aspect2) || 255;   // default None
+    if (_catAspectColorCount(asp2) !== slots) {
+      asp2 = slots >= 3 ? 24 : (slots === 2 ? 252 : 255);
+    }
+
+    const td = Number(fil.transmission_dist);
+
+    const doc = {
+      uid: cloudId,
+
+      // ── Identity ──────────────────────────────────────────────────────
+      id_brand:    _catByName("brand", api.brand, ["name"]),
+      id_material: _catMaterialId(fil.material),
+      id_type:     _catByName("type", api.product_type) || 142,   // Filament
+      id_aspect1:  asp1,
+      id_aspect2:  asp2,
+      id_unit:     unitId,
+      // THE field that makes this a TigerData+.
+      id_product:  Number(productId),
+      id_tigertag: _catChiplessNonce(),
+
+      // ── Colour 1 (RGBA) ───────────────────────────────────────────────
+      color_r: c1.r, color_g: c1.g, color_b: c1.b, color_a: c1.a,
+
+      // ── Firmware data slots (Filament 142 meanings) ───────────────────
+      data1: _catByName("diameter", fil.diameter) || 56,   // default 1.75
+      data2: Number(api.nozzle?.temp_min) || 0,
+      data3: Number(api.nozzle?.temp_max) || 0,
+      data4: Number(api.dryer?.temp)      || 0,
+      data5: Number(api.dryer?.time)      || 0,
+      data6: Number(api.bed?.temp_min)    || 0,
+      data7: Number(api.bed?.temp_max)    || 0,
+
+      // ── Measure — a spool off the shelf starts FULL ────────────────────
+      measure:          hasMeasure ? measure : null,
+      measure_gr:       grams,
+      weight_available: grams,
+
+      // The product's own name already carries the colour, so the free-text
+      // note stays empty instead of echoing it.
+      message: "",
+
+      TD: Number.isFinite(td) && td > 0 ? Math.max(0.1, Math.min(100, td)) : null,
+
+      timestamp:  nowChipTs(),
+      updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      deleted:    null,
+      deleted_at: null,
+
+      // ── Catalogue-sourced fields — the shared mapping ─────────────────
+      ..._productApiFields(api),
+    };
+
+    // Colours 2 / 3 — written only when the aspect announces them.
+    if (slots >= 2) {
+      const c2 = _catHexToRgba(colors[1]);
+      doc.color_r2 = c2.r; doc.color_g2 = c2.g; doc.color_b2 = c2.b;
+    }
+    if (slots >= 3) {
+      const c3 = _catHexToRgba(colors[2]);
+      doc.color_r3 = c3.r; doc.color_g3 = c3.g; doc.color_b3 = c3.b;
+    }
+    return doc;
+  }
+
+  /* ── Create a TigerData+ from a catalogue product ──────────────────────────
+     Fills the SAME canonical chip schema `saveAddProduct` writes, so a future
+     chip burn stays a straight copy of the doc. Two things make it a
+     TigerData+: the chipless `TigerData_` doc id, and a real `id_product`.
+     `id_tigertag` deliberately keeps the chipless nonce — this spool has no
+     chip, so it must not carry the TigerTag+ id.
+  */
+  async function _catalogCreate(productId) {
+    if (_catalogBusy) return;
+    const uid = state.activeAccountId;
+    if (!uid || state.friendView) return;
+    // Feedback goes to whichever surface the user actually triggered this from.
+    const res$ = $("productCardCatMsg");
+    _catalogSetBusy(true);
+    try {
+      // The one network call of this path — the same detail endpoint the
+      // TigerTag→TigerTag+ conversion uses (IPC `rfid:lookup-product`).
+      const res = await window.electronAPI.lookupProduct(productId);
+      if (!res?.ok || !res.api) { toast(res$, "bad", t("catalogCreateError")); return; }
+      const api = res.api;
+      // Browsable ≠ creatable — see _catIsCreatable. Refuse rather than fill the
+      // Filament data slots from a product type they don't describe.
+      if (!_catIsCreatable(api)) {
+        toast(res$, "warn", t("catalogTypeUnsupported", { type: String(api.product_type || "—") }));
+        return;
+      }
+      const cloudId = _adpCloudId();
+      const data = _catalogDocFromApi(api, productId, cloudId);
+
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("inventory").doc(cloudId).set(data);
+      // Still a chipless creation, but counted apart from a basic TigerData so
+      // the two tiers can be told apart. The `TigerCloud` analytics bucket key
+      // (derived server-side from the id prefix) is deliberately untouched.
+      bumpStudioCounters({ cloudPlusAddedTotal: 1 });
+      // Show it: the grouped-spools deck for this filament, once the snapshot lands.
+      try { _revealAddedSpool(_spoolGroupKey(normalizeRow(cloudId, data))); } catch (_) {}
+      // The modal stays open: adding several spools in a row is the common case
+      // (you rarely buy just one), and the inline result confirms each one.
+      toast(res$, "ok", t("catalogCreateOk", { name: api.title || api.name || "" }));
+    } catch (e) {
+      console.error("[catalog] create failed:", e);
+      toast(res$, "bad", t("catalogCreateError"));
+    } finally {
+      _catalogSetBusy(false);
+    }
+  }
+
+  // The write is driven from the footer button, so that is what goes busy —
+  // the row keeps its selected look throughout.
+  function _catalogSetBusy(busy) {
+    _catalogBusy = !!busy;
+    // The only control that writes is the Product card's add button.
+    const btn = document.querySelector(".pc-cat-add-btn");
+    if (btn) { btn.disabled = !!busy; btn.classList.toggle("is-busy", !!busy); }
+  }
+
+
+  /* ══ Search views — the official catalogue as a first-class grid / table ════
+     Same local cache and the SAME engine as the modal (`_catalogFilter`), but a
+     separate result set and selection, so opening the modal never disturbs the
+     view and vice-versa. Driven by the MAIN search bar, like every other view.
+     These views show products that exist in the world, not spools you own —
+     picking one still only SELECTS; the action bar creates the TigerData+.
+  */
+  const CAT_VIEW_CHUNK = 60;
+  let _catViewHits       = [];
+  let _catViewShown      = 0;
+  let _catViewSelectedId = null;
+  let _catViewObserver   = null;
+
+  function renderCatalogView() {
+    if (!$("invCatalogView")) return;
+    if (!_catalogIndex.length) _catalogLoadCache();
+    _catViewSearch();
+    _catalogSync();   // no-op while the cache is fresh; re-renders when it isn't
+  }
+
+  /* ── Filters, mirroring the public catalogue page ──────────────────────────
+     Type · Brand · Material · Series · Sort. Every option carries its count,
+     and Series is scoped to the selected brand (a series only means something
+     within one brand — the control stays disabled until a brand is picked).
+     All of it runs over the local cache: changing a filter never hits the API.
+  */
+  const CAT_SORTS = {
+    brand:    (a, b) => String(a.brand || "").localeCompare(String(b.brand || "")),
+    name:     (a, b) => String(a._name || "").localeCompare(String(b._name || "")),
+    material: (a, b) => String(a.material || "").localeCompare(String(b.material || "")),
+  };
+
+  // Counts are computed over the WHOLE catalogue, not the current result set —
+  // the number next to "Bambu Lab" answers "how many are there", which stays
+  // stable as the other filters move.
+  function _catViewFillFacets() {
+    const idx = _catalogIndex.map(e => e.it);
+    const countBy = (list, key) => {
+      const m = new Map();
+      for (const it of list) {
+        const v = it[key];
+        if (v) m.set(v, (m.get(v) || 0) + 1);
+      }
+      return [...m.entries()].sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+    };
+    const fill = (el, allLabel, pairs, { keepValue = true } = {}) => {
+      if (!el) return;
+      const cur = el.value;
+      el.innerHTML = `<option value="">${esc(allLabel)}</option>` +
+        pairs.map(([v, n]) => `<option value="${esc(String(v))}">${esc(String(v))} (${n})</option>`).join("");
+      if (keepValue && cur && pairs.some(([v]) => String(v) === cur)) el.value = cur;
+      // These selects are wrapped in the app's custom dropdown (_enhanceSelect):
+      // the native <select> is only the model, so the visible button has to be
+      // told the options changed.
+      el._cselRefresh?.();
+    };
+    // Iso with every other filter in the app: the LIST shows a plain "All" row,
+    // and the BUTTON shows the field name (via `data-csel-short`, which
+    // _enhanceSelect swaps in whenever no value is picked) so the user can see
+    // what the menu filters without opening it.
+    fill($("cvType"),     t("filterAllVersions"),  countBy(idx, "product_type"));
+    fill($("cvBrand"),    t("filterAllBrands"),    countBy(idx, "brand"));
+    fill($("cvMaterial"), t("filterAllMaterials"), countBy(idx, "material"));
+
+    // Series depends on the chosen brand.
+    const brand = $("cvBrand")?.value || "";
+    const sEl = $("cvSeries");
+    if (sEl) {
+      if (!brand) {
+        sEl.disabled = true;
+        sEl.innerHTML = `<option value="">${esc(t("catFilterSeriesPick"))}</option>`;
+        sEl._cselRefresh?.();
+      } else {
+        sEl.disabled = false;
+        fill(sEl, t("filterAllSeries"), countBy(idx.filter(it => it.brand === brand), "_series"));
+      }
+      // The custom dropdown mirrors the <select>'s options but NOT its disabled
+      // state, so the wrapper carries it — otherwise the button stays clickable
+      // and opens an empty list.
+      sEl.closest(".csel")?.classList.toggle("is-disabled", sEl.disabled);
+    }
+    const sortEl = $("cvSort");
+    if (sortEl && !sortEl.options.length) {
+      // "Sort by: Brand", not a bare "Brand" — the sort always HAS a value, so
+      // `cselShort` never kicks in and the button shows the option text. A bare
+      // field name there would sit next to the Brand FILTER reading identically.
+      sortEl.innerHTML = [["brand", "thBrand"], ["name", "thName"], ["material", "thMaterial"]]
+        .map(([v, k]) => `<option value="${v}">${esc(t("sortBy") + ": " + t(k))}</option>`).join("");
+    }
+  }
+
+  function _catViewSearch() {
+    _catViewFillFacets();
+    const fType   = $("cvType")?.value || "";
+    const fBrand  = $("cvBrand")?.value || "";
+    const fMat    = $("cvMaterial")?.value || "";
+    const fSeries = $("cvSeries")?.value || "";
+    _catViewHits = _catalogFilter($("searchInv")?.value, fBrand, fMat)
+      .filter(it => (!fType || it.product_type === fType)
+                 && (!fSeries || it._series === fSeries));
+    const sorter = CAT_SORTS[$("cvSort")?.value || "brand"] || CAT_SORTS.brand;
+    // Title as the tiebreak so the order is stable between renders.
+    _catViewHits.sort((a, b) => sorter(a, b) || String(a.title || "").localeCompare(String(b.title || "")));
+    // Drop a selection the current query no longer contains.
+    if (_catViewSelectedId && !_catViewHits.some(x => String(x.id) === _catViewSelectedId)) {
+      _catViewSelectedId = null;
+    }
+    _catViewShown = 0;
+    const body = $("catalogViewBody");
+    if (body) {
+      const grid = state.viewMode === "catalogGrid";
+      // The grid REUSES `.inv-grid` — same track size and gap as the inventory
+      // grid, so a catalogue card is exactly the size of a spool card. Only the
+      // sentinel hook is ours.
+      body.className = `cv-body ${grid ? "cv-body--grid inv-grid" : "cv-body--table"}`;
+      body.innerHTML = grid ? "" : _catViewTableHTML();
+    }
+    _catViewRenderChunk();
+    _catViewSyncStatus();
+    // Search — the TABLE scrolls inside its own bordered box (like the inventory
+    // and Favorites tables); the GRID fills the view, so the view is what
+    // overflows. Wire whichever is on screen and clear the other.
+    const _cvView = $("invCatalogView");
+    const _cvTable = _cvView?.querySelector(".cv-table-wrap");
+    if (_cvTable) {
+      _cvView?.classList.remove("scroll-fade", "sf-top", "can-up", "can-down");
+      _wireScrollFade(_cvTable, { top: true });
+    } else {
+      _wireScrollFade(_cvView, { top: true });
+    }
+  }
+
+  // The table is a REAL table in the app's own `.table-wrap` shell, with the
+  // always-on selection column every other list view has — so it inherits the
+  // shared table CSS (zebra, hover, sticky head, `.sel-check` pastille) instead
+  // of restating any of it.
+  const CAT_TABLE_COLS = 9;   // sel · thumb · type · material · brand · series · colour · name · capacity
+  function _catViewTableHTML() {
+    return `
+      <div class="table-wrap cv-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sel-th"></th>
+              <th></th>
+              <th>${esc(t("thType"))}</th>
+              <th>${esc(t("thMaterial"))}</th>
+              <th>${esc(t("thBrand"))}</th>
+              <th>${esc(t("thSeries"))}</th>
+              <th>${esc(t("thColor"))}</th>
+              <th>${esc(t("thName"))}</th>
+              <th>${esc(t("thCapacity"))}</th>
+            </tr>
+          </thead>
+          <tbody id="catalogViewTbody"></tbody>
+        </table>
+      </div>`;
+  }
+
+  // Grid card — the catalogue's answer to a spool card: photo, tier badge, the
+  // colour circle and the same identity fields, minus everything that only
+  // exists once you OWN a spool (weight left, rack, twin…).
+  // Reuses `.spool-card` WHOLESALE — the very card the inventory grid draws, so
+  // a catalogue card and an owned-spool card are the same object: full-bleed
+  // photo on top, then the padded body (name · brand·material · series · foot).
+  // Only the tier badge overlay and the colour dot on the name line are ours.
+  //
+  // A DIV with button semantics, not a <button>: a real button refuses to grow
+  // to its children here (Chromium clamps its intrinsic height, so the photo
+  // overflows a 40px-tall card). Keyboard activation is wired alongside the
+  // click handler. The table rows stay real buttons — their content is a single
+  // short line, so the clamp never bites there.
+  function _catViewCardHTML(it) {
+    const sel = String(it.id) === String(_catViewSelectedId) ? " selected" : "";
+    const r = _catViewAsRow(it);
+    // Body built by the app's OWN card builder — same slots, same classes, same
+    // wording rules as the inventory grid (name line with the colour circle,
+    // `brand · material`, then the series line, then the footer with the tier
+    // badge). Nothing about the text is re-implemented here.
+    const inner = _gridCardInnerHTML(r, {
+      nameText:     String(it._name || it.title || "—"),
+      subText:      [it.brand, it.material].filter(Boolean).join(" · ") || "—",
+      subExtraText: String(it._series || ""),
+      footerHTML:   `<span class="card-weight">${esc(String(it.measure || "—"))}</span>`,
+    });
+    return `
+      <div class="spool-card cv-card${sel}" role="button" tabindex="0" data-id="${esc(String(it.id))}"
+           aria-pressed="${sel ? "true" : "false"}">${inner}</div>`;
+  }
+
+  // A catalogue item dressed as the row shape the card builder reads. Everything
+  // that only exists once you OWN a spool stays null, so the builder skips the
+  // fill bar, the TD chip, the pending-chip dot and the twin/backup badges on
+  // its own. `isPlus` is what makes it show the gold TigerTag+ badge — accurate:
+  // the CATALOGUE entry is a TigerTag+ product (adding it mints a TigerData+,
+  // which the inventory then badges as such itself).
+  function _catViewAsRow(it) {
+    return {
+      ..._catColorRow(it),
+      imgUrl: it.img_src || null,
+      brand:    it.brand    || "-",
+      material: it.material || "-",
+      series:   it._series  || "-",
+      colorName: it._name   || "-",
+      isPlus: true, isCloud: false, rfidBackup: false,
+      weightAvailable: null, capacity: null, td: null, needUpdateAt: null,
+      tags: [], raw: null,
+    };
+  }
+
+  // One `<tr>` shaped exactly like an inventory row: the always-on `.sel-cell`
+  // pastille, the 50 px `.thumb-cell` thumbnail, the tier badge, then the
+  // identity columns and the `.color-cell` circle — all drawn by the same
+  // helpers (`thumbHTML`, `tierBadgeHTML`, `colorCircleHTML`) the other tables
+  // use, so nothing about the look is re-implemented here.
+  // Thumbnail for a catalogue row — the filament COLOUR is the base layer and
+  // the product photo sits on top, the same stacking the inventory grid card
+  // uses. `thumbHTML` picks one OR the other, which leaves a catalogue product
+  // blank while its photo loads and broken if the CDN link is dead; here the
+  // right colour is on screen immediately and simply stays if the photo never
+  // arrives (the <img> removes itself on error).
+  function _catThumbHTML(r, size = 50) {
+    const bg  = colorBg(r);
+    const src = r.imgUrl ? resolvedImg(r.imgUrl) : null;
+    return `<span class="cv-thumb" style="width:${size}px;height:${size}px;background:${bg}">`
+         + `<img class="cv-thumb-logo" src="${logoSrc(bg)}" alt="" />`
+         + (src ? `<img class="cv-thumb-img" src="${esc(src)}" loading="lazy" alt="" onerror="this.remove()" />` : "")
+         + `</span>`;
+  }
+
+  function _catViewRowHTML(it) {
+    const r = _catViewAsRow(it);
+    const sel = String(it.id) === String(_catViewSelectedId) ? " row-selected" : "";
+    const cell = v => `<td title="${esc(String(v || ""))}">${esc(String(v || "-"))}</td>`;
+    return `
+      <tr class="cv-row${sel}" data-id="${esc(String(it.id))}" aria-selected="${sel ? "true" : "false"}">
+        <td class="sel-cell"><span class="sel-check" aria-hidden="true"></span></td>
+        <td class="thumb-cell">${_catThumbHTML(r, 50)}</td>
+        <td>${tierBadgeHTML(r)}</td>
+        ${cell(it.material)}
+        ${cell(it.brand)}
+        ${cell(it._series)}
+        <td class="color-cell">${colorCircleHTML(r, 28)}</td>
+        ${cell(it._name)}
+        <td style="font-variant-numeric:tabular-nums">${esc(String(it.measure || "-"))}</td>
+      </tr>`;
+  }
+
+  // Chunked append driven by an IntersectionObserver sentinel — the page itself
+  // is the scroller here (unlike the modal, which scrolls its own list), so
+  // watching a sentinel is more robust than listening for scroll on one element.
+  function _catViewRenderChunk() {
+    const grid = state.viewMode === "catalogGrid";
+    // In table mode the rows live in the <tbody>, not in the view container —
+    // a <tr> can only be appended to a table section.
+    const body = grid ? $("catalogViewBody") : $("catalogViewTbody");
+    if (!body) return;
+    body.querySelector(".cv-sentinel")?.remove();
+    const end = Math.min(_catViewShown + CAT_VIEW_CHUNK, _catViewHits.length);
+    if (end > _catViewShown) {
+      const html = _catViewHits.slice(_catViewShown, end)
+        .map(grid ? _catViewCardHTML : _catViewRowHTML).join("");
+      body.insertAdjacentHTML("beforeend", html);
+      _catViewShown = end;
+    }
+    _catViewObserver?.disconnect();
+    if (_catViewShown < _catViewHits.length) {
+      // A <div> is invalid inside a <tbody> and gets hoisted out of the table,
+      // which breaks the observer — the sentinel has to be a row there.
+      body.insertAdjacentHTML("beforeend", grid
+        ? `<div class="cv-sentinel" aria-hidden="true"></div>`
+        : `<tr class="cv-sentinel" aria-hidden="true"><td colspan="${CAT_TABLE_COLS}"></td></tr>`);
+      const sentinel = body.querySelector(".cv-sentinel");
+      _catViewObserver = new IntersectionObserver(entries => {
+        if (entries.some(e => e.isIntersecting)) _catViewRenderChunk();
+      }, { rootMargin: "320px" });
+      _catViewObserver.observe(sentinel);
+    }
+  }
+
+  // One-off status message (a failed sync with nothing cached to fall back on).
+  function _catViewSetStatus(msg) {
+    const el = $("catalogViewStatus");
+    if (el) el.textContent = msg;
+  }
+
+  function _catViewSyncStatus() {
+    const el = $("catalogViewStatus");
+    if (!el) return;
+    if (!_catalogIndex.length) { el.textContent = t("catalogSyncing"); return; }
+    el.textContent = _catalogSyncing
+      ? t("catalogSyncing")
+      : t("catalogCount", { n: _catViewHits.length, total: _catalogIndex.length });
+  }
+
+  /* ── Product card for a catalogue product ──────────────────────────────────
+     Selecting in the Search views opens the app's own Product card side-card,
+     the same one the Favorites grid uses. `_renderProductCard` prefers a
+     `cloudSeed` — the canonical doc — and runs it through `normalizeRow`, so
+     feeding it `_catalogDocFromApi` gives the full picture (colours, nozzle /
+     bed / dryer temps, diameter, SKU, EAN, product id) rather than the handful
+     of fields the LIST endpoint carries. It also means the card previews
+     exactly what "Add to my inventory" would store.
+
+     The detail is fetched once per product and kept — re-selecting a row you
+     already looked at costs nothing, and the cache dies with the session.
+  */
+  const _catDetailCache = new Map();
+  async function _catViewProductCard(it) {
+    if (!it) return;
+    let api = _catDetailCache.get(String(it.id));
+    if (!api) {
+      const res = await window.electronAPI?.lookupProduct?.(Number(it.id));
+      if (!res?.ok || !res.api) return;          // silent: the row stays selected
+      api = res.api;
+      _catDetailCache.set(String(it.id), api);
+    }
+    // The selection may have moved (or been cleared) while the fetch was in
+    // flight — don't yank the card onto a product the user has left behind.
+    if (String(it.id) !== String(_catViewSelectedId)) return;
+    const seed = _catalogDocFromApi(api, it.id, _adpCloudId());
+    let row = null;
+    try { row = normalizeRow("PRODUCT_" + it.id, seed); } catch (_) {}
+    // Hash by the product's IDENTITY, exactly as an owned spool would be — so
+    // the card's ★/❤ light up when this product is already in the inventory.
+    const hash = row ? _productKeyHash(row) : "cat:" + it.id;
+    openProductCard({
+      id: hash,
+      key: row ? _spoolGroupKey(row) : "cat:" + it.id,
+      label: row ? _productLabel(row) : {},
+      cloudSeed: seed,
+      favorite: false, liked: false,
+      catalogItem: it,        // marks this card as a catalogue preview → add button
+    });
+  }
+
+  function _catViewSelect(id) {
+    _catViewSelectedId = (String(id) === String(_catViewSelectedId)) ? null : String(id);
+    $("catalogViewBody")?.querySelectorAll(".cv-card, .cv-row").forEach(el => {
+      const on = el.dataset.id === _catViewSelectedId;
+      // Cards are `.spool-card`s, so they take that card's own `.selected` look
+      // (primary border + soft ring); table rows take `.row-selected`, which is
+      // also what fills the `.sel-check` pastille in the selection column.
+      const card = el.classList.contains("cv-card");
+      el.classList.toggle(card ? "selected" : "row-selected", on);
+      el.setAttribute(card ? "aria-pressed" : "aria-selected", on ? "true" : "false");
+    });
+    // Picking shows the product; unpicking takes the card away with it.
+    if (_catViewSelectedId) {
+      const it = _catViewHits.find(x => String(x.id) === _catViewSelectedId);
+      _catViewProductCard(it).catch(e => console.warn("[catalog] product card:", e?.message));
+    } else {
+      closeProductCard();
+    }
+  }
+
 
   /* ── Duplicate a spool as fresh TigerCloud entries ──────────────────
      Clones the spool into `count` new docs, each with its own Cloud UID.
@@ -11308,6 +12336,25 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     host.innerHTML = state.viewMode === "favesTable"
       ? _renderFavesTable(faves, stockMap, info, ro)
       : _renderFavesGrid(faves, ro);
+    // Favorites — the grid and the table fill this scroller edge to edge, so the
+    // fade covers exactly what is hidden. The To-order view does NOT: it is a
+    // card plus a 300 px STICKY side panel, and masking the scroller would fade
+    // that panel too — a cue sitting where nothing is actually cut off. Off
+    // there until that list scrolls inside its own box.
+    const _pvHostEl = $("invProductsView");
+    const _pvTable  = _pvHostEl?.querySelector(".pv-table-wrap");
+    _pvHostEl?.classList.remove("scroll-fade", "sf-top", "can-up", "can-down");
+    if (_pvTable) {
+      // Table: the bordered box scrolls itself (like the inventory table), so the
+      // fade belongs on it — flush under its sticky header and only as wide as
+      // the table.
+      _wireScrollFade(_pvTable, { top: true });
+    } else if (state.viewMode !== "order") {
+      // Grid: the cards fill the view, so the view is what overflows. The
+      // To-order view is left alone — it is a card plus a sticky side panel, and
+      // a fade across the whole scroller would dim a panel that hides nothing.
+      _wireScrollFade(_pvHostEl, { top: true });
+    }
   }
 
   // ── Lists view ────────────────────────────────────────────────────────────
@@ -11413,7 +12460,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const layout = localStorage.getItem("tigertag.listLayout") === "grid" ? "grid" : "list";
     const layoutToggle = `<div class="lv-layout">
       <button type="button" class="lv-layout-btn${layout === "list" ? " is-active" : ""}" data-listlayout="list" aria-label="${esc(t("listLayoutRows"))}"><span class="icon icon-list icon-13"></span></button>
-      <button type="button" class="lv-layout-btn${layout === "grid" ? " is-active" : ""}" data-listlayout="grid" aria-label="${esc(t("btnViewGrid"))}"><span class="vt-glyph">⊞</span></button>
+      <button type="button" class="lv-layout-btn${layout === "grid" ? " is-active" : ""}" data-listlayout="grid" aria-label="${esc(t("btnViewGrid"))}"><span class="icon icon-grid icon-13"></span></button>
     </div>`;
     // Left sidebar — the user's lists (name + item count), selected highlighted,
     // + a "Create a list" entry (owner only). Amazon-style two-column layout.
@@ -13270,7 +14317,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   function _saveTtagFile(filename, jsonString) {
-    const blob = new Blob([jsonString], { type: "application/json" });
+    // Canonical vendor MIME for .ttag interchange (importers still validate by
+    // content, never by MIME/extension) — see TigerSystem-Docs ttag-format spec.
+    const blob = new Blob([jsonString], { type: "application/vnd.tigertag.ttag+json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = filename;
@@ -13338,12 +14387,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (btn) btn.disabled = state.selectedSpools.size === 0;
   }
 
-  // The .ttag Export/Import bar buttons make sense only in the material
-  // inventory (table/grid) and never on a read-only friend view.
-  function _syncTtagBarButtons() {
+  // The inventory action-bar buttons (.ttag Export/Import, + From Catalogue)
+  // make sense only in the material inventory (table/grid) and never on a
+  // read-only friend view — they all write to the user's own inventory.
+  function _syncInvBarButtons() {
     const show = (state.viewMode === "table" || state.viewMode === "grid") && !state.friendView;
     $("btnInvExportTtag")?.classList.toggle("hidden", !show);
     $("btnInvImportTtag")?.classList.toggle("hidden", !show);
+    $("btnAddFromCatalogue")?.classList.toggle("hidden", !show);
     _syncTtagExportBtn();
   }
 
@@ -13361,7 +14412,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
          never overwrites your existing docs.
      ─────────────────────────────────────────────────────────────────────── */
   const TTAG_ID_PRODUCT_UNSET = 4294967295; // 0xFFFFFFFF — mirrors saveAddProduct
-  const TTAG_URL_FIELDS = ["url_img", "LinkYoutube", "LinkMSDS", "LinkTDS", "LinkROHS", "LinkREACH", "LinkFOOD"];
+  // Every file-supplied URL field. `url_img_user` belongs here too: it is a
+  // user-set image URL carried verbatim in the file, so without it a hostile
+  // scheme (javascript:, file://) would be written straight to Firestore — the
+  // render-time checks would hide it, but the stored data would already be bad.
+  const TTAG_URL_FIELDS = ["url_img", "url_img_user", "LinkYoutube", "LinkMSDS", "LinkTDS", "LinkROHS", "LinkREACH", "LinkFOOD"];
 
   // Validate the content marker. { ok } or { ok:false, error:<i18nKey> }.
   function _ttagValidate(obj) {
@@ -13406,6 +14461,31 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return String(doc && doc.uid != null ? doc.uid : "").trim();
   }
 
+  // ── Record contract — see docs/TTAG-FIELDS.md ─────────────────────────────
+  // Rule: everything written to the TigerTag chip is REQUIRED. A material must
+  // carry the full chip field set so a chipless TigerData can become a real
+  // TigerTag with no friction and nothing missing. A record that doesn't is
+  // REFUSED at import rather than landing half-formed data in the inventory.
+  const TTAG_REQUIRED_NUM = [
+    "id_brand", "id_material", "id_type", "id_aspect1", "id_aspect2",
+    "id_diameter", "id_measure_unit", "id_version", "id_tigertag", "id_product",
+    "measure", "color_r", "color_g", "color_b", "color_a",
+    "data1", "data2", "data3", "data4", "data5", "data6", "data7", "timestamp",
+  ];
+  // `null`/`""` must NOT pass: Number(null) and Number("") are 0, i.e. finite.
+  const _ttagNumOk = v => v != null && v !== "" && Number.isFinite(Number(v));
+  function _ttagRecordValid(doc) {
+    if (!doc || typeof doc !== "object") return false;
+    if (!_ttagRecordId(doc)) return false;                    // uid
+    return TTAG_REQUIRED_NUM.every(f => _ttagNumOk(doc[f]));
+  }
+  // A material is atomic: a twin pair passes only if BOTH sides do — a
+  // half-twin is not a material.
+  function _ttagMaterialValid(group) {
+    return !!group && Array.isArray(group.records) && group.records.length > 0
+      && group.records.every(_ttagRecordValid);
+  }
+
   function _ttagDetectMode(obj) {
     const owner = obj && obj.exportedBy ? String(obj.exportedBy) : null;
     return owner && owner === String(state.activeAccountId) ? "restore" : "import";
@@ -13432,7 +14512,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Build the Firestore write plan for accept. { writes:[{id,data}], backups:[{id,data}] }.
   function _ttagBuildWrites(obj, mode) {
     const FV = firebase.firestore.FieldValue;
-    const records = obj.records.map(_ttagSanitizeRecord);
+    // Sanitise, then enforce the contract again here — the preview already
+    // filters, this is the last line of defence before anything is written.
+    const records = obj.records.map(_ttagSanitizeRecord).filter(_ttagRecordValid);
     if (mode === "restore") {
       const writes = records
         .map(d => ({ id: _ttagRecordId(d), data: { ...d, updatedAt: FV.serverTimestamp(), deleted: null, deleted_at: null } }))
@@ -13775,7 +14857,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     } else {
       const files = payload.files;
       const allRecords = files.flatMap(f => f.obj.records);
-      const groups = _ttagGroupMaterials(allRecords);
+      // Enforce the record contract (docs/TTAG-FIELDS.md): a material missing
+      // any chip field never reaches the preview, so it can never be imported.
+      const allGroups = _ttagGroupMaterials(allRecords);
+      const groups = allGroups.filter(_ttagMaterialValid);
+      const rejected = allGroups.length - groups.length;
       payload.groups = groups;
       payload.excluded = new Set();   // record uids the user unchecked
       payload.mode = null;            // chosen add mode (null until a mode is picked)
@@ -13783,11 +14869,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (files.length > 1) summary += " · " + t("ttagFilesCount", { n: files.length });
       const skipLine = payload.skipped > 0
         ? `<div class="ttag-summary ttag-summary--warn">${esc(t("ttagSkipped", { n: payload.skipped }))}</div>` : "";
+      // Materials refused by the contract — told, never silently dropped.
+      const rejectLine = rejected > 0
+        ? `<div class="ttag-summary ttag-summary--warn">${esc(t("ttagRejected", { n: rejected }))}</div>` : "";
       // Every material starts checked; unchecking one keeps it out of the import.
       // The user CHOOSES the add mode too — nothing is decided by default.
       if (card) card.innerHTML =
         `<div class="ttag-summary" id="ttagSummaryLine">${esc(summary)}</div>
          ${skipLine}
+         ${rejectLine}
          <div class="ttag-list-wrap"><div class="ttag-list"><table class="ttag-table">
            <thead><tr>
              <th class="sel-th"><span class="sel-check sel-check--all" id="ttagSelAll" role="checkbox" tabindex="0" aria-label="${esc(t("bulkSelectMode"))}"></span></th>
@@ -14106,7 +15196,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("upgradePlusInput")?.addEventListener("keydown", e => { if (e.key === "Enter") _lookupPlusProduct(r); });
     $("upgradePlusConfirm")?.addEventListener("click", () => _convertToPlus(r));
     $("upgradePlusListBtn")?.addEventListener("click", () =>
-      window.electronAPI?.openExternal("https://tigertag.io/pages/public-material-list?page=1"));
+      window.electronAPI?.openExternal("https://tigersystem.io/fr/catalog"));
     $("upgradePlusHelpBtn")?.addEventListener("click", () =>
       $("productIdHelpOverlay")?.classList.add("open"));
 
@@ -14672,6 +15762,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const nextTb = tmp.querySelector(".panel-section--toolbox");
     if (curTb && nextTb) { curTb.replaceWith(nextTb); _hideToolInfoTip(); _wireToolbox(r); }
     else if (curTb && !nextTb) curTb.remove();
+    // Flags row (ⓘ / + / Shopping / ❤ / ★ / list) — every button in it is driven by
+    // a delegated handler, so a plain swap is enough. Needed so the Shopping button
+    // turns green the moment a buy link is added from the Reorder card.
+    const curFlags = body.querySelector(".pi-flags-row");
+    const nextFlags = tmp.querySelector(".pi-flags-row");
+    if (curFlags && nextFlags) curFlags.replaceWith(nextFlags);
     // "Price & buy" block — a plain price + link (no JS wiring) → swap / add / remove.
     const curBuy = body.querySelector(".det-buy");
     const nextBuy = tmp.querySelector(".det-buy");
@@ -14860,6 +15956,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   /* ── container picker ── */
   let _cpRow = null; // spool row currently being edited in the picker
+  let _cpFadeUpdate = null; // scroll-fade updater for the picker list (see _renderCpList)
 
   function openContainerPicker(r) {
     _cpRow = r;
@@ -14867,6 +15964,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("containerPickerSearch").value = "";
     $("containerPanel").classList.add("open");   // side card to the LEFT of the spool detail
     _syncPanels();                                // place the picker + close tabs
+    _cpFadeUpdate?.();                            // list was measured while hidden (height 0)
     setTimeout(() => $("containerPickerSearch").focus(), 120);
   }
   function closeContainerPicker() {
@@ -14887,7 +15985,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const byBrand = {};
     containers.forEach(c => { (byBrand[c.brand] = byBrand[c.brand] || []).push(c); });
     const currentId = _cpRow?.containerId;
-    const html = Object.entries(byBrand).map(([brand, items]) => `
+    // Alphabetical by brand. The groups used to come out in catalogue order — the
+    // order containers were ADDED to the file — so finding a brand in 30+ groups
+    // meant scanning the whole list. `numeric` so "3DXTECH" sorts as a number and
+    // `sensitivity: "base"` so case never decides the order (eSun vs ESUN).
+    // The generic containers stay PINNED at the top: they are the customizable
+    // catch-alls you fall back to when your spool's brand isn't listed, and they
+    // would be lost mid-list between Geeetech and GIANTARM. Keyed on `brandId == 0`
+    // — the same sentinel resolveContainerForBrand uses — not on the label.
+    const isGeneric = items => Number(items[0]?.brandId) === 0;
+    const groups = Object.entries(byBrand).sort(([aName, aItems], [bName, bItems]) =>
+      isGeneric(aItems) !== isGeneric(bItems)
+        ? (isGeneric(aItems) ? -1 : 1)
+        : aName.localeCompare(bName, undefined, { sensitivity: "base", numeric: true }));
+    const html = groups.map(([brand, items]) => `
       <div class="cp-group-label">${esc(brand)}</div>
       ${items.map(c => `
         <div class="cp-item${c.id === currentId ? " active" : ""}" data-cid="${esc(c.id)}" role="button" tabindex="0">
@@ -14902,6 +16013,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       `).join("")}
     `).join("");
     $("containerPickerList").innerHTML = html || `<div class="cp-empty">—</div>`;
+    // Scroll fade on both edges — .cp-list hides its scrollbar, so without it
+    // nothing says the 30+ groups continue past the fold. No sticky header inside
+    // the scroller (the brand labels scroll with the rows), so the top fade needs
+    // no offset. Re-called after every render: the list length changes with the
+    // search, and neither `scroll` nor a resize fires when only the content did.
+    _cpFadeUpdate = _wireScrollFade($("containerPickerList"), { top: true });
   }
 
   function _cpWeightRowHTML(c) {
@@ -15169,11 +16286,40 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      from a product/share record (label + price + buy link + SKU/EAN + ★/❤),
      never a real chip: no location, no RFID actions, no weight edit — the
      filament illustration is always full (100%). */
+  /* Same card, same data, wherever it is opened from ────────────────────────
+     `_renderProductCard` builds its material row from `p.cloudSeed`. The Search
+     views always hand it a full one (built from `product/get`), while a favorite
+     only carries whatever was captured the day it was starred — so the very same
+     product could look richer from Search than from Favorites. When a product
+     points at a real catalogue id, top its seed up from the catalogue so both
+     routes show the same thing.
+
+     The stored product is never mutated: the enriched seed goes into a COPY, so
+     nothing here can leak into a later Firestore write. Cached per product and
+     fetched only on open. */
+  async function _enrichProductCardFromCatalogue(p) {
+    const pid = Number(p?.cloudSeed?.id_product);
+    if (p?.catalogItem || !_hasRealProductId(pid)) return;   // already full, or nothing to look up
+    let api = _catDetailCache.get(String(pid));
+    if (!api) {
+      const res = await window.electronAPI?.lookupProduct?.(pid);
+      if (!res?.ok || !res.api) return;                      // offline / unknown id → keep what we had
+      api = res.api;
+      _catDetailCache.set(String(pid), api);
+    }
+    if (_productCardData !== p) return;                      // the user moved to another product
+    const seed = { ...p.cloudSeed, ..._catalogDocFromApi(api, pid, p.cloudSeed?.uid || "PRODUCT_" + pid) };
+    _renderProductCard({ ...p, cloudSeed: seed });
+  }
+
   function openProductCard(p) {
     if (!p) return;
     if ($("notifPanel")?.classList.contains("open")) closeNotifs();   // notif centre takes over the right — dismiss it
     _productCardData = p;
     _renderProductCard(p);
+    // Paints immediately from what we already hold, then tops the seed up from
+    // the catalogue if this product has one — never blocks the card opening.
+    _enrichProductCardFromCatalogue(p).catch(e => console.warn("[productCard] enrich:", e?.message));
     $("productCardPanel").classList.add("open");
     // An open "Product info" card must FOLLOW the product being shown, not keep
     // describing the previous one. Re-seeded in place (row + re-render) rather than
@@ -15227,7 +16373,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const _img = imgUrl ? resolvedImg(imgUrl) : null;
     const onerr = `this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`;
     const imgSection = _img
-      ? `<div class="panel-img-wrap"><img class="panel-img" src="${esc(_img)}" onerror="${esc(onerr)}" /></div>`
+      ? `<div class="panel-img-wrap" style="background:${colorBg(r)}"><img class="panel-img" src="${esc(_img)}" onerror="${esc(onerr)}" /></div>`
       : `<div class="panel-img-wrap"><div class="panel-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" class="panel-img-logo" /></div></div>`;
     // Identity — Brand · Series · Material on line 1, colour name on line 2.
     const brand = (r.brand && r.brand !== "-") ? r.brand : "";
@@ -15241,16 +16387,40 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // share's price/link/SKU-EAN. Same .flag-toggle look as the materials card.
     const mine  = state.products[p.id] || {};
     const liked = !!mine.liked, fav = !!mine.favorite;
-    // `productId` still drives the catalogue link row in the details below.
-    const _pcPid = Number(r.raw?.id_product);
-    const productId = (r.isPlus && _pcPid && _pcPid !== 4294967295) ? String(_pcPid) : "";
+    // `productId` drives the catalogue link row in the details below. Gated on
+    // the id being REAL (neither 0 nor 0xFFFFFFFF) and nothing else: a chip is
+    // not what makes a catalogue product identifiable. Keying this on `isPlus`
+    // hid the link for everything chipless that nonetheless carries a real id —
+    // a TigerData+, or a catalogue product previewed from the Search views.
+    const productId = _hasRealProductId(r.raw?.id_product) ? String(Number(r.raw.id_product)) : "";
     // Info button → opens the in-app reorder / To-order side-card for this product
     // (owner only). Not the external catalogue (that stays as a link in the details).
     const productInfoBtn = state.friendView ? ""
       : `<button type="button" class="flag-toggle flag-toggle--info pi-flag-info" data-pc-reorder data-tip="${esc(t("productInfoPage"))}" aria-label="${esc(t("productInfoPage"))}"><span class="icon icon-info icon-16"></span></button>`;
     // Product info FIRST — left-aligned via .pi-flag-info, the three toggles grouped
     // right, same split as the spool detail and grouped-spools cards.
-    const flagsHTML = `${productInfoBtn}
+    // "+ Material" — add a spool of this product to the inventory. Present on
+    // EVERY product card, wherever it was opened from: the card is the same
+    // object, so it offers the same action. Only the route differs — a catalogue
+    // preview has no spool to copy yet and goes through _catalogCreate (which
+    // fetches the product and mints a TigerData+), an owned/favorited product
+    // uses the app's existing _createCloudFromProduct. Owner-only.
+    const catAddBtn = state.friendView ? "" :
+      `<button type="button" class="flag-toggle flag-toggle--addmat pc-cat-add-btn"${
+        p.catalogItem ? ` data-cat-add="${esc(String(p.catalogItem.id))}"` : ` data-pc-addmat="1"`
+      } data-tip="${esc(t("productCreateCloudTip"))}" aria-label="${esc(t("productCreateCloud"))}"><span class="icon icon-plus icon-16"></span></button>`;
+    // Resolved here rather than further down: the shopping button in the flags
+    // row below reads it, and a `const` used before its declaration throws.
+    const buyUrl = (p.buyUrl || "").trim();
+    // Shopping — one button, two jobs, told apart by colour: GREEN when this
+    // product has a buy link (click opens the shop), plain when it has none
+    // (click drops you on the Reorder card's buy-link field). `icon-cart`, not
+    // the `icon-cart-plus` the to-order flag uses, so the two never read alike.
+    const buyBtn = state.friendView ? "" :
+      `<button type="button" class="flag-toggle flag-toggle--buy${buyUrl ? " is-buy" : ""}" data-pc-buy="1" data-tip="${
+        esc(buyUrl ? _buyHost(buyUrl) : t("reorderAddLink"))
+      }" aria-label="${esc(buyUrl ? _buyHost(buyUrl) : t("reorderAddLink"))}"><span class="icon icon-cart icon-16"></span></button>`;
+    const flagsHTML = `${productInfoBtn}${catAddBtn}${buyBtn}
       ${state.friendView ? "" : `<button type="button" class="flag-toggle flag-toggle--list js-add-to-list" data-atl-hash="${esc(p.id)}" data-tip="${esc(t("listAddTo"))}" aria-label="${esc(t("listAddTo"))}"><span class="icon icon-list-check icon-16"></span></button>`}
       <button type="button" class="flag-toggle flag-toggle--wish${liked ? " active" : ""}" data-pc-flag="liked" aria-pressed="${liked}" data-tip="${esc(t("productLikeTip"))}" aria-label="${esc(t("productLike"))}"><span class="icon icon-cart-plus icon-16"></span></button>
       <button type="button" class="flag-toggle flag-toggle--like${fav ? " active" : ""}" data-pc-flag="favorite" aria-pressed="${fav}" data-tip="${esc(t("productFavoriteTip"))}" aria-label="${esc(t("productFavorite"))}"><span class="icon icon-star${fav ? "-fill" : ""} icon-16"></span></button>`;
@@ -15337,13 +16507,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Product-specific extras: price + clickable buy link.
     const sym = _vatInfo().symbol;
     const priceHTML = _favePriceHTML(p.buyPriceHt, sym);
-    const buyUrl = (p.buyUrl || "").trim();
+    // (buyUrl is resolved above — the shopping button needs it first.)
     const sku = (r.sku || p.sku || "").toString().trim();
     const ean = (r.barcode || p.ean || "").toString().trim();
     // DÉTAILS — the identity/catalogue rows we HAVE (no Tag type / UID / Updated /
     // Manufactured / location — those are spool-specific and absent here).
     const detailRows = [
-      [t("detProductId"), productId, productId ? `https://tigertag.io/pages/product-infos/${productId}` : null],
+      [t("detProductId"), productId, productId ? `https://tigersystem.io/fr/catalog/${productId}` : null],
       [t("detType"),      r.productType],
       [t("detBrand"),     brand],
       [t("detSeries"),    series],
@@ -15366,6 +16536,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // from" + name). Works both ways: on your product it's who YOU imported from; on
     // a friend's, who THE FRIEND imported from (a third person).
     const fromHTML = _importedFromHTML(p);
+    // Result line for the "+ Material" action. Rendered for every card, not just
+    // catalogue previews: it is the same card and the same action, so it reports
+    // in the same place. Collapses to nothing while empty (CSS `:has(:empty)`).
+    const catalogAddHTML = state.friendView ? ""
+      : `<div class="panel-section pc-cat-add"><div class="pc-cat-msg" id="productCardCatMsg"></div></div>`;
     body.innerHTML = `
       ${imgSection}
       <div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>
@@ -15393,7 +16568,32 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       </div>` : ""}
       ${detailsHtml}
       ${fromHTML ? `<div class="pc-from-wrap">${fromHTML}</div>` : ""}
+      ${catalogAddHTML}
       <div class="pc-note">${esc(t("pcNoStock"))}</div>`;
+    // The add button lives inside a body that is rebuilt on every render, so the
+    // handler goes on the button we just wrote.
+    body.querySelector("[data-cat-add]")?.addEventListener("click", e => {
+      const id = Number(e.currentTarget.dataset.catAdd);
+      if (id) _catalogCreate(id);
+    });
+    body.querySelector("[data-pc-buy]")?.addEventListener("click", () => {
+      // Has a shop → go there. Has none → the Reorder card, already focused on
+      // the field that would create one, so the button always leads somewhere.
+      if (buyUrl) window.electronAPI?.openExternal?.(_normalizeBuyUrl(buyUrl));
+      else openReorderPanel(r, { editBuyLink: true });
+    });
+    // Owned / favorited product → the app's existing "+ Material" path, from the
+    // very row the card is already showing.
+    body.querySelector("[data-pc-addmat]")?.addEventListener("click", async e => {
+      const btn = e.currentTarget;
+      try {
+        setLoading(btn, true);
+        await _createCloudFromProduct(r);
+        _revealAddedSpool(_spoolGroupKey(r));
+      }
+      catch (err) { reportError("pc.createCloud", err); }
+      finally { setLoading(btn, false); }
+    });
   }
   // Toggle MY ★/❤ from the product card. Uses the EXACT same path as favoriting
   // from your own inventory (or a friend's material card): build the full material
@@ -16291,6 +17491,39 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (r) _toggleReorderPanel(r);
   });
 
+  // "+ Material" in the spool detail panel — same action as the product card's and
+  // the grouped-spools card's: add another spool of this material, then open the
+  // grouped-spools card on it so you SEE what you just created. Delegated for the
+  // same reason as the flags above (the row is swapped surgically on refresh).
+  document.addEventListener("click", async e => {
+    const btn = e.target.closest(".flag-toggle[data-dp-addmat]");
+    if (!btn) return;
+    const r = (state.rows || []).find(x => x.spoolId === state.selected);
+    if (!r) return;
+    try {
+      setLoading(btn, true);
+      await _createCloudFromProduct(r);
+      _revealAddedSpool(_spoolGroupKey(r));
+    }
+    catch (err) { reportError("detail.createCloud", err); }
+    finally { setLoading(btn, false); }
+  });
+
+  // Shopping in the spool detail panel — has a shop → go there; has none → the
+  // Reorder card, already focused on the field that would create one, so the
+  // button always leads somewhere.
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".flag-toggle[data-dp-buy]")) return;
+    const r = (state.rows || []).find(x => x.spoolId === state.selected);
+    if (!r) return;
+    // Friend view reads THEIR link, and only ever opens it — the "add a link"
+    // fallback writes to my own product through an owner-only card, so it must
+    // not fire here (the button isn't even rendered when they have no link).
+    const url = ((state.friendView ? _friendProductFor(r) : _getProduct(r))?.buyUrl || "").trim();
+    if (url) window.electronAPI?.openExternal?.(_normalizeBuyUrl(url));
+    else if (!state.friendView) openReorderPanel(r, { editBuyLink: true });
+  });
+
   function buildPanelHTML(r) {
     const mat = r.materialData;
 
@@ -16536,7 +17769,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // element = raw HTML cell.
       [t("detTagType"),       tierBadgeHTML(r), null, null, true],
       [t("detUid"),           r.uid],
-      [t("detProductId"),     _productId, null, _productId ? `https://tigertag.io/pages/product-infos/${_productId}` : null],
+      [t("detProductId"),     _productId, null, _productId ? `https://tigersystem.io/fr/catalog/${_productId}` : null],
       [t("detType"),          r.productType],
       [t("detBrand"),         r.brand],
       [t("detSeries"),        r.series],
@@ -16740,8 +17973,28 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Owner-only: a friend's product info card isn't reachable from their inventory.
     const infoBtn = state.friendView ? "" :
       `<button type="button" class="flag-toggle flag-toggle--info pi-flag-info" data-dp-reorder data-tip="${esc(t("productInfoPage"))}" aria-label="${esc(t("productInfoPage"))}"><span class="icon icon-info icon-16"></span></button>`;
+    // "+ Material" and Shopping — the exact same pair the product card and the
+    // grouped-spools card already carry, so the three cards offer the same actions
+    // for the same product. "+" adds another spool of THIS material to the
+    // inventory; Shopping is GREEN when the product has a buy link (click opens the
+    // shop) and plain when it has none (click lands on the Reorder card's link
+    // field). `icon-cart`, not the `icon-cart-plus` the To-order flag uses.
+    // Owner-only, like ⓘ.
+    // The shop button is worth having on a FRIEND's spool too — "where do I buy
+    // this?" is half the reason for looking at someone else's shelf — so there it
+    // reads the friend's OWN shared product (`_friendProductFor`), not mine. When
+    // that product has no link there is nothing to offer: the empty-state route is
+    // the Reorder card, which is owner-only, so the button is dropped rather than
+    // left leading nowhere. "+ Material" stays owner-only.
+    const dpBuyUrl = ((state.friendView ? _friendProductFor(r) : _getProduct(r))?.buyUrl || "").trim();
+    const dpAddBtn = state.friendView ? "" :
+      `<button type="button" class="flag-toggle flag-toggle--addmat" data-dp-addmat="1" data-tip="${esc(t("productCreateCloudTip"))}" aria-label="${esc(t("productCreateCloud"))}"><span class="icon icon-plus icon-16"></span></button>`;
+    const dpBuyBtn = (state.friendView && !dpBuyUrl) ? "" :
+      `<button type="button" class="flag-toggle flag-toggle--buy${dpBuyUrl ? " is-buy" : ""}" data-dp-buy="1" data-tip="${
+        esc(dpBuyUrl ? _buyHost(dpBuyUrl) : t("reorderAddLink"))
+      }" aria-label="${esc(dpBuyUrl ? _buyHost(dpBuyUrl) : t("reorderAddLink"))}"><span class="icon icon-cart icon-16"></span></button>`;
     const flagsRow = !r.deleted
-      ? `<div class="panel-section pi-flags-row"><div class="pi-flags">${infoBtn}${_flagTogglesHTML(r)}</div></div>` : "";
+      ? `<div class="panel-section pi-flags-row"><div class="pi-flags">${infoBtn}${dpAddBtn}${dpBuyBtn}${_flagTogglesHTML(r)}</div></div>` : "";
     const identityHtml = `
       <div class="panel-section panel-identity">
         <div class="pi-ident-text">
@@ -17495,7 +18748,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   const _closePidHelp = () => $("productIdHelpOverlay")?.classList.remove("open");
   $("productIdHelpOverlay")?.addEventListener("click", e => { if (e.target === $("productIdHelpOverlay")) _closePidHelp(); });
   $("productIdHelpListBtn")?.addEventListener("click", () => {
-    window.electronAPI?.openExternal("https://tigertag.io/pages/public-material-list?page=1");
+    window.electronAPI?.openExternal("https://tigersystem.io/fr/catalog");
     _closePidHelp();
   });
   $("btnDiagCopy")?.addEventListener("click", async () => {
@@ -19594,6 +20847,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     applyPrinterFilter(); // honour an active search on rebuild
     _syncSelAllHeader();  // reflect selection on the header master checkbox
+    // Printers — the grid and the cam wall scroll in the view itself. The TABLE
+    // never gets here (renderPrintersView returns early for it) and wires its own
+    // `.pt-wrap` scroller from inside _renderPrinterTable.
+    _wireScrollFade($("invPrinterView"), { top: true });
   }
 
   // Does a printer match the current search query? Matches on name, brand label,
@@ -19881,6 +21138,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
 
     applyPrinterFilter(); // honour an active search on rebuild
+    // Wired HERE, not in renderPrintersView: that function returns early for
+    // this mode, so its own wiring never runs. The table scrolls in `.pt-wrap`,
+    // whose sticky header is the <thead> itself (`.pt-head`).
+    _wireScrollFade(host.querySelector(".pt-wrap"), { top: true });
   }
 
   // ── Serialize online cameras for the detached cam window ────────────────
@@ -26064,7 +27325,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // A friend's inventory is read-only — hide the write action (Add product /
     // Add device) since it can't act on a friend's docs.
     $("btnAddProduct")?.classList.toggle("hidden", !!state.friendView);
-    _syncTtagBarButtons();   // hide the .ttag Export/Import bar on a friend view
+    _syncInvBarButtons();   // hide the .ttag Export/Import bar on a friend view
     // The cam-wall "Detach" button is meaningless in a friend view (no cameras) —
     // force-hide it here so it can never linger from a prior cam session.
     if (state.friendView) { const _d = $("camWallDetachTop"); if (_d) _d.hidden = true; }
@@ -26075,6 +27336,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // meaningless here — hide the whole group + its separator in friend view.
     $("vtgPrinters")?.classList.toggle("hidden", !!state.friendView);
     $("vtgSep")?.classList.toggle("hidden", !!state.friendView);
+    // Search browses the catalogue in order to ADD a spool — to YOUR inventory. On
+    // a friend's shelf every write is off-limits and the segment would be an offer
+    // the view can't honour, so the whole group + its separator go, like Printers.
+    $("vtgCatalog")?.classList.toggle("hidden", !!state.friendView);
+    $("vtgSepCatalog")?.classList.toggle("hidden", !!state.friendView);
     // Favorites (the viewer's OWN records) stay available in a friend view — you
     // can flip to your favorites grid/table while browsing a friend's shelf. But
     // "To order" is a reorder action on YOUR owned stock, meaningless here → hide
@@ -26085,6 +27351,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // If we somehow land in the hidden "To order" view when entering a friend,
     // fall back to the favorites grid.
     if (state.friendView && state.viewMode === "order") setViewMode("favesGrid", { persist: false });
+    // Same guard for Search: entering a friend's shelf while it is open would leave
+    // the view showing with no way back to it once its buttons are hidden.
+    if (state.friendView && _isCatalogMode(state.viewMode)) setViewMode("grid", { persist: false });
     if (!banner) return;
     // ─── Friend view ───────────────────────────────────────────────
     if (state.friendView) {
@@ -26622,7 +27891,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Support the project → open the official goodies shop in the browser
   // (mirrors the sidebar Shop button).
   $("btnGoodiesShop")?.addEventListener("click", () =>
-    window.electronAPI?.openExternal("https://tigertag.io/collections/tigertag-rfid-maker"));
+    window.electronAPI?.openExternal("https://shop.tigersystem.io/collections/tigertag-rfid-maker"));
 
   // Live search filter
   $("fpSearch")?.addEventListener("input", () => renderFriendsList());

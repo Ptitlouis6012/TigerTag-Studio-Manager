@@ -440,9 +440,17 @@
     min-width: 0;
   }
   .top-stats::-webkit-scrollbar { height: 0; }
+  /* Every card keeps the SAME two-line shape whatever the bar's width. `flex: 1 1 0`
+     alone let a card be squeezed below its own content, so a long label ("Valeur du
+     stock ⓘ") wrapped onto a second line and that one card grew taller than its
+     neighbours. `min-width: fit-content` is the floor — a card grows to share the
+     space but never shrinks under its text — and `nowrap` keeps the figure, its
+     HT/TTC suffix and the label each on one line. Past that floor the whole bar
+     scrolls horizontally (.top-stats is already `overflow-x: auto`), which is the
+     right trade: a bar that scrolls beats a row of cards with ragged heights. */
   .top-stats .sb-stat {
     flex: 1 1 0;
-    min-width: 96px;
+    min-width: fit-content;
     padding: 8px 14px;
     background: var(--surface-2);
     border: 1px solid var(--border);
@@ -459,6 +467,7 @@
     color: var(--text);
     margin-top: 0;
     line-height: 1.1;
+    white-space: nowrap;
   }
   .top-stats .sb-stat .label {
     font-size: 10px;
@@ -467,6 +476,7 @@
     letter-spacing: .05em;
     line-height: 1.2;
     margin-top: 2px;
+    white-space: nowrap;
   }
   /* HT / TTC qualifier, sitting to the RIGHT of the stock-value figure — a quiet
      suffix on the price line, not on the label below. Smaller and muted so it
@@ -764,4 +774,46 @@
     50%      { box-shadow: 0 0 0 3px var(--danger-soft); }
   }
   .field-bump { animation: fieldBump 240ms ease; }
+}
+
+/* ── Scroll fade (a.k.a. "scroll shadow" / fade scrim) ─────────────────────
+   Tells the user there is more content below in a scroller whose scrollbar we
+   hide. Wired by `_wireScrollFade()`, which toggles `.can-down` (and
+   `.can-up`, opt-in) from the scroll position.
+
+   Done as a MASK on the scroller itself, not as a coloured overlay on a
+   wrapper (the way the .ttag import list does it):
+     • a mask is relative to the element's own box, so it does not scroll away
+       with the content — no wrapper element needed anywhere;
+     • it fades to TRANSPARENT, so it works on any background instead of
+       having to match a hard-coded surface colour.
+   The top fade is opt-in because a sticky <thead> already covers that edge —
+   fading it would dim the header itself. */
+.scroll-fade { --sf-size: 28px; }
+.scroll-fade.can-down {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - var(--sf-size)), transparent);
+          mask-image: linear-gradient(to bottom, #000 calc(100% - var(--sf-size)), transparent);
+}
+/* The top fade starts BELOW any sticky header: `--sf-top-offset` is set from JS
+   to that header's height, so the header itself stays crisp while the content
+   sliding under it fades. The hard stop at the offset lands exactly on the
+   header's bottom border, so it reads as the border, not as a seam.
+   Offset 0 (no sticky header, e.g. the grid) degrades to a plain top fade. */
+.scroll-fade.can-up.sf-top {
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 var(--sf-top-offset, 0px), transparent var(--sf-top-offset, 0px),
+    #000 calc(var(--sf-top-offset, 0px) + var(--sf-size)));
+          mask-image: linear-gradient(to bottom,
+    #000 var(--sf-top-offset, 0px), transparent var(--sf-top-offset, 0px),
+    #000 calc(var(--sf-top-offset, 0px) + var(--sf-size)));
+}
+.scroll-fade.can-up.can-down.sf-top {
+  -webkit-mask-image: linear-gradient(to bottom,
+    #000 var(--sf-top-offset, 0px), transparent var(--sf-top-offset, 0px),
+    #000 calc(var(--sf-top-offset, 0px) + var(--sf-size)),
+    #000 calc(100% - var(--sf-size)), transparent);
+          mask-image: linear-gradient(to bottom,
+    #000 var(--sf-top-offset, 0px), transparent var(--sf-top-offset, 0px),
+    #000 calc(var(--sf-top-offset, 0px) + var(--sf-size)),
+    #000 calc(100% - var(--sf-size)), transparent);
 }
