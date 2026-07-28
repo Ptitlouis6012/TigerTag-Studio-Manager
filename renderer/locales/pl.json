@@ -1494,5 +1494,6 @@
   "catalogCount": "{{n}} z {{total}} produktów",
   "catalogCreateOk": "Dodano — {{name}}. Nic do wpisywania.",
   "catalogCreateError": "Ta nie przeszła. Spróbuj jeszcze raz.",
-  "catalogAdd": "Dodaj do mojego magazynu"
+  "catalogAdd": "Dodaj do mojego magazynu",
+  "bulkHiddenWarn": "[object Object]"
 }

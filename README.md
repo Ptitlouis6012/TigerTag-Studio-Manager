@@ -114,6 +114,8 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **TigerData** — create fully-digital spools with no chip; promote to a real chip later, atomically
 - **TigerData+** *(new in 2.15.0)* — a fully-digital spool that is nonetheless tied to a **real product in the official catalogue**: the exact brand, colour, material, temperatures, diameter, SKU and EAN, straight from the source instead of from whatever you typed. No chip to buy, nothing to stick on — and it is not a TigerTag+, so it carries its own badge and never pretends to be one
 - **Catalogue search** *(new in 2.15.0)* — browse the whole official TigerTag+ catalogue from inside the app, in grid or list, filtered by type, brand, series and material. Pick a product to see its real spec sheet, then add it as a TigerData+ in one click, already filled in. The catalogue is downloaded once and searched locally, so it is instant and works offline
+- **The catalogue travels with the app** *(new in 2.16.0)* — around 3 000 filaments ship inside the installer, so search works on the very first launch, offline, without waiting for a download. It still refreshes itself in the background
+- **Spools that keep themselves current** *(new in 2.16.0)* — when a brand corrects a temperature, a diameter or a colour name, the spools you own follow along on their own. Only a TigerTag+ can ever ask you for anything, and only when the change concerns something written on the chip itself
 - Custom product image for DIY & Cloud spools
 - Manufacturing date, twin-tag detection and manual repair
 - Spool toolbox — scan color (TD1S), scan TD, link twin, remove from rack, delete

@@ -7152,5 +7152,160 @@
         }
       }
     ]
+  },
+  "2.16.0": {
+    "date": "2026-07-28",
+    "items": [
+      {
+        "icon": "shield",
+        "title": {
+          "en": "Your chipless spools stay whole",
+          "fr": "Vos bobines sans puce restent intactes",
+          "de": "Deine Spulen ohne Chip bleiben vollständig",
+          "es": "Tus bobinas sin chip siguen intactas",
+          "it": "Le bobine senza chip restano intatte",
+          "zh": "无芯片线材信息完整无缺",
+          "pt": "Suas bobinas sem chip continuam intactas",
+          "pt-pt": "As suas bobinas sem chip ficam intactas",
+          "pl": "Twoje szpule bez chipa pozostają kompletne"
+        },
+        "body": {
+          "en": "A spool without a chip could quietly lose its brand, colour and weight and turn into a blank. That can't happen any more. If you're already looking at a pile of empty spools, tell us — we can say exactly what was in it.",
+          "fr": "Une bobine sans puce pouvait perdre discrètement sa marque, sa couleur et son poids et se retrouver vierge. Ça n'arrivera plus. Si vous avez déjà une pile de bobines vides sous les yeux, dites-le-nous — on sait exactement ce qu'il y avait dedans.",
+          "de": "Eine Spule ohne Chip konnte still und leise Marke, Farbe und Gewicht verlieren und leer dastehen. Das passiert nicht mehr. Wer schon auf einen Stapel leerer Spulen schaut: meldet euch — wir wissen genau, was drin war.",
+          "es": "Una bobina sin chip podía perder en silencio su marca, su color y su peso y quedarse en blanco. Ya no puede pasar. Si ya tienes delante un montón de bobinas vacías, dínoslo: sabemos exactamente qué había.",
+          "it": "Una bobina senza chip poteva perdere in silenzio marca, colore e peso e restare vuota. Non può più succedere. Se hai già davanti una pila di bobine vuote, scrivici: sappiamo esattamente cosa c'era.",
+          "zh": "没有芯片的线材曾会悄悄丢失品牌、颜色和重量，变成一片空白。现在不会了。如果你已经看到一堆空白线材，告诉我们——我们清楚里面原本是什么。",
+          "pt": "Uma bobina sem chip podia perder em silêncio a marca, a cor e o peso e ficar em branco. Isso não acontece mais. Se você já está olhando para uma pilha de bobinas vazias, fale com a gente — sabemos exatamente o que havia ali.",
+          "pt-pt": "Uma bobina sem chip podia perder em silêncio a marca, a cor e o peso e ficar em branco. Já não acontece. Se já está a olhar para uma pilha de bobinas vazias, diga-nos — sabemos exactamente o que lá estava.",
+          "pl": "Szpula bez chipa mogła po cichu stracić markę, kolor i wagę i zostać pusta. Już się to nie zdarzy. Jeśli patrzysz właśnie na stos pustych szpul, napisz do nas — wiemy dokładnie, co w nim było."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "The catalogue is already there",
+          "fr": "Le catalogue est déjà là",
+          "de": "Der Katalog ist schon da",
+          "es": "El catálogo ya está ahí",
+          "it": "Il catalogo è già lì",
+          "zh": "目录早就在里面了",
+          "pt": "O catálogo já está aí",
+          "pt-pt": "O catálogo já lá está",
+          "pl": "Katalog już tu jest"
+        },
+        "body": {
+          "en": "Three thousand filaments, packed in the box. Search works the second you open the app — first launch, no connection, no waiting for a download that hasn't finished.",
+          "fr": "Trois mille filaments, livrés dans la boîte. La recherche marche à la seconde où vous ouvrez l'app — dès le premier lancement, sans connexion, sans attendre un téléchargement qui traîne.",
+          "de": "Dreitausend Filamente, direkt mitgeliefert. Die Suche läuft in der Sekunde, in der du die App öffnest — beim allerersten Start, ohne Verbindung, ohne auf einen Download zu warten.",
+          "es": "Tres mil filamentos, incluidos en la caja. La búsqueda funciona en cuanto abres la app: desde el primer arranque, sin conexión y sin esperar a ninguna descarga.",
+          "it": "Tremila filamenti, già nella scatola. La ricerca funziona nel secondo in cui apri l'app — al primo avvio, senza connessione, senza aspettare nessun download.",
+          "zh": "三千种线材，直接装在包里。打开应用的那一秒搜索就能用——首次启动、没有网络、也不用等下载。",
+          "pt": "Três mil filamentos, já dentro da caixa. A busca funciona no segundo em que você abre o app — logo no primeiro início, sem conexão e sem esperar download nenhum.",
+          "pt-pt": "Três mil filamentos, já dentro da caixa. A pesquisa funciona no segundo em que abre a app — logo no primeiro arranque, sem ligação e sem esperar por descarregamento nenhum.",
+          "pl": "Trzy tysiące filamentów, prosto z pudełka. Wyszukiwarka działa w sekundzie, w której otwierasz aplikację — przy pierwszym uruchomieniu, bez sieci i bez czekania na pobieranie."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "en": "Your spools do their own homework",
+          "fr": "Vos bobines révisent toutes seules",
+          "de": "Deine Spulen halten sich selbst aktuell",
+          "es": "Tus bobinas se ponen al día solas",
+          "it": "Le tue bobine si aggiornano da sole",
+          "zh": "你的线材会自己做功课",
+          "pt": "Suas bobinas se atualizam sozinhas",
+          "pt-pt": "As suas bobinas actualizam-se sozinhas",
+          "pl": "Twoje szpule odrabiają lekcje same"
+        },
+        "body": {
+          "en": "A brand corrects a temperature, a diameter, a colour name — and the spools you own quietly follow. Nothing to press, nothing to check.",
+          "fr": "Une marque corrige une température, un diamètre, un nom de couleur — et vos bobines suivent sans faire de bruit. Rien à cliquer, rien à vérifier.",
+          "de": "Eine Marke korrigiert eine Temperatur, einen Durchmesser, einen Farbnamen — und deine Spulen ziehen still nach. Nichts zu drücken, nichts zu prüfen.",
+          "es": "Una marca corrige una temperatura, un diámetro, el nombre de un color — y tus bobinas lo siguen sin hacer ruido. Nada que pulsar, nada que revisar.",
+          "it": "Un marchio corregge una temperatura, un diametro, il nome di un colore — e le tue bobine seguono in silenzio. Niente da premere, niente da controllare.",
+          "zh": "品牌改了温度、直径或颜色名称，你手上的线材就悄悄跟上。不用点，也不用查。",
+          "pt": "Uma marca corrige uma temperatura, um diâmetro, o nome de uma cor — e suas bobinas acompanham sem alarde. Nada para clicar, nada para conferir.",
+          "pt-pt": "Uma marca corrige uma temperatura, um diâmetro, o nome de uma cor — e as suas bobinas acompanham sem alarido. Nada para clicar, nada para verificar.",
+          "pl": "Marka poprawia temperaturę, średnicę, nazwę koloru — a twoje szpule po cichu nadążają. Nic do klikania, nic do sprawdzania."
+        }
+      },
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "We'll only send you to the reader when it counts",
+          "fr": "On ne vous envoie au lecteur que quand ça compte",
+          "de": "Zum Lesegerät schicken wir dich nur, wenn es zählt",
+          "es": "Solo te mandamos al lector cuando hace falta",
+          "it": "Ti mandiamo al lettore solo quando serve",
+          "zh": "只有真有必要才请你去读写器那边",
+          "pt": "Só mandamos você ao leitor quando vale a pena",
+          "pt-pt": "Só o mandamos ao leitor quando vale a pena",
+          "pl": "Do czytnika wysyłamy cię tylko wtedy, gdy ma to sens"
+        },
+        "body": {
+          "en": "A TigerTag+ used to ask for a re-write over things the chip never carried — a product being renamed, for instance. Now it only asks when something actually written on the chip has moved.",
+          "fr": "Un TigerTag+ réclamait une réécriture pour des choses que la puce ne porte même pas — un produit renommé, par exemple. Désormais il ne le demande que si quelque chose d'écrit sur la puce a vraiment bougé.",
+          "de": "Ein TigerTag+ verlangte ein Neuschreiben für Dinge, die gar nicht auf dem Chip stehen — etwa ein umbenanntes Produkt. Jetzt fragt er nur noch, wenn sich wirklich etwas auf dem Chip geändert hat.",
+          "es": "Un TigerTag+ pedía reescribir por cosas que el chip ni siquiera guarda — un producto renombrado, por ejemplo. Ahora solo lo pide si ha cambiado algo escrito de verdad en el chip.",
+          "it": "Un TigerTag+ chiedeva una riscrittura per cose che il chip nemmeno contiene — un prodotto rinominato, per dire. Ora lo chiede solo se è cambiato davvero qualcosa scritto sul chip.",
+          "zh": "以前 TigerTag+ 会为芯片根本没存的东西要求重写，比如产品改了个名。现在只有芯片上真正写着的内容变了才会提醒你。",
+          "pt": "Um TigerTag+ pedia regravação por coisas que o chip nem guarda — um produto renomeado, por exemplo. Agora só pede quando algo realmente escrito no chip mudou.",
+          "pt-pt": "Um TigerTag+ pedia regravação por coisas que o chip nem guarda — um produto renomeado, por exemplo. Agora só pede quando algo realmente escrito no chip mudou.",
+          "pl": "TigerTag+ prosił o ponowny zapis przez rzeczy, których chip w ogóle nie przechowuje — na przykład zmianę nazwy produktu. Teraz pyta tylko wtedy, gdy zmieniło się coś naprawdę zapisanego na chipie."
+        }
+      },
+      {
+        "icon": "cart",
+        "title": {
+          "en": "\"To order\" moved in with your lists",
+          "fr": "« À commander » a emménagé avec vos listes",
+          "de": "„Zu bestellen\" ist zu deinen Listen gezogen",
+          "es": "«Por pedir» se ha mudado con tus listas",
+          "it": "«Da ordinare» ha traslocato con le tue liste",
+          "zh": "「待购」搬去和清单住一起了",
+          "pt": "\"A encomendar\" mudou-se para junto das suas listas",
+          "pt-pt": "\"A encomendar\" mudou-se para junto das suas listas",
+          "pl": "„Do zamówienia\" przeprowadziło się do twoich list"
+        },
+        "body": {
+          "en": "Favorites is what you own. Lists is what you're about to buy — which is exactly what the to-order cart is. They finally share a shelf.",
+          "fr": "Les favoris, c'est ce que vous avez. Les listes, c'est ce que vous allez acheter — précisément le rôle du panier à commander. Ils partagent enfin la même étagère.",
+          "de": "Favoriten ist, was du hast. Listen ist, was du kaufen willst — genau das ist der Bestellkorb. Endlich teilen sie sich ein Regal.",
+          "es": "Favoritos es lo que tienes. Listas es lo que vas a comprar — que es justo lo que hace el carrito por pedir. Por fin comparten estante.",
+          "it": "I preferiti sono ciò che hai. Le liste sono ciò che stai per comprare — esattamente il ruolo del carrello da ordinare. Finalmente condividono lo scaffale.",
+          "zh": "收藏是你已经有的，清单是你打算买的——待购清单本来就属于后者。现在它们终于放在同一层架子上。",
+          "pt": "Favoritos é o que você tem. Listas é o que você vai comprar — que é exatamente o papel do carrinho a encomendar. Enfim dividem a mesma prateleira.",
+          "pt-pt": "Favoritos é o que tem. Listas é o que vai comprar — que é exactamente o papel do carrinho a encomendar. Finalmente partilham a mesma prateleira.",
+          "pl": "Ulubione to, co masz. Listy to, co zamierzasz kupić — a koszyk „do zamówienia\" jest właśnie tym. Wreszcie stoją na tej samej półce."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Two-colour spools stop flipping sides",
+          "fr": "Les bobines bicolores arrêtent de changer de côté",
+          "de": "Zweifarbige Spulen wechseln nicht mehr die Seite",
+          "es": "Las bobinas de dos colores dejan de cambiar de lado",
+          "it": "Le bobine bicolore smettono di invertirsi",
+          "zh": "双色线材不再左右颠倒",
+          "pt": "Bobinas de duas cores param de trocar de lado",
+          "pt-pt": "As bobinas de duas cores deixam de trocar de lado",
+          "pl": "Dwukolorowe szpule przestają zamieniać się stronami"
+        },
+        "body": {
+          "en": "A red-and-blue spool could show up red-on-the-left in one place and blue-on-the-left in another. Every view, thumbnail and preview now draws it the same way — and rainbows finally lean the same direction too.",
+          "fr": "Une bobine rouge et bleue pouvait apparaître rouge à gauche ici et bleue à gauche là. Toutes les vues, vignettes et aperçus la dessinent désormais pareil — et les arcs-en-ciel penchent enfin dans le même sens.",
+          "de": "Eine rot-blaue Spule konnte hier rot links und dort blau links erscheinen. Jede Ansicht, jedes Vorschaubild zeichnet sie jetzt gleich — und Regenbögen neigen sich endlich in dieselbe Richtung.",
+          "es": "Una bobina roja y azul podía salir con el rojo a la izquierda aquí y el azul a la izquierda allá. Ahora todas las vistas, miniaturas y vistas previas la dibujan igual — y los arcoíris por fin se inclinan igual.",
+          "it": "Una bobina rossa e blu poteva comparire con il rosso a sinistra qui e il blu a sinistra là. Ora ogni vista, miniatura e anteprima la disegna allo stesso modo — e gli arcobaleni finalmente pendono nello stesso verso.",
+          "zh": "一卷红蓝线材，可能这里红色在左、那里蓝色在左。现在所有视图、缩略图和预览都画得一模一样——彩虹的倾斜方向也终于统一了。",
+          "pt": "Uma bobina vermelha e azul podia aparecer com o vermelho à esquerda aqui e o azul à esquerda ali. Agora toda vista, miniatura e prévia desenha do mesmo jeito — e os arco-íris enfim inclinam para o mesmo lado.",
+          "pt-pt": "Uma bobina vermelha e azul podia aparecer com o vermelho à esquerda aqui e o azul à esquerda ali. Agora todas as vistas, miniaturas e pré-visualizações desenham igual — e os arco-íris finalmente inclinam para o mesmo lado.",
+          "pl": "Czerwono-niebieska szpula mogła tu mieć czerwony po lewej, a tam niebieski. Teraz każdy widok, miniatura i podgląd rysują ją tak samo — a tęcze wreszcie pochylają się w tę samą stronę."
+        }
+      }
+    ]
   }
 }

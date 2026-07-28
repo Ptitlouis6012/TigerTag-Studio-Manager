@@ -180,6 +180,39 @@ for (const file of ["README.md", "llms.txt", "CLAUDE.md", "AGENT.md"]) {
   }
 }
 
+// ── The on-chip field set must match the ratified contract ──────────────
+// `TTAG_ON_CHIP_FIELDS` decides whether a record change makes a physical chip
+// stale — i.e. whether the user is asked to re-burn one. The truth is the
+// `On chip` column of docs/TTAG-FIELDS.md, which is generated from the founder's
+// editor; the renderer mirrors it because it cannot parse Markdown at runtime.
+// Drift is silent and costly in BOTH directions: a field wrongly listed sends
+// people to the reader for nothing, a field wrongly missing lets a chip go stale
+// unnoticed. So it is checked rather than trusted.
+{
+  const contractPath = "docs/TTAG-FIELDS.md";
+  const md = existsSync(join(root, contractPath)) ? read(contractPath) : null;
+  const inv = read("renderer/inventory.js");
+  if (md && inv) {
+    const doc = [...md.matchAll(/^\| `([a-z0-9_]+)` \| [^|]* \| \*\*yes\*\* \|/gm)].map(m => m[1]).sort();
+    const listed = /const TTAG_ON_CHIP_FIELDS = \[([\s\S]*?)\];/.exec(inv);
+    if (!listed) {
+      fail("renderer/inventory.js", "declares TTAG_ON_CHIP_FIELDS", "the constant was not found",
+           "restore it, or drop this check if the design changed");
+    } else {
+      const code = [...listed[1].matchAll(/"([a-z0-9_]+)"/g)].map(m => m[1]).sort();
+      const missing = doc.filter(f => !code.includes(f));
+      const extra = code.filter(f => !doc.includes(f));
+      if (missing.length || extra.length) {
+        fail("renderer/inventory.js",
+             `TTAG_ON_CHIP_FIELDS matches the 'On chip' column of ${contractPath}`,
+             [missing.length ? `missing: ${missing.join(", ")}` : "",
+              extra.length ? `not on chip per the contract: ${extra.join(", ")}` : ""].filter(Boolean).join("; "),
+             "align the constant with the contract — regenerate the contract from playground/ttag-fields-editor if IT is what changed");
+      }
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 if (!issues.length) {
   console.log(`[docs-check] OK — llms.txt, FEATURES.md and doc paths match the source (v${version}, ${invLines} renderer lines, ${brands.length} brands, ${i18nKeys} i18n keys).`);

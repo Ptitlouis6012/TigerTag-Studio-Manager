@@ -205,15 +205,18 @@
               <span class="view-toggle-ind" aria-hidden="true"></span>
               <button id="btnViewFavesGrid" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
               <button id="btnViewFavesTable" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
-              <button id="btnViewOrder" data-i18n-aria="btnViewOrder"><span class="icon icon-cart icon-13"></span><span class="view-order-badge" id="viewOrderBadge" hidden>0</span></button>
             </div>
           </div>
           <span class="vtg-sep" id="vtgSepLists" aria-hidden="true"></span>
+          <!-- Lists holds BOTH ways of planning a purchase: the wishlists you curate,
+               and the To-order cart they feed. "To order" used to sit with Favorites,
+               which describes what you OWN — a different question entirely. -->
           <div class="vtg-group" id="vtgLists">
             <span class="vtg-label"><span data-i18n="viewGroupLists">Lists</span></span>
             <div class="view-toggle">
               <span class="view-toggle-ind" aria-hidden="true"></span>
               <button id="btnViewLists" data-i18n-aria="viewGroupLists"><span class="icon icon-list-check icon-13"></span><span class="view-order-badge view-lists-badge" id="viewListsBadge" hidden>0</span></button>
+              <button id="btnViewOrder" data-i18n-aria="btnViewOrder"><span class="icon icon-cart icon-13"></span><span class="view-order-badge" id="viewOrderBadge" hidden>0</span></button>
             </div>
           </div>
           <span class="vtg-sep" id="vtgSep" aria-hidden="true"></span>
@@ -431,6 +434,10 @@
             <span class="icon icon-close icon-13"></span>
           </button>
         </div>
+        <!-- Filtering does NOT clear the selection, so the count can describe rows the
+             table no longer shows. Saying so is what stops a "Delete (143)" fired
+             from a one-row view. Hidden whenever the whole selection is visible. -->
+        <span id="bulkHidden" class="bulk-hidden hidden"></span>
         <button id="bulkDelete" class="bulk-btn bulk-btn--danger" type="button">
           <span class="hold-progress"></span>
           <span class="icon icon-trash icon-13"></span>

@@ -1261,7 +1261,7 @@
   "toolRemoveFromRackTip": "Takes this spool out of its storage slot — it stays in your inventory.",
   "encodeCloudTip": "Writes this cloud material onto the blank chip on your reader — it becomes a real TigerTag.",
   "burnRfidTip": "Writes this material onto a chip sitting on your reader.",
-  "toolRefreshApiTip": "Pulls the latest catalog info for this TigerTag+ (picture, specs…).",
+  "toolRefreshApiTip": "Pulls the latest catalogue info for this TigerTag+ (picture, specs…).",
   "snapPaxxUpdate": "A newer firmware is available — download it just above.",
   "snapPaxxUpToDate": "This printer is on the latest firmware. Nothing to do.",
   "snapPaxxStep1Title": "Recommended firmware",
@@ -1495,5 +1495,6 @@
   "catalogCount": "{{n}} of {{total}} products",
   "catalogCreateOk": "Added — {{name}}. Nothing left to type.",
   "catalogCreateError": "That one did not make it. Give it another go.",
-  "catalogAdd": "Add to my inventory"
+  "catalogAdd": "Add to my inventory",
+  "bulkHiddenWarn": "[object Object]"
 }

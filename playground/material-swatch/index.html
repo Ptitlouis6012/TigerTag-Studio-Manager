@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Color swatch matrix — every spool-colour surface × every colour case</title>
+
+<!-- The REAL app stylesheets, in the same order as inventory.html. What you see
+     here is styled by the shipped CSS, not by a copy of it. -->
+<link rel="stylesheet" href="../../renderer/css/00-base.css" />
+<link rel="stylesheet" href="../../renderer/css/30-racks.css" />
+<link rel="stylesheet" href="../../renderer/css/60-modals.css" />
+<link rel="stylesheet" href="../../renderer/css/70-detail-misc.css" />
+
+<style>
+  /* Page chrome only — nothing here styles a swatch.
+     00-base.css locks html/body to 100% + overflow:hidden (the app is a fixed
+     shell); this is a long document, so give it back its scroll and its text
+     selection so the produced CSS can be copied. */
+  html, body { height: auto; overflow: visible; }
+  body { padding: 24px 28px 80px; display: block; -webkit-user-select: text; user-select: text; }
+  h1 { font-size: 19px; margin: 0 0 4px; }
+  .intro { color: var(--muted); font-size: 12.5px; max-width: 900px; line-height: 1.55; margin: 0 0 4px; }
+  .intro code { font-family: var(--mono, ui-monospace); font-size: 11.5px; color: var(--primary); }
+  .legend { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 12px; }
+  .legend span { font-size: 11px; padding: 3px 9px; border-radius: 99px; border: 1px solid var(--border); color: var(--muted); }
+  .legend .new { border-color: #f0a020; color: #f0a020; }
+
+  /* Jump index — 17 cases is more than fits on a screen. */
+  .toc { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px;
+         padding: 10px 0 12px; margin-bottom: 10px; background: var(--bg); border-bottom: 1px solid var(--border); }
+  .toc a { font-size: 11px; text-decoration: none; padding: 3px 9px; border-radius: 99px;
+           border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+  .toc a:hover { border-color: var(--primary); color: var(--primary); }
+  .toc a.new { border-color: #f0a020; color: #f0a020; font-weight: 600; }
+  .case { scroll-margin-top: 62px; }
+
+  .case { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .case.is-new { border-color: #f0a020; }
+  .case-head { padding: 10px 14px; background: var(--surface-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+  .case-title { font-size: 13.5px; font-weight: 700; }
+  .case-badge { font-size: 10px; font-weight: 700; letter-spacing: .04em; padding: 2px 7px; border-radius: 99px;
+                background: #f0a020; color: #1a1200; }
+  .case-branch { font-size: 11px; color: var(--muted); }
+  .case-css { flex-basis: 100%; font-family: var(--mono, ui-monospace); font-size: 11px; color: #7fd1a8;
+              word-break: break-all; line-height: 1.5; }
+  .case-note { flex-basis: 100%; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+  /* Colour pickers — the case's real colours, editable in place. */
+  .pickers { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+  .pick { display: inline-flex; align-items: center; gap: 6px; }
+  .pick input[type="color"] {
+    width: 30px; height: 30px; padding: 0; border: 1px solid var(--border); border-radius: 7px;
+    background: none; cursor: pointer;
+  }
+  .pick input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+  .pick input[type="color"]::-webkit-color-swatch { border: none; border-radius: 5px; }
+  .pick span { font-family: var(--mono, ui-monospace); font-size: 10.5px; color: var(--muted); }
+  /* A slot this branch does not read — editable, but it changes nothing. */
+  .pick.is-unused { opacity: .38; }
+  .pick.is-unused span::after { content: " · unused"; }
+  .pick-actions { display: inline-flex; gap: 4px; margin-left: 2px; }
+  .pick-actions button {
+    height: 26px; min-width: 26px; padding: 0 8px; font-size: 11px; line-height: 1;
+    border: 1px solid var(--border); border-radius: 7px; background: var(--surface);
+    color: var(--muted); cursor: pointer;
+  }
+  .pick-actions button:hover { border-color: var(--primary); color: var(--primary); }
+  .pick-field { font-family: var(--mono, ui-monospace); font-size: 10.5px; color: var(--muted); opacity: .75; }
+  .pick-none { flex-basis: 100%; font-size: 11px; color: var(--muted); opacity: .7; margin-top: 2px; }
+  #resetAll {
+    height: 24px; padding: 0 10px; font-size: 11px; border-radius: 99px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer;
+  }
+  #resetAll:hover { border-color: var(--primary); color: var(--primary); }
+
+  /* Surfaces are shown at TRUE app size, so they cannot share one column width —
+     a 300px side-card next to a 32px rack slot. Flex-wrap, each item as wide as
+     the thing it shows, bottom-aligned so the captions read as one row. */
+  .surfaces { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 20px; padding: 16px 14px; }
+  figure { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  figure > .holder { display: flex; align-items: flex-end; justify-content: center; }
+  figcaption { font-size: 10.5px; color: var(--muted); text-align: center; line-height: 1.35; max-width: 150px; }
+  figcaption b { display: block; color: var(--text); font-weight: 600; font-size: 11px; }
+
+  /* TRUE APP SIZES. The logo watermark is sized as a PERCENTAGE of its tile
+     (42 % on the table thumbnail, 28 % on the grid card, 22 % on the side-card
+     illustration), so those percentages are only calibrated against the real
+     box: shrinking every surface to a uniform thumbnail here would make the
+     side-card's 22 % look undersized and the table's 42 % oversized, and the
+     matrix would lie about the one thing it exists to check. Each value below
+     is the size the app actually uses — see the comment on each. */
+  .h-card   { width: 150px; }             /* .inv-grid → minmax(150px, 1fr) */
+  .h-panel  { width: 300px; }             /* .detail-panel { width: 300px } */
+  .h-slot   .rp-slot { width: 32px; }     /* .rp-row-slots → repeat(--slots, 32px) */
+  .h-slotph .rp-slot { width: 64px; }     /* .rp-slotview-photo → 64px tracks */
+  .h-cv     { width: 50px; height: 50px; }/* _catThumbHTML(r, 50) */
+  .adp-color-circle { cursor: default; }  /* keeps its shipped 104px */
+</style>
+</head>
+<body>
+
+<h1>Spool-colour rendering — the Tiger Data / TigerTag convention</h1>
+<p class="intro">
+  Every surface that paints a filament colour, crossed with every case
+  <code>colorBg()</code> can take. The logic is copied verbatim from
+  <code>renderer/inventory.js</code>, the CSS is the shipped files linked as-is — nothing is
+  mocked except the row data. <b>Pick any colour to see all eleven surfaces follow.</b>
+  This page proves <i>Studio</i> obeys the convention; the convention itself is
+  owned by TigerSystem-Docs → <code>docs/developers/material-swatch.md</code>,
+  which ships its own self-contained reference renderer for implementers
+  outside Studio. Studio-side notes: <code>docs/MATERIAL-SWATCH.md</code>.
+</p>
+<div class="legend">
+  <span class="new">orange = changed this cycle</span>
+  <span>green line = the CSS actually produced</span>
+  <button type="button" id="resetAll">Reset every case</button>
+</div>
+
+<nav class="toc" id="toc"></nav>
+<div id="out"></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   VERBATIM from renderer/inventory.js — do not "improve" here. If a branch
+   is edited in the app, edit it here too or this page starts lying.
+   ───────────────────────────────────────────────────────────────────────── */
+const LOGO_PATH         = "../../assets/svg/logos/logo_tigertag.svg";
+const LOGO_PATH_OUTLINE = "../../assets/svg/logos/logo_tigertag_contouring.svg";
+
+const _pieSplit = (colors) => {
+  const step = 360 / colors.length;
+  const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
+  return `conic-gradient(${stops.join(', ')})`;
+};
+const RAMP_ANGLE = '135deg';
+
+function colorBg(row) {
+  const aspects = [row.aspect1, row.aspect2].map(a => (a || '').toLowerCase());
+  const isRainbow  = aspects.some(a => a.includes('rainbow') || a.includes('multicolor'));
+  const isTricolor = aspects.some(a => a.includes('tricolor') || a.includes('tri color') || a.includes('tricolore'));
+  const isBicolor  = aspects.some(a => a.includes('bicolor')  || a.includes('bi color')  || a.includes('bicolore'));
+  const normalizeColor = c => {
+    const s = (c || '').trim().replace(/^#/, '');
+    const hex6 = s.length === 8 ? s.slice(0, 6) : s;
+    return /^[0-9a-fA-F]{6}$/.test(hex6) ? `#${hex6}` : null;
+  };
+  const cls = (row.colorList || []).map(normalizeColor).filter(Boolean);
+  const colorType = row.colorType || '';
+  if (cls.length >= 2 && colorType === 'conic_gradient') {
+    return `conic-gradient(from 0deg, ${cls.join(', ')}, ${cls[0]})`;
+  } else if (cls.length >= 2 && colorType === 'gradient') {
+    return `linear-gradient(${RAMP_ANGLE}, ${cls.join(', ')})`;
+  } else if (cls.length >= 2) {
+    return _pieSplit(cls);
+  } else if (cls.length === 1) {
+    return cls[0];
+  } else if (isRainbow && isTricolor) {
+    const [c1=`#ff4d4d`, c2=`#ffd93d`, c3=`#4da3ff`] = cls;
+    return `linear-gradient(${RAMP_ANGLE}, ${c1} 0%, ${c2} 50%, ${c3} 100%)`;
+  } else if (isRainbow && isBicolor) {
+    const [c1=`#ff7a00`, c2=`#8a2be2`] = cls;
+    return `linear-gradient(${RAMP_ANGLE}, ${c1} 0%, ${c2} 100%)`;
+  } else if (isRainbow) {
+    const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
+    if (colors.length >= 2) return `linear-gradient(${RAMP_ANGLE}, ${colors.join(', ')})`;
+    if (colors.length === 1) return colors[0];
+    return `linear-gradient(${RAMP_ANGLE}, #ff0000, #ff8800, #ffff00, #00cc00, #0000ff, #8b00ff)`;
+  } else if (isTricolor) {
+    const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
+    const [c1 = '#cccccc', c2 = '#888888', c3] = colors;
+    return _pieSplit([c1, c2, c3 || c1]);
+  } else if (isBicolor) {
+    const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
+    const [c1 = '#cccccc', c2 = '#ffffff'] = colors;
+    return _pieSplit([c1, c2]);
+  } else {
+    return row.colorHex || '#1c2030';
+  }
+}
+
+function colorCircleHTML(row, size = 15) {
+  const bg = colorBg(row);
+  const borderColor = isColorDark(bg) ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
+  return `<span class="color-circle" style="width:${size}px;height:${size}px;border-color:${borderColor}"><span class="color-circle-fill" style="background:${bg}"></span></span>`;
+}
+
+function isColorDark(bg) {
+  const m = bg.match(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/);
+  if (!m) return false;
+  let h = m[1];
+  if (h.length === 8) h = h.slice(0, 6);
+  else if (h.length === 4) h = h.slice(0, 3);
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.5;
+}
+
+function logoSrc(bg) { return isColorDark(bg) ? LOGO_PATH : LOGO_PATH_OUTLINE; }
+
+/* ───────────── The surfaces, with the markup each one really ships ─────── */
+const SURFACES = [
+  { name: "Colour circle",   sub: "side-card · 56 px",        cls: "",         html: r => colorCircleHTML(r, 56) },
+  { name: "Colour circle",   sub: "table cell · 28 px",       cls: "",         html: r => colorCircleHTML(r, 28) },
+  { name: "Colour circle",   sub: "inline · 15 / 13 / 12 px", cls: "",
+    html: r => `<span style="display:flex;align-items:center;gap:6px">${colorCircleHTML(r,15)}${colorCircleHTML(r,13)}${colorCircleHTML(r,12)}</span>` },
+  { name: "Table thumbnail", sub: "thumbHTML · 50 px",        cls: "",
+    html: r => `<span class="thumb-wrap"><span class="thumb-color" style="width:50px;height:50px;background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" /></span></span>` },
+  // `.spool-card` is the CARD, not a layout host — it must wrap the placeholder,
+  // never carry the holder's flex centring, or the tile stops filling the card.
+  { name: "Grid card",       sub: "card-img-color-placeholder", cls: "",
+    html: r => `<div class="spool-card h-card"><div class="card-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" /></div></div>` },
+  { name: "Side-card image", sub: "panel-img-color-placeholder", cls: "",
+    html: r => `<div class="h-panel"><div class="panel-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" class="panel-img-logo" /></div></div>` },
+  { name: "Catalogue row",   sub: "cv-thumb",                 cls: "inv-catalog-view",
+    html: r => `<span class="cv-thumb h-cv" style="background:${colorBg(r)}"><img class="cv-thumb-logo" src="${logoSrc(colorBg(r))}" alt="" /></span>` },
+  { name: "Rack slot",       sub: "fill view · 60 %",         cls: "h-slot",
+    html: r => `<div class="rp-slot rp-slot--filled"><div class="rp-fill" style="height:60%;background:${colorBg(r)}"></div></div>` },
+  { name: "Rack slot",       sub: "photo view · full tile",   cls: "rp-slotview-photo h-slotph",
+    html: r => `<div class="rp-slot rp-slot--filled"><div class="rp-fill rp-fill--full" style="background:${colorBg(r)}"></div></div>` },
+  { name: "Twin link",       sub: "36 px round",              cls: "",
+    html: r => `<span class="twin-link-card-swatch" style="display:block;background:${colorBg(r)}"></span>` },
+  { name: "Add-Product",     sub: "live preview button",      cls: "",
+    html: r => `<button class="adp-color-circle" type="button" style="background:${colorBg(r)}"></button>` },
+];
+
+/* ───────────── The cases ───────────── */
+const CASES = [
+  { t: "Mono — one colour in the list", branch: "cls.length === 1",
+    row: { colorList: ["FF5722"] } },
+  { t: "Mono — chip colour only, no list", branch: "row.colorHex fallback",
+    row: { colorHex: "#2463e0" } },
+  { t: "Black catalogue product — #000000FF", branch: "cls.length === 1 (8-digit normalised)",
+    note: "The isColorDark fix lives here: an unnormalised #000000FF used to pick the black-outline logo. colorBg normalises to 6 digits, so the white logo is correct on both paths now.",
+    row: { colorList: ["000000FF"] } },
+  { t: "White product — #FFFFFFFF", branch: "cls.length === 1",
+    row: { colorList: ["FFFFFFFF"] } },
+
+  { t: "Bicolor — declared aspect, chip slots", branch: "isBicolor → _pieSplit (2 sectors)", isNew: true,
+    note: "Two equal sectors put the boundary on the vertical axis, so bicolor IS the guaranteed vertical split — on a circle, a square or a clipped strip. Shared with the Add-Product preview, which used to draw the same line mirrored.",
+    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#000000", aspect2: "Bicolor" } },
+  { t: "Two colours in the list, no declared type", branch: "cls.length >= 2 → _pieSplit", isNew: true,
+    row: { colorList: ["e02424", "2463e0"] } },
+
+  { t: "Tricolor — declared aspect, chip slots", branch: "isTricolor → _pieSplit (3 sectors)",
+    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#22a06b", aspect2: "Tricolor" } },
+  { t: "Three colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit",
+    row: { colorList: ["e02424", "2463e0", "22a06b"], colorType: "multi" } },
+  { t: "Four colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit",
+    row: { colorList: ["e02424", "f0a020", "2463e0", "22a06b"], colorType: "multi" } },
+
+  { t: "Declared type: gradient", branch: "colorType === 'gradient' → ramp 135°", isNew: true,
+    note: "A catalogue instruction, not a bicolor — keeps its smooth ramp even on two colours. Was 90°, now on the shared 135° diagonal like every other ramp.",
+    row: { colorList: ["e02424", "f0a020", "2463e0"], colorType: "gradient" } },
+  { t: "Declared type: gradient, TWO colours", branch: "colorType === 'gradient' → ramp 135°", isNew: true,
+    note: "Deliberately NOT the vertical split: the catalogue asked for a ramp.",
+    row: { colorList: ["e02424", "2463e0"], colorType: "gradient" } },
+  { t: "Declared type: conic_gradient", branch: "colorType === 'conic_gradient'",
+    note: "First colour repeated at the end so the sweep closes seamlessly.",
+    row: { colorList: ["e02424", "f0a020", "22a06b", "2463e0"], colorType: "conic_gradient" } },
+
+  { t: "Rainbow — aspect, no colours at all", branch: "isRainbow → 6-stop default",
+    row: { aspect1: "Rainbow" } },
+  { t: "Rainbow — aspect + chip slots", branch: "isRainbow → ramp over the slots",
+    row: { colorHex: "#e02424", colorHex2: "#f0a020", colorHex3: "#2463e0", aspect1: "Rainbow" } },
+  { t: "Rainbow + Bicolor", branch: "isRainbow && isBicolor → smooth 2 stops",
+    note: "Rainbow says 'no hard edge', so this stays a ramp — untouched by the bicolor change.",
+    row: { aspect1: "Rainbow", aspect2: "Bicolor" } },
+  { t: "Rainbow + Tricolor", branch: "isRainbow && isTricolor → smooth 3 stops",
+    row: { aspect1: "Rainbow", aspect2: "Tricolor" } },
+
+  { t: "No colour at all", branch: "last resort → #1c2030",
+    row: {} },
+];
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Live editing. Each case declares WHERE its colours live — the online list
+   (`online_color_list`) or the three chip slots — so a picker writes back into
+   the same field the real document uses, and the row is rebuilt from scratch.
+   Nothing is patched by hand: the picture always comes from colorBg().
+   ───────────────────────────────────────────────────────────────────────── */
+// Where are this case's editable colours? null = the case is defined by its
+// aspect alone (rainbow defaults) or by nothing at all, so there is nothing to pick.
+function editableOf(c) {
+  if (Array.isArray(c.row.colorList) && c.row.colorList.length) return "list";
+  if (c.row.colorHex) return "slots";
+  return null;
+}
+function colorsOf(c) {
+  const kind = editableOf(c);
+  if (kind === "list") return c.row.colorList.map(h => `#${String(h).replace(/^#/, "").slice(0, 6)}`);
+  if (kind === "slots") return [c.row.colorHex, c.row.colorHex2, c.row.colorHex3].filter(Boolean);
+  return [];
+}
+// Rewrite the case's row from an edited colour array, keeping every other field
+// (aspects, colour type) untouched — those define WHICH branch is exercised.
+function applyColors(c, colors) {
+  const kind = editableOf(c);
+  if (kind === "list") {
+    c.row = { ...c.row, colorList: colors.map(h => h.replace(/^#/, "")) };
+  } else if (kind === "slots") {
+    c.row = { ...c.row, colorHex: colors[0] || null, colorHex2: colors[1] || null, colorHex3: colors[2] || null };
+  }
+}
+
+function pickerHTML(c, i) {
+  const kind = editableOf(c);
+  if (!kind) return `<span class="pick-none">no colour to pick — this case is defined by its aspect</span>`;
+  const colors = colorsOf(c);
+  // A chip document always carries three slots — a bicolor spool still has a
+  // slot 3, written as black. Dim the ones this branch does not consume so a
+  // picker that changes nothing looks like it changes nothing.
+  const produced = colorBg(c.row).toLowerCase();
+  return `<div class="pickers">
+    ${colors.map((h, j) => `<label class="pick${produced.includes(h.toLowerCase()) ? "" : " is-unused"}">
+        <input type="color" value="${h}" data-case="${i}" data-idx="${j}" />
+        <span>${h.toUpperCase()}</span>
+      </label>`).join("")}
+    <span class="pick-actions">
+      <button type="button" data-reset="${i}">Reset</button>
+    </span>
+    <span class="pick-field">${kind === "list" ? "online_color_list" : "color_r/g/b (+2, +3)"}</span>
+  </div>`;
+}
+
+const surfacesHTML = c => SURFACES.map(s => `
+  <figure>
+    <div class="holder ${s.cls}">${s.html(c.row)}</div>
+    <figcaption><b>${s.name}</b>${s.sub}</figcaption>
+  </figure>`).join("");
+
+function caseHTML(c, i) {
+  return `<div class="case-head">
+      <span class="case-title">${c.t}</span>
+      ${c.isNew ? `<span class="case-badge">CHANGED</span>` : ""}
+      <span class="case-branch">${c.branch}</span>
+      <span class="case-css">${colorBg(c.row)}</span>
+      ${c.note ? `<span class="case-note">${c.note}</span>` : ""}
+      ${pickerHTML(c, i)}
+    </div>
+    <div class="surfaces">${surfacesHTML(c)}</div>`;
+}
+
+const out = document.getElementById("out");
+const PRISTINE = CASES.map(c => JSON.parse(JSON.stringify(c.row)));
+
+document.getElementById("toc").innerHTML = CASES.map((c, i) =>
+  `<a href="#case-${i}" class="${c.isNew ? "new" : ""}">${c.t.split(" — ")[0]}</a>`).join("");
+out.innerHTML = CASES.map((c, i) =>
+  `<section class="case${c.isNew ? " is-new" : ""}" id="case-${i}">${caseHTML(c, i)}</section>`).join("");
+
+// Repaint a case WITHOUT touching its picker row. The native colour picker is
+// anchored to the live <input> element and fires `input` continuously while the
+// user drags the spectrum — so replacing that input (which rebuilding the block
+// does) tears the picker down mid-gesture and the dialog snaps shut on every
+// click. Only the produced-CSS line, the surfaces and the hex labels are
+// patched; the inputs themselves are never re-created.
+function repaintSurfaces(i) {
+  const c = CASES[i], sec = document.getElementById(`case-${i}`);
+  const bg = colorBg(c.row);
+  sec.querySelector(".case-css").textContent = bg;
+  sec.querySelector(".surfaces").innerHTML = surfacesHTML(c);
+  const colors = colorsOf(c), produced = bg.toLowerCase();
+  sec.querySelectorAll(".pick").forEach((el, j) => {
+    const hex = colors[j] || "";
+    el.querySelector("span").textContent = hex.toUpperCase();
+    el.classList.toggle("is-unused", !produced.includes(hex.toLowerCase()));
+  });
+}
+
+out.addEventListener("input", e => {
+  const inp = e.target.closest('input[type="color"]');
+  if (!inp) return;
+  const i = +inp.dataset.case;
+  const colors = colorsOf(CASES[i]);
+  colors[+inp.dataset.idx] = inp.value;
+  applyColors(CASES[i], colors);
+  repaintSurfaces(i);
+});
+
+// Reset writes the preset back INTO the existing inputs, same reason: never
+// replace an input a picker may be open on.
+function resetCase(i) {
+  CASES[i].row = JSON.parse(JSON.stringify(PRISTINE[i]));
+  const colors = colorsOf(CASES[i]);
+  document.querySelectorAll(`#case-${i} input[type="color"]`)
+    .forEach((inp, j) => { if (colors[j]) inp.value = colors[j]; });
+  repaintSurfaces(i);
+}
+
+out.addEventListener("click", e => {
+  const btn = e.target.closest("button[data-reset]");
+  if (btn) resetCase(+btn.dataset.reset);
+});
+
+document.getElementById("resetAll").addEventListener("click", () => CASES.forEach((_, i) => resetCase(i)));
+</script>
+</body>
+</html>

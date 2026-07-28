@@ -6,7 +6,7 @@
 > folder / sub-folder metaphor. **No Firestore change** — each spool stays its
 > own document; the group is computed at render time.
 
-Repo: `#studio` = `/Users/benglut/Documents/TigerTag_Studio_Manager` (Electron;
+Repo: `#studio` = the `TigerTag_Studio_Manager` checkout (Electron;
 read `CLAUDE.md` + `renderer/CODEMAP.md` first — jump to line ranges, don't read
 the 17k-line `inventory.js` top-to-bottom).
 

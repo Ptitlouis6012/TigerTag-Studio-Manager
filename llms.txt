@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.15.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.16.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -107,9 +107,19 @@ Four tiers, visible as badges throughout the UI:
 | **TigerTag** | a written NFC chip | `spoolId` = chip UID |
 | **TigerTag+** | a certified chip with a signed factory dump | UID + a `backup` hex dump in `rfidList` |
 
-**TigerData+ is DERIVED, never stored** (`_hasRealProductId` + `normalizeRow.isCloudPlus`) — there is no field, no
-doc-id prefix and no `protocol` value of its own: `protocol` stays `"TigerData"` for every chipless spool, so the
-version filter and the telemetry rollup are unaffected. It is emphatically **not** a TigerTag+ — no chip, no UID —
+**TigerData+ is DERIVED from `isCloud + _hasRealProductId(id_product)` (`normalizeRow.isCloudPlus`), then MIRRORED**:
+since v2.16.0 `normalizeRow` emits `protocol: "TigerData+"` and `syncSpoolMirrors` writes it onto the doc, so the tier
+is readable straight from Firestore by the Hub / mobile / third parties. There is still no `tier` field and no doc-id
+prefix of its own — the derived pair remains the definition, `protocol` is only its mirror, and docs written before
+v2.16.0 still say `"TigerData"` until their owner reopens Studio (both values are in the wild meanwhile). Backend:
+`byProtocol` gained a 4th `"TigerData+"` key and its `"TigerCloud"` key now means PLAIN TigerData — a deliberate series
+break; `cloudCount` stays the whole chipless total and `cloudPlusCount` is the new subset. It is emphatically **not** a
+TigerTag+ — no chip, no UID, and since v2.16.0 **no `id_tigertag` either**: that field names the chip version in
+`id_version.json` (only 0 / 1542820452 / 1816240865 / 3155151767 are legal) so a chipless doc has nothing to put
+there. It used to hold a random u32 "nonce" (Add Product v1.4.12, `.ttag` import v2.14.0, catalogue path v2.15.0) —
+an out-of-referential value on every chipless doc. `syncSpoolMirrors` now DELETES it on chipless docs, so accounts
+clean themselves. `_ttagRecordValid` requires `id_tigertag` only of chip-backed records (`_ttagNeedsTigertag`),
+otherwise every TigerData would have become unexportable —
 so a TigerData+ keeps the chipless `id_tigertag` nonce (`_catChiplessNonce` re-rolls off the version table, which
 guarantees the row can never read as Plus) and gets its own badge (`.tag-cloud-plus`: the white chipless capsule
 with an amber accent, never a gold fill). New spools of this tier are counted by `cloudPlusAddedTotal`, separate
@@ -156,6 +166,16 @@ colour/weight/TD clamped) → previews → writes in two modes: **Restore** (ver
 `id_product` unset, backups dropped, weight reset to capacity, `twin_tag_uid` remapped). Code:
 `_buildTtag` / `_exportMaterialTtag` (export), `openTtagImportPicker` / `_ttagValidate` / `_ttagSanitizeRecord` /
 `_ttagApplyImportAll` (import), all in `renderer/inventory.js`.
+
+**Record contract, enforced at import (v2.15.0).** A `.ttag` exists to CREATE chips, so a record that cannot produce
+one is refused rather than imported half-filled: `uid` plus the 24 numeric chip-payload fields of `TTAG_REQUIRED_NUM`
+(the 10 identity ids incl. `id_product`, `measure`, the 4 colour bytes, `data1`–`data7`, `timestamp`) must all be
+present and finite — `null`/`""` do NOT count (`Number(null)` is `0`, i.e. finite, which is exactly the trap
+`_ttagNumOk` exists to avoid). A **material is atomic**: a twin pair passes only if BOTH records do. Refusals never
+reach the preview and are counted back to the user (`ttagRejected`), never silently dropped; the write builder
+re-filters as a last line of defence. Code: `TTAG_REQUIRED_NUM` / `_ttagRecordValid` / `_ttagMaterialValid`. The
+field-level contract itself is authored in `playground/ttag-fields-editor` and generated into `docs/TTAG-FIELDS.md` —
+never hand-edit that file, and never change the importer's contract without a founder-ratified regeneration.
 
 ## NFC / RFID system
 

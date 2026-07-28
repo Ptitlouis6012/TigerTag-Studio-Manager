@@ -75,10 +75,10 @@ The ecosystem, all open source:
 
 Local (read-only). Run `ls ~/Documents | grep -i tiger` first — more may exist than listed:
 
-- `/Users/benglut/Documents/TigerTag_Studio_Manager` — the Electron app (main subject)
-- `/Users/benglut/Documents/TigerTag_Firebase_Backend` — `firestore.rules`, `storage.rules`, `functions/`
-- `/Users/benglut/Documents/TigerTag_Hub` — public website
-- `/Users/benglut/Documents/TigerTag_Firebase_Integration` — third-party integration docs
+- **`TigerTag_Studio_Manager`** — the Electron app (main subject)
+- **`TigerTag_Firebase_Backend`** — `firestore.rules`, `storage.rules`, `functions/`
+- **`TigerTag_Hub`** — public website
+- **`TigerTag_Firebase_Integration`** — third-party integration docs
 
 Also on GitHub, org `TigerTag-Project` (use `gh repo list TigerTag-Project` and `gh repo view`):
 TigerPOD, Tiger-Scale, TigerTag-SDK-JS, TigerTag-SDK-Python, the TigerTag RFID Guide, and the

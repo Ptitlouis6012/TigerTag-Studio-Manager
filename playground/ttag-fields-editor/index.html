@@ -8,7 +8,7 @@
   :root{
     --primary:#ff7a18; --bg:#f3f4f6; --surface:#fff; --surface-2:#f6f7f9;
     --border:#e3e6ea; --text:#1c2024; --muted:#6b7280;
-    --req:#dc2626; --opt:#6b7280; --na:#b45309; --chip:#0f9d58;
+    --req:#dc2626; --opt:#6b7280; --na:#b45309; --cond:#7c3aed; --chip:#0f9d58;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box}
@@ -25,7 +25,8 @@
   .cnt{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid var(--border);
        background:var(--surface-2);white-space:nowrap}
   .cnt b{font-variant-numeric:tabular-nums}
-  .cnt.req{color:var(--req)} .cnt.opt{color:var(--opt)} .cnt.na{color:var(--na)} .cnt.chip{color:var(--chip)}
+  .cnt.req{color:var(--req)} .cnt.opt{color:var(--opt)} .cnt.na{color:var(--na)}
+  .cnt.cond{color:var(--cond)} .cnt.chip{color:var(--chip)}
   .tabs{display:flex;gap:6px;padding:4px 22px 12px;flex-wrap:wrap;align-items:center}
   .tab{font:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:10px;border:1px solid var(--border);
        background:var(--surface-2);color:var(--muted);cursor:pointer;display:flex;align-items:center;gap:7px}
@@ -81,6 +82,7 @@
   .seg button[aria-pressed="true"]{color:#fff}
   .seg button[data-v="REQUIRED"][aria-pressed="true"]{background:var(--req)}
   .seg button[data-v="OPTIONAL"][aria-pressed="true"]{background:var(--opt)}
+  .seg button[data-v="COND"][aria-pressed="true"]{background:var(--cond)}
   .seg button[data-v="NA"][aria-pressed="true"]{background:var(--na)}
   .note{font-size:11.5px;color:var(--muted);line-height:1.45;margin-top:6px;padding-left:2px}
   .mods{display:inline-flex;gap:4px;margin-right:6px;vertical-align:middle}
@@ -151,8 +153,8 @@ const DATA = [
    { f:"id_type", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Product type id — references `id_type.json` (142 Filament · 116 Accessories · 41 Spare Part · 173 Resin). This value selects which contract below applies. Import accepts 142 only for now." },
    { f:"id_brand", t:"uint16 (0–65535) · ref", chip:true, s:"REQUIRED", mods:[], note:"Brand id — references `id_brand.json`." },
    { f:"id_material", t:"uint16 (0–65535) · ref", chip:true, s:"REQUIRED", mods:[], note:"Material id — references `id_material.json`." },
-   { f:"id_version", t:"string (derived)", chip:false, s:"OPTIONAL", mods:[], note:"NOT a stored field: the version/tier NAME (e.g. \"TigerTag\", \"TigerTag+\") DERIVED from id_tigertag via id_version.json. A record normally omits it." },
-   { f:"id_tigertag", t:"uint32 (0–4294967295) · ref", chip:true, s:"REQUIRED", mods:["ovr"], note:"The chip's tag id (bytes 0-3). References id_version.json — its value maps to the version/tier (e.g. 3155151767 = TigerTag+). A chipless material carries a random nonce (so it resolves to no tier); the real chip's id replaces it on programming, and Import always mints a fresh random one." },
+   { f:"id_version", t:"string (derived)", chip:false, s:"NA", mods:[], note:"NOT a stored field, and never required: the version/tier NAME (e.g. \"TigerTag\", \"TigerTag+\") DERIVED from id_tigertag via id_version.json. A record normally omits it." },
+   { f:"id_tigertag", t:"uint32 · ref id_version.json", chip:true, s:"COND", mods:["ovr"], note:"The chip's tag id (bytes 0-3). It REFERENCES id_version.json, so only the four ids listed there are legal: 0 RFID Empty, 1542820452 TigerTag, 1816240865 TigerTag Init, 3155151767 TigerTag+. Required of a record that HAS a chip; a chipless record (uid TigerData_… or legacy CLOUD_…) has no chip and therefore no version, so it must NOT carry the field at all — it is written for the first time when a real chip is programmed. Studio ≤2.15.0 stored a random u32 here on chipless materials, a value outside the referential; 2.15.1 stopped writing it and deletes the stray ones. Import drops the field (which is what makes the copy not a TigerTag+); Restore keeps it verbatim." },
    { f:"id_product", t:"uint32 (0–4294967295)", chip:true, s:"OPTIONAL", mods:["ovr"], note:"Catalogue product id — look up a real one in the public catalogue at https://tigersystem.io/fr/catalog. When unknown it MUST be `4294967295` (`0xFFFFFFFF`, the “generic” sentinel), never absent. Import always resets it to that value." },
    { f:"timestamp", t:"uint32 (0–4294967295, chip epoch)", chip:true, s:"REQUIRED", mods:[], note:"Chip encode timestamp — SECONDS since 2000-01-01 (TigerTag chip epoch, not Unix, not Firestore)." },
  ]},
@@ -160,8 +162,8 @@ const DATA = [
  { band:"rec", cat:"Filament identity", rows:[
    { f:"id_aspect1", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Primary aspect id — references `id_aspect.json` (one shared file for both aspects)." },
    { f:"id_aspect2", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Secondary aspect id — same `id_aspect.json`." },
-   { f:"id_diameter", t:"uint8 (0–255) · ref | 0", chip:true, s:"REQUIRED", mods:[], note:"Diameter id — references `id_diameter.json`, or `0` when the material has no diameter." },
-   { f:"id_measure_unit", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Unit id — references `id_measure_unit.json`. Gives `measure` its meaning (g, kg, ml, L…)." },
+   { f:"id_diameter", t:"— (not a record field)", chip:true, s:"NA", mods:[], note:"NOT a field of the record. It is a name for chip byte `data1`, whose value references `id_diameter.json` (e.g. 56 = 1.75 mm) — see data1, which IS required. Studio reads it as `id_diameter ?? data1` and writes it back as `data1`; no inventory document has ever carried an `id_diameter` key. Listing it as required rejected every real material at export." },
+   { f:"id_unit", t:"uint8 (0–255) · ref", chip:true, s:"REQUIRED", mods:[], note:"Unit id — gives `measure` its meaning (21 = g, 35 = kg, …). The REFERENCE FILE is `id_measure_unit.json`, but the record field is `id_unit`: the contract used to name it after the file, which rejected every real material at export." },
  ]},
  { band:"rec", cat:"Quantity", rows:[
    { f:"measure", t:"uint24 (0–16777215)", chip:true, s:"REQUIRED", mods:["san"], note:"A bare quantity with NO unit of its own — the unit comes from `id_measure_unit`. Clamped finite ≥ 0." },
@@ -252,8 +254,13 @@ const BANDS = {
   env:{ title:"Envelope — shared across every product type", desc:"File-level wrapper, validated before any record is read. Not part of a record, never on a chip. Identical for all types." },
   rec:{ title:"Record fields", desc:"The Header block is the same for every type; the rest of the contract (Required / Optional / N-A) is set PER TYPE — pick a type above." },
 };
-const VALUES = ["REQUIRED","OPTIONAL","NA"];
-const VLABEL = { REQUIRED:"Required", OPTIONAL:"Optional", NA:"N/A" };
+// COND — "required, but only when a condition on the RECORD holds". The three
+// original states are per PRODUCT TYPE; some fields are instead conditioned by the
+// spool's TIER, which no product type can express: `id_tigertag` names the chip's
+// version, so it is mandatory for a chip-backed record and meaningless on a chipless
+// one. Marking it plainly OPTIONAL would have let a chip record ship without it.
+const VALUES = ["REQUIRED","COND","OPTIONAL","NA"];
+const VLABEL = { REQUIRED:"Required", COND:"If chip", OPTIONAL:"Optional", NA:"N/A" };
 const MOD_LABEL = { san:"SANITIZED", ovr:"OVERWRITTEN ON IMPORT", ign:"IGNORED" };
 const KEY = "ttagFieldContract.v4";
 
@@ -337,18 +344,19 @@ function render(){
 }
 
 function counts(){
-  let req=0, opt=0, na=0, chip=0, chipReq=0, todo=0;
+  let req=0, cond=0, opt=0, na=0, chip=0, chipReq=0, todo=0;
   DATA.forEach(c => c.rows.forEach(r => {
     if (c.env) return;
     const v = val(r.f);
-    if (v==="REQUIRED") req++; else if (v==="OPTIONAL") opt++; else na++;
-    if (state.chip[r.f]){ chip++; if (v==="REQUIRED") chipReq++; }
+    if (v==="REQUIRED") req++; else if (v==="COND") cond++; else if (v==="OPTIONAL") opt++; else na++;
+    if (state.chip[r.f]){ chip++; if (v==="REQUIRED"||v==="COND") chipReq++; }
     if (r.todo) todo++;
   }));
   const ty = TYPES.find(t=>t.id===active);
   document.getElementById("counts").innerHTML =
     `<span class="cnt" style="color:#111"><b>${esc(ty.name)}</b> · ${state.status[active]}</span>
      <span class="cnt req"><b>${req}</b> req</span>
+     <span class="cnt cond"><b>${cond}</b> if chip</span>
      <span class="cnt opt"><b>${opt}</b> opt</span>
      ${na?`<span class="cnt na"><b>${na}</b> n/a</span>`:""}
      <span class="cnt chip"><b>${chip}</b> on chip</span>
@@ -398,7 +406,8 @@ document.getElementById("btnReset").addEventListener("click", () => {
 function markdown(){
   const modTxt = m => m.map(x=>`**${MOD_LABEL[x]}**`).join(", ");
   const cell = (c,r,tyId) => c.env ? r.s : state.contract[tyId][r.f];
-  const shortC = v => v==="REQUIRED" ? "**Req**" : v==="OPTIONAL" ? "Opt" : "—";
+  const shortC = v => v==="REQUIRED" ? "**Req**" : v==="COND" ? "**Req if chip**"
+                  : v==="OPTIONAL" ? "Opt" : "—";
 
   let out = `# \`.ttag\` field contract — per product type
 
@@ -412,6 +421,10 @@ Each field has three independent properties — **Type** (wire format), **On chi
 physical chip), **Contract** (per type). They are genuinely independent: \`color_name\` is on the chip
 yet optional.
 
+A field can also be **Req if chip**: mandatory for a record that carries a chip, and required to be
+**absent** on a chipless one. That axis is the record's TIER, not its product type — \`id_tigertag\`
+names the chip's version, so it has nothing to name when there is no chip.
+
 ## Product types
 
 | id | Name | Status |
@@ -423,6 +436,7 @@ ${TYPES.map(ty=>`| \`${ty.id}\` | ${ty.name} | ${state.status[ty.id]}${ty.id===D
 | Marker | Meaning |
 |---|---|
 | **Req** | REQUIRED — a well-formed record MUST carry it. |
+| **Req if chip** | REQUIRED of a record that HAS a chip, and it must be ABSENT otherwise. A chipless record is recognised by its \`uid\` (\`TigerData_…\`, or the legacy \`CLOUD_…\`). |
 | Opt | OPTIONAL — free to omit; passed through verbatim. |
 | — | N/A — the field is not used for that product type. |
 | **SANITIZED** | Untrusted input — scheme-checked / clamped before any write. |
@@ -466,13 +480,18 @@ ${TYPES.map(ty=>`| \`${ty.id}\` | ${ty.name} | ${state.status[ty.id]}${ty.id===D
   // Per-type minimal record
   out += `\n---\n\n## Minimal well-formed record, per type\n`;
   TYPES.forEach(ty => {
-    const req = []; DATA.forEach(c => { if (!c.env) c.rows.forEach(r => { if (state.contract[ty.id][r.f]==="REQUIRED") req.push(r.f); }); });
-    out += `\n**${ty.name} (${ty.id})** — ${state.status[ty.id]}: ${req.map(f=>`\`${f}\``).join(", ")}.\n`;
+    const req = [], cond = [];
+    DATA.forEach(c => { if (!c.env) c.rows.forEach(r => {
+      const v = state.contract[ty.id][r.f];
+      if (v === "REQUIRED") req.push(r.f); else if (v === "COND") cond.push(r.f); }); });
+    out += `\n**${ty.name} (${ty.id})** — ${state.status[ty.id]}: ${req.map(f=>`\`${f}\``).join(", ")}.`;
+    if (cond.length) out += ` Plus ${cond.map(f=>`\`${f}\``).join(", ")} **only when the record carries a chip** (and it must be absent otherwise).`;
+    out += `\n`;
   });
   out += `\nPlus a valid envelope for every type: \`format\`, \`kind\`, \`version\`, \`records\`.\n`;
   out += `\n---\n\n## Editing this contract\n
 \`playground/ttag-fields-editor/index.html\` — standalone page (no deps, no server). Pick a product
-type tab, then set each field's type, on-chip and Required/Optional/N-A. It regenerates this document:
+type tab, then set each field's type, on-chip and Required / Req-if-chip / Optional / N-A. It regenerates this document:
 **Download TTAG-FIELDS.md** and drop it into \`docs/\`.\n`;
   return out;
 }

@@ -1495,5 +1495,6 @@
   "catalogCount": "{{n}} de {{total}} productos",
   "catalogCreateOk": "Añadida — {{name}}. Nada que escribir.",
   "catalogCreateError": "Esa no ha entrado. Prueba otra vez.",
-  "catalogAdd": "Añadir a mi inventario"
+  "catalogAdd": "Añadir a mi inventario",
+  "bulkHiddenWarn": "[object Object]"
 }

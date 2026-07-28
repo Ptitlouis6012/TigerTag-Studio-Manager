@@ -260,8 +260,13 @@ users/
         byMaterialId    map      — { "<id_material>": count } — RAW ids, names resolved by the dashboards
         byTypeId        map      — { "<id_type>": count } — Filament / Resin / … (RAW ids)
         byProtocol      map      — { TigerTag: n, "TigerTag+": n, TigerCloud: n, unknown: n } — from the mirrored `protocol`
-                                   (TigerCloud is the stored key; the UI shows this tier as "TigerData")
-        cloudCount      number   — TigerCloud spools (CLOUD_ prefix — they carry a random id_tigertag)
+                                   + "TigerData+" since v2.16.0 — FIVE keys in all.
+                                   ⚠️ SERIES BREAK: before v2.16.0 "TigerCloud" held ALL chipless
+                                   spools; it now holds the PLAIN TigerData only, so it drops at the
+                                   first recompute. Pre-2.16.0 definition = TigerCloud + "TigerData+".
+        cloudCount      number   — ALL chipless spools, TigerData+ INCLUDED — unchanged, no break;
+                                   prefer it for any long series
+        cloudPlusCount  number   — of which TigerData+ (plain TigerData = cloudCount - cloudPlusCount)
         printers        number
         printersByBrand map      — { bambulab: n, creality: n, … }
         favorites       number   — ★ products
@@ -282,6 +287,50 @@ users/
 - **`productKey`** — the product identity hash, built from RESOLVED names (brand / material / aspect). It is the join key to `products/{keyHash}`; without it the backend could never find a spool's price and the stock value would come out as 0.
 - **`protocol`** — `TigerTag` / `TigerTag+` / `TigerCloud`, resolved via `versionName(id_tigertag)`. The raw `id_tigertag` is NOT a usable substitute: only a couple of values map to a known version and the rest are a long tail of unrecognised ids, so counting raw ids server-side yields noise and no TigerTag-vs-TigerTag+ split at all.
   > ⚠️ `TigerCloud` is the **stored value and must never be renamed** — every existing document, the `byProtocol` map and the backend aggregation key off this exact string. Since v2.12.1 the UI displays this tier as **"TigerData"**; that rebrand is display-only and stops at the presentation layer.
+
+### TigerData+ — a DERIVED tier, with nothing of its own stored (v2.15.0)
+
+A spool's tier is **derived** from two things it already carries, then **mirrored onto the doc** so no reader has to re-derive it:
+
+```
+isTigerDataPlus = isChipless(spoolId)            // "TigerData_…" or the legacy "CLOUD_…"
+                  && id_product ∉ { 0, 0xFFFFFFFF }   // i.e. a REAL catalogue product id
+```
+
+Meaning: a fully-digital spool that is nonetheless tied to a real product in the official catalogue, so it knows the exact brand, colour, material, temperatures, diameter, SKU and EAN instead of only what the user typed. It is created by adding a catalogue product from Studio's Search view.
+
+> ### ⚠️ Unexplained: the `MAN_` doc-id prefix
+>
+> Real inventories contain documents whose id starts **`MAN_`** (e.g. `MAN_19DF7E0ACC9`), carrying
+> `manual_entry: true`. **That prefix appears nowhere in any code** — not Studio, not the backend —
+> so nothing creates it today and nothing recognises it either. Consequences while it stays
+> unmodelled: `_isChiplessId` sees only `TigerData_` / `CLOUD_`, so a `MAN_` doc is treated as
+> CHIP-BACKED — it lands in `byProtocol.unknown`, never in `cloudCount`, and the `.ttag` importer
+> demands an `id_tigertag` it will never have. The one observed sample was missing 15 of the 20
+> required fields (no `id_type`, no `data*`, no `timestamp`), so it is not exportable either.
+>
+> Origin unknown as of v2.16.0 — possibly a manual entry from the mobile app, possibly a legacy
+> import. **Deliberately left alone**: guessing wrong would either hide real spools from the stats or
+> mislabel them. Decide what it is before touching `_isChiplessId`.
+
+**`protocol` is the stored answer — four values since v2.16.0.** `normalizeRow` computes `TigerData+` for these spools and `syncSpoolMirrors` writes it onto the doc, so the Hub, the mobile app and any third party can **read the tier directly** instead of re-deriving it:
+
+| `protocol` | Meaning |
+|---|---|
+| `TigerData` | chipless, no catalogue product |
+| `TigerData+` | chipless, real catalogue product |
+| `TigerTag` | a written chip |
+| `TigerTag+` | a certified chip |
+
+**Three things every client and integrator must still respect:**
+
+- **Old documents lag.** Every doc written before v2.16.0 still says `TigerData`. They migrate themselves — the mirror compares stored vs computed and rewrites on mismatch, once, the next time the owner opens Studio. Until then **both values are in the wild**, so a reader that must be exact should derive rather than trust the field; a reader that can tolerate lag can use it directly.
+- **Deriving needs BOTH conditions.** `id_product` alone is not enough: a TigerTag+ carries one too, and it is not chipless.
+- **It is NOT a TigerTag+.** No chip, no UID — and no `id_tigertag` at all, so it cannot be resolved as a Plus by `versionName()`. Never render it with the TigerTag+ badge.
+**No `id_tigertag` on a chipless spool (v2.16.0).** That field names the chip's version in `id_version.json`, and only four values are legal — `0` RFID Empty, `1542820452` TigerTag, `1816240865` TigerTag Init, `3155151767` TigerTag+. A chipless spool has no chip and therefore no version, so **the field is absent**; it is written for the first time when a real chip is programmed. Until v2.16.0 a random u32 was stored there as a "nonce" (Add Product since v1.4.12, `.ttag` import since v2.14.0, the catalogue path in v2.15.0): it served nothing and put an out-of-referential value on every chipless document, which any reader resolving it against `id_version.json` would choke on. Existing documents clean themselves — the client mirror deletes the stray field on its next pass. **So: never resolve `id_tigertag` without checking the spool has a chip, and never write one onto a chipless doc.**
+
+
+The two sentinel values matter: `0` means "unset" and `0xFFFFFFFF` (4294967295) is the all-ones erased state. Treat either as "no product".
 
 The backend then does plain lookups: no reference DB server-side, no duplicated logic, no drift when the catalogue changes.
 

@@ -28,6 +28,18 @@ set the GitHub repo variable `TRUSTED_SIGNING_CERT_PROFILE` → update `.github/
 
 **Delete this whole section once signed `.exe` builds are confirmed working.**
 
+## 📍 Machine-local paths → `CLAUDE.local.md` (gitignored)
+
+**This file is committed and PUBLIC.** Never write an absolute path into it — a
+`/Users/…` line publishes the account name and the folder layout to GitHub, and
+it is wrong on every other machine anyway. Refer to a sibling repo by **name**
+(`TigerTag_Firebase_Backend`) or relatively (`../TigerTag_Firebase_Backend`).
+
+Where the checkouts actually live, which clone is the live one and which are
+stale decoys, and the per-repo commit policy: **`CLAUDE.local.md`** at the repo
+root, gitignored. Read it when you need a path; update it when a path changes.
+Same rule for every other committed doc in this repo.
+
 ## ⚡ Token efficiency — read this first
 
 Every file read and grep costs tokens. Follow these rules on every task to keep context lean:
@@ -275,6 +287,28 @@ the authority; a code change follows a founder-ratified contract, not the revers
 
 ---
 
+## 🎨 The material swatch — one convention, owned by another repo
+
+**Everything is a camembert except a ramp, and every ramp is at 135°.** Bicolor
+is not a special case: two equal conic sectors put the boundary on the vertical
+axis, so its vertical split is a consequence of the pie. It is the *material*
+swatch, not the spool swatch — the same rule serves filament, accessories,
+spare parts and resin alike; nothing in it reads `id_type`.
+
+The convention is **NOT defined in this repo** — its canonical home is
+**TigerSystem-Docs → `docs/developers/material-swatch.md`**, which the Hub, the
+mobile app and third parties implement too. Amend it there first, then re-align
+Studio.
+
+In Studio it lives in `renderer/inventory.js`: `_pieSplit()`, `RAMP_ANGLE`,
+`colorBg()`, `isColorDark()` → `logoSrc()`. **Never open-code a gradient
+anywhere else** — that is exactly how the Add-Product preview ended up drawing
+a bicolor mirrored relative to the inventory. Check any change against
+`playground/material-swatch/index.html` (17 cases × 11 surfaces, real sizes,
+live pickers). Details + the known gaps: `docs/MATERIAL-SWATCH.md`.
+
+---
+
 ## Stack
 Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js`. Renderer: `renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js`. Preload bridge: `preload.js`.
 
@@ -397,9 +431,9 @@ Third-party apps can fetch this URL to get the Firebase project config and call 
 
 Rules are **NOT in this repo**. They live in the **separate backend repo**, already mounted as an additional working dir:
 
-- **File**: `/Users/benglut/Documents/TigerTag_Firebase_Backend/firestore.rules` (single file, self-documented — its header has the **REFLEX** field-whitelist warning; read that before editing).
+- **File**: `firestore.rules` in the **`TigerTag_Firebase_Backend`** repo (checked out beside this one — see `CLAUDE.local.md` for this machine's paths) (single file, self-documented — its header has the **REFLEX** field-whitelist warning; read that before editing).
 - **Project**: `tigertag-connect` (`.firebaserc` default). Storage rules: `storage.rules` in the same repo.
-- **Deploy**: `cd /Users/benglut/Documents/TigerTag_Firebase_Backend && firebase deploy --only firestore:rules --project tigertag-connect` (CLI is installed + authenticated; compiles server-side before release). Then commit `firestore.rules` on `main` and push.
+- **Deploy**: `cd ../TigerTag_Firebase_Backend && firebase deploy --only firestore:rules --project tigertag-connect` (CLI is installed + authenticated; compiles server-side before release). Then commit `firestore.rules` on `main` and push.
 
 **Model (so you usually don't need to open the file):**
 - Everything under `users/{uid}/**` is **owner-only** (`isOwner()`) by default.
@@ -415,7 +449,7 @@ When a feature needs a new cross-user write or field, edit + deploy that file; m
 ### Firestore data structure
 The full collection/field map (publicKeys, userProfiles, users/{uid} + telemetry/inventory/friends/friendRequests/blacklist/prefs) **and** a third-party connect example live in **`docs/firestore-schema.md`** — read it on demand when changing the data model; do not reproduce it here. Security rules live in the backend repo (see *Firestore Security Rules* above).
 
-> **Keep the two data-model docs in sync.** Whenever you change `docs/firestore-schema.md` (add/rename/remove a collection or field, change its shape or a write convention), also update the **public backend repo** doc so third-party integrators + the mobile app stay aligned: `/Users/benglut/Documents/TigerTag_Firebase_Backend/README.md` → section **🧠 Firestore Data Structure** (the `users/{uid}` tree + any per-field subsection). This README is the public integration reference. Doc-only change — no deploy needed; commit it on `main` in the backend repo when the user asks (same as `firestore.rules`). Mention the cross-app impact (mobile/third-party) when relevant.
+> **Keep the two data-model docs in sync.** Whenever you change `docs/firestore-schema.md` (add/rename/remove a collection or field, change its shape or a write convention), also update the **public backend repo** doc so third-party integrators + the mobile app stay aligned: `README.md` in the **`TigerTag_Firebase_Backend`** repo → section **🧠 Firestore Data Structure** (the `users/{uid}` tree + any per-field subsection). This README is the public integration reference. Doc-only change — no deploy needed; commit it on `main` in the backend repo when the user asks (same as `firestore.rules`). Mention the cross-app impact (mobile/third-party) when relevant.
 
 ---
 

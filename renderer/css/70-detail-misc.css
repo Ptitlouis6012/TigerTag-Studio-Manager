@@ -530,6 +530,16 @@
     background: var(--surface); border: 1px solid var(--border);
     border-radius: 14px; box-shadow: 0 12px 32px rgba(0,0,0,.28);
   }
+  /* Spoken warning when the selection reaches past the filter. Amber, not red: it
+     is a caution about scope, not an error — the delete button beside it is the red
+     one. Sits before the destructive button so it is read first. */
+  .bulk-hidden {
+    display: inline-flex; align-items: center;
+    font-size: 11px; font-weight: 600; line-height: 1.2;
+    color: #7a5a05; background: #fff7e0; border: 1px solid #f0b429;
+    border-radius: 8px; padding: 4px 8px; max-width: 260px;
+  }
+  .bulk-hidden.hidden { display: none; }
   .bulk-bar.hidden { display: none; }
   .bulk-btn {
     position: relative; overflow: hidden;
@@ -1046,6 +1056,10 @@
     padding: 5px; overflow: hidden;
     animation: cselPop .12s ease;
   }
+  /* Flipped when left-aligning would overflow the card (set in _enhanceSelect from
+     a live measurement). Without it the rightmost filter's list is clipped away by
+     #card-inv's `overflow: hidden`. */
+  .csel-pop--right { left: auto; right: 0; }
   /* The list scrolls, not the popup: the scroll-fade is a mask and a mask clips
      to the border box, so masking the popup itself would erase its drop shadow.
      Keeping the shadow on the outer box and the scroll (plus the mask) on this
@@ -4298,6 +4312,21 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
    Favorites tables. That is what keeps its corners rounded while scrolling (a
    header pinned to the OUTER view would escape the rounded box and square them
    off) and puts the scroll-fade on the element that actually overflows. */
+/* `.cv-body` is the only thing between the view and the table, and it carried no
+   rules at all — so `flex: 1; min-height: 0` on the wrap below resolved against a
+   plain block, the wrap grew to its full content height, and the sticky <thead>
+   ended up pinned inside a box taller than the screen: it scrolled away with the
+   rows. Making the body a flex column that fills the view is what lets the
+   bordered box actually BE the scroller, exactly like Favorites and Inventory.
+
+   Scoped to `--table` ON PURPOSE: in grid mode `#catalogViewBody` IS the grid
+   (it gets `cv-body--grid inv-grid`), so an unscoped `display: flex` here would
+   outrank `.inv-grid`'s own `display: grid` and collapse the cards into a column.
+   In grid mode the body stays untouched and the VIEW is what scrolls. */
+.inv-catalog-view .cv-body--table {
+  display: flex; flex-direction: column;
+  flex: 1; min-height: 0;
+}
 .inv-catalog-view .cv-table-wrap { flex: 1; min-height: 0; margin-top: 0; }
 .inv-catalog-view .cv-row { cursor: pointer; }
 .inv-catalog-view .cv-sentinel td { height: 1px; padding: 0; border: 0; }
@@ -4330,8 +4359,10 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
   position: relative; display: inline-block; flex: 0 0 auto;
   border-radius: 6px; overflow: hidden; vertical-align: middle;
 }
+/* Full opacity, like every other TigerTag watermark (table thumb, grid card,
+   side-card illustration). This one was the odd one out at .55. */
 .inv-catalog-view .cv-thumb-logo {
-  position: absolute; top: 8%; right: 8%; width: 42%; opacity: .55;
+  position: absolute; top: 8%; right: 8%; width: 42%;
 }
 .inv-catalog-view .cv-thumb-img {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;

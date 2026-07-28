@@ -149,3 +149,6 @@ acu-cam-mqtt.json
 # not committed (commercial SDK; it's an npm dependency instead)
 renderer/lib/agora/
 tmp/
+
+# Machine-local agent reference (absolute paths — must never be pushed)
+CLAUDE.local.md

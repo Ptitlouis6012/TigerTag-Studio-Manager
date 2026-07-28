@@ -1495,5 +1495,6 @@
   "catalogCount": "{{total}} 个产品中的 {{n}} 个",
   "catalogCreateOk": "已添加 — {{name}}，一个字都不用填。",
   "catalogCreateError": "这卷没成功，再试一次。",
-  "catalogAdd": "加入我的库存"
+  "catalogAdd": "加入我的库存",
+  "bulkHiddenWarn": "[object Object]"
 }

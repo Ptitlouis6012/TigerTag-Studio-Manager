@@ -1,217 +1,238 @@
-# `.ttag` field contract — chip payload vs enrichment metadata
+# `.ttag` field contract — per product type
 
-`.ttag` is the **export and import** format of the TigerTag ecosystem. Its primary job is to carry
-everything needed to **create a TigerTag or TigerTag+ chip** — so a `.ttag` must always contain the
-chip payload. Everything else is **enrichment metadata**: useful in the app, never written to a chip.
+`.ttag` is the **export and import** format of the TigerTag ecosystem, whose job is to carry
+everything needed to **create a TigerTag / TigerTag+ chip**. The **envelope, the field list, the data
+types and the on-chip mapping are shared**; the **Required / Optional / N-A contract is set per
+product type** (`id_type`). Today only **Filament (142)** is ratified and the importer accepts only
+142; the other types are drafts to be defined.
 
-This is the field-level contract, so third-party producers (the TigerSystem web playground,
-brand/range collection generators, backup tools) can never land half-formed or corrupted data in a
-user's inventory. Companion to the TigerSystem-Docs `ttag-format` spec.
+Each field has three independent properties — **Type** (wire format), **On chip** (written to the
+physical chip), **Contract** (per type). They are genuinely independent: `color_name` is on the chip
+yet optional.
 
-**Totals:** 28 required · 44 optional — of which 24/24 chip-payload fields are required.
+A field can also be **Req if chip**: mandatory for a record that carries a chip, and required to be
+**absent** on a chipless one. That axis is the record's TIER, not its product type — `id_tigertag`
+names the chip's version, so it has nothing to name when there is no chip.
 
-The contract is **binary**: a field is either needed for a well-formed record, or it is a supplement.
-The rule that decides the column: **the chip payload is REQUIRED, enrichment metadata is OPTIONAL.**
-A consequence worth stating: a chipless **TigerData** carries the full payload too, so it can become
-a real **TigerTag** with no friction and nothing missing.
-A "material" here is any TigerTag-tracked item — a filament spool, a resin, an accessory.
+## Product types
+
+| id | Name | Status |
+|---|---|---|
+| `142` | Filament | ratified · importer-accepted |
+| `116` | Accessories | draft |
+| `41` | Spare Part | draft |
+| `173` | Resin | draft |
 
 ## Legend
 
 | Marker | Meaning |
 |---|---|
-| **REQUIRED** | A well-formed record MUST carry it. Enforced at import: a material missing any of these is refused. |
-| **OPTIONAL** | Free to omit. Passed through verbatim when present. |
+| **Req** | REQUIRED — a well-formed record MUST carry it. |
+| **Req if chip** | REQUIRED of a record that HAS a chip, and it must be ABSENT otherwise. A chipless record is recognised by its `uid` (`TigerData_…`, or the legacy `CLOUD_…`). |
+| Opt | OPTIONAL — free to omit; passed through verbatim. |
+| — | N/A — the field is not used for that product type. |
 | **SANITIZED** | Untrusted input — scheme-checked / clamped before any write. |
-| **OVERWRITTEN ON IMPORT** | Replaced by Studio in Import mode; the file value only matters for Restore. |
+| **OVERWRITTEN ON IMPORT** | Replaced by Studio in Import mode; only matters for Restore. |
 | **IGNORED** | Carried in the file but not applied to the importing account. |
 
-> Envelope-level `exportedAt` is an **ISO 8601 string**; timestamps *inside* `records[]` serialise
-> as **epoch-ms**.
+> Envelope `exportedAt` is an **ISO 8601 string**; timestamps inside `records[]` serialise as
+> **epoch-ms**; the chip's `timestamp` is **seconds since 2000-01-01**.
 
 ---
 
-# Envelope
+# Envelope — shared across every product type
 
-File-level wrapper. Validated before any record is read — a bad marker rejects the whole file.
+File-level wrapper, validated before any record is read. Not part of a record, never on a chip. Identical for all types.
 
 ## Envelope — the wrapper around records[]
 
-| Field | Contract | Notes |
-|---|---|---|
-| `format` | **REQUIRED** | Must be the literal `"tigertag"`. Any other value ⇒ the whole file is rejected. |
-| `kind` | **REQUIRED** | Must be the literal `"ttag"`. Any other value ⇒ the whole file is rejected. |
-| `version` | **REQUIRED** | Integer ≥ 1 and ≤ the reader's supported version (currently 1). Newer ⇒ rejected as "made by a newer version". |
-| `records` | **REQUIRED** | Non-empty array of material records. Empty or not an array ⇒ the whole file is rejected. |
-| `exportedAt` | **OPTIONAL** | ISO 8601 string — NOT epoch-ms (that rule applies only inside `records[]`). Informational. |
-| `exportedBy` | **OPTIONAL** | Exporting account uid. A UX hint only: same account ⇒ Restore pre-selected, otherwise Import. Never a security boundary — Firestore rules are. |
-| `rfidBackups` | **OPTIONAL** | Map keyed by chip UID → the signed factory dump. Present only for TigerTag+ materials. Restored in Restore mode, dropped in Import mode. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `format` | `string` | — | **Req** | **Req** | **Req** | **Req** | Literal `"tigertag"`. Any other value rejects the whole file. |
+| `kind` | `string` | — | **Req** | **Req** | **Req** | **Req** | Literal `"ttag"`. Any other value rejects the whole file. |
+| `version` | `int` | — | **Req** | **Req** | **Req** | **Req** | Integer ≥ 1 and ≤ the reader's supported version (currently 1). |
+| `records` | `array<object>` | — | **Req** | **Req** | **Req** | **Req** | Non-empty array of material records. |
+| `exportedAt` | `string (ISO 8601)` | — | Opt | Opt | Opt | Opt | Export date, ISO 8601 string — NOT epoch-ms. Informational. |
+| `exportedBy` | `string (uid)` | — | Opt | Opt | Opt | Opt | Exporting account uid. UX hint for Restore/Import; never a security boundary. |
+| `rfidBackups` | `object<uid,object>` | — | Opt | Opt | Opt | Opt | Map chip UID → signed factory dump. TigerTag+ only. Restored in Restore, dropped in Import. |
 
 ---
 
-# Chip payload — what a TigerTag / TigerTag+ is burned from
+# Record fields
 
-A `.ttag` exists to CREATE chips, so this payload is REQUIRED: without it the file cannot produce a
-chip, and a chipless TigerData could never become a TigerTag.
+The Header block is the same for every type; the rest of the contract (Required / Optional / N-A) is set PER TYPE — pick a type above.
 
-## Chip · identity
+## Header — same for every product type
 
-| Field | Contract | Notes |
-|---|---|---|
-| `uid` | **REQUIRED** | The chip's UID (hex), or `TigerData_<id>` for a chipless material. Doc id. Restore: a record without it is skipped. Never emit a legacy `CLOUD_` value. |
-| `id_brand` | **REQUIRED** | Brand id, resolved against the TigerTag reference DB. |
-| `id_material` | **REQUIRED** | Material id, resolved against the reference DB. |
-| `id_type` | **REQUIRED** | Material type id. |
-| `id_aspect1` | **REQUIRED** | Primary aspect id. |
-| `id_aspect2` | **REQUIRED** | Secondary aspect id. |
-| `id_diameter` | **REQUIRED** | Diameter id (1.75 / 2.85 …). |
-| `id_measure_unit` | **REQUIRED** | Unit id that gives `measure` its meaning. |
-| `id_version` | **REQUIRED** | Reference-data version id. |
-| `id_tigertag` | **REQUIRED**, **OVERWRITTEN ON IMPORT** | Nonce. Import mints a fresh random one (so the copy is never TigerTag+); the file value only matters for Restore. |
-| `id_product` | **REQUIRED**, **OVERWRITTEN ON IMPORT** | Catalogue product id. Import unsets it; the file value only matters for Restore. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `uid` | `string (hex | TigerData_…)` | **yes** | **Req** | **Req** | **Req** | **Req** | Chip hardware UID in hex, or `TigerData_<id>` for a chipless material. Firestore doc id. Never emit a legacy `CLOUD_`. |
+| `id_type` | `uint8 (0–255) · ref` | **yes** | **Req** | **Req** | **Req** | **Req** | Product type id — references `id_type.json` (142 Filament · 116 Accessories · 41 Spare Part · 173 Resin). This value selects which contract below applies. Import accepts 142 only for now. |
+| `id_brand` | `uint16 (0–65535) · ref` | **yes** | **Req** | **Req** | **Req** | **Req** | Brand id — references `id_brand.json`. |
+| `id_material` | `uint16 (0–65535) · ref` | **yes** | **Req** | **Req** | **Req** | **Req** | Material id — references `id_material.json`. |
+| `id_version` | `string (derived)` | no | — | — | — | — | NOT a stored field, and never required: the version/tier NAME (e.g. "TigerTag", "TigerTag+") DERIVED from id_tigertag via id_version.json. A record normally omits it. |
+| `id_tigertag` | `uint32 · ref id_version.json` | **yes** | **Req if chip** | **Req if chip** | **Req if chip** | **Req if chip** | **OVERWRITTEN ON IMPORT**. The chip's tag id (bytes 0-3). It REFERENCES id_version.json, so only the four ids listed there are legal: 0 RFID Empty, 1542820452 TigerTag, 1816240865 TigerTag Init, 3155151767 TigerTag+. Required of a record that HAS a chip; a chipless record (uid TigerData_… or legacy CLOUD_…) has no chip and therefore no version, so it must NOT carry the field at all — it is written for the first time when a real chip is programmed. Studio ≤2.15.0 stored a random u32 here on chipless materials, a value outside the referential; 2.16.0 stopped writing it and deletes the stray ones. Import drops the field (which is what makes the copy not a TigerTag+); Restore keeps it verbatim. |
+| `id_product` | `uint32 (0–4294967295)` | **yes** | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. Catalogue product id — look up a real one in the public catalogue at https://tigersystem.io/fr/catalog. When unknown it MUST be `4294967295` (`0xFFFFFFFF`, the “generic” sentinel), never absent. Import always resets it to that value. |
+| `timestamp` | `uint32 (0–4294967295, chip epoch)` | **yes** | **Req** | **Req** | **Req** | **Req** | Chip encode timestamp — SECONDS since 2000-01-01 (TigerTag chip epoch, not Unix, not Firestore). |
 
-## Chip · quantity
+## Filament identity
 
-| Field | Contract | Notes |
-|---|---|---|
-| `measure` | **REQUIRED**, **SANITIZED** | Quantity as stored on the chip, paired with `id_measure_unit`. Clamped finite ≥ 0. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `id_aspect1` | `uint8 (0–255) · ref` | **yes** | **Req** | **Req** | **Req** | **Req** | Primary aspect id — references `id_aspect.json` (one shared file for both aspects). |
+| `id_aspect2` | `uint8 (0–255) · ref` | **yes** | **Req** | **Req** | **Req** | Opt | Secondary aspect id — same `id_aspect.json`. |
+| `id_diameter` | `— (not a record field)` | **yes** | — | — | — | Opt | NOT a field of the record. It is a name for chip byte `data1`, whose value references `id_diameter.json` (e.g. 56 = 1.75 mm) — see data1, which IS required. Studio reads it as `id_diameter ?? data1` and writes it back as `data1`; no inventory document has ever carried an `id_diameter` key. Listing it as required rejected every real material at export. |
+| `id_unit` | `uint8 (0–255) · ref` | **yes** | **Req** | **Req** | **Req** | **Req** | Unit id — gives `measure` its meaning (21 = g, 35 = kg, …). The REFERENCE FILE is `id_measure_unit.json`, but the record field is `id_unit`: the contract used to name it after the file, which rejected every real material at export. |
 
-## Chip · colour
+## Quantity
 
-| Field | Contract | Notes |
-|---|---|---|
-| `color_r` | **REQUIRED**, **SANITIZED** | Primary colour, red. Clamped 0–255. |
-| `color_g` | **REQUIRED**, **SANITIZED** | Primary colour, green. Clamped 0–255. |
-| `color_b` | **REQUIRED**, **SANITIZED** | Primary colour, blue. Clamped 0–255. |
-| `color_a` | **REQUIRED**, **SANITIZED** | Primary colour, alpha. Clamped 0–255. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `measure` | `uint24 (0–16777215)` | **yes** | **Req** | **Req** | **Req** | **Req** | **SANITIZED**. A bare quantity with NO unit of its own — the unit comes from `id_measure_unit`. Clamped finite ≥ 0. |
 
-## Chip · raw data slots
+## Colour
 
-| Field | Contract | Notes |
-|---|---|---|
-| `data1` | **REQUIRED** | Raw chip slot 1 — diameter id at creation (default 56 = 1.75 mm). |
-| `data2` | **REQUIRED** | Raw chip slot 2. |
-| `data3` | **REQUIRED** | Raw chip slot 3. |
-| `data4` | **REQUIRED** | Raw chip slot 4. |
-| `data5` | **REQUIRED** | Raw chip slot 5. |
-| `data6` | **REQUIRED** | Raw chip slot 6. |
-| `data7` | **REQUIRED** | Raw chip slot 7. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `color_r` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | **SANITIZED**. Primary colour, red. |
+| `color_g` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | **SANITIZED**. Primary colour, green. |
+| `color_b` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | **SANITIZED**. Primary colour, blue. |
+| `color_a` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | **SANITIZED**. Primary colour, alpha. |
+| `color_r2` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Second colour, red. Absent or empty ⇒ `0`. |
+| `color_g2` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Second colour, green. Absent or empty ⇒ `0`. |
+| `color_b2` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Second colour, blue. Absent or empty ⇒ `0`. |
+| `color_r3` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Third colour, red. Absent or empty ⇒ `0`. |
+| `color_g3` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Third colour, green. Absent or empty ⇒ `0`. |
+| `color_b3` | `uint8 (0–255)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Third colour, blue. Absent or empty ⇒ `0`. |
+| `color_name` | `string (≤28 B UTF-8)` | **yes** | Opt | Opt | Opt | Opt | Free description stored ON the chip in a fixed 28-byte UTF-8 slot. On-chip yet optional. |
 
-## Chip · timestamp
+## Raw chip data slots
 
-| Field | Contract | Notes |
-|---|---|---|
-| `timestamp` | **REQUIRED** | The chip's encode timestamp — TigerTag chip epoch = 1 Jan 2000. Not Firestore bookkeeping. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `data1` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | Opt | Raw chip slot 1. REQUIRED for Filament (the diameter id, default `56` = 1.75 mm) — its requiredness depends on id_type (Optional for Resin, where it means Mixing Time). Same chip byte as id_diameter for Filament. |
+| `data2` | `uint16 (0–65535)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 2. Absent or empty ⇒ `0`. |
+| `data3` | `uint16 (0–65535)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 3. Absent or empty ⇒ `0`. |
+| `data4` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 4. Absent or empty ⇒ `0`. |
+| `data5` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 5. Absent or empty ⇒ `0`. |
+| `data6` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 6. Absent or empty ⇒ `0`. |
+| `data7` | `uint8 (0–255)` | **yes** | **Req** | **Req** | **Req** | **Req** | Raw chip slot 7. Absent or empty ⇒ `0`. |
 
----
+## Derived quantity
 
-# Enrichment metadata — never written to a chip
-
-Enriches the material inside the app. A chip is burned without any of it, and a material stays
-well-formed without it.
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `measure_gr` | `number (grams)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Grams, DERIVED from the on-chip `measure` + `id_measure_unit` (1 kg ⇒ 1000 g). Already implemented and used across the app. A producer never needs to send it — the app computes it. |
+| `measure_ml` | `number (millilitres)` | no | Opt | Opt | Opt | Opt | Millilitres, derived from the SAME source (`measure` + `id_measure_unit`, 1 L ⇒ 1000 ml) — the volume counterpart of `measure_gr` for liquid products that report a volume (some liquids still report a mass → `measure_gr`). New: the derivation mechanism exists; this ml output isn't wired up yet. |
+| `capacity` | `number` | no | Opt | Opt | Opt | Opt | Last-resort capacity fallback in the Import weight-reset chain. |
 
 ## Derived & display
 
-| Field | Contract | Notes |
-|---|---|---|
-| `measure_gr` | **OPTIONAL**, **SANITIZED** | Quantity normalised to grams. Drives the gauge AND the Import reset (`weight_available = capacity`). Clamped finite ≥ 0. |
-| `capacity` | **OPTIONAL** | Last-resort capacity fallback in the Import reset chain. |
-| `online_color_list` | **OPTIONAL** | Hex colour string (e.g. `00A046`), derived from the chip colour bytes. |
-| `online_color_type` | **OPTIONAL** | Mono / dual / tri / rainbow discriminator. |
-| `color_name` | **OPTIONAL** | Human colour label. |
-| `material` | **OPTIONAL** | Human material label (e.g. `PETG HF Basic`). |
-| `series` | **OPTIONAL** | Product series label. |
-| `name` | **OPTIONAL** | Product name. |
-| `label` | **OPTIONAL** | Free-text label. |
-| `message` | **OPTIONAL** | Free-text message. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `online_color_list` | `string (hex)` | no | Opt | Opt | Opt | Opt | Hex colour string (e.g. `00A046`), derived from the chip colour bytes. |
+| `online_color_type` | `uint` | no | Opt | Opt | Opt | Opt | Mono / dual / tri / rainbow discriminator. |
+| `material` | `string` | no | Opt | Opt | Opt | Opt | Human material label resolved for display. |
+| `series` | `string` | no | Opt | Opt | Opt | Opt | Product series label. |
+| `name` | `string` | no | Opt | Opt | Opt | Opt | Product name. |
+| `label` | `string` | no | Opt | Opt | Opt | Opt | Free-text label. |
+| `message` | `string` | no | Opt | Opt | Opt | Opt | Free-text message. |
 
 ## Inventory state
 
-| Field | Contract | Notes |
-|---|---|---|
-| `weight_available` | **OPTIONAL**, **OVERWRITTEN ON IMPORT**, **SANITIZED** | Remaining grams. Import resets it to capacity — only meaningful for Restore. Clamped finite ≥ 0. |
-| `container_id` | **OPTIONAL** | Container from the bundled catalogue — needed for gross→net weighing. |
-| `container_weight` | **OPTIONAL** | Empty-container grams (may be a per-account calibrated value). |
-| `TD` | **OPTIONAL**, **SANITIZED** | Transmission Density, measured by a TD1S. Clamped to `[0.1, 100]` when > 0, else `null`. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `weight_available` | `number (grams)` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**, **SANITIZED**. Remaining grams. Import resets it to capacity, so it only matters for Restore. |
+| `container_id` | `uint (ref)` | no | Opt | Opt | Opt | Opt | Container from the bundled catalogue — needed for gross→net weighing. |
+| `container_weight` | `number (grams)` | no | Opt | Opt | Opt | Opt | Empty-container grams; may be a per-account calibrated value. |
+| `TD` | `uint16 (0–65535, /10 = mm)` | **yes** | Opt | Opt | Opt | Opt | **SANITIZED**. Transmission Density (measured by a TD1S). On the chip at byte offset 44 as a uint16, divided by 10 = mm. Clamped to [0.1, 100] when > 0, else null. |
 
 ## References & tags
 
-| Field | Contract | Notes |
-|---|---|---|
-| `sku` | **OPTIONAL** | Product reference (SKU). |
-| `barcode` | **OPTIONAL** | Product reference (EAN / barcode). |
-| `info1` | **OPTIONAL** | Free-text slot 1. |
-| `info2` | **OPTIONAL** | Free-text slot 2. |
-| `info3` | **OPTIONAL** | Free-text slot 3. |
-| `tags` | **OPTIONAL** | Array of user labels. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `sku` | `string` | no | Opt | Opt | Opt | Opt | Product reference (SKU). |
+| `barcode` | `string (digits only)` | no | Opt | Opt | Opt | Opt | EAN / barcode — digits only, no letters or separators. |
+| `info1` | `string` | no | Opt | Opt | Opt | Opt | Free-text slot 1. |
+| `info2` | `string` | no | Opt | Opt | Opt | Opt | Free-text slot 2. |
+| `info3` | `string` | no | Opt | Opt | Opt | Opt | Free-text slot 3. |
+| `tags` | `array<string>` | no | Opt | Opt | Opt | Opt | A plain JSON array of strings — Studio filters it to strings on read (`data.tags.filter(x => typeof x === "string")`). No separator-joined form. |
 
 ## Links — all untrusted
 
-| Field | Contract | Notes |
-|---|---|---|
-| `url_img` | **OPTIONAL**, **SANITIZED** | Product image URL. Non-http(s) ⇒ dropped on import. |
-| `url_img_user` | **OPTIONAL**, **SANITIZED** | User's custom image URL. Non-http(s) ⇒ dropped on import. |
-| `LinkTDS` | **OPTIONAL**, **SANITIZED** | Technical datasheet URL. Non-http(s) ⇒ dropped. |
-| `LinkMSDS` | **OPTIONAL**, **SANITIZED** | Safety datasheet URL. Non-http(s) ⇒ dropped. |
-| `LinkYoutube` | **OPTIONAL**, **SANITIZED** | Video URL. Non-http(s) ⇒ dropped. |
-| `LinkREACH` | **OPTIONAL**, **SANITIZED** | REACH compliance URL. Non-http(s) ⇒ dropped. |
-| `LinkROHS` | **OPTIONAL**, **SANITIZED** | RoHS compliance URL. Non-http(s) ⇒ dropped. |
-| `LinkFOOD` | **OPTIONAL**, **SANITIZED** | Food-contact compliance URL. Non-http(s) ⇒ dropped. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `url_img` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Product image URL. Non-http(s) scheme dropped on import. |
+| `url_img_user` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. User's own image URL. Non-http(s) scheme dropped on import. |
+| `LinkTDS` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Technical datasheet URL. |
+| `LinkMSDS` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Safety datasheet URL. |
+| `LinkYoutube` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Video URL. |
+| `LinkREACH` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. REACH compliance URL. |
+| `LinkROHS` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. RoHS compliance URL. |
+| `LinkFOOD` | `string (http/https URL)` | no | Opt | Opt | Opt | Opt | **SANITIZED**. Food-contact compliance URL. |
 
 ## Relations & state
 
-| Field | Contract | Notes |
-|---|---|---|
-| `twin_tag_uid` | **OPTIONAL** | Twinned materials only. Reciprocity expected and both records must be in the same file — a half-twin is refused as a whole. Import remaps it; dropped if the partner isn't in the batch. |
-| `rfidBackup` | **OPTIONAL**, **OVERWRITTEN ON IMPORT** | `true` only for TigerTag+, and only with a matching `rfidBackups` entry keyed by this record's `uid`. Import forces `false`. |
-| `rfidListed` | **OPTIONAL**, **OVERWRITTEN ON IMPORT** | Deleted on import. |
-| `deleted` | **OPTIONAL**, **OVERWRITTEN ON IMPORT** | Reset to `null` on import/restore. A producer must never ship a deleted record. |
-| `deleted_at` | **OPTIONAL**, **OVERWRITTEN ON IMPORT** | Reset to `null` on import/restore. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `twin_tag_uid` | `string (hex UID)` | no | Opt | Opt | Opt | Opt | Partner chip's hex UID. Twins only: reciprocity expected, both records in the same file — a half-twin is refused. |
+| `rfidBackup` | `bool` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. `true` only for TigerTag+, with a matching `rfidBackups` entry keyed by this record's uid. The dump is the chip's user memory pages `0x04`–`0x27` (= 4–39 decimal, 144 bytes — the full NTAG213 user memory), stored in the envelope. Import forces `false`. |
+| `rfidListed` | `bool` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. Deleted on import. |
+| `deleted` | `bool | null` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. Reset to `null` on import/restore. Never ship a deleted record. |
+| `deleted_at` | `epoch-ms | null` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. Reset to `null` on import/restore. |
 
 ## Storage placement — carried, never applied
 
-| Field | Contract | Notes |
-|---|---|---|
-| `rack` | **OPTIONAL**, **IGNORED** | Rack object. An imported material never inherits the exporter's storage layout. |
-| `rack_id` | **OPTIONAL**, **IGNORED** | Rack id. Not applied on import. |
-| `level` | **OPTIONAL**, **IGNORED** | Shelf level. Not applied on import. |
-| `position` | **OPTIONAL**, **IGNORED** | Slot position. Not applied on import. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `rack` | `object` | no | Opt | Opt | Opt | Opt | **IGNORED**. Rack placement object. Never inherited on import. |
+| `rack_id` | `string` | no | Opt | Opt | Opt | Opt | **IGNORED**. Rack id. Not applied on import. |
+| `level` | `uint` | no | Opt | Opt | Opt | Opt | **IGNORED**. Shelf level. Not applied on import. |
+| `position` | `uint` | no | Opt | Opt | Opt | Opt | **IGNORED**. Slot position. Not applied on import. |
 
 ## Firestore stamps
 
-| Field | Contract | Notes |
-|---|---|---|
-| `updatedAt` | **OPTIONAL**, **OVERWRITTEN ON IMPORT** | Always stamped fresh on write. Serialises as epoch-ms inside `records[]`. |
-| `updated_at` | **OPTIONAL** | Legacy stamp. Serialises as epoch-ms. |
-| `last_update` | **OPTIONAL** | Legacy stamp. Serialises as epoch-ms. |
-| `needUpdateAt` | **OPTIONAL** | Auxiliary stamp. Serialises as epoch-ms. |
+| Field | Type | On chip | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) | Notes |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `updatedAt` | `epoch-ms` | no | Opt | Opt | Opt | Opt | **OVERWRITTEN ON IMPORT**. Stamped fresh on write. Firestore Timestamps serialise as epoch-ms. |
+| `updated_at` | `epoch-ms` | no | Opt | Opt | Opt | Opt | Legacy stamp. |
+| `last_update` | `epoch-ms` | no | Opt | Opt | Opt | Opt | Legacy stamp. |
+| `needUpdateAt` | `epoch-ms` | no | Opt | Opt | Opt | Opt | Auxiliary stamp. |
 
 ---
 
-## Minimal well-formed record
+## Chip data slots — meaning per product type
 
-A record MUST carry: `uid`, `id_brand`, `id_material`, `id_type`, `id_aspect1`, `id_aspect2`,
-`id_diameter`, `id_measure_unit`, `id_version`, `id_tigertag`, `id_product`, `measure`, `color_r`,
-`color_g`, `color_b`, `color_a`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`,
-`timestamp`.
+The seven raw chip slots hold a type-specific payload. Same bytes on the chip, different meaning:
 
-Plus a valid envelope: `format`, `kind`, `version`, `records`.
+| Slot | Filament (142) | Accessories (116) | Spare Part (41) | Resin (173) |
+| --- | --- | --- | --- | --- |
+| `data1` | Diameter ID (mm) | — | — | Mixing Time (minute) |
+| `data2` | Nozzle Temp Min (°C) | — | — | Work Temp Min (°C) |
+| `data3` | Nozzle Temp Max (°C) | — | — | Work Temp Max (°C) |
+| `data4` | Dry Temp (°C) | — | — | Curing Temp (°C) |
+| `data5` | Dry Time (hours) | — | — | Curing Time (min) |
+| `data6` | Bed Temp Min (°C) | — | — | Wash Temp (°C) |
+| `data7` | Bed Temp Max (°C) | — | — | Wash Time (min) |
 
-## Enforcement
+---
 
-Studio enforces this at import (`_ttagRecordValid` / `_ttagMaterialValid` in `renderer/inventory.js`):
+## Minimal well-formed record, per type
 
-- A record missing any REQUIRED field is refused. `null` and `""` do not count as present.
-- A **material is atomic** — a twin pair passes only if both sides do; a half-twin is refused whole.
-- Refused materials never reach the preview and are **counted and shown** to the user
-  (`ttagRejected`), never silently dropped.
-- The write builder re-filters as a last line of defence, so nothing invalid can ever be written.
+**Filament (142)** — ratified: `uid`, `id_type`, `id_brand`, `id_material`, `timestamp`, `id_aspect1`, `id_aspect2`, `id_unit`, `measure`, `color_r`, `color_g`, `color_b`, `color_a`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`. Plus `id_tigertag` **only when the record carries a chip** (and it must be absent otherwise).
+
+**Accessories (116)** — draft: `uid`, `id_type`, `id_brand`, `id_material`, `timestamp`, `id_aspect1`, `id_aspect2`, `id_unit`, `measure`, `color_r`, `color_g`, `color_b`, `color_a`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`. Plus `id_tigertag` **only when the record carries a chip** (and it must be absent otherwise).
+
+**Spare Part (41)** — draft: `uid`, `id_type`, `id_brand`, `id_material`, `timestamp`, `id_aspect1`, `id_aspect2`, `id_unit`, `measure`, `color_r`, `color_g`, `color_b`, `color_a`, `data1`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`. Plus `id_tigertag` **only when the record carries a chip** (and it must be absent otherwise).
+
+**Resin (173)** — draft: `uid`, `id_type`, `id_brand`, `id_material`, `timestamp`, `id_aspect1`, `id_unit`, `measure`, `color_r`, `color_g`, `color_b`, `color_a`, `data2`, `data3`, `data4`, `data5`, `data6`, `data7`. Plus `id_tigertag` **only when the record carries a chip** (and it must be absent otherwise).
+
+Plus a valid envelope for every type: `format`, `kind`, `version`, `records`.
 
 ---
 
 ## Editing this contract
 
-`playground/ttag-fields-editor/index.html` is a standalone page (no dependencies, no server) that
-lists every field with a Required / Optional toggle, chip / off-chip banding, live counters and a
-per-category bulk set. It regenerates this exact document — edit there, then **Download
-TTAG-FIELDS.md** and drop it back into `docs/`.
+`playground/ttag-fields-editor/index.html` — standalone page (no deps, no server). Pick a product
+type tab, then set each field's type, on-chip and Required / Req-if-chip / Optional / N-A. It regenerates this document:
+**Download TTAG-FIELDS.md** and drop it into `docs/`.

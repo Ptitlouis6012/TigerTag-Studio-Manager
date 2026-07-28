@@ -221,10 +221,10 @@ grep -n "purgeLegacyTombstones\|autoAssignMissingContainers\|autoLinkTwinsByTime
 
 ## 10. Fichiers clés (chemins absolus)
 
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/inventory.js` — main renderer (14 268 lignes)
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/printers/flashforge/index.js` — 2s HTTP poll
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/printers/snapmaker/index.js` — Moonraker WS
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/printers/creality/index.js` — port-9999 WS
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/printers/elegoo/index.js` — MQTT
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/renderer/printers/bambulab/index.js` — MQTTS
-- `/Users/benglut/Documents/TigerTag_Studio_Manager/main.js` — Electron main + image cache IPC
+- `renderer/inventory.js` — main renderer (14 268 lignes)
+- `renderer/printers/flashforge/index.js` — 2s HTTP poll
+- `renderer/printers/snapmaker/index.js` — Moonraker WS
+- `renderer/printers/creality/index.js` — port-9999 WS
+- `renderer/printers/elegoo/index.js` — MQTT
+- `renderer/printers/bambulab/index.js` — MQTTS
+- `main.js` — Electron main + image cache IPC

@@ -1605,9 +1605,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // TigerData+ — a chipless spool that nonetheless carries a REAL catalogue
     // product id (born from the catalogue browser). It is NOT a TigerTag+:
     // there is no chip and therefore no UID, so `id_tigertag` stays the
-    // chipless nonce and `isPlus` stays false. DERIVED, never stored — the
-    // pair (chipless id, real id_product) IS the definition, so no field can
-    // drift out of sync with it. A plain TigerData has id_product unset.
+    // chipless nonce and `isPlus` stays false. The pair (chipless id, real
+    // id_product) IS the definition — a plain TigerData has id_product unset —
+    // so this flag can never drift, and it is what `protocol` is derived FROM
+    // below (see the note there on why the tier is also mirrored to the doc).
     const isCloudPlus = isCloud && _hasRealProductId(data.id_product);
     const mat = materialFull(data.id_material);
     return {
@@ -1640,7 +1641,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // Protocol / version shown in the filter bar and detail panel.
       // Cloud spools carry a random id_tigertag so we derive the label
       // from the spoolId prefix instead of the version table.
-      protocol: isCloud ? "TigerData" : (versionName(data.id_tigertag) || null),
+      // FOUR values, not three: the chipless branch splits TigerData+ out.
+      // `syncSpoolMirrors` writes this onto the doc, so the tier is READABLE
+      // DIRECTLY by anything reading Firestore — the Hub, the mobile app, a
+      // third party — instead of each having to re-derive it. Existing docs
+      // migrate themselves: the mirror compares stored vs computed and rewrites
+      // on mismatch, once, the next time the owner opens Studio.
+      // NB the backend's `byProtocol` deliberately does NOT read this field for
+      // chipless spools (it buckets them by id prefix), so the historical
+      // TigerCloud series is not split by this — the separate count lives in
+      // `cloudPlusCount`.
+      protocol: isCloud ? (isCloudPlus ? "TigerData+" : "TigerData")
+                        : (versionName(data.id_tigertag) || null),
       weightAvailable: data.weight_available,
       containerWeight: data.container_weight,
       capacity: data.measure_gr || data.measure,
@@ -2544,6 +2556,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   // Update the circle preview to show a solid colour (mono), half-split
   // (dual) or three-way conic gradient (tri / rainbow).
+  // Every branch must render what `colorBg()` will render once the spool is
+  // saved — this is a preview, so "not what I saw" is a bug. Dual and tri go
+  // through the shared `_pieSplit` for exactly that reason, and rainbow through
+  // the shared `RAMP_ANGLE`. See docs/COLOR-RENDERING.md.
   function _adpUpdateCircle() {
     const sq = $("adpColorSquare");
     if (!sq) return;
@@ -2551,17 +2567,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (n === 1) {
       sq.style.background = _adpColorSlots[0];
     } else if (n === 2) {
-      sq.style.background =
-        `linear-gradient(90deg, ${_adpColorSlots[0]} 50%, ${_adpColorSlots[1]} 50%)`;
+      sq.style.background = _pieSplit(_adpColorSlots.slice(0, 2));
     } else if (_adpColorMode === "rainbow") {
-      // Smooth linear gradient — mirrors colorBg() in the inventory.
+      // Smooth diagonal ramp — mirrors colorBg()'s rainbow branch (RAMP_ANGLE).
       sq.style.background =
-        `linear-gradient(90deg, ${_adpColorSlots[0]}, ${_adpColorSlots[1]}, ${_adpColorSlots[2]})`;
+        `linear-gradient(${RAMP_ANGLE}, ${_adpColorSlots[0]}, ${_adpColorSlots[1]}, ${_adpColorSlots[2]})`;
     } else {
-      // Tri — hard conic sectors (120° each).
-      sq.style.background =
-        `conic-gradient(${_adpColorSlots[0]} 0deg 120deg, ` +
-        `${_adpColorSlots[1]} 120deg 240deg, ${_adpColorSlots[2]} 240deg 360deg)`;
+      // Tri — three equal conic sectors (see _pieSplit).
+      sq.style.background = _pieSplit(_adpColorSlots.slice(0, 3));
     }
   }
 
@@ -3197,9 +3210,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // grams (id 21) when the user hasn't opened Advanced.
       id_unit:     isFinite(unitId)    ? unitId    : 21,
       id_product:  ID_PRODUCT_UNSET,
-      // Random 32-bit TigerTag ID for cloud-only entries — the real
-      // chip replaces this at programming time.
-      id_tigertag: Math.floor(Math.random() * ID_PRODUCT_UNSET),
+      // NO `id_tigertag`. It names the chip's version in `id_version.json` and
+      // only four values are legal (0 RFID Empty / TigerTag / TigerTag Init /
+      // TigerTag+). A chipless spool has no chip and therefore no version, so
+      // the field is OMITTED — it is written for the first time when a real
+      // chip is programmed. Until v2.16.0 a random u32 was stored here as a
+      // "nonce"; it served nothing and put an out-of-referential value on every
+      // chipless doc, which any reader trusting `id_version.json` would choke on.
 
       // ── Colour 1 (RGBA) — always written ───────────────────────
       color_r: r, color_g: g, color_b: b, color_a: 255,
@@ -3925,7 +3942,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      the views do everything the old modal did and more (grid, real table,
      Product card, the catalogue's own filters), so keeping a second browser
      would have meant two search UIs to keep in step. */
-  $("btnAddFromCatalogue")?.addEventListener("click", () => setViewMode("catalogTable"));
+  // …and it lands in the SAME layout you were already reading the inventory in:
+  // grid → catalogue grid, list → catalogue list. Jumping from a list of rows to
+  // a wall of cards (or the reverse) reads as a different feature rather than the
+  // same shelf seen from the catalogue side. `_syncInvBarButtons` only shows the
+  // button in those two modes, so there is no third case to map.
+  $("btnAddFromCatalogue")?.addEventListener("click",
+    () => setViewMode(state.viewMode === "grid" ? "catalogGrid" : "catalogTable"));
 
   /* ── Settings → Tools: force a catalogue re-sync ────────────────────────────
      The local copy refreshes on its own once a day; this is the escape hatch for
@@ -5369,9 +5392,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // TigerData_ prefix yet, which would read them as real chips. Client-side, the
   // rename only happens on accounts whose Studio already accepts both prefixes,
   // and spreads progressively as users sign in. A chipless doc is self-contained
-  // — no twin (it has no chip), no rfidList backup, nothing references it by id —
-  // so each migration is a plain atomic id-rename. Idempotent (re-reads first,
-  // no-op when there are none), safe vs a concurrent write to the same doc.
+  // has no rfidList backup, so the rename is an atomic copy + delete. Idempotent
+  // (re-reads first, no-op when there are none), safe vs a concurrent write.
+  //
+  // It is NOT free of references, though — this comment used to claim a chipless
+  // doc "has no twin (it has no chip)", and that is false: a chipless spool can be
+  // twinned like any other, and real inventories contain them. Renaming the doc
+  // without retargeting `twin_tag_uid` — its own, and the partner's pointing back —
+  // left both halves aimed at a `CLOUD_` id that had just been deleted. A dangling
+  // twin pointer then produces a row with no document behind it, which
+  // `syncSpoolMirrors` used to MATERIALISE (it is the one inventory write using
+  // `set(merge)`), turning a couple of broken links into a pile of empty spools.
   const _cloudMigrating = new Set();   // ids with a migration in flight — no double-fire
   function maybeMigrateCloudToTigerData(ownerUid) {
     for (const docId of Object.keys(state.inventory)) {
@@ -5394,17 +5425,55 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // we saw it in the snapshot.
     const snap = await oldRef.get();
     if (!snap.exists) return;
+
+    // REFUSE to propagate a doc that carries no identity. This is the guard that
+    // was missing when one account lost 136 spools: the mirror's `set(merge)`
+    // could RESURRECT a `CLOUD_` doc microseconds after this migration deleted it,
+    // as a two-field husk (`productKey` + `protocol`). The next snapshot saw a
+    // `CLOUD_` id again, re-ran this function, and `batch.set` — a FULL overwrite,
+    // not a merge — replaced the good migrated doc with the husk. The mirror can
+    // no longer create a doc, so the husk cannot reappear; this is the second
+    // belt. A husk is not data: drop it rather than let it overwrite anything.
+    const _identity = ["id_brand", "id_material", "id_type", "id_product", "weight_available"];
+    if (!_identity.some(k => snap.data()?.[k] != null)) {
+      await oldRef.delete().catch(() => {});
+      console.warn(`[cloudMigration] ${cloudId} has no identity — husk dropped, NOT propagated`);
+      return;
+    }
     // Full copy with the `uid` FIELD renamed too (it mirrors the doc id), and
-    // `protocol` set to "TigerData" so the migrated doc is immediately
-    // consistent (it's chipless by definition here; the mirror would set it
-    // anyway). Everything else — including updatedAt — is preserved as-is so the
-    // spool does not surface as "recently modified".
-    const newData = { ...snap.data(), uid: newId, protocol: "TigerData" };
+    // `protocol` set so the migrated doc is immediately consistent (it's chipless
+    // by definition here; the mirror would set it anyway). It must be DERIVED, not
+    // hard-coded: a legacy `CLOUD_` doc can perfectly well carry a real
+    // `id_product`, and writing a flat "TigerData" would demote it for as long as
+    // it takes the mirror to notice. Everything else — including updatedAt — is
+    // preserved as-is so the spool does not surface as "recently modified".
+    const _old = snap.data();
+    const newData = { ...(_old), uid: newId,
+      protocol: _hasRealProductId(_old?.id_product) ? "TigerData+" : "TigerData" };
+    // Retarget THIS doc's own twin pointer. The rename is deterministic — the
+    // suffix is preserved — so a partner that has already migrated, or is about
+    // to, lands on the id this computes. Without it the copy keeps pointing at a
+    // `CLOUD_` id that the partner's own migration deletes.
+    if (typeof newData.twin_tag_uid === "string" && newData.twin_tag_uid.startsWith("CLOUD_"))
+      newData.twin_tag_uid = CHIPLESS_PREFIX + newData.twin_tag_uid.slice("CLOUD_".length);
+
+    // …and the pointers aimed AT this doc. Queried rather than read from the local
+    // snapshot so a partner outside it is still fixed — the same belt the
+    // decimal→hex migration wears. `limit(2)`: one is the norm, two reveals
+    // corruption, and it keeps the query inside the rules' soft limit.
+    const reverseTwins = await invRef.where("twin_tag_uid", "==", cloudId).limit(2).get();
+
     const batch = db.batch();
     batch.set(newRef, newData);   // the new doc lands...
+    reverseTwins.forEach(twin => {
+      if (twin.id === cloudId) return;       // the doc we are about to delete
+      if (twin.id === newId) return;         // already handled above, in newData
+      batch.update(twin.ref, { twin_tag_uid: newId });
+    });
     batch.delete(oldRef);         // ...and the old is removed, atomically (or neither)
     await batch.commit();
-    console.log(`[cloudMigration] ${cloudId} → ${newId}`);
+    console.log(`[cloudMigration] ${cloudId} → ${newId}`
+      + (reverseTwins.size ? ` (twins retargeted: ${reverseTwins.size})` : ""));
   }
 
   async function migrateOneSpoolDecimalToHex(ownerUid, decimalId) {
@@ -6104,10 +6173,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       { key: "cloud",  label: '<span class="tag-cloud">TigerData</span>', mini: t("statCloudMini"), num: cloud.length, fmt: intFmt, filter: "TigerData", cloud: true },
       // TigerData+ — chipless like its neighbour, but tied to a real catalogue
       // product. Its own tile because that is the whole point of the tier: how much
-      // of your digital-only stock the app can actually identify. `filter` stays
-      // "TigerData": `r.protocol` is "TigerData" for every chipless spool, so the
-      // version dropdown lights BOTH tiles — which is honest, they are one protocol.
-      { key: "cloudplus", label: '<span class="tag-cloud tag-cloud-plus">TigerData+</span>', mini: t("statCloudPlusMini"), num: cloudPlus.length, fmt: intFmt, filter: "TigerData", cloud: true },
+      // of your digital-only stock the app can actually identify. It filters on its
+      // own `protocol` value, so the two tiles light independently.
+      { key: "cloudplus", label: '<span class="tag-cloud tag-cloud-plus">TigerData+</span>', mini: t("statCloudPlusMini"), num: cloudPlus.length, fmt: intFmt, filter: "TigerData+", cloud: true },
       { key: "diy",    label: '<span class="tag-diy">TigerTag</span>',        mini: t("statDiyMini"),   num: diy,          fmt: intFmt, filter: "TigerTag" },
       { key: "plus",   label: '<span class="tag-plus">TigerTag+</span>',      mini: t("statPlusMini"),  num: plus.length,  fmt: intFmt, filter: "TigerTag+" },
     ];
@@ -6580,12 +6648,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       pop.innerHTML = `<div class="csel-pop-list">` + Array.from(sel.options).map((o, i) =>
         `<button type="button" class="csel-opt${i === sel.selectedIndex ? " is-sel" : ""}" data-i="${i}">${esc(o.text)}</button>`).join("") + `</div>`;
       pop.hidden = false; wrap.classList.add("csel--open");
-      pop.querySelector(".is-sel")?.scrollIntoView({ block: "nearest" });
+      // Right-align the popup when opening it left-aligned would push it past the
+      // card's right edge. `#card-inv` is `overflow: hidden`, so an overflowing
+      // popup is not merely ugly — it is CLIPPED, and the rightmost filter's list
+      // would be half invisible. Measured, not guessed at from the DOM order: how
+      // far the last filter sits depends on the locale's label widths.
+      pop.classList.remove("csel-pop--right");
+      const host = wrap.closest("#card-inv") || document.body;
+      if (pop.getBoundingClientRect().right > host.getBoundingClientRect().right - 4)
+        pop.classList.add("csel-pop--right");
+      // Bring the selected option into view WITHOUT scrollIntoView: that walks up
+      // and scrolls EVERY scrollable ancestor, and `overflow: hidden` still scrolls
+      // programmatically — so opening the rightmost dropdown slid the whole view
+      // sideways and cut off the left edge. Scroll the list itself instead; nothing
+      // above it moves.
+      const list = pop.querySelector(".csel-pop-list"), selOpt = pop.querySelector(".is-sel");
+      if (list && selOpt) list.scrollTop = Math.max(0, selOpt.offsetTop - (list.clientHeight - selOpt.offsetHeight) / 2);
       // A long option list scrolls, but its scrollbar is hidden — without a cue
       // there is nothing to say the list continues past the last visible row.
       // Both edges: the top one is what says "you have already scrolled past
       // some". The scrollbar above is the primary cue; this just softens the cut.
-      _wireScrollFade(pop.querySelector(".csel-pop-list"), { top: true });
+      _wireScrollFade(list, { top: true });
     };
     btn.addEventListener("click", e => { e.stopPropagation(); pop.hidden ? open() : close(); });
     pop.addEventListener("click", e => {
@@ -6625,6 +6708,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   function renderInventory() {
+    // Put the view-selector bubble on the active button. It lives here rather than
+    // only at boot because the selector sits inside `#card-inv`, which is
+    // `display: none` until sign-in completes: at boot every button measures 0 px,
+    // the bubble hides itself, and the app opened with the restored view showing
+    // and NOTHING marked as selected. This is the first moment the card is
+    // reliably on screen, and it is cheap and idempotent — a handful of box reads.
+    queueMicrotask(() => { try { _positionViewIndicators(true); } catch (_) {} });
     populateBrandFilter();      // refresh dropdown options on every render
     const rows = allDisplayRows();
     renderFriendBanner();
@@ -6654,7 +6744,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("invCatalogView")?.classList.add("hidden");
     // Leaving the Search views: the Product card was describing a CATALOGUE
     // product, which no other view can show — take it away with them.
-    if (_catViewSelectedId) { _catViewSelectedId = null; closeProductCard(); }
+    if (_catViewSelectedId) closeProductCard();   // clears the highlight too
 
     // ── Loading or truly empty → dedicated welcome card ──────────────────────
     // In friendView, keep card-inv visible so the banner stays; show spinner there
@@ -7052,6 +7142,33 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     _syncSelAllHeader();   // header master checkbox reflects the filtered-visible selection
   }
 
+  // ── The Tiger Data / TigerTag colour convention — see docs/COLOR-RENDERING.md
+  // Those two helpers ARE the convention. Every surface in every Tiger app must
+  // paint a spool through them, so a bicolor looks the same in Studio, in the
+  // Hub, on the chip guide and in the Add-Product preview. Do not open-code a
+  // gradient anywhere else.
+
+  // N COLOURS, HARD EDGES = a pie (conic) of N equal sectors, first colour
+  // starting at 12 o'clock and sweeping clockwise. Bicolor (2 sectors) and
+  // tricolor (3 sectors) are the ratified cases; an undeclared list of N is
+  // the same picture with N slices. The Add-Product preview shares this helper —
+  // it used to open-code a 50/50 linear split, which drew the same vertical line
+  // MIRRORED (slot 1 left instead of right), so a bicolor spool swapped sides
+  // between the preview and Save.
+  const _pieSplit = (colors) => {
+    const step = 360 / colors.length;
+    const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
+    return `conic-gradient(${stops.join(', ')})`;
+  };
+
+  // ANY SMOOTH RAMP runs on the DIAGONAL, not left-to-right — the rainbow
+  // aspect in all its variants AND the catalogue's declared `gradient` type.
+  // A ramp has no hard edge to place, so the angle is free, and 135° reads as a
+  // sweep across the whole tile instead of vertical bands that look like a
+  // mis-rendered bicolor. One constant so a ramp is a ramp everywhere,
+  // including the Add-Product preview.
+  const RAMP_ANGLE = '135deg';
+
   function colorBg(row) {
     const aspects = [row.aspect1, row.aspect2].map(a => (a || '').toLowerCase());
     const isRainbow  = aspects.some(a => a.includes('rainbow') || a.includes('multicolor'));
@@ -7068,33 +7185,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (cls.length >= 2 && colorType === 'conic_gradient') {
       return `conic-gradient(from 0deg, ${cls.join(', ')}, ${cls[0]})`;
     } else if (cls.length >= 2 && colorType === 'gradient') {
-      return `linear-gradient(90deg, ${cls.join(', ')})`;
+      return `linear-gradient(${RAMP_ANGLE}, ${cls.join(', ')})`;
     } else if (cls.length >= 2) {
-      const step = 360 / cls.length;
-      const stops = cls.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`).join(', ');
-      return `conic-gradient(${stops})`;
+      return _pieSplit(cls);
     } else if (cls.length === 1) {
       return cls[0];   // online_color_list mono — takes priority over RFID chip color
     } else if (isRainbow && isTricolor) {
       const [c1=`#ff4d4d`, c2=`#ffd93d`, c3=`#4da3ff`] = cls;
-      return `linear-gradient(90deg, ${c1} 0%, ${c2} 50%, ${c3} 100%)`;
+      return `linear-gradient(${RAMP_ANGLE}, ${c1} 0%, ${c2} 50%, ${c3} 100%)`;
     } else if (isRainbow && isBicolor) {
       const [c1=`#ff7a00`, c2=`#8a2be2`] = cls;
-      return `linear-gradient(90deg, ${c1} 0%, ${c2} 100%)`;
+      return `linear-gradient(${RAMP_ANGLE}, ${c1} 0%, ${c2} 100%)`;
     } else if (isRainbow) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
-      if (colors.length >= 2) return `linear-gradient(90deg, ${colors.join(', ')})`;
+      if (colors.length >= 2) return `linear-gradient(${RAMP_ANGLE}, ${colors.join(', ')})`;
       if (colors.length === 1) return colors[0];
-      return `linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00cc00, #0000ff, #8b00ff)`;
+      return `linear-gradient(${RAMP_ANGLE}, #ff0000, #ff8800, #ffff00, #00cc00, #0000ff, #8b00ff)`;
     } else if (isTricolor) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
       const [c1 = '#cccccc', c2 = '#888888', c3] = colors;
-      const _c3 = c3 || c1;
-      return `conic-gradient(${c1} 0deg 120deg, ${c2} 120deg 240deg, ${_c3} 240deg 360deg)`;
+      return _pieSplit([c1, c2, c3 || c1]);
     } else if (isBicolor) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
       const [c1 = '#cccccc', c2 = '#ffffff'] = colors;
-      return `conic-gradient(${c1} 0deg 180deg, ${c2} 180deg 360deg)`;
+      return _pieSplit([c1, c2]);   // 2 sectors ⇒ a vertical split, by construction
     } else {
       return row.colorHex || '#1c2030';
     }
@@ -7112,10 +7226,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   // Returns true if the first color found in a CSS background string is dark.
+  // The alternatives are ordered LONGEST FIRST on purpose: with `{6}` tried
+  // before `{8}`, an `#RRGGBBAA` would match its first six digits and then fail
+  // the trailing `\b` (the alpha digits are word chars), so the whole match was
+  // dropped and every 8-digit colour — the raw form the catalogue serves, e.g.
+  // `#000000FF` — was read as LIGHT. That put the black-outline logo on a black
+  // spool. Callers here normalise to 6 digits first, but this helper is shared
+  // (TigerScale, the Hub) and must not lie to a caller that does not.
   function isColorDark(bg) {
-    const m = bg.match(/#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b/);
+    const m = bg.match(/#([0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{4}|[0-9a-fA-F]{3})\b/);
     if (!m) return false;
     let h = m[1];
+    if (h.length === 8) h = h.slice(0, 6);        // #RRGGBBAA → drop the alpha
+    else if (h.length === 4) h = h.slice(0, 3);   // #RGBA     → drop the alpha
     if (h.length === 3) h = h.split('').map(c => c + c).join('');
     const r = parseInt(h.slice(0, 2), 16);
     const g = parseInt(h.slice(2, 4), 16);
@@ -7192,7 +7315,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   //   • TigerData      — doc-only, no physical chip yet (chipless prefix)
   //   • TigerData+     — chipless too, but carrying a real catalogue product
   //                      (created from the catalogue browser). No chip, no UID.
-  //   • TigerTag+      — chip linked to an online catalog product (url_img set)
+  //   • TigerTag+      — chip linked to an online catalogue product (url_img set)
   //   • TigerTag       — bare chip / DIY entry
   // Chipless takes precedence over Plus because a chipless doc cannot also be a
   // chip-on-shelf — the prefix flips to a real hex UID the moment a chip
@@ -9305,6 +9428,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const dc = $("bulkDeleteCount"); if (dc) dc.textContent = n ? ` (${n})` : "";
     const show = state.bulkSelect && n > 0;
     bar.classList.toggle("hidden", !show);
+    // The count is the WHOLE selection; the table only shows what passes the current
+    // filter. Select all, then search, and "Delete (143)" sits under a single row —
+    // a destructive action aimed at 142 spools you cannot see. The selection is kept
+    // on purpose (filtering is how you build one), so the fix is to say it out loud.
+    const hiddenEl = $("bulkHidden");
+    if (hiddenEl) {
+      const vis = ctx.visibleKeys().reduce((c, k) => c + (ctx.set.has(k) ? 1 : 0), 0);
+      const hidden = Math.max(0, n - vis);
+      hiddenEl.textContent = hidden ? t("bulkHiddenWarn", { n: hidden }) : "";
+      hiddenEl.classList.toggle("hidden", !hidden || !show);
+    }
+
     // "Price" bulk action shows for products AND inventory materials (a price is a
     // product-level field; for spools it writes to their product identity). Printers
     // have no price.
@@ -9620,8 +9755,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (instant) { void ind.offsetWidth; ind.classList.remove("vti-instant"); }  // reflow, re-enable transition
     });
   }
-  // Reposition (instant) when button widths change: language switch + window resize.
-  window.addEventListener("resize", () => _positionViewIndicators(true));
+  /**
+   * Keep the bubble on the active button, whatever moves.
+   *
+   * A ResizeObserver rather than a list of "call it here" sites, because the one
+   * that mattered was impossible to name: the groups live inside `#card-inv`,
+   * which is `display: none` until sign-in completes, so at boot every button
+   * measures 0 px wide, the bubble hides itself — and nothing put it back when the
+   * card finally appeared. The app opened with the restored view showing and no
+   * view marked. The observer fires exactly when the element gains a size, which
+   * covers that reveal, a language switch changing label widths, and a window
+   * resize, without anyone having to guess the moment.
+   *
+   * No feedback loop: `.view-toggle-ind` is absolutely positioned, so writing its
+   * width and transform cannot change the observed element's own size.
+   */
+  try {
+    const _vtg = document.querySelector(".view-toggle-groups");
+    if (_vtg) new ResizeObserver(() => _positionViewIndicators(true)).observe(_vtg);
+  } catch (_) {
+    window.addEventListener("resize", () => _positionViewIndicators(true));
+  }
   // Detach (top, cam view) → pop the camera wall into its own window.
   $("camWallDetachTop")?.addEventListener("click", () => {
     try { window.electronAPI?.openCamWindow(_serializeCamerasForDetach()); } catch (_) {}
@@ -10394,6 +10548,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // (setViewMode, which normally toggles it, isn't called on the initial render).
   if ($("gridSortWrap")) $("gridSortWrap").hidden = (state.viewMode !== "grid");
   if (state.viewMode === "grid") _syncGridSort();
+  // …and the selection bubble in the view selector. The block above sets `.active`
+  // by hand, but what you actually SEE is `.view-toggle-ind`, positioned in JS from
+  // the live button box — and only ever from setViewMode, which the initial render
+  // skips. So the app opened with the restored view showing and NOTHING marked as
+  // selected, whichever view it was. Placed instantly (no slide-in from the left)
+  // and re-measured on the next frame, since the buttons have no width until the
+  // first layout — the same two-step setViewMode uses on its own first call.
+  _positionViewIndicators(true);
+  _vtiReady = true;
+  requestAnimationFrame(() => _positionViewIndicators(true));
 
   // Toggle the clear-button visibility in lock-step with the input
   // value — only shown when there's something to clear. The same pass
@@ -11109,13 +11273,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   async function _refreshApiData(r, { silent = false } = {}) {
-    if (!window.electronAPI?.refreshApiData) return;
     const rawDoc = state.inventory[r.spoolId];
     if (!rawDoc) return;
-    const btn = $("btnRefreshApi");
+    const btn = silent ? null : $("btnRefreshApi");
     if (btn) { btn.disabled = true; btn.querySelector(".toolbox-row-label").textContent = t("toolRefreshApiLoading"); }
     try {
-      const res = await window.electronAPI.refreshApiData(rawDoc);
+      // Two ways to ask the API for the same product, picked by whether there is a
+      // chip. `refreshApiData` builds its URL from the chip's UID (`BigInt("0x" +
+      // uid)`), which THROWS on a chipless id like `TigerData_0281050778` — so a
+      // TigerData+ has to go through the product lookup, exactly as its creation
+      // did. Both handlers return the same `{ ok, api }`.
+      const res = r.isCloud
+        ? await window.electronAPI?.lookupProduct?.(Number(rawDoc.id_product))
+        : await window.electronAPI?.refreshApiData?.(rawDoc);
+      if (!res) return;
       if (!res.ok) throw new Error(res.error || "unknown");
       const api = res.api;
       const update = {};
@@ -11167,25 +11338,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (!silent) toast(t("toolRefreshApiNoChange"), "info");
         return;
       }
-      // Several refreshed fields live on the physical chip. If any of them
-      // actually CHANGED value, the tag is now out of sync with the record →
-      // flag it for re-burn (the chip-pending badge; cleared by the burn flow).
-      // Compared against the current doc so an already-correct chip isn't
-      // falsely flagged. Cloud entries have no chip → never flagged.
-      const CHIP_FIELDS = [
-        "id_brand", "id_material", "id_aspect1", "id_aspect2",
-        "data2", "data3", "data4", "data5", "data6", "data7",
-        "color_r", "color_g", "color_b", "color_a",
-        "name", "series", "sku", "barcode",
-      ];
-      if (!r.isCloud && CHIP_FIELDS.some(k => k in update && update[k] !== rawDoc[k])) {
-        update.needUpdateAt = Date.now();
-      }
+      // If the refresh changed something the CHIP carries, the tag is now out of
+      // sync with the record → flag it for re-burn (the chip-pending badge, cleared
+      // by the burn flow). Compared against the current doc so an already-correct
+      // chip is not flagged. A chipless spool has no chip → never flagged, which is
+      // why a TigerData+ updates in complete silence.
+      // This used to run off a hand-written list that included `name`, `series`,
+      // `sku` and `barcode` — none of which are on the chip. A brand renaming a
+      // product therefore sent the user to the reader to write bytes identical to
+      // the ones already there. The list is now the ratified one.
+      if (!r.isCloud && _touchesChipData(update, rawDoc)) update.needUpdateAt = Date.now();
+      // We have just reconciled this spool with the catalogue — stamp it, whether
+      // or not anything actually differed. A refresh that finds no change still
+      // proves the record is current, and not recording that would make us re-fetch
+      // the same product on every sync.
+      update.catalogSyncedAt = _catalogStamp();
       update.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       const uid = fbAuth().currentUser?.uid;
       if (!uid) return;
       await fbDb().collection("users").doc(uid).collection("inventory").doc(r.spoolId).update(update);
-      toast(t("toolRefreshApiSuccess"), "success");
+      if (!silent) toast(t("toolRefreshApiSuccess"), "success");
+      return true;
     } catch (e) {
       console.error("[refreshApi]", e);
       if (!silent) toast(t("toolRefreshApiError"), "error");
@@ -11338,6 +11511,32 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!_catalogIndex.length) _catalogLoadCache();
   }
 
+  /**
+   * Fall back to the catalogue bundled with the app.
+   *
+   * A fresh install has nothing in localStorage, so the Search view used to sit
+   * empty until the first sync came back — and stayed empty forever offline. The
+   * build ships `assets/db/tigertag/id_catalog.json` (refreshed by `db_update.py`
+   * alongside the reference tables), so there is always something to search.
+   *
+   * Read ONLY when the cache is empty: it is ~1.5 MB, and a downloaded catalogue
+   * is by definition fresher than the one frozen at build time. `_catalogFetchedAt`
+   * is deliberately left at 0 so the age check still treats it as stale and a real
+   * sync happens as soon as there is a network — the bundle is a floor, not a
+   * substitute.
+   */
+  async function _catalogLoadBundled() {
+    if (_catalogIndex.length) return false;
+    try {
+      const r = await fetch("../assets/db/tigertag/id_catalog.json");
+      if (!r.ok) return false;
+      const items = await r.json();
+      if (!Array.isArray(items) || !items.length) return false;
+      _catalogBuildIndex(items);
+      return _catalogIndex.length > 0;
+    } catch (_) { return false; }
+  }
+
   // ── Local cache ──────────────────────────────────────────────────────────
   function _catalogLoadCache() {
     try {
@@ -11366,7 +11565,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     _catalogIndex = (items || [])
       .filter(it => it && it.id != null)
       .map(it => ({
-        it: { ...it, ..._catSplitTitle(it.title) },
+        it: { ...it, ..._catSplitTitle(it) },
         hay: [it.brand, it.title, it.material, it.sku, it.measure]
                .filter(Boolean).join(" ").toLowerCase(),
       }));
@@ -11381,19 +11580,104 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return String(it?.product_type || CATALOG_CREATABLE_TYPE) === CATALOG_CREATABLE_TYPE;
   }
 
-  // The LIST endpoint gives one `title` where the detail endpoint gives `series`
-  // and `name` separately ("CarbonX CF-PLA - Black"). Split on the LAST " - " so
-  // a series that itself contains one survives ("CarbonX - PA12+CF - Black" →
-  // series "CarbonX - PA12+CF", name "Black"). Verified against the detail
-  // endpoint, and every one of the catalogue's titles carries the separator.
-  // Derived once here rather than on every re-render — rows redraw on each
-  // keystroke, the index is built once per sync.
-  function _catSplitTitle(title) {
-    const s = String(title || "").trim();
+  // Series and name, taken from the LIST endpoint, which now returns them as their
+  // own fields. Splitting `title` on the last " - " was the old way and it GUESSES
+  // WRONG whenever the colour name itself contains a dash: "PLA Basic - CMYK -
+  // Magenta" is series "PLA Basic" + name "CMYK - Magenta", not series "PLA Basic
+  // - CMYK" + name "Magenta". Measured on a 1000-product page: the split disagreed
+  // with the API on 2 of them, and `series`/`name` were present on all 1000.
+  // The split survives only as a fallback for a cache written by an older build —
+  // those payloads have `title` and nothing else, and must not lose their series
+  // until the next sync overwrites them.
+  function _catSplitTitle(it) {
+    const o = it && typeof it === "object" ? it : { title: it };
+    if (o.series != null || o.name != null)
+      return { _series: String(o.series || "").trim(), _name: String(o.name || "").trim() };
+    const s = String(o.title || "").trim();
     const i = s.lastIndexOf(" - ");
     return i > 0
       ? { _series: s.slice(0, i).trim(), _name: s.slice(i + 3).trim() }
       : { _series: s, _name: "" };
+  }
+
+  /**
+   * Which spools the catalogue has moved on from.
+   *
+   * The catalogue is already in memory after a sync, so this costs one pass over
+   * the inventory and no network at all — the expensive `product/get` call happens
+   * only for the rows this returns.
+   *
+   * Both tiers are checked: a TigerData+ and a TigerTag+ carry the same
+   * `id_product` and go stale the same way. What differs is the CONSEQUENCE, and
+   * that is decided later by `_touchesChipData` — a chipless spool can never ask
+   * for a re-burn, so its refresh is always silent.
+   */
+  function _catalogStaleRows() {
+    // A friend's shelf is READ-ONLY, always — so we do not even look. Their spools
+    // being current or not is their business, not this account's, and scanning them
+    // could only produce work we are forbidden to do. The guard lives here, at the
+    // scan, rather than only at the writer: nothing downstream should ever hold a
+    // list of someone else's stale spools in the first place.
+    if (state.friendView) return [];
+    if (!_catalogIndex.length) return [];
+    const byId = new Map(_catalogIndex.map(e => [Number(e.it.id), e.it]));
+    return (state.rows || []).filter(r => {
+      if (r.deleted) return false;
+      const pid = Number(r.raw?.id_product);
+      if (!_hasRealProductId(pid)) return false;          // nothing to reconcile against
+      const prod = byId.get(pid);
+      if (!prod) return false;                            // withdrawn from the catalogue → leave alone
+      const changed = Number(prod.updated_at);
+      if (!Number.isFinite(changed)) return false;        // never changed since creation
+      const synced = Number(r.raw?.catalogSyncedAt);
+      // No stamp means the spool predates this mechanism, and we genuinely do not
+      // know whether it is current — so it IS refreshed. That sweeps every existing
+      // inventory once, which is the point: after that first pass everything carries
+      // a stamp and the comparison above does the work. Deliberate, and affordable
+      // because only spools whose product ACTUALLY moved reach this point.
+      if (!Number.isFinite(synced)) return true;
+      return changed > synced;
+    });
+  }
+
+  // How many stale spools one sync will refresh. Each one is a `product/get`
+  // round-trip, so an inventory that has sat unopened for months could otherwise
+  // fire hundreds at once. The rest are picked up by the next sync — the stamp
+  // makes the work resumable, nothing is lost by stopping early.
+  const CATALOG_REFRESH_MAX = 40;
+  let _catalogRefreshing = false;
+
+  /**
+   * Bring every spool the catalogue has moved on from back in line.
+   *
+   * Runs after a catalogue sync, in the background, sequentially — a burst of
+   * parallel requests would be rude to the API and buys nothing here. Each row
+   * goes through the SAME `_refreshApiData` the manual button uses, so the
+   * consequence is decided in one place: the record is updated either way, and
+   * `needUpdateAt` is raised only when the change touched something the chip
+   * carries AND the spool has a chip. A TigerData+ therefore updates in complete
+   * silence, which is the whole point — it has no chip to re-burn.
+   */
+  async function _catalogRefreshStale() {
+    // Second lock on the WRITE path. `_catalogStaleRows` already refuses to scan a
+    // friend's inventory, so this can only fire if that ever regresses — cheap, and
+    // it is the write that would be unrecoverable.
+    if (_catalogRefreshing || state.friendView) return;
+    const stale = _catalogStaleRows();
+    if (!stale.length) return;
+    _catalogRefreshing = true;
+    const batch = stale.slice(0, CATALOG_REFRESH_MAX);
+    let done = 0;
+    try {
+      for (const r of batch) {
+        if (await _refreshApiData(r, { silent: true })) done++;
+      }
+    } finally {
+      _catalogRefreshing = false;
+    }
+    const left = stale.length - batch.length;
+    console.log(`[catalog] refreshed ${done}/${batch.length} stale spool(s)`
+      + (left ? ` — ${left} left for the next sync` : ""));
   }
 
   async function _catalogSync({ force = false } = {}) {
@@ -11411,6 +11695,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         _catalogBuildIndex(res.items);
         _catalogSaveCache(res.items);
         if (_isCatalogMode(state.viewMode)) _catViewSearch();
+        _catalogRefreshStale();   // fire-and-forget: a sync must not wait on it
       } else if (!_catalogIndex.length) {
         // Only surface a failure when there is nothing cached to fall back on.
         _catViewSetStatus(t("catalogSyncError"));
@@ -11528,16 +11813,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       a: m[4] != null ? parseInt(m[4], 16) : 255,
     };
   }
-  // A chipless spool must never CLAIM to be a chip: if the random nonce happened
-  // to land on a real version id, `versionName()` would resolve it and flip
-  // `isPlus` on. Astronomically unlikely, cheap to rule out.
-  function _catChiplessNonce() {
-    for (let i = 0; i < 8; i++) {
-      const n = Math.floor(Math.random() * ID_PRODUCT_UNSET_U32);
-      if (!versionName(n)) return n;
-    }
-    return Math.floor(Math.random() * ID_PRODUCT_UNSET_U32);
-  }
 
   /* ── Catalogue product → the canonical chip doc ────────────────────────────
      THE single mapping from a `product/get` payload to the inventory document a
@@ -11588,7 +11863,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       id_unit:     unitId,
       // THE field that makes this a TigerData+.
       id_product:  Number(productId),
-      id_tigertag: _catChiplessNonce(),
 
       // ── Colour 1 (RGBA) ───────────────────────────────────────────────
       color_r: c1.r, color_g: c1.g, color_b: c1.b, color_a: c1.a,
@@ -11615,6 +11889,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
       timestamp:  nowChipTs(),
       updatedAt:  firebase.firestore.FieldValue.serverTimestamp(),
+      // Born from the catalogue, so it is by definition in sync with it right now.
+      catalogSyncedAt: _catalogStamp(),
       deleted:    null,
       deleted_at: null,
 
@@ -11709,6 +11985,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!$("invCatalogView")) return;
     if (!_catalogIndex.length) _catalogLoadCache();
     _catViewSearch();
+    // Nothing cached (fresh install) → show the bundled catalogue immediately
+    // rather than an empty view, then re-render once it is in.
+    if (!_catalogIndex.length) {
+      _catalogLoadBundled().then(ok => { if (ok && _isCatalogMode(state.viewMode)) _catViewSearch(); });
+    }
     _catalogSync();   // no-op while the cache is fresh; re-renders when it isn't
   }
 
@@ -12028,8 +12309,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
   }
 
-  function _catViewSelect(id) {
-    _catViewSelectedId = (String(id) === String(_catViewSelectedId)) ? null : String(id);
+  // Paint `_catViewSelectedId` onto the rows/cards. Side-effect free ON PURPOSE:
+  // both the picker and the "the card was closed" path need it, and only one of
+  // them may touch the Product card — otherwise the two would call each other.
+  function _catViewPaintSelection() {
     $("catalogViewBody")?.querySelectorAll(".cv-card, .cv-row").forEach(el => {
       const on = el.dataset.id === _catViewSelectedId;
       // Cards are `.spool-card`s, so they take that card's own `.selected` look
@@ -12039,7 +12322,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       el.classList.toggle(card ? "selected" : "row-selected", on);
       el.setAttribute(card ? "aria-pressed" : "aria-selected", on ? "true" : "false");
     });
-    // Picking shows the product; unpicking takes the card away with it.
+  }
+  // Drop the highlight without touching the card — this is what `closeProductCard`
+  // calls, so shutting the card by ANY route (its ✕, opening another card, leaving
+  // the view) also releases the row. Selection and card were one-way before: the
+  // row lit the card up but the card closing left the row lit with nothing open.
+  function _catViewClearSelection() {
+    if (!_catViewSelectedId) return;
+    _catViewSelectedId = null;
+    _catViewPaintSelection();
+  }
+  function _catViewSelect(id) {
+    _catViewSelectedId = (String(id) === String(_catViewSelectedId)) ? null : String(id);
+    _catViewPaintSelection();
+    // Picking shows the product; unpicking takes the card away with it. The
+    // `closeProductCard` below re-enters `_catViewClearSelection`, which returns
+    // at once because the id is already null — no loop.
     if (_catViewSelectedId) {
       const it = _catViewHits.find(x => String(x.id) === _catViewSelectedId);
       _catViewProductCard(it).catch(e => console.warn("[catalog] product card:", e?.message));
@@ -14466,17 +14764,70 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // carry the full chip field set so a chipless TigerData can become a real
   // TigerTag with no friction and nothing missing. A record that doesn't is
   // REFUSED at import rather than landing half-formed data in the inventory.
+  // Field names come from the DOCUMENT schema, not from the reference files. Three
+  // of them were wrong until v2.16.0 and rejected EVERY real material at export:
+  //   • `id_measure_unit` — that is the reference FILE's name; the doc field is `id_unit`
+  //   • `id_diameter`     — never a doc field: the diameter id travels in `data1`
+  //                         (Studio reads `id_diameter ?? data1`, writes back `data1`)
+  //   • `id_version`      — derived from `id_tigertag`, never stored
   const TTAG_REQUIRED_NUM = [
     "id_brand", "id_material", "id_type", "id_aspect1", "id_aspect2",
-    "id_diameter", "id_measure_unit", "id_version", "id_tigertag", "id_product",
+    "id_unit", "id_product",
     "measure", "color_r", "color_g", "color_b", "color_a",
     "data1", "data2", "data3", "data4", "data5", "data6", "data7", "timestamp",
   ];
+  /**
+   * `catalogSyncedAt` — epoch ms, "when this spool was last reconciled with the
+   * product catalogue". It is the ONLY field that means that, and it had to be a
+   * new one: `last_update` already means "when the chip was last read or written"
+   * (set by the encode + reader paths, never by an API refresh), and `updatedAt`
+   * is Firestore's own write stamp, which moves every time a weight changes.
+   *
+   * Read against the catalogue's per-product `updated_at`, which the API sets only
+   * on a change AFTER creation — so its absence means "never changed since it was
+   * created", i.e. up to date by construction, not "unknown":
+   *
+   *   product.updated_at missing              → up to date
+   *   product.updated_at <= catalogSyncedAt   → up to date
+   *   product.updated_at >  catalogSyncedAt   → stale, refresh it
+   */
+  function _catalogStamp() { return Date.now(); }   // hoisted: callers sit above this block
+
+  /**
+   * The fields that physically live on the chip — the ratified `On chip` column of
+   * `docs/TTAG-FIELDS.md`, mirrored here because the app cannot parse Markdown at
+   * runtime. `npm run docs:check` fails the commit if the two ever drift.
+   *
+   * This set answers ONE question: has the record changed in a way that makes the
+   * chip stale? A change to anything outside it — a name, a series, a datasheet
+   * link, a photo — is metadata: worth storing, never worth asking the user to
+   * re-burn a chip for. Getting that wrong is not cosmetic; it sends people to the
+   * reader to write bytes identical to the ones already there.
+   */
+  const TTAG_ON_CHIP_FIELDS = [
+    "id_type", "id_brand", "id_material", "id_tigertag", "id_product", "timestamp",
+    "id_aspect1", "id_aspect2", "id_diameter", "id_unit", "measure",
+    "color_r", "color_g", "color_b", "color_a",
+    "color_r2", "color_g2", "color_b2", "color_r3", "color_g3", "color_b3", "color_name",
+    "data1", "data2", "data3", "data4", "data5", "data6", "data7",
+  ];
+  /** Would applying `update` to `doc` change something the chip carries? */
+  function _touchesChipData(update, doc) {
+    return TTAG_ON_CHIP_FIELDS.some(k => k in update && update[k] !== doc?.[k]);
+  }
+
+  // `id_tigertag` is required only of a record that HAS a chip. It names the
+  // chip's version in `id_version.json`, so a chipless record has nothing to put
+  // there — omitting it is correct, and demanding it would make every TigerData
+  // unexportable. Split out of the list above rather than dropped, because for a
+  // chip-backed record it is still part of the payload that makes the chip.
+  const _ttagNeedsTigertag = doc => !_isChiplessId(_ttagRecordId(doc));
   // `null`/`""` must NOT pass: Number(null) and Number("") are 0, i.e. finite.
   const _ttagNumOk = v => v != null && v !== "" && Number.isFinite(Number(v));
   function _ttagRecordValid(doc) {
     if (!doc || typeof doc !== "object") return false;
     if (!_ttagRecordId(doc)) return false;                    // uid
+    if (_ttagNeedsTigertag(doc) && !_ttagNumOk(doc.id_tigertag)) return false;
     return TTAG_REQUIRED_NUM.every(f => _ttagNumOk(doc[f]));
   }
   // A material is atomic: a twin pair passes only if BOTH sides do — a
@@ -14534,7 +14885,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const data = {
         ...d,
         uid: newId,
-        id_tigertag: Math.floor(Math.random() * TTAG_ID_PRODUCT_UNSET), // fresh nonce → not Plus
+        // The copy is chipless, so it carries NO chip version at all — dropping
+        // `id_tigertag` is both what makes it not-a-TigerTag+ and what keeps the
+        // doc inside `id_version.json`'s referential. (It used to be re-rolled
+        // to a random u32 here, which achieved the first goal and broke the second.)
+        id_tigertag: FV.delete(),
         id_product: TTAG_ID_PRODUCT_UNSET,
         rfidBackup: false,
         updatedAt: FV.serverTimestamp(),
@@ -16337,6 +16692,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("productCardPanel")?.classList.remove("open");
     _syncPanels();
     _productCardData = null;
+    // A Search row/card that opened this stays highlighted otherwise, pointing at
+    // a panel that is no longer there. No-op everywhere else (nothing selected).
+    _catViewClearSelection();
   }
   // Toggle the Product card from a reorder/spool row: close it if it's already open
   // for this same product, else open it — reusing the live product record (with its
@@ -17737,7 +18095,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // info rows — optional 3rd tuple element is an id placed on the .pv span,
     // so _patchDetailWeight can refresh that cell without a full rebuild.
     // TigerTag+ carries a product id (id_product) that ties the chip to its
-    // catalog entry — shown right under the UID. Unset (0 / 0xFFFFFFFF) → hidden.
+    // catalogue entry — shown right under the UID. Unset (0 / 0xFFFFFFFF) → hidden.
     const _productId = (() => {
       const pid = Number(r.raw?.id_product);
       return (r.isPlus && pid && pid !== 4294967295) ? String(pid) : null;
@@ -20772,7 +21130,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const safeName  = esc(p.printerName || modelName);
       // The thumbnail uses object-fit: contain so the printer photo always
       // shows in full. Falls back to the per-brand `no_printer.png` placeholder
-      // (declared in every brand catalog as id "0") when modelId is missing.
+      // (declared in every brand catalogue as id "0") when modelId is missing.
       const fallback  = printerImageUrl(findPrinterModel(p.brand, "0"));
       const imgSrc    = imgUrl || fallback || "";
       // Trigger an HTTP ping for Snapmaker printers so the online dot
@@ -22447,7 +22805,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // doesn't see the printer name twice).
     $("printerPanelTitle").textContent = p.printerName || t("printerPanelTitle");
 
-    // Resolve catalog metadata for the model. The legacy `featuresHtml`
+    // Resolve catalogue metadata for the model. The legacy `featuresHtml`
     // (camera / multi-extruder / etc. pills under the photo) was
     // removed — it took vertical space without conveying anything the
     // user couldn't already see in the live blocks below the hero.
@@ -29772,11 +30130,25 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // we'd persist WRONG values. Bail — a later snapshot does it once loaded.
     const db = state.db || {};
     if (!db.brand || !db.material || !db.aspect || !db.version) return;
-    const want = r => ({ productKey: _productKeyHash(r), protocol: r.protocol || "unknown" });
+    const FV = firebase.firestore.FieldValue;
+    // A chipless spool must carry NO `id_tigertag`: the field names the chip's
+    // version in `id_version.json`, and until v2.16.0 every chipless doc got a
+    // random u32 there — a value outside the referential, which breaks any reader
+    // that resolves it. The mirror is the right place to undo it: it already
+    // rewrites drifted fields, so every account cleans itself the next time
+    // Studio opens, with no server-side pass and no migration to schedule.
+    const _strayTigertag = r => r.isCloud && raw[r.spoolId]?.id_tigertag !== undefined;
+    const want = r => {
+      const w = { productKey: _productKeyHash(r), protocol: r.protocol || "unknown" };
+      if (_strayTigertag(r)) w.id_tigertag = FV.delete();
+      return w;
+    };
     const stale = (state.rows || []).filter(r => {
       if (r.deleted || !_productKeyHash(r)) return false;
-      const cur = raw[r.spoolId] || {}, w = want(r);
-      return cur.productKey !== w.productKey || cur.protocol !== w.protocol;
+      const cur = raw[r.spoolId] || {};
+      return cur.productKey !== _productKeyHash(r)
+          || cur.protocol !== (r.protocol || "unknown")
+          || _strayTigertag(r);
     });
     if (!stale.length) return;
     try {
@@ -29784,10 +30156,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const col = fdb.collection("users").doc(uid).collection("inventory");
       for (let i = 0; i < stale.length; i += 400) {       // Firestore batch cap is 500
         const batch = fdb.batch();
-        stale.slice(i, i + 400).forEach(r => batch.set(col.doc(r.spoolId), want(r), { merge: true }));
+        // `update`, NOT `set(merge)`. This mirrors two fields onto spools that
+        // EXIST; it has no business creating one. With `set(merge)` a row whose
+        // document was missing — a twin pointer left dangling by the CLOUD_ →
+        // TigerData_ rename — got MATERIALISED here as an empty spool carrying
+        // just `productKey` + `protocol`, which later writes then fleshed out
+        // into a plausible-looking phantom. `update` fails on a missing doc,
+        // which is the correct outcome: nothing to mirror, nothing written.
+        stale.slice(i, i + 400).forEach(r => batch.update(col.doc(r.spoolId), want(r)));
         await batch.commit();
       }
-      console.log(`[spoolMirrors] productKey + protocol mirrored on ${stale.length} spool(s)`);
+      console.log(`[spoolMirrors] reconciled ${stale.length} spool(s) (productKey / protocol / stray id_tigertag)`);
     } catch (e) {
       console.warn("[spoolMirrors] sync failed:", e?.code, e?.message);
     }
