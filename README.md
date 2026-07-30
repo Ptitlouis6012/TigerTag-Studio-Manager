@@ -2,9 +2,9 @@
 
 # Tiger Studio Manager 2
 
-<img src="assets/svg/logos/logo_tigertag_contouring.svg" width="140" alt="TigerTag logo" />
+<img src="assets/img/icon.png" width="140" alt="Tiger Studio Manager" />
 
-**Desktop companion for the [TigerTag](https://tigertag.io) RFID filament-tracking ecosystem.**<br>
+**Desktop companion for the [TigerTag](https://tigersystem.io) RFID filament-tracking ecosystem.**<br>
 Manage your spool inventory, connect your 3D printers, and keep everything in sync — across devices, accounts, and friends.
 
 <br>
@@ -40,7 +40,7 @@ Manage your spool inventory, connect your 3D printers, and keep everything in sy
 
 ## What is it?
 
-**[TigerTag](https://tigertag.io)** is an open RFID standard for tracking 3D-printing filament spools. Each spool carries an NFC chip with its full profile — brand, material, color, print settings — readable by any compatible app or reader. The ecosystem includes the mobile app, an open-source scale, a color sensor, and this desktop companion.
+**[TigerTag](https://tigersystem.io)** is an open RFID standard for tracking 3D-printing filament spools. Each spool carries an NFC chip with its full profile — brand, material, color, print settings — readable by any compatible app or reader. The ecosystem includes the mobile app, an open-source scale, a color sensor, and this desktop companion.
 
 Tiger Studio Manager is an Electron desktop app that bridges your physical filament collection with the TigerTag cloud. Scan a spool's NFC chip, see its full profile (material, color, weight, print settings), update its weight on the scale, and push filament data directly to your connected printers — all in one window.
 
@@ -59,7 +59,8 @@ It works standalone (no reader needed), but unlocks its full potential with:
 
 <img src="assets/img/screenshots/screenshot_setup_tiger_project.png" width="100%" alt="TigerTag ecosystem setup — Tiger Studio Manager, TigerScale, TD1S, ACR122U and TigerPOD" />
 
-> 🌐 **[tigertag.io](https://tigertag.io)** — official website: buy TigerTag chips, browse the filament catalogue, manage your account.
+> 🌐 **[tigersystem.io](https://tigersystem.io)** — the ecosystem site: browse the filament catalogue, manage your account, get the apps.<br>
+> 🛒 **[tigertag.io](https://tigertag.io)** — the shop: TigerTag chips, readers and sensors.
 
 ---
 
@@ -114,7 +115,8 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **TigerData** — create fully-digital spools with no chip; promote to a real chip later, atomically
 - **TigerData+** *(new in 2.15.0)* — a fully-digital spool that is nonetheless tied to a **real product in the official catalogue**: the exact brand, colour, material, temperatures, diameter, SKU and EAN, straight from the source instead of from whatever you typed. No chip to buy, nothing to stick on — and it is not a TigerTag+, so it carries its own badge and never pretends to be one
 - **Catalogue search** *(new in 2.15.0)* — browse the whole official TigerTag+ catalogue from inside the app, in grid or list, filtered by type, brand, series and material. Pick a product to see its real spec sheet, then add it as a TigerData+ in one click, already filled in. The catalogue is downloaded once and searched locally, so it is instant and works offline
-- **The catalogue travels with the app** *(new in 2.16.0)* — around 3 000 filaments ship inside the installer, so search works on the very first launch, offline, without waiting for a download. It still refreshes itself in the background
+- **The catalogue travels with the app** *(new in 2.16.0)* — nearly 5 000 filaments ship inside the installer, so search works on the very first launch, offline, without waiting for a download. It still refreshes itself in the background
+- **Find a filament by its barcode** *(new in 2.17.0)* — scan the EAN on the box with a barcode reader, or type it in, and the catalogue opens that product. The search also covers the reference, the series, the colour name, the finish, the product type and the weight
 - **Spools that keep themselves current** *(new in 2.16.0)* — when a brand corrects a temperature, a diameter or a colour name, the spools you own follow along on their own. Only a TigerTag+ can ever ask you for anything, and only when the change concerns something written on the chip itself
 - Custom product image for DIY & Cloud spools
 - Manufacturing date, twin-tag detection and manual repair
@@ -247,7 +249,7 @@ A QR code to download the mobile app is always accessible in the sidebar.
 
 - **Node.js** 24+
 - **npm** 10+
-- A **TigerTag account** — [tigertag.io](https://tigertag.io)
+- A **TigerTag account** — [tigersystem.io](https://tigersystem.io)
 - _(Optional)_ An **ACR122U** NFC reader for chip read/write
 
 #### Linux only

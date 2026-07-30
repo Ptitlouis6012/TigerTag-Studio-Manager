@@ -1489,7 +1489,7 @@
   "ttagModeImportHint": "Chaque matériau est recréé en TigerData neuf, réinitialisé en bobine pleine — sans reprendre la puce.",
   "ttagSummarySel": "{{n}} sur {{total}} matériaux sélectionnés",
   "catalogBtn": "Depuis le catalogue",
-  "catalogSearchPh": "Marque, nom, matière, référence…",
+  "catalogSearchPh": "Marque, nom, couleur, poids, référence, code-barres…",
   "catalogSyncing": "Récupération du catalogue…",
   "catalogSyncError": "Catalogue injoignable. Réessayez dans un instant.",
   "catalogCount": "{{n}} produits sur {{total}}",

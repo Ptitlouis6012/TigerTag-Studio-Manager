@@ -7307,5 +7307,110 @@
         }
       }
     ]
+  },
+  "2.17.0": {
+    "date": "2026-07-30",
+    "items": [
+      {
+        "icon": "search",
+        "title": {
+          "en": "Find your filament by its barcode",
+          "fr": "Trouve ton filament au code-barres",
+          "de": "Finde dein Filament über den Barcode",
+          "es": "Encuentra tu filamento por el código de barras",
+          "it": "Trova il filamento dal codice a barre",
+          "zh": "用条码找到你的线材",
+          "pt": "Acha o teu filamento pelo código de barras",
+          "pt-pt": "Encontra o teu filamento pelo código de barras",
+          "pl": "Znajdź filament po kodzie kreskowym"
+        },
+        "body": {
+          "en": "Scan the EAN on the box with a barcode reader, or type it in: the catalogue opens your filament. The search also knows the reference, the series, the colour name, the finish, the product type and the weight.",
+          "fr": "Scanne l'EAN de la boîte avec une douchette, ou tape-le : le catalogue ouvre ton filament. La recherche connaît aussi la référence, la série, le nom de couleur, la finition, le type de produit et le poids.",
+          "de": "Scanne die EAN auf der Verpackung mit einem Barcode-Leser oder tippe sie ein: Der Katalog öffnet dein Filament. Die Suche kennt außerdem Artikelnummer, Serie, Farbname, Finish, Produkttyp und Gewicht.",
+          "es": "Escanea el EAN de la caja con un lector, o escríbelo: el catálogo abre tu filamento. La búsqueda también conoce la referencia, la serie, el nombre del color, el acabado, el tipo de producto y el peso.",
+          "it": "Scansiona l'EAN sulla scatola con un lettore, o digitalo: il catalogo apre il tuo filamento. La ricerca conosce anche il codice, la serie, il nome del colore, la finitura, il tipo di prodotto e il peso.",
+          "zh": "用条码枪扫包装盒上的 EAN，或者直接输入：目录就会打开你的线材。搜索还认得货号、系列、颜色名、质感、产品类型和重量。",
+          "pt": "Escaneia o EAN da caixa com um leitor, ou digita: o catálogo abre o teu filamento. A busca também conhece a referência, a série, o nome da cor, o acabamento, o tipo de produto e o peso.",
+          "pt-pt": "Lê o EAN da caixa com um leitor, ou escreve-o: o catálogo abre o teu filamento. A pesquisa conhece também a referência, a série, o nome da cor, o acabamento, o tipo de produto e o peso.",
+          "pl": "Zeskanuj kod EAN z pudełka czytnikiem albo go wpisz — katalog otworzy twój filament. Wyszukiwarka zna też symbol, serię, nazwę koloru, wykończenie, typ produktu i wagę."
+        }
+      },
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "TigerData and TigerTag, filed together",
+          "fr": "TigerData et TigerTag, rangés ensemble",
+          "de": "TigerData und TigerTag liegen zusammen",
+          "es": "TigerData y TigerTag, guardados juntos",
+          "it": "TigerData e TigerTag, archiviati insieme",
+          "zh": "TigerData 和 TigerTag 归到一起",
+          "pt": "TigerData e TigerTag, arquivados juntos",
+          "pt-pt": "TigerData e TigerTag, arrumados juntos",
+          "pl": "TigerData i TigerTag trzymane razem"
+        },
+        "body": {
+          "en": "A TigerData is filed with its TigerTag, and a TigerData+ with its TigerTag+, with their product details merged into one — so there is nothing left to keep up to date twice. In the grid and the list you still see each of them on its own.",
+          "fr": "Un TigerData est rangé avec son TigerTag, et un TigerData+ avec son TigerTag+, leurs infos produit fusionnées en une seule — plus rien à tenir à jour en double. Dans la grille et la liste, tu continues à les voir chacun de son côté.",
+          "de": "Ein TigerData liegt bei seinem TigerTag, ein TigerData+ bei seinem TigerTag+, und ihre Produktdaten sind zu einer Einheit verschmolzen — nichts muss mehr doppelt gepflegt werden. In Raster und Liste siehst du sie weiterhin einzeln.",
+          "es": "Un TigerData se guarda con su TigerTag, y un TigerData+ con su TigerTag+, con sus datos de producto fusionados en uno solo — ya no hay nada que mantener por duplicado. En la cuadrícula y la lista los sigues viendo por separado.",
+          "it": "Un TigerData sta col suo TigerTag, e un TigerData+ col suo TigerTag+, con i dati prodotto fusi in uno solo — niente più da aggiornare due volte. Nella griglia e nell'elenco continui a vederli separati.",
+          "zh": "TigerData 和它的 TigerTag 归在一起，TigerData+ 和 TigerTag+ 也一样，产品资料合并成一份——不用再维护两遍。在网格和列表里，你还是分开看到它们。",
+          "pt": "Um TigerData fica com o seu TigerTag, e um TigerData+ com o seu TigerTag+, com os dados de produto fundidos num só — nada mais para manter em duplicado. Na grade e na lista continua vendo cada um separado.",
+          "pt-pt": "Um TigerData fica com o seu TigerTag, e um TigerData+ com o seu TigerTag+, com os dados de produto fundidos num só — nada mais para manter em duplicado. Na grelha e na lista continuas a vê-los em separado.",
+          "pl": "TigerData leży przy swoim TigerTagu, a TigerData+ przy TigerTagu+, a ich dane produktu są scalone w jedno — nic nie trzeba już prowadzić podwójnie. W siatce i na liście nadal widzisz każdy z osobna."
+        }
+      },
+      {
+        "icon": "cart",
+        "title": {
+          "en": "Your price follows the filament",
+          "fr": "Ton prix suit le filament",
+          "de": "Dein Preis hängt am Filament",
+          "es": "Tu precio sigue al filamento",
+          "it": "Il prezzo segue il filamento",
+          "zh": "价格跟着线材走",
+          "pt": "O teu preço segue o filamento",
+          "pt-pt": "O teu preço segue o filamento",
+          "pl": "Cena trzyma się filamentu"
+        },
+        "body": {
+          "en": "Buy link, price, minimum stock, favourite and note are set once for a filament and apply to every version of it. And \"in stock\" counts them all together.",
+          "fr": "Lien d'achat, prix, stock minimum, favori et note se règlent une fois pour un filament et valent pour toutes ses versions. Et « en stock » les compte ensemble.",
+          "de": "Kauflink, Preis, Mindestbestand, Favorit und Notiz stellst du einmal pro Filament ein und sie gelten für jede Variante. Und „auf Lager\" zählt alle zusammen.",
+          "es": "Enlace de compra, precio, stock mínimo, favorito y nota se ponen una vez por filamento y valen para todas sus versiones. Y «en stock» las cuenta juntas.",
+          "it": "Link d'acquisto, prezzo, scorta minima, preferito e nota si impostano una volta per filamento e valgono per ogni sua versione. E «disponibili» le conta insieme.",
+          "zh": "购买链接、价格、最低库存、收藏和备注，一种线材设一次，所有版本通用。「库存」也一起算。",
+          "pt": "Link de compra, preço, estoque mínimo, favorito e nota se definem uma vez por filamento e valem pra todas as versões. E «em estoque» conta tudo junto.",
+          "pt-pt": "Link de compra, preço, stock mínimo, favorito e nota definem-se uma vez por filamento e valem para todas as versões. E «em stock» conta tudo junto.",
+          "pl": "Link do zakupu, cena, stan minimalny, ulubione i notatka ustawiane są raz dla filamentu i działają dla każdej jego wersji. A „w magazynie\" liczy je razem."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "Nearly 5 000 filaments in the box",
+          "fr": "Près de 5 000 filaments dans la boîte",
+          "de": "Fast 5 000 Filamente sind schon dabei",
+          "es": "Casi 5 000 filamentos ya incluidos",
+          "it": "Quasi 5 000 filamenti già dentro",
+          "zh": "近 5000 种线材，开箱即有",
+          "pt": "Quase 5 000 filamentos já na caixa",
+          "pt-pt": "Quase 5 000 filamentos já na caixa",
+          "pl": "Blisko 5 000 filamentów już w środku"
+        },
+        "body": {
+          "en": "The catalogue that ships with the app went from about 3 200 to nearly 5 000 products, across 32 brands. Series and colour names now come straight from the source too, so a colour like \"CMYK - Magenta\" is no longer cut in half.",
+          "fr": "Le catalogue livré avec l'app est passé d'environ 3 200 à près de 5 000 produits, chez 32 marques. Les séries et les noms de couleur viennent aussi directement de la source, donc une couleur comme « CMYK - Magenta » n'est plus coupée en deux.",
+          "de": "Der mitgelieferte Katalog ist von rund 3 200 auf fast 5 000 Produkte gewachsen, von 32 Marken. Serien und Farbnamen kommen jetzt ebenfalls direkt von der Quelle, eine Farbe wie „CMYK - Magenta\" wird also nicht mehr zerschnitten.",
+          "es": "El catálogo que viene con la app pasó de unos 3 200 a casi 5 000 productos, de 32 marcas. Las series y los nombres de color vienen también directos de la fuente, así que un color como «CMYK - Magenta» ya no se parte en dos.",
+          "it": "Il catalogo incluso nell'app è passato da circa 3 200 a quasi 5 000 prodotti, di 32 marchi. Serie e nomi dei colori arrivano ora direttamente dalla fonte, quindi un colore come «CMYK - Magenta» non viene più tagliato a metà.",
+          "zh": "随应用附带的目录从约 3200 款增加到近 5000 款，覆盖 32 个品牌。系列名和颜色名现在也直接取自源头，像「CMYK - Magenta」这样的颜色不会再被拦腰截断。",
+          "pt": "O catálogo que vem com o app passou de uns 3 200 para quase 5 000 produtos, de 32 marcas. Séries e nomes de cor agora vêm direto da fonte, então uma cor como «CMYK - Magenta» não é mais cortada ao meio.",
+          "pt-pt": "O catálogo que vem com a app passou de cerca de 3 200 para quase 5 000 produtos, de 32 marcas. Séries e nomes de cor vêm agora diretamente da fonte, por isso uma cor como «CMYK - Magenta» já não é cortada ao meio.",
+          "pl": "Katalog dołączony do aplikacji urósł z około 3 200 do prawie 5 000 produktów od 32 marek. Serie i nazwy kolorów pochodzą teraz prosto ze źródła, więc kolor w rodzaju „CMYK - Magenta\" nie jest już przecinany na pół."
+        }
+      }
+    ]
   }
 }

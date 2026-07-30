@@ -1489,7 +1489,7 @@
   "ttagModeImportHint": "Every material is recreated as fresh TigerData, reset to a full new spool — no chip claimed.",
   "ttagSummarySel": "{{n}} of {{total}} materials selected",
   "catalogBtn": "From Catalogue",
-  "catalogSearchPh": "Brand, name, material, SKU…",
+  "catalogSearchPh": "Brand, name, colour, weight, SKU, barcode…",
   "catalogSyncing": "Fetching the catalogue…",
   "catalogSyncError": "Could not reach the catalogue. Try again in a moment.",
   "catalogCount": "{{n}} of {{total}} products",

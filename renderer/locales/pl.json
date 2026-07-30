@@ -1488,7 +1488,7 @@
   "ttagModeImportHint": "Każdy materiał jest tworzony na nowo jako świeży TigerData, zresetowany do pełnej szpuli — bez przypisywania chipa.",
   "ttagSummarySel": "Wybrano {{n}} z {{total}} materiałów",
   "catalogBtn": "Z katalogu",
-  "catalogSearchPh": "Marka, nazwa, materiał, SKU…",
+  "catalogSearchPh": "Marka, nazwa, kolor, waga, SKU, kod kreskowy…",
   "catalogSyncing": "Pobieranie katalogu…",
   "catalogSyncError": "Nie udało się połączyć z katalogiem. Spróbuj za chwilę.",
   "catalogCount": "{{n}} z {{total}} produktów",

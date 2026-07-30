@@ -81,12 +81,21 @@
     "img": "../assets/img/spool_filament/polymaker_cardboard.png"
   },
   {
+    "id": "polymaker_panchroma_cardboard",
+    "brandId": 50604,
+    "brand": "Polymaker",
+    "label": "Standard",
+    "type": "cardboard",
+    "container_weight": 145,
+    "img": "../assets/img/spool_filament/panchroma_cardboard.png"
+  },
+  {
     "id": "panchroma_cardboard",
     "brandId": 45670,
     "brand": "Panchroma",
     "label": "Standard",
     "type": "cardboard",
-    "container_weight": 170,
+    "container_weight": 145,
     "img": "../assets/img/spool_filament/panchroma_cardboard.png"
   },
   {

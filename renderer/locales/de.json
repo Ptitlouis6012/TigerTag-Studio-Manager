@@ -1489,7 +1489,7 @@
   "ttagModeImportHint": "Jedes Material wird als neues TigerData neu erstellt, auf eine volle Spule zurückgesetzt — kein Chip beansprucht.",
   "ttagSummarySel": "{{n}} von {{total}} Materialien ausgewählt",
   "catalogBtn": "Aus dem Katalog",
-  "catalogSearchPh": "Marke, Name, Material, Artikelnummer…",
+  "catalogSearchPh": "Marke, Name, Farbe, Gewicht, SKU, Barcode…",
   "catalogSyncing": "Katalog wird geladen…",
   "catalogSyncError": "Katalog nicht erreichbar. Gleich nochmal versuchen.",
   "catalogCount": "{{n}} von {{total}} Produkten",

@@ -1489,7 +1489,7 @@
   "ttagModeImportHint": "Cada material é recriado como TigerData novo, reposto para uma bobina cheia — sem reclamar o chip.",
   "ttagSummarySel": "{{n}} de {{total}} materiais selecionados",
   "catalogBtn": "Do catálogo",
-  "catalogSearchPh": "Marca, nome, material, SKU…",
+  "catalogSearchPh": "Marca, nome, cor, peso, SKU, código de barras…",
   "catalogSyncing": "A carregar o catálogo…",
   "catalogSyncError": "Não foi possível aceder ao catálogo. Tente daqui a pouco.",
   "catalogCount": "{{n}} de {{total}} produtos",

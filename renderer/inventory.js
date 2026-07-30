@@ -1586,6 +1586,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   /* ── normalize ── */
+  // Is this a photo of the actual product, or a stand-in?
+  //
+  // `product/get` never answers "no image": for a product without a photo it
+  // returns a shared placeholder — a line drawing of an empty spool hosted on
+  // Shopify. It is a real image that loads with a 200, so an `onerror` fallback
+  // never fires and the card shows a generic sketch where the filament's own
+  // colour belongs. The LIST endpoint is honest about it (`img_src` is null or
+  // ""), only the DETAIL endpoint substitutes. Recognised here, at the single
+  // funnel every surface reads `imgUrl` through, so the grid card, the table
+  // thumbnail, the detail panel and the product card all fall back to the colour
+  // illustration together — including on documents that already stored the URL.
+  const PLACEHOLDER_IMG_RE = /\/DefaultFilament\.(jpe?g|png|webp)(\?|$)/i;
+  function _isRealProductImg(url) {
+    const s = String(url || "").trim();
+    return !!s && s !== "--" && !PLACEHOLDER_IMG_RE.test(s);
+  }
+
   function normalizeRow(spoolId, data) {
     const hex  = toHex(data.color_r,  data.color_g,  data.color_b);
     const hex2 = toHex(data.color_r2, data.color_g2, data.color_b2);
@@ -1656,7 +1673,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       weightAvailable: data.weight_available,
       containerWeight: data.container_weight,
       capacity: data.measure_gr || data.measure,
-      imgUrl: data.url_img && data.url_img !== "--" && data.url_img !== "" ? data.url_img : null,
+      imgUrl: _isRealProductImg(data.url_img) ? data.url_img : null,
       userImg: !!data.url_img_user,
       isPlus,
       isCloud,
@@ -7404,29 +7421,60 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   //                          and group together — both are user-defined entries,
   //                          identified by attributes + finish/aspect, not a
   //                          catalogue product id.)
-  function _spoolGroupKey(r) {
-    const ID_UNSET = 4294967295; // 0xFFFFFFFF — unset product id
-    // TigerTag+ : group by id_product alone. 0 / max means "unset" → fall through
-    // to the attribute key (an unset id must not lump unrelated products together).
-    const pid = r.raw ? Number(r.raw.id_product) : NaN;
-    if (r.isPlus && Number.isFinite(pid) && pid !== 0 && pid !== ID_UNSET)
-      return "tt:" + pid;
-    // Maker + Cloud (and any other non-plus): same brand + material + FULL colour
-    // signature + both aspects/finishes. The primary RGB alone is not enough:
-    // many DIY chips keep the default red in color_r/g/b while the real colour is
-    // set via online_color_list (e.g. a "white" spool) or the 2nd/3rd colour
-    // (rainbow) — so a white, a red and a rainbow spool would otherwise collapse
-    // into one group. Include colorHex2/3 + the online colour list + aspect2 so
-    // only genuinely identical-looking spools group.
-    // Include the product TYPE (id_type: Filament vs Resin) so a filament and a
-    // resin that happen to match on brand/material/colour/aspect never share an
-    // identity — used both for visual grouping and for the filament buy-link /
-    // reorder table (products).
+  /**
+   * The PRODUCT: what a spool is, with no regard for how it is tagged.
+   *
+   * A TigerTag+ answers on its `id_product` alone. Everything else answers on the
+   * attributes — brand + material + the FULL colour signature + both aspects. The
+   * primary RGB is not enough on its own: many DIY chips keep the default red in
+   * `color_r/g/b` while the real colour lives in `online_color_list` (a "white"
+   * spool) or in the 2nd/3rd colour (rainbow), so a white, a red and a rainbow
+   * would otherwise collapse into one. `id_type` is in there too, so a filament and
+   * a resin matching on brand/colour/aspect never share an identity.
+   *
+   * `0` and `0xFFFFFFFF` mean "unset" and fall through to the attributes — an
+   * unset id must never lump unrelated products together, which is the shape the
+   * husk incident took.
+   *
+   * This is the key the product STATE hangs off: buy link, price, minimum stock,
+   * ★/❤, note. Two spools of one filament share all of that whether one carries a
+   * chip and the other does not.
+   */
+  function _attrKey(r) {
     return "diy:" + r.brand + "|" + r.material
       + "|" + (r.raw ? r.raw.id_type : "")
       + "|" + r.colorHex + "|" + (r.colorHex2 || "") + "|" + (r.colorHex3 || "")
       + "|" + (r.colorList || []).join(",")
       + "|" + (r.aspect1 || "") + "|" + (r.aspect2 || "");
+  }
+  function _spoolProductKey(r) {
+    const pid = r?.raw ? Number(r.raw.id_product) : NaN;
+    return ((r?.isPlus || r?.isCloudPlus) && _hasRealProductId(pid)) ? "tt:" + pid : _attrKey(r);
+  }
+
+  // Which of the four tiers a spool belongs to. Derived, never stored.
+  function _spoolTier(r) {
+    return r?.isCloud ? (r.isCloudPlus ? "tdplus" : "td")
+                      : (r?.isPlus     ? "ttplus" : "tt");
+  }
+
+  /**
+   * The CARD: one per product AND per tier.
+   *
+   * A card means "these spools are interchangeable", and they are not across
+   * tiers: a chipless spool cannot be written, weighed on a TigerScale or proven,
+   * and a certified TigerTag+ is not the same object as a bare TigerTag. So the
+   * grid and the table show a card per tier — while the deck, keyed on
+   * `_spoolProductKey`, gathers the whole product behind them.
+   *
+   * A bucket therefore holds exactly ONE tier, which is what lets every card carry
+   * a single unambiguous badge.
+   *
+   * View-only. Nothing is stored under this key: the product state and the
+   * document's mirrored `productKey` both hang off `_spoolProductKey`.
+   */
+  function _spoolGroupKey(r) {
+    return _spoolProductKey(r) + "|" + _spoolTier(r);
   }
 
   /* ── Filament buy-links / reorder ──────────────────────────────────────
@@ -7459,7 +7507,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   // Doc id for a spool's filament-link row (hash of its product identity key).
-  function _productKeyHash(r) { return _flHash(_spoolGroupKey(r)); }
+  function _productKeyHash(r) { return _flHash(_spoolProductKey(r)); }
+
 
   /* ── VAT / currency helpers (shared by the account country picker + the
      reorder price field) ────────────────────────────────────────────────
@@ -7522,7 +7571,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Stays MINE even in friend-view: the toggles/reorder write to my own account.
   function _getProduct(r) {
     if (!r) return null;
-    return state.products[_productKeyHash(r)] || null;
+    return state.products[_productKeyHash(r)] || _legacyProduct(state.products, r);
+  }
+  /**
+   * A record written before the product state moved off the tier-specific key.
+   *
+   * `_productKeyHash` used to hash `_spoolGroupKey`, which puts a TigerData+ under
+   * `diy:<attributes>` and the TigerTag+ of the SAME product under `tt:<id>` — so
+   * a favourite, a price or a minimum stock set on a TigerData+ was stored under a
+   * hash nothing looks up any more. Reading through to it costs one map lookup and
+   * needs no migration: no Firestore write, nothing to go wrong, and no window
+   * where a user's buy link is missing. A row rewritten today lands on the new key
+   * and this fallback simply stops matching. Only a TigerData+ can differ — for
+   * every other tier the two keys are the same string.
+   */
+  function _legacyProduct(src, r) {
+    if (!r?.isCloudPlus) return null;
+    const legacy = _flHash(_attrKey(r));   // the string those records were written under
+    return (legacy !== _productKeyHash(r) && src?.[legacy]) || null;
   }
   // The product record DESCRIBING the spool on screen. In friend-view the rows are
   // the FRIEND's, so their price / buy link must come from THEIR products — not
@@ -7532,7 +7598,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _displayProduct(r) {
     if (!r) return null;
     const src = state.friendView ? (state.friendProducts || {}) : (state.products || {});
-    return src[_productKeyHash(r)] || null;
+    return src[_productKeyHash(r)] || _legacyProduct(src, r);
   }
 
   // Product web-link attachments a plan allows. MIRROR of the Firestore rule
@@ -7622,8 +7688,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   function _filamentStockCount(r) {
     if (!r) return 0;
-    const key = _spoolGroupKey(r);
-    const rows = (state.rows || []).filter(row => !row.deleted && _spoolGroupKey(row) === key);
+    const key = _spoolProductKey(r);
+    const rows = (state.rows || []).filter(row => !row.deleted && _spoolProductKey(row) === key);
     return _countPhysicalSpools(rows);
   }
 
@@ -7681,7 +7747,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // when the product has no doc yet: attaching a link is the one entry point that
     // can fire on a never-favorited, never-priced product, and without the record the
     // caller's immediate re-render would read back nothing and look like a failed save.
-    const _rec = state.products[hash] || (state.products[hash] = { key: _spoolGroupKey(r), label: _productLabel(r) });
+    const _rec = state.products[hash] || (state.products[hash] = { key: _spoolProductKey(r), label: _productLabel(r) });
     if (_rec) {
       if ("liked" in patch)    _rec.liked = !!patch.liked;
       if ("favorite" in patch) _rec.favorite = !!patch.favorite;
@@ -7736,12 +7802,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // type, diameter, product id, image, sku/ean…). Instance-specific bits (uid,
   // weight, rack placement, timestamps, twin link, deletion) are dropped — the
   // Cloud creator assigns a new id + timestamp.
+  /**
+   * Fields that belong to a physical chip and must never survive onto a chipless
+   * spool. Both minting paths use it — `duplicateSpoolAsCloud` ("+ another spool
+   * of this filament") and `_mintCloudsFromRaw` (from a product's stored seed) —
+   * because both start from a `raw` that may have come off a real chip.
+   *
+   * `id_tigertag` names the chip's VERSION in `id_version.json` and only four ids
+   * are legal. A chipless spool has no chip, so it has no version: v2.16.0 stopped
+   * writing one and deletes the strays. These two paths still copied it straight
+   * off the source, which put an out-of-referential value on a fresh document and
+   * — visibly — made the new spool read as `isPlus` until the mirror cleaned up.
+   * For that moment it shared the TigerTag+ grouping bucket, so the TigerTag+ card
+   * flashed a second, TigerData+ badge before settling. The tier is derived from
+   * this field; copy it and the spool lies about what it is.
+   */
+  const CHIP_ONLY_FIELDS = ["id_tigertag"];
+
   function _sanitizeCloudSeed(raw) {
     if (!raw || typeof raw !== "object") return null;
     const seed = { ...raw };
     ["uid", "twin_tag_uid", "rack", "rack_id", "level", "position",
      "weight_available", "weight", "timestamp", "updatedAt", "needUpdateAt",
-     "deleted", "deleted_at", "container_id", "container_weight"].forEach(k => delete seed[k]);
+     "deleted", "deleted_at", "container_id", "container_weight",
+     ...CHIP_ONLY_FIELDS].forEach(k => delete seed[k]);
     return seed;
   }
 
@@ -8328,7 +8412,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // The current friend's product record for a row (null outside friend view).
   function _friendProductFor(r) {
     if (!state.friendView || !r) return null;
-    return (state.friendProducts || {})[_productKeyHash(r)] || null;
+    return (state.friendProducts || {})[_productKeyHash(r)] || _legacyProduct(state.friendProducts, r);
   }
   // When importing a friend's material (favoriting it), carry over their shared
   // price / buy link / manual SKU-EAN into the write patch — but only fields I
@@ -8890,6 +8974,50 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
+  /**
+   * Widen a deck to every spool of the SAME PRODUCT — deck only.
+   *
+   * A TigerData+ and the TigerTag+ carrying the same `id_product` are the same
+   * product, so the deck lists them together: it answers "what do I actually hold
+   * of this filament", and whether a given spool carries a chip belongs to the
+   * spool, not to the product.
+   *
+   * The grid and the table are deliberately NOT merged. There a card means "these
+   * spools are interchangeable", and a chipless spool is not interchangeable with a
+   * certified one — you can write the chip, weigh it on a TigerScale, prove its
+   * origin. Two cards, one shared deck.
+   *
+   * That is why `groupRows` keeps the strict identity key and only this function
+   * reaches for `_spoolProductKey`. Rows come from the SAME source the caller
+   * grouped, so the active filters and friend-view still apply; the clicked
+   * bucket stays first so the deck opens on the tier you came from; and `rep` and
+   * `key` are untouched, so the panel's identity, its product card and its buy
+   * link keep resolving exactly as before.
+   */
+  function _deckWithSameProduct(g) {
+    // No prefix guard: `_spoolProductKey` identifies the product for EVERY tier —
+    // by `id_product` when there is one, by the attributes otherwise — so a plain
+    // TigerTag and a plain TigerData of the same filament belong in one deck just
+    // as much as a TigerTag+ and a TigerData+ do. Spools with no identity at all
+    // already share a card, so gathering them changes nothing they did not already
+    // do; the husk guard that matters is on the WRITE side, not here.
+    const pk = _spoolProductKey(g.rep);
+    const members = (allDisplayRows() || []).filter(r => _spoolProductKey(r) === pk);
+    if (members.length <= g.members.length) return g;
+    // The deck must be the SAME card whichever tier you opened it from — same
+    // spools, same order, same representative. So it is rebuilt from the display
+    // order rather than "the bucket you clicked, then the rest": that ordering
+    // made the TigerTag+ deck and the TigerData+ deck of one product differ, which
+    // is exactly what they must not do. `key` is left alone — it still addresses
+    // the grid card and the table row this panel was opened from.
+    let totalAvail = 0, totalCap = 0;
+    members.forEach(m => {
+      if (m.weightAvailable != null) totalAvail += Number(m.weightAvailable) || 0;
+      if (m.capacity != null)        totalCap   += Number(m.capacity) || 0;
+    });
+    return { ...g, members, rep: members[0], count: members.length, totalAvail, totalCap };
+  }
+
   function _openGroupPanel(key, opts = {}) {
     // Products view opens the deck even for a single spool (keepSingletons).
     _groupPanelKeepSingletons = !!opts.keepSingletons;
@@ -8898,7 +9026,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!g) { _groupPanelKeepSingletons = false; return; }
     closeNotifs();   // opening a side card takes over the right — dismiss notifs
     _groupPanelKey = key;
-    _renderGroupPanelContents(g);   // sets _groupPanelMembers
+    _renderGroupPanelContents(_deckWithSameProduct(g));   // sets _groupPanelMembers
     // If a detail card is open for a spool that doesn't belong to this group,
     // it's now unrelated → close it (a member's card may stay and be pushed).
     if ($("detailPanel")?.classList.contains("open") && state.selected && !_groupPanelMembers.has(state.selected)) {
@@ -8947,7 +9075,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const g = groupRows(allDisplayRows(), { force: _groupPanelKeepSingletons || state.bulkSelect, keepSingletons: _groupPanelKeepSingletons })
       .find(it => it.type === "group" && it.key === _groupPanelKey);
     if (!g) { _closeGroupPanel(); return; }   // group dissolved (e.g. all members deleted)
-    _renderGroupPanelContents(g);
+    // Widen exactly as `_openGroupPanel` does. Without this the deck silently
+    // narrowed to its own bucket on the next snapshot: adding a spool from the
+    // deck re-rendered it as TigerData+ only, the TigerTag+ vanishing until the
+    // panel was closed and reopened.
+    _renderGroupPanelContents(_deckWithSameProduct(g));
   }
   // Live-patch (during slider drag, before the Firestore echo) every place a
   // spool's group weight shows: the panel member card, the panel dashboard, the
@@ -8979,7 +9111,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     const pct = totCap ? Math.max(0, Math.min(100, Math.round(totAvail / totCap * 100))) : 0;
     const color = fillBarColor(pct);
-    if (_groupPanelKey === g.key) _patchGroupSummaryWeight(totAvail, totCap);
+    // The grid card and the table row show the BUCKET's total; the deck shows the
+    // whole product's. Same drag, two different sums — compute the panel's from
+    // the widened member list or its header would disagree with its own rows.
+    if (_groupPanelKey === g.key) {
+      const wide = _deckWithSameProduct(g);
+      let pAvail = 0, pCap = 0;
+      wide.members.forEach(m => {
+        const wa = m.spoolId === spoolId ? w : (m.weightAvailable != null ? Number(m.weightAvailable) : 0);
+        pAvail += Number(wa) || 0;
+        if (m.capacity != null) pCap += Number(m.capacity) || 0;
+      });
+      _patchGroupSummaryWeight(pAvail, pCap);
+    }
     const gridCard = document.querySelector(`#invGrid .spool-card[data-group-key="${CSS.escape(g.key)}"]`);
     if (gridCard) {
       const wEl = gridCard.querySelector(".card-weight");
@@ -9322,9 +9466,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const r = state.rows.find(x => x.spoolId === spoolId);
     if (!r) return;
     const key = _spoolGroupKey(r);
-    const g = groupRows(allDisplayRows(), { force: true }).find(it => it.type === "group" && it.key === key);
-    if (g && g.members.length >= 2) {
-      if (_groupPanelKey !== key || !document.getElementById("groupPanel")?.classList.contains("open")) _openGroupPanel(key);
+    // `keepSingletons` + the product widening: a lone TigerTag+ is a 1-member
+    // bucket, but if a TigerData+ of the same product exists the deck has two
+    // spools to show and must open. Counting the strict bucket alone would close
+    // it on exactly the pairing this deck exists to display.
+    const g = groupRows(allDisplayRows(), { force: true, keepSingletons: true })
+      .find(it => it.type === "group" && it.key === key);
+    if (g && _deckWithSameProduct(g).members.length >= 2) {
+      if (_groupPanelKey !== key || !document.getElementById("groupPanel")?.classList.contains("open"))
+        _openGroupPanel(key, { keepSingletons: true });
     } else {
       _closeGroupPanel();
     }
@@ -10384,7 +10534,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // "Add a price" (Products table, empty price) → open the Product-info card
     // straight into the price editor, input focused, ready to type.
     if (e.target.closest("[data-addprice]")) {
-      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolGroupKey(x) === key);
+      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolProductKey(x) === key);
       let row = liveRows[0] || (p ? _productAsRow(p) : null);   // no live spool → synth from cloudSeed (else label)
       if (row) openReorderPanel(row, { editPrice: true });
       return;
@@ -10393,7 +10543,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p?.buyUrl) { window.electronAPI?.openExternal(_normalizeBuyUrl(p.buyUrl)); return; }
       // No link (greyed Shopify button) → open the card straight into the buy-link
       // editor, ready to paste. Synthesise the row from cloudSeed if no live spool.
-      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolGroupKey(x) === key);
+      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolProductKey(x) === key);
       let row = liveRows[0] || (p ? _productAsRow(p) : null);   // no live spool → synth from cloudSeed (else label)
       if (row) openReorderPanel(row, { editBuyLink: true });
       return;
@@ -10426,7 +10576,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const isOrderInfo = !!e.target.closest(".pv-info");
     if (isOrderInfo || !line.classList.contains("pv-order-line")) {
       if (e.target.closest(".pv-min-editwrap")) return;   // editing a field — never opens
-      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolGroupKey(x) === key);
+      const liveRows = (state.rows || []).filter(x => !x.deleted && _spoolProductKey(x) === key);
       let row = liveRows[0] || (p ? _productAsRow(p) : null);   // no live spool → synth from cloudSeed (else label)
       // Order-tab ⓘ toggles: reclicking the same product's info button closes the
       // card. Favorites line clicks always (re)open it (they also drive the deck).
@@ -10435,7 +10585,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // product still has at least one real spool in stock (even a single one) —
       // so you can jump straight to its actual spool(s). Order-tab ⓘ stays lean.
       if (!isOrderInfo) {
-        if (liveRows.length >= 1) _openGroupPanel(key, { keepSingletons: true });
+        // `key` is the PRODUCT key; the deck is bucketed by the grouping key
+        // (which still separates a TigerData+ from a TigerTag+) — derive it.
+        if (liveRows.length >= 1) _openGroupPanel(_spoolGroupKey(liveRows[0]), { keepSingletons: true });
         else _closeGroupPanel();
       }
     }
@@ -11294,7 +11446,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (api.sku)                           update.sku                = api.sku;
       if (api.barcode)                       update.barcode            = api.barcode;
       if (api.series)                        update.series             = api.series;
-      if (api.images?.main_src)              update.url_img            = api.images.main_src;
+      if (_isRealProductImg(api.images?.main_src)) update.url_img         = api.images.main_src;
       if (api.filament?.color)               update.online_color       = api.filament.color;
       if (api.filament?.color_info?.colors?.length)
                                              update.online_color_list  = api.filament.color_info.colors;
@@ -11382,7 +11534,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (api.sku)                         out.sku               = api.sku;
     if (api.barcode)                     out.barcode           = api.barcode;
     if (api.series)                      out.series            = api.series;
-    if (api.images?.main_src)            out.url_img           = api.images.main_src;
+    if (_isRealProductImg(api.images?.main_src)) out.url_img        = api.images.main_src;
     if (api.filament?.color)             out.online_color      = api.filament.color;
     if (api.filament?.color_info?.colors?.length)
                                          out.online_color_list = api.filament.color_info.colors;
@@ -11543,7 +11695,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const raw = localStorage.getItem(CATALOG_LS_KEY);
       if (!raw) return false;
       const c = JSON.parse(raw);
-      if (!c || c.v !== 1 || !Array.isArray(c.items)) return false;
+      // v2 = the payload carries `series` and `name` as their own fields. A v1
+      // cache predates that and has only `title`, which is exactly the case the
+      // title-splitting fallback existed for — rejecting it here is what let
+      // that guesswork be deleted. A rejected cache is not a loss: the bundled
+      // catalogue takes over immediately and a real sync follows, because
+      // `_catalogFetchedAt` stays 0.
+      if (!c || c.v !== 2 || !Array.isArray(c.items)) return false;
       _catalogFetchedAt = Number(c.fetchedAt) || 0;
       _catalogBuildIndex(c.items);
       return _catalogIndex.length > 0;
@@ -11551,7 +11709,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   function _catalogSaveCache(items) {
     try {
-      localStorage.setItem(CATALOG_LS_KEY, JSON.stringify({ v: 1, fetchedAt: Date.now(), items }));
+      localStorage.setItem(CATALOG_LS_KEY, JSON.stringify({ v: 2, fetchedAt: Date.now(), items }));
     } catch (e) {
       // Quota exceeded / storage disabled. The in-memory index still works for
       // this session and the user simply re-syncs next launch — never fatal.
@@ -11564,11 +11722,55 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _catalogBuildIndex(items) {
     _catalogIndex = (items || [])
       .filter(it => it && it.id != null)
-      .map(it => ({
-        it: { ...it, ..._catSplitTitle(it) },
-        hay: [it.brand, it.title, it.material, it.sku, it.measure]
-               .filter(Boolean).join(" ").toLowerCase(),
-      }));
+      .map(it => {
+        const split = _catSeriesName(it);
+        return {
+          it: { ...it, ...split },
+          // WORDS. Everything a human types by name: brand, the full title, the
+          // series and colour name on their own (a cache written before the API
+          // returned them has neither, hence the split), the material, both
+          // aspects — "translucent", "bicolor", "silk" are how people actually
+          // look — the product type, and the measure.
+          hay: [it.brand, it.title, split._series, split._name, it.material,
+                it.aspect1, it.aspect2, it.product_type,
+                it.measure]
+                 .filter(Boolean).join(" ").toLowerCase(),
+          // The weight as whole tokens, so "500g" cannot ride along on "2500g".
+          meas: _catMeasureAliases(it.measure),
+          // CODES, deliberately kept OUT of the words. A barcode is 13 digits,
+          // so folding it into `hay` would make "1000" (a perfectly good search
+          // for 1 kg) match every EAN containing 1000 — the index would get
+          // wider and the results worse. Consulted only for a token that looks
+          // like a code; see `_catCodeish`.
+          code: [it.sku, it.barcode, it.id].filter(Boolean).join(" ").toLowerCase(),
+        };
+      });
+  }
+
+  // Long enough not to collide with a measure or a temperature, and carrying a
+  // digit: an EAN is 8/12/13 digits, a SKU reads like "PC1001045". Anything
+  // shorter ("1.75", "220", "1 kg") stays a word search.
+  const _catCodeish = tk => tk.length >= 6 && /\d/.test(tk);
+
+  // "1 kg" also answers to "1000 g" and "1000g".
+  //
+  // Not a nicety — it replaces an accident. Searching "1000" used to return 284
+  // products, every one of them matched through its SKU, because several brands
+  // encode the weight there (Bambu ships `G00-W00-1.75-1000-spl`). It worked by
+  // coincidence: a brand that spells its SKU differently was invisible to the
+  // same search. Indexing the weight the user actually means makes "1000" find
+  // every 1 kg spool in the catalogue, whatever its SKU looks like.
+  function _catMeasureAliases(measure) {
+    const m = /^\s*([\d.,]+)\s*(kg|g)\s*$/i.exec(String(measure || ""));
+    if (!m) return "";
+    const n = parseFloat(m[1].replace(",", "."));
+    if (!Number.isFinite(n)) return "";
+    const grams = m[2].toLowerCase() === "kg" ? n * 1000 : n;
+    if (!Number.isInteger(grams)) return "";
+    // Space-delimited TOKENS, matched whole — never as a substring. A weight is a
+    // number, and numbers collide: "2500g" ends in "500g", so a substring search
+    // for a 500 g spool would hand back the 2.5 kg ones too.
+    return ` ${grams}g ${grams} `;
   }
   // Every product type is BROWSABLE, but only Filament can be turned into a
   // TigerData+: `data1`–`data7` carry per-type meanings and Filament (142) is
@@ -11580,24 +11782,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return String(it?.product_type || CATALOG_CREATABLE_TYPE) === CATALOG_CREATABLE_TYPE;
   }
 
-  // Series and name, taken from the LIST endpoint, which now returns them as their
-  // own fields. Splitting `title` on the last " - " was the old way and it GUESSES
-  // WRONG whenever the colour name itself contains a dash: "PLA Basic - CMYK -
-  // Magenta" is series "PLA Basic" + name "CMYK - Magenta", not series "PLA Basic
-  // - CMYK" + name "Magenta". Measured on a 1000-product page: the split disagreed
-  // with the API on 2 of them, and `series`/`name` were present on all 1000.
-  // The split survives only as a fallback for a cache written by an older build —
-  // those payloads have `title` and nothing else, and must not lose their series
-  // until the next sync overwrites them.
-  function _catSplitTitle(it) {
+  // Series and colour name, READ from the list endpoint — never derived.
+  //
+  // Both fields are now returned on every product, so the old title-splitting is
+  // gone. It cut `title` on its LAST " - ", which guesses wrong the moment the
+  // colour name itself contains a dash: "PLA Basic - CMYK - Magenta" is series
+  // "PLA Basic" + name "CMYK - Magenta", not series "PLA Basic - CMYK". Measured
+  // against the live 4 922-product catalogue, the split disagreed with the API on
+  // 6 products — Panchroma™ Galaxy PLA, PolyLite™ Version A/B, the CMYK pair —
+  // and `series` / `name` were non-empty on all 4 922.
+  //
+  // Nothing needs a fallback any more: the only payloads without the two fields
+  // were caches written by an older build, and those are rejected outright by the
+  // v2 cache check (see `_catalogLoadCache`).
+  function _catSeriesName(it) {
     const o = it && typeof it === "object" ? it : { title: it };
-    if (o.series != null || o.name != null)
-      return { _series: String(o.series || "").trim(), _name: String(o.name || "").trim() };
-    const s = String(o.title || "").trim();
-    const i = s.lastIndexOf(" - ");
-    return i > 0
-      ? { _series: s.slice(0, i).trim(), _name: s.slice(i + 3).trim() }
-      : { _series: s, _name: "" };
+    return { _series: String(o.series || "").trim(), _name: String(o.name || "").trim() };
   }
 
   /**
@@ -11718,11 +11918,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // The engine itself, extracted so the modal AND the Search views run the exact
   // same matching — one place to change how the catalogue is searched.
   function _catalogFilter(query, fBrand = "", fMat = "") {
-    const toks = String(query || "").trim().toLowerCase().split(/\s+/).filter(Boolean);
+    const raw  = String(query || "").trim().toLowerCase();
+    const toks = raw.split(/\s+/).filter(Boolean);
+    const pass = e => (!fBrand || e.it.brand === fBrand) && (!fMat || e.it.material === fMat);
+
+    // A scanned barcode is the whole query and it means ONE product. Match it
+    // exactly first and return only that — a barcode gun fires the digits and an
+    // Enter, and a scan that lands on "the right one plus nine cousins whose EAN
+    // happens to contain these digits" is a scan you have to read. Falls through
+    // to the ordinary search when nothing matches exactly, so a typo still finds
+    // something rather than an empty view.
+    if (_catCodeish(raw) && !raw.includes(" ")) {
+      const exact = _catalogIndex.filter(e => pass(e) &&
+        (String(e.it.barcode || "").toLowerCase() === raw ||
+         String(e.it.sku     || "").toLowerCase() === raw ||
+         String(e.it.id      || "")               === raw));
+      if (exact.length) return exact.map(e => e.it);
+    }
+
     return _catalogIndex.filter(e => {
-      if (fBrand && e.it.brand !== fBrand) return false;
-      if (fMat   && e.it.material !== fMat) return false;
-      for (const tk of toks) if (!e.hay.includes(tk)) return false;
+      if (!pass(e)) return false;
+      for (const tk of toks)
+        if (!e.hay.includes(tk) && !e.meas.includes(` ${tk} `)
+            && !(_catCodeish(tk) && e.code.includes(tk))) return false;
       return true;
     }).map(e => e.it);
   }
@@ -12387,6 +12605,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       usedIds.add(newId);
       const data = { ...(r.raw || {}) };
       data.uid = newId;
+      CHIP_ONLY_FIELDS.forEach(k => delete data[k]);
       delete data.twin_tag_uid;
       delete data.rack; delete data.rack_id; delete data.level; delete data.position;
       delete data.needUpdateAt;
@@ -12511,7 +12730,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const groups = new Map();
     (state.rows || []).forEach(r => {
       if (r.deleted) return;
-      const k = _spoolGroupKey(r);
+      const k = _spoolProductKey(r);
       if (!groups.has(k)) groups.set(k, []);
       groups.get(k).push(r);
     });
@@ -12663,7 +12882,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // straight into the price / buy-link editor.
   function _listRowFor(p) {
     if (!p) return null;
-    return (state.rows || []).find(x => !x.deleted && _spoolGroupKey(x) === p.key) || _productAsRow(p);
+    return (state.rows || []).find(x => !x.deleted && _spoolProductKey(x) === p.key) || _productAsRow(p);
   }
   // Buy-button label = the shop's host (e.g. "amazon.fr", "atome3d.com") rather
   // than a generic "Buy", so a wishlist reads like a shopping list of shops.
@@ -16706,7 +16925,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const existing = state.products[hash];
     const p = existing
       ? { ...existing, id: hash }
-      : { id: hash, key: _spoolGroupKey(r), label: _productLabel(r), cloudSeed: _sanitizeCloudSeed(r.raw), favorite: false, liked: false };
+      : { id: hash, key: _spoolProductKey(r), label: _productLabel(r), cloudSeed: _sanitizeCloudSeed(r.raw), favorite: false, liked: false };
     openProductCard(p);
   }
   let _productCardData = null;
@@ -17626,7 +17845,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const next = !_getProduct(r)?.[field];
     // Optimistic local patch so the toggle buttons AND the illustration badges
     // (grid/table/deck/detail) flip instantly; the write's snapshot reconciles.
-    const cur = state.products[hash] || (state.products[hash] = { key: _spoolGroupKey(r) });
+    const cur = state.products[hash] || (state.products[hash] = { key: _spoolProductKey(r) });
     // Apply the flag + its interest-hierarchy coupling (❤⇒★, ★off⇒drop ❤+min)
     // to the local record and repaint BOTH toggles so the link shows instantly.
     const coupled = _coupleFlags({ [field]: next }, +(cur.minStockSpools) || 0);
@@ -31178,7 +31397,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (api.sku)                           doc.sku                = api.sku;
         if (api.barcode)                       doc.barcode            = api.barcode;
         if (api.series)                        doc.series             = api.series;
-        if (api.images?.main_src)              doc.url_img            = api.images.main_src;
+        if (_isRealProductImg(api.images?.main_src)) doc.url_img         = api.images.main_src;
         if (api.filament?.color)               doc.online_color       = api.filament.color;
         if (api.filament?.color_info?.colors?.length)
                                                doc.online_color_list  = api.filament.color_info.colors;
