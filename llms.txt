@@ -273,7 +273,7 @@ Tiger Studio Manager is the desktop app of a wider open hardware + software ecos
 |---|---|---|
 | TigerTag SDK for JavaScript | Parse, verify and encode TigerTag NFC chips — used internally by this app | https://github.com/TigerTag-Project/TigerTag-SDK-JS |
 | TigerTag SDK for Python | Same operations in Python, for scripts and automation | https://github.com/TigerTag-Project/TigerTag-SDK-Python |
-| TigerScale | ESP32 firmware + hardware for the open-source filament scale | https://github.com/TigerTag-Project/Tiger-Scale |
+| TigerScale V3 | ESP32-S3 firmware + hardware for the open-source filament scale (touchscreen, dual NFC, battery) | https://github.com/TigerTag-Project/Tiger-Scale-V3 |
 | TigerPOD | Open-source dual NFC reader/writer stand for spools — 3D-printable shell + two USB readers | https://github.com/TigerTag-Project/TigerPOD |
 
 ## Optional docs

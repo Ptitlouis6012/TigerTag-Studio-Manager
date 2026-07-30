@@ -96,7 +96,7 @@ Everything around TigerTag is open — the hardware, the firmware, the SDK, and 
 | **[Tiger Studio Manager](https://github.com/TigerTag-Project/TigerTag-Studio-Manager)** | This app — desktop companion for filament management | MIT |
 | **[TigerTag SDK for JavaScript](https://github.com/TigerTag-Project/TigerTag-SDK-JS)** | Parse, verify, and encode TigerTag NFC chips — used internally by this app | MIT |
 | **[TigerTag SDK for Python](https://github.com/TigerTag-Project/TigerTag-SDK-Python)** | Parse, verify, and encode TigerTag NFC chips in Python — for scripts, tools, and automation | MIT |
-| **[TigerScale](https://github.com/TigerTag-Project/Tiger-Scale)** | ESP32 firmware + hardware for the open-source filament scale | MIT |
+| **[TigerScale V3](https://github.com/TigerTag-Project/Tiger-Scale-V3)** | ESP32-S3 firmware + hardware for the open-source filament scale — 3.5" touchscreen, dual NFC readers, battery | MIT |
 | **[TigerPOD](https://github.com/TigerTag-Project/TigerPOD)** | Open-source dual NFC reader/writer stand for spools — 3D-printable shell + two USB readers ([free STL on MakerWorld](https://makerworld.com/en/models/1289152)) | CC BY 4.0 |
 
 The **TigerTag SDK** is the low-level library that handles all NFC chip operations — reading the 144-byte NTAG payload, verifying the TigerTag format, and encoding new chip data. It is published as an npm package (`tigertag`) and can be used independently to build custom TigerTag-compatible tools.
@@ -197,7 +197,7 @@ The TD1S auto-opens a live viewer when plugged in. In the spool detail panel, sc
 
 <img src="assets/img/TigerScale_Photo.png" width="480" alt="TigerScale ESP32 filament scale" />
 
-The [TigerScale](https://github.com/TigerTag-Project/Tiger-Scale) is an open-source ESP32-based filament scale. Tiger Studio Manager connects to it over WebSocket and shows a live card per scale:
+The [TigerScale](https://github.com/TigerTag-Project/Tiger-Scale-V3) is an open-source ESP32 filament scale — now in its **V3** generation (ESP32-S3, 3.5" touchscreen, dual PN532 readers, battery). Tiger Studio Manager connects to it over WebSocket and shows a live card per scale:
 - **56 px live weight display** with container / filament split
 - **Send-status badge** — tracks the firmware lifecycle: `idle → scanning → stable → send → success`
 - **Filament mini-panel** — color dot, brand, and material pushed directly from the scale firmware
