@@ -7412,5 +7412,60 @@
         }
       }
     ]
+  },
+  "2.17.1": {
+    "date": "2026-08-02",
+    "items": [
+      {
+        "icon": "user",
+        "title": {
+          "en": "Sign in with Google — actually works",
+          "fr": "Connexion Google — ça marche vraiment",
+          "de": "Google-Anmeldung — funktioniert wirklich",
+          "es": "Iniciar sesión con Google — ahora sí funciona",
+          "it": "Accesso Google — funziona davvero",
+          "zh": "用 Google 登录——这次是真的能用了",
+          "pt": "Entrar com Google — agora vai",
+          "pt-pt": "Iniciar sessão com Google — agora funciona mesmo",
+          "pl": "Logowanie przez Google — wreszcie działa"
+        },
+        "body": {
+          "en": "The Google button used to dead-end on a screen claiming your browser had no JavaScript. It now hands you to your real browser and brings you straight back, signed in.",
+          "fr": "Le bouton Google finissait sur un écran qui prétendait que ton navigateur n'avait pas JavaScript. Il te passe maintenant à ton vrai navigateur et te ramène connecté.",
+          "de": "Der Google-Button endete bisher auf einer Seite, die behauptete, dein Browser habe kein JavaScript. Jetzt übergibt er an deinen echten Browser und bringt dich angemeldet zurück.",
+          "es": "El botón de Google acababa en una pantalla que decía que tu navegador no tenía JavaScript. Ahora te pasa a tu navegador de verdad y te trae de vuelta con la sesión iniciada.",
+          "it": "Il pulsante Google finiva su una schermata che sosteneva che il tuo browser non avesse JavaScript. Ora ti passa al tuo browser vero e ti riporta qui, connesso.",
+          "zh": "以前点 Google 按钮会卡在一个说你浏览器没有 JavaScript 的页面。现在它会交给你真正的浏览器，然后带你登录着回来。",
+          "pt": "O botão do Google terminava numa tela dizendo que seu navegador não tinha JavaScript. Agora ele te passa pro seu navegador de verdade e te traz de volta já conectado.",
+          "pt-pt": "O botão do Google acabava num ecrã a dizer que o teu navegador não tinha JavaScript. Agora passa-te para o teu navegador a sério e traz-te de volta com sessão iniciada.",
+          "pl": "Przycisk Google kończył na ekranie twierdzącym, że twoja przeglądarka nie ma JavaScriptu. Teraz przekazuje cię do prawdziwej przeglądarki i wraca z tobą już zalogowanym."
+        }
+      },
+      {
+        "icon": "check",
+        "title": {
+          "en": "One click instead of the full interrogation",
+          "fr": "Un clic au lieu de l'interrogatoire complet",
+          "de": "Ein Klick statt des ganzen Verhörs",
+          "es": "Un clic en vez del interrogatorio completo",
+          "it": "Un clic invece dell'interrogatorio completo",
+          "zh": "一次点击，省掉整套盘问",
+          "pt": "Um clique em vez do interrogatório completo",
+          "pt-pt": "Um clique em vez do interrogatório completo",
+          "pl": "Jedno kliknięcie zamiast całego przesłuchania"
+        },
+        "body": {
+          "en": "If you're already signed in to Google in your browser, signing in here is now almost instant — no password, no security key, no round of questions every single time.",
+          "fr": "Si tu es déjà connecté à Google dans ton navigateur, la connexion ici est quasi instantanée — plus de mot de passe, plus de clé de sécurité, plus de questions à chaque fois.",
+          "de": "Wenn du in deinem Browser bereits bei Google angemeldet bist, geht die Anmeldung hier fast sofort — kein Passwort, kein Sicherheitsschlüssel, keine Fragerunde jedes Mal.",
+          "es": "Si ya tienes la sesión de Google abierta en tu navegador, entrar aquí es casi instantáneo — sin contraseña, sin llave de seguridad, sin preguntas cada vez.",
+          "it": "Se sei già connesso a Google nel browser, accedere qui è quasi istantaneo — niente password, niente chiave di sicurezza, niente domande ogni volta.",
+          "zh": "如果你的浏览器里已经登录了 Google，这里的登录几乎是瞬间完成——不用密码，不用安全密钥，也不用每次都答一轮问题。",
+          "pt": "Se você já está logado no Google no navegador, entrar aqui é quase instantâneo — sem senha, sem chave de segurança, sem interrogatório toda vez.",
+          "pt-pt": "Se já tens sessão do Google no teu navegador, entrar aqui é quase instantâneo — sem palavra-passe, sem chave de segurança, sem perguntas de cada vez.",
+          "pl": "Jeśli masz już zalogowane Google w przeglądarce, logowanie tutaj jest niemal natychmiastowe — bez hasła, bez klucza bezpieczeństwa, bez rundy pytań za każdym razem."
+        }
+      }
+    ]
   }
 }

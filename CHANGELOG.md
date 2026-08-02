@@ -5,6 +5,19 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.17.1 — 2026-08-02
+
+### Fixed
+
+- **Signing in with Google works again — a regression live since v1.10.0.** Commit `a94b4aa` (2026-05-20) moved the Google Desktop OAuth credentials to `process.env.…` with no fallback. `main.js` reads them at **runtime**, on the user's machine, where they never exist: CI only sets them at **build** time and, with no bundler and no `afterPack` hook, nothing ever inlined them — so **every shipped build** ran with empty credentials. The loopback flow (RFC 8252 + PKCE, system browser) reported "not configured" and the renderer silently fell back to `signInWithPopup`, which Google refuses from an embedded Electron webview ("browser not compatible with JavaScript"). Credentials are now written by `scripts/gen-oauth-config.mjs` into a gitignored `oauth-config.json` that electron-builder packs into the app, and `main.js` resolves them **env → generated file → hardcoded public client id**. The client id keeps a hardcoded fallback (public by design, and already in the repo's history); the **client secret has none** — it must never enter the public repository, even though it necessarily ships inside the binary (RFC 8252 §8.5: an installed app cannot keep a secret — PKCE is what protects the exchange). Google **requires** that secret for this Desktop client: the live endpoint answers `invalid_request / client_secret is missing.` without it, so the `client_secret` field stays in the token exchange with a comment saying why. The "not configured" guard now checks **both** credentials and names the missing one, so a misconfiguration fails fast in the log instead of surfacing as an unexplained popup — `main.js`, `scripts/gen-oauth-config.mjs`, `package.json`, `.gitignore`.
+
+### Changed
+
+- **Google sign-in is near-instant when the browser already holds a session.** The loopback flow forced `prompt=select_account` on every sign-in, making Google re-authenticate from scratch each time — account chooser plus a full identity challenge (passkey / security key / password) even with a live session. Dropped the parameter; an existing session now completes the round-trip with little or no interaction. Multi-account users are unaffected in practice: Google shows the chooser on its own whenever the browser holds more than one session — `main.js`.
+- **`productKey` changed meaning in v2.17.0 and no data-model doc said so.** It is the join key third parties, the Hub and the backend statistics use, and since the tier left the key a `TigerData+` document now hashes to the same value as the `TigerTag+` of its `id_product`. Documented in `docs/firestore-schema.md` and propagated to the public integration reference (the backend repo's README): which documents change value (only `TigerData+`), that every other tier keeps its hash, that the mirror rewrites them lazily so BOTH values are in the wild during the rollout — the same caveat `protocol` already carries — and what a reader should do about it — `docs/firestore-schema.md`.
+
+---
+
 ## v2.17.0 — 2026-07-30
 
 ### Changed

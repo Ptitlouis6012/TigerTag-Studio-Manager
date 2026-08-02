@@ -1760,18 +1760,49 @@ ipcMain.on('update:set-auto', (_evt, enabled) => {
 // the access_token against Google's userinfo endpoint, which has no
 // audience constraint. This dual-token call is what makes the flow
 // portable across project setups.
-// Injected at build time via GitHub Actions secrets TIGERTAG_GOOGLE_DESKTOP_CLIENT_ID
-// and TIGERTAG_GOOGLE_DESKTOP_CLIENT_SECRET. For local dev, set them in your shell
-// or in a .env file (never commit these values to the repository).
-const GOOGLE_DESKTOP_CLIENT_ID     = process.env.TIGERTAG_GOOGLE_DESKTOP_CLIENT_ID     || '';
-const GOOGLE_DESKTOP_CLIENT_SECRET = process.env.TIGERTAG_GOOGLE_DESKTOP_CLIENT_SECRET || '';
+// The env var still wins (CI / local override), but the hardcoded fallback below is
+// what makes the loopback flow work in a SHIPPED build: main.js reads this at RUNTIME,
+// on the user machine, where a build-time env var does not exist. Removing the fallback
+// (commit a94b4aa, v1.10.0) silently disabled the flow and fell back to signInWithPopup,
+// which Google refuses from an embedded Electron webview.
+// Google Desktop OAuth credentials, written by scripts/gen-oauth-config.mjs and
+// packed into the app. Read at RUNTIME — a build-time env var does not survive
+// into the shipped binary, which is exactly what broke sign-in from v1.10.0.
+const _oauthCfg = (() => {
+  try { return require("./oauth-config.json"); } catch { return {}; }
+})();
+
+const GOOGLE_DESKTOP_CLIENT_ID =
+  process.env.TIGERTAG_GOOGLE_DESKTOP_CLIENT_ID ||
+  _oauthCfg.googleDesktopClientId ||
+  // Desktop OAuth client created in Google Cloud Console for the
+  // tigertag-connect project on 2026-05-03 ("Tiger Studio Manager"). This
+  // value is PUBLIC by design: an installed app cannot keep a secret
+  // (RFC 8252 §8.5), which is why PKCE exists — each sign-in generates a
+  // fresh code_verifier only this process knows. Extracting these strings
+  // from the binary does not let an attacker impersonate the app.
+  '298062874545-c3d61latpmhp6qn9l1q87hvhmng8aadi.apps.googleusercontent.com';
+
+// Google REQUIRES this for the Desktop client token exchange (see the
+// client_secret note further down). Deliberately NO hardcoded fallback: unlike
+// the client id, this must never land in the public repository. It comes from
+// the environment (CI secret / local export) or from the gitignored
+// oauth-config.json — run `npm run oauth:config` to write that file.
+const GOOGLE_DESKTOP_CLIENT_SECRET =
+  process.env.TIGERTAG_GOOGLE_DESKTOP_CLIENT_SECRET ||
+  _oauthCfg.googleDesktopClientSecret ||
+  "";
 
 ipcMain.handle('auth:google-loopback', async () => {
-  if (!GOOGLE_DESKTOP_CLIENT_ID) {
-    return {
-      ok: false,
-      error: 'GOOGLE_DESKTOP_CLIENT_ID is not configured. See main.js header.',
-    };
+  // Check BOTH up front. Missing either one used to surface only at the token
+  // exchange — after the whole browser round-trip — and the renderer then fell
+  // back to signInWithPopup, which Google blocks. Fail fast and say which.
+  if (!GOOGLE_DESKTOP_CLIENT_ID || !GOOGLE_DESKTOP_CLIENT_SECRET) {
+    const missing = !GOOGLE_DESKTOP_CLIENT_ID
+      ? 'GOOGLE_DESKTOP_CLIENT_ID'
+      : 'GOOGLE_DESKTOP_CLIENT_SECRET';
+    log.error(`[auth.google-loopback] ${missing} is not configured — see main.js`);
+    return { ok: false, error: `${missing} is not configured. See main.js header.` };
   }
 
   // PKCE: verifier is a high-entropy random string, challenge is its
@@ -1804,9 +1835,13 @@ ipcMain.handle('auth:google-loopback', async () => {
     authUrl.searchParams.set('code_challenge',        codeChallenge);
     authUrl.searchParams.set('code_challenge_method', 'S256');
     authUrl.searchParams.set('state',                 state);
-    // `prompt=select_account` mirrors the existing popup behaviour so users
-    // with multiple Google accounts see the chooser every time.
-    authUrl.searchParams.set('prompt',                'select_account');
+    // NO `prompt` parameter on purpose. `prompt=select_account` forced Google to
+    // re-authenticate on EVERY sign-in — that is what made the flow long: an
+    // account chooser plus a full identity challenge (passkey / security key /
+    // password) even when the browser already held a live Google session.
+    // Without it, an existing session completes the round-trip almost instantly.
+    // Multi-account users are not stranded: Google shows the chooser by itself
+    // whenever the browser holds more than one session.
 
     // Wait for the OAuth redirect to land on /callback. 5-minute timeout
     // — beyond that we assume the user abandoned the flow.
@@ -1887,6 +1922,12 @@ ipcMain.handle('auth:google-loopback', async () => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body:    new URLSearchParams({
         client_id:     GOOGLE_DESKTOP_CLIENT_ID,
+        // REQUIRED, despite PKCE. Google's token endpoint rejects this Desktop
+        // client without it: `invalid_request / client_secret is missing.` It is
+        // not a real secret (RFC 8252 §8.5 — an installed app cannot keep one,
+        // and Google documents it as such); PKCE is what actually protects the
+        // exchange. Do not "clean it up" — it breaks sign-in, silently, because
+        // the renderer then falls back to signInWithPopup, which Google blocks.
         client_secret: GOOGLE_DESKTOP_CLIENT_SECRET,
         code,
         code_verifier: codeVerifier,

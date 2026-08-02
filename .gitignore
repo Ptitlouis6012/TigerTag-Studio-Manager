@@ -152,3 +152,8 @@ tmp/
 
 # Machine-local agent reference (absolute paths — must never be pushed)
 CLAUDE.local.md
+
+# Google Desktop OAuth credentials — generated at build time by
+# scripts/gen-oauth-config.mjs. NEVER commit: the client secret ships inside
+# the built app (unavoidable) but must not land in the public repository.
+oauth-config.json

@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.17.0",
+  "version": "2.17.1",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -9,12 +9,12 @@
   "scripts": {
     "start": "electron .",
     "postinstall": "electron-rebuild && node scripts/copy-agora-sdk.mjs",
-    "build:win": "electron-builder --win --publish always",
-    "build:win:nopublish": "electron-builder --win --publish never",
-    "build:mac": "electron-builder --mac --publish always",
+    "build:win": "node scripts/gen-oauth-config.mjs && electron-builder --win --publish always",
+    "build:win:nopublish": "node scripts/gen-oauth-config.mjs && electron-builder --win --publish never",
+    "build:mac": "node scripts/gen-oauth-config.mjs && electron-builder --mac --publish always",
     "build:mac:local": "bash build/sign-and-notarize.sh",
     "build:mac:unsigned": "electron-builder --mac -c.mac.identity=null -c.mac.notarize=false",
-    "build:linux": "electron-builder --linux --publish always",
+    "build:linux": "node scripts/gen-oauth-config.mjs && electron-builder --linux --publish always",
     "build:all": "electron-builder -wml --publish always",
     "i18n:add": "node scripts/i18n-add.mjs",
     "i18n:check": "node scripts/check-i18n-consistency.mjs",
@@ -24,7 +24,8 @@
     "whatsnew:import": "node scripts/whatsnew-import-changelog.mjs",
     "whatsnew:check": "node scripts/whatsnew-check.mjs",
     "lint": "eslint .",
-    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
+    "oauth:config": "node scripts/gen-oauth-config.mjs"
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.4",
@@ -65,7 +66,8 @@
       "renderer/**",
       "services/**",
       "data/**",
-      "assets/**"
+      "assets/**",
+      "oauth-config.json"
     ],
     "asarUnpack": [
       "**/node_modules/ffmpeg-static/**"
