@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.17.1",
+  "version": "2.17.2",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -13,9 +13,9 @@
     "build:win:nopublish": "node scripts/gen-oauth-config.mjs && electron-builder --win --publish never",
     "build:mac": "node scripts/gen-oauth-config.mjs && electron-builder --mac --publish always",
     "build:mac:local": "bash build/sign-and-notarize.sh",
-    "build:mac:unsigned": "electron-builder --mac -c.mac.identity=null -c.mac.notarize=false",
+    "build:mac:unsigned": "node scripts/gen-oauth-config.mjs && electron-builder --mac -c.mac.identity=null -c.mac.notarize=false",
     "build:linux": "node scripts/gen-oauth-config.mjs && electron-builder --linux --publish always",
-    "build:all": "electron-builder -wml --publish always",
+    "build:all": "node scripts/gen-oauth-config.mjs && electron-builder -wml --publish always",
     "i18n:add": "node scripts/i18n-add.mjs",
     "i18n:check": "node scripts/check-i18n-consistency.mjs",
     "codemap:check": "node scripts/check-codemap.mjs",

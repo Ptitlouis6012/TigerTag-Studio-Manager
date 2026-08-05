@@ -2124,9 +2124,15 @@
     border: 1.5px solid rgba(255,255,255,.8);
     box-shadow: 0 1px 3px rgba(0,0,0,.2);
   }
-  .panel-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 5px; }
-  .panel-row .pk { color: var(--muted); }
-  .panel-row .pv { font-weight: 500; text-align: right; max-width: 60%; }
+  .panel-row { display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-bottom: 5px; gap: 12px; }
+  /* The label keeps its natural width; the value takes ALL the rest. A fixed
+     `max-width` on the value used to cap it at 60% of the row, so a SKU wrapped
+     onto two lines with half the row still empty next to a short label. */
+  .panel-row .pk { color: var(--muted); flex: 0 0 auto; }
+  /* `flex:1 1 auto` + `min-width:0` let it use the free space AND shrink;
+     `overflow-wrap: anywhere` breaks a value that has no spaces at all (a SKU,
+     a barcode), which otherwise ran off the right edge of the card. */
+  .panel-row .pv { font-weight: 500; text-align: right; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   /* Badge-valued row (e.g. "Type de tag" → tier badge + backup shield) — align
      the pill to the right, vertically centred with the key. */
   .panel-row .pv-badge { display: inline-flex; align-items: center; gap: 4px; }

@@ -12045,10 +12045,21 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _catalogDocFromApi(api, productId, cloudId) {
     const fil = api.filament || {};
 
+    // Two DIFFERENT quantities — never mix them in one variable:
+    //   • `measure_value` is unitless and only means something with `measure_unit`
+    //     (500 + "g", but also 2 + "kg", or a volume in L). It is what goes on the
+    //     chip, paired with `id_unit`.
+    //   • `grams` is ALREADY normalised to grams by the API — it is the authority
+    //     for `measure_gr`, and must never be run through the unit conversion.
+    // Reading `measure_value ?? grams` into one variable and converting the result
+    // meant a missing `measure_value` on a kg product yielded 2000 × 1000 g.
     const unitId     = _catByName("unit", fil.measure_unit) || 21;   // default g
-    const measure    = Number(fil.measure_value ?? fil.grams);
+    const measure    = Number(fil.measure_value);
     const hasMeasure = Number.isFinite(measure) && measure > 0;
-    const grams      = hasMeasure ? _adpToGrams(measure, unitId) : null;
+    const apiGrams   = Number(fil.grams);
+    const grams      = Number.isFinite(apiGrams) && apiGrams > 0
+      ? apiGrams                                                  // already in grams
+      : (hasMeasure ? _adpToGrams(measure, unitId) : null);       // else convert the raw value
 
     // Colours — `color_info.colors` is the authority, `color` the shorthand.
     const colors = (Array.isArray(fil.color_info?.colors) && fil.color_info.colors.length)
@@ -16929,6 +16940,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     openProductCard(p);
   }
   let _productCardData = null;
+  // "500 g" / "2 kg" / "1,5 kg" → grams. The catalogue exposes the quantity as a
+  // display STRING (its numeric measure lives in the API detail, not the list),
+  // so a catalogue preview opened before the detail lands still shows the right
+  // capacity. Returns null when there is nothing usable to parse.
+  function _catMeasureToGrams(s) {
+    const mm = String(s == null ? "" : s).trim().replace(",", ".").match(/^([\d.]+)\s*(kg|g|ml|l)?$/i);
+    if (!mm) return null;
+    const n = Number(mm[1]);
+    if (!Number.isFinite(n) || n <= 0) return null;
+    const unit = (mm[2] || "g").toLowerCase();
+    return (unit === "kg" || unit === "l") ? Math.round(n * 1000) : Math.round(n);
+  }
+
   function _renderProductCard(p) {
     const body = $("productCardBody"); if (!body) return;
     const l = p.label || {};
@@ -17003,11 +17027,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       <button type="button" class="flag-toggle flag-toggle--like${fav ? " active" : ""}" data-pc-flag="favorite" aria-pressed="${fav}" data-tip="${esc(t("productFavoriteTip"))}" aria-label="${esc(t("productFavorite"))}"><span class="icon icon-star${fav ? "-fill" : ""} icon-16"></span></button>`;
     // COULEURS & ASPECT — identical markup to buildPanelHTML.
     const colorsHtml = colorCircleHTML(r, 56);
-    const aspectChips = [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None");
+    // Aspects, then the Refill / Recycled / Filled badges — same chips, wording
+    // and i18n keys as the material side-card, which reads them from
+    // `info1`/`info2`/`info3` via normalizeRow (isRefill/isRecycled/isFilled).
+    const aspectChips = [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None")
+      .concat([
+        r.isRefill   ? t("badgeRefill")   : null,
+        r.isRecycled ? t("badgeRecycled") : null,
+        r.isFilled   ? t("badgeFilled")   : null,
+      ].filter(Boolean));
     const badgeHtml = aspectChips.length
       ? `<div class="aspect-chips">${aspectChips.map(a => `<span class="aspect-chip">${esc(a)}</span>`).join("")}</div>` : "";
-    // POIDS — a product identity has no per-spool weight → show a FULL 1 kg spool.
-    const cap = 1000, curW = 1000, pctFill = 100;
+    // POIDS — a product identity has no per-spool weight, so the spool is shown
+    // FULL. Its CAPACITY is real though, and must not be invented: the seed
+    // carries it (`measure_gr`/`measure` → `r.capacity`), and a catalogue preview
+    // also has the raw "500 g" / "2 kg" string on its item. Hardcoding 1000 here
+    // made every 500 g / 750 g / 2 kg product read as 1 kg.
+    const cap = Number(r.capacity) || _catMeasureToGrams(p.catalogItem?.measure) || 1000;
+    const curW = cap, pctFill = 100;
     const capTxt = cap >= 1000 ? (cap / 1000).toFixed(cap % 1000 === 0 ? 0 : 1) + ' kg' : cap + ' g';
     const weightHtml = `
       <div class="panel-section">
@@ -17097,12 +17134,47 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       [t("thName"),       colorName],
       [t("detMaterial"),  material],
       [t("detDiameter"),  r.diameter],
+      // Colour(s) as HEX — the chip carries RGB(A) bytes, `online_color_list` the
+      // hex strings. Multi-colour products list every slot, so a dual/tri shows
+      // all of them rather than just the first.
+      [t("detColor"),     (() => {
+        const list = (Array.isArray(r.colorList) && r.colorList.length)
+          ? r.colorList
+          : (r.colorHex ? [r.colorHex] : []);
+        // The catalogue is inconsistent: some products give RRGGBBAA, others only
+        // RRGGBB. NEVER pad a short one with FF — a TigerTag+ can be factory-set
+        // to any alpha, so assuming opaque would invent a value. The real alpha
+        // lives in the chip byte `color_a`, so use THAT to complete the primary
+        // colour when the string omits it; the extra slots have no alpha byte of
+        // their own, so they stay exactly as stored.
+        const a = Number(r.raw?.color_a);
+        const aHex = Number.isFinite(a) && a >= 0 && a <= 255
+          ? a.toString(16).padStart(2, "0").toUpperCase() : "";
+        const hex = list.map(c => String(c || "").trim().replace(/^#/, "").toUpperCase())
+                        .filter(Boolean)
+                        .map((c, i) => "#" + (c.length === 6 && i === 0 && aHex ? c + aHex : c));
+        // One per line — a tri-colour joined on a single line wrapped badly.
+        // Rendered with `white-space: pre-line` (4th tuple slot below).
+        return hex.length ? hex.join("\n") : "";
+      })(), null, true],
+      // Quantity as the product states it: the RAW `measure` with its own unit
+      // (500 g, but also 2 kg) — not the grams the gauge uses, which would read
+      // "2000 g" for a 2 kg spool.
+      [t("detMeasure"),   (() => {
+        const v = Number(r.raw?.measure);
+        if (!Number.isFinite(v) || v <= 0) return "";
+        const u = (state.db.unit || []).find(x => x.id === r.raw?.id_unit);
+        const label = u ? (u.name || u.label || u.symbol || "") : "";
+        return label ? `${v} ${label}` : String(v);
+      })()],
       [t("detSku"),       sku],
       [t("detBarcode"),   ean],
     ].filter(([, v]) => v && v !== "-")
-     .map(([k, v, href]) => `<div class="panel-row"><span class="pk">${esc(k)}</span>${href
+     // 4th slot = multiline: keeps the newlines in the value (colours, one per
+     // line) without letting HTML through — the text stays escaped.
+     .map(([k, v, href, multi]) => `<div class="panel-row"><span class="pk">${esc(k)}</span>${href
         ? `<a class="pv" href="${safeHref(href)}" target="_blank" rel="noopener">${esc(String(v))}</a>`
-        : `<span class="pv">${esc(String(v))}</span>`}</div>`).join("");
+        : `<span class="pv"${multi ? ` style="white-space:pre-line;text-align:right"` : ""}>${esc(String(v))}</span>`}</div>`).join("");
     const detailsHtml = detailRows ? `
       <div class="panel-section">
         <div class="panel-label">${esc(t("sectionDetails"))}</div>
@@ -17146,7 +17218,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ${detailsHtml}
       ${fromHTML ? `<div class="pc-from-wrap">${fromHTML}</div>` : ""}
       ${catalogAddHTML}
-      <div class="pc-note">${esc(t("pcNoStock"))}</div>`;
+      <div class="pc-note">${esc(t("pcNoStock"))}</div>
+      ${state.debugEnabled ? `
+      <div class="panel-section">
+        <details class="debug" id="pcRawDetails">
+          <summary style="display:flex;align-items:center;justify-content:space-between">
+            <strong>${esc(t("sectionRaw"))}</strong>
+            <button class="stg-copy-btn" id="btnCopyPcRaw" title="Copy JSON" style="height:26px;width:26px;flex-shrink:0">${SVG_COPY}</button>
+          </summary>
+          <pre class="json" id="pcRawJsonPre" style="margin-top:10px;max-height:400px">${highlight(r.raw || {})}</pre>
+        </details>
+      </div>` : ""}`;
+    // Copy-JSON — same affordance as the material card's raw section. Wired here
+    // because the body is rebuilt on every render.
+    body.querySelector("#btnCopyPcRaw")?.addEventListener("click", e => {
+      e.preventDefault(); e.stopPropagation();
+      const btn = e.currentTarget;
+      navigator.clipboard.writeText($("pcRawJsonPre")?.textContent || "").then(() => {
+        btn.classList.add("copied");
+        setTimeout(() => btn.classList.remove("copied"), 1800);
+      });
+    });
     // The add button lives inside a body that is rebuilt on every render, so the
     // handler goes on the button we just wrote.
     body.querySelector("[data-cat-add]")?.addEventListener("click", e => {
@@ -18382,6 +18474,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                 : `<span class="pv"${pvId ? ` id="${pvId}"` : ""}>${esc(String(val))}</span>`;
             return `<div class="panel-row"><span class="pk">${k}</span>${cell}</div>`;
           }).join("")}
+          ${infoHtml2}
           ${r.deleted ? `<div style="margin-top:8px"><span class="badge bad" style="font-size:11px">${t("badgeDeleted")}</span></div>` : ""}
         </div>
       </div>`;

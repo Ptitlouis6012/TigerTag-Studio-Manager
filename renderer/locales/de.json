@@ -245,6 +245,8 @@
   "detBrand": "Marke",
   "detMaterial": "Material",
   "detDiameter": "Durchmesser",
+  "detColor": "Farbe",
+  "detMeasure": "Menge",
   "detTagType": "Tag-Typ",
   "detSku": "SKU",
   "detBarcode": "Barcode",

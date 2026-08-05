@@ -7467,5 +7467,85 @@
         }
       }
     ]
+  },
+  "2.17.2": {
+    "date": "2026-08-02",
+    "items": [
+      {
+        "icon": "package",
+        "title": {
+          "en": "Spools are their real size again",
+          "fr": "Les bobines retrouvent leur vraie taille",
+          "de": "Spulen haben wieder ihre echte Größe",
+          "es": "Las bobinas recuperan su tamaño real",
+          "it": "Le bobine tornano alla loro vera dimensione",
+          "zh": "料卷终于是它本来的大小",
+          "pt": "As bobinas voltam ao tamanho real",
+          "pt-pt": "As bobinas voltam ao tamanho real",
+          "pl": "Szpule znów mają swój prawdziwy rozmiar"
+        },
+        "body": {
+          "en": "A product card insisted every spool held 1 kg — even the 500 g and the 2 kg ones. It now shows the size the product actually is.",
+          "fr": "La fiche produit soutenait que chaque bobine faisait 1 kg — y compris les 500 g et les 2 kg. Elle affiche maintenant la vraie taille.",
+          "de": "Die Produktkarte behauptete, jede Spule fasse 1 kg — auch die mit 500 g und die mit 2 kg. Jetzt zeigt sie die echte Größe.",
+          "es": "La ficha de producto insistía en que toda bobina era de 1 kg — incluidas las de 500 g y las de 2 kg. Ahora muestra el tamaño real.",
+          "it": "La scheda prodotto sosteneva che ogni bobina fosse da 1 kg — anche quelle da 500 g e da 2 kg. Ora mostra la dimensione vera.",
+          "zh": "产品卡片一口咬定每卷都是 1 kg——连 500 g 和 2 kg 的也一样。现在它显示真实的规格了。",
+          "pt": "O cartão do produto insistia que toda bobina tinha 1 kg — inclusive as de 500 g e as de 2 kg. Agora mostra o tamanho real.",
+          "pt-pt": "O cartão do produto insistia que todas as bobinas tinham 1 kg — incluindo as de 500 g e as de 2 kg. Agora mostra o tamanho real.",
+          "pl": "Karta produktu upierała się, że każda szpula ma 1 kg — także te 500 g i 2 kg. Teraz pokazuje prawdziwy rozmiar."
+        }
+      },
+      {
+        "icon": "list-check",
+        "title": {
+          "en": "7 552 filaments, straight out of the box",
+          "fr": "7 552 filaments, dès l'installation",
+          "de": "7 552 Filamente, direkt ab Werk",
+          "es": "7 552 filamentos, nada más instalar",
+          "it": "7 552 filamenti, già all'installazione",
+          "zh": "7 552 种耗材，装好就有",
+          "pt": "7 552 filamentos, já na instalação",
+          "pt-pt": "7 552 filamentos, logo na instalação",
+          "pl": "7 552 filamenty, od razu po instalacji"
+        },
+        "body": {
+          "en": "The catalogue that ships inside the app went from 4 807 to 7 552 products, so Search finds your filament on day one — offline, before anything syncs.",
+          "fr": "Le catalogue embarqué dans l'app passe de 4 807 à 7 552 produits : la recherche trouve ton filament dès le premier jour, hors ligne, avant toute synchro.",
+          "de": "Der mitgelieferte Katalog wuchs von 4 807 auf 7 552 Produkte — die Suche findet dein Filament ab Tag eins, offline, noch vor jeder Synchronisierung.",
+          "es": "El catálogo incluido en la app pasa de 4 807 a 7 552 productos: la búsqueda encuentra tu filamento desde el primer día, sin conexión y antes de sincronizar.",
+          "it": "Il catalogo incluso nell'app passa da 4 807 a 7 552 prodotti: la ricerca trova il tuo filamento dal primo giorno, offline, prima di qualsiasi sincronizzazione.",
+          "zh": "随应用附带的目录从 4 807 增加到 7 552 个产品——第一天就能搜到你的耗材，离线也行，无需先同步。",
+          "pt": "O catálogo que vem dentro do app passou de 4 807 para 7 552 produtos: a busca acha seu filamento no primeiro dia, offline, antes de qualquer sincronização.",
+          "pt-pt": "O catálogo que vem dentro da app passou de 4 807 para 7 552 produtos: a pesquisa encontra o teu filamento no primeiro dia, offline, antes de qualquer sincronização.",
+          "pl": "Katalog dołączony do aplikacji urósł z 4 807 do 7 552 produktów — wyszukiwarka znajdzie twój filament pierwszego dnia, offline, zanim cokolwiek się zsynchronizuje."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "en": "Refill spools finally say so",
+          "fr": "Les recharges le disent enfin",
+          "de": "Nachfüllspulen sagen es endlich",
+          "es": "Las recargas por fin lo dicen",
+          "it": "Le ricariche finalmente lo dicono",
+          "zh": "补充装终于会自报家门",
+          "pt": "As recargas finalmente avisam",
+          "pt-pt": "As recargas finalmente dizem-no",
+          "pl": "Wkłady wreszcie się przyznają"
+        },
+        "body": {
+          "en": "Refill, Recycled and Filled badges were being prepared and then quietly dropped before anything was drawn. They now show up on your spools and on product cards.",
+          "fr": "Les badges Recharge, Recyclé et Rempli étaient préparés puis discrètement jetés avant d'être affichés. Ils apparaissent désormais sur tes bobines et sur les fiches produit.",
+          "de": "Die Badges Nachfüllung, Recycelt und Gefüllt wurden vorbereitet und dann still verworfen, bevor irgendetwas gezeichnet wurde. Jetzt erscheinen sie auf deinen Spulen und auf Produktkarten.",
+          "es": "Las etiquetas Recarga, Reciclado y Cargado se preparaban y luego se descartaban en silencio antes de dibujarse. Ahora aparecen en tus bobinas y en las fichas de producto.",
+          "it": "I badge Ricarica, Riciclato e Caricato venivano preparati e poi scartati in silenzio prima di essere disegnati. Ora compaiono sulle tue bobine e sulle schede prodotto.",
+          "zh": "「补充装」「再生」「填充」这几个标签本来已经准备好，却在显示前被悄悄丢掉了。现在它们会出现在你的料卷和产品卡片上。",
+          "pt": "As etiquetas Recarga, Reciclado e Carregado eram preparadas e depois descartadas em silêncio antes de aparecer. Agora surgem nas suas bobinas e nos cartões de produto.",
+          "pt-pt": "As etiquetas Recarga, Reciclado e Carregado eram preparadas e depois descartadas em silêncio antes de aparecerem. Agora surgem nas tuas bobinas e nos cartões de produto.",
+          "pl": "Plakietki Wkład, Z recyklingu i Napełniony były przygotowywane, a potem po cichu porzucane, zanim cokolwiek się narysowało. Teraz pojawiają się na twoich szpulach i na kartach produktów."
+        }
+      }
+    ]
   }
 }

@@ -5,6 +5,23 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.17.2 — 2026-08-02
+
+### Added
+
+- **Product card: colour, quantity, and a raw-JSON block in debug mode.** DÉTAILS gained a **Color** row listing every slot as `#RRGGBBAA`, one per line (a dual/tri product shows all of them, not just the first) and a **Quantity** row showing the product's own `measure` with its unit — `2 kg`, not the `2000 g` the gauge uses. The alpha is never invented: a catalogue colour given as `RRGGBB` is completed from the chip's own `color_a` byte when the record has one, and left as-is otherwise — a TigerTag+ can be factory-set to any alpha, so padding with `FF` would have been a guess. With debug mode on, the card ends with the same collapsible **raw JSON** block (and copy button) the material side-card has — `renderer/inventory.js`.
+- **Bundled catalogue refreshed to 7 552 products** (was 4 807), plus a brand-table update, via `assets/db/tigertag/db_update.py` — `assets/db/tigertag/`.
+
+### Fixed
+
+- **The product card always showed a 1 kg spool, whatever the real size.** `_renderProductCard` hardcoded `const cap = 1000, curW = 1000`, so a 500 g, 750 g or 2 kg product all read "1000 g / 1 kg total" with a full bar — while the grid card right beside it showed the correct `500 g`. The capacity was never missing: the catalogue seed already carries it and `normalizeRow` exposes it as `r.capacity`. The card now uses that, falling back to parsing the catalogue item's display string (`"500 g"` / `"2 kg"`, new `_catMeasureToGrams`) for a preview opened before the API detail lands. The spool still renders FULL — a product identity has no per-spool weight — only its capacity is now real. **One render function serves all six product-card entry points** (catalogue, favourites, lists, cart, friend view, groups), so every card in the app was affected and is fixed by this — `renderer/inventory.js`.
+- **Catalogue seed: `measure_value` and `grams` are two different quantities and were read into one variable.** `_catalogDocFromApi` did `Number(fil.measure_value ?? fil.grams)` and ran the result through the unit conversion — but `measure_value` is unitless and only means something with `measure_unit` (500 + "g", or 2 + "kg"), while `grams` is ALREADY normalised by the API. A missing `measure_value` on a kg product would have yielded 2000 × 1000 g. `grams` is now the authority for `measure_gr`; the raw `measure_value` (paired with `id_unit`) is kept for the chip payload as the `.ttag` contract requires, and the conversion only runs when the API omits `grams` — `renderer/inventory.js`.
+- **The Refill / Recycled / Filled badges were never displayed anywhere.** The spool detail card computed `infoBadges` and built `infoHtml2` from them, then never inserted it into its template — dead code (eslint had been flagging the unused variable), which is why a "PLA Basic Refill" spool showed no badge at all. Inserted into the Details body, and the same three chips added to the **product card** — same `.aspect-chip` markup and the same existing `badgeRefill`/`badgeRecycled`/`badgeFilled` keys, already translated in all 9 locales. They read `info1`/`info2`/`info3` through `normalizeRow` — `renderer/inventory.js`.
+- **Side-card detail rows: a long value ran off the edge, and a medium one wrapped with half the row empty.** `.panel-row .pv` was capped at `max-width: 60%`, so a SKU broke onto two lines even when the label beside it was short and the space free; and nothing could break an unbreakable string (a SKU or barcode has no spaces), so a long one overflowed past the right edge. The label is now `flex: 0 0 auto` and the value `flex: 1 1 auto; min-width: 0`, plus `overflow-wrap: anywhere` for the no-space case. Applies to every panel row, so the material card benefits too — `renderer/css/70-detail-misc.css`.
+- **`build:mac:unsigned` and `build:all` shipped without Google OAuth credentials** — the generator added in v2.17.1 was only wired into the publishing builds, so a local or unsigned build had no `oauth-config.json` on a clean checkout — `package.json`.
+
+---
+
 ## v2.17.1 — 2026-08-02
 
 ### Fixed

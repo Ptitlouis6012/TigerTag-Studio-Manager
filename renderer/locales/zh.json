@@ -245,6 +245,8 @@
   "detBrand": "品牌",
   "detMaterial": "材料",
   "detDiameter": "直径",
+  "detColor": "颜色",
+  "detMeasure": "数量",
   "detTagType": "标签类型",
   "detSku": "SKU",
   "detBarcode": "条形码",
