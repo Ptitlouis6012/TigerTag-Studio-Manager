@@ -17,7 +17,7 @@
 **"TigerTag"** is a trademark of the TigerTag Project.
 
 TigerTag refers to the **RFID spool-tracking protocol** and the **cloud service**
-(`tigertag.io`) that synchronizes filament inventory across devices.
+(`tigersystem.io`) that synchronizes filament inventory across devices.
 
 You **may** reference "TigerTag" in a factual, descriptive way
 (e.g. *"compatible with TigerTag"*, *"works with the TigerTag cloud"*) without permission.
@@ -57,7 +57,7 @@ the Tiger Studio codebase, alongside the MIT copyright notice requirement.
 
 **The attribution must include a link** to
 `https://github.com/TigerTag-Project/TigerTag-Studio-Manager`
-or `https://tigertag.io` wherever the format supports hyperlinks.
+or `https://tigersystem.io` wherever the format supports hyperlinks.
 
 **Ready-to-use badge** — drop this in your README:
 
@@ -113,4 +113,4 @@ This is standard practice in open-source (Arduino, OpenWrt, Prusa Research, etc.
 ## Questions
 
 Open an issue or reach us on [Discord](https://discord.gg/3Qv5TSqnJH).
-For trademark authorization requests: contact via [tigertag.io](https://tigertag.io).
+For trademark authorization requests: contact via [tigersystem.io](https://tigersystem.io).
