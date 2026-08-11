@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.17.2**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.18.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -62,6 +62,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - Login / create-account / forgot-password modal; Google sign-in (popup, then loopback OAuth RFC 8252 + PKCE for native Touch ID / passkey support) (v1.4+; loopback flow v1.4.5; broken-fallback fix v1.7.7).
 - Email verification required for email/password sign-up, with an inline resend action (Google sign-in exempt) (v2.1.0).
 - Profiles modal — manage multiple connected accounts, switch, disconnect (v1.4+; Discord-style account menu with hover switcher redesign v1.10.24).
+- "My profile" editor as a left side card — pinned header + identity hero + grouped one-row-per-setting sections, sign-out pinned in a footer; social links listed with their detected platform and a note that they are public (v2.18.0).
 - Color avatars (13 presets + custom hex) and pseudo (`displayName`) setup flow, with a first-launch prompt when missing.
 - Two-step first-connection onboarding — language, then display name + avatar (generated colour or imported photo). Version-gated on `users/{uid}/apps/studio.onboardingVersion`, so every account runs it once and a bumped constant re-runs everyone (v2.12.0).
 - Per-application state doc `users/{uid}/apps/{appId}` — owner-only, for state read per-user by a single ecosystem app (v2.12.0).
@@ -226,8 +227,18 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - Auto-update via `electron-updater` / GitHub Releases, with a Settings toggle (enable/disable + "Check now") (v1.4.4).
 - macOS code signing + notarization (Apple Developer ID + `notarytool`, App Store Connect API Key) in CI (v1.4.2).
 - Cross-platform builds — macOS (x64 + arm64, signed), Windows (NSIS, unsigned pending Azure Trusted Signing), Linux (AppImage).
+- **Portable Windows build** — runs with no installation and keeps accounts, cache and logs beside the .exe rather than in `%APPDATA%`, so nothing is left behind on a shared machine (v2.18.0).
 - Dark native window chrome (`nativeTheme.themeSource = 'dark'`) and shadow-less window edges (v1.4.13).
 - Launch splash screen shown instantly while the app assembles from cache (v1.8.24).
+
+## Appearance & theming
+
+- **Dark and Light themes**, dark shipped as the default, chosen in *Edit profile → Theme* (v2.18.0).
+- Theme carried by `data-theme` on `<html>`, written statically so the right palette is in force at first paint — no flash of the wrong theme on launch (v2.18.0).
+- Native window chrome follows the in-app theme over IPC (`nativeTheme.themeSource`), so a light UI never sits inside a black title bar (v2.18.0).
+- Choice persisted three ways, each with its own job: `localStorage` for an offline cold start, `users/{uid}.studioTheme` so it follows the account across machines, and `telemetry/studio.theme` as usage data for the Hub's dark/light split (v2.18.0).
+- Design-token layer — ~75 semantic tokens plus a dark override, an "ink ladder" whose polarity flips with the theme, and `--on-accent` for the fixed-polarity case (a label on a filled button stays white in both themes) (v2.18.0).
+- `npm run theme:check` guards it: fails on any raw colour or any `var(--x)` naming an undeclared variable (v2.18.0).
 
 ## Internationalization (i18n)
 

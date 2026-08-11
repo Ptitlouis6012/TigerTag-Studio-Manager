@@ -47,7 +47,7 @@
 }
 
 .elg-cam-fallback-img--placeholder {
-  background: var(--bg-2);
+  background: var(--surface-2);
 }
 
 .elg-cam-fallback-overlay {
@@ -65,12 +65,12 @@
 }
 
 .elg-cam-fallback-icon {
-  background-color: var(--warn, #f59e0b);
+  background-color: var(--warning);
 }
 
 .elg-cam-fallback-msg {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ink-85);
   text-align: center;
 }
 
@@ -85,7 +85,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg-2);
+  background: var(--surface-2);
 }
 .cre-file-thumb--placeholder .icon {
   background-color: var(--muted);
@@ -97,8 +97,8 @@
   padding: 1px 5px;
   border-radius: 4px;
 }
-.elg-hist-status--ok     { color: var(--ok, #22c55e);   background: rgba(34,197,94,.12); }
-.elg-hist-status--cancel { color: var(--muted);          background: var(--bg-2); }
+.elg-hist-status--ok     { color: var(--success);   background: color-mix(in srgb, var(--success) 12%, transparent); }
+.elg-hist-status--cancel { color: var(--muted);          background: var(--surface-2); }
 
 /* ── Mono-extruder filament grid (no Canvas hub) ───────────────────────────
    Single "Ext." slot aligned left, same size as one slot in the 4-up grid.
@@ -171,7 +171,7 @@
 .elg-fs-print-btn:hover {
   background: var(--primary);
   border-color: var(--primary);
-  color: #fff;
+  color: var(--on-accent);
 }
 .elg-fs-print-btn:active {
   background: var(--primary-hover);
@@ -418,8 +418,8 @@
   flex-shrink: 0;
   user-select: none;
 }
-.elg-jog-home-btn:hover  { background: var(--primary); border-color: var(--primary); color: #fff; }
-.elg-jog-home-btn:active { background: var(--primary); border-color: var(--primary); color: #fff; opacity: .8; }
+.elg-jog-home-btn:hover  { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
+.elg-jog-home-btn:active { background: var(--primary); border-color: var(--primary); color: var(--on-accent); opacity: .8; }
 
 /* ── XY circle ── */
 .elg-jog-xy-circle {
@@ -439,7 +439,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: var(--primary, #ff7a18);
+  background: var(--primary);
   opacity: 0;
   transition: opacity .15s;
   z-index: 0;
@@ -502,8 +502,8 @@
   line-height: 1;
   z-index: 2;
 }
-.elg-jog-home-btn--xy:hover  { background: var(--primary); border-color: var(--primary); color: #fff; }
-.elg-jog-home-btn--xy:active { background: var(--primary); border-color: var(--primary); color: #fff; opacity: .8; }
+.elg-jog-home-btn--xy:hover  { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
+.elg-jog-home-btn--xy:active { background: var(--primary); border-color: var(--primary); color: var(--on-accent); opacity: .8; }
 
 /* Z pill home btn — large glyph */
 .elg-jog-z-pill .elg-jog-home-btn { font-size: 40px; }
@@ -623,16 +623,16 @@
   padding: 0;
 }
 .elg-fan-icon-btn .icon           { background-color: var(--muted); transition: background-color .1s; }
-.elg-fan-icon-btn:hover           { background: rgba(255,122,24,.10); }
+.elg-fan-icon-btn:hover           { background: color-mix(in srgb, var(--primary) 10%, transparent); }
 .elg-fan-icon-btn:hover .icon     { background-color: var(--primary); }
-.elg-fan-icon-btn--on             { background: rgba(34,197,94,.10); }
-.elg-fan-icon-btn--on .icon       { background-color: #22c55e; }
-.elg-fan-icon-btn--on:hover       { background: rgba(34,197,94,.20); }
+.elg-fan-icon-btn--on             { background: color-mix(in srgb, var(--success) 10%, transparent); }
+.elg-fan-icon-btn--on .icon       { background-color: var(--success); }
+.elg-fan-icon-btn--on:hover       { background: color-mix(in srgb, var(--success) 20%, transparent); }
 
 /* LED icon — amber when on */
-.elg-fan-icon-btn--light.elg-fan-icon-btn--on             { background: rgba(234,179,8,.10); }
-.elg-fan-icon-btn--light.elg-fan-icon-btn--on .icon       { background-color: #d97706; }
-.elg-fan-icon-btn--light.elg-fan-icon-btn--on:hover       { background: rgba(234,179,8,.20); }
+.elg-fan-icon-btn--light.elg-fan-icon-btn--on             { background: color-mix(in srgb, var(--warning) 10%, transparent); }
+.elg-fan-icon-btn--light.elg-fan-icon-btn--on .icon       { background-color: var(--warning); }
+.elg-fan-icon-btn--light.elg-fan-icon-btn--on:hover       { background: color-mix(in srgb, var(--warning) 20%, transparent); }
 
 /* − / + step buttons */
 .elg-fan-step-btn {
@@ -653,8 +653,8 @@
   transition: background .1s;
   flex-shrink: 0;
 }
-.elg-fan-step-btn:hover  { background: var(--primary); color: #fff; }
-.elg-fan-step-btn:active { background: var(--primary); color: #fff; opacity: .8; }
+.elg-fan-step-btn:hover  { background: var(--primary); color: var(--on-accent); }
+.elg-fan-step-btn:active { background: var(--primary); color: var(--on-accent); opacity: .8; }
 
 /* % value */
 .elg-fan-pct {

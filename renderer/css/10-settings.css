@@ -123,7 +123,7 @@
     border-radius: 6px;
     word-break: break-word;
   }
-  .stg-status[data-kind="ok"]   { color: var(--success, #16a34a); border-color: rgba(22,163,74,.3); }
+  .stg-status[data-kind="ok"]   { color: var(--success); border-color: rgba(22,163,74,.3); }
   .stg-status[data-kind="warn"] { color: rgb(217, 119, 6); border-color: rgba(217,119,6,.3); }
   .stg-status[data-kind="err"]  { color: var(--danger); border-color: rgba(220,38,38,.3); }
 
@@ -150,8 +150,8 @@
     font-family: var(--mono);
     font-size: 12px; font-weight: 700;
     color: var(--primary);
-    background: var(--primary-soft, rgba(249,115,22,.10));
-    border: 1px solid rgba(249,115,22,.4);
+    background: var(--primary-soft);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
     padding: 2px 8px;
     border-radius: 5px;
     letter-spacing: .04em;
@@ -204,7 +204,7 @@
     transition: background .15s, transform .15s;
   }
   .panel-storage-loc .storage-loc-autobtn:hover {
-    background: var(--primary-soft, rgba(249,115,22,.12));
+    background: var(--primary-soft);
     border-color: var(--primary);
   }
   .panel-storage-loc .storage-loc-autobtn:hover .icon {
@@ -218,7 +218,7 @@
   }
   .panel-storage-loc .storage-loc-row--empty:has(.storage-loc-autobtn:hover) {
     border-color: var(--primary);
-    background: var(--primary-soft, rgba(249,115,22,.10));
+    background: var(--primary-soft);
   }
   .panel-storage-loc .storage-loc-row--empty:has(.storage-loc-autobtn:hover) .storage-loc-rack--empty {
     color: var(--primary);
@@ -291,7 +291,7 @@
   .sb-github-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     background: #2d333b; border: none; border-radius: 8px;
-    padding: 8px 12px; color: #fff; font-size: 12px; font-weight: 600;
+    padding: 8px 12px; color: var(--on-dark); font-size: 12px; font-weight: 600;
     cursor: pointer; transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1);
     width: 100%; box-sizing: border-box;
   }
@@ -299,7 +299,7 @@
   .sb-makerworld-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     background: #00BCA0; border: none; border-radius: 8px;
-    padding: 8px 12px; color: #fff; font-size: 12px; font-weight: 600;
+    padding: 8px 12px; color: var(--on-dark); font-size: 12px; font-weight: 600;
     cursor: pointer; transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1);
     width: 100%; box-sizing: border-box;
   }
@@ -307,7 +307,7 @@
   .sb-discord-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     background: #5865F2; border: none; border-radius: 8px;
-    padding: 8px 12px; color: #fff; font-size: 12px; font-weight: 600;
+    padding: 8px 12px; color: var(--on-accent); font-size: 12px; font-weight: 600;
     cursor: pointer; text-decoration: none;
     transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1); width: 100%; box-sizing: border-box;
   }
@@ -315,7 +315,7 @@
   .sb-shop-btn {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     background: #5e8e3e; border: none; border-radius: 8px;   /* Shopify green */
-    padding: 8px 12px; color: #fff; font-size: 12px; font-weight: 600;
+    padding: 8px 12px; color: var(--on-accent); font-size: 12px; font-weight: 600;
     cursor: pointer;
     transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1);
     width: 100%; box-sizing: border-box;
@@ -354,7 +354,7 @@
     display: none;
     min-width: 16px; height: 16px; padding: 0 4px;
     align-items: center; justify-content: center;
-    background: #ed4245; color: #fff;          /* plain red bubble, like a phone app badge */
+    background: #ed4245; color: var(--on-accent);          /* plain red bubble, like a phone app badge */
     font-size: 10px; font-weight: 700; line-height: 1;
     border-radius: 8px;
   }
@@ -372,10 +372,10 @@
      hide it — otherwise the browser's broken-image icon + "QR" alt text flash for
      a beat on cold start. The fixed box above keeps the layout from shifting. */
   .sb-qr-img:not([src]) { visibility: hidden; }
-  .sb-qr-label { font-size: 11px; font-weight: 600; color: rgba(255,255,255,.72); }
+  .sb-qr-label { font-size: 11px; font-weight: 600; color: var(--ink-70); }
   /* Short label shown only when the sidebar is collapsed (see collapsed rule). */
-  .sb-qr-label-short { display: none; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.5); }
-  .sb-qr-hint { font-size: 10px; color: rgba(255,255,255,.3); text-align: center; }
+  .sb-qr-label-short { display: none; font-size: 10px; font-weight: 700; color: var(--ink-50); }
+  .sb-qr-hint { font-size: 10px; color: var(--ink-30); text-align: center; }
 
   /* ── Settings panel — `.stg-copy-btn` is still used by the raw-JSON copy
      button in the spool detail panel. Other legacy `.stg-*` classes were
@@ -388,7 +388,7 @@
     cursor: pointer; transition: background .15s, color .15s, border-color .15s, transform .15s;
   }
   .stg-copy-btn:hover { background: var(--border); color: var(--text); transform: scale(1.08); }
-  .stg-copy-btn.copied { background: var(--success-soft); border-color: rgba(26,175,108,.3); color: var(--success); }
+  .stg-copy-btn.copied { background: var(--success-soft); border-color: color-mix(in srgb, var(--success) 30%, transparent); color: var(--success); }
   @keyframes copyPop { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
   .stg-copy-btn.pop { animation: copyPop .25s cubic-bezier(.4,0,.2,1); }
 

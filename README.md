@@ -215,6 +215,11 @@ The mobile app handles chip programming, NFC scanning on the go, and catalogue b
 
 A QR code to download the mobile app is always accessible in the sidebar.
 
+### 🌗 Dark & Light
+- **Dark by default**, Light one click away in *Edit profile → Theme*
+- Your choice follows your account onto every machine you sign in from
+- The native window chrome follows the theme too — no white UI in a black title bar
+
 ### 🌍 Accounts & i18n
 - Multi-account — switch between multiple TigerTag accounts
 - **9 locales** — EN · FR · DE · ES · IT · PL · PT (Brasil) · PT (Portugal) · 中文

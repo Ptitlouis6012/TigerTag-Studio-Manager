@@ -35,7 +35,7 @@
   margin-top: 8px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,.03);
+  background: var(--ink-04);
   border: 1px solid var(--border);
   animation: usbscale-pop .24s cubic-bezier(.2,.9,.3,1.15);
 }
@@ -57,7 +57,7 @@
   cursor: pointer;
   transition: background .15s, border-color .15s;
 }
-.usbscale-btn:hover { background: rgba(255,255,255,.06); }
+.usbscale-btn:hover { background: var(--ink-06); }
 .usbscale-btn-primary {
   background: var(--primary);
   border-color: var(--primary);

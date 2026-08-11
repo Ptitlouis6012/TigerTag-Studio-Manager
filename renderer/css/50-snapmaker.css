@@ -33,17 +33,17 @@
     flex-shrink: 0;
   }
   .snap-led--connected {
-    background: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18);
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
     animation: snap-pulse 1.6s ease-in-out infinite;
   }
   .snap-led--connecting {
-    background: #f59e0b;
+    background: var(--warning);
     box-shadow: 0 0 0 3px rgba(245, 158, 11, .18);
     animation: snap-pulse 0.8s ease-in-out infinite;
   }
-  .snap-led--offline { background: #94a3b8; }
-  .snap-led--error   { background: #ef4444; }
+  .snap-led--offline { background: var(--neutral); }
+  .snap-led--error   { background: var(--danger); }
   @keyframes snap-pulse {
     0%, 100% { opacity: 1; }
     50%      { opacity: .35; }
@@ -135,9 +135,9 @@
     font-size: 13px; font-weight: 600;
     padding: 4px 14px;
     border-radius: 999px;
-    background: rgba(56, 110, 207, .12);
+    background: color-mix(in srgb, var(--info) 12%, transparent);
     color: var(--primary);
-    border: 1px solid rgba(56, 110, 207, .24);
+    border: 1px solid color-mix(in srgb, var(--info) 24%, transparent);
   }
   /* Printing — spinner ring before label text */
   .snap-job-state--printing::before {
@@ -171,26 +171,26 @@
   .snap-job-name--idle { color: var(--muted); font-style: italic; font-weight: 500; }
   .snap-job-state--paused {
     background: rgba(245,158,11,.15);
-    color: #b45309;
+    color: var(--warning-hover);
     border-color: rgba(245,158,11,.3);
   }
   .snap-job-state--complete,
   .snap-job-state--finished {
-    background: rgba(34,197,94,.15);
+    background: color-mix(in srgb, var(--success) 15%, transparent);
     color: #15803d;
-    border-color: rgba(34,197,94,.3);
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
   }
   .snap-job-state--error,
   .snap-job-state--failed {
-    background: rgba(239,68,68,.12);
-    color: #b91c1c;
-    border-color: rgba(239,68,68,.3);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger-hover);
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   }
   .snap-job-state--heating,
   .snap-job-state--preparing {
-    background: rgba(249,115,22,.12);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
     color: #c2410c;
-    border-color: rgba(249,115,22,.3);
+    border-color: color-mix(in srgb, var(--primary) 30%, transparent);
   }
   /* Preparing/heating — same spinner as printing */
   .snap-job-state--preparing::before {
@@ -238,7 +238,7 @@
     background: var(--surface-2); color: var(--text); font-size: 12px;
     font-weight: 500; cursor: pointer; transition: background .12s, border-color .12s;
   }
-  .snap-fil-act-btn:hover { background: var(--surface-3, var(--surface-2)); border-color: var(--primary); color: var(--primary); }
+  .snap-fil-act-btn:hover { background: var(--surface-3); border-color: var(--primary); color: var(--primary); }
   .snap-fil-act-btn--cancel { color: var(--muted); }
   .snap-fil-act-btn--cancel:hover { color: var(--text); border-color: var(--border); }
 
@@ -255,7 +255,7 @@
   .snap-fil-sel-check--on {
     border-color: var(--primary); background: var(--primary);
   }
-  .snap-fil-sel-check--on .icon { color: #fff; }
+  .snap-fil-sel-check--on .icon { color: var(--on-accent); }
   .snap-fil--checked .snap-fil-square { box-shadow: 0 0 0 3px var(--primary); }
   /* Disabled slots (invalid for current mode) */
   .snap-fil--disabled { cursor: not-allowed; pointer-events: none; }
@@ -268,8 +268,8 @@
     color: var(--muted);
   }
   .snap-fil-sel-reason--loaded {
-    background: color-mix(in srgb, #22c55e 15%, transparent);
-    color: #16a34a;
+    background: color-mix(in srgb, var(--success) 15%, transparent);
+    color: var(--success-hover);
   }
   .snap-fil-sel-empty { font-size: 12px; color: var(--muted); padding: 8px 4px; margin: 0; }
   /* Confirm footer */
@@ -277,14 +277,14 @@
   .snap-fil-confirm-btn {
     display: flex; align-items: center; gap: 6px;
     padding: 6px 16px; border-radius: 8px; border: none;
-    background: var(--primary); color: #fff; font-size: 13px; font-weight: 600;
+    background: var(--primary); color: var(--on-accent); font-size: 13px; font-weight: 600;
     cursor: pointer; transition: opacity .12s;
   }
   .snap-fil-confirm-btn:disabled { opacity: .4; cursor: default; }
   .snap-fil-confirm-btn:not(:disabled):hover { opacity: .88; }
   .snap-fil-sel-count {
     min-width: 18px; height: 18px; border-radius: 9px;
-    background: rgba(255,255,255,.25); font-size: 11px; font-weight: 700;
+    background: var(--ink-25); font-size: 11px; font-weight: 700;
     display: flex; align-items: center; justify-content: center; padding: 0 4px;
   }
 
@@ -315,12 +315,12 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     letter-spacing: -.02em;
   }
-  .snap-temp--heating { color: #ef4444; }
-  .snap-temp--heating .snap-temp-val { color: #b91c1c; }
+  .snap-temp--heating { color: var(--danger); }
+  .snap-temp--heating .snap-temp-val { color: var(--danger-hover); }
 
   /* Dual-nozzle (H2 series) — active-head highlight (left/right conveyed by
      position; no R/L label needed). */
-  .snap-temp--active { box-shadow: inset 0 0 0 1.5px var(--primary, #386ecf); }
+  .snap-temp--active { box-shadow: inset 0 0 0 1.5px var(--primary); }
 
   /* Editable pills */
   .snap-temp--editable {
@@ -328,8 +328,8 @@
     border-radius: 8px;
     transition: color .15s, background .15s;
   }
-  .snap-temp--editable:hover { background: rgba(56,110,207,.08); }
-  .snap-temp--editing        { background: rgba(56,110,207,.12); }
+  .snap-temp--editable:hover { background: color-mix(in srgb, var(--info) 8%, transparent); }
+  .snap-temp--editing        { background: color-mix(in srgb, var(--info) 12%, transparent); }
 
   .snap-temp-label {
     font-size: 9px; font-weight: 700; letter-spacing: .04em;
@@ -342,7 +342,7 @@
   .snap-temp-set-input {
     width: 44px;
     background: var(--surface);
-    border: 1.5px solid var(--primary, #386ecf);
+    border: 1.5px solid var(--primary);
     border-radius: 4px;
     font-size: 11px; font-weight: 700;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -384,7 +384,7 @@
     padding: 4px;
     overflow: hidden;
     transition: transform .12s, box-shadow .12s;
-    box-shadow: 0 0 0 2px rgba(56, 110, 207, .35) inset;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 35%, transparent) inset;
     margin: 0 auto;  /* keep the smaller square centered inside its flex card */
   }
   .snap-fil-square:hover { transform: translateY(-1px); }
@@ -488,7 +488,7 @@
     font-size: 10px; font-weight: 600; line-height: 1;
     padding: 2px 5px; border-radius: 4px;
   }
-  .snap-fil-loaded--yes { background: color-mix(in srgb, #22c55e 15%, transparent); color: #16a34a; }
+  .snap-fil-loaded--yes { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success-hover); }
   .snap-fil-loaded--no  { background: color-mix(in srgb, var(--muted) 12%, transparent); color: var(--muted); }
 
   /* Creality filament layout:
@@ -567,7 +567,7 @@
     display: block;
     width: 7px; height: 7px;
     border-radius: 50%;
-    background: rgba(255,255,255,.45);
+    background: var(--ink-40);
     animation: ppCamDot 1.2s ease-in-out infinite;
   }
   .pp-cam-loading-dots span:nth-child(2) { animation-delay: .2s; }
@@ -634,7 +634,7 @@
     filter: grayscale(35%) brightness(0.55);
   }
   .ffg-cam-fallback-img--placeholder {
-    background: linear-gradient(135deg, #1c2233, #0e1422);
+    background: linear-gradient(135deg, #1c2233, var(--code-bg));
   }
   .ffg-cam-fallback-overlay {
     position: absolute;
@@ -655,7 +655,7 @@
     background: var(--icon-bg, currentColor);
   }
   .ffg-cam-fallback-msg {
-    color: #fff;
+    color: var(--on-dark);
     font-size: 13px;
     font-weight: 600;
     line-height: 1.35;
@@ -669,17 +669,17 @@
     margin-top: 4px;
     padding: 6px 14px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.35);
-    background: rgba(255,255,255,.08);
-    color: #fff;
+    border: 1px solid var(--ink-30);
+    background: var(--ink-08);
+    color: var(--on-accent);
     font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     transition: background .15s, border-color .15s, transform .12s;
   }
   .ffg-cam-fallback-retry:hover {
-    background: rgba(255,255,255,.16);
-    border-color: rgba(255,255,255,.55);
+    background: var(--ink-15);
+    border-color: var(--ink-60);
   }
   .ffg-cam-fallback-retry:active { transform: translateY(1px); }
   .ffg-cam-fallback-retry .icon { background: currentColor; }
@@ -739,7 +739,7 @@
   .snap-log-btn:hover { background: var(--surface-2); border-color: var(--primary); }
   .snap-log-btn .icon { background: currentColor; }
   .snap-log-btn--pause.is-paused {
-    background: rgba(56, 110, 207, .12);
+    background: color-mix(in srgb, var(--info) 12%, transparent);
     border-color: var(--primary);
     color: var(--primary);
   }
@@ -779,7 +779,7 @@
   }
   .snap-log-paste-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(56, 110, 207, .15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent);
     background: var(--surface);
   }
   .snap-log-paste-row {
@@ -788,9 +788,9 @@
   }
   .snap-log-paste-error {
     font-size: 11px;
-    color: #b91c1c;
-    background: rgba(239, 68, 68, .08);
-    border: 1px solid rgba(239, 68, 68, .25);
+    color: var(--danger-hover);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
     border-radius: 6px;
     padding: 3px 8px;
     flex: 1;
@@ -801,17 +801,17 @@
   }
   .snap-log-paste-send.snap-log-paste-send--ok {
     background: var(--primary) !important;
-    color: #fff !important;
+    color: var(--on-accent) !important;
     border-color: var(--primary) !important;
   }
-  .snap-log-paste-send--ok .icon { background: #fff !important; }
+  .snap-log-paste-send--ok .icon { background: var(--on-accent) !important; }
 
   .snap-log-paused-tag {
     display: inline-block;
     margin-left: 6px;
     padding: 1px 7px;
     background: rgba(245, 158, 11, .18);
-    color: #b45309;
+    color: var(--warning-hover);
     border-radius: 999px;
     font-size: 10px; font-weight: 700;
     text-transform: uppercase; letter-spacing: .4px;
@@ -892,10 +892,10 @@
   .snap-log-detail-copy .icon { background: currentColor; }
   .snap-log-detail-copy--ok {
     background: var(--primary);
-    color: #fff !important;
+    color: var(--on-accent) !important;
     border-color: var(--primary);
   }
-  .snap-log-detail-copy--ok .icon { background: #fff; }
+  .snap-log-detail-copy--ok .icon { background: var(--on-accent); }
   /* ═══════════════════════════════════════════════════════════════════
      Snapmaker filament edit — modal pushed to /printer.gcode.script
      ═══════════════════════════════════════════════════════════════════ */
@@ -908,7 +908,7 @@
   /* Slots vides : lift autorisé mais brightness désactivé — le hachage et le contour restent intacts */
   .snap-fil--editable:hover .snap-fil-square--empty { filter: none; }
   /* Active toolhead (Snapmaker only — multi-head system) — green border */
-  #snapLive .snap-fil--active { outline: 2px solid #22c55e; outline-offset: 2px; border-radius: 10px; }
+  #snapLive .snap-fil--active { outline: 2px solid var(--success); outline-offset: 2px; border-radius: 10px; }
 
   /* Bottom-sheet — anchors to the right side of the screen behind the
      printer side card (same width + right alignment). Slides up from the
@@ -1050,7 +1050,7 @@
   .sfe-line-color-dot {
     width: 28px; height: 28px;
     border-radius: 50%;
-    background: #888;
+    background: var(--neutral);
     box-shadow: 0 0 0 1px rgba(0,0,0,.1) inset;
     margin-left: auto;
     flex-shrink: 0;
@@ -1086,7 +1086,7 @@
   }
   .sfe-line-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(56, 110, 207, .15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent);
   }
   /* <select> variant — same look as the text input but with a chevron
      dropdown indicator on the right (native select arrows look mismatched
@@ -1169,7 +1169,7 @@
     overflow: hidden;
   }
   .sfe-color-cell--custom .icon {
-    background: #fff;
+    background: var(--surface);
     width: 16px; height: 16px;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,.4));
     pointer-events: none;
@@ -1229,13 +1229,13 @@
   .cre-file-btn--del .hold-progress {
     position: absolute; left: 0; top: 0;
     width: 0; height: 100%;
-    background: rgba(239,68,68,.3);
+    background: color-mix(in srgb, var(--danger) 30%, transparent);
     pointer-events: none;
   }
   .cre-file-btn--del .icon { position: relative; z-index: 1; }
-  .cre-file-btn--del.is-holding { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.4); }
-  .cre-file-btn--del.is-confirming { background: #ef4444; border-color: #ef4444; }
-  .cre-file-btn--del.is-confirming .icon { background-color: #fff; }
+  .cre-file-btn--del.is-holding { background: color-mix(in srgb, var(--danger) 15%, transparent); border-color: color-mix(in srgb, var(--danger) 40%, transparent); }
+  .cre-file-btn--del.is-confirming { background: var(--danger); border-color: var(--danger); }
+  .cre-file-btn--del.is-confirming .icon { background-color: var(--on-accent); }
   .sfe-field {
     display: flex; flex-direction: column; gap: 6px;
   }
@@ -1294,7 +1294,7 @@
   }
   .sfe-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(56, 110, 207, .15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent);
   }
   .sfe-input--custom {
     margin-top: 6px;
@@ -1442,7 +1442,7 @@
     font-weight: 700;
   }
   .sfe-fil-materials .sfe-fil-row.is-selected {
-    background: rgba(56, 110, 207, .1);
+    background: color-mix(in srgb, var(--info) 10%, transparent);
     color: var(--primary);
   }
   .sfe-fil-row-text {
@@ -1457,7 +1457,7 @@
     white-space: nowrap;
   }
   .sfe-fil-row-check {
-    color: #16a34a;
+    color: var(--success-hover);
     font-weight: 800;
     font-size: 18px;
     margin-left: 6px;
@@ -1489,9 +1489,9 @@
   .sfe-fil-custom .sfe-input--custom + .sfe-input--custom { margin-top: 6px; }
 
   .sfe-error {
-    background: rgba(239, 68, 68, .1);
-    border: 1px solid rgba(239, 68, 68, .25);
-    color: #b91c1c;
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+    color: var(--danger-hover);
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 12px; line-height: 1.4;
@@ -1551,37 +1551,37 @@
   .cre-action-btn--files .icon { background-color: var(--muted); }
   .cre-action-btn--files:hover .icon { background-color: var(--text); }
   .cre-action-btn--led-on {
-    background: rgba(234,179,8,.12);
-    border-color: rgba(234,179,8,.45);
+    background: color-mix(in srgb, var(--warning) 12%, transparent);
+    border-color: color-mix(in srgb, var(--warning) 45%, transparent);
     color: #92400e;
   }
-  .cre-action-btn--led-on .icon { background-color: #d97706; }
+  .cre-action-btn--led-on .icon { background-color: var(--warning); }
 
   /* Pause / Resume */
   .cre-action-btn--pause {
     position: relative; overflow: hidden;
-    background: rgba(56,110,207,.08);
-    border-color: rgba(56,110,207,.28);
+    background: color-mix(in srgb, var(--info) 8%, transparent);
+    border-color: color-mix(in srgb, var(--info) 28%, transparent);
     color: var(--primary);
   }
   .cre-action-btn--pause .icon { background-color: var(--primary); position: relative; z-index: 1; }
-  .cre-action-btn--pause:hover { background: rgba(56,110,207,.16); }
-  .cre-action-btn--pause.is-holding { background: rgba(56,110,207,.18); }
+  .cre-action-btn--pause:hover { background: color-mix(in srgb, var(--info) 16%, transparent); }
+  .cre-action-btn--pause.is-holding { background: color-mix(in srgb, var(--info) 18%, transparent); }
   .cre-action-btn--pause.is-confirming { background: var(--primary); }
-  .cre-action-btn--pause.is-confirming .icon { background-color: #fff; }
+  .cre-action-btn--pause.is-confirming .icon { background-color: var(--on-accent); }
 
   /* Cancel print */
   .cre-action-btn--stop {
     position: relative; overflow: hidden;
-    background: rgba(239,68,68,.08);
-    border-color: rgba(239,68,68,.28);
-    color: #b91c1c;
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+    color: var(--danger-hover);
   }
-  .cre-action-btn--stop .icon { background-color: #ef4444; position: relative; z-index: 1; }
-  .cre-action-btn--stop:hover { background: rgba(239,68,68,.16); }
-  .cre-action-btn--stop.is-holding { background: rgba(239,68,68,.18); }
-  .cre-action-btn--stop.is-confirming { background: #ef4444; }
-  .cre-action-btn--stop.is-confirming .icon { background-color: #fff; }
+  .cre-action-btn--stop .icon { background-color: var(--danger); position: relative; z-index: 1; }
+  .cre-action-btn--stop:hover { background: color-mix(in srgb, var(--danger) 16%, transparent); }
+  .cre-action-btn--stop.is-holding { background: color-mix(in srgb, var(--danger) 18%, transparent); }
+  .cre-action-btn--stop.is-confirming { background: var(--danger); }
+  .cre-action-btn--stop.is-confirming .icon { background-color: var(--on-accent); }
 
   /* Hold-to-confirm progress fill (shared) */
   .cre-action-btn--pause .hold-progress,
@@ -1590,8 +1590,8 @@
     width: 0; height: 100%;
     pointer-events: none;
   }
-  .cre-action-btn--pause .hold-progress { background: rgba(56,110,207,.25); }
-  .cre-action-btn--stop  .hold-progress { background: rgba(239,68,68,.25); }
+  .cre-action-btn--pause .hold-progress { background: color-mix(in srgb, var(--info) 25%, transparent); }
+  .cre-action-btn--stop  .hold-progress { background: color-mix(in srgb, var(--danger) 25%, transparent); }
 
   /* ── Creality — file explorer ───────────────────────────────────────── */
   .cre-files-head {
@@ -1626,7 +1626,7 @@
     text-align: center;
     font-style: italic;
   }
-  .cre-files-empty--err { color: var(--danger, #ef4444); font-style: normal; }
+  .cre-files-empty--err { color: var(--danger); font-style: normal; }
 
   .cre-file-row {
     display: flex; align-items: center; gap: 8px;
@@ -1637,8 +1637,8 @@
   }
   .cre-file-row:hover { background: var(--surface-2); }
   .cre-file-row--active {
-    background: rgba(56,110,207,.07);
-    border-color: rgba(56,110,207,.2);
+    background: color-mix(in srgb, var(--info) 7%, transparent);
+    border-color: color-mix(in srgb, var(--info) 20%, transparent);
   }
 
   /* Thumbnail — 52×52 square, rounded, shows background-image set inline */
@@ -1705,19 +1705,19 @@
   }
   .cre-file-btn .icon { flex-shrink: 0; }
 
-  .cre-file-btn--print .icon  { background-color: #22c55e; }
-  .cre-file-btn--print:hover  { background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.4); }
+  .cre-file-btn--print .icon  { background-color: var(--success); }
+  .cre-file-btn--print:hover  { background: color-mix(in srgb, var(--success) 15%, transparent); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
 
   .cre-file-btn--del .icon { background-color: var(--muted); }
-  .cre-file-btn--del:hover { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); }
-  .cre-file-btn--del:hover .icon { background-color: #ef4444; }
+  .cre-file-btn--del:hover { background: color-mix(in srgb, var(--danger) 12%, transparent); border-color: color-mix(in srgb, var(--danger) 35%, transparent); }
+  .cre-file-btn--del:hover .icon { background-color: var(--danger); }
 
   .cre-file-btn--armed {
-    background: rgba(239,68,68,.18);
-    border-color: #ef4444;
+    background: color-mix(in srgb, var(--danger) 18%, transparent);
+    border-color: var(--danger);
     animation: cre-arm-pulse .55s ease-in-out infinite;
   }
-  .cre-file-btn--armed .icon { background-color: #ef4444; }
+  .cre-file-btn--armed .icon { background-color: var(--danger); }
 
   /* ── Bambu Lab ────────────────────────────────────────────────────────────
      All bbl-* rules have been moved to
@@ -1725,7 +1725,7 @@
 
   /* Active AMS/filament slot ring — shared by Creality, Elegoo, FlashForge
      and Bambu Lab (all use .snap-fil--active via their cards.js). */
-  .snap-fil--active .snap-fil-square { box-shadow: 0 0 0 2px #22c55e; }
+  .snap-fil--active .snap-fil-square { box-shadow: 0 0 0 2px var(--success); }
 
   /* AMS block meta (humidity / temp) next to section title — Bambu only,
      also defined in bambulab.css; kept here so the rule loads even if the
@@ -1783,7 +1783,7 @@
 .snap-wizard-dot--active {
   width: 20px;
   border-radius: 3px;
-  background: var(--accent, #3b82f6);
+  background: var(--info);
 }
 
 /* Track + slides */
@@ -1843,8 +1843,8 @@
   cursor: default;
 }
 .snap-wizard-btn--next {
-  background: var(--accent, #3b82f6);
-  color: #fff;
+  background: var(--info);
+  color: var(--on-accent);
   border-color: transparent;
 }
 .snap-wizard-btn--next:not(:disabled):hover { opacity: .85; }
@@ -1856,7 +1856,7 @@
   color: var(--muted);
 }
 .snap-paxx-status--upd {
-  color: var(--accent, #3b82f6);
+  color: var(--info);
   font-weight: 600;
 }
 
@@ -1867,16 +1867,16 @@
   gap: 8px;
   margin-top: 10px;
 }
-.snap-cfg-ok       { font-size: 12px; font-weight: 600; color: var(--green, #22c55e); }
-.snap-cfg-err      { font-size: 12px; color: var(--red,  #ef4444); }
-.snap-cfg-warn     { font-size: 12px; color: var(--orange, #f97316); }
+.snap-cfg-ok       { font-size: 12px; font-weight: 600; color: var(--success); }
+.snap-cfg-err      { font-size: 12px; color: var(--danger); }
+.snap-cfg-warn     { font-size: 12px; color: var(--warning); }
 .snap-cfg-checking { font-size: 12px; color: var(--muted); font-style: italic; }
 
 /* ── Active extruder highlight ───────────────────────────────────────────── */
 .snap-temp--active {
   border-color: var(--primary) !important;
-  background: rgba(56,110,207,.08);
-  box-shadow: 0 0 0 2px rgba(56,110,207,.15);
+  background: color-mix(in srgb, var(--info) 8%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 15%, transparent);
 }
 
 /* ── Job name row (name + files button side by side) ─────────────────────── */
@@ -1958,7 +1958,7 @@
   transition: background .12s;
 }
 .snap-file-row:hover { background: var(--surface-2); }
-.snap-file-row--active { background: rgba(56,110,207,.06); }
+.snap-file-row--active { background: color-mix(in srgb, var(--info) 6%, transparent); }
 .snap-file-info {
   flex: 1; min-width: 0;
   display: flex; flex-direction: column; gap: 2px;
@@ -1980,7 +1980,7 @@
   cursor: pointer;
   transition: background .12s;
 }
-.snap-file-btn--print:hover { background: rgba(56,110,207,.12); border-color: var(--primary); }
+.snap-file-btn--print:hover { background: color-mix(in srgb, var(--info) 12%, transparent); border-color: var(--primary); }
 .snap-file-btn--print .icon { background-color: var(--primary); }
 .snap-file-btn--print:disabled { opacity: .4; cursor: default; }
 
@@ -1998,7 +1998,7 @@
   background: var(--primary);
   border-color: var(--primary);
 }
-.ffg-light-btn.is-on .icon { background-color: #fff; }
+.ffg-light-btn.is-on .icon { background-color: var(--on-accent); }
 
 .ffg-files-block .ffg-files-title {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
@@ -2038,7 +2038,7 @@
   width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
   border: none; background: var(--primary); cursor: pointer; padding: 0;
 }
-.ffg-file-print .icon { background-color: #fff; }
+.ffg-file-print .icon { background-color: var(--on-accent); }
 .ffg-file-print:hover { filter: brightness(1.06); }
 
 /* ── FlashForge — fans / door / error status (PROTOCOL §7) ── */
@@ -2075,15 +2075,15 @@
 .ffg-chip .icon { background-color: currentColor; }
 .ffg-chip--on { color: var(--primary); border-color: var(--primary); }
 .ffg-door-chip.is-open {
-  color: #b45309; border-color: #f59e0b; background: rgba(245,158,11,.12);
+  color: var(--warning-hover); border-color: var(--warning); background: rgba(245,158,11,.12);
 }
 .ffg-error-banner {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 12px; margin-bottom: 10px; border-radius: 10px;
-  background: rgba(239,68,68,.12); border: 1px solid #ef4444; color: #b91c1c;
+  background: color-mix(in srgb, var(--danger) 12%, transparent); border: 1px solid var(--danger); color: var(--danger-hover);
   font-size: 13px; font-weight: 600;
 }
-.ffg-error-banner .icon { background-color: #ef4444; flex-shrink: 0; }
+.ffg-error-banner .icon { background-color: var(--danger); flex-shrink: 0; }
 
 /* ── FlashForge — printer-info modal ── */
 .ffg-info-card { width: min(420px, 92vw); }

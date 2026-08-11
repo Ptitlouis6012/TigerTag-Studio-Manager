@@ -99,11 +99,11 @@
      data-conn="active"   → printer is connected or connecting → danger tint (clicking disconnects)
      data-conn="inactive" → printer is offline / unknown       → accent tint  (clicking connects) */
   #printerConnBtn[data-conn="active"] {
-    color: var(--danger, #ef4444);
+    color: var(--danger);
   }
   #printerConnBtn[data-conn="active"]:hover {
-    background: color-mix(in srgb, var(--danger, #ef4444) 12%, transparent);
-    color: var(--danger, #ef4444);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
   }
   #printerConnBtn[data-conn="inactive"] {
     color: var(--primary);
@@ -178,7 +178,7 @@
   .printer-card--dragging { opacity: 0; }
   .mr-reordering .printer-card, .mr-reordering .cam-wall-card { will-change: transform; }
   .printer-card:hover {
-    border-color: var(--border-strong, #d0d4dc);
+    border-color: var(--border-strong);
     box-shadow: 0 2px 6px rgba(0,0,0,.04);
   }
   .printer-card--active {
@@ -194,13 +194,13 @@
     display: inline-flex; align-items: center;
     padding: 2px 10px; border-radius: 999px;
     font-size: 11px; font-weight: 600;
-    color: #fff; background: var(--brand-accent, #888);
+    color: var(--on-accent); background: var(--brand-accent, var(--neutral));
     letter-spacing: .2px;
   }
   .printer-active-badge {
     font-size: 10px; font-weight: 700;
     color: var(--primary);
-    background: rgba(56, 110, 207, .12);
+    background: color-mix(in srgb, var(--info) 12%, transparent);
     padding: 2px 8px; border-radius: 999px;
     text-transform: uppercase; letter-spacing: .3px;
   }
@@ -216,17 +216,17 @@
   .printer-card-name-dot {
     width: 10.5px; height: 10.5px;
     border-radius: 50%;
-    background: #94a3b8;       /* offline — fixed grey */
+    background: var(--neutral);       /* offline — fixed grey */
     flex-shrink: 0;
   }
   .printer-card-name-dot.is-online {
-    background: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18);
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
     animation: printer-name-dot-pulse 1.8s ease-in-out infinite;
   }
   @keyframes printer-name-dot-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, .5); }
-    50%      { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
+    0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent); }
+    50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--success) 0%, transparent); }
   }
   .printer-card-model {
     font-size: 12px; color: var(--muted);
@@ -345,7 +345,7 @@
     height: 38px;
     padding: 0 18px;
   }
-  .printers-empty-cta .icon { background: #fff; }
+  .printers-empty-cta .icon { background: var(--on-accent); }
 
   .printer-card { cursor: pointer; }
 
@@ -365,13 +365,13 @@
     flex-shrink: 0;
   }
   .printer-online.is-online .printer-online-dot {
-    background: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, .18);
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
   }
   .printer-online.is-online .printer-online-lbl { color: #15803d; }
-  .printer-online.is-offline .printer-online-dot { background: #94a3b8; }
+  .printer-online.is-offline .printer-online-dot { background: var(--neutral); }
   .printer-online.is-checking .printer-online-dot {
-    background: #f59e0b;
+    background: var(--warning);
     box-shadow: 0 0 0 3px rgba(245, 158, 11, .18);
     animation: snap-pulse 0.8s ease-in-out infinite;
   }
@@ -385,8 +385,8 @@
     border: 1px solid var(--border);
   }
   .printer-online--card.is-online {
-    background: rgba(34, 197, 94, .14);
-    border-color: rgba(34, 197, 94, .3);
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
   }
   .printer-online--card.is-offline {
     background: var(--surface-2);
@@ -405,8 +405,8 @@
     border: 1px solid var(--border);
   }
   .printer-online--side.is-online {
-    background: rgba(34, 197, 94, .14);
-    border-color: rgba(34, 197, 94, .3);
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    border-color: color-mix(in srgb, var(--success) 30%, transparent);
   }
   .printer-online--side.is-offline {
     background: var(--surface-2);
@@ -434,7 +434,7 @@
   .printer-card--add:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: rgba(56, 110, 207, .04);
+    background: color-mix(in srgb, var(--info) 4%, transparent);
   }
   .printer-card--add:active { transform: translateY(1px); }
   .printer-add-plus {
@@ -444,7 +444,7 @@
     display: flex; align-items: center; justify-content: center;
     transition: background .15s;
   }
-  .printer-card--add:hover .printer-add-plus { background: rgba(56, 110, 207, .12); }
+  .printer-card--add:hover .printer-add-plus { background: color-mix(in srgb, var(--info) 12%, transparent); }
   .printer-add-plus .icon { background: currentColor; }
   .printer-add-title {
     font-size: 14px; font-weight: 600;
@@ -550,14 +550,14 @@
   }
   .pba-brand:hover {
     border-color: var(--primary);
-    background: rgba(56, 110, 207, .04);
+    background: color-mix(in srgb, var(--info) 4%, transparent);
   }
   .pba-brand:active { transform: scale(.99); }
   /* The brand whose add-card is currently open is highlighted in the picker. */
   .pba-brand--selected,
   .pba-brand--selected:hover {
     border-color: var(--primary);
-    background: rgba(255,122,24,.07);
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
     box-shadow: inset 3px 0 0 var(--primary);
   }
   .pba-brand-dot {
@@ -608,7 +608,7 @@
     position: absolute; top: 4px; left: 4px;
     display: inline-flex; align-items: center; justify-content: center;
     width: 40px; height: 40px; border-radius: 9px;
-    background: var(--surface, #fff);
+    background: var(--surface);
     box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
   }
   .pt-thumb-badge .pt-thumb-logo { width: 28px; height: 26px; }
@@ -637,7 +637,7 @@
     flex-shrink: 0;
     padding: 2px 8px;
     border-radius: 999px;
-    background: var(--primary); color: #fff;
+    background: var(--primary); color: var(--on-accent);
     font-size: 10px; font-weight: 700; line-height: 1.5;
     letter-spacing: .02em; text-transform: uppercase;
     white-space: nowrap;
@@ -665,7 +665,7 @@
     font-size: 12px; font-weight: 500; color: var(--muted);
   }
   .pba-field-req {
-    color: #ef4444;
+    color: var(--danger);
     margin-left: 2px;
   }
   .pba-input {
@@ -682,7 +682,7 @@
   }
   .pba-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(56, 110, 207, .15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent);
   }
   .pba-input--mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -709,9 +709,9 @@
     padding-right: 28px;
   }
   .pba-error {
-    background: rgba(239, 68, 68, .1);
-    border: 1px solid rgba(239, 68, 68, .25);
-    color: #b91c1c;
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+    color: var(--danger-hover);
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 12px;
@@ -790,8 +790,8 @@
     text-align: left;
   }
   .pba-mp-trigger:hover { border-color: var(--primary); }
-  .pba-mp-trigger:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(56,110,207,.15); }
-  .pba-mp-trigger--open { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(56,110,207,.15); }
+  .pba-mp-trigger:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent); }
+  .pba-mp-trigger--open { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent); }
   .pba-mp-trigger-text {
     flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -855,7 +855,7 @@
     transition: background .12s;
   }
   .pba-mp-opt:hover { background: var(--surface-2); }
-  .pba-mp-opt:active { background: rgba(56,110,207,.08); }
+  .pba-mp-opt:active { background: color-mix(in srgb, var(--info) 8%, transparent); }
   .pba-mp-opt .pba-mp-name {
     flex: 1; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -919,8 +919,8 @@
 
   /* ── Per-brand helper banner (above the form fields) ──────────────── */
   .pba-helper {
-    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-accent, #888) 8%, transparent), transparent 60%);
-    border: 1px solid color-mix(in srgb, var(--brand-accent, #888) 20%, var(--border));
+    background: linear-gradient(180deg, color-mix(in srgb, var(--brand-accent, var(--neutral)) 8%, transparent), transparent 60%);
+    border: 1px solid color-mix(in srgb, var(--brand-accent, var(--neutral)) 20%, var(--border));
     border-radius: 12px;
     padding: 12px 14px;
     margin-bottom: 10px;
@@ -931,9 +931,9 @@
   }
   .pba-helper-dot {
     width: 8px; height: 8px;
-    background: var(--brand-accent, #888);
+    background: var(--brand-accent, var(--neutral));
     border-radius: 50%;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent, #888) 18%, transparent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-accent, var(--neutral)) 18%, transparent);
   }
   .pba-helper-title {
     font-size: 12px; font-weight: 700;
@@ -947,7 +947,7 @@
     font-size: 12px; line-height: 1.5;
   }
   .pba-helper-list li::marker {
-    color: var(--brand-accent, #888);
+    color: var(--brand-accent, var(--neutral));
     font-weight: 700;
   }
   .pba-helper-link {
@@ -978,7 +978,7 @@
   }
   .pba-tuto-pill:hover,
   .pba-tuto-pill:focus-visible {
-    background: var(--primary); color: #fff; outline: none;
+    background: var(--primary); color: var(--on-accent); outline: none;
   }
 
   /* ── Sections inside the add form ─────────────────────────────────── */
@@ -1059,7 +1059,7 @@
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden;
-    background: #fff;
+    background: var(--surface);
   }
   .acu-cloud-webview-wrap[hidden] { display: none; }
   .acu-cloud-webview { flex: 1; width: 100%; height: 100%; border: none; }
@@ -1114,14 +1114,14 @@
     flex-shrink: 0;
   }
   .snap-scan-card:hover {
-    background: rgba(56, 110, 207, .06);
+    background: color-mix(in srgb, var(--info) 6%, transparent);
   }
   .snap-scan-card:active { transform: scale(.995); }
   /* Focus ring for keyboard navigation on the role=button div. */
   .snap-scan-card:focus-visible {
     outline: 2px solid var(--primary);
     outline-offset: -2px;
-    background: rgba(56, 110, 207, .06);
+    background: color-mix(in srgb, var(--info) 6%, transparent);
   }
   /* Loading state — short visual feedback while the Firestore write is
      in flight after a click. Disables further clicks via pointer-events
@@ -1191,7 +1191,7 @@
   }
   .snap-scan-card-ip {
     font-size: 11px; color: var(--muted);
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     line-height: 1.4;
     /* Same truncation pattern as the other identity lines so a long
        IPv6 (one day) wouldn't bleed into the score column. */
@@ -1216,7 +1216,7 @@
   }
   .snap-scan-card-line--host,
   .snap-scan-card-line--sn {
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     font-size: 10.5px;
     color: var(--muted);
   }
@@ -1253,12 +1253,12 @@
     border: 0;
   }
   .snap-scan-card--high .snap-scan-card-score {
-    background: rgba(34, 197, 94, .14);
-    color: #16a34a;
+    background: color-mix(in srgb, var(--success) 14%, transparent);
+    color: var(--success-hover);
   }
   .snap-scan-card--med .snap-scan-card-score {
-    background: rgba(234, 179, 8, .14);
-    color: #b45309;
+    background: color-mix(in srgb, var(--warning) 14%, transparent);
+    color: var(--warning-hover);
   }
   .snap-scan-card--low {
     opacity: .82;
@@ -1281,8 +1281,8 @@
      user notices it's NOT the same generic "nothing found" state. */
   .snap-scan-empty--warn {
     color: var(--text);
-    background: rgba(234, 179, 8, .08);
-    border: 1px solid rgba(234, 179, 8, .4);
+    background: color-mix(in srgb, var(--warning) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--warning) 40%, transparent);
     text-align: left;
     line-height: 1.5;
   }
@@ -1311,7 +1311,7 @@
     user-select: none;
     transition: background .1s;
   }
-  .snap-add-ip-summary:hover { background: rgba(56, 110, 207, .04); }
+  .snap-add-ip-summary:hover { background: color-mix(in srgb, var(--info) 4%, transparent); }
   .snap-add-ip-summary::-webkit-details-marker { display: none; }
   .snap-add-ip-summary-icon {
     background: var(--primary);
@@ -1358,26 +1358,26 @@
     border-radius: 10px;
     background: var(--surface-2);
     color: var(--text);
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     font-size: 13px;
     outline: none;
     transition: box-shadow .14s ease, background .12s ease;
   }
   .snap-add-ip-input:focus {
     background: var(--surface);
-    box-shadow: 0 0 0 2px rgba(56, 110, 207, .35);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 35%, transparent);
   }
   /* Invalid state — red border + soft red ring (HTML5-form-style). */
   .snap-add-ip-input--err {
-    border-color: #ef4444 !important;
-    background: rgba(239, 68, 68, .04);
+    border-color: var(--danger) !important;
+    background: color-mix(in srgb, var(--danger) 4%, transparent);
   }
   .snap-add-ip-input--err:focus {
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, .2) !important;
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger) 20%, transparent) !important;
   }
   /* Valid state — soft green to confirm format is parseable. */
   .snap-add-ip-input--ok {
-    border-color: #16a34a !important;
+    border-color: var(--success-hover) !important;
   }
   /* "Invalid IP address format" bubble — floats to the RIGHT of the
      input (tooltip-style) so it doesn't push down on the Validate
@@ -1389,8 +1389,8 @@
     left: calc(100% + 10px);
     transform: translateY(-50%);
     padding: 6px 10px;
-    background: #ef4444;
-    color: #fff;
+    background: var(--danger);
+    color: var(--on-dark);
     border-radius: 6px;
     font-size: 11px; font-weight: 600;
     line-height: 1.3;
@@ -1407,10 +1407,10 @@
     top: 50%; left: -4px;
     transform: translateY(-50%) rotate(45deg);
     width: 8px; height: 8px;
-    background: #ef4444;
+    background: var(--danger);
   }
   .snap-add-ip-tip .icon {
-    background: #fff;
+    background: var(--surface);
     flex-shrink: 0;
   }
   /* Narrow modal fallback — when the bubble would overflow the modal
@@ -1457,14 +1457,14 @@
     flex-wrap: wrap;
   }
   .snap-add-ip-status--info {
-    background: rgba(56, 110, 207, .08);
+    background: color-mix(in srgb, var(--info) 8%, transparent);
     color: var(--text);
-    border: 1px solid rgba(56, 110, 207, .25);
+    border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
   }
   .snap-add-ip-status--err {
-    background: rgba(239, 68, 68, .08);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
     color: var(--text);
-    border: 1px solid rgba(239, 68, 68, .3);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
   }
   .snap-add-ip-anyway {
     margin-left: auto;
@@ -1497,7 +1497,7 @@
     user-select: none;
     transition: background .1s;
   }
-  .snap-extra-subnets-summary:hover { background: rgba(56, 110, 207, .04); }
+  .snap-extra-subnets-summary:hover { background: color-mix(in srgb, var(--info) 4%, transparent); }
   .snap-extra-subnets-summary::-webkit-details-marker { display: none; }
   /* Network icon on the left — gives the row visual identity. */
   .snap-extra-subnets-icon {
@@ -1551,20 +1551,20 @@
     border-radius: 10px;
     background: var(--surface-2);
     color: var(--text);
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     font-size: 12px;
     outline: none;
     transition: box-shadow .14s ease, background .12s ease;
   }
   .snap-extra-subnets-input:focus {
     background: var(--surface);
-    box-shadow: 0 0 0 2px rgba(56, 110, 207, .35);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 35%, transparent);
   }
   .snap-extra-subnets-add {
     height: 32px;
     padding: 0 16px;
     background: var(--primary);
-    color: #fff;
+    color: var(--on-accent);
     border: 0;
     border-radius: 10px;
     font-family: inherit;
@@ -1575,7 +1575,7 @@
   .snap-extra-subnets-add:hover { opacity: .9; }
   .snap-extra-subnets-err {
     font-size: 11px;
-    color: #ef4444;
+    color: var(--danger);
     padding: 4px 0;
   }
   .snap-extra-subnets-chips {
@@ -1584,10 +1584,10 @@
   .snap-extra-subnets-chip {
     display: inline-flex; align-items: center; gap: 4px;
     padding: 4px 4px 4px 12px;
-    background: rgba(56, 110, 207, .1);
+    background: color-mix(in srgb, var(--info) 10%, transparent);
     border: 0;
     border-radius: 999px;
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     font-size: 11px; font-weight: 600;
     color: var(--text);
   }
@@ -1605,8 +1605,8 @@
     transition: background .1s, color .1s;
   }
   .snap-extra-subnets-chip-x:hover {
-    background: rgba(239, 68, 68, .15);
-    color: #ef4444;
+    background: color-mix(in srgb, var(--danger) 15%, transparent);
+    color: var(--danger);
   }
 
   /* Debug-only scan journal — collapsible panel at the bottom of the
@@ -1689,12 +1689,12 @@
     transition: background .12s;
   }
   .snap-scan-log-btn:hover {
-    background: rgba(56, 110, 207, .1);
+    background: color-mix(in srgb, var(--info) 10%, transparent);
   }
   .snap-scan-log-btn:hover .icon { background: var(--text); }
   /* Clear button — hovers red, destructive cue. */
-  #snapScanLogClear:hover { background: rgba(239, 68, 68, .1); }
-  #snapScanLogClear:hover .icon { background: #ef4444; }
+  #snapScanLogClear:hover { background: color-mix(in srgb, var(--danger) 10%, transparent); }
+  #snapScanLogClear:hover .icon { background: var(--danger); }
   /* Icon next to "Scan log" title — same colour treatment as the chevron. */
   .snap-scan-log-title-icon {
     background: var(--muted);
@@ -1713,26 +1713,26 @@
     background: var(--surface);
   }
   .snap-scan-log-btn--primary:hover {
-    color: #fff;
+    color: var(--on-accent);
     background: var(--primary);
     border-color: var(--primary);
   }
   /* Transient feedback states after Export click. */
   .snap-scan-log-btn--ok {
-    color: #16a34a !important;
-    border-color: #16a34a !important;
-    background: rgba(34, 197, 94, .12) !important;
+    color: var(--success-hover) !important;
+    border-color: var(--success-hover) !important;
+    background: color-mix(in srgb, var(--success) 12%, transparent) !important;
   }
   .snap-scan-log-btn--err {
-    color: #ef4444 !important;
-    border-color: #ef4444 !important;
-    background: rgba(239, 68, 68, .12) !important;
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+    background: color-mix(in srgb, var(--danger) 12%, transparent) !important;
   }
   .snap-scan-log-body {
     max-height: 220px;
     overflow-y: auto;
     padding: 4px 0;
-    font-family: var(--mono, ui-monospace, monospace);
+    font-family: var(--mono);
     font-size: 11px;
     line-height: 1.4;
   }
@@ -1751,9 +1751,9 @@
     font-size: inherit;
     transition: background .08s;
   }
-  .snap-scan-log-row:hover:not(:disabled) { background: rgba(56, 110, 207, .06); }
+  .snap-scan-log-row:hover:not(:disabled) { background: color-mix(in srgb, var(--info) 6%, transparent); }
   .snap-scan-log-row:disabled { cursor: default; opacity: .75; }
-  .snap-scan-log-row--copied { background: rgba(34, 197, 94, .14) !important; }
+  .snap-scan-log-row--copied { background: color-mix(in srgb, var(--success) 14%, transparent) !important; }
   .snap-scan-log-ts { color: var(--muted); font-variant-numeric: tabular-nums; }
   .snap-scan-log-kind {
     text-transform: uppercase;
@@ -1762,9 +1762,9 @@
     align-self: center;
     color: var(--muted);
   }
-  .snap-scan-log-row--hit       .snap-scan-log-kind { color: #16a34a; }
-  .snap-scan-log-row--ambiguous .snap-scan-log-kind { color: #b45309; }
-  .snap-scan-log-row--error     .snap-scan-log-kind { color: #ef4444; }
+  .snap-scan-log-row--hit       .snap-scan-log-kind { color: var(--success-hover); }
+  .snap-scan-log-row--ambiguous .snap-scan-log-kind { color: var(--warning-hover); }
+  .snap-scan-log-row--error     .snap-scan-log-kind { color: var(--danger); }
   .snap-scan-log-summary {
     color: var(--text);
     word-break: break-all;
@@ -1782,14 +1782,14 @@
     flex-wrap: wrap;
   }
   .snap-manual-status--info {
-    background: rgba(56, 110, 207, .08);
+    background: color-mix(in srgb, var(--info) 8%, transparent);
     color: var(--text);
-    border: 1px solid rgba(56, 110, 207, .25);
+    border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
   }
   .snap-manual-status--err {
-    background: rgba(239, 68, 68, .08);
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
     color: var(--text);
-    border: 1px solid rgba(239, 68, 68, .3);
+    border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
   }
   .snap-manual-anyway {
     margin-left: auto;
@@ -1843,7 +1843,7 @@
     display: inline-flex; align-items: center;
     padding: 3px 12px; border-radius: 999px;
     font-size: 11px; font-weight: 600;
-    color: #fff; background: var(--brand-accent, #888);
+    color: var(--on-accent); background: var(--brand-accent, var(--neutral));
     letter-spacing: .2px;
   }
   /* Model pill — outline-style label sitting next to the brand pill,
@@ -1862,7 +1862,7 @@
     position: absolute; top: 18px; right: 20px;
     font-size: 10px; font-weight: 700;
     color: var(--primary);
-    background: rgba(56, 110, 207, .12);
+    background: color-mix(in srgb, var(--info) 12%, transparent);
     padding: 3px 10px; border-radius: 999px;
     text-transform: uppercase; letter-spacing: .3px;
   }
@@ -2010,7 +2010,7 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 12px;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(56, 110, 207, .15);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 15%, transparent);
   }
   .pp-row-val--editing { padding: 0 !important; margin: 0 !important; }
   .pp-row-val--saving {
@@ -2027,9 +2027,9 @@
     display: inline-block;
   }
   .pp-edit-error {
-    color: #b91c1c;
+    color: var(--danger-hover);
     font-size: 12px;
-    background: rgba(239, 68, 68, .1);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
     padding: 2px 8px;
     border-radius: 6px;
   }
@@ -2050,23 +2050,23 @@
   .pp-copy .icon, .pp-eye .icon { background: var(--muted); }
   .pp-copy:hover .icon, .pp-eye:hover .icon { background: var(--text); }
   .pp-copy--ok { background: var(--primary); border-color: var(--primary); }
-  .pp-copy--ok .icon { background: #fff; }
+  .pp-copy--ok .icon { background: var(--on-accent); }
 
   /* Sensitive section warning */
   .pp-section--secret {
-    background: linear-gradient(180deg, rgba(239, 68, 68, .04), transparent 80%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 4%, transparent), transparent 80%);
   }
   .pp-secret-warn {
     display: flex; align-items: flex-start; gap: 8px;
-    background: rgba(239, 68, 68, .08);
-    border: 1px solid rgba(239, 68, 68, .25);
-    color: #b91c1c;
+    background: color-mix(in srgb, var(--danger) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
+    color: var(--danger-hover);
     border-radius: 8px;
     padding: 8px 10px;
     font-size: 12px; line-height: 1.45;
     margin-bottom: 10px;
   }
-  .pp-secret-warn .icon { background: #b91c1c; flex-shrink: 0; margin-top: 1px; }
+  .pp-secret-warn .icon { background: var(--danger-hover); flex-shrink: 0; margin-top: 1px; }
   .pp-secret { user-select: all; }
 
   /* Raw JSON */
@@ -2100,19 +2100,19 @@
     z-index: 1;
   }
   .pp-raw-copy.pp-copy:hover { color: var(--text); background: var(--surface); border-color: var(--primary); }
-  .pp-raw-copy.pp-copy.pp-copy--ok { color: #fff; }
-  .pp-raw-copy.pp-copy.pp-copy--ok .icon { background: #fff; }
+  .pp-raw-copy.pp-copy.pp-copy--ok { color: var(--on-accent); }
+  .pp-raw-copy.pp-copy.pp-copy--ok .icon { background: var(--on-accent); }
 
 
 /* ── Printer setup steps (Snapmaker U1 — expandable cards) ──────────────── */
 
 /* <details> card */
 .pba-step {
-  border: 1px solid var(--border, #2a2a2a);
+  border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   margin-top: 8px;
-  background: var(--surface, #141414);
+  background: var(--surface);
 }
 .pba-step + .pba-step { margin-top: 6px; }
 
@@ -2127,15 +2127,15 @@
   list-style: none; /* hide default marker */
 }
 .pba-step-header::-webkit-details-marker { display: none; }
-.pba-step-header:hover { background: rgba(255,255,255,.03); }
+.pba-step-header:hover { background: var(--ink-04); }
 
 /* Numbered badge */
 .pba-step-num {
   flex-shrink: 0;
   width: 24px; height: 24px;
   border-radius: 50%;
-  background: var(--primary, #386ecf);
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-accent);
   font-size: 12px;
   font-weight: 700;
   display: flex; align-items: center; justify-content: center;
@@ -2173,7 +2173,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 /* Expanded body */
 .pba-step-body {
   padding: 0 14px 14px;
-  border-top: 1px solid var(--border, #2a2a2a);
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2205,8 +2205,8 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pba-step-code {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
-  background: var(--surface-2, #1e1e1e);
-  border: 1px solid var(--border, #2a2a2a);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   padding: 1px 5px;
   border-radius: 4px;
   color: var(--text);
@@ -2220,8 +2220,8 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   gap: 6px;
   padding: 8px 16px;
   border-radius: 8px;
-  background: var(--primary, #386ecf);
-  color: #fff;
+  background: var(--primary);
+  color: var(--on-accent);
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -2236,14 +2236,14 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 /* Secondary (outline) variant */
 .pba-step-cta--secondary {
   background: transparent;
-  color: var(--primary, #386ecf);
-  border: 1px solid var(--primary, #386ecf);
+  color: var(--primary);
+  border: 1px solid var(--primary);
 }
 .pba-step-cta--secondary .pba-step-cta-icon {
-  background-color: var(--primary, #386ecf);
+  background-color: var(--primary);
 }
-.pba-step-cta--secondary:hover { background: rgba(56, 110, 207, .08); opacity: 1; }
-.pba-step-cta--secondary:active { background: rgba(56, 110, 207, .15); opacity: 1; }
+.pba-step-cta--secondary:hover { background: color-mix(in srgb, var(--info) 8%, transparent); opacity: 1; }
+.pba-step-cta--secondary:active { background: color-mix(in srgb, var(--info) 15%, transparent); opacity: 1; }
 
 /* Container when two CTAs sit side by side */
 .pba-step-ctas {
@@ -2260,7 +2260,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   height: 14px;
   aspect-ratio: 1;
   flex-shrink: 0;
-  background-color: #fff;
+  background-color: var(--surface);
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
@@ -2396,7 +2396,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
                  border-radius: var(--radius); overflow: hidden;
                  cursor: grab; transition: border-color .15s;
                  grid-column: span 2; }
-.cam-wall-card:hover { border-color: var(--accent, #6366f1); }
+.cam-wall-card:hover { border-color: var(--info); }
 /* Drag-to-reorder ("make room") — dragged card hidden, others slide (see printer grid). */
 .cam-wall-card--dragging { opacity: 0; }
 /* Prevent native image/video drag from intercepting card DnD */
@@ -2413,7 +2413,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   opacity: 0; transition: opacity .18s;
 }
 .cam-wall-card:hover .cam-wall-card-head { opacity: 1; }
-.cam-wall-card-name { font-weight: 500; font-size: 13px; color: #fff; min-width: 0;
+.cam-wall-card-name { font-weight: 500; font-size: 13px; color: var(--on-dark); min-width: 0;
                       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* ── Cam wall size controls ──────────────────────────────────────────────── */
@@ -2422,12 +2422,12 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   display: flex; align-items: center; justify-content: center;
   min-width: 22px; height: 20px; padding: 0 5px;
   font-size: 10px; font-weight: 700; line-height: 1;
-  border: 1px solid rgba(255,255,255,.3); border-radius: 3px;
-  background: rgba(0,0,0,.3); color: rgba(255,255,255,.8);
+  border: 1px solid var(--ink-30); border-radius: 3px;
+  background: var(--scrim); color: var(--ink-85);
   cursor: pointer; transition: background .1s, color .1s, border-color .1s;
 }
-.cam-size-btn:hover { background: rgba(255,255,255,.2); color: #fff; border-color: rgba(255,255,255,.6); }
-.cam-size-btn--active { background: var(--accent, #6366f1); border-color: transparent; color: #fff; }
+.cam-size-btn:hover { background: var(--ink-20); color: var(--on-dark); border-color: var(--ink-60); }
+.cam-size-btn--active { background: var(--info); border-color: transparent; color: var(--on-accent); }
 .cam-size-btn svg { pointer-events: none; }
 
 /* Camera containers fill full card width — card height = camera height (pure 16:9).

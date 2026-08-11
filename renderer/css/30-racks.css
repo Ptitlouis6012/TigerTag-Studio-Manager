@@ -23,13 +23,13 @@
   .rp-cta {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     padding: 10px 14px;
-    background: var(--primary); border: 1px solid var(--primary); color: #fff;
+    background: var(--primary); border: 1px solid var(--primary); color: var(--on-accent);
     border-radius: 10px; font-size: 13px; font-weight: 600; font-family: inherit;
     cursor: pointer;
     transition: background .15s, border-color .15s;
   }
-  .rp-cta:hover { background: #f0670d; border-color: #f0670d; }
-  .rp-cta .icon { background: #fff; }
+  .rp-cta:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+  .rp-cta .icon { background: var(--on-accent); }
 
   .rp-list {
     flex: 1; min-height: 0;
@@ -86,7 +86,7 @@
     transition: color .15s, background .15s;
     border-radius: 6px;
   }
-  .rp-rack-grip:hover { color: var(--primary); background: var(--primary-soft, rgba(249,115,22,.06)); }
+  .rp-rack-grip:hover { color: var(--primary); background: var(--primary-soft); }
   .rp-rack-grip:active { cursor: grabbing; }
   .rp-rack { position: relative; }
   /* Drag-to-reorder ("make room") — dragged rack hidden, others slide (2D translate).
@@ -115,7 +115,7 @@
   .rp-rack-add:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: var(--primary-soft, rgba(249,115,22,.06));
+    background: var(--primary-soft);
     transform: translateY(-1px);
   }
   .rp-rack-add-plus {
@@ -203,15 +203,15 @@
     flex: 0 0 auto;
   }
   .rp-menu-item--hold.is-holding { background: var(--surface-2); }
-  .rp-menu-item--hold.is-confirming { background: var(--primary); color: #fff; }
-  .rp-menu-item--hold.is-confirming .icon { background: #fff; }
+  .rp-menu-item--hold.is-confirming { background: var(--primary); color: var(--on-accent); }
+  .rp-menu-item--hold.is-confirming .icon { background: var(--on-accent); }
   .rp-menu-item--hold.is-confirming.rp-menu-item--danger { background: var(--danger); }
   /* Make sure the hold-progress overlay sits above the bg but below the label */
   .rp-menu-item--hold .hold-progress { z-index: 0; opacity: .55; }
 
   .rp-menu-item--danger { color: var(--danger); }
   .rp-menu-item--danger .icon { background: var(--danger); }
-  .rp-menu-item--danger:hover { background: var(--danger-soft, rgba(220,38,38,.08)); }
+  .rp-menu-item--danger:hover { background: var(--danger-soft); }
   .rp-menu-item--danger:hover .icon { background: var(--danger); }
   .rp-menu-sep {
     height: 1px;
@@ -251,7 +251,7 @@
   button.rv-stat-add::-moz-focus-inner { border: 0; padding: 0; }
   button.rv-stat-add:hover {
     border-color: var(--primary);
-    background: var(--primary-soft, rgba(249,115,22,.06));
+    background: var(--primary-soft);
     color: var(--primary);
     transform: translateY(-1px);
   }
@@ -324,7 +324,7 @@
   /* Active filter highlight — applied when a stat tile is "selected" to
      filter the rack view */
   .rv-stat--active {
-    background: var(--primary-soft, rgba(249,115,22,.10));
+    background: var(--primary-soft);
     border-color: var(--primary);
   }
   .rv-stat--active .rv-stat-lbl,
@@ -337,8 +337,8 @@
      Layout switches to a row (body on the left, chevron on the right) to make
      room for an affordance hinting that clicking opens a side panel. */
   .rv-stat--orange {
-    background: rgba(249,115,22,.10);
-    border-color: rgba(249,115,22,.45);
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
     flex-direction: row;
     align-items: center;
     gap: 8px;
@@ -356,12 +356,12 @@
     transition: background .15s;
   }
   .rv-stat--orange.rv-stat--active .rv-stat-chev {
-    background: #fff;
+    background: var(--surface);
   }
   .rv-stat--orange .rv-stat-num,
   .rv-stat--orange .rv-stat-lbl { color: var(--primary); }
   .rv-stat--orange:hover {
-    background: rgba(249,115,22,.18);
+    background: color-mix(in srgb, var(--primary) 18%, transparent);
     border-color: var(--primary);
   }
   /* When the panel is open, intensify the orange so the toggle reads as ON */
@@ -370,7 +370,7 @@
     border-color: var(--primary);
   }
   .rv-stat--orange.rv-stat--active .rv-stat-num,
-  .rv-stat--orange.rv-stat--active .rv-stat-lbl { color: #fff; }
+  .rv-stat--orange.rv-stat--active .rv-stat-lbl { color: var(--on-accent); }
 
   /* ── Drop-zone visibility while dragging a spool ──────────────────────── */
   /* Keep the rack NEUTRAL during a drag: no ambient orange flood on every empty
@@ -459,7 +459,7 @@
     flex-shrink: 0;
     border-radius: 8px;
     object-fit: contain;
-    background: rgba(255, 255, 255, .06);
+    background: var(--ink-06);
     border: 1px solid rgba(0, 0, 0, .12);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12);
   }
@@ -470,7 +470,7 @@
     flex-shrink: 0;
     border-radius: 4px;
     border: 1px solid rgba(0,0,0,.12);
-    background: rgba(150,150,150,.12);
+    background: color-mix(in srgb, var(--neutral) 12%, transparent);
     position: relative; overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
   }
@@ -492,8 +492,8 @@
     font-family: var(--mono);
     font-size: 11px; font-weight: 700;
     color: var(--primary);
-    background: var(--primary-soft, rgba(249,115,22,.10));
-    border: 1px solid rgba(249,115,22,.4);
+    background: var(--primary-soft);
+    border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
     padding: 2px 6px;
     border-radius: 5px;
   }
@@ -542,8 +542,8 @@
      ("empty" / "locked") is selected. Self-fading pulse so it draws the eye
      without becoming permanently distracting. */
   @keyframes rp-slot-highlight-pulse {
-    0%, 100% { box-shadow: 0 0 0 2px rgba(249,115,22,.55), 0 0 8px rgba(249,115,22,.5); }
-    50%      { box-shadow: 0 0 0 3px rgba(249,115,22,.85), 0 0 14px rgba(249,115,22,.85); }
+    0%, 100% { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 55%, transparent), 0 0 8px color-mix(in srgb, var(--primary) 50%, transparent); }
+    50%      { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 85%, transparent), 0 0 14px color-mix(in srgb, var(--primary) 85%, transparent); }
   }
   .rp-slot--highlight {
     animation: rp-slot-highlight-pulse 1.6s ease-in-out infinite;
@@ -679,7 +679,7 @@
   .rp-slot--filled {
     border-style: solid;
     border-color: rgba(0,0,0,.12);
-    background: rgba(150,150,150,.12);   /* the "empty" portion above the fill */
+    background: color-mix(in srgb, var(--neutral) 12%, transparent);   /* the "empty" portion above the fill */
     cursor: grab;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
     transition: transform .12s, box-shadow .15s;
@@ -711,8 +711,8 @@
     background: var(--primary-soft) !important;
     box-shadow:
       0 0 0 3px var(--primary),
-      0 0 0 6px rgba(249,115,22,.25),
-      0 6px 18px rgba(249,115,22,.45) !important;
+      0 0 0 6px color-mix(in srgb, var(--primary) 25%, transparent),
+      0 6px 18px color-mix(in srgb, var(--primary) 45%, transparent) !important;
     transform: scale(1.12);
     z-index: 3;
     transition: transform .12s cubic-bezier(.34, 1.6, .64, 1),
@@ -721,7 +721,7 @@
   /* Filled slot being hovered → swap target. Same ring/glow but keep the
      existing fill visible so the user sees what they're swapping with. */
   .rp-slot--filled.rp-slot--drop {
-    background: rgba(150,150,150,.12) !important;   /* preserve original empty bg */
+    background: color-mix(in srgb, var(--neutral) 12%, transparent) !important;   /* preserve original empty bg */
   }
   /* Swap arrow — shown on BOTH slots that will trade places: the landing target
      AND the source slot the user is dragging, so the swap reads clearly from
@@ -737,7 +737,7 @@
     position: absolute;
     inset: 0;
     display: flex; align-items: center; justify-content: center;
-    color: #fff;
+    color: var(--on-dark);
     font-size: 16px; font-weight: 700;
     text-shadow: 0 0 4px rgba(0,0,0,.7), 0 0 8px rgba(0,0,0,.5);
     z-index: 4;
@@ -752,7 +752,7 @@
     animation: none !important;
     border-style: solid !important;
     border-color: var(--danger) !important;
-    background: var(--danger-soft, rgba(220,38,38,.18)) !important;
+    background: var(--danger-soft) !important;
     box-shadow:
       0 0 0 3px var(--danger),
       0 0 12px rgba(220,38,38,.5) !important;
@@ -787,9 +787,9 @@
   .rp-slot--filled.rp-slot--match {
     border-color: var(--primary) !important;
     box-shadow:
-      0 0 0 2.5px rgba(249,115,22,.7),
-      0 0 11px rgba(249,115,22,.7),
-      inset 0 0 0 1px rgba(255,255,255,.28);
+      0 0 0 2.5px color-mix(in srgb, var(--primary) 70%, transparent),
+      0 0 11px color-mix(in srgb, var(--primary) 70%, transparent),
+      inset 0 0 0 1px var(--ink-30);
     z-index: 2;
     animation: rp-slot-match-pulse 1.6s ease-in-out infinite;
     /* Pre-promote to a compositor layer so the rack-hover reveal (which expands
@@ -836,7 +836,7 @@
   /* Case 2 — pinned filled slot: keep the spool fill, add an amber border
      and a small lock badge in the top-right corner. */
   .rp-slot--pinned {
-    border: 2px solid #D97706 !important;
+    border: 2px solid var(--warning) !important;
   }
   .rp-slot--pinned::before {
     content: "";
@@ -844,7 +844,7 @@
     top: 2px; right: 2px;
     width: 17px; height: 17px;
     border-radius: 50%;
-    background: #D97706;
+    background: var(--warning);
     z-index: 2;
     pointer-events: none;
   }
@@ -853,7 +853,7 @@
     position: absolute;
     top: 5px; right: 5px;
     width: 11px; height: 11px;
-    background-color: #fff;
+    background-color: var(--surface);
     -webkit-mask-image: url('../../assets/svg/icons/icon_lock.svg');
             mask-image: url('../../assets/svg/icons/icon_lock.svg');
     -webkit-mask-size: contain; mask-size: contain;
@@ -915,7 +915,7 @@
   .rp-toggle-count {
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 18px; height: 18px; padding: 0 6px; margin-left: 4px;
-    background: var(--primary); color: #fff;
+    background: var(--primary); color: var(--on-accent);
     border-radius: 9px;
     font-size: 11px; font-weight: 700;
   }
@@ -927,7 +927,7 @@
     text-transform: uppercase; color: var(--muted);
   }
   .rp-side-count {
-    background: var(--primary); color: #fff;
+    background: var(--primary); color: var(--on-accent);
     border-radius: 10px; padding: 1px 8px;
     font-size: 11px; font-weight: 700;
     flex-shrink: 0;     /* badge sits before the title — push close button to the right via the title's flex */
@@ -940,8 +940,8 @@
   .rp-side-add-rack {
     display: flex; flex-direction: row; align-items: center; gap: 8px;
     padding: 8px 10px;
-    background: rgba(255, 122, 24, .08);
-    border: 1px solid rgba(255, 122, 24, .35);
+    background: color-mix(in srgb, var(--primary) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
     border-radius: 8px;
     flex-shrink: 0;
   }
@@ -953,7 +953,7 @@
     border: none;
     border-radius: 8px;
     background: var(--primary);
-    color: #fff;
+    color: var(--on-accent);
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
@@ -962,7 +962,7 @@
   }
   .rp-side-add-rack-btn:hover  { background: var(--primary); filter: brightness(1.07); }
   .rp-side-add-rack-btn:active { transform: translateY(1px); }
-  .rp-side-add-rack-btn .icon  { background: #fff; }
+  .rp-side-add-rack-btn .icon  { background: var(--on-accent); }
   /* Info bubble — small ⓘ that reveals an explanation on hover/focus (replaces
      the inline help text). Styled bubble, NOT a native title. */
   /* The bubble itself is rendered via the shared #toolInfoPop (body-appended,
@@ -1109,7 +1109,7 @@
     flex-shrink: 0;
     border-radius: 5px;
     border: 1.5px solid rgba(0,0,0,.12);
-    background: rgba(150,150,150,.12);
+    background: color-mix(in srgb, var(--neutral) 12%, transparent);
     position: relative; overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
   }
@@ -1154,7 +1154,7 @@
     aspect-ratio: 3 / 5;
     border-radius: 5px;
     border: 1.5px solid rgba(0,0,0,.12);
-    background: rgba(150,150,150,.12);
+    background: color-mix(in srgb, var(--neutral) 12%, transparent);
     position: relative;
     overflow: hidden;
     cursor: grab;
@@ -1190,7 +1190,7 @@
   /* legacy icon variant — kept for backwards compat in case someone calls it */
   .rp-empty-icon {
     width: 48px; height: 48px; margin: 0 auto 12px;
-    background: var(--primary-soft, rgba(249,115,22,.1));
+    background: var(--primary-soft);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
   }

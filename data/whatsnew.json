@@ -7547,5 +7547,110 @@
         }
       }
     ]
+  },
+  "2.18.0": {
+    "date": "2026-08-11",
+    "items": [
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Dark mode. Finally.",
+          "fr": "Le mode sombre. Enfin.",
+          "de": "Dark Mode. Endlich.",
+          "es": "Modo oscuro. Por fin.",
+          "it": "Modalità scura. Finalmente.",
+          "zh": "深色模式。终于来了。",
+          "pt": "Modo escuro. Enfim.",
+          "pt-pt": "Modo escuro. Finalmente.",
+          "pl": "Tryb ciemny. Nareszcie."
+        },
+        "body": {
+          "en": "Your eyes have been asking for a while. The whole app is dark now — and if you liked it bright, Light is one click away in your profile. Your choice follows you to every machine.",
+          "fr": "Tes yeux le réclamaient depuis un moment. Toute l'app est passée au sombre — et si tu préférais la lumière, un clic dans ton profil et c'est réglé. Ton choix te suit sur toutes tes machines.",
+          "de": "Deine Augen haben lange darum gebeten. Die ganze App ist jetzt dunkel — und wenn du es lieber hell magst, ist Hell einen Klick entfernt in deinem Profil. Deine Wahl folgt dir auf jedes Gerät.",
+          "es": "Tus ojos llevaban tiempo pidiéndolo. Toda la app es oscura ahora — y si la preferías clara, tienes Claro a un clic en tu perfil. Tu elección te sigue a cada equipo.",
+          "it": "I tuoi occhi lo chiedevano da un po'. Tutta l'app è scura adesso — e se la preferivi chiara, Chiaro è a un clic nel tuo profilo. La tua scelta ti segue su ogni macchina.",
+          "zh": "你的眼睛念叨很久了。整个应用都暗下来了——想要亮色，在个人资料里点一下就好。你的选择会跟着你到每台设备。",
+          "pt": "Teus olhos já pediam faz tempo. O app inteiro ficou escuro — e se preferias claro, é um clique no teu perfil. Tua escolha te acompanha em qualquer máquina.",
+          "pt-pt": "Os teus olhos já pediam há algum tempo. A app inteira ficou escura — e se preferias clara, está a um clique no teu perfil. A tua escolha segue-te em qualquer máquina.",
+          "pl": "Twoje oczy prosiły o to od dawna. Cała aplikacja jest teraz ciemna — a jeśli wolisz jasną, jedno kliknięcie w profilu. Twój wybór idzie z tobą na każdy komputer."
+        }
+      },
+      {
+        "icon": "user",
+        "title": {
+          "en": "Your profile, tidied up",
+          "fr": "Ton profil, rangé",
+          "de": "Dein Profil, aufgeräumt",
+          "es": "Tu perfil, ordenado",
+          "it": "Il tuo profilo, in ordine",
+          "zh": "你的资料，整理好了",
+          "pt": "Teu perfil, arrumado",
+          "pt-pt": "O teu perfil, arrumado",
+          "pl": "Twój profil, uporządkowany"
+        },
+        "body": {
+          "en": "It slides out from the side now, right where your account lives. One clean line per setting, your avatar colours next to your avatar, and your links finally listed instead of hiding.",
+          "fr": "Il se déplie maintenant sur le côté, là où vit ton compte. Une ligne nette par réglage, tes couleurs d'avatar à côté de ton avatar, et tes liens enfin visibles au lieu de se cacher.",
+          "de": "Es fährt jetzt seitlich aus, genau dort, wo dein Konto wohnt. Eine saubere Zeile pro Einstellung, deine Avatarfarben neben deinem Avatar, und deine Links endlich sichtbar statt versteckt.",
+          "es": "Ahora se despliega por el lado, justo donde vive tu cuenta. Una línea limpia por ajuste, los colores de tu avatar junto a tu avatar, y tus enlaces por fin a la vista.",
+          "it": "Adesso si apre di lato, proprio dove vive il tuo account. Una riga pulita per impostazione, i colori dell'avatar accanto all'avatar, e i tuoi link finalmente in vista.",
+          "zh": "现在从侧边滑出，就在你账号所在的位置。每项设置一行，头像配色紧挨着头像，你的链接终于摆出来了。",
+          "pt": "Agora abre pela lateral, bem onde tua conta mora. Uma linha limpa por ajuste, as cores do avatar do lado do avatar, e teus links enfim à vista.",
+          "pt-pt": "Agora abre pela lateral, mesmo onde a tua conta vive. Uma linha limpa por definição, as cores do avatar ao lado do avatar, e os teus links finalmente à vista.",
+          "pl": "Teraz wysuwa się z boku, dokładnie tam, gdzie mieszka twoje konto. Jedna czysta linia na ustawienie, kolory awatara obok awatara, a twoje linki wreszcie widoczne."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "TigerScale V3 is out",
+          "fr": "La TigerScale V3 est là",
+          "de": "Die TigerScale V3 ist da",
+          "es": "La TigerScale V3 ya está",
+          "it": "La TigerScale V3 è arrivata",
+          "zh": "TigerScale V3 上市了",
+          "pt": "A TigerScale V3 chegou",
+          "pt-pt": "A TigerScale V3 chegou",
+          "pl": "TigerScale V3 jest dostępna"
+        },
+        "body": {
+          "en": "Big colour touchscreen, a tighter build, and a look that finally matches the rest. Put a spool on it and your inventory updates itself.",
+          "fr": "Grand écran tactile couleur, une conception resserrée, et un look enfin à la hauteur du reste. Tu poses une bobine dessus, ton inventaire se met à jour tout seul.",
+          "de": "Großer Farb-Touchscreen, kompaktere Bauweise und endlich eine Optik, die zum Rest passt. Spule drauflegen, und dein Bestand aktualisiert sich von selbst.",
+          "es": "Pantalla táctil a color grande, un diseño más ajustado y un aspecto por fin a la altura. Pones una bobina y tu inventario se actualiza solo.",
+          "it": "Grande touchscreen a colori, costruzione più curata e un look finalmente all'altezza. Ci appoggi una bobina e il tuo inventario si aggiorna da solo.",
+          "zh": "大尺寸彩色触摸屏，结构更紧凑，外观终于配得上其他部分了。放上一卷料，库存自己就更新了。",
+          "pt": "Tela sensível ao toque colorida e grande, construção mais enxuta e um visual enfim à altura. Põe um carretel e teu inventário se atualiza sozinho.",
+          "pt-pt": "Ecrã tátil a cores grande, construção mais cuidada e um visual finalmente à altura. Pousas uma bobine e o teu inventário atualiza-se sozinho.",
+          "pl": "Duży kolorowy ekran dotykowy, zwarta konstrukcja i wygląd, który wreszcie pasuje do reszty. Kładziesz szpulę, a stan magazynu aktualizuje się sam."
+        }
+      },
+      {
+        "icon": "download",
+        "title": {
+          "en": "Windows: run it from a USB key",
+          "fr": "Windows : lance-le depuis une clé USB",
+          "de": "Windows: vom USB-Stick starten",
+          "es": "Windows: úsalo desde un USB",
+          "it": "Windows: portalo su una chiavetta USB",
+          "zh": "Windows：从 U 盘直接运行",
+          "pt": "Windows: rode direto de um pendrive",
+          "pt-pt": "Windows: usa-o a partir de uma pen USB",
+          "pl": "Windows: uruchom z pendrive'a"
+        },
+        "body": {
+          "en": "For the machines where you can't install anything. Everything stays on the key — your account, your stock — so you leave nothing behind on someone else's PC.",
+          "fr": "Pour les machines où tu n'as pas le droit d'installer quoi que ce soit. Tout reste sur la clé — ton compte, ton stock — et tu ne laisses rien derrière toi sur le PC d'un autre.",
+          "de": "Für Rechner, auf denen du nichts installieren darfst. Alles bleibt auf dem Stick — dein Konto, dein Bestand — und auf fremden PCs bleibt nichts zurück.",
+          "es": "Para los equipos donde no puedes instalar nada. Todo se queda en el USB — tu cuenta, tu stock — y no dejas rastro en el PC de otro.",
+          "it": "Per le macchine dove non puoi installare niente. Resta tutto sulla chiavetta — account e scorte — e sul PC di un altro non lasci nulla.",
+          "zh": "给那些不让你装软件的电脑。账号、库存，全都留在 U 盘上，别人的电脑上什么都不留下。",
+          "pt": "Para as máquinas onde você não pode instalar nada. Tudo fica no pendrive — tua conta, teu estoque — e você não deixa rastro no PC dos outros.",
+          "pt-pt": "Para as máquinas onde não podes instalar nada. Fica tudo na pen — a tua conta, o teu stock — e não deixas rasto no PC de outra pessoa.",
+          "pl": "Dla komputerów, na których nie wolno ci nic instalować. Wszystko zostaje na pendrivie — konto i stan magazynu — a na cudzym PC nie zostawiasz śladu."
+        }
+      }
+    ]
   }
 }

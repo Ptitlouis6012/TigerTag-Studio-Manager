@@ -1,25 +1,231 @@
-/* ── 00-base.css — root vars + reset + sidebar + header + app-layout ── */
+/* ── 00-base.css — design tokens + reset + sidebar + header + app-layout ── */
+
+/* ══ DESIGN TOKENS ═══════════════════════════════════════════════════════
+   Every colour in the app resolves through one of these. A raw hex or rgba()
+   anywhere else is a bug: it cannot follow the theme, and the theme is now a
+   user setting (Edit profile → Theme, stored in `tigertag.theme` +
+   users/{uid}/prefs/app.theme). `npm run theme:check` enforces it.
+
+   The theme is carried by `data-theme` on <html>. It is written STATICALLY in
+   inventory.html as the shipped default (dark), so the correct palette applies
+   at first paint — before any JS runs — and the renderer only rewrites it when
+   the user has picked the other one.
+
+   ── The four groups, and which way each moves ──
+     1. SURFACES / TEXT / BORDERS — invert between themes. The bulk of the work.
+     2. BRAND + SEMANTIC accents  — the HUE is constant (orange stays orange,
+        danger stays red) but the `-soft` tints must be recomputed: a pale peach
+        that reads as "subtle" on white becomes a glaring block on near-black.
+        They are derived with color-mix() against --surface so a tint always
+        sits correctly on whatever it is painted over, in both themes.
+     3. FIXED-POLARITY  — colours that must NOT invert. `--on-accent` is the
+        text/icon sitting ON a filled orange/red button: white in both themes,
+        because the fill underneath never changes. Getting this wrong is the
+        single most common dark-mode bug, and this codebase writes `#fff` for
+        BOTH "card background" and "label on an orange button" — only the token
+        tells them apart.
+     4. ALWAYS-DARK — tooltips, and anything sitting on video. A camera feed
+        letterboxed in white would be absurd, so media surfaces keep a fixed
+        dark scale in both themes. The sidebar and the TD1S panel deliberately
+        do NOT belong here: they are panels inside the app, so they follow the
+        theme like everything else rather than staying black in a light UI. */
+
   :root {
-    --bg: #f6f7fb;
-    --surface: #ffffff;
-    --surface-2: #f1f3f9;
-    --border: #e3e6ef;
-    --text: #1c2030;
-    --muted: #6b7287;
+    /* ── 1. Surfaces — an elevation ladder, lowest first ── */
+    --bg: #f6f7fb;              /* the page itself */
+    --surface: #ffffff;         /* cards, panels, rows */
+    --surface-2: #f1f3f9;       /* recessed: table heads, chips, inset wells */
+    --surface-3: #e7eaf3;       /* deeper inset / pressed state */
+    --surface-hover: #eef1f8;   /* hover on an interactive surface */
+    --surface-raised: #ffffff;  /* floats ABOVE surface: dropdowns, popovers */
+
+    /* ── Text ── */
+    --text: #1c2030;            /* primary */
+    --muted: #6b7287;           /* secondary */
+    --faint: #8b93a7;           /* tertiary, disabled, timestamps */
+
+    /* ── Borders ── */
+    --border: #e3e6ef;          /* default hairline */
+    --border-soft: #eef0f6;     /* barely-there separator */
+    --border-strong: #d0d4dc;   /* emphasised / focus base */
+
+    /* ── 2. Brand + semantic — hue constant across themes ── */
     --primary: #ff7a18;
     --primary-hover: #e96900;
     --primary-soft: #ffe9d6;
+    --primary-20: rgba(255,120,0,.25);
     --success: #1aaf6c;
     --success-soft: #e1f6ec;
     --danger: #d83b3b;
     --danger-soft: #fbe3e3;
     --warning: #b97a00;
     --warning-soft: #fff5dc;
+    --info: #386ecf;
+    --info-soft: rgba(56,110,207,.10);
     --neutral: #8b91a3;
+    --violet: #7c4dff;          /* cloud / premium accent, distinct from brand */
+    --violet-hover: #6a3de0;
+    --primary-hi: #ffb056;      /* light stop of the brand gradient */
+    --success-hover: #16a34a;
+    --success-hi: #4fc98d;      /* light stop of the success gradient */
+    --danger-hover: #b91c1c;
+    --warning-hover: #b45309;
+    /* Commerce green — the "buy / add to cart / shop" action throughout, and
+       the Shopify brand colour it came from. Semantic, not decorative: it must
+       stay recognisably the buy colour, so it only lifts for dark contrast. */
+    --buy: #5e8e3e;
+    --buy-hover: #4d7532;
+    /* The starred/favourite gold. A state, not decoration — the same colour has
+       to mean "favourite" on the card badge, the filter chip and the bulk bar. */
+    --favorite: #f5a623;
+    --favorite-deep: #c98a1e;
+
+    /* ── 3. Fixed polarity — these do NOT invert ── */
+    --on-accent: #ffffff;       /* label/icon ON a filled accent button */
+    --on-dark: #ffffff;         /* label/icon on an always-dark surface */
+
+    /* ── Effects ── */
+    --scrim: rgba(20,24,40,.42);            /* modal backdrop */
     --shadow: 0 1px 2px rgba(20,24,40,.04), 0 8px 24px rgba(20,24,40,.06);
+    --shadow-lg: 0 4px 12px rgba(20,24,40,.08), 0 24px 60px rgba(20,24,40,.12);
+    --glass-hi: rgba(255,255,255,.75);      /* light sheen on glassy fills */
+    --glass-lo: rgba(0,0,0,.06);            /* depth notch */
+
+    /* ── The ink ladder ──────────────────────────────────────────────────
+       "Ink" is whatever contrasts with the CURRENT ground: near-black in
+       light, white in dark. Reach for it wherever a translucent overlay has
+       to read as a border, a fill or a label at a given strength, rather than
+       as a specific colour — which is most of what the hand-written
+       `rgba(255,255,255,.08)` and `rgba(0,0,0,.12)` were doing all over this
+       codebase.
+
+       One ladder replaces ~450 hand-written alphas, and it flips on its own.
+       Light steps are slightly lower than their dark twins because black on
+       white reads heavier than white on black at the same alpha.
+
+       NOT for shadows or media scrims — those stay dark in both themes and
+       belong to --shadow / --scrim / --media-scrim below. */
+    --ink-04: rgba(20,24,40,.03);
+    --ink-06: rgba(20,24,40,.05);
+    --ink-08: rgba(20,24,40,.06);
+    --ink-10: rgba(20,24,40,.08);
+    --ink-12: rgba(20,24,40,.10);
+    --ink-15: rgba(20,24,40,.12);
+    --ink-20: rgba(20,24,40,.16);
+    --ink-25: rgba(20,24,40,.20);
+    --ink-30: rgba(20,24,40,.26);
+    --ink-40: rgba(20,24,40,.36);
+    --ink-50: rgba(20,24,40,.46);
+    --ink-60: rgba(20,24,40,.56);
+    --ink-70: rgba(20,24,40,.66);
+    --ink-85: rgba(20,24,40,.82);
+
+    /* Scrim laid over photo/video so overlaid controls stay readable. Dark in
+       BOTH themes — letterboxing a camera feed in white would be absurd. */
+    --media-bg: #000000;
+    --media-scrim: rgba(0,0,0,.45);
+
+    /* ── 4. Always-dark instrument surfaces (identical in both themes) ── */
+    /* The sidebar has its own ground because it is a distinct plane, not a
+       card: a faint violet-warm gradient rather than a flat surface. It MUST
+       follow the theme — its labels use the ink ladder, so a dark sidebar left
+       standing in a light UI would print dark ink on a dark ground. */
+    --sidebar-bg: linear-gradient(175deg, #eef0f7 0%, #edeaf4 100%);
+
+    --dark-bg: #0f1117;
+    --dark-surface: #1c2030;
+    --dark-surface-2: #262b3a;
+    /* Literal white on purpose: this group must NOT follow the theme, so it
+       cannot borrow the ink ladder — in light mode ink turns dark, and a dark
+       tooltip would end up with a dark border on a dark ground. */
+    --dark-border: rgba(255,255,255,.10);
+    --dark-text: #ffffff;
+    --dark-muted: rgba(255,255,255,.62);
+    --code-bg: #15151b;
+
+    /* ── Geometry + type (theme-independent) ── */
     --radius: 14px;
     --radius-sm: 10px;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+
+  /* ══ DARK ═══════════════════════════════════════════════════════════════
+     The scale is anchored on #0f1117 — the exact top stop of the sidebar
+     gradient, which has always been dark. So in this theme the content area
+     and the sidebar finally belong to the same surface, instead of a light
+     document sitting inside a dark frame. */
+  :root[data-theme="dark"] {
+    --sidebar-bg: linear-gradient(175deg, #0f1117 0%, #18101f 100%);
+
+    --bg: #0f1117;
+    --surface: #171a22;
+    --surface-2: #1e222c;
+    --surface-3: #262b37;
+    --surface-hover: #232734;
+    --surface-raised: #232838;
+
+    --text: #e7e9f0;
+    --muted: #9aa2b6;
+    --faint: #6f778c;
+
+    /* Borders are translucent white rather than a fixed grey: they then read
+       correctly over ANY of the surfaces above without a per-elevation value. */
+    --border: var(--ink-08);
+    --border-soft: var(--ink-04);
+    --border-strong: var(--ink-20);
+
+    /* Same hues, lifted for contrast against a dark ground. --warning at
+       #b97a00 is a brown on black — it has to brighten to stay legible. */
+    --primary: #ff8a33;
+    --primary-hover: #ffa057;
+    --success: #35c98a;
+    --danger: #f2585a;
+    --warning: #e9a020;
+    --info: #5b8ee0;
+    --neutral: #7d8496;
+    --violet: #9d7bff;
+    --violet-hover: #b294ff;
+    --primary-hi: #ffc07a;
+    --success-hover: #4ad89b;
+    --success-hi: #6fe0b0;
+    --danger-hover: #ff7376;
+    --warning-hover: #f5b544;
+    --buy: #7cae57;
+    --buy-hover: #92c06d;
+    --favorite: #f7b444;
+    --favorite-deep: #e0a33a;
+
+    /* Tints recomputed against the dark surface instead of pale washes. */
+    --primary-soft: color-mix(in srgb, var(--primary) 16%, var(--surface));
+    --success-soft: color-mix(in srgb, var(--success) 15%, var(--surface));
+    --danger-soft:  color-mix(in srgb, var(--danger)  15%, var(--surface));
+    --warning-soft: color-mix(in srgb, var(--warning) 15%, var(--surface));
+    --info-soft:    color-mix(in srgb, var(--info)    16%, var(--surface));
+    --primary-20: rgba(255,138,51,.30);
+
+    /* Shadows stop being soft grey haze — on a dark ground only near-black
+       reads as depth, and the sheen flips from white to a faint lift. */
+    --scrim: rgba(0,0,0,.62);
+    --shadow: 0 1px 2px rgba(0,0,0,.30), 0 8px 24px rgba(0,0,0,.36);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,.40), 0 24px 60px rgba(0,0,0,.50);
+    --glass-hi: rgba(255,255,255,.08);
+    --glass-lo: rgba(0,0,0,.28);
+
+    /* Ink flips to white — same ladder, opposite polarity. */
+    --ink-04: rgba(255,255,255,.04);
+    --ink-06: rgba(255,255,255,.06);
+    --ink-08: rgba(255,255,255,.08);
+    --ink-10: rgba(255,255,255,.10);
+    --ink-12: rgba(255,255,255,.12);
+    --ink-15: rgba(255,255,255,.15);
+    --ink-20: rgba(255,255,255,.20);
+    --ink-25: rgba(255,255,255,.25);
+    --ink-30: rgba(255,255,255,.30);
+    --ink-40: rgba(255,255,255,.40);
+    --ink-50: rgba(255,255,255,.50);
+    --ink-60: rgba(255,255,255,.60);
+    --ink-70: rgba(255,255,255,.70);
+    --ink-85: rgba(255,255,255,.85);
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
@@ -82,7 +288,7 @@
   /* sidebar */
   .sidebar {
     width: 240px; flex-shrink: 0;
-    background: linear-gradient(175deg, #0f1117 0%, #18101f 100%);
+    background: var(--sidebar-bg);
     border-right: none;
     display: flex; flex-direction: column; overflow: hidden;
     transition: width .25s cubic-bezier(.4,0,.2,1);
@@ -91,7 +297,7 @@
   }
   .sidebar::after {
     content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 1px;
-    background: linear-gradient(180deg, rgba(255,122,24,.3) 0%, rgba(255,122,24,.0) 60%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 30%, transparent) 0%, color-mix(in srgb, var(--primary) 0%, transparent) 60%);
     pointer-events: none;
   }
   .sidebar.collapsed { width: 65px; }
@@ -105,23 +311,23 @@
   .sb-brand { display: flex; align-items: center; gap: 9px; overflow: hidden; min-width: 0; }
   .sb-brand-dot {
     width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px;
-    background: linear-gradient(135deg, var(--primary), #ffb056);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; color: #fff;
-    box-shadow: 0 2px 10px rgba(255,122,24,.4);
+    font-size: 14px; font-weight: 800; color: var(--on-accent);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 40%, transparent);
   }
-  .sb-brand-name { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.85); white-space: nowrap; letter-spacing: -.01em; }
+  .sb-brand-name { font-size: 13px; font-weight: 700; color: var(--ink-85); white-space: nowrap; letter-spacing: -.01em; }
   .sidebar.collapsed .sb-brand { display: none; }
   .sb-toggle {
     width: 28px; height: 28px; padding: 0; border-radius: 50%; flex-shrink: 0;
-    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
-    color: rgba(255,255,255,.45);
+    background: var(--ink-08); border: 1px solid var(--ink-12);
+    color: var(--ink-40);
     display: flex; align-items: center; justify-content: center;
     transition: background .2s, border-color .2s, box-shadow .2s, color .2s;
   }
   .sb-toggle:hover {
-    background: rgba(255,122,24,.18) !important; border-color: rgba(255,122,24,.55) !important;
-    box-shadow: 0 0 12px rgba(255,122,24,.25); color: var(--primary) !important;
+    background: color-mix(in srgb, var(--primary) 18%, transparent) !important; border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 25%, transparent); color: var(--primary) !important;
   }
   .sb-chevron {
     display: block; flex-shrink: 0; pointer-events: none;
@@ -153,14 +359,14 @@
        and it matches the friend chips) so the avatar never changes size when the
        sidebar is minimised/expanded. */
     width: 40px; height: 40px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), #ffb056);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -1px;
-    box-shadow: 0 0 0 3px rgba(255,122,24,.25), 0 4px 20px rgba(255,122,24,.2);
+    font-size: 15px; font-weight: 700; color: var(--on-accent); letter-spacing: -1px;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent), 0 4px 20px color-mix(in srgb, var(--primary) 20%, transparent);
     transition: box-shadow .3s; flex-shrink: 0; cursor: pointer;
     position: relative;          /* anchor for the swap-back badge overlay */
   }
-  .sb-avatar:hover { box-shadow: 0 0 0 4px rgba(255,122,24,.45), 0 4px 28px rgba(255,122,24,.3); }
+  .sb-avatar:hover { box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 45%, transparent), 0 4px 28px color-mix(in srgb, var(--primary) 30%, transparent); }
   /* Custom-avatar photo overlay — sits on top of the colour-circle
      gradient + initials. When `state.photoURL` is set, JS injects this
      <img> via `_renderAvatarPhotoOverlay`. When the photo errors out or
@@ -201,9 +407,9 @@
      CSS (not an inline style) so :hover still works on the sidebar host. */
   .sb-avatar[data-av-mode="empty"] {
     background: rgba(255,255,255,.08); box-shadow: none;
-    color: rgba(255,255,255,.55); cursor: pointer;
+    color: var(--ink-60); cursor: pointer;
   }
-  .sb-avatar[data-av-mode="empty"]:hover { background: rgba(255,255,255,.14); }
+  .sb-avatar[data-av-mode="empty"]:hover { background: var(--ink-15); }
 
   /* Swap-back badge — a small ⇄ chip pinned to the bottom-right of the
      avatar. Hidden by default, revealed only while we're previewing a
@@ -217,9 +423,9 @@
     border-radius: 50%;
     display: none;               /* shown only in friend-view mode */
     align-items: center; justify-content: center;
-    background: #1a1a1a;
-    color: #fff;
-    box-shadow: 0 0 0 2px var(--surface-1, #0e0e10), 0 2px 8px rgba(0,0,0,.4);
+    background: var(--dark-surface);
+    color: var(--on-accent);
+    box-shadow: 0 0 0 2px var(--dark-bg), 0 2px 8px rgba(0,0,0,.4);
     pointer-events: none;        /* clicks fall through to the avatar */
     transform: scale(.6); opacity: 0;
     transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
@@ -230,7 +436,7 @@
   }
   .sb-avatar-swap .icon {
     width: 13px; height: 13px;
-    background: #fff;            /* mask-image colour */
+    background: var(--surface);            /* mask-image colour */
   }
   /* Collapsed sidebar (avatar shrinks to 40px) → shrink the badge too. */
   .sidebar.collapsed .sb-avatar-swap {
@@ -241,14 +447,14 @@
     width: 11px; height: 11px;
   }
   .sb-name {
-    font-size: 14px; font-weight: 600; color: #fff; text-align: left;
+    font-size: 14px; font-weight: 600; color: var(--text); text-align: left;
     margin-top: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     max-width: 100%;
     cursor: pointer; transition: opacity .15s;   /* click → open my user (profile) view */
   }
   .sb-name:hover { opacity: .75; }
   .sb-sub {
-    font-size: 10px; color: rgba(255,255,255,.32); text-align: left;
+    font-size: 10px; color: var(--ink-30); text-align: left;
     font-family: var(--mono); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
   }
   .sb-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 14px; width: 100%; flex: 0 1 auto; min-height: 0; }
@@ -258,13 +464,13 @@
     display: flex; align-items: center;   /* center the icon on BOTH axes (esp. the collapsed bell) */
     height: 40px; font-size: 12px; width: 100%; justify-content: center; border-radius: 8px;   /* 40px = same height expanded & collapsed (matches the friend avatars) */
   }
-  .sb-actions .primary { background: var(--primary); border-color: var(--primary); box-shadow: 0 2px 10px rgba(255,122,24,.35); }
-  .sb-actions .primary:hover { background: var(--primary-hover) !important; box-shadow: 0 3px 14px rgba(255,122,24,.45); }
+  .sb-actions .primary { background: var(--primary); border-color: var(--primary); box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 35%, transparent); }
+  .sb-actions .primary:hover { background: var(--primary-hover) !important; box-shadow: 0 3px 14px color-mix(in srgb, var(--primary) 45%, transparent); }
   .sb-actions button:not(.primary) {
-    background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.1);
-    color: rgba(255,255,255,.6);
+    background: var(--ink-08); border-color: var(--ink-10);
+    color: var(--ink-60);
   }
-  .sb-actions button:not(.primary):hover { background: rgba(255,255,255,.12) !important; color: #fff !important; }
+  .sb-actions button:not(.primary):hover { background: var(--ink-12) !important; color: var(--text) !important; }
   /* Action/community button labels (Notifications, GitHub, 3D Files, Discord):
      animatable open/close so the sidebar collapse/expand glides instead of
      popping. See the collapsed rules. */
@@ -282,7 +488,7 @@
   .sb-notifs-btn .icon { width: 20px; height: 20px; }
   .sb-friends-btn .friends-badge,
   .sb-notifs-btn .friends-badge { position: absolute; top: -5px; right: -5px; margin: 0; }
-  .sb-sub-welcome { font-size: 11px; color: rgba(255,255,255,.38); text-align: left; margin-top: 0;
+  .sb-sub-welcome { font-size: 11px; color: var(--ink-40); text-align: left; margin-top: 0;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
   /* ── avatar : état vide (aucun compte) ──
@@ -301,15 +507,15 @@
   .sb-user--empty .sb-user-row { justify-content: center; }
   .sb-noacct { display: none; flex-direction: column; align-items: center; gap: 10px; margin-top: 10px; }
   .sb-user--empty .sb-noacct { display: flex; }
-  .sb-noacct-label { font-size: 11px; color: rgba(255,255,255,.3); text-align: center; }
+  .sb-noacct-label { font-size: 11px; color: var(--ink-30); text-align: center; }
   .sb-noacct-btn {
     display: flex; align-items: center; gap: 7px;
     height: 32px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
-    background: rgba(255,122,24,.18); border: 1px solid rgba(255,122,24,.35);
+    background: color-mix(in srgb, var(--primary) 18%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
     color: var(--primary); cursor: pointer; font-family: inherit;
     transition: background .15s, border-color .15s;
   }
-  .sb-noacct-btn:hover { background: rgba(255,122,24,.28) !important; border-color: rgba(255,122,24,.55) !important; }
+  .sb-noacct-btn:hover { background: color-mix(in srgb, var(--primary) 28%, transparent) !important; border-color: color-mix(in srgb, var(--primary) 55%, transparent) !important; }
   /* collapsed : masquer le contenu no-account (juste l'avatar "+" reste visible) */
   .sidebar.collapsed .sb-noacct { display: none !important; }
 
@@ -344,26 +550,26 @@
 
   /* config section */
   .sb-field-wrap { display: flex; flex-direction: column; gap: 4px; }
-  .sb-field-label { font-size: 10px; color: rgba(255,255,255,.28); text-transform: uppercase; letter-spacing: .06em; }
+  .sb-field-label { font-size: 10px; color: var(--ink-30); text-transform: uppercase; letter-spacing: .06em; }
   .sb-field-row { display: flex; gap: 4px; }
   .sb-field-input {
     flex: 1; height: 30px; padding: 0 9px; font-size: 11px; font-family: var(--mono);
-    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.1);
-    border-radius: 7px; color: rgba(255,255,255,.8); outline: none; min-width: 0;
+    background: var(--ink-08); border: 1px solid var(--ink-10);
+    border-radius: 7px; color: var(--ink-85); outline: none; min-width: 0;
     transition: border-color .15s, background .15s;
   }
-  .sb-field-input:focus { border-color: var(--primary); background: rgba(255,122,24,.08); }
+  .sb-field-input:focus { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, transparent); }
   .sb-eye {
     width: 30px; height: 30px; padding: 0; border-radius: 7px; flex-shrink: 0;
-    background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.1); color: rgba(255,255,255,.35);
+    background: var(--ink-08); border-color: var(--ink-10); color: var(--ink-30);
     display: flex; align-items: center; justify-content: center;
     transition: background .15s, color .15s;
   }
   .sb-eye svg { display: block; }
-  .sb-eye:hover { background: rgba(255,255,255,.13) !important; color: rgba(255,255,255,.8) !important; }
+  .sb-eye:hover { background: var(--ink-12) !important; color: var(--ink-85) !important; }
   .sb-config-save {
     height: 30px; font-size: 12px; background: var(--primary); border-color: var(--primary);
-    color: #fff; border-radius: 7px; width: 100%; justify-content: center; margin-top: 2px;
+    color: var(--on-accent); border-radius: 7px; width: 100%; justify-content: center; margin-top: 2px;
   }
   .sb-config-save:hover { background: var(--primary-hover) !important; }
 
@@ -378,13 +584,13 @@
   }
   .sb-stats-wrap::-webkit-scrollbar { width: 3px; }
   .sb-stats-wrap::-webkit-scrollbar-track { background: transparent; }
-  .sb-stats-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+  .sb-stats-wrap::-webkit-scrollbar-thumb { background: var(--ink-15); border-radius: 2px; }
   .sb-stats-section-label {
     font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
-    color: rgba(255,255,255,.25); padding: 4px 2px 6px;
+    color: var(--ink-25); padding: 4px 2px 6px;
   }
   .sb-stat {
-    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.07);
+    background: var(--ink-04); border: 1px solid var(--ink-08);
     border-radius: 10px; padding: 10px 12px;
     transition: background .15s, border-color .15s; cursor: default;
     text-align: center; display: flex; flex-direction: column; align-items: center; gap: 2px;
@@ -392,17 +598,17 @@
   /* No :hover feedback — the stat cards are informational, not clickable
      (filtering lives in the controls next to the search field). */
   .sb-stat .label {
-    font-size: 10px; color: rgba(255,255,255,.38); text-transform: uppercase;
+    font-size: 10px; color: var(--ink-40); text-transform: uppercase;
     letter-spacing: .06em;
   }
   .sb-stat .label::before { display: none; }
   /* ⓘ info bubble on the "Stock value" stat */
   .sb-stat-info { display: inline-flex; align-items: center; margin-left: 4px; vertical-align: -1px; cursor: help; }
-  .sb-stat-info .icon { background-color: rgba(255,255,255,.45); }
-  .sb-stat-info:hover .icon { background-color: rgba(255,255,255,.85); }
+  .sb-stat-info .icon { background-color: var(--ink-40); }
+  .sb-stat-info:hover .icon { background-color: var(--ink-85); }
   .sb-stat .value {
     font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums;
-    color: #fff; margin-top: 4px; letter-spacing: -.02em;
+    color: var(--text); margin-top: 4px; letter-spacing: -.02em;
     transition: color .3s ease;   /* tint back to white after the ticker animation */
   }
   /* Ticker count animation — brief green (up) / red (down) tint while rolling. */
@@ -416,12 +622,12 @@
   .sidebar.collapsed .sb-stat .value { display: none; }
   .sidebar.collapsed .sb-stat::before {
     content: attr(data-mini-val); display: block; text-align: center;
-    font-size: 13px; font-weight: 700; color: #fff; letter-spacing: -.02em;
+    font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: -.02em;
   }
   .sidebar.collapsed .sb-stat::after {
     content: attr(data-mini); display: block; text-align: center;
     font-size: 8px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-    color: rgba(255,255,255,.3); margin-top: 2px;
+    color: var(--ink-30); margin-top: 2px;
   }
 
   /* ── Top header stats (v1.4.4): the same .sb-stat boxes used in the
@@ -504,8 +710,8 @@
   }
   /* TigerCloud stat — purple gradient accent */
   .sb-stat--cloud {
-    border-color: rgba(124,77,255,.35) !important;
-    background: linear-gradient(135deg, rgba(124,77,255,.12), rgba(163,123,255,.07)) !important;
+    border-color: color-mix(in srgb, var(--violet) 35%, transparent) !important;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--violet) 12%, transparent), color-mix(in srgb, var(--violet) 7%, transparent)) !important;
   }
   .sb-stat--cloud .value { color: #7b879b; }
   .sb-stat--cloud .label { color: rgba(123,135,155,.75); }
@@ -520,7 +726,7 @@
      the controls next to the search field). */
   .top-stats .sb-stat { cursor: default; }
   .top-stats .sb-stat.is-active {
-    background: rgba(255,122,24,.12) !important;
+    background: color-mix(in srgb, var(--primary) 12%, transparent) !important;
     border-color: var(--primary) !important;
   }
   .top-stats .sb-stat.is-active .value { color: var(--primary); }
@@ -576,7 +782,7 @@
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: rgba(255,255,255,.65);
+    color: var(--ink-60);
     font-size: 12px;
     font-family: inherit;
     cursor: pointer;
@@ -587,14 +793,14 @@
   .sb-actions button.sb-friend-chip:hover,
   button.sb-friend-chip:hover {
     background: transparent !important;
-    color: #fff !important;
+    color: var(--text) !important;
   }
   .sb-friend-chip:hover .sb-friend-avatar {
     box-shadow: 0 0 0 2px rgba(255,255,255,.12);
   }
   /* Active friend = brighter name only. The orange ring is gone: the sliding
      active-view pill (left edge) is the single source of "which view is active". */
-  .sb-friend-chip.is-active { color: #fff; }
+  .sb-friend-chip.is-active { color: var(--text); }
   /* Active-view pill — ONE bar pinned to the sidebar's (window's) left edge that
      SLIDES vertically (Pong-style) to line up with the avatar of the view you're
      currently browsing. Its `top` is set in JS (_positionActiveViewPill); the
@@ -602,7 +808,7 @@
   .active-view-pill {
     position: absolute; left: 0; top: 0; z-index: 6;
     width: 4px; height: 30px; border-radius: 0 4px 4px 0;
-    background: var(--primary); box-shadow: 0 0 10px rgba(255,122,24,.6);
+    background: var(--primary); box-shadow: 0 0 10px color-mix(in srgb, var(--primary) 60%, transparent);
     opacity: 0; pointer-events: none;
     transition: top .34s cubic-bezier(.34,1.25,.5,1), opacity .2s, height .2s;
   }
@@ -617,7 +823,7 @@
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 15px; font-weight: 700;
-    color: #fff;
+    color: var(--on-accent);
     letter-spacing: -.5px;
     overflow: hidden;          /* clips the <img> to the circle */
   }
@@ -662,9 +868,9 @@
   #sbFriendTip {
     position: fixed;
     z-index: 1000;
-    background: #1c2030;
-    color: #fff;
-    border: 1px solid rgba(255,255,255,.1);
+    background: var(--dark-surface);
+    color: var(--on-dark);
+    border: 1px solid var(--ink-10);
     padding: 5px 10px;
     border-radius: 7px;
     font-size: 11px;
@@ -689,7 +895,7 @@
     width: 0; height: 0;
     border-top: 5px solid transparent;
     border-bottom: 5px solid transparent;
-    border-right: 6px solid #1c2030;
+    border-right: 6px solid var(--dark-surface);
   }
 
   /* mid flex wrapper (login + stats) */
@@ -725,7 +931,7 @@
   /* App version — discrete line at the very bottom of the sidebar */
   .sb-version {
     font-size: 10px; font-weight: 500;
-    color: rgba(255,255,255,.35);
+    color: var(--ink-30);
     text-align: center;
     margin-top: 0;
     padding: 2px 4px;

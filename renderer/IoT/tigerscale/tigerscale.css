@@ -27,7 +27,7 @@
   filter: drop-shadow(0 0 5px var(--success));
 }
 .scale-health.scale-none .scale-health-icon {
-  background-color: #ef4444; opacity: 1;
+  background-color: var(--danger); opacity: 1;
 }
 /* Live "ready / active" indicator — a small green dot with an expanding ping
    ring, shown only while a scale is online (mirrors the header TigerPod dot). */
@@ -114,7 +114,7 @@
   transition: opacity .15s, transform .12s;
 }
 .scales-empty-cta:hover { opacity: .85; transform: translateY(-1px); }
-.scales-empty-cta .icon { background: var(--surface); }
+.scales-empty-cta .icon { background: var(--on-accent); }
 .scales-empty-license {
   font-size: 10.5px; color: var(--muted);
   margin-top: 2px;
@@ -156,7 +156,7 @@
   border-radius: 999px;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  background: rgba(255,255,255,0.2);
+  background: var(--ink-20);
   color: #fff;
   letter-spacing: .03em;
   white-space: nowrap;
@@ -174,15 +174,15 @@
   border-radius: 12px;
   padding: 10px 11px;
   min-width: 76px;
-  border: 1px solid rgba(255,255,255,0.13);
+  border: 1px solid var(--ink-12);
   z-index: 2;
   pointer-events: none;
 }
 .filament-color-dot {
   width: 30px; height: 30px;
   border-radius: 50%;
-  background: #888888;
-  border: 2px solid rgba(255,255,255,0.35);
+  background: var(--neutral)888;
+  border: 2px solid var(--ink-30);
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
 }
@@ -214,7 +214,7 @@
 /* Scale display name */
 .user-name {
   font-size: 14px; font-weight: 600;
-  color: rgba(255,255,255,0.75);
+  color: var(--ink-70);
   letter-spacing: .01em;
 }
 
@@ -224,17 +224,17 @@
 }
 .sc2-weight-num {
   font-size: 56px; font-weight: 800;
-  line-height: 1; letter-spacing: -.03em; color: #fff;
+  line-height: 1; letter-spacing: -.03em; color: var(--text);
 }
 .weight-unit {
   font-size: 22px; font-weight: 500;
-  color: rgba(255,255,255,0.65);
+  color: var(--ink-60);
 }
 
 /* ── Container | Filament split row ── */
 .weight-meta-row {
   display: flex; align-items: stretch; width: 100%;
-  background: rgba(255,255,255,0.12);
+  background: var(--ink-12);
   border-radius: 12px; overflow: hidden;
 }
 .weight-meta-item {
@@ -244,13 +244,13 @@
 .weight-meta-label {
   font-size: 9px; font-weight: 700;
   letter-spacing: .10em; text-transform: uppercase;
-  color: rgba(255,255,255,0.5);
+  color: var(--ink-50);
 }
 .weight-meta-value {
-  font-size: 16px; font-weight: 700; color: #fff;
+  font-size: 16px; font-weight: 700; color: var(--text);
 }
 .weight-meta-sep {
-  width: 1px; background: rgba(255,255,255,0.18); align-self: stretch;
+  width: 1px; background: var(--ink-20); align-self: stretch;
 }
 
 /* ── UID reader rows — grille 2 colonnes ── */
@@ -266,7 +266,7 @@
   gap: 3px;
 }
 .uid-chip-label {
-  background: rgba(255,255,255,0.18);
+  background: var(--ink-20);
   border-radius: 4px;
   padding: 2px 7px;
   font-size: 0.65em; font-weight: 700;
@@ -328,7 +328,7 @@
   text-transform: lowercase; letter-spacing: .01em; flex-shrink: 0;
 }
 .scale-card-status-pill.is-online  { background: var(--success-soft); color: var(--success); }
-.scale-card-status-pill.is-offline { background: rgba(150,150,150,.12); color: var(--muted); }
+.scale-card-status-pill.is-offline { background: color-mix(in srgb, var(--neutral) 12%, transparent); color: var(--muted); }
 .scale-card-status-dot {
   width: 6px; height: 6px; border-radius: 50%;
   display: inline-block; background: currentColor;
@@ -354,7 +354,7 @@
   background: transparent; border: none; border-radius: 8px;
   cursor: pointer; transition: background .15s;
 }
-.scale-card-btn:hover { background: var(--danger-soft, rgba(220,38,38,.1)); }
+.scale-card-btn:hover { background: var(--danger-soft); }
 /* Icon sits above the .hold-progress fill, so the red fill grows
    UNDER the trash glyph instead of obscuring it. */
 .scale-card-btn .icon {
@@ -375,12 +375,12 @@
 
 /* WS connect/disconnect button — not destructive, use accent hover instead of danger */
 .scale-card-btn--ws:hover             { background: rgba(99,102,241,.12); }
-.scale-card-btn--ws:hover .icon       { background: var(--accent, #6366f1); }
+.scale-card-btn--ws:hover .icon       { background: var(--info); }
 /* Connected state: green indicator */
-.scale-card-btn--ws.is-ws-on          { background: rgba(34,197,94,.12); }
-.scale-card-btn--ws.is-ws-on .icon    { background: var(--ok, #22c55e); }
-.scale-card-btn--ws.is-ws-on:hover    { background: rgba(34,197,94,.2); }
-.scale-card-btn--ws.is-ws-on:hover .icon { background: var(--ok, #22c55e); }
+.scale-card-btn--ws.is-ws-on          { background: color-mix(in srgb, var(--success) 12%, transparent); }
+.scale-card-btn--ws.is-ws-on .icon    { background: var(--success); }
+.scale-card-btn--ws.is-ws-on:hover    { background: color-mix(in srgb, var(--success) 20%, transparent); }
+.scale-card-btn--ws.is-ws-on:hover .icon { background: var(--success); }
 
 /* ── Chips strip — telemetry at a glance.
    A horizontal row of compact pills, each showing one piece of info
@@ -445,7 +445,7 @@
   flex-shrink: 0;
   border-radius: 4px;
   border: 1px solid rgba(0,0,0,.12);
-  background: rgba(150,150,150,.12);
+  background: color-mix(in srgb, var(--neutral) 12%, transparent);
   position: relative; overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
 }
@@ -542,7 +542,7 @@
   position: absolute;
   left: 0; top: 0;
   height: 100%; width: 0;
-  background: rgba(255, 255, 255, 0.4);
+  background: var(--ink-40);
   transition: none;
   z-index: 1;
 }
@@ -561,7 +561,7 @@
 
 .scale-ws-log {
   margin: 0;
-  border: 1px solid var(--border, rgba(255,255,255,.08));
+  border: 1px solid var(--border);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -578,7 +578,7 @@
   cursor: pointer;
   list-style: none;
   user-select: none;
-  background: var(--bg-raised, rgba(255,255,255,.03));
+  background: var(--surface-raised);
 }
 .swl-summary::-webkit-details-marker { display: none; }
 .swl-summary::before {
@@ -591,7 +591,7 @@
 .swl-count {
   font-size: 10px;
   font-weight: 700;
-  background: var(--bg-2, rgba(255,255,255,.06));
+  background: var(--surface-2);
   padding: 1px 5px;
   border-radius: 4px;
   color: var(--muted);
@@ -602,8 +602,8 @@
   font-size: 10px;
   font-family: 'SF Mono', ui-monospace, monospace;
   line-height: 1.55;
-  color: var(--text-2, rgba(255,255,255,.7));
-  background: var(--bg-2, rgba(0,0,0,.18));
+  color: var(--muted);
+  background: var(--surface-2);
   overflow-x: auto;
   max-height: 220px;
   overflow-y: auto;
@@ -619,8 +619,8 @@
   text-align: center;
   margin-right: 3px;
 }
-.swl-dir--rx  { color: var(--ok,      #22c55e); }
-.swl-dir--tx  { color: var(--accent,  #6366f1); }
+.swl-dir--rx  { color: var(--success); }
+.swl-dir--tx  { color: var(--info); }
 .swl-dir--ev  { color: var(--muted); }
 .swl-ts {
   color: var(--muted);

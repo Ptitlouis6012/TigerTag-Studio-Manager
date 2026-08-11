@@ -9,15 +9,52 @@ const crypto = require('crypto');
 // language) and pushed here via IPC so the native menu matches the in-app language
 // rather than the OS locale. Null until the first push → role defaults are used.
 let _ctxMenuLabels = null;
+// The renderer owns the theme (Settings → Appearance); the window chrome is
+// ours, so it has to be told. Called on boot and on every change.
+ipcMain.on('app:native-theme', (_e, theme) => {
+  nativeTheme.themeSource = theme === 'light' ? 'light' : 'dark';
+});
+
 ipcMain.on('app:ctx-menu-labels', (_e, labels) => {
   if (labels && typeof labels === 'object') _ctxMenuLabels = labels;
 });
+
+// ── Portable build — keep EVERYTHING on the stick ──────────────────────────
+// The Windows `portable` target runs the app straight from a USB key or an
+// external drive, with no installation (for machines where installing is not
+// allowed). electron-builder sets PORTABLE_EXECUTABLE_DIR to the folder the
+// .exe was launched from.
+//
+// Without this block a "portable" build is only half portable: Electron would
+// still write accounts, cache, IndexedDB and logs to %APPDATA% on the HOST
+// machine — so the user would leave a signed-in session behind on a shared PC
+// AND would not find their inventory again on the next computer, which is the
+// whole point of carrying the app around.
+//
+// Must run BEFORE electron-log is required (it resolves its file path from
+// userData) and before anything else touches an app path.
+const _portableDir = process.env.PORTABLE_EXECUTABLE_DIR;
+if (_portableDir) {
+  try {
+    const dataDir = path.join(_portableDir, 'TigerStudioData');
+    fs.mkdirSync(dataDir, { recursive: true });
+    app.setPath('userData', dataDir);
+    app.setPath('sessionData', dataDir);
+    app.setPath('logs', path.join(dataDir, 'logs'));
+  } catch (e) {
+    // A read-only stick or a locked-down folder: fall back to the default
+    // location rather than refusing to start. The app still works, it just
+    // stores its data on the host.
+    console.warn('[portable] cannot use the executable folder, falling back:', e.message);
+  }
+}
 
 // ── Persistent logging ─────────────────────────────────────────────────────
 // Writes to:
 //   Windows : %APPDATA%\Tiger Studio Manager\logs\main.log
 //   macOS   : ~/Library/Logs/Tiger Studio Manager/main.log
 //   Linux   : ~/.config/Tiger Studio Manager/logs/main.log
+//   Portable: <stick>\TigerStudioData\logs\main.log   (see the block above)
 const log = require('electron-log');
 log.transports.file.maxSize = 5 * 1024 * 1024; // 5 MB max, auto-rotated
 log.transports.file.format  = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}';
@@ -4147,7 +4184,10 @@ app.whenReady().then(async () => {
   imgCacheDir = path.join(app.getPath('userData'), 'img_cache');
   fs.mkdirSync(imgCacheDir, { recursive: true });
 
-  // Force dark window chrome (title bar, traffic lights) on all platforms
+  // Dark window chrome (title bar, traffic lights) is the DEFAULT, matching the
+  // app's default theme — set here so the frame is right before the renderer
+  // has said anything. If the user picked Light, the renderer corrects this via
+  // 'app:native-theme' as soon as it boots.
   nativeTheme.themeSource = 'dark';
 
   // macOS native "About Tiger Studio Manager" menu (Apple menu → About)

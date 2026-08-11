@@ -647,6 +647,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // group structure is derived at render time — never persisted to Firestore.
     groupInv: localStorage.getItem("tigertag.inv.group") !== "false",
     lang: localStorage.getItem("tigertag.lang") || "en",
+    theme: localStorage.getItem("tigertag.theme") || "dark",
     sortCol: _invSort.col,       // persisted; default "brand"
     sortDir: _invSort.dir,       // persisted; default "asc"
     favesSortCol: _favesSort.col,       // Favorites table sort — persisted, own column set
@@ -4140,6 +4141,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("eacAvatarResult").textContent = "";
     $("eacDisplayNameInput").value = _editingAccount.displayName || "";
     $("eacNameResult").textContent = "";
+    // Mark the live theme on the segment. The modal is re-opened, not rebuilt,
+    // so this has to be refreshed each time — same as langSelect further down.
+    document.querySelectorAll("#eacThemeSeg .eac-seg-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.themeChoice === (state.theme || "dark")));
     $("eacAdminBadge").classList.toggle("hidden", !state.isAdmin);
     $("eacDebugRow").classList.toggle("hidden",   !state.isAdmin);
     $("eacDebugToggle").checked = state.debugEnabled;
@@ -4199,10 +4204,35 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const del = row.querySelector(".eac-social-del"); if (del) del.hidden = !val;
     });
     box.addEventListener("focusout", () => { clearTimeout(_socialsSaveT); _socialsSaveT = setTimeout(_saveSocials, 150); });
+    // Enter commits and leaves the field. Blurring is enough — it fires the
+    // focusout above, which is the ONE save path; calling _saveSocials here as
+    // well would race it and re-render the editor under the user's cursor.
+    // preventDefault stops the <input type="url"> from submitting anything.
+    box.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      const inp = e.target.closest?.(".eac-social-input"); if (!inp) return;
+      e.preventDefault();
+      inp.blur();
+    });
     box.addEventListener("click", e => {
       if (!e.target.closest(".eac-social-del")) return;
-      const inp = e.target.closest(".eac-social-row")?.querySelector(".eac-social-input");
-      if (inp) inp.value = "";
+      const row = e.target.closest(".eac-social-row"); if (!row) return;
+      // Drop the ROW, don't just blank its input. _saveSocials only re-renders
+      // the editor once focus has left it — and the ✕ lives inside it — so a
+      // blanked row would linger on screen, still showing its old platform icon
+      // and its ✕, right next to the empty add-row. Removing it here is also
+      // the surgical move: no innerHTML rebuild, so the other fields keep their
+      // caret, selection and scroll position.
+      const inp = row.querySelector(".eac-social-input");
+      if (row === box.lastElementChild) {
+        // The trailing row is the "add another" slot — it must always exist, so
+        // reset it in place instead of removing it.
+        if (inp) inp.value = "";
+        row.querySelector(".eac-social-ic .icon")?.setAttribute("class", "icon icon-link icon-13");
+        e.target.closest(".eac-social-del").hidden = true;
+      } else {
+        row.remove();
+      }
       _saveSocials();
     });
   }
@@ -4225,6 +4255,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       `<option value="${c.code}">${c.label} · ${c.rate}% · ${c.symbol}</option>`
     ).join("");
     sel.value = _vatCountryCode();
+    // The styled dropdown mirrors the <select>; repopulating it behind the
+    // button would otherwise leave the old country showing on the button.
+    sel._cselRefresh?.();
   }
   function closeEditAccountModal() {
     $("editAccountModalOverlay").classList.remove("open");
@@ -4569,17 +4602,34 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   function _closeAvatarMenu() { $("avatarMenu")?.classList.remove("open"); }
 
+  // Confirmation lives ON the save button rather than as a message under the
+  // field: a success has nothing to say, so a line of text appearing and
+  // vanishing below the input is just noise that shifts the layout. Errors DO
+  // carry information ("the name must be N characters"), so they still get
+  // words — the button only reinforces them with a shake.
+  function _flashNameSave(kind) {
+    const b = $("btnSaveDisplayName"); if (!b) return;
+    clearTimeout(b._flashT);
+    b.classList.remove("is-ok", "is-err", "is-busy");
+    if (kind === "busy") { b.classList.add("is-busy"); return; }
+    void b.offsetWidth;                       // restart the animation on a repeat save
+    b.classList.add(kind === "ok" ? "is-ok" : "is-err");
+    b._flashT = setTimeout(() => b.classList.remove("is-ok", "is-err"), kind === "ok" ? 1200 : 700);
+  }
+
   // Save display name
   async function saveDisplayName() {
     if (!_editingAccount) return;
     const newName = $("eacDisplayNameInput").value.trim();
     const res = $("eacNameResult");
-    if (newName.length < DNS_NAME_MIN || newName.length > DNS_NAME_MAX) { res.style.color = "var(--danger)"; res.textContent = t("setupNameLen"); return; }
-    if (newName === (_editingAccount.displayName || "")) {
-      res.style.color = "var(--muted)"; res.textContent = "✓";
-      setTimeout(() => { res.textContent = ""; }, 1200); return;
+    if (newName.length < DNS_NAME_MIN || newName.length > DNS_NAME_MAX) {
+      res.style.color = "var(--danger)"; res.textContent = t("setupNameLen");
+      _flashNameSave("err"); return;
     }
-    res.style.color = "var(--muted)"; res.textContent = "Saving…";
+    if (newName === (_editingAccount.displayName || "")) {
+      res.textContent = ""; _flashNameSave("ok"); return;
+    }
+    res.textContent = ""; _flashNameSave("busy");
     try {
       // 1. Firebase Auth profile
       const user = fbAuth().currentUser;
@@ -4603,10 +4653,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         renderFriendBanner();
       }
       renderAccountDropdown();
-      res.style.color = "var(--primary)"; res.textContent = "✓ Saved";
-      setTimeout(() => { res.textContent = ""; }, 2000);
+      res.textContent = ""; _flashNameSave("ok");
     } catch (e) {
       res.style.color = "var(--danger)"; res.textContent = e.message || "Error";
+      _flashNameSave("err");
     }
   }
   $("btnSaveDisplayName").addEventListener("click", saveDisplayName);
@@ -6630,6 +6680,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     sel._cselRefresh?.();   // sync the custom dropdown's button label
   }
 
+  // The nearest ancestor that actually CLIPS its overflow. An absolutely
+  // positioned popup is cut off by that box, not by the viewport — so it is the
+  // box to measure against when deciding which way a dropdown should open.
+  function _nearestClippingAncestor(el) {
+    for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (/auto|hidden|scroll/.test(cs.overflowY) || /auto|hidden|scroll/.test(cs.overflowX)) return n;
+    }
+    return document.documentElement;
+  }
+
   // Replace a native <select>'s OS dropdown (unstylable) with an app-styled popup.
   // The <select> stays (for value + every existing populate / change handler) but
   // is visually hidden; a button mirrors it and a custom list drives selection.
@@ -6670,10 +6731,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // popup is not merely ugly — it is CLIPPED, and the rightmost filter's list
       // would be half invisible. Measured, not guessed at from the DOM order: how
       // far the last filter sits depends on the locale's label widths.
-      pop.classList.remove("csel-pop--right");
+      pop.classList.remove("csel-pop--right", "csel-pop--up");
       const host = wrap.closest("#card-inv") || document.body;
       if (pop.getBoundingClientRect().right > host.getBoundingClientRect().right - 4)
         pop.classList.add("csel-pop--right");
+      // Same problem on the vertical axis, but the box that clips is whatever
+      // ancestor actually scrolls — the profile card's body, a settings panel —
+      // not `#card-inv`. Opening downward there cuts the list in half, so flip
+      // it above the button when it would not fit below.
+      const clipHost = _nearestClippingAncestor(wrap);
+      const room = clipHost.getBoundingClientRect();
+      if (pop.getBoundingClientRect().bottom > room.bottom - 4)
+        pop.classList.add("csel-pop--up");
       // Bring the selected option into view WITHOUT scrollIntoView: that walks up
       // and scrolls EVERY scrollable ancestor, and `overflow: hidden` still scrolls
       // programmatically — so opening the rightmost dropdown slid the whole view
@@ -6731,7 +6800,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // the bubble hides itself, and the app opened with the restored view showing
     // and NOTHING marked as selected. This is the first moment the card is
     // reliably on screen, and it is cheap and idempotent — a handful of box reads.
-    queueMicrotask(() => { try { _positionViewIndicators(true); } catch (_) {} });
+    // ONE-SHOT. This exists only to catch the first render after `#card-inv`
+    // becomes visible; re-running it on every render fired an INSTANT re-fit in
+    // the same tick as a view switch, which snapped the bubble to its
+    // destination and killed the slide the switch had just started.
+    // "Fitted" means a bubble actually measured a width — before the card is on
+    // screen every button is 0 px wide and the fit is meaningless, so we keep
+    // retrying until one lands.
+    queueMicrotask(() => {
+      try {
+        if (_vtiFitted) return;
+        _positionViewIndicators(true);
+        if (document.querySelector(".view-toggle-groups .view-toggle-ind")?.offsetWidth) _vtiFitted = true;
+      } catch (_) {}
+    });
     populateBrandFilter();      // refresh dropdown options on every render
     const rows = allDisplayRows();
     renderFriendBanner();
@@ -8190,16 +8272,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Social-profile links (userProfiles.socials = ordered list of URLs). The icon
   // is inferred from the URL host — flexible, no fixed platform enum. Any host we
   // don't recognise falls back to a globe (generic website).
+  // The colour is written into `--sc` as an inline style, so it may be a token
+  // reference as well as a hex. X, TikTok and GitHub have MONOCHROME identities
+  // built to invert (black on white / white on black) — pinning them to
+  // #111111 made them vanish against a dark background, which is exactly what
+  // "the TikTok logo is missing" turned out to be. `var(--text)` keeps them
+  // near-black in light and near-white in dark, which is what those brands do
+  // themselves. Every other entry is a real chromatic brand colour and stays
+  // literal: Instagram pink is Instagram pink in any theme.
   const _SOCIAL_MAP = [
-    [/(^|\.)(x\.com|twitter\.com)$/,        "x",         "#111111"],
+    [/(^|\.)(x\.com|twitter\.com)$/,        "x",         "var(--text)"],
     [/(^|\.)instagram\.com$/,               "instagram", "#e1306c"],
     [/(^|\.)(youtube\.com|youtu\.be)$/,     "youtube",   "#ff0000"],
-    [/(^|\.)tiktok\.com$/,                  "tiktok",    "#111111"],
+    [/(^|\.)tiktok\.com$/,                  "tiktok",    "var(--text)"],
     [/(^|\.)facebook\.com$/,                "facebook",  "#1877f2"],
     [/(^|\.)(linkedin\.com|lnkd\.in)$/,     "linkedin",  "#0a66c2"],
     [/(^|\.)twitch\.tv$/,                   "twitch",    "#9146ff"],
     [/(^|\.)discord\.(gg|com)$/,            "discord",   "#5865f2"],
-    [/(^|\.)github\.com$/,                  "github",    "#111111"],
+    [/(^|\.)github\.com$/,                  "github",    "var(--text)"],
     [/(^|\.)(wa\.me|whatsapp\.com)$/,       "whatsapp",  "#25d366"],
   ];
   function _socialMeta(url) {
@@ -9880,6 +9970,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Slide the selection bubble to the newly-active button (instant on the very
     // first call so it doesn't animate in from the left on load).
     const _firstFit = !_vtiReady;
+    // Timestamp the switch so the ResizeObserver below can tell a reflow the
+    // USER just caused from one the window caused. Switching view changes which
+    // filters are visible, which can rewrap the action row — and a rewrap must
+    // not snap the bubble the click has just set moving.
+    _vtiSwitchAt = performance.now();
     _positionViewIndicators(_firstFit);
     _vtiReady = true;
     if (_firstFit) requestAnimationFrame(() => _positionViewIndicators(true));  // re-fit once layout settles
@@ -9889,6 +9984,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // segments (only one segment holds the current view). Measured from live layout
   // so it copes with variable button widths + i18n label changes.
   let _vtiReady = false;
+  // Set once a bubble has really been measured on a visible card — guards the
+  // one-shot re-fit in renderInventory (see the comment there).
+  let _vtiFitted = false;
+  // When the last view switch happened. The action row is `flex-wrap`, so
+  // switching view can rewrap it (different filters become visible) — and that
+  // reflow must NOT snap the bubble the click has just set moving.
+  let _vtiSwitchAt = 0;
   function _positionViewIndicators(instant) {
     document.querySelectorAll(".view-toggle-groups .view-toggle").forEach(tg => {
       const ind = tg.querySelector(".view-toggle-ind");
@@ -9922,7 +10024,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
    */
   try {
     const _vtg = document.querySelector(".view-toggle-groups");
-    if (_vtg) new ResizeObserver(() => _positionViewIndicators(true)).observe(_vtg);
+    // Snap only when the reflow was NOT caused by the user's own click. The row
+    // is `flex-wrap`, so changing view can move a whole group onto another line;
+    // that fires this observer a few ms after the click, and re-fitting
+    // instantly there wiped out the slide the click had just started. Inside the
+    // switch window we re-fit with the transition intact, so the bubble travels
+    // to wherever the button ended up — new line included.
+    if (_vtg) new ResizeObserver(() => {
+      _positionViewIndicators(performance.now() - _vtiSwitchAt > 400);
+    }).observe(_vtg);
   } catch (_) {
     window.addEventListener("resize", () => _positionViewIndicators(true));
   }
@@ -19931,6 +20041,52 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  // Dark is the shipped default, written statically on <html> in
+  // inventory.html so the right palette is painted before this module runs.
+  // applyTheme only ever OVERRIDES that — initialising it from storage here
+  // would flash dark-then-light on every launch for someone who picked light.
+  function applyTheme(theme) {
+    const t = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = t;
+    // The title bar, traffic lights and native dialogs belong to the main
+    // process — CSS cannot reach them, so a light UI would otherwise sit
+    // inside a black frame.
+    try { window.electronAPI?.setNativeTheme?.(t); } catch (_) {}
+    document.querySelectorAll("#eacThemeSeg .eac-seg-btn").forEach(b =>
+      b.classList.toggle("active", b.dataset.themeChoice === t));
+  }
+
+  // Same three-tier persistence as the language pref, plus telemetry.
+  function saveAccountTheme(theme) {
+    const t = theme === "light" ? "light" : "dark";
+    state.theme = t;
+    applyTheme(t);
+    // 1. localStorage — the read source at boot, before Firebase is up. This is
+    //    what makes the choice survive a cold start with no network.
+    localStorage.setItem("tigertag.theme", t);
+    const user = fbAuth().currentUser;
+    if (!user) return;
+    // 2. users/{uid}.studioTheme — the preference itself, on the user doc beside
+    //    `vatCountry` and `priceInputMode`, which is where this app's own
+    //    settings already live. `prefs/app` is the CROSS-APP doc (that is where
+    //    `lang` sits, shared with the mobile app); the theme is Studio's alone,
+    //    hence the `studio` prefix. It also rides along with `syncUserDoc`'s
+    //    existing read at boot instead of costing a second document fetch.
+    //    users/{uid} is owner-only and its write rule is a BLACKLIST (only
+    //    `roles` and `tier` are refused), so this needs no rules change.
+    fbDb().collection("users").doc(user.uid)
+      .set({ studioTheme: t }, { merge: true })
+      .catch(err => console.warn("[Firestore] saveAccountTheme:", err.message));
+    // 3. telemetry/studio { theme } — the same value, but as USAGE data, so the
+    //    Hub can report the dark/light split across the install base. Kept
+    //    separate on purpose: prefs is what the app reads back, telemetry is
+    //    what we aggregate. NOTE: telemetry is a field-whitelisted collection in
+    //    firestore.rules — `theme` must be in its hasOnly([...]) list or this
+    //    write is rejected silently.
+    _recordUsage({ theme: t });
+  }
+
   // Persist the user's country choice — drives the VAT rate + currency used
   // for filament reorder prices. Stored on users/{uid}.vatCountry (a user-doc
   // field, alongside publicKey/isPublic — not a spool field).
@@ -20266,11 +20422,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // every instance: the materials detail side card AND the product-info card.
   // Clicking still toggles the flag (no swallow — unlike the ⓘ).
   let _flagTipsWired = false;
+  // Also covers `.eac-info`, the ⓘ in the profile side card: same bubble, same
+  // delegation, one selector — an explanation that only shows when asked beats
+  // a paragraph of help text sitting under the control forever.
+  const _DOC_TIP_SEL = ".flag-toggle[data-tip], .eac-info[data-tip]";
   function _wireFlagTips() {
     if (_flagTipsWired) return;
     _flagTipsWired = true;
-    document.addEventListener("mouseover", e => { const el = e.target.closest?.(".flag-toggle[data-tip]"); if (el) _showToolInfoTip(el); });
-    document.addEventListener("mouseout",  e => { const el = e.target.closest?.(".flag-toggle[data-tip]"); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
+    document.addEventListener("mouseover", e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el) _showToolInfoTip(el); });
+    document.addEventListener("mouseout",  e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
+    // Keyboard parity: the ⓘ is focusable, so it must reveal on focus too.
+    document.addEventListener("focusin",   e => { const el = e.target.closest?.(".eac-info[data-tip]"); if (el) _showToolInfoTip(el); });
+    document.addEventListener("focusout",  e => { if (e.target.closest?.(".eac-info[data-tip]")) _hideToolInfoTip(); });
   }
   _wireFlagTips();
   // Rack-view ⓘ tips (.rp-info — auto-organize, "no space" hint, …) reuse the
@@ -30821,6 +30984,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       state.socials    = _cleanSocials(data.socials);   // social-profile links (mirrored to userProfiles)
       state.vatCountry = data.vatCountry || null;    // ISO country code for VAT rate + currency (filament reorder)
       state.priceInputMode = data.priceInputMode === "HT" ? "HT" : "TTC"; // how the user types prices (stored value stays HT)
+      // UI theme, beside its sibling Studio settings. Applied only when it
+      // actually differs from what is already on screen: this doc arrives after
+      // first paint, and re-applying the same value would restart the CSS
+      // transitions for nothing.
+      if ((data.studioTheme === "light" || data.studioTheme === "dark")
+          && data.studioTheme !== (localStorage.getItem("tigertag.theme") || "dark")) {
+        localStorage.setItem("tigertag.theme", data.studioTheme);
+        state.theme = data.studioTheme;
+        applyTheme(data.studioTheme);
+      }
       state.discordSeen    = !!data.discordSeen;     // "nudge done" flags (per account, synced)
       state.githubSeen     = !!data.githubSeen;
       state.makerworldSeen = !!data.makerworldSeen;
@@ -31092,6 +31265,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (acc) { acc.lang = cloudLang; saveAccounts(accounts); }
         applyLang(cloudLang);
       }
+      // (The theme is NOT read here. It lives on users/{uid}.studioTheme with
+      // the other Studio-only settings and is applied by syncUserDoc — `prefs`
+      // is the CROSS-APP document, shared with the mobile app, and the theme is
+      // this app's alone.)
       // Group-identical-spools toggle — apply if remote differs.
       if (typeof data.groupInv === "boolean" && data.groupInv !== state.groupInv) {
         state.groupInv = data.groupInv;
@@ -31141,6 +31318,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const btn = e.target.closest(".eac-seg-btn[data-mode]");
     if (btn) saveAccountPriceMode(btn.dataset.mode);
   });
+  $("eacThemeSeg")?.addEventListener("click", e => {
+    const btn = e.target.closest(".eac-seg-btn[data-theme-choice]");
+    if (btn) saveAccountTheme(btn.dataset.themeChoice);
+  });
+  // The profile card's two dropdowns get the app-styled popup like every other
+  // select in the app — a native <select> opens an OS list that no CSS can
+  // reach, so it would stay light-on-light (or dark-on-dark) whatever theme
+  // the card is wearing.
+  ["langSelect", "vatCountrySelect"].forEach(id => _enhanceSelect($(id)));
+  // Boot: honour the stored choice. The window is still hidden at this point
+  // (main reveals it on `studio:ready`), so switching here is never seen.
+  applyTheme(localStorage.getItem("tigertag.theme") || "dark");
 
   /* ── init ── */
   loadLocales().then(() => {

@@ -38,7 +38,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 
 ---
 
-## App bootstrap, static server, splash & main window (L143-381)
+## App bootstrap, static server, splash & main window (L180-418)
 
 | L | What | Anchors |
 |---|---|---|
@@ -47,7 +47,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 311-335 | UID hex→decimal + TigerTag SDK payload builder | `normalizeUid`, `_sdkPayload` |
 | 336-442 | `BrowserWindow` creation, preload wiring, CSP, devtools | `createWindow` |
 
-## NFC / RFID reader + chip write (L526-1337)
+## NFC / RFID reader + chip write (L563-1374)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -62,7 +62,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 |---|---|---|
 | 1138-1379 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
 
-## Auto-updater + migration gate (L1599-1650)
+## Auto-updater + migration gate (L1636-1687)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -76,7 +76,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 1554-1702 | Google OAuth loopback sign-in (`auth:google-loopback`); `shell:open-external` | — |
 | 1703-1749 | Detached camera-wall `BrowserWindow` (`cam:open-detached`); `update:check-now` | — |
 
-## Printer discovery probes (L2094-2478)
+## Printer discovery probes (L2172-2556)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -112,7 +112,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 2826-2910 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
 | 2911-3019 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags | — |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3507-3515)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L3585-3593)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -121,7 +121,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3213-3235 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3236-3343 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L3660-4021)
+## Anycubic cloud — REST + cloud MQTT (L3738-4099)
 
 | L | What | Anchors / IPC |
 |---|---|---|

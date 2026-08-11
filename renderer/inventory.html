@@ -1,5 +1,10 @@
 <!doctype html>
-<html lang="en">
+<!-- `data-theme` is written here, statically, so the right palette is in force
+     at the FIRST paint — before any script runs. Dark is the shipped default;
+     the renderer only rewrites this attribute when the user has picked Light
+     in Settings (persisted as `tigertag.theme`). Putting it in JS instead
+     would flash the wrong theme on every launch. -->
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1859,9 +1864,17 @@
 <!-- ── edit account modal ── -->
 <div class="modal-overlay" id="editAccountModalOverlay">
   <div class="modal-card eac-card">
+    <!-- Panel header — the card is a side panel now, so it gets a real title
+         bar like the other side panels rather than a floating ✕ on the hero. -->
+    <div class="eac-panel-head">
+      <span class="eac-panel-title">
+        <span class="icon icon-user icon-16"></span>
+        <span data-i18n="eacPanelTitle">My profile</span>
+      </span>
+      <button class="modal-close eac-close" id="editAccountModalClose">✕</button>
+    </div>
     <!-- hero: avatar + color picker -->
     <div class="eac-hero">
-      <button class="modal-close eac-close" id="editAccountModalClose">✕</button>
       <div class="eac-ident">
         <div class="eac-avatar eac-avatar-editable" id="eacAvatar" title="Change avatar">
           <!-- Initials live in their OWN span so JS can update them
@@ -1914,63 +1927,121 @@
         </label>
       </div>
     </div>
-    <!-- body -->
+    <!-- Body — grouped into sections rather than one long field run, so the
+         card scans at a glance: who you are, then how it looks, then where
+         you are, then the rarely-touched things. -->
     <div class="eac-body">
-      <!-- Avatar status message (inline below the hero avatar) -->
-      <div id="eacAvatarResult" style="min-height:16px;font-size:11px;margin-top:-8px;margin-bottom:12px;text-align:center"></div>
+      <!-- Avatar status message (inline, right under the hero avatar) -->
+      <div id="eacAvatarResult" class="eac-avatar-result"></div>
 
-      <!-- display name -->
-      <div class="eac-field-label" data-i18n="displayNameLabel">Display name</div>
-      <div class="eac-name-row">
-        <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="20" placeholder="—" autocomplete="off" />
-        <button class="ghost sm eac-name-save" id="btnSaveDisplayName">
-          <span class="icon icon-check icon-13"></span>
-        </button>
-      </div>
-      <div id="eacNameResult" style="min-height:16px;font-size:11px;margin-top:4px"></div>
+      <!-- ── Display name — label sits above the field, which is the shape an
+           editable text input wants: the label reads as the field's caption
+           rather than as a settings row whose value happens to be typeable. ── -->
+      <section class="eac-group">
+        <div class="eac-field-label" data-i18n="displayNameLabel">Display name</div>
+        <div class="eac-name-row">
+          <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="20" placeholder="—" autocomplete="off" />
+          <button class="ghost sm eac-name-save" id="btnSaveDisplayName">
+            <span class="icon icon-check icon-13"></span>
+          </button>
+        </div>
+        <div id="eacNameResult" class="eac-inline-result"></div>
+      </section>
 
-      <!-- social links (auto-save; icon inferred from the URL host) -->
-      <div class="eac-field-label" data-i18n="editSocialsLabel" style="margin-top:12px">Social links</div>
-      <div id="eacSocials" class="eac-socials"></div>
+      <!-- ── Links — its own washed block, so the stack of link cards reads as
+           one region instead of loose rows inside Profile. ── -->
+      <section class="eac-group eac-group--links">
+        <h3 class="eac-group-title" data-i18n="editSocialsLabel">Social links</h3>
+        <div id="eacSocials" class="eac-socials"></div>
+        <!-- These links are mirrored to the public profile, which friends and
+             the web read. Nothing in the UI said so until now. -->
+        <div class="eac-socials-note">
+          <span class="icon icon-link icon-13"></span>
+          <span data-i18n="editSocialsPublicNote">Visible to your friends and on your public profile</span>
+        </div>
+      </section>
 
-      <!-- language (auto-saves) -->
-      <div class="eac-field-label" data-i18n="settingsLang" style="margin-top:12px">Language</div>
-      <select class="lang-select" id="langSelect">
-        <option value="en">English</option>
-        <option value="fr">Français</option>
-        <option value="de">Deutsch</option>
-        <option value="es">Español</option>
-        <option value="it">Italiano</option>
-        <option value="pl">Polski</option>
-        <option value="pt">Português (BR)</option>
-        <option value="pt-pt">Português (PT)</option>
-        <option value="zh">中文</option>
-      </select>
-      <!-- country (drives VAT rate + currency for filament reorder prices) — auto-saves -->
-      <div class="eac-field-label" data-i18n="vatCountryLabel" style="margin-top:12px">Country</div>
-      <select class="lang-select" id="vatCountrySelect"></select>
-      <div class="eac-field-hint" data-i18n="vatCountryHint">Sets your VAT rate and currency for filament prices.</div>
-      <!-- price entry mode (HT vs TTC) — how the user types prices; stored value is always HT -->
-      <div class="eac-field-label" data-i18n="priceInputLabel" style="margin-top:12px">Price entry</div>
-      <div class="eac-seg" id="eacPriceMode" role="tablist">
-        <button type="button" class="eac-seg-btn" data-mode="HT" data-i18n="reorderHT">excl. tax</button>
-        <button type="button" class="eac-seg-btn" data-mode="TTC" data-i18n="reorderTTC">incl. tax</button>
-      </div>
-      <div class="eac-field-hint" data-i18n="priceInputHint">Type prices this way — we always store them tax-free and add tax for your country.</div>
-      <!-- debug toggle (admin only) -->
-      <div class="eac-debug-row hidden" id="eacDebugRow">
-        <span class="eac-debug-label">
-          <span class="icon icon-info icon-13"></span>
-          Debug mode
-        </span>
-        <label class="eac-toggle">
-          <input type="checkbox" id="eacDebugToggle" />
-          <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
-        </label>
-      </div>
+      <!-- ── Appearance ── -->
+      <section class="eac-group">
+        <h3 class="eac-group-title" data-i18n="eacGroupAppearance">Appearance</h3>
+        <div class="eac-row">
+          <span class="eac-row-label" data-i18n="stgThemeRow">Theme</span>
+          <div class="eac-seg" id="eacThemeSeg" role="tablist">
+            <button type="button" class="eac-seg-btn" data-theme-choice="dark"  data-i18n="stgThemeDark">Dark</button>
+            <button type="button" class="eac-seg-btn" data-theme-choice="light" data-i18n="stgThemeLight">Light</button>
+          </div>
+        </div>
+      </section>
 
-      <!-- sign out -->
-      <button class="eac-disconnect" id="btnEditModalDisconnect" style="margin-top:18px">
+      <!-- ── Language & region ──
+           Each setting is one row: label left, control right. The two hints
+           stay — they carry information the control itself cannot show. -->
+      <section class="eac-group">
+        <h3 class="eac-group-title" data-i18n="eacGroupRegion">Language &amp; region</h3>
+        <div class="eac-row">
+          <span class="eac-row-label" data-i18n="settingsLang">Language</span>
+          <select class="lang-select" id="langSelect">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="es">Español</option>
+            <option value="it">Italiano</option>
+            <option value="pl">Polski</option>
+            <option value="pt">Português (BR)</option>
+            <option value="pt-pt">Português (PT)</option>
+            <option value="zh">中文</option>
+          </select>
+        </div>
+
+        <!-- country (drives VAT rate + currency for filament reorder prices).
+             The explanation is an ⓘ bubble rather than a paragraph under the
+             row: "France · 20% · €" already shows the rate, only the fact that
+             it also picks the CURRENCY needs saying, and only to whoever asks. -->
+        <div class="eac-row">
+          <span class="eac-row-label">
+            <span data-i18n="vatCountryLabel">Country</span>
+            <span class="eac-info" tabindex="0" role="button" data-i18n-tip="vatCountryHint"
+                  data-tip="Sets your VAT rate and currency for filament prices."
+                  data-i18n-aria="vatCountryLabel">
+              <span class="icon icon-info icon-13"></span>
+            </span>
+          </span>
+          <select class="lang-select" id="vatCountrySelect"></select>
+        </div>
+
+        <!-- HT vs TTC — drives both how prices are TYPED and how they are
+             DISPLAYED (inventory price column, reorder). Stored value is
+             always tax-free. -->
+        <div class="eac-row">
+          <span class="eac-row-label" data-i18n="priceInputLabel">Prices</span>
+          <div class="eac-seg" id="eacPriceMode" role="tablist">
+            <button type="button" class="eac-seg-btn" data-mode="HT" data-i18n="reorderHT">excl. tax</button>
+            <button type="button" class="eac-seg-btn" data-mode="TTC" data-i18n="reorderTTC">incl. tax</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Advanced (admin only; the whole section hides with the row) ── -->
+      <section class="eac-group eac-debug-row hidden" id="eacDebugRow">
+        <h3 class="eac-group-title" data-i18n="eacGroupAdvanced">Advanced</h3>
+        <div class="eac-row">
+          <span class="eac-row-label eac-debug-label">
+            <span class="icon icon-info icon-13"></span>
+            Debug mode
+          </span>
+          <label class="eac-toggle">
+            <input type="checkbox" id="eacDebugToggle" />
+            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+          </label>
+        </div>
+      </section>
+
+    </div>
+    <!-- Sign out is pinned below the scrolling body: it is the one destructive
+         action here, and hunting for it at the bottom of a scroll is worse than
+         having it always in reach. -->
+    <div class="eac-footer">
+      <button class="eac-disconnect" id="btnEditModalDisconnect">
         <span class="icon icon-signout icon-13"></span>
         <span data-i18n="btnDisconnect">Disconnect</span>
       </button>

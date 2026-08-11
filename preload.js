@@ -113,6 +113,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // startup and on every language change.
   setContextMenuLabels: (labels) => ipcRenderer.send('app:ctx-menu-labels', labels),
 
+  // Keep the native window chrome (title bar, traffic lights, system dialogs)
+  // in step with the in-app theme. Without this the frame stays whatever the
+  // main process forced at startup, so choosing Light leaves a black title bar
+  // sitting on top of a white UI.
+  setNativeTheme: (theme) => ipcRenderer.send('app:native-theme', theme),
+
   // ── Deep links (tigertag://friend/<code>) ──────────────────────────────
   // Main forwards a clicked deep link here. The renderer also calls
   // deepLinkReady() once its handler is wired so main can flush a link that

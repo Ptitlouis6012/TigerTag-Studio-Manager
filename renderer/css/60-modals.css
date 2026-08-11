@@ -56,7 +56,7 @@
   .rec-field { position: relative; }
   .rec-field.is-invalid input {
     border-color: var(--danger) !important;
-    background: var(--danger-soft, rgba(220,38,38,.06)) !important;
+    background: var(--danger-soft) !important;
   }
   .rec-field.is-invalid input:focus {
     box-shadow: 0 0 0 3px rgba(220,38,38,.18);
@@ -65,7 +65,7 @@
     position: absolute;
     left: 0; top: calc(100% + 6px);
     background: var(--danger);
-    color: #fff;
+    color: var(--on-accent);
     font-size: 11.5px; font-weight: 600;
     padding: 5px 9px;
     border-radius: 6px;
@@ -141,11 +141,11 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    background: var(--primary-soft, rgba(249,115,22,.08));
+    background: var(--primary-soft);
     border: 1.5px solid var(--primary);
     border-radius: 16px;
     min-width: 180px;
-    box-shadow: 0 4px 14px rgba(249,115,22,.18);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 18%, transparent);
     /* Center the inline-flex element inside its block parent */
     align-self: center;
   }
@@ -177,7 +177,7 @@
   /* Geometry + skin only — centring comes from .circle-center (00-base.css). */
   .rec-sec-num {
     flex: 0 0 22px;
-    background: var(--primary); color: #fff;
+    background: var(--primary); color: var(--on-accent);
     font-size: 11.5px; font-weight: 800;
   }
   .rec-sec-title {
@@ -321,20 +321,20 @@
 
   /* Holding state — soft tint matching the variant color */
   .adf-btn--icon.is-holding {
-    background: var(--danger-soft, rgba(220,38,38,.08));
+    background: var(--danger-soft);
     border-color: var(--danger);
   }
   .adf-btn--icon.is-confirming { background: var(--danger); }
-  .adf-btn--icon.is-confirming > .icon { background: #fff; }
+  .adf-btn--icon.is-confirming > .icon { background: var(--on-accent); }
 
   .adf-btn--secondary.is-holding {
-    background: var(--primary-soft, rgba(249,115,22,.08));
+    background: var(--primary-soft);
     border-color: var(--primary);
     color: var(--primary);
   }
   .adf-btn--secondary.is-holding > .icon { background: var(--primary); }
-  .adf-btn--secondary.is-confirming { background: var(--primary); color: #fff; }
-  .adf-btn--secondary.is-confirming > .icon { background: #fff; }
+  .adf-btn--secondary.is-confirming { background: var(--primary); color: var(--on-accent); }
+  .adf-btn--secondary.is-confirming > .icon { background: var(--on-accent); }
 
   /* Mark-as-deleted button inside the spool detail panel — full width,
      same hold-to-confirm pattern as the rack delete (red fill). */
@@ -353,12 +353,12 @@
     position: relative; overflow: hidden;
     transition: background .15s, color .15s;
   }
-  .panel-delete-btn:hover { background: var(--danger-soft, rgba(220,38,38,.06)); }
+  .panel-delete-btn:hover { background: var(--danger-soft); }
   .panel-delete-btn > .icon { background: var(--danger); position: relative; z-index: 1; }
   .panel-delete-btn > [data-i18n] { position: relative; z-index: 1; }
-  .panel-delete-btn.is-holding { background: var(--danger-soft, rgba(220,38,38,.08)); }
-  .panel-delete-btn.is-confirming { background: var(--danger); color: #fff; }
-  .panel-delete-btn.is-confirming > .icon { background: #fff; }
+  .panel-delete-btn.is-holding { background: var(--danger-soft); }
+  .panel-delete-btn.is-confirming { background: var(--danger); color: var(--on-accent); }
+  .panel-delete-btn.is-confirming > .icon { background: var(--on-accent); }
   /* Secondary action — neutral grey, less loud than primary */
   .adf-btn--secondary {
     display: inline-flex; align-items: center; gap: 6px;
@@ -385,7 +385,7 @@
     transition: background .15s, border-color .15s, color .15s;
   }
   .adf-btn--danger:hover {
-    background: var(--danger-soft, rgba(220,38,38,.08));
+    background: var(--danger-soft);
     border-color: var(--danger);
   }
   .adf-btn--danger .icon { background: var(--danger); }
@@ -396,7 +396,7 @@
   .fi-avatar {
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #fff;
+    font-size: 13px; font-weight: 700; color: var(--on-accent);
   }
   .dp-header-identity { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
   .fi-name { font-size: 15px; font-weight: 700; color: var(--text); }
@@ -431,8 +431,8 @@
     height: 16px;
     padding: 0 4px;
     margin-left: 5px;
-    background: var(--primary, #f97316);
-    color: #fff;
+    background: var(--primary);
+    color: var(--on-accent);
     font-size: 10px;
     font-weight: 700;
     border-radius: 8px;
@@ -460,7 +460,7 @@
     position: relative; overflow: hidden;
     width: 56px; height: 56px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 20px; font-weight: 700; color: #fff;
+    font-size: 20px; font-weight: 700; color: var(--on-accent);
     box-shadow: 0 2px 12px rgba(0,0,0,.15);
   }
   /* Requester's real avatar photo, overlaid on top of the initials circle. */
@@ -532,11 +532,11 @@
     position: relative; overflow: hidden;   /* anchor + clip the .frq-avatar-photo overlay */
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #fff;
+    font-size: 13px; font-weight: 700; color: var(--on-accent);
   }
   .adf-preview-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .adf-preview-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .adf-preview-status { font-size: 11px; color: var(--success, #1aaf6c); font-weight: 600; }
+  .adf-preview-status { font-size: 11px; color: var(--success); font-weight: 600; }
   /* Social proof — the person's friend count, shown while adding them. */
   .adf-preview-count { display: inline-flex; align-items: center; gap: 4px; align-self: flex-start;
     font-size: 11px; font-weight: 600; color: var(--muted); }
@@ -545,7 +545,7 @@
   .adf-preview-check {
     width: 22px; height: 22px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: var(--success, #1aaf6c); border-radius: 50%; color: #fff;
+    background: var(--success); border-radius: 50%; color: var(--on-accent);
   }
 
   /* Result line (errors, hints) */
@@ -554,7 +554,7 @@
     text-align: center; line-height: 1.4;
   }
   .adf-result.adf-result--error   { color: var(--danger); }
-  .adf-result.adf-result--success { color: var(--success, #1aaf6c); }
+  .adf-result.adf-result--success { color: var(--success); }
 
   /* Footer — same pattern as other modals (.ghost / .primary buttons) */
   .adf-footer { display: flex; gap: 8px; }
@@ -573,10 +573,10 @@
   }
   .adf-btn--ghost:hover { background: var(--surface); border-color: var(--muted); }
   .adf-btn--primary {
-    background: var(--primary); border: 1px solid var(--primary); color: #fff;
+    background: var(--primary); border: 1px solid var(--primary); color: var(--on-accent);
     flex: 1.5 !important;
   }
-  .adf-btn--primary:hover:not(:disabled) { background: #f0670d; border-color: #f0670d; }
+  .adf-btn--primary:hover:not(:disabled) { background: var(--primary-hover); border-color: var(--primary-hover); }
 
   /* settings panel — light-theme overrides for dark sidebar components */
   #settingsPanel .sb-field-label { color: var(--muted); }
@@ -627,11 +627,11 @@
   .avp-avatar-ph {
     width: 84px; height: 84px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, var(--primary), #ffb056);
-    box-shadow: 0 8px 24px rgba(255,122,24,.35);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 35%, transparent);
     animation: avp-pop .5s cubic-bezier(.34,1.56,.64,1) both;
   }
-  .avp-avatar-ph .icon { background: #fff; }
+  .avp-avatar-ph .icon { background: var(--on-accent); }
   /* Concentric pulsing rings — a clean "spotlight on you" beat, no emoji. */
   .avp-ring {
     position: absolute; top: 50%; left: 50%;
@@ -658,9 +658,9 @@
   .avp-skip:hover { background: var(--surface); color: var(--text); }
   .avp-cta {
     flex: 1; height: 42px; border-radius: 11px; border: none;
-    background: linear-gradient(135deg, var(--primary), #ff9036);
-    color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
-    font-family: inherit; box-shadow: 0 4px 16px rgba(255,122,24,.4);
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
+    color: var(--on-accent); font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: inherit; box-shadow: 0 4px 16px color-mix(in srgb, var(--primary) 40%, transparent);
     transition: filter .15s, transform .1s;
   }
   .avp-cta:hover { filter: brightness(1.07); }
@@ -679,25 +679,63 @@
     transition: transform .22s cubic-bezier(.34,1.3,.64,1);
   }
   .modal-overlay.open .modal-card { transform: scale(1) translateY(0); }
-  /* ── edit account card ── */
-  #editAccountModalOverlay .modal-card { padding: 0; overflow: hidden; width: 360px; }
+  /* ── Edit account — a LEFT side card, not a centred modal ──────────────────
+     The account lives in the left sidebar, so the editor unfolds from the side
+     you clicked instead of jumping to the middle of the screen. It reuses the
+     `.detail-panel` idiom (fixed, inset 8px top/bottom, rounded on the inner
+     edge only, slide on transform) mirrored horizontally: anchored left,
+     rounded on the RIGHT, entering from translateX(-100%).
+
+     The overlay keeps its id and its `.open` class, so openEditAccountModal /
+     closeEditAccountModal need no changes — only the geometry moved. */
+  #editAccountModalOverlay { align-items: stretch; justify-content: flex-start; }
+  #editAccountModalOverlay .modal-card {
+    padding: 0; overflow: hidden;
+    width: 380px; max-width: 95vw;
+    margin: 8px 0; border-radius: 0 16px 16px 0; border-left: none;
+    display: flex; flex-direction: column;
+    /* Overrides .modal-card's scale/translateY pop — a side panel slides. */
+    transform: translateX(-100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s;
+    box-shadow: none;
+  }
+  #editAccountModalOverlay.open .modal-card {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px var(--glass-lo);
+  }
+
+  /* Title bar — matches the other side panels' header. */
+  .eac-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 13px 14px 13px 18px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex: 0 0 auto;
+  }
+  .eac-panel-title {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 700; color: var(--text);
+  }
+  .eac-panel-title .icon { background-color: var(--muted); }
+  .eac-close { position: static; flex-shrink: 0; }
+
   .eac-hero {
     position: relative; display: flex; flex-direction: column; align-items: stretch;
-    padding: 20px 24px 20px;
+    padding: 18px 20px 18px;
     background: linear-gradient(170deg, var(--surface-2) 0%, var(--surface) 100%);
     border-bottom: 1px solid var(--border);
+    flex: 0 0 auto;
   }
-  .eac-close { position: absolute; top: 12px; right: 12px; }
   .eac-ident { display: flex; flex-direction: row; align-items: center; gap: 14px; }
   .eac-ident-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .eac-avatar {
     position: relative;       /* anchor for the .sb-avatar-photo overlay
                                  and the absolutely-positioned avatar menu */
     width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
-    background: linear-gradient(135deg, var(--primary) 0%, #ffb056 100%);
-    color: #fff; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hi) 100%);
+    color: var(--on-accent); display: flex; align-items: center; justify-content: center;
     font-size: 18px; font-weight: 700; letter-spacing: -.02em;
-    box-shadow: 0 6px 22px rgba(255,122,24,.32);
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--primary) 32%, transparent);
     /* overflow: visible so the popover menu can extend below the avatar.
        The avatar's circle look is preserved because (a) border-radius
        still clips the background gradient, and (b) the .sb-avatar-photo
@@ -713,12 +751,12 @@
   .eac-avatar-hover-overlay {
     position: absolute; inset: 0;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.55);
+    background: var(--scrim);
     opacity: 0; transition: opacity .15s;
     pointer-events: none;        /* clicks reach the parent .eac-avatar */
     z-index: 2;                  /* on top of any <img class="sb-avatar-photo"> */
   }
-  .eac-avatar-hover-overlay .icon { background: #fff; }
+  .eac-avatar-hover-overlay .icon { background: var(--on-accent); }
   .eac-avatar-editable:hover .eac-avatar-hover-overlay { opacity: 1; }
 
   /* Popover menu — anchored to the avatar (.eac-avatar is the relative
@@ -777,7 +815,7 @@
     width: 280px; height: 280px;
     margin: 0 auto 18px;
     border-radius: 10px;
-    background: #1a1a1a;
+    background: var(--dark-surface);
     overflow: hidden;
   }
   .avatar-crop-canvas {
@@ -794,7 +832,7 @@
     pointer-events: none;
     box-shadow: 0 0 0 9999px rgba(18,22,36,.66);   /* darker scrim — crop area reads instantly */
     border-radius: 50%;
-    border: 2px solid #fff;
+    border: 2px solid var(--on-dark);
   }
   .avatar-crop-controls {
     display: flex; align-items: center; gap: 10px;
@@ -846,7 +884,7 @@
     position: absolute; bottom: calc(100% + 8px); left: 50%;
     transform: translateX(-50%) translateY(3px);
     padding: 5px 9px; border-radius: 7px;
-    background: #1e2230; color: #fff; font-size: 11px; font-weight: 600; white-space: nowrap;
+    background: var(--dark-surface); color: var(--on-dark); font-size: 11px; font-weight: 600; white-space: nowrap;
     box-shadow: 0 6px 18px rgba(0,0,0,.28);
     opacity: 0; pointer-events: none; z-index: 5;
     transition: opacity .12s ease, transform .12s ease;
@@ -873,7 +911,7 @@
   .avatar-crop-actions .ghost, .avatar-crop-actions .primary {
     transition: transform .12s ease, background .15s ease, box-shadow .15s ease, opacity .15s ease;
   }
-  .avatar-crop-actions .primary:hover { box-shadow: 0 4px 14px rgba(249,115,22,.3); }
+  .avatar-crop-actions .primary:hover { box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent); }
   .avatar-crop-actions .ghost:active, .avatar-crop-actions .primary:active { transform: scale(.98); }
   .avatar-crop-actions .ghost:disabled, .avatar-crop-actions .primary:disabled { opacity: .5; pointer-events: none; }
   /* visible focus rings for keyboard users */
@@ -883,7 +921,141 @@
   }
   .eac-name { font-size: 15px; font-weight: 700; letter-spacing: -.015em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .eac-email { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .eac-body { padding: 20px 24px 22px; display: flex; flex-direction: column; gap: 0; }
+  /* The body is the only scrolling part — header and hero stay pinned, so the
+     avatar and name remain visible while you work down the sections. */
+  .eac-body {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto;
+    padding: 4px 20px 20px;
+    display: flex; flex-direction: column;
+    scrollbar-width: none;
+  }
+  .eac-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+  /* ── Grouped sections ──────────────────────────────────────────────────
+     One concern per group, separated by a hairline instead of stacked
+     margins, so the card scans as four blocks rather than eleven fields. */
+  .eac-group { padding: 16px 0; border-top: 1px solid var(--border-soft); }
+  .eac-group:first-of-type { border-top: none; padding-top: 12px; }
+  /* Sentence case, not shouted caps: four section headers in uppercase read as
+     four competing labels. At this size they only need to be quiet dividers. */
+  .eac-group-title {
+    margin: 0 0 10px; font-size: 11px; font-weight: 500;
+    text-transform: none; letter-spacing: 0; color: var(--faint);
+  }
+  .eac-group .eac-field-label {
+    text-transform: none; letter-spacing: 0; font-size: 11px; font-weight: 500;
+    color: var(--faint);
+  }
+  /* Label on the left, control on the right — for single-control rows. */
+  .eac-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .eac-row-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  /* Field labels inside a group no longer need their own top margin — the
+     group's padding does that job. Only stacked fields need separating. */
+  .eac-group .eac-field-label { margin-top: 0; }
+  .eac-group .eac-field-label + * + .eac-field-label,
+  .eac-group .eac-field-hint + .eac-field-label,
+  .eac-group .eac-inline-result + .eac-field-label,
+  .eac-group .eac-socials + .eac-field-label,
+  .eac-group select + .eac-field-label { margin-top: 14px; }
+
+  /* ── Identity: the avatar colour strip ───────────────────────────────────
+     These swatches paint the AVATAR's background, so they belong with it, not
+     in a settings section. One row of 14 instead of two rows of 7: same reach,
+     half the height, and it reads as "a property of the avatar above" rather
+     than as a palette of its own. */
+  .eac-hero .eac-swatches {
+    display: flex; gap: 6px; margin-top: 14px; width: 100%;
+    justify-content: space-between;
+  }
+  /* Explicit width AND height, not aspect-ratio: inside a flex row the ratio
+     loses to the flex sizing and the circles stretch into ellipses. */
+  .eac-hero .eac-swatch {
+    flex: 0 0 auto; width: 19px; height: 19px; aspect-ratio: auto;
+    border-width: 2px;
+  }
+
+  /* ── Social links — one card per link ────────────────────────────────────
+     The rows are built in JS (`_renderSocialsEditor`), so this is styling only:
+     icon + field + delete become a bordered card, which makes the empty
+     trailing row read as an empty SLOT rather than a stray input. */
+  .eac-socials { display: flex; flex-direction: column; gap: 6px; }
+  .eac-social-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 5px 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    transition: border-color .15s, background .15s;
+  }
+  .eac-social-row:focus-within { border-color: var(--primary); background: var(--surface); }
+  /* The trailing add-row is the only one whose field is empty — dashed and
+     transparent so it reads as the slot waiting to be filled. */
+  .eac-social-row:last-child:not(:focus-within) {
+    background: transparent; border-style: dashed;
+  }
+  .eac-social-ic { display: flex; flex-shrink: 0; }
+  .eac-social-ic .icon { background-color: var(--muted); }
+  .eac-social-row:focus-within .eac-social-ic .icon { background-color: var(--primary); }
+  .eac-social-input {
+    flex: 1; min-width: 0;
+    background: transparent !important; border: none !important;
+    padding: 3px 0; font-size: 12px; color: var(--text);
+    outline: none;
+  }
+  .eac-social-del {
+    flex-shrink: 0; border: none; background: none; cursor: pointer;
+    padding: 2px; display: flex; border-radius: 5px;
+  }
+  .eac-social-del .icon { background-color: var(--faint); }
+  .eac-social-del:hover .icon { background-color: var(--danger); }
+  /* Says out loud what the code already does: these links are mirrored to the
+     public profile. */
+  .eac-socials-note {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 9px; font-size: 11px; color: var(--faint);
+  }
+  .eac-socials-note .icon { background-color: var(--faint); flex-shrink: 0; }
+
+  /* ── Pinned footer ── */
+  .eac-footer {
+    flex: 0 0 auto;
+    padding: 10px 20px;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  .eac-footer .eac-disconnect { margin-top: 0; }
+
+  /* ── The card's dropdowns ────────────────────────────────────────────────
+     `_enhanceSelect()` hides the native <select> behind a styled button + a
+     themed popup, because an OS option list is unreachable from CSS and would
+     stay light-on-light (or dark-on-dark) whatever the card is wearing. The
+     wrapper is inline-flex by default; here it has to fill the field width. */
+  .eac-body .csel { display: block; width: 100%; }
+  .eac-body .csel-btn { width: 100%; height: 38px; }
+  .eac-body .csel-pop { width: 100%; }
+  /* Inside a label-left/control-right row the dropdown sizes to its content
+     instead of stretching, but never past half the card — a long country label
+     would otherwise crush its own label. */
+  .eac-row .csel { width: auto; max-width: 62%; margin-left: auto; }
+  .eac-row .csel-btn { height: 34px; }
+  .eac-row .csel-pop { min-width: 100%; width: max-content; max-width: 260px; right: 0; left: auto; }
+  /* The dropdown here is a plain field, not an inventory filter — the orange
+     "is-active" treatment those inherit signals a live filter, which means
+     nothing in a settings row and just shouts. */
+  .eac-body .csel-btn.is-active {
+    background-color: var(--surface-2); border-color: var(--border); color: var(--text);
+  }
+  .eac-body .csel-btn.is-active:hover,
+  .eac-body .csel--open .csel-btn.is-active { background-color: var(--surface-3); }
+
+  /* Inline status lines — collapse to nothing until they carry a message, so
+     an empty result never reserves a visible gap. */
+  .eac-avatar-result, .eac-inline-result {
+    font-size: 11px; text-align: center; color: var(--muted);
+    min-height: 0; margin: 0;
+  }
+  .eac-avatar-result:not(:empty) { margin: 10px 0 0; }
+  .eac-inline-result:not(:empty) { margin: 5px 0 0; text-align: left; }
   .eac-field-label {
     font-size: 10px; font-weight: 700; color: var(--muted);
     text-transform: uppercase; letter-spacing: .07em; margin-bottom: 7px;
@@ -901,7 +1073,7 @@
     padding: 6px 16px; border-radius: 7px; font-size: 12px; font-weight: 700;
     color: var(--muted); transition: background .15s, color .15s;
   }
-  .eac-seg-btn.active { background: var(--primary); color: #fff; }
+  .eac-seg-btn.active { background: var(--primary); color: var(--on-accent); }
   .eac-input { background: var(--surface-2) !important; border-color: var(--border) !important; color: var(--text) !important; }
   .eac-input:focus { border-color: var(--primary) !important; background: var(--primary-soft) !important; }
   .eac-eye { background: var(--surface-2) !important; border-color: var(--border) !important; color: var(--muted) !important; }
@@ -911,14 +1083,13 @@
   .eac-admin-badge {
     font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
     padding: 2px 6px; border-radius: 20px;
-    background: linear-gradient(135deg, var(--primary), #ffb056);
-    color: #fff; flex-shrink: 0; align-self: center;
+    background: linear-gradient(135deg, var(--primary), var(--primary-hi));
+    color: var(--on-accent); flex-shrink: 0; align-self: center;
   }
   /* debug toggle row */
-  .eac-debug-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 0; border-top: 1px solid var(--border); margin-top: 14px;
-  }
+  /* Now a full `.eac-group` section (it carries its own title + hairline), so
+     it only needs the hidden-state behaviour — the flex row moved to .eac-row. */
+  .eac-debug-row.hidden { display: none; }
   .eac-debug-label {
     display: flex; align-items: center; gap: 7px;
     font-size: 13px; font-weight: 500; color: var(--text);
@@ -933,7 +1104,7 @@
   }
   .eac-toggle input:checked ~ .eac-toggle-track { background: var(--primary); }
   .eac-toggle-thumb {
-    width: 16px; height: 16px; border-radius: 50%; background: #fff;
+    width: 16px; height: 16px; border-radius: 50%; background: var(--surface);
     box-shadow: 0 1px 4px rgba(0,0,0,.2);
     transition: transform .2s; flex-shrink: 0;
   }
@@ -973,6 +1144,179 @@
     display: flex; align-items: center; justify-content: center;
     border-radius: 8px;
   }
+
+/* ══ PROFILE SIDE CARD — the card's own look ═══════════════════════════════
+   Everything above this line is inherited from when this was a centred modal.
+   Rather than fight those rules one property at a time, this block owns the
+   card's appearance end to end; it is scoped to the overlay so it outranks
+   them, and it is the only place to edit the card's visual design.
+
+   Three ideas carry it:
+     • one row per setting — label left, control right, so the eye runs down a
+       single column of values instead of zig-zagging past full-width fields;
+     • quiet dividers — sections are separated by hairlines and sentence-case
+       headers, not by four competing blocks of shouted uppercase;
+     • weight where it means something — 500 is the heaviest weight here, so
+       the only truly bold things are the accents that carry state. */
+
+  #editAccountModalOverlay .eac-panel-head { padding: 15px 16px 15px 18px; border-bottom: none; }
+  #editAccountModalOverlay .eac-panel-title { font-size: 14px; font-weight: 600; gap: 9px; }
+
+  #editAccountModalOverlay .eac-hero { padding: 6px 18px 20px; background: none; border-bottom: none; }
+  #editAccountModalOverlay .eac-ident { gap: 14px; }
+  #editAccountModalOverlay .eac-name { font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+  #editAccountModalOverlay .eac-email { font-size: 13px; }
+  /* A tinted pill rather than a filled gradient: it is a status, not a button. */
+  #editAccountModalOverlay .eac-admin-badge {
+    font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none;
+    padding: 2px 8px; border-radius: 999px;
+    background: var(--primary-soft); color: var(--primary);
+  }
+
+  #editAccountModalOverlay .eac-body { padding: 0; }
+  /* Every section keeps its top hairline, including the first — that is what
+     separates the identity block from the settings now that the header and hero
+     carry no border of their own. */
+  #editAccountModalOverlay .eac-group { padding: 16px 18px; border-top: 1px solid var(--border-soft); }
+  #editAccountModalOverlay .eac-group-title {
+    margin: 0 0 6px; font-size: 12px; font-weight: 400;
+    text-transform: none; letter-spacing: 0; color: var(--faint);
+  }
+  #editAccountModalOverlay .eac-field-label {
+    margin: 0 0 7px; font-size: 12px; font-weight: 400;
+    text-transform: none; letter-spacing: 0; color: var(--faint);
+  }
+  #editAccountModalOverlay .eac-field-hint { font-size: 12px; color: var(--faint); margin-top: 2px; line-height: 1.5; }
+  /* 38px min-height rather than padding: rows keep a steady rhythm whether they
+     hold a 22px toggle, a 30px segmented control or a plain line of text. */
+  #editAccountModalOverlay .eac-row { padding: 0; min-height: 38px; }
+  #editAccountModalOverlay .eac-row-label {
+    font-size: 14px; font-weight: 400; color: var(--text);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  /* ⓘ next to a label — same behaviour and same bubble as the rack view's
+     `.rp-info`: the explanation appears when asked instead of living under the
+     control as a permanent paragraph. */
+  #editAccountModalOverlay .eac-info {
+    display: inline-flex; align-items: center; cursor: help;
+    flex-shrink: 0; border: none; background: none; padding: 0;
+  }
+  #editAccountModalOverlay .eac-info .icon { background: var(--faint); transition: background .15s; }
+  #editAccountModalOverlay .eac-info:hover .icon,
+  #editAccountModalOverlay .eac-info:focus-visible .icon { background: var(--primary); }
+
+  /* The name field spans the section under its own caption — a text input needs
+     room to show what you typed, which a right-hand column cannot give it. */
+  #editAccountModalOverlay .eac-name-row { gap: 6px; }
+  #editAccountModalOverlay .eac-name-input {
+    flex: 1; min-width: 0; padding: 8px 11px; font-size: 13px; border-radius: 9px;
+  }
+  /* The save button IS the feedback — it flashes green on success and shakes on
+     a refusal, so nothing appears and disappears under the field to shift the
+     layout. Only errors still print words, because only they have something to
+     say beyond "done". */
+  #editAccountModalOverlay .eac-name-save {
+    width: 34px; height: 34px; border-radius: 9px;
+    transition: background .18s, border-color .18s, color .18s;
+  }
+  #editAccountModalOverlay .eac-name-save.is-ok {
+    background: var(--success); border-color: var(--success);
+    animation: eacSavePop .45s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  #editAccountModalOverlay .eac-name-save.is-ok .icon { background-color: var(--on-accent); }
+  #editAccountModalOverlay .eac-name-save.is-err {
+    border-color: var(--danger); animation: eacSaveShake .38s;
+  }
+  #editAccountModalOverlay .eac-name-save.is-err .icon { background-color: var(--danger); }
+  /* Inert while the write is in flight so a double-click cannot fire it twice. */
+  #editAccountModalOverlay .eac-name-save.is-busy { opacity: .5; pointer-events: none; }
+  @keyframes eacSavePop {
+    0%   { transform: scale(1); }
+    38%  { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+  @keyframes eacSaveShake {
+    0%, 100% { transform: translateX(0); }
+    22%      { transform: translateX(-3px); }
+    62%      { transform: translateX(3px); }
+  }
+
+  /* Persistent camera badge on the avatar. The hover overlay alone only tells
+     you the avatar is editable once the pointer is already on it — this says so
+     while you are still looking for it. Purely decorative: the click target is
+     the avatar itself, which already opens the menu. */
+  /* Two pseudo-elements, because one cannot be both a filled circle and a
+     masked glyph: ::before draws the disc, ::after masks the pencil on top.
+     A background-image would ignore the theme — masks take --muted like every
+     other icon in the app. The avatar is overflow:visible, so a badge hanging
+     2px past its edge is not clipped. */
+  #editAccountModalOverlay .eac-avatar-editable::before,
+  #editAccountModalOverlay .eac-avatar-editable::after {
+    content: ""; position: absolute; pointer-events: none;
+  }
+  #editAccountModalOverlay .eac-avatar-editable::before {
+    right: -2px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--surface-2); border: 1px solid var(--border-strong); z-index: 2;
+  }
+  #editAccountModalOverlay .eac-avatar-editable::after {
+    right: 3px; bottom: 3px; width: 11px; height: 11px; z-index: 3;
+    background-color: var(--muted);
+    -webkit-mask: url('../../assets/svg/icons/icon_edit.svg') center / contain no-repeat;
+    mask: url('../../assets/svg/icons/icon_edit.svg') center / contain no-repeat;
+  }
+
+  /* Segmented controls — the one place accent fill is allowed, because it is
+     the only thing on the row carrying the current choice. */
+  /* Two-state segmented control — wide and flat rather than tall and chunky,
+     with a pill that SLIDES between the two options instead of the fill
+     teleporting. The moving pill is a single ::before positioned by :has(),
+     so nothing in the markup or the JS has to know about it: the buttons keep
+     toggling `.active` exactly as before.
+
+     Both halves are equal width (flex: 1) so the pill's 50% travel is exact
+     whatever the labels say — "Sombre"/"Clair" and "HT"/"TTC" both work. */
+  #editAccountModalOverlay .eac-seg {
+    position: relative; padding: 2px; gap: 0; border-radius: 9px;
+    min-width: 172px; isolation: isolate;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
+  #editAccountModalOverlay .eac-seg::before {
+    content: ""; position: absolute; z-index: -1;
+    top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px);
+    border-radius: 7px; background: var(--primary);
+    transition: transform .22s cubic-bezier(.4, 0, .2, 1);
+  }
+  /* Second option active → the pill travels one full slot to the right. */
+  #editAccountModalOverlay .eac-seg:has(.eac-seg-btn:last-child.active)::before {
+    transform: translateX(100%);
+  }
+  /* Nothing lit up → no pill (it would otherwise sit under the first option
+     and claim a choice the user has not made). */
+  #editAccountModalOverlay .eac-seg:not(:has(.eac-seg-btn.active))::before { opacity: 0; }
+  /* Explicit height: the global `button { height: 40px }` in 70-detail-misc.css
+     applies here too and made the control 46px tall — chunky rather than the
+     flat, wide switch this wants to be. 28px + 2px padding + 2px border = 34. */
+  #editAccountModalOverlay .eac-seg-btn {
+    flex: 1 1 0; height: 28px; padding: 0 10px; border-radius: 7px;
+    font-size: 12.5px; font-weight: 400; background: transparent;
+    line-height: 1; transition: color .18s;
+  }
+  /* The pill paints the fill now — a background here would cover it mid-slide. */
+  #editAccountModalOverlay .eac-seg-btn.active {
+    background: transparent; color: var(--on-accent); font-weight: 600;
+  }
+
+  /* Links: the existing ones are listed under the row rather than hidden behind
+     an "add" affordance — you cannot manage what you cannot see. Rows are built
+     by `_renderSocialsEditor`, so this is styling only. */
+  #editAccountModalOverlay .eac-socials { gap: 6px; margin-top: 4px; }
+  #editAccountModalOverlay .eac-social-row { padding: 7px 10px; border-radius: 9px; gap: 9px; }
+  #editAccountModalOverlay .eac-social-input { font-size: 12.5px; }
+  #editAccountModalOverlay .eac-socials-note { margin-top: 9px; font-size: 12px; }
+
+  #editAccountModalOverlay .eac-footer { padding: 12px 18px; background: none; }
+  #editAccountModalOverlay .eac-disconnect { font-size: 14px; padding: 10px; border-radius: 10px; }
+
   .eac-sep {
     display: flex; align-items: center; gap: 10px; margin: 20px 0 12px;
     font-size: 10px; font-weight: 700; color: var(--muted);
@@ -989,14 +1333,14 @@
     transition: color .15s, background .15s, border-color .15s;
     user-select: none; -webkit-user-select: none;
   }
-  .eac-disconnect:hover { color: var(--danger); background: var(--danger-soft); border-color: rgba(216,59,59,.15); }
+  .eac-disconnect:hover { color: var(--danger); background: var(--danger-soft); border-color: color-mix(in srgb, var(--danger) 15%, transparent); }
   /* long-press fill */
   .eac-disconnect::before {
     content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
-    background: rgba(216,59,59,.18); pointer-events: none;
+    background: color-mix(in srgb, var(--danger) 18%, transparent); pointer-events: none;
     transition: none; border-radius: 8px;
   }
-  .eac-disconnect.holding { color: var(--danger); border-color: rgba(216,59,59,.3); }
+  .eac-disconnect.holding { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
   .eac-disconnect.holding::before { width: 100%; transition: width 1.5s linear; }
 
   /* ── account dropdown ── */
@@ -1004,7 +1348,7 @@
   .acct-dropdown {
     position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%);
     width: 224px; z-index: 500;
-    background: rgba(16,18,26,.97); border: 1px solid rgba(255,255,255,.08);
+    background: var(--surface-raised); border: 1px solid var(--ink-08);
     border-radius: 14px; padding: 6px;
     box-shadow: 0 12px 40px rgba(0,0,0,.55);
     backdrop-filter: blur(16px);
@@ -1026,41 +1370,41 @@
   .acct-drop-item {
     display: flex; align-items: center; gap: 10px; width: 100%;
     padding: 8px 10px; border-radius: 9px; border: none; background: transparent;
-    color: rgba(255,255,255,.75); font-size: 12px; font-weight: 500;
+    color: var(--ink-70); font-size: 12px; font-weight: 500;
     cursor: pointer; font-family: inherit; text-align: left; justify-content: flex-start;
     transition: background .13s, color .13s;
   }
-  .acct-drop-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-  .acct-drop-item.active { color: #fff; }
+  .acct-drop-item:hover { background: var(--ink-08); color: var(--text); }
+  .acct-drop-item.active { color: var(--text); }
   .acct-drop-avatar {
     position: relative;       /* anchor for the .sb-avatar-photo overlay */
     width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 700; color: #fff; letter-spacing: -0.5px;
+    font-size: 11px; font-weight: 700; color: var(--on-accent); letter-spacing: -0.5px;
     overflow: hidden;
   }
   .acct-drop-name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
   .acct-drop-check { margin-left: auto; color: var(--primary); font-size: 13px; flex-shrink: 0; }
-  .acct-drop-sep { height: 1px; background: rgba(255,255,255,.07); margin: 5px 4px; }
+  .acct-drop-sep { height: 1px; background: var(--ink-08); margin: 5px 4px; }
   .acct-drop-action {
     display: flex; align-items: center; justify-content: flex-start; text-align: left;
     gap: 9px; width: 100%;
     padding: 8px 10px; border-radius: 9px; border: none; background: transparent;
-    color: rgba(255,255,255,.55); font-size: 12px; font-weight: 500;
+    color: var(--ink-60); font-size: 12px; font-weight: 500;
     cursor: pointer; font-family: inherit;
     transition: background .13s, color .13s;
   }
-  .acct-drop-action:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.9); }
+  .acct-drop-action:hover { background: var(--ink-08); color: var(--ink-85); }
   .acct-drop-badge {
     margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 9px; background: var(--primary); color: #fff;
+    border-radius: 9px; background: var(--primary); color: var(--on-accent);
     font-size: 10px; font-weight: 700; line-height: 1;
   }
   /* Logged-in account header at the top of the menu (display only). */
   .acct-drop-current {
     display: flex; align-items: center; gap: 9px; width: 100%;
-    padding: 8px 10px; border-radius: 9px; color: #fff;
+    padding: 8px 10px; border-radius: 9px; color: var(--text);
   }
   .acct-drop-current .acct-drop-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; }
   .acct-drop-current .acct-drop-check { margin-left: auto; color: var(--primary); font-size: 13px; flex-shrink: 0; }
@@ -1068,13 +1412,13 @@
   /* "Switch account ›" — chevron at the right; the account list opens as a hover
      fly-out to the RIGHT (it does NOT replace the main menu). */
   .acct-drop-chevron { margin-left: auto; display: inline-flex; align-items: center; }
-  .acct-drop-chevron .icon { background: rgba(255,255,255,.4); }
-  .acct-drop-haschild:hover .acct-drop-chevron .icon { background: rgba(255,255,255,.75); }
+  .acct-drop-chevron .icon { background: var(--ink-40); }
+  .acct-drop-haschild:hover .acct-drop-chevron .icon { background: var(--ink-70); }
   .acct-drop-haschild { position: relative; }
   .acct-drop-submenu {
     position: absolute; left: 100%; top: -6px;
     min-width: 200px; padding: 6px;
-    background: rgba(16,18,26,.98); border: 1px solid rgba(255,255,255,.08);
+    background: var(--surface-raised); border: 1px solid var(--ink-08);
     border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.55);
     backdrop-filter: blur(16px);
     opacity: 0; pointer-events: none; transform: translateX(-4px);
@@ -1083,127 +1427,127 @@
   .acct-drop-haschild:hover .acct-drop-submenu { opacity: 1; pointer-events: auto; transform: translateX(0); }
   .acct-drop-section-label {
     font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em;
-    color: rgba(255,255,255,.3); padding: 4px 10px 2px;
+    color: var(--ink-30); padding: 4px 10px 2px;
   }
-  .acct-drop-friend-active { color: #fff !important; }
+  .acct-drop-friend-active { color: var(--text) !important; }
   .acct-drop-eye {
     margin-left: auto; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     width: 20px; height: 20px;
     opacity: .35; transition: opacity .13s;
   }
-  .acct-drop-eye .icon { background: rgba(255,255,255,.85); }
+  .acct-drop-eye .icon { background: var(--ink-85); }
   .acct-drop-item:hover .acct-drop-eye { opacity: .85; }
 
   /* ── profiles modal ── */
   /* ── Manage-accounts modal — DARK, matching the account dropdown ── */
   .prf-card {
     width: min(420px, 92vw); padding: 0; overflow: visible;
-    background: rgba(16,18,26,.98); border: 1px solid rgba(255,255,255,.08);
-    color: #fff;
+    background: var(--surface-raised); border: 1px solid var(--ink-08);
+    color: var(--text);
   }
   .prf-header {
     display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
     padding: 22px 22px 12px;
   }
   .prf-head-text { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-  .prf-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: #fff; }
-  .prf-sub { font-size: 12.5px; color: rgba(255,255,255,.5); line-height: 1.35; }
+  .prf-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+  .prf-sub { font-size: 12.5px; color: var(--ink-50); line-height: 1.35; }
   .prf-card .modal-close {
-    flex-shrink: 0; color: rgba(255,255,255,.45); background: rgba(255,255,255,.06);
+    flex-shrink: 0; color: var(--ink-40); background: var(--ink-06);
     border: none; width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: 15px;
   }
-  .prf-card .modal-close:hover { color: #fff; background: rgba(255,255,255,.12); }
+  .prf-card .modal-close:hover { color: var(--text); background: var(--ink-12); }
   .prf-body { padding: 6px 16px 18px; display: flex; flex-direction: column; gap: 14px; }
 
   .prf-acct-list {
     display: flex; flex-direction: column; gap: 2px;
-    background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+    background: var(--ink-04); border: 1px solid var(--ink-06);
     border-radius: 14px; padding: 6px;
   }
   .prf-acct {
     position: relative; display: flex; align-items: center; gap: 11px;
     padding: 9px 10px; border-radius: 10px;
   }
-  .prf-acct:hover { background: rgba(255,255,255,.05); }
+  .prf-acct:hover { background: var(--ink-04); }
   .prf-acct-avatar {
     position: relative; width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 15px; font-weight: 700; color: #fff; letter-spacing: -.5px; overflow: hidden;
+    font-size: 15px; font-weight: 700; color: var(--on-accent); letter-spacing: -.5px; overflow: hidden;
   }
   .prf-acct-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-  .prf-acct-name { font-size: 14px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .prf-acct-email { font-size: 12px; color: rgba(255,255,255,.42); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prf-acct-name { font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prf-acct-email { font-size: 12px; color: var(--ink-40); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .prf-acct-active { font-size: 12px; font-weight: 600; color: var(--success); }
   .prf-acct-switch {
     flex-shrink: 0; height: 32px; padding: 0 15px; border-radius: 8px; border: none;
-    background: rgba(255,255,255,.1); color: #fff; font-size: 13px; font-weight: 600;
+    background: var(--ink-10); color: var(--text); font-size: 13px; font-weight: 600;
     cursor: pointer; font-family: inherit;
   }
-  .prf-acct-switch:hover { background: rgba(255,255,255,.18); }
+  .prf-acct-switch:hover { background: var(--ink-20); }
   .prf-acct-menu-btn {
     flex-shrink: 0; width: 30px; height: 30px; border-radius: 8px; border: none;
     background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center;
   }
-  .prf-acct-menu-btn .icon { background: rgba(255,255,255,.5); }
-  .prf-acct-menu-btn:hover { background: rgba(255,255,255,.08); }
-  .prf-acct-menu-btn:hover .icon { background: #fff; }
+  .prf-acct-menu-btn .icon { background: var(--ink-50); }
+  .prf-acct-menu-btn:hover { background: var(--ink-08); }
+  .prf-acct-menu-btn:hover .icon { background: var(--on-accent); }
   .prf-acct-menu {
     position: absolute; right: 8px; top: calc(100% - 4px); z-index: 3;
     min-width: 160px; padding: 5px;
-    background: rgba(28,30,40,.99); border: 1px solid rgba(255,255,255,.1);
+    background: rgba(28,30,40,.99); border: 1px solid var(--ink-10);
     border-radius: 11px; box-shadow: 0 12px 34px rgba(0,0,0,.55);
   }
   .prf-acct-menu[hidden] { display: none; }
   .prf-acct-menu-item {
     display: flex; align-items: center; gap: 9px; width: 100%;
     padding: 8px 10px; border-radius: 7px; border: none; background: transparent;
-    color: rgba(255,255,255,.8); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
+    color: var(--ink-85); font-size: 13px; font-weight: 500; cursor: pointer; font-family: inherit;
   }
-  .prf-acct-menu-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+  .prf-acct-menu-item:hover { background: var(--ink-08); color: var(--text); }
   .prf-acct-menu-item .icon { background: currentColor; }
-  .prf-acct-menu-item--danger { color: #ff6b6b; }
-  .prf-acct-menu-item--danger:hover { background: rgba(255,107,107,.14); color: #ff8585; }
+  .prf-acct-menu-item--danger { color: var(--danger); }
+  .prf-acct-menu-item--danger:hover { background: rgba(255,107,107,.14); color: var(--danger-hover); }
 
   .prf-add-btn {
     width: 100%; height: 44px; border-radius: 12px;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
-    color: #fff; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    background: var(--ink-06); border: 1px solid var(--ink-10);
+    color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
   }
-  .prf-add-btn:hover { background: rgba(255,255,255,.1); }
-  .prf-add-btn .icon { background: #fff; }
-  .prf-empty-msg { padding: 18px; text-align: center; color: rgba(255,255,255,.45); font-size: 13px; }
+  .prf-add-btn:hover { background: var(--ink-10); }
+  .prf-add-btn .icon { background: var(--on-accent); }
+  .prf-empty-msg { padding: 18px; text-align: center; color: var(--ink-40); font-size: 13px; }
 
   /* ── Dark confirmation modal (remove friend) — Discord-style + avatar ── */
   .confirm-card {
     width: min(380px, 92vw); padding: 26px 24px 22px; position: relative; text-align: center;
-    background: rgba(16,18,26,.98); border: 1px solid rgba(255,255,255,.08); color: #fff;
+    background: var(--surface-raised); border: 1px solid var(--ink-08); color: var(--text);
   }
   .confirm-card .modal-close {
     position: absolute; top: 14px; right: 14px;
     width: 30px; height: 30px; border-radius: 8px; border: none;
-    background: rgba(255,255,255,.06); color: rgba(255,255,255,.45); cursor: pointer; font-size: 15px;
+    background: var(--ink-06); color: var(--ink-40); cursor: pointer; font-size: 15px;
   }
-  .confirm-card .modal-close:hover { color: #fff; background: rgba(255,255,255,.12); }
+  .confirm-card .modal-close:hover { color: var(--text); background: var(--ink-12); }
   .confirm-avatar { display: flex; justify-content: center; margin: 2px 0 14px; }
   .confirm-avatar-img {
     position: relative; width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
-    font-size: 24px; font-weight: 700; color: #fff; letter-spacing: -.5px;
+    font-size: 24px; font-weight: 700; color: var(--on-accent); letter-spacing: -.5px;
     box-shadow: 0 6px 20px rgba(0,0,0,.4);
   }
-  .confirm-title { margin: 0 0 8px; font-size: 18px; font-weight: 800; color: #fff; letter-spacing: -.02em; }
-  .confirm-body  { margin: 0 0 20px; font-size: 13.5px; line-height: 1.5; color: rgba(255,255,255,.6); }
+  .confirm-title { margin: 0 0 8px; font-size: 18px; font-weight: 800; color: var(--text); letter-spacing: -.02em; }
+  .confirm-body  { margin: 0 0 20px; font-size: 13.5px; line-height: 1.5; color: var(--ink-60); }
   .confirm-actions { display: flex; gap: 10px; }
   .confirm-cancel, .confirm-danger {
     flex: 1; height: 42px; border-radius: 11px; border: none;
     font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
   }
-  .confirm-cancel { background: rgba(255,255,255,.08); color: #fff; }
-  .confirm-cancel:hover { background: rgba(255,255,255,.14); }
-  .confirm-danger { background: #d83a3a; color: #fff; }
-  .confirm-danger:hover { background: #c42f2f; }
+  .confirm-cancel { background: var(--ink-08); color: var(--text); }
+  .confirm-cancel:hover { background: var(--ink-15); }
+  .confirm-danger { background: var(--danger); color: var(--text); }
+  .confirm-danger:hover { background: var(--danger-hover); }
 
   /* ── friend view banner ── */
   /* User chip in the top header row — to the LEFT of the KPI stats.
@@ -1236,7 +1580,7 @@
     position: relative;       /* anchor for the .sb-avatar-photo overlay */
     width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 18px; font-weight: 700; color: #fff;
+    font-size: 18px; font-weight: 700; color: var(--on-accent);
     letter-spacing: -.7px;
     overflow: hidden;
   }
@@ -1251,11 +1595,11 @@
   .fvb-avatar-ovl {
     position: absolute; inset: 0; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(0,0,0,.5); opacity: 0; transition: opacity .15s;
+    background: var(--scrim); opacity: 0; transition: opacity .15s;
     pointer-events: none;
   }
   .fvb-avatar-edit:hover .fvb-avatar-ovl { opacity: 1; }
-  .fvb-avatar-ovl .icon { background: #fff; }
+  .fvb-avatar-ovl .icon { background: var(--on-accent); }
   .fvb-name {
     font-size: 13px; font-weight: 600; color: var(--text);
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1274,12 +1618,12 @@
   }
   .fvb-badge .icon { background-color: currentColor; }
   /* Public → green gradient pill (white). Transparent border keeps the same box height. */
-  .fvb-badge--public { color: #fff; border-color: transparent; background: linear-gradient(90deg, #22a06b, #35c489); }
-  .fvb-badge--public .icon { background-color: #fff; }
+  .fvb-badge--public { color: var(--on-dark); border-color: transparent; background: linear-gradient(90deg, #22a06b, #35c489); }
+  .fvb-badge--public .icon { background-color: var(--on-accent); }
   /* "Partager" → blue "link" gradient pill, clickable (copies the invite link) — same slim box. */
-  .fvb-badge--share { position: relative; cursor: pointer; color: #fff; border-color: transparent;
-    background: linear-gradient(90deg, #2f74d0, #5b9be8); transition: filter .12s; }
-  .fvb-badge--share .icon { background-color: #fff; }
+  .fvb-badge--share { position: relative; cursor: pointer; color: var(--on-accent); border-color: transparent;
+    background: linear-gradient(90deg, var(--info), var(--info)); transition: filter .12s; }
+  .fvb-badge--share .icon { background-color: var(--on-accent); }
   .fvb-badge--share:hover { filter: brightness(1.06); }
   /* "X friends" — plain muted count (not a pill). */
   .fvb-count { display: inline-flex; align-items: center; gap: 3px;
@@ -1298,7 +1642,7 @@
      red `.fvb-badge--error` chip in the inner stack carries the whole
      error signal on its own. */
   .fvb-badge--error {
-    background: var(--danger) !important; color: #fff !important;
+    background: var(--danger) !important; color: var(--on-accent) !important;
   }
 
   /* ── UID format migration overlay ─────────────────────────────────────
@@ -1319,7 +1663,7 @@
     width: 64px; height: 64px;
     margin: 0 auto 18px;
     border-radius: 50%;
-    background: var(--primary-soft, rgba(255,122,24,.12));
+    background: var(--primary-soft);
     display: flex; align-items: center; justify-content: center;
     color: var(--primary);
     animation: uidMigrSpin 1.6s linear infinite;
@@ -1330,11 +1674,11 @@
   }
   .uid-migr-card.uid-migr--done .uid-migr-icon {
     background: rgba(16,185,129,.14);
-    color: #10b981;
+    color: var(--success);
     animation: none;
   }
   .uid-migr-card.uid-migr--done .uid-migr-icon .icon {
-    background: #10b981;
+    background: var(--success);
     /* Switch from refresh-arrow to check via mask swap */
     -webkit-mask-image: url('../../assets/svg/icons/icon_check.svg');
             mask-image: url('../../assets/svg/icons/icon_check.svg');
@@ -1372,7 +1716,7 @@
   }
   .uid-migr-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, var(--primary), #ffb056);
+    background: linear-gradient(90deg, var(--primary), var(--primary-hi));
     width: 0%;
     transition: width .25s ease;
     border-radius: 8px;
@@ -1401,7 +1745,7 @@
   }
   .uid-migr-card.uid-migr--done .uid-migr-title::after {
     content: " — done";
-    color: #10b981;
+    color: var(--success);
   }
 
   /* ── Confirm modal (phase 1) — user consent before migration starts ──
@@ -1468,16 +1812,16 @@
   .uid-migr-confirm-btn.ghost:hover {
     border-color: var(--primary);
     color: var(--primary);
-    background: var(--primary-soft, rgba(255,122,24,.06));
+    background: var(--primary-soft);
   }
   .uid-migr-confirm-btn.primary {
     background: var(--primary);
     border: 1.5px solid var(--primary);
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(255,122,24,.25);
+    color: var(--text);
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 25%, transparent);
   }
   .uid-migr-confirm-btn.primary:hover {
-    background: var(--primary-hover, #ff8a30);
+    background: var(--primary-hover);
   }
 
   /* Friend view — full error state inside card-inv */
@@ -1519,7 +1863,7 @@
   .fie-btn:hover .icon { background: var(--primary); }
   .fie-btn .icon { background: var(--text); }
   .fie-btn:disabled { opacity: .5; cursor: not-allowed; }
-  .fie-btn--danger { color: var(--danger); border-color: rgba(216,59,59,.3); }
+  .fie-btn--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
   .fie-btn--danger .icon { background: var(--danger); }
   .fie-btn--danger:hover { background: var(--danger-soft); border-color: var(--danger); color: var(--danger); }
   .fie-btn--danger:hover .icon { background: var(--danger); }
@@ -1534,7 +1878,7 @@
     transition: transform .15s, border-color .15s, box-shadow .15s;
   }
   .eac-swatch:hover { transform: scale(1.18); }
-  .eac-swatch.active { border-color: #fff; box-shadow: 0 0 0 2.5px rgba(255,255,255,.35); transform: scale(1.12); }
+  .eac-swatch.active { border-color: var(--text); box-shadow: 0 0 0 2.5px var(--ink-30); transform: scale(1.12); }
   /* custom color swatch (label element, light context in hero) */
   .eac-swatch-custom {
     display: flex; align-items: center; justify-content: center;
@@ -1553,8 +1897,8 @@
   }
   /* hero: preset swatches keep white borders on dark-ish gradient bg */
   .eac-hero .eac-swatches { margin-top: 16px; }
-  .eac-hero .eac-swatch[data-color] { border-color: rgba(255,255,255,.1); }
-  .eac-hero .eac-swatch[data-color].active { border-color: #fff; box-shadow: 0 0 0 2.5px rgba(255,255,255,.28); }
+  .eac-hero .eac-swatch[data-color] { border-color: var(--ink-10); }
+  .eac-hero .eac-swatch[data-color].active { border-color: var(--on-dark); box-shadow: 0 0 0 2.5px rgba(255,255,255,.28); }
 
   /* add account modal */
   .modal-header {
@@ -1646,7 +1990,7 @@
     transition: border-color .2s, box-shadow .2s;
   }
   #addAccountModalOverlay .lm-input:focus {
-    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255,122,24,.12);
+    border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
   }
   #addAccountModalOverlay .lm-input.lm-pass-input { padding-right: 44px; }
   #addAccountModalOverlay .lm-label {
@@ -1696,7 +2040,7 @@
   }
   #addAccountModalOverlay .lm-check-wrap input[type="checkbox"]:checked ~ .lm-check-box::after {
     content: ""; display: block; width: 9px; height: 5px;
-    border-left: 2px solid #fff; border-bottom: 2px solid #fff;
+    border-left: 2px solid var(--on-accent); border-bottom: 2px solid var(--on-accent);
     transform: rotate(-45deg) translateY(-1px);
   }
   #addAccountModalOverlay .lm-forgot-btn {
@@ -1749,7 +2093,7 @@
     display: inline-block; margin-left: 6px;
     min-width: 16px; height: 16px; padding: 0 5px;
     border-radius: 8px;
-    background: var(--danger); color: #fff;
+    background: var(--danger); color: var(--on-accent);
     font-size: 10px; font-weight: 700; line-height: 16px;
     text-align: center; vertical-align: middle;
   }
@@ -1798,7 +2142,7 @@
     margin-left: auto;
   }
   header.top h1 { margin: 0; font-size: 24px; letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; }
-  header.top h1 .dot { width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--primary), #ffb056); display: inline-block; }
+  header.top h1 .dot { width: 12px; height: 12px; border-radius: 4px; background: linear-gradient(135deg, var(--primary), var(--primary-hi)); display: inline-block; }
   header.top .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
   .health { display: flex; align-items: center; cursor: default; position: relative; }
   .health .icon { color: var(--neutral); transition: color .25s, filter .25s; }
@@ -1843,9 +2187,9 @@
     -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
     transition: background-color .3s, filter .3s;
   }
-  .rfid-pod.connected    .rfid-pod-icon { background-color: var(--success); filter: drop-shadow(0 0 4px rgba(26,175,108,.45)); }
+  .rfid-pod.connected    .rfid-pod-icon { background-color: var(--success); filter: drop-shadow(0 0 4px color-mix(in srgb, var(--success) 45%, transparent)); }
   .rfid-pod.card-present .rfid-pod-icon { filter: drop-shadow(0 0 7px var(--success)); }
-  .rfid-pod.disconnected .rfid-pod-icon { background-color: #ef4444; }
+  .rfid-pod.disconnected .rfid-pod-icon { background-color: var(--danger); }
   /* Live "ready to scan" indicator — a small green dot with an expanding ping
      ring, shown only while a reader is connected (real-time / active). The pod
      icon itself stays static; a tag present makes the ping pulse faster. */
@@ -1879,19 +2223,19 @@
   .rfid-pod-pop {
     position: absolute; top: calc(100% + 7px); right: 0; left: auto;
     transform: translateY(-4px);
-    background: #1c2030; border: 1px solid rgba(255,255,255,.1); border-radius: 7px;
+    background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 7px;
     padding: 5px 10px; display: flex; flex-direction: column; gap: 5px;
     opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s;
     box-shadow: 0 4px 12px rgba(0,0,0,.3); z-index: 60;
   }
   .rfid-pod:hover .rfid-pod-pop { opacity: 1; transform: translateY(0); }
-  .rfid-pod-row { display: flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; font-weight: 600; color: #fff; }
+  .rfid-pod-row { display: flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--on-dark); }
   .rfid-pod-row .rrd-dot {
     width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
     background: var(--success);
   }
-  .rfid-pod-row.card-present .rrd-dot { background: #fff; }
-  .rfid-pod.disconnected .rfid-pod-row .rrd-dot { background: #ef4444; }
+  .rfid-pod-row.card-present .rrd-dot { background: var(--surface); }
+  .rfid-pod.disconnected .rfid-pod-row .rrd-dot { background: var(--danger); }
   .rfid-pod-row .rrd-name { overflow: hidden; text-overflow: ellipsis; }   /* full text — no fixed max-width */
   .rfid-pod-uid { margin-left: auto; padding-left: 10px; font-family: ui-monospace, monospace; font-size: 10px; color: var(--success); letter-spacing: .03em; }
 
@@ -1904,13 +2248,13 @@
   #health.ok { --tip-dot: var(--success); }
   .td1s-health:not(.td1s-connected),
   .scale-health:not(.scale-connected),
-  #health.bad { --tip-dot: #ef4444; }
+  #health.bad { --tip-dot: var(--danger); }
   .health::after {
     content: attr(data-tooltip);
     position: absolute; top: calc(100% + 7px); right: 0;
     padding: 5px 10px 5px 21px;   /* left room for the dot */
-    background: radial-gradient(circle at 11px 50%, var(--tip-dot) 0 3px, transparent 3px) no-repeat, #1c2030;
-    color: #fff; border: 1px solid rgba(255,255,255,.1);
+    background: radial-gradient(circle at 11px 50%, var(--tip-dot) 0 3px, transparent 3px) no-repeat, var(--dark-surface);
+    color: var(--on-dark); border: 1px solid var(--ink-10);
     border-radius: 7px; font-size: 11px; font-weight: 600; white-space: nowrap;
     opacity: 0; pointer-events: none; transition: opacity .15s;
     box-shadow: 0 4px 12px rgba(0,0,0,.3); z-index: 50;
@@ -1954,10 +2298,13 @@
     --adp-surface-2: #2a313e;
     /* Visible white border on every input/select — user feedback
        called for inputs that read clearly against the black canvas. */
-    --adp-border:    rgba(255,255,255,.55);
+    /* Literal white alphas, NOT the ink ladder: this panel is deliberately
+       dark in both themes (it mirrors the Flutter app's product screen), so
+       themed ink would flip to black-on-black the moment Light is picked. */
+    --adp-border:    rgba(255,255,255,.60);
     --adp-border-soft: rgba(255,255,255,.10);
-    --adp-text:      #fff;
-    --adp-muted:     rgba(255,255,255,.78);
+    --adp-text:      var(--on-dark);
+    --adp-muted:     rgba(255,255,255,.85);
     color: var(--adp-text);
     /* Match the Flutter app's typography — Material 3 ships with
        Roboto on Android, falls back to SF on iOS, both are inherited
@@ -2002,7 +2349,7 @@
      the background to pure black like the Flutter creator screen. */
   .adp-panel.detail-panel {
     background: var(--adp-bg);
-    border-color: rgba(255,255,255,.06);
+    border-color: var(--ink-06);
     width: 400px; /* wider than the spool detail panel (300px) — more breathing room */
   }
   .adp-panel.detail-panel .panel-body { background: var(--adp-bg); }
@@ -2033,7 +2380,7 @@
     cursor: pointer; padding: 4px 6px;
     transition: background .12s;
   }
-  .adp-td1s-btn:hover { background: rgba(255,255,255,.08); }
+  .adp-td1s-btn:hover { background: var(--ink-08); }
   .adp-td1s-btn::before {
     content: "";
     display: block;
@@ -2042,7 +2389,7 @@
        SVG edits. Same visual size as the sidebar td1s-health-icon. */
     height: 18px;
     aspect-ratio: 52 / 22;
-    background-color: rgba(255,255,255,.35);
+    background-color: var(--ink-30);
     -webkit-mask-image: url('../../assets/svg/icons/icon_td1s.svg');
     -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
     transition: background-color .3s, filter .3s;
@@ -2102,20 +2449,20 @@
   .adp-toggle {
     width: 40px; height: 22px;
     border-radius: 999px;
-    background: rgba(255,255,255,.18);
+    background: var(--ink-20);
     border: none;
     padding: 0;
     cursor: pointer;
     position: relative;
     transition: background .15s;
   }
-  .adp-toggle[data-on="true"] { background: #34c759; }
+  .adp-toggle[data-on="true"] { background: var(--success); }
   .adp-toggle-knob {
     position: absolute;
     top: 2px; left: 2px;
     width: 18px; height: 18px;
     border-radius: 50%;
-    background: #fff;
+    background: var(--surface);
     box-shadow: 0 1px 3px rgba(0,0,0,.4);
     transition: left .15s;
   }
@@ -2171,7 +2518,7 @@
     width: 100%;
     height: 36px;
     padding: 0 10px;
-    border: 1.5px solid #fff;
+    border: 1.5px solid var(--on-dark);
     border-radius: 10px;
     background: var(--adp-surface);
     color: var(--adp-text);
@@ -2183,7 +2530,7 @@
   .adp-panel .adp-select:focus,
   .adp-panel .adp-input:focus {
     outline: none;
-    border-color: #fff;
+    border-color: var(--text);
     background: var(--adp-surface-2);
     box-shadow: 0 0 0 3px rgba(255,255,255,.12);
   }
@@ -2195,7 +2542,7 @@
   .adp-panel .adp-select {
     appearance: none;
     -webkit-appearance: none;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='rgba(255,255,255,0.6)'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='var(--ink-60)'/></svg>");
     background-position: right 12px center;
     background-size: 8px 5px;
     background-repeat: no-repeat;
@@ -2220,10 +2567,10 @@
     width: 100%; height: 36px; max-width: none; box-sizing: border-box;
     display: flex; align-items: center; justify-content: flex-start; text-align: left;
     padding: 0 28px 0 10px;
-    border: 1.5px solid #fff; border-radius: 10px;
+    border: 1.5px solid var(--on-dark); border-radius: 10px;
     background-color: var(--adp-surface); color: var(--adp-text);
     font-size: 13px; font-family: inherit; cursor: pointer;   /* weight inherits the panel's 700, like the Brand/Material triggers */
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='rgba(255,255,255,0.6)'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 5'><path d='M0 0l4 5 4-5z' fill='var(--ink-60)'/></svg>");
     background-position: right 12px center; background-size: 8px 5px; background-repeat: no-repeat;
     transition: border-color .12s, box-shadow .12s, background-color .12s;
   }
@@ -2243,14 +2590,14 @@
   .adp-panel .csel--open .csel-btn.is-active { background-color: var(--adp-surface-2); }
   .adp-panel .csel-pop {
     max-width: none; background: var(--adp-surface);
-    border: 1.5px solid rgba(255,255,255,.85); border-radius: 10px;
+    border: 1.5px solid var(--ink-85); border-radius: 10px;
     box-shadow: 0 16px 40px rgba(0,0,0,.45);
   }
   .adp-panel .csel-opt { color: var(--adp-text); font-size: 13px; font-weight: 400; }
   .adp-panel .csel-opt:hover { background: var(--adp-surface-2); }
   /* Selected option: highlighted by the background only — NO bold, so it stays
      iso with every other panel field. */
-  .adp-panel .csel-opt.is-sel { color: #fff; font-weight: 400; background: rgba(255,255,255,.10); }
+  .adp-panel .csel-opt.is-sel { color: var(--text); font-weight: 400; background: var(--ink-10); }
 
   /* Top row — round swatch on left, identity stack on right.
      `align-items: stretch` so the stack fills the row's vertical
@@ -2280,8 +2627,8 @@
     width: 104px; height: 104px;
     border-radius: 50%;
     /* Thinner ring so the colour reads as the focus, not the border. */
-    border: 2px solid #fff;
-    background: #FF5722;
+    border: 2px solid var(--on-dark);
+    background: var(--primary);
     cursor: pointer;
     padding: 0;
     flex-shrink: 0;
@@ -2319,13 +2666,13 @@
      above (1.5 px white) so every "input you can type / pick into"
      reads as one consistent surface family. */
   .adp-panel .adp-color-name-wrap .adp-input--with-clear {
-    border: 1.5px solid #fff;
+    border: 1.5px solid var(--on-dark);
     border-radius: 16px;
     height: 46px;
     font-size: 14px;
   }
   .adp-panel .adp-color-name-wrap .adp-input--with-clear:focus {
-    border-color: #fff;
+    border-color: var(--text);
     box-shadow: 0 0 0 3px rgba(255,255,255,.12);
   }
   /* Re-position the inline ✕ clear button so it stays vertically
@@ -2340,7 +2687,7 @@
     transform: translateY(-50%);
     width: 24px; height: 24px;
     border-radius: 50%;
-    background: rgba(255,255,255,.10);
+    background: var(--ink-10);
     border: none;
     padding: 0;
     display: inline-flex;
@@ -2349,8 +2696,8 @@
     cursor: pointer;
     transition: background .12s;
   }
-  .adp-input-clear:hover { background: rgba(255,255,255,.20); }
-  .adp-input-clear .icon { background: #fff; }
+  .adp-input-clear:hover { background: var(--ink-20); }
+  .adp-input-clear .icon { background: var(--on-accent); }
   .adp-input-clear[hidden] { display: none; }
   /* Press feedback: re-apply the centering transform so the button stays
      vertically centered on click — the global `button:active` would otherwise
@@ -2381,9 +2728,9 @@
     background: rgba(255,180,91,.08);
   }
   .adp-byte-counter[data-byte-state="full"] {
-    color: #ef4444;
-    border-color: rgba(239,68,68,.45);
-    background: rgba(239,68,68,.10);
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+    background: color-mix(in srgb, var(--danger) 10%, transparent);
   }
   .adp-byte-counter-sep { opacity: .5; margin: 0 1px; }
   .adp-byte-counter-max { opacity: .65; }
@@ -2504,8 +2851,8 @@
     justify-content: center;
     transition: background .12s, transform .12s;
   }
-  .adp-rfid-section .adp-rfid-copy:hover  { background: rgba(255,255,255,.10); }
-  .adp-rfid-section .adp-rfid-copy:active { background: rgba(255,255,255,.18); transform: scale(.96); }
+  .adp-rfid-section .adp-rfid-copy:hover  { background: var(--ink-10); }
+  .adp-rfid-section .adp-rfid-copy:active { background: var(--ink-20); transform: scale(.96); }
   /* `.copied` flash — JS toggles this for ~1.8 s after a successful
      clipboard write. Tints the icon green to confirm without needing
      a toast. */
@@ -2537,8 +2884,8 @@
      `.adp-brand-sheet` instead, so they keep their own background. */
   .sfe-sheet--color.adp-color-sheet {
     background: #1f242e;            /* matches the brand sheet + adp inputs */
-    color: #fff;
-    border-color: rgba(255,255,255,.08);
+    color: var(--on-dark);
+    border-color: var(--ink-08);
   }
   /* Preset swatches — solid 1 px black ring so every colour reads
      crisply against the anthracite canvas (the 8 % inset ring used
@@ -2559,7 +2906,7 @@
      pencil to stay visible is gone: it was compensating for the missing flip, and
      on a light colour it read as a smudge. */
   .sfe-sheet--color.adp-color-sheet .sfe-color-cell--custom .icon {
-    background: #fff;
+    background: var(--surface);
     width: 18px; height: 18px;
   }
 
@@ -2585,11 +2932,11 @@
   .adp-color-count-btn.is-active {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
+    color: var(--on-accent);
   }
   .adp-color-count-btn:not(.is-active):hover {
     background: var(--surface-3);
-    color: var(--fg);
+    color: var(--text);
   }
 
   /* ── Slot indicator row (Dual / Tri) ───────────────────────────── */
@@ -2610,7 +2957,7 @@
   .adp-color-slot-btn.is-active {
     border-color: var(--primary);
     transform: scale(1.1);
-    box-shadow: 0 0 0 2px var(--primary-20, rgba(255,120,0,.25));
+    box-shadow: 0 0 0 2px var(--primary-20);
   }
 
   /* Add-product sheet backdrops — limited to the panel area (right
@@ -2661,7 +3008,7 @@
     width: 0; height: 0;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
-    border-top: 5px solid rgba(255,255,255,.6);
+    border-top: 5px solid var(--ink-60);
     flex-shrink: 0;
   }
 
@@ -2672,7 +3019,7 @@
     height: 90vh;
     max-height: 90vh;
     background: #1f242e;          /* anthracite, matches input wells */
-    color: #fff;
+    color: var(--on-dark);
     display: flex;
     flex-direction: column;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
@@ -2682,7 +3029,7 @@
   .adp-brand-search-row {
     flex-shrink: 0;
     padding: 14px 16px;
-    border-bottom: 1px solid rgba(255,255,255,.08);
+    border-bottom: 1px solid var(--ink-08);
   }
   .adp-brand-search-wrap {
     position: relative;
@@ -2696,14 +3043,14 @@
   .adp-brand-sheet .adp-brand-search-input {
     width: 100%;
     height: 36px;
-    border: 1px solid rgba(255,255,255,.18);
+    border: 1px solid var(--ink-20);
     border-radius: 10px;
     /* Lighter grey than the anthracite sheet so the field reads as
        a distinct surface — pops out against the #1f242e canvas. */
     background: #3a4051;
-    color: #fff;
+    color: var(--text);
     /* Same rank as "Nozzle Temp." — 13 px / 700, white when typed.
-       Placeholder stays at the lighter `rgba(255,255,255,.4)` set
+       Placeholder stays at the lighter `var(--ink-40)` set
        just below so the empty-state hint remains soft. */
     font-size: 13px;
     font-weight: 700;
@@ -2715,13 +3062,13 @@
   }
   .adp-brand-sheet .adp-brand-search-input:focus {
     outline: none;
-    border-color: rgba(255,255,255,.55);
+    border-color: var(--ink-60);
     background: #444a5c;
-    color: #fff;
+    color: var(--text);
     box-shadow: 0 0 0 3px rgba(255,255,255,.08);
   }
   .adp-brand-sheet .adp-brand-search-input::placeholder {
-    color: rgba(255,255,255,.4);
+    color: var(--ink-40);
   }
   /* Loupe icon — anchored at the right edge inside the input. */
   .adp-brand-search-icon {
@@ -2729,7 +3076,7 @@
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255,255,255,.55);
+    background: var(--ink-60);
     pointer-events: none;
   }
   /* Clear ✕ — sits to the LEFT of the loupe, visible only when the
@@ -2745,15 +3092,15 @@
     padding: 0;
     border: none;
     border-radius: 50%;
-    background: rgba(255,255,255,.18);
-    color: rgba(255,255,255,.85);
+    background: var(--ink-20);
+    color: var(--ink-85);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: background .12s, color .12s, transform .1s;
   }
-  .adp-brand-search-clear:hover { background: rgba(255,255,255,.30); color: #fff; }
+  .adp-brand-search-clear:hover { background: var(--ink-30); color: var(--text); }
   .adp-brand-search-clear:active { transform: translateY(-50%) scale(.92); }
   .adp-brand-search-clear[hidden] { display: none; }
   .adp-brand-search-clear .icon { background: currentColor; }
@@ -2830,11 +3177,11 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    color: rgba(255,255,255,.35);
+    color: var(--ink-30);
     transition: background .12s, color .12s, transform .08s;
     flex-shrink: 0;
   }
-  .adp-brand-star:hover { background: rgba(255,255,255,.10); color: rgba(255,255,255,.65); }
+  .adp-brand-star:hover { background: var(--ink-10); color: var(--ink-60); }
   .adp-brand-star:active { transform: scale(.92); }
   .adp-brand-star .icon { background: currentColor; }
   /* Force the icon up to ~24-26px regardless of which `.icon-NN` size
@@ -2854,12 +3201,12 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .08em;
-    color: rgba(255,255,255,.45);
+    color: var(--ink-40);
   }
   .adp-brand-empty {
     padding: 20px 16px;
     text-align: center;
-    color: rgba(255,255,255,.5);
+    color: var(--ink-50);
     font-size: 13px;
   }
 
@@ -2911,7 +3258,7 @@
        create visible seams from sub-pixel mis-alignment. Only the
        glyph itself (white on the input's anthracite) reads. */
     background: transparent;
-    color: #fff;
+    color: var(--on-dark);
     font-size: 18px;
     font-weight: 600;
     line-height: 1;
@@ -2945,7 +3292,7 @@
        icon widths) so the centered hex text floats visually between
        them rather than colliding with either side. */
     padding: 0 26px;
-    color: #fff;
+    color: var(--text);
     font-size: 18px;
     font-weight: 700;
     letter-spacing: .06em;
@@ -2954,7 +3301,7 @@
     font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     /* Caret colour — matches the white text. Without this Chromium
        defaults to a black caret that disappears against the dark fill. */
-    caret-color: #fff;
+    caret-color: var(--text);
     box-shadow: none;
   }
   /* Focus override — kills the global `input:focus` rule (primary
@@ -2971,12 +3318,12 @@
   .adp-cc-sheet .adp-cc-hex-input:-webkit-autofill,
   .adp-cc-sheet .adp-cc-hex-input:-webkit-autofill:hover,
   .adp-cc-sheet .adp-cc-hex-input:-webkit-autofill:focus {
-    -webkit-text-fill-color: #fff;
+    -webkit-text-fill-color: var(--text);
     -webkit-box-shadow: 0 0 0 1000px #1f242e inset;
     box-shadow: 0 0 0 1000px #1f242e inset;
-    caret-color: #fff;
+    caret-color: var(--text);
   }
-  .adp-cc-hex-input::placeholder { color: rgba(255,255,255,.35); }
+  .adp-cc-hex-input::placeholder { color: var(--ink-30); }
   .adp-cc-hex-paste {
     appearance: none;
     /* Fully transparent — same logic as the # prefix: the input
@@ -2986,7 +3333,7 @@
        interactivity without introducing hard fill edges. */
     background: transparent;
     border: 0;
-    color: #fff;
+    color: var(--on-dark);
     cursor: pointer;
     padding: 2px;
     border-radius: 6px;
@@ -2995,8 +3342,8 @@
     justify-content: center;
     transition: background .12s;
   }
-  .adp-cc-hex-paste:hover  { background: rgba(255,255,255,.10); }
-  .adp-cc-hex-paste:active { background: rgba(255,255,255,.18); }
+  .adp-cc-hex-paste:hover  { background: var(--ink-10); }
+  .adp-cc-hex-paste:active { background: var(--ink-20); }
 
   /* Saturation × value rectangle. Two stacked gradients: horizontal
      white→hue (the hue is set inline via JS as `--cc-hue`) and
@@ -3041,7 +3388,7 @@
     width: 44px; height: 44px;
     border-radius: 50%;
     border: 0;
-    background: #FF5722;
+    background: var(--primary);
     cursor: default;
     padding: 0;
     box-shadow: 0 0 0 1px rgba(255,255,255,.25) inset,
@@ -3078,7 +3425,7 @@
   .adp-cc-ok {
     align-self: center;
     appearance: none;
-    background: #fff;
+    background: var(--surface);
     color: #2c2540;
     border: 0;
     border-radius: 999px;
@@ -3091,15 +3438,15 @@
     box-shadow: 0 4px 14px rgba(0,0,0,.35);
     transition: transform .12s, box-shadow .12s;
   }
-  .adp-cc-ok:hover  { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.45); background: #fff; }
+  .adp-cc-ok:hover  { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,0,0,.45); background: var(--surface); }
   .adp-cc-ok:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,.35); }
 
   .adp-error {
     margin: 4px 0 0;
     padding: 8px 12px;
-    background: rgba(239, 68, 68, .12);
-    color: var(--danger, #ef4444);
-    border: 1px solid rgba(239, 68, 68, .25);
+    background: color-mix(in srgb, var(--danger) 12%, transparent);
+    color: var(--danger);
+    border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent);
     border-radius: 8px;
     font-size: 12px;
     font-weight: 500;
@@ -3139,7 +3486,7 @@
   }
   .adp-btn--primary {
     background: var(--primary);
-    color: #fff;
+    color: var(--on-dark);
   }
   .adp-btn--primary:hover { filter: brightness(1.07); }
   .adp-btn--primary:disabled {
@@ -3153,7 +3500,7 @@
      footer like the mobile "Make" CTA does. */
   .adp-btn--make {
     background: linear-gradient(180deg, #c93442 0%, #9b1f2c 100%);
-    color: #fff;
+    color: var(--on-dark);
     padding: 0 36px;
     height: 44px;
     min-width: 180px;
@@ -3455,12 +3802,12 @@
 }
 .tigerpod-close-btn {
   position: absolute; top: 12px; right: 12px; z-index: 2;
-  color: rgba(255,255,255,.7); background: rgba(0,0,0,.25);
+  color: var(--ink-70); background: rgba(0,0,0,.25);
   border-radius: 50%; width: 28px; height: 28px;
   display: flex; align-items: center; justify-content: center;
   font-size: 14px; line-height: 1;
 }
-.tigerpod-close-btn:hover { color: #fff; background: rgba(0,0,0,.45); }
+.tigerpod-close-btn:hover { color: var(--text); background: rgba(0,0,0,.45); }
 
 /* ── Hero — purple gradient + pulsing rings + product identity ── */
 .tigerpod-hero {
@@ -3475,7 +3822,7 @@
 .tigerpod-hero-rings { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
 .tpr {
   position: absolute; border-radius: 50%;
-  border: 1.5px solid rgba(255,255,255,.2);
+  border: 1.5px solid var(--ink-20);
   animation: tpr-pulse 2.8s ease-out infinite;
 }
 .tpr1 { width: 70px;  height: 70px;  animation-delay: 0s; }
@@ -3501,11 +3848,11 @@
 }
 .tigerpod-hero-brand {
   font-size: 10px; font-weight: 700; letter-spacing: .1em;
-  color: rgba(255,255,255,.6); text-transform: uppercase;
+  color: var(--ink-60); text-transform: uppercase;
 }
 .tigerpod-hero-product {
   font-size: 18px; font-weight: 800; letter-spacing: .02em;
-  color: #fff;
+  color: var(--text);
 }
 /* Stats bar — bottom strip inside hero */
 .tigerpod-stats {
@@ -3514,18 +3861,18 @@
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .tigerpod-stat {
-  font-size: 12px; color: rgba(255,255,255,.8);
+  font-size: 12px; color: var(--ink-85);
 }
-.tigerpod-stat strong { color: #fff; font-weight: 700; }
-.tigerpod-stat-sep { color: rgba(255,255,255,.3); font-size: 11px; }
+.tigerpod-stat strong { color: var(--text); font-weight: 700; }
+.tigerpod-stat-sep { color: var(--ink-30); font-size: 11px; }
 .tigerpod-stat-free {
-  background: rgba(255,255,255,.15); border-radius: 4px;
-  padding: 1px 6px; font-weight: 700; color: rgba(255,255,255,.95);
+  background: var(--ink-15); border-radius: 4px;
+  padding: 1px 6px; font-weight: 700; color: var(--ink-85);
   font-size: 11px; letter-spacing: .04em;
 }
 .tigerpod-cta {
   font-size: 12px; font-weight: 600;
-  color: rgba(255,255,255,.9); letter-spacing: .03em;
+  color: var(--ink-85); letter-spacing: .03em;
 }
 
 /* ── Body ── */
@@ -3555,12 +3902,12 @@
 }
 .tigerpod-feat {
   display: flex; align-items: flex-start; gap: 9px;
-  background: var(--surface2); border: 1px solid var(--border);
+  background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 9px; padding: 10px 11px;
 }
 .tigerpod-feat-icon {
   flex-shrink: 0; height: 16px; aspect-ratio: 1/1; margin-top: 1px;
-  background-color: var(--accent);
+  background-color: var(--primary);
   -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
 }
 .tpfi-rfid    { -webkit-mask-image: url('../../assets/svg/icons/icon_rfid.svg');    aspect-ratio: 48/32; height: 14px; margin-top: 2px; }
@@ -3572,12 +3919,12 @@
   flex-shrink: 0;
   width: 20px; height: 20px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff7a18, #ffb056);
-  color: #fff;
+  background: linear-gradient(135deg, var(--primary), var(--primary-hi));
+  color: var(--text);
   font-size: 11px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
   margin-top: 1px;
-  box-shadow: 0 2px 6px rgba(255,122,24,.4);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 .tigerpod-feat-text {
   display: flex; flex-direction: column; gap: 1px; min-width: 0;
@@ -3592,7 +3939,7 @@
 /* ── Print spec strip ── */
 .tigerpod-print-spec {
   display: flex; align-items: center; justify-content: center; gap: 7px;
-  background: var(--surface2); border: 1px solid var(--border);
+  background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px 12px;
   font-size: 12px; color: var(--muted);
 }
@@ -3608,12 +3955,12 @@
   width: 100%; height: 44px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
-  background: var(--primary); color: #fff; border: 1px solid var(--primary);
-  box-shadow: 0 2px 10px rgba(255,122,24,.35);
+  background: var(--primary); color: var(--on-accent); border: 1px solid var(--primary);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 35%, transparent);
 }
 .tigerpod-print-btn:hover {
   background: var(--primary-hover); border-color: var(--primary-hover);
-  box-shadow: 0 3px 14px rgba(255,122,24,.45);
+  box-shadow: 0 3px 14px color-mix(in srgb, var(--primary) 45%, transparent);
 }
 /* Debug-only reader readout (replaces the removed ownership toggle). Only ever
    visible in debug mode; mono, compact, unobtrusive — it's a diagnostic, not UI. */
@@ -3621,8 +3968,8 @@
   margin-top: 14px;
   padding: 10px 12px;
   border-radius: 10px;
-  background: var(--surface-2, #f4f5f7);
-  border: 1px solid var(--hairline, #e3e6ea);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 11px;
   line-height: 1.5;
@@ -3633,10 +3980,10 @@
 .tigerpod-debug .tpd-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tigerpod-debug .tpd-chip { flex: none; }
 .tigerpod-debug .tpd-empty { opacity: .7; }
-.tigerpod-debug .tpd-meta { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--hairline, #e3e6ea); }
+.tigerpod-debug .tpd-meta { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .tigerpod-btn-icon {
   flex-shrink: 0; height: 16px; aspect-ratio: 1/1;
-  background-color: #fff;
+  background-color: var(--surface);
   -webkit-mask-image: url('../../assets/svg/icons/icon_printer.svg');
   -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
 }
@@ -3677,13 +4024,13 @@
   display: flex; align-items: center; justify-content: center;
   padding: 22px 24px; border-radius: 16px;
   background: linear-gradient(160deg, #4b5468, #363d4e);
-  border: 1.5px solid rgba(255,255,255,.06);
+  border: 1.5px solid var(--ink-06);
   box-shadow: 0 4px 14px rgba(20,24,40,.16);
   transition: box-shadow .25s ease, transform .2s ease;
 }
 .cem-chip-logo {
   width: 76px; aspect-ratio: 340 / 289.1; /* viewBox of logo_tigertag.svg */
-  background-color: #fff;
+  background-color: var(--surface);
   -webkit-mask: url('../../assets/svg/logos/logo_tigertag.svg') center / contain no-repeat;
           mask: url('../../assets/svg/logos/logo_tigertag.svg') center / contain no-repeat;
   transition: transform .2s ease;
@@ -3693,12 +4040,12 @@
   position: absolute; top: 9px; left: 9px;
   width: 20px; height: 20px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; line-height: 1; color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1; color: var(--on-accent);
   background: var(--danger);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.2), 0 0 7px rgba(216,59,59,.65);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.2), 0 0 7px color-mix(in srgb, var(--danger) 65%, transparent);
   transition: background .2s ease, box-shadow .2s ease;
 }
-.cem-chip-uid { position: absolute; bottom: 4px; left: 0; right: 0; font-size: 9px; color: rgba(255,255,255,.65); font-family: ui-monospace, monospace; text-align: center; }
+.cem-chip-uid { position: absolute; bottom: 4px; left: 0; right: 0; font-size: 9px; color: var(--ink-60); font-family: ui-monospace, monospace; text-align: center; }
 
 /* ── per-state: LED colour + plate glow ── */
 .cem-chip--waiting .cem-chip-logo { animation: cemPulse 1.6s ease-in-out infinite; }
@@ -3707,29 +4054,29 @@
 .cem-chip--writing .cem-chip-num,
 .cem-chip--ok .cem-chip-num {
   background: var(--success);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px rgba(26,175,108,.7);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px color-mix(in srgb, var(--success) 70%, transparent);
 }
 
-.cem-chip--writing { box-shadow: 0 5px 18px rgba(26,175,108,.32); }
+.cem-chip--writing { box-shadow: 0 5px 18px color-mix(in srgb, var(--success) 32%, transparent); }
 .cem-chip--writing .cem-chip-logo { animation: cemPulse 1s ease-in-out infinite; }
 
-.cem-chip--ok { box-shadow: 0 5px 18px rgba(26,175,108,.42); }
+.cem-chip--ok { box-shadow: 0 5px 18px color-mix(in srgb, var(--success) 42%, transparent); }
 
-.cem-chip--fail { box-shadow: 0 5px 18px rgba(216,59,59,.36); animation: cemShake .4s ease; }
+.cem-chip--fail { box-shadow: 0 5px 18px color-mix(in srgb, var(--danger) 36%, transparent); animation: cemShake .4s ease; }
 .cem-chip--fail .cem-chip-num {
   background: var(--danger);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px rgba(216,59,59,.7);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px color-mix(in srgb, var(--danger) 70%, transparent);
 }
 
 /* Update flow: a present chip whose UID isn't this spool's — clearly wrong. */
 .cem-chip--mismatch {
-  border-color: rgba(216,59,59,.55);
-  box-shadow: 0 5px 18px rgba(216,59,59,.30);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  box-shadow: 0 5px 18px color-mix(in srgb, var(--danger) 30%, transparent);
 }
 .cem-chip--mismatch .cem-chip-logo { background-color: rgba(255,150,150,.9); }
 .cem-chip--mismatch .cem-chip-num {
   background: var(--danger);
-  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px rgba(216,59,59,.7);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.22), 0 0 8px color-mix(in srgb, var(--danger) 70%, transparent);
 }
 
 .cem-chip--none { opacity: .5; }
@@ -3737,8 +4084,8 @@
 /* ── global progress bar (sequence-wide) ── */
 .cem-progress { width: 100%; height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
 .cem-progress.hidden { display: none; }
-.cem-progress-fill { display: block; height: 100%; width: 0%; border-radius: 4px; background: #386ecf; transition: width .3s ease, background .2s ease; }
-.cem-progress--writing .cem-progress-fill { background-image: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.45) 50%, rgba(255,255,255,0) 100%); background-size: 40% 100%; background-repeat: no-repeat; animation: cemSheen 1.1s linear infinite; }
+.cem-progress-fill { display: block; height: 100%; width: 0%; border-radius: 4px; background: var(--info); transition: width .3s ease, background .2s ease; }
+.cem-progress--writing .cem-progress-fill { background-image: linear-gradient(90deg, var(--ink-04) 0%, var(--ink-40) 50%, var(--ink-04) 100%); background-size: 40% 100%; background-repeat: no-repeat; animation: cemSheen 1.1s linear infinite; }
 .cem-progress--done .cem-progress-fill { background-color: var(--success); }
 .cem-progress--fail .cem-progress-fill { background-color: var(--danger); }
 
@@ -3748,12 +4095,12 @@
 
 .cem-hint { font-size: 13px; color: var(--muted); line-height: 1.4; text-align: center; }
 .cem-hint.hidden { display: none; }
-.cem-overwrite { display: flex; flex-direction: column; gap: 9px; padding: 12px 14px; border-radius: 12px; background: rgba(234,179,8,.12); border: 1px solid rgba(234,179,8,.28); }
+.cem-overwrite { display: flex; flex-direction: column; gap: 9px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--warning) 12%, transparent); border: 1px solid color-mix(in srgb, var(--warning) 28%, transparent); }
 .cem-overwrite.hidden { display: none; }
 .cem-ow-warn { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 500; color: #92660b; }
-.cem-ow-warn .icon { background: #b45309; flex-shrink: 0; }
+.cem-ow-warn .icon { background: var(--warning-hover); flex-shrink: 0; }
 .cem-ow-toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text); cursor: pointer; }
-.cem-ow-toggle input { width: 16px; height: 16px; accent-color: #b45309; cursor: pointer; }
+.cem-ow-toggle input { width: 16px; height: 16px; accent-color: var(--warning-hover); cursor: pointer; }
 .cem-status { font-size: 13px; text-align: center; color: var(--muted); }
 .cem-status:empty { display: none; }
 .cem-status--fail { color: var(--danger); font-weight: 600; }
@@ -3917,7 +4264,7 @@
   margin-left: auto;
   display: inline-flex; align-items: center; gap: 4px;
   padding: 5px 12px;
-  background: var(--primary); color: #fff;
+  background: var(--primary); color: var(--on-accent);
   border: none; border-radius: 999px;
   font-size: 11px; font-weight: 700; line-height: 1;
   white-space: nowrap;
@@ -4017,7 +4364,7 @@
 .whatsnew-item-icon {
   flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--primary-soft, rgba(249,115,22,.12));
+  background: var(--primary-soft);
 }
 .whatsnew-item-icon .icon { background-color: var(--primary); }
 .whatsnew-item-text { flex: 1; min-width: 0; }
@@ -4036,14 +4383,14 @@
 }
 .whatsnew-btn:hover { border-color: var(--primary); }
 .whatsnew-btn--primary {
-  background: var(--primary, #f97316); color: #fff; border-color: var(--primary, #f97316);
+  background: var(--primary); color: var(--on-accent); border-color: var(--primary);
 }
 .whatsnew-btn--primary:hover { filter: brightness(1.05); }
 /* Support block in the What's New footer — a short caption + the official
    "Buy me a coffee" button (.bmc-btn), pushed to the left (margin-right:auto)
    so the Later / Got it actions stay on the right. */
 .whatsnew-coffee-wrap { margin-right: auto; display: inline-flex; align-items: center; gap: 9px; }
-.whatsnew-coffee-cap { font-size: 12.5px; font-weight: 600; color: var(--text-dim, #8b93a7); }
+.whatsnew-coffee-cap { font-size: 12.5px; font-weight: 600; color: var(--faint); }
 @media (max-width: 440px) { .whatsnew-coffee-cap { display: none; } }
 
 /* Version page-control — Apple-style dots (one per version, current filled), in the
@@ -4073,7 +4420,7 @@
 }
 .wn-dot::before {
   content: ""; display: block; width: 9px; height: 9px; border-radius: 999px;
-  background: var(--muted, #8b93a7); opacity: .35;
+  background: var(--muted); opacity: .35;
   transition: width .3s cubic-bezier(.34,1.2,.5,1), opacity .22s, background-color .22s;
 }
 .wn-dot:hover:not(.is-active)::before { opacity: .6; }
@@ -4111,9 +4458,9 @@
   transition: border-color .12s, background-color .12s, transform .06s;
 }
 /* Per-type accent colour (matches the sidebar / Details badge): purple / blue / green. */
-.clm-vis-opt[data-vis="private"] { --vc: #8358d6; }
-.clm-vis-opt[data-vis="friends"] { --vc: #2f74d0; }
-.clm-vis-opt[data-vis="public"]  { --vc: #2e9e6b; }
+.clm-vis-opt[data-vis="private"] { --vc: var(--violet); }
+.clm-vis-opt[data-vis="friends"] { --vc: var(--info); }
+.clm-vis-opt[data-vis="public"]  { --vc: var(--success); }
 .clm-vis-opt:hover { border-color: color-mix(in srgb, var(--vc) 40%, var(--border)); }
 .clm-vis-opt:active { transform: scale(.98); }
 .clm-vis-ic { flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, var(--vc) 10%, var(--surface)); }
@@ -4138,7 +4485,7 @@
 }
 .clm-btn--ghost { background: var(--surface-2); border-color: var(--border); color: var(--muted); }
 .clm-btn--ghost:hover { background: var(--surface); color: var(--text); }
-.clm-btn--primary { background: var(--primary); color: #fff; }
+.clm-btn--primary { background: var(--primary); color: var(--on-accent); }
 .clm-btn--primary:hover { filter: brightness(1.07); }
 .clm-btn--primary:disabled { opacity: .5; cursor: not-allowed; filter: none; }
 /* Delete list — compact icon button, bottom-left of the footer. Hold-to-confirm
@@ -4168,7 +4515,7 @@
 }
 .attach-modal-field input:focus { outline: none; border-color: var(--primary); background: var(--primary-soft); }
 .attach-modal-hint { font-size: 12px; color: var(--muted); line-height: 1.4; }
-.attach-modal-err { font-size: 12.5px; color: var(--danger, #ff5c5c); font-weight: 600; }
+.attach-modal-err { font-size: 12.5px; color: var(--danger); font-weight: 600; }
 .attach-modal-err[hidden] { display: none; }
 .attach-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 18px 16px; }
 
@@ -4227,7 +4574,7 @@
      the white value well and the control lost its three-part reading. */
   #cwModalOverlay .cw-stepper:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px var(--primary-soft, rgba(249,115,22,.16));
+    box-shadow: 0 0 0 4px var(--primary-soft);
   }
   /* height:auto + align-self:stretch are REQUIRED: the global `button` rule sets a
      fixed 40px height, which left these sitting top-aligned in a 66px stepper with
@@ -4242,7 +4589,7 @@
     transition: background .12s, color .12s;
   }
   #cwModalOverlay .cw-step:hover  { background: var(--border); color: var(--primary); }
-  #cwModalOverlay .cw-step:active { background: var(--primary-soft, rgba(249,115,22,.16)); }
+  #cwModalOverlay .cw-step:active { background: var(--primary-soft); }
   /* White value well between the two buttons — the wrapper keeps the outer frame,
      side rules separate the number from − / + without giving it its own box. */
   #cwModalOverlay .cw-dial {
@@ -4300,7 +4647,7 @@
   }
   #cwModalOverlay .cw-how-num {
     flex: none; width: 18px;
-    background: var(--primary); color: #fff;
+    background: var(--primary); color: var(--on-accent);
     font-size: 10.5px; font-weight: 800;
     /* The head is flex-start so the badge pins to the top line whether the
        caption is one line or three (it used to centre on the whole block, so a
@@ -4355,7 +4702,7 @@
     padding: 0;
     border: 0;
     border-radius: 50%;
-    background: #fff;
+    background: var(--surface);
     display: grid; place-items: center;
     line-height: 1;
     font-size: 20px; font-weight: 700; font-family: inherit;
@@ -4411,7 +4758,7 @@
   #cwModalOverlay .cw-mode-opt input:checked + .cw-radio { border-color: var(--primary); }
   #cwModalOverlay .cw-mode-opt input:checked + .cw-radio::after { transform: scale(1); }
   #cwModalOverlay .cw-mode-opt input:focus-visible + .cw-radio {
-    box-shadow: 0 0 0 3px var(--primary-soft, rgba(249,115,22,.20));
+    box-shadow: 0 0 0 3px var(--primary-soft);
   }
   #cwModalOverlay .cw-mode-opt:hover .cw-radio { border-color: var(--primary); }
 

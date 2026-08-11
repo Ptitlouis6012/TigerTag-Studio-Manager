@@ -12,7 +12,7 @@
     margin-left: 0; font-size: 12px; font-weight: 700;
     min-width: 22px; height: 20px; padding: 0 7px;
     display: inline-flex; align-items: center; justify-content: center;
-    background: var(--primary); color: #fff; border-radius: 10px;
+    background: var(--primary); color: var(--on-accent); border-radius: 10px;
   }
   #friendsListPanel .friends-body { padding: 14px 16px 16px; gap: 10px; }
   #friendsListPanel .fp-list {
@@ -33,15 +33,15 @@
     padding: 22px 18px 18px;
     background: linear-gradient(135deg, var(--primary) 0%, #ff5e3a 100%);
     border-radius: 18px;
-    color: #fff;
+    color: var(--on-accent);
     text-align: center;
-    box-shadow: 0 10px 30px rgba(249,115,22,.25);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 25%, transparent);
     position: relative;
     overflow: hidden;
   }
   .fp-hero::before {
     content: ""; position: absolute; inset: 0;
-    background: radial-gradient(circle at 20% 0%, rgba(255,255,255,.15), transparent 60%);
+    background: radial-gradient(circle at 20% 0%, var(--ink-15), transparent 60%);
     pointer-events: none;
   }
   .fp-hero-label {
@@ -62,16 +62,16 @@
   .fp-hero-qr { display: flex; justify-content: center; margin: 0 0 16px; }
   .fp-hero-qr img {
     width: 116px; height: 116px; padding: 7px;
-    background: #fff; border-radius: 13px;
+    background: var(--surface); border-radius: 13px;
     box-shadow: 0 6px 18px rgba(0,0,0,.18);
     display: block;
   }
   .fp-hero-qr img:not([src]) { display: none; }
-  .fp-hero-code.pkey-loading { color: rgba(255,255,255,.3); }
+  .fp-hero-code.pkey-loading { color: var(--ink-30); }
   .fp-hero-code.pkey-loading::after {
     content: "• • •";
     font-family: var(--mono); font-size: 32px; font-weight: 800;
-    color: #fff; letter-spacing: .18em;
+    color: var(--on-accent); letter-spacing: .18em;
     animation: pkey-pulse .9s ease-in-out infinite;
   }
   @keyframes pkey-pulse { 0%,100% { opacity:1 } 50% { opacity:.3 } }
@@ -83,17 +83,17 @@
     flex: 1; max-width: 140px;
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 8px 14px; border-radius: 10px;
-    background: rgba(255,255,255,.18);
-    border: 1px solid rgba(255,255,255,.25);
-    color: #fff; font-size: 12px; font-weight: 600;
+    background: var(--ink-20);
+    border: 1px solid var(--ink-25);
+    color: var(--on-accent); font-size: 12px; font-weight: 600;
     cursor: pointer; font-family: inherit;
     transition: background .15s, transform .1s, border-color .15s;
     backdrop-filter: blur(10px);
   }
-  .fp-hero-btn:hover  { background: rgba(255,255,255,.28); border-color: rgba(255,255,255,.4); }
+  .fp-hero-btn:hover  { background: var(--ink-30); border-color: var(--ink-40); }
   .fp-hero-btn:active { transform: scale(.96); }
-  .fp-hero-btn .icon  { background: #fff; }
-  .fp-hero-btn--copied { background: rgba(26,175,108,.45); border-color: rgba(255,255,255,.5); }
+  .fp-hero-btn .icon  { background: var(--on-accent); }
+  .fp-hero-btn--copied { background: color-mix(in srgb, var(--success) 45%, transparent); border-color: var(--ink-50); }
   .fp-hero-btn:disabled { opacity: .5; cursor: not-allowed; }
 
   /* Toggle row card */
@@ -104,11 +104,11 @@
     border-radius: 14px; cursor: pointer;
     transition: background .15s, border-color .15s;
   }
-  .fp-toggle-card:hover { background: var(--surface); border-color: var(--primary-soft, rgba(249,115,22,.3)); }
+  .fp-toggle-card:hover { background: var(--surface); border-color: var(--primary-soft); }
   .fp-toggle-icon {
     width: 32px; height: 32px; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    background: var(--primary-soft, rgba(249,115,22,.1));
+    background: var(--primary-soft);
     border-radius: 9px;
   }
   .fp-toggle-icon .icon { background: var(--primary); }
@@ -200,7 +200,7 @@
     position: relative;       /* anchor for the .sb-avatar-photo overlay */
     width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #fff;
+    font-size: 13px; font-weight: 700; color: var(--on-accent);
     box-shadow: 0 2px 6px rgba(0,0,0,.1);
     overflow: hidden;
   }
@@ -237,8 +237,8 @@
   .fp-reqs-block { flex: 0 0 auto; }
   .fp-reqs-block.hidden { display: none; }
   .fp-list-count--accent {
-    background: var(--primary-soft, rgba(249,115,22,.12));
-    color: var(--primary); border: 1px solid rgba(249,115,22,.25);
+    background: var(--primary-soft);
+    color: var(--primary); border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
   }
   .fp-req {
     display: flex; flex-direction: column; gap: 10px;
@@ -269,7 +269,7 @@
     padding: 10px 12px; border-radius: 12px;
     background: var(--surface-2); border: 1px solid var(--border);
   }
-  .notif-item--unread { border-color: var(--primary); background: var(--primary-soft, rgba(249,115,22,.08)); }
+  .notif-item--unread { border-color: var(--primary); background: var(--primary-soft); }
   /* All notifications wrap their text instead of truncating with an ellipsis. */
   .notif-text {
     font-size: 13px; color: var(--text);
@@ -280,7 +280,7 @@
   .notif-title { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.25; }
   .notif-title + .notif-text { font-size: 12px; color: var(--muted); line-height: 1.35; }
   .notif-item--clickable { cursor: pointer; transition: background .12s, border-color .12s; }
-  .notif-item--clickable:hover { border-color: var(--primary); background: var(--primary-soft, rgba(249,115,22,.16)); }
+  .notif-item--clickable:hover { border-color: var(--primary); background: var(--primary-soft); }
   .notif-item--clickable:active { transform: scale(.99); }
   .notif-dismiss { flex-shrink: 0; }
   .notif-dismiss:hover { background: var(--border); }
@@ -301,8 +301,8 @@
   .notif-ic--shop       { background: #5e8e3e; border-color: #5e8e3e; } /* Shopify green */
   .notif-ic--coffee     { background: #FFDD00; border-color: #FFDD00; } /* Buy Me a Coffee yellow */
   /* Low-stock alert — amber circle, white box icon. */
-  .notif-ic--lowstock { background: #f59e0b; border-color: #f59e0b; }
-  .notif-ic--lowstock .icon { background: #fff; }
+  .notif-ic--lowstock { background: var(--warning); border-color: var(--warning); }
+  .notif-ic--lowstock .icon { background: var(--on-accent); }
   /* Product illustration in a notification (fills the circular chip). */
   /* Material/product illustration → rounded SQUARE (like the cart's .pv-thumb),
      not the circular chip the other notif icons use. */
@@ -310,7 +310,7 @@
   .notif-ic--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .notif-ic--discord, .notif-ic--github, .notif-ic--makerworld, .notif-ic--shop, .notif-ic--coffee { border-radius: 10px; }
   .notif-ic--discord .icon, .notif-ic--github .icon, .notif-ic--makerworld .icon, .notif-ic--shop .icon {
-    background: #fff; width: 24px; height: 24px;
+    background: var(--surface); width: 24px; height: 24px;
   }
   /* Official Buy Me a Coffee cup (our own SVG) on the yellow square. */
   .notif-ic--coffee .notif-coffee-img { width: 26px; height: 26px; display: block; }
@@ -337,10 +337,10 @@
   /* ── Blacklist section ─────────────────────────────────────────────── */
   .fp-blacklist-block { margin-top: 10px; flex: 0 0 auto; }
   .fp-blacklist-block.hidden { display: none; }
-  .fp-list-count--danger { background: var(--danger-soft); color: var(--danger); border: 1px solid rgba(216,59,59,.25); }
+  .fp-list-count--danger { background: var(--danger-soft); color: var(--danger); border: 1px solid color-mix(in srgb, var(--danger) 25%, transparent); }
   .fp-blocked {
     background: var(--danger-soft) !important;
-    border-color: rgba(216,59,59,.2) !important;
+    border-color: color-mix(in srgb, var(--danger) 20%, transparent) !important;
     cursor: default !important;
   }
   .fp-blocked:hover { transform: none !important; box-shadow: none !important; }
@@ -354,7 +354,7 @@
     cursor: pointer;
     transition: background .15s, color .15s;
   }
-  .fp-friend-unblock:hover { background: var(--danger); color: #fff; }
+  .fp-friend-unblock:hover { background: var(--danger); color: var(--on-accent); }
   .fp-friend-unblock:disabled { opacity: .5; cursor: not-allowed; }
 
   /* Empty state */
@@ -367,7 +367,7 @@
   }
   .fp-empty-icon {
     width: 48px; height: 48px; margin: 0 auto 12px;
-    background: var(--primary-soft, rgba(249,115,22,.1));
+    background: var(--primary-soft);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
   }
@@ -395,14 +395,14 @@
     padding: 13px;
     background: var(--primary);
     border: none; border-radius: 12px;
-    color: #fff; font-size: 14px; font-weight: 600;
+    color: var(--on-accent); font-size: 14px; font-weight: 600;
     cursor: pointer; font-family: inherit;
     transition: background .15s, transform .1s, box-shadow .15s;
-    box-shadow: 0 4px 14px rgba(249,115,22,.25);
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 25%, transparent);
   }
-  .fp-cta:hover  { background: #f0670d; box-shadow: 0 6px 18px rgba(249,115,22,.35); }
+  .fp-cta:hover  { background: var(--primary-hover); box-shadow: 0 6px 18px color-mix(in srgb, var(--primary) 35%, transparent); }
   .fp-cta:active { transform: scale(.98); }
-  .fp-cta .icon  { background: #fff; }
+  .fp-cta .icon  { background: var(--on-accent); }
 
   /* Support button → official goodies shop. Secondary (soft) so it supports the
      primary "Add a friend" CTA without competing with it. Opens in the browser.

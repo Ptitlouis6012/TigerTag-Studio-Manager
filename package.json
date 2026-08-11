@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.17.2",
+  "version": "2.18.0",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -25,7 +25,8 @@
     "whatsnew:check": "node scripts/whatsnew-check.mjs",
     "lint": "eslint .",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
-    "oauth:config": "node scripts/gen-oauth-config.mjs"
+    "oauth:config": "node scripts/gen-oauth-config.mjs",
+    "theme:check": "node scripts/check-theme-tokens.mjs"
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.4",
@@ -79,6 +80,12 @@
           "arch": [
             "x64"
           ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "assets/img/icon.ico",
@@ -129,6 +136,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "portable": {
+      "artifactName": "${productName}-${version}-portable.${ext}",
+      "unpackDirName": "TigerStudioManager"
     }
   },
   "license": "MIT"
