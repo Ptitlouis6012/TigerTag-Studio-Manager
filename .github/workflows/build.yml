@@ -179,6 +179,24 @@ jobs:
         if: matrix.os == 'windows-latest' && steps.check_signing.outputs.ready == 'true'
         run: node scripts/regen-latest-yml.mjs
 
+      # Windows ships TWO .exe (NSIS installer + portable). electron-builder only
+      # writes latest.yml for `nsis` targets (isSuitableWindowsTarget in
+      # PublishManager), so the portable can never become the auto-update
+      # target — but that is a library invariant, not ours. Assert it here so a
+      # future target rename or an electron-builder change cannot silently point
+      # every Windows user's updater at a build that does not install.
+      - name: Assert latest.yml never points at the portable build
+        if: matrix.os == 'windows-latest'
+        shell: bash
+        run: |
+          if grep -qi "portable" dist/latest.yml; then
+            echo "::error::dist/latest.yml references the portable build — the auto-updater would download an app that does not install."
+            cat dist/latest.yml
+            exit 1
+          fi
+          echo "✓ latest.yml points only at the installer:"
+          grep -E "^(path|  - url):" dist/latest.yml
+
       - name: Release version (strip leading v)
         if: matrix.os == 'windows-latest'
         id: verwin
