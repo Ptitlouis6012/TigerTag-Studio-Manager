@@ -1753,6 +1753,7 @@
   /* Tab z-index ladder — see the 3-layer note above. Each tab sits above the
      panel it overlaps (the one to its left) and below the panel to its right. */
   #detailCloseTab     { z-index: 102; } /* material tab — behind settings + printer */
+  #matSourceCloseTab  { z-index: 97; }  /* add-material picker — leftmost card, so bottom of the ladder */
   #printerAddCloseTab { z-index: 104; } /* settings tab — over material, behind printer */
   #printerCloseTab    { z-index: 106; } /* printer tab — over settings (front-most) */
   /* Settings + Debug stack: Debug tab tucks BEHIND the Settings panel (102 <

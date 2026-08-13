@@ -10,19 +10,31 @@ utilityProcess). PC/SC enumerates *any* smart-card interface as a "reader" — s
 security key that exposes a CCID interface over USB) is picked up exactly like an ACR122U, and the app
 treats it as a filament reader (and would attempt card reads on it). Reported by a real user.
 
-More generally, the user has **no control** over which detected readers the app uses. Two legitimate
-needs beyond the YubiKey case:
+The same over-enumeration hit a second, **much more common** device: the **"Windows Hello for
+Business"** virtual smart-card reader. Windows auto-creates it on any TPM-backed / Entra-ID managed PC
+for certificate logon, and PC/SC lists it like a real CCID reader (visible via `certutil -scinfo`, not
+in Device Manager's reader category). It permanently reports a card present (`Identity Device
+(Microsoft Generic Profile)`), so a user with 2× ACR122U saw **three** slots in the multi-reader burn
+window; the third could never turn green and the Burn button stayed disabled for good. Reported by a
+real user on Windows 10 — and since Hello for Business is on by default on managed laptops, expect
+more of these than YubiKeys.
 
-- exclude a device that isn't a filament reader (YubiKey, other security tokens, PIV/CAC readers);
+More generally, the user has **no control** over which detected readers the app uses. Two legitimate
+needs beyond the security-key / virtual-reader cases:
+
+- exclude a device that isn't a filament reader (YubiKey, other security tokens, Windows Hello /
+  virtual smart cards, PIV/CAC readers);
 - with **two identical readers** (e.g. 2× ACR122U), use only one — deactivate the other when there's
   a single chip to write.
 
 ## Already shipped (the immediate fix — do not duplicate)
 
-A tight name filter already skips known security keys at the reader-registration gate
-(`nfc-process.js`, `nfc.on('reader')`): `if (/yubico|yubikey/i.test(name)) return;`. This unblocks the
-reported user with zero action. It is deliberately **narrow** (Yubico only) — the panel below is the
-general, user-controlled mechanism, and the filter becomes just a *smart default* within it.
+A tight name filter already skips known non-filament interfaces at the reader-registration gate
+(`nfc-process.js`, `nfc.on('reader')`):
+`if (/yubico|yubikey|windows hello|virtual smart card/i.test(name)) return;`. This unblocks the
+reported users with zero action. It is deliberately **narrow** (Yubico security keys + the Windows
+TPM virtual readers) — the panel below is the general, user-controlled mechanism, and the filter
+becomes just a *smart default* within it.
 
 ## The design — one panel, active/inactive per reader
 
@@ -109,4 +121,6 @@ Hardware-dependent → request a real-device test before proposing the commit:
 
 ## Progress
 
-_Immediate YubiKey name-filter shipped in `nfc-process.js` (hardware test pending). Panel not started._
+_Immediate name-filter shipped in `nfc-process.js` — YubiKey (v2.16.0) then the Windows Hello for
+Business / Microsoft virtual smart-card readers (v2.18.1, hardware test pending). Panel not started —
+two real reports of the same PC/SC over-enumeration now, so it is worth prioritising._

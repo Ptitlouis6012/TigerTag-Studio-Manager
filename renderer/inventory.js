@@ -2880,6 +2880,82 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // edits — only rotates on next open. Cleared on close.
   let _pendingCloudId = null;
 
+  /* ── Add material — source picker (step 1) ────────────────────────────────
+     The "+ Material" button asks where the material comes from before opening
+     anything: the catalogue produces a TigerData+ (a real product id behind the
+     entry), typing it in produces a plain TigerData. Both were reachable before
+     — the catalogue from its own top-bar button — but nothing said they were
+     the same task, nor what each one yields. One entry point, two labelled
+     outcomes. Picking either closes this card, so the cards never stack.
+     ─────────────────────────────────────────────────────────────────────── */
+  // One row per source. Two tier capsules each, not one: the entry starts
+  // chipless and becomes a real chip the day it is burned, and which rung it
+  // lands on is decided HERE — a catalogue entry carries a product id, so it
+  // burns to a TigerTag+; a hand-typed one burns to a plain TigerTag.
+  const MAT_SOURCES = [
+    { id: "matSourceChoiceCatalogue", label: "matSourceCatalogue", hint: "matSourceCatalogueHint",
+      tiers: '<span class="tag-cloud tag-cloud-plus">TigerData+</span><span class="tag-plus">TigerTag+</span>' },
+    { id: "matSourceChoiceManual",    label: "matSourceManual",    hint: "matSourceManualHint",
+      tiers: '<span class="tag-cloud">TigerData</span><span class="tag-diy">TigerTag</span>' },
+  ];
+  function openMaterialSourcePicker() {
+    if (!state.activeAccountId) {
+      try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
+      return;
+    }
+    const list = $("matSourceList");
+    if (list) {
+      list.innerHTML = MAT_SOURCES.map(s => {
+        const hint = esc(t(s.hint));
+        return `
+        <button type="button" class="pba-brand" id="${s.id}">
+          <span class="pba-brand-dot"></span>
+          <span class="pba-brand-text">
+            <span class="pba-brand-label">${esc(t(s.label))}</span>
+            <span class="mat-source-tiers">${s.tiers}</span>
+          </span>
+          <span class="tool-info" data-tip="${hint}" aria-label="${hint}"><span class="icon icon-info icon-13"></span></span>
+        </button>`;
+      }).join("");
+    }
+    $("matSourcePanel")?.classList.add("open");
+    _syncPanels();   // place it in the cascade + pin its » tab
+  }
+  function closeMaterialSourcePicker() {
+    $("matSourcePanel")?.classList.remove("open");
+    _syncPanels();
+    _hideToolInfoTip();
+  }
+  $("matSourceClose")?.addEventListener("click", closeMaterialSourcePicker);
+  $("matSourceCloseTab")?.addEventListener("click", closeMaterialSourcePicker);
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape" && $("matSourcePanel")?.classList.contains("open")) closeMaterialSourcePicker();
+  });
+  // Delegated on the container: the rows are re-rendered on every open.
+  $("matSourceList")?.addEventListener("click", e => {
+    const btn = e.target.closest?.(".pba-brand");
+    if (!btn) return;
+    closeMaterialSourcePicker();
+    // Catalogue always lands on the GRID, whatever layout the inventory was in.
+    // Picking a product you have never seen is a visual task — the spool photo
+    // and its colour are what you recognise it by — and the table shows neither
+    // at a glance.
+    if (btn.id === "matSourceChoiceCatalogue") setViewMode("catalogGrid");
+    else                                       openAddProductPanel();
+  });
+  // ⓘ hover bubbles — same body-appended tooltip as the toolbox and the reorder
+  // card. The ⓘ sits INSIDE the row button, so its pointer/click is swallowed in
+  // the capture phase or pressing it would pick that source.
+  (() => {
+    const list = $("matSourceList");
+    if (!list) return;
+    list.addEventListener("mouseover", e => { const el = e.target.closest?.(".tool-info"); if (el) _showToolInfoTip(el); });
+    list.addEventListener("mouseout",  e => { const el = e.target.closest?.(".tool-info"); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
+    const swallow = e => { if (e.target.closest?.(".tool-info")) { e.stopPropagation(); e.preventDefault(); } };
+    list.addEventListener("pointerdown", swallow, true);
+    list.addEventListener("click", swallow, true);
+  })();
+
   function openAddProductPanel() {
     if (!state.activeAccountId) {
       try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
@@ -2887,7 +2963,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
 
     // "Add product" takes over the right side — close every other side card first
-    // (spool detail, grouped-spools card, product card, reorder, pickers, notifs).
+    // (source picker, spool detail, grouped-spools card, product card, reorder,
+    // pickers, notifs).
+    try { closeMaterialSourcePicker(); } catch (_) {}
     try { closeDetail(); } catch (_) {}
     try { _closeGroupPanel(); } catch (_) {}
     try { closeProductCard(); } catch (_) {}
@@ -3435,10 +3513,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // The header Add button is multi-purpose, dispatching by current view:
     //   - Printer modes (grid / table / cam) → brand picker → add printer
     //   - Storage (rack) mode                 → new rack modal
-    //   - Inventory (table / grid)            → add product side panel
+    //   - Inventory (table / grid)            → source picker → catalogue or form
     if (_isPrinterMode(state.viewMode))      openPrinterBrandPicker();
     else if (state.viewMode === "rack")       openRackEditModal(null);
-    else                                      openAddProductPanel();
+    else                                      openMaterialSourcePicker();
   });
   $("addProductClose")?.addEventListener("click", _adpCloseAllSheetsAndPanel);
   // TD1S button in ADP header: open "Set Color & TD Value" modal pre-filled
@@ -3965,8 +4043,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // a wall of cards (or the reverse) reads as a different feature rather than the
   // same shelf seen from the catalogue side. `_syncInvBarButtons` only shows the
   // button in those two modes, so there is no third case to map.
-  $("btnAddFromCatalogue")?.addEventListener("click",
-    () => setViewMode(state.viewMode === "grid" ? "catalogGrid" : "catalogTable"));
+  // (The entry point is the "+ Material" side card — see openMaterialSourcePicker.)
 
   /* ── Settings → Tools: force a catalogue re-sync ────────────────────────────
      The local copy refreshes on its own once a day; this is the escape hatch for
@@ -14680,6 +14757,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const roW = (roOpen && rop) ? rop.offsetWidth : 0;
     const roRight = roOpen ? (baseRight + detailW + cppW + gpW + pcW) : 0;
     if (rop) rop.style.right = roRight ? `${roRight}px` : "";
+    // Add-material source picker — it has no scrim, so it can still be up when a
+    // spool or printer card is opened. It is the LEFTMOST card of the cascade:
+    // whatever opens next takes the right edge and PUSHES it left, rather than
+    // covering it.
+    const msp = $("matSourcePanel");
+    const msOpen = !!msp?.classList.contains("open");
+    const msW = (msOpen && msp) ? msp.offsetWidth : 0;
+    const msRight = msOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    if (msp) msp.style.right = msRight ? `${msRight}px` : "";
+    _setTab($("matSourceCloseTab"), msOpen, msRight + msW, msp);
     _setTab($("productCardCloseTab"), pcOpen, pcRight + pcW, pcp);
     _setTab($("reorderCloseTab"), roOpen, roRight + roW, rop);
     _setTab($("detailCloseTab"),     dOpen, matRight + detailW, dp);
@@ -15032,7 +15119,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const show = (state.viewMode === "table" || state.viewMode === "grid") && !state.friendView;
     $("btnInvExportTtag")?.classList.toggle("hidden", !show);
     $("btnInvImportTtag")?.classList.toggle("hidden", !show);
-    $("btnAddFromCatalogue")?.classList.toggle("hidden", !show);
     _syncTtagExportBtn();
   }
 
@@ -19373,6 +19459,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Close every open side card (spool / group / printer / settings) in one go.
   function _closeAllSidePanels() {
     if ($("notifPanel")?.classList.contains("open"))      closeNotifs();
+    if ($("matSourcePanel")?.classList.contains("open"))  closeMaterialSourcePicker();
     if ($("containerPanel")?.classList.contains("open"))  closeContainerPicker();
     if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
     if ($("reorderPanel")?.classList.contains("open"))    closeReorderPanel();

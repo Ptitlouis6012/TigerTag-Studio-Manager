@@ -263,14 +263,9 @@
             <span class="icon icon-backup icon-13"></span>
             <span data-i18n="ttagImportShort">Import</span>
           </button>
-          <!-- Browse the TigerTag+ product catalogue and create a ready-made
-               TigerData+ from a real product. Same visibility rule as the .ttag
-               bar buttons (inventory table/grid, own account) — driven by
-               _syncInvBarButtons. -->
-          <button id="btnAddFromCatalogue" class="inv-add-btn inv-ttag-btn" type="button">
-            <span class="icon icon-search icon-13"></span>
-            <span data-i18n="catalogBtn">From Catalogue</span>
-          </button>
+          <!-- "From Catalogue" used to be a top-bar button of its own; it is now
+               the first choice of the "+ Material" side card (#matSourcePanel),
+               so there is one place to add a material instead of two. -->
           <!-- Search views: how many catalogue PRODUCTS the current filters
                match. Sits in the actions row (not under the search bar) so it
                reads as a headline figure, like the stat tiles above. Shown only
@@ -2551,6 +2546,32 @@
      underscore makes it impossible to confuse with a real 7-byte hex
      RFID UID. Auto-prefills nozzle/bed/dry temps from
      id_material.recommended.* when Material changes. -->
+<!-- Add material — step 1: where does it come from?
+     "+ Material" used to open the manual form straight away, with a second
+     top-bar button for the catalogue. The two are the same intent with two
+     sources, and they do not produce the same thing — the catalogue makes a
+     TigerData+ tied to a real product, typing it in makes a plain TigerData —
+     so the button now asks first. Same side card + .pba-brand rows as the
+     printer add flow; the tier capsule on each row is the one the header stats
+     use, so "what will I get" is said in the app's own vocabulary. -->
+<!-- No .panel-overlay: like the spool detail card, this one leaves the app
+     visible and clickable behind it — it is a choice you can walk away from,
+     not a decision that must be answered before anything else. -->
+<button class="pp-close-tab" id="matSourceCloseTab" aria-label="Close" hidden>»</button>
+<aside class="detail-panel pba-panel mat-source-panel" id="matSourcePanel">
+  <div class="pba-header">
+    <div class="pba-header-text">
+      <div class="pba-title" data-i18n="matSourceTitle">Add a material</div>
+      <div class="pba-sub" data-i18n="matSourceSub">Two ways in — pick the one you have.</div>
+    </div>
+    <button class="panel-close" id="matSourceClose">✕</button>
+  </div>
+  <!-- Rows are built by openMaterialSourcePicker: each one's hint lives in a ⓘ
+       bubble, and `data-tip` carries plain text, which applyTranslations cannot
+       reach — rendering on open keeps them in the current language. -->
+  <div class="pba-brands" id="matSourceList"></div>
+</aside>
+
 <div class="panel-overlay" id="addProductOverlay"></div>
 <button class="pp-close-tab" id="addProductCloseTab" title="Close" aria-label="Close" hidden>»</button>
 <aside class="detail-panel adp-panel" id="addProductPanel">

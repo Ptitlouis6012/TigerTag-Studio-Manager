@@ -7652,5 +7652,135 @@
         }
       }
     ]
+  },
+  "2.19.0": {
+    "date": "2026-08-13",
+    "items": [
+      {
+        "icon": "plus",
+        "title": {
+          "en": "Adding a material: pick your lane",
+          "fr": "Ajouter une matière : choisis ta voie",
+          "de": "Material hinzufügen: du hast die Wahl",
+          "es": "Añadir un material: tú eliges el camino",
+          "it": "Aggiungere un materiale: scegli la strada",
+          "zh": "添加耗材：两条路，你挑",
+          "pt": "Adicionar um material: escolha o caminho",
+          "pt-pt": "Adicionar um material: escolhe o caminho",
+          "pl": "Dodawanie materiału: wybierz drogę"
+        },
+        "body": {
+          "en": "The + Material button now asks where it comes from. Pull the real product out of the catalogue and let it fill everything in, or type it in yourself. Each option tells you upfront what you end up with.",
+          "fr": "Le bouton + Matière te demande maintenant d'où elle sort. Prends le vrai produit dans le catalogue et laisse-le tout remplir, ou saisis-la à la main. Chaque option t'annonce d'avance ce que tu obtiens.",
+          "de": "Der Button + Material fragt jetzt, woher es kommt. Hol das echte Produkt aus dem Katalog und lass alles ausfüllen, oder tipp es selbst ein. Jede Option sagt dir vorher, was dabei herauskommt.",
+          "es": "El botón + Material ahora te pregunta de dónde sale. Saca el producto real del catálogo y deja que lo rellene todo, o escríbelo tú. Cada opción te dice de antemano qué vas a obtener.",
+          "it": "Il pulsante + Materiale ora ti chiede da dove arriva. Pesca il prodotto vero dal catalogo e lascia che compili tutto, oppure scrivilo tu. Ogni opzione ti dice in anticipo cosa otterrai.",
+          "zh": "「+ 耗材」按钮现在会先问一句：这卷从哪来？从产品库里挑出真实产品，剩下的自动填好；或者你自己手打。每个选项都提前告诉你会得到什么。",
+          "pt": "O botão + Material agora pergunta de onde ele vem. Puxe o produto real do catálogo e deixe que preencha tudo, ou digite você mesmo. Cada opção avisa de antemão o que você vai obter.",
+          "pt-pt": "O botão + Material pergunta agora de onde vem. Puxa o produto real do catálogo e deixa-o preencher tudo, ou escreve-o tu. Cada opção avisa-te de antemão o que vais obter.",
+          "pl": "Przycisk + Materiał pyta teraz, skąd się wziął. Wyciągnij prawdziwy produkt z katalogu i pozwól mu wypełnić resztę, albo wpisz wszystko sam. Każda opcja z góry mówi, co z tego wyjdzie."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "The TigerScale card grew up to V3",
+          "fr": "La carte TigerScale est passée en V3",
+          "de": "Die TigerScale-Karte ist jetzt V3",
+          "es": "La tarjeta TigerScale ya es V3",
+          "it": "La scheda TigerScale è passata alla V3",
+          "zh": "TigerScale 介绍卡升级到 V3",
+          "pt": "O cartão da TigerScale virou V3",
+          "pt-pt": "O cartão da TigerScale passou a V3",
+          "pl": "Karta TigerScale przeszła na V3"
+        },
+        "body": {
+          "en": "New photo, and a description that finally matches the machine: two readers so your spool is recognised whichever way you set it down, a big touchscreen that walks you through calibration, and it keeps going without internet. No computer to switch on.",
+          "fr": "Nouvelle photo, et une description qui colle enfin à la machine : deux lecteurs pour que ta bobine soit reconnue dans les deux sens, un grand écran tactile qui te guide pour la calibration, et elle continue sans internet. Pas d'ordinateur à allumer.",
+          "de": "Neues Foto und eine Beschreibung, die endlich zur Maschine passt: zwei Leser, damit deine Spule in beide Richtungen erkannt wird, ein großer Touchscreen, der dich durch die Kalibrierung führt, und sie läuft auch ohne Internet. Kein Computer nötig.",
+          "es": "Foto nueva y una descripción que por fin cuadra con la máquina: dos lectores para que tu bobina se reconozca la pongas como la pongas, una pantalla táctil grande que te guía en la calibración, y sigue funcionando sin internet. Sin encender el ordenador.",
+          "it": "Foto nuova e una descrizione che finalmente corrisponde alla macchina: due lettori così la bobina viene riconosciuta da entrambi i lati, un grande touchscreen che ti guida nella calibrazione, e continua a funzionare senza internet. Nessun computer da accendere.",
+          "zh": "换了新照片，描述也终于对得上这台机器了：双读头，线盘正反随便放都能认出来；大触摸屏一步步带你做校准；断了网照样干活，也不用开电脑。",
+          "pt": "Foto nova e uma descrição que finalmente combina com a máquina: dois leitores para o carretel ser reconhecido de qualquer lado, uma tela sensível ao toque grande que te guia na calibração, e continua funcionando sem internet. Sem ligar o computador.",
+          "pt-pt": "Foto nova e uma descrição que finalmente corresponde à máquina: dois leitores para a bobine ser reconhecida de qualquer lado, um ecrã táctil grande que te guia na calibração, e continua a funcionar sem internet. Sem ligar o computador.",
+          "pl": "Nowe zdjęcie i opis, który wreszcie pasuje do maszyny: dwa czytniki, więc szpula rozpoznaje się z każdej strony, duży ekran dotykowy prowadzi cię przez kalibrację, a całość działa też bez internetu. Bez włączania komputera."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "Print your own TigerScale",
+          "fr": "Imprime ta propre TigerScale",
+          "de": "Druck dir deine eigene TigerScale",
+          "es": "Imprime tu propia TigerScale",
+          "it": "Stampati la tua TigerScale",
+          "zh": "自己打印一台 TigerScale",
+          "pt": "Imprima sua própria TigerScale",
+          "pt-pt": "Imprime a tua própria TigerScale",
+          "pl": "Wydrukuj własną TigerScale"
+        },
+        "body": {
+          "en": "A MakerWorld button now sits next to the GitHub one, straight to the printable body. And GitHub no longer drops you on the old V2 nobody maintains.",
+          "fr": "Un bouton MakerWorld s'est posé à côté de celui de GitHub, direction le boîtier à imprimer. Et GitHub ne t'envoie plus sur la vieille V2 que plus personne ne maintient.",
+          "de": "Neben dem GitHub-Button sitzt jetzt einer für MakerWorld, direkt zum druckbaren Gehäuse. Und GitHub wirft dich nicht mehr auf die alte V2, die niemand mehr pflegt.",
+          "es": "Junto al botón de GitHub hay ahora uno de MakerWorld, directo a la carcasa imprimible. Y GitHub ya no te suelta en la vieja V2 que nadie mantiene.",
+          "it": "Accanto al pulsante GitHub ora ce n'è uno MakerWorld, dritto alla scocca da stampare. E GitHub non ti scarica più sulla vecchia V2 che nessuno aggiorna.",
+          "zh": "GitHub 按钮旁边多了一个 MakerWorld 按钮，直达可打印的外壳。GitHub 那个也不再把你丢到没人维护的老 V2 了。",
+          "pt": "Ao lado do botão do GitHub agora tem um do MakerWorld, direto para a carcaça imprimível. E o GitHub não te larga mais na velha V2 que ninguém mantém.",
+          "pt-pt": "Ao lado do botão do GitHub há agora um do MakerWorld, directo à caixa imprimível. E o GitHub já não te atira para a velha V2 que ninguém mantém.",
+          "pl": "Obok przycisku GitHuba pojawił się MakerWorld — prosto do obudowy do druku. A GitHub nie wrzuca cię już na starą V2, której nikt nie utrzymuje."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Your printers are visible again in dark mode",
+          "fr": "Tes imprimantes redeviennent visibles en mode sombre",
+          "de": "Deine Drucker sind im Dunkelmodus wieder sichtbar",
+          "es": "Tus impresoras vuelven a verse en modo oscuro",
+          "it": "Le tue stampanti tornano visibili in modalità scura",
+          "zh": "深色模式下，你的打印机又看得见了",
+          "pt": "Suas impressoras voltaram a aparecer no modo escuro",
+          "pt-pt": "As tuas impressoras voltaram a ver-se no modo escuro",
+          "pl": "Twoje drukarki znów widać w trybie ciemnym"
+        },
+        "body": {
+          "en": "In the printers list they had turned into black silhouettes — every time on Windows, only when hovering a row on Mac. They look like printers again.",
+          "fr": "Dans la liste des imprimantes, elles étaient devenues des silhouettes noires — tout le temps sur Windows, seulement au survol sur Mac. Elles ressemblent de nouveau à des imprimantes.",
+          "de": "In der Druckerliste waren sie zu schwarzen Silhouetten geworden — unter Windows immer, auf dem Mac nur beim Überfahren einer Zeile. Jetzt sehen sie wieder aus wie Drucker.",
+          "es": "En la lista de impresoras se habían convertido en siluetas negras: siempre en Windows, y solo al pasar el ratón en Mac. Vuelven a parecer impresoras.",
+          "it": "Nell'elenco delle stampanti erano diventate sagome nere — sempre su Windows, solo al passaggio del mouse su Mac. Ora sembrano di nuovo stampanti.",
+          "zh": "在打印机列表里，它们变成了一团黑影——Windows 上一直如此，Mac 上只在鼠标划过时出现。现在又长回打印机的样子了。",
+          "pt": "Na lista de impressoras elas tinham virado silhuetas pretas — sempre no Windows, e só ao passar o mouse no Mac. Voltaram a parecer impressoras.",
+          "pt-pt": "Na lista de impressoras tinham-se tornado silhuetas pretas — sempre no Windows, e só ao passar o rato no Mac. Voltaram a parecer impressoras.",
+          "pl": "Na liście drukarek zamieniły się w czarne sylwetki — na Windowsie zawsze, na Macu tylko po najechaniu na wiersz. Znów wyglądają jak drukarki."
+        }
+      },
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "The third reader that never existed",
+          "fr": "Le troisième lecteur qui n'existait pas",
+          "de": "Der dritte Leser, den es nie gab",
+          "es": "El tercer lector que nunca existió",
+          "it": "Il terzo lettore che non è mai esistito",
+          "zh": "那个根本不存在的第三个读卡器",
+          "pt": "O terceiro leitor que nunca existiu",
+          "pt-pt": "O terceiro leitor que nunca existiu",
+          "pl": "Trzeci czytnik, którego nigdy nie było"
+        },
+        "body": {
+          "en": "On a managed work PC, Windows quietly keeps a smart-card reader of its own. Studio was counting it, adding a slot to the burn window that could never turn green and left the Burn button stuck. It is ignored now.",
+          "fr": "Sur un PC pro géré, Windows garde discrètement son propre lecteur de carte. Studio le comptait, ce qui ajoutait à la fenêtre de gravure un emplacement qui ne passait jamais au vert et bloquait le bouton Graver. Il est ignoré maintenant.",
+          "de": "Auf einem verwalteten Firmen-PC hält Windows still und leise einen eigenen Kartenleser bereit. Studio zählte ihn mit, was dem Brennfenster einen Platz bescherte, der nie grün wurde und den Brennen-Button blockierte. Er wird jetzt ignoriert.",
+          "es": "En un PC de trabajo gestionado, Windows mantiene en silencio un lector de tarjetas propio. Studio lo contaba, lo que añadía a la ventana de grabación un hueco que nunca se ponía verde y dejaba el botón Grabar bloqueado. Ahora se ignora.",
+          "it": "Su un PC aziendale gestito, Windows si tiene di nascosto un proprio lettore di schede. Studio lo contava, aggiungendo alla finestra di scrittura uno slot che non diventava mai verde e lasciava il pulsante bloccato. Ora viene ignorato.",
+          "zh": "在公司统一管理的电脑上，Windows 会悄悄留一个自己的智能卡读卡器。Studio 把它也算了进去，于是烧录窗口多出一个永远变不了绿的位置，烧录按钮就一直点不动。现在直接忽略它。",
+          "pt": "Num PC de trabalho gerenciado, o Windows mantém quietinho um leitor de cartões próprio. O Studio contava com ele, o que adicionava à janela de gravação um espaço que nunca ficava verde e travava o botão Gravar. Agora ele é ignorado.",
+          "pt-pt": "Num PC de trabalho gerido, o Windows mantém sossegadamente um leitor de cartões próprio. O Studio contava-o, o que acrescentava à janela de gravação um lugar que nunca ficava verde e deixava o botão Gravar preso. Agora é ignorado.",
+          "pl": "Na firmowym, zarządzanym komputerze Windows po cichu trzyma własny czytnik kart. Studio go liczyło, więc w oknie zapisu pojawiało się miejsce, które nigdy nie zapalało się na zielono, a przycisk Zapisz zostawał zablokowany. Teraz jest pomijany."
+        }
+      }
+    ]
   }
 }

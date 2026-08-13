@@ -147,23 +147,45 @@ export function renderScalesPanel() {
   if (!state.scales.length) {
     body.innerHTML = `
       <div class="scales-empty-card">
-        <img class="scales-empty-img" src="../assets/img/TigerScale_Photo.png" alt="TigerScale" />
+        <div class="scales-empty-stage">
+          <img class="scales-empty-img" src="../assets/img/TigerScale_Photo.png" alt="TigerScale" />
+          <span class="scales-empty-badge">V3</span>
+        </div>
         <div class="scales-empty-title" data-i18n="scaleEmptyTitle">${esc(t("scaleEmptyTitle"))}</div>
         <div class="scales-empty-sub" data-i18n="scaleEmptySub">${esc(t("scaleEmptySub"))}</div>
-        <ul class="scales-empty-bullets">
-          <li data-i18n="scaleEmptyBullet1">${esc(t("scaleEmptyBullet1"))}</li>
-          <li data-i18n="scaleEmptyBullet2">${esc(t("scaleEmptyBullet2"))}</li>
-          <li data-i18n="scaleEmptyBullet3">${esc(t("scaleEmptyBullet3"))}</li>
+        <ul class="scales-empty-feats">
+          <li><span class="ic"><span class="icon icon-nfc"></span></span>
+              <span data-i18n="scaleEmptyBullet1">${esc(t("scaleEmptyBullet1"))}</span></li>
+          <li><span class="ic"><span class="icon icon-scale"></span></span>
+              <span data-i18n="scaleEmptyBullet2">${esc(t("scaleEmptyBullet2"))}</span></li>
+          <li><span class="ic"><span class="icon icon-wifi"></span></span>
+              <span data-i18n="scaleEmptyBullet3">${esc(t("scaleEmptyBullet3"))}</span></li>
+          <li><span class="ic"><span class="icon icon-cloud"></span></span>
+              <span data-i18n="scaleEmptyBullet4">${esc(t("scaleEmptyBullet4"))}</span></li>
+          <li><span class="ic"><span class="icon icon-bolt"></span></span>
+              <span data-i18n="scaleEmptyBullet5">${esc(t("scaleEmptyBullet5"))}</span></li>
+          <li><span class="ic"><span class="icon icon-sparkle"></span></span>
+              <span data-i18n="scaleEmptyBullet6">${esc(t("scaleEmptyBullet6"))}</span></li>
         </ul>
-        <a class="scales-empty-cta" id="scaleGithubLink" href="#">
-          <span class="icon icon-github icon-14"></span>
-          <span data-i18n="scaleEmptyCta">View on GitHub</span>
-        </a>
+        <div class="scales-empty-ctas">
+          <a class="scales-empty-cta scales-empty-cta--github" id="scaleGithubLink" href="#">
+            <span class="icon icon-github icon-14"></span>
+            <span data-i18n="scaleEmptyCta">View on GitHub</span>
+          </a>
+          <a class="scales-empty-cta scales-empty-cta--makerworld" id="scaleModelLink" href="#">
+            <span class="icon icon-package icon-14"></span>
+            <span data-i18n="scaleEmptyCtaModel">${esc(t("scaleEmptyCtaModel"))}</span>
+          </a>
+        </div>
         <div class="scales-empty-license" data-i18n="scaleEmptyLicense">${esc(t("scaleEmptyLicense"))}</div>
       </div>`;
     $("scaleGithubLink")?.addEventListener("click", e => {
       e.preventDefault();
-      window.open("https://github.com/TigerTag-Project/TigerTag-Scale");
+      window.open("https://github.com/TigerTag-Project/Tiger-Scale-V3");
+    });
+    $("scaleModelLink")?.addEventListener("click", e => {
+      e.preventDefault();
+      window.open("https://makerworld.com/models/3161869-tigerscale-v3-best-smart-filament-scale-with-nfc");
     });
     return;
   }

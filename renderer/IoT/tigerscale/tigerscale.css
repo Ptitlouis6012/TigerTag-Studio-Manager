@@ -16,10 +16,16 @@
 .scale-health { cursor: pointer; }
 .scale-health-icon {
   display: inline-block;
-  height: 44px; aspect-ratio: 1 / 1; /* icon_tigerscale_3d.svg viewBox 1254×1254 */
+  height: 44px; aspect-ratio: 1 / 1;
   background-color: var(--neutral);
   -webkit-mask-image: url('../../../assets/svg/icons/icon_tigerscale_3d.svg');
-  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+  /* The glyph is scaled inside an unchanged 44px box instead of filling it.
+     icon_tigerscale_3d.svg is a tight trace — its ink fills 100% of the viewBox
+     — while its header neighbours carry margin inside theirs (TigerPod ~75%
+     tall, TD1S ~47%). Sharing a 44px box therefore drew this one much bigger
+     than the other two; 34px of ink matches TigerPod's 33px, and keeping the
+     box at 44 leaves the header row's spacing and alignment untouched. */
+  -webkit-mask-size: auto 34px; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
   opacity: .38; transition: opacity .3s, background-color .3s, filter .3s;
 }
 .scale-health.scale-connected .scale-health-icon {
@@ -65,19 +71,37 @@
   background: var(--surface-2);
   color: var(--muted); font-size: 13px;
 }
-/* Onboarding card — shown when the user has no scale yet, promoting
-   the open-source TigerScale repo. */
+/* Onboarding card — shown when the user has no scale yet. It is the only place
+   the product is pitched, so it is built like a small product page: a lit stage
+   for the photo, then what the machine does for you, then where to get one. */
 .scales-empty-card {
   background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: 14px; padding: 18px 18px 16px;
+  border-radius: 14px; padding: 14px 16px 16px;
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   text-align: center;
 }
+/* Lit stage — a soft radial pool under the scale so the photo reads as a
+   product shot rather than an image dropped on a panel. */
+.scales-empty-stage {
+  position: relative; align-self: stretch;
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 0 6px;
+  border-radius: 12px;
+  background: radial-gradient(ellipse 60% 55% at 50% 62%,
+              color-mix(in srgb, var(--primary) 16%, transparent) 0%, transparent 70%);
+}
 .scales-empty-img {
-  width: 100%; max-width: 240px;
+  width: 100%; max-width: 216px;
   height: auto; object-fit: contain;
-  margin-bottom: 4px;
-  filter: drop-shadow(0 6px 16px rgba(0,0,0,.22));
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,.28));
+}
+/* Generation badge — the photo is the V3 body, and V2 owners need to see at a
+   glance that this is a different machine, not a firmware update. */
+.scales-empty-badge {
+  position: absolute; top: 4px; right: 4px;
+  padding: 3px 8px; border-radius: 999px;
+  background: var(--primary); color: var(--on-accent);
+  font-size: 10px; font-weight: 800; letter-spacing: .06em;
 }
 .scales-empty-title {
   font-size: 15px; font-weight: 700; color: var(--text);
@@ -86,35 +110,51 @@
   font-size: 12.5px; color: var(--muted); line-height: 1.5;
   max-width: 320px;
 }
-.scales-empty-bullets {
+/* Feature rows — real masked icons instead of ✓ glyphs: each row says which
+   part of the machine does the work, so the list scans without being read. */
+.scales-empty-feats {
   list-style: none; padding: 0; margin: 4px 0 0;
   text-align: left; align-self: stretch;
-  display: flex; flex-direction: column; gap: 6px;
+  display: flex; flex-direction: column; gap: 8px;
 }
-.scales-empty-bullets li {
-  font-size: 12px; color: var(--text);
-  padding-left: 22px;
-  position: relative;
-  line-height: 1.45;
+.scales-empty-feats li {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 12px; color: var(--text); line-height: 1.45;
 }
-.scales-empty-bullets li::before {
-  content: "✓";
-  position: absolute; left: 4px; top: 0;
-  color: var(--success);
-  font-weight: 800;
+.scales-empty-feats .ic {
+  flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--primary);
+}
+/* Height only — each icon keeps the ratio of its own viewBox. */
+.scales-empty-feats .ic .icon { height: 14px; width: 14px; }
+.scales-empty-feats .ic .icon-nfc { width: 21px; }  /* viewBox 48 / 32 */
+/* Two destinations: the firmware (GitHub) and the printable body (MakerWorld).
+   Each keeps the brand colour it already has in the sidebar, so the same
+   destination looks the same everywhere in the app. Stacked full-width rather
+   than side by side — the panel is 420px and the two labels never fit on one
+   line in every locale; a deliberate stack beats a per-language ragged wrap. */
+.scales-empty-ctas {
+  margin-top: 6px;
+  align-self: stretch;
+  display: flex; flex-direction: column; gap: 8px;
 }
 .scales-empty-cta {
-  margin-top: 10px;
-  display: inline-flex; align-items: center; gap: 8px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   padding: 10px 16px;
-  background: var(--text); color: var(--surface);
   border-radius: 10px;
   font-size: 13px; font-weight: 600;
-  text-decoration: none;
-  transition: opacity .15s, transform .12s;
+  color: var(--on-dark); text-decoration: none;
+  transition: background .15s, box-shadow .2s, transform .12s;
 }
-.scales-empty-cta:hover { opacity: .85; transform: translateY(-1px); }
-.scales-empty-cta .icon { background: var(--on-accent); }
+.scales-empty-cta:hover { transform: translateY(-1px); }
+.scales-empty-cta .icon { background: currentColor; }
+.scales-empty-cta--github { background: #2d333b; }
+.scales-empty-cta--github:hover { background: #3a414b; box-shadow: 0 3px 14px rgba(0,0,0,.4); }
+.scales-empty-cta--makerworld { background: #00BCA0; }
+.scales-empty-cta--makerworld:hover { background: #00a890; box-shadow: 0 3px 14px rgba(0,188,160,.4); }
 .scales-empty-license {
   font-size: 10.5px; color: var(--muted);
   margin-top: 2px;

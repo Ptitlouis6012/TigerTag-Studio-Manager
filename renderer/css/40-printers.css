@@ -512,6 +512,29 @@
   #printerBrandPickerPanel {
     width: min(280px, 92vw);
   }
+  /* Add-material source picker — same component, but each row carries a hint AND
+     a tier capsule, so it needs the room the brand list doesn't. Its rows grow
+     with the wrapped hint instead of clipping it at the fixed brand-row height. */
+  /* z 97 = the bottom of the side-card ladder (reorder 98 › product 99 › group
+     and container 100 › material 101 › printer 103/105). The picker has no
+     scrim, so it can still be open when a spool or a printer card is opened —
+     it is the leftmost card of the cascade and must tuck BEHIND every one of
+     them at the seam, never cover one. */
+  #matSourcePanel {
+    width: min(380px, 92vw);
+    z-index: 97;
+  }
+  #matSourcePanel .pba-brand {
+    height: auto; min-height: 56px;
+    padding: 12px 14px;
+  }
+  /* Tier pair — under the label, not beside it: side by side they would eat the
+     row's width, and on their own line the two rungs read as the pair they are
+     (what this entry is now, and what it becomes once burned to a chip). */
+  .mat-source-tiers {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 7px;
+  }
   /* (Snapmaker's scan panel used to be a bespoke `.detail-panel.snap-scan-panel`
      side-panel with its own width + header/footer rules. It now uses the shared
      `.modal-overlay > .pba-card` frame like every other brand's scan, so those
@@ -570,10 +593,11 @@
      colour dot — the dot element is reused and masked. `!important` overrides the
      inline background colour on the span. Shared across all brands via the
      consistent button-id suffixes. */
-  [id$="ChoiceScan"]   .pba-brand-dot,
-  [id$="ChoiceManual"] .pba-brand-dot,
-  [id$="ChoiceImport"] .pba-brand-dot,
-  [id$="ChoiceCloud"]  .pba-brand-dot {
+  [id$="ChoiceScan"]      .pba-brand-dot,
+  [id$="ChoiceManual"]    .pba-brand-dot,
+  [id$="ChoiceImport"]    .pba-brand-dot,
+  [id$="ChoiceCatalogue"] .pba-brand-dot,
+  [id$="ChoiceCloud"]     .pba-brand-dot {
     width: 22px; height: 22px;
     border-radius: 0;
     background: var(--primary) !important;
@@ -585,6 +609,9 @@
   [id$="ChoiceScan"]   .pba-brand-dot { -webkit-mask-image: url('../../assets/svg/icons/icon_wifi.svg');    mask-image: url('../../assets/svg/icons/icon_wifi.svg'); }
   [id$="ChoiceManual"] .pba-brand-dot { -webkit-mask-image: url('../../assets/svg/icons/icon_edit.svg');    mask-image: url('../../assets/svg/icons/icon_edit.svg'); }
   [id$="ChoiceCloud"]  .pba-brand-dot { -webkit-mask-image: url('../../assets/svg/icons/icon_cloud.svg');   mask-image: url('../../assets/svg/icons/icon_cloud.svg'); }
+  /* "From Catalogue" (add-material picker) — the magnifier the removed top-bar
+     button used, so the action keeps the icon users already associate with it. */
+  [id$="ChoiceCatalogue"] .pba-brand-dot { -webkit-mask-image: url('../../assets/svg/icons/icon_search.svg'); mask-image: url('../../assets/svg/icons/icon_search.svg'); }
   /* "Import from Anycubic Slicer" uses the same cube as the 3D Files button. */
   [id$="ChoiceImport"] .pba-brand-dot { -webkit-mask-image: url('../../assets/svg/icons/icon_package.svg'); mask-image: url('../../assets/svg/icons/icon_package.svg'); }
   /* Brand logo (replaces the colour dot) — single-path SVG masked + tinted with
@@ -2350,8 +2377,13 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pt-dot--on { background: var(--success); }
 .pt-th--thumb { width: 56px; padding: 8px 8px 8px 12px; }
 .pt-td--thumb { width: 56px; padding: 6px 8px 6px 12px; }
+/* No blend mode here: every printer photo in assets/img/<brand>_printers/ is a
+   real transparent PNG, so nothing needs to be knocked out — and `multiply`
+   against a dark row background turned each printer into a black silhouette
+   (permanently on Windows, on :hover only on macOS, where the row background is
+   painted at different times). Keep it plain. */
 .pt-thumb { display: block; width: 44px; height: 44px; object-fit: contain;
-            border-radius: 4px; mix-blend-mode: multiply; }
+            border-radius: 4px; }
 /* Print-preview thumbnail column — the current job's model preview, so you can
    see what's on the bed at a glance. Empty (no box) when idle / unavailable. */
 .pt-th--jobthumb, .pt-td--jobthumb { width: 64px; white-space: nowrap; }

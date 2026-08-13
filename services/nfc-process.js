@@ -77,15 +77,21 @@ function startNFC() {
     _downReported = false;
 
     const name = reader.name;
-    // Some USB devices present a PC/SC smart-card interface without being a
-    // filament NFC reader — a YubiKey is the common one: over USB it exposes a
-    // CCID interface, so nfc-pcsc enumerates it exactly like an ACR122U and the
-    // app would treat it as a reader (and attempt card reads on it). Skip known
-    // security keys by name so they never become a reader. Kept deliberately
-    // tight (Yubico only) to avoid excluding a real reader with an unusual name;
-    // the general, user-controlled override is the reader-management panel
-    // (see docs/READER-SELECTION-BRIEF.md).
-    if (/yubico|yubikey/i.test(name)) return;
+    // Some smart-card interfaces are enumerated by PC/SC exactly like an
+    // ACR122U without being a filament NFC reader, so the app would treat them
+    // as readers (and attempt card reads on them). Two known families:
+    //   • security keys — a YubiKey exposes a CCID interface over USB;
+    //   • Windows virtual smart-card readers — "Windows Hello for Business"
+    //     (and the generic "Microsoft Virtual Smart Card") are TPM-backed
+    //     certificate readers auto-created on Entra-ID / managed PCs. They
+    //     permanently report a card present ("Identity Device (Microsoft
+    //     Generic Profile)"), so they showed up as an extra burn slot that
+    //     could never turn green and blocked the burn button for good.
+    // Skip them by name so they never become a reader. Kept deliberately tight
+    // to avoid excluding a real reader with an unusual name; the general,
+    // user-controlled override is the reader-management panel (see
+    // docs/READER-SELECTION-BRIEF.md).
+    if (/yubico|yubikey|windows hello|virtual smart card/i.test(name)) return;
     readers.set(name, reader);
     process.parentPort.postMessage({ type: 'reader-connected', name });
 
