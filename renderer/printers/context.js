@@ -20,6 +20,11 @@ export const ctx = {
   snapFmtDuration: s => `${Math.floor((s || 0) / 60)}m`,
   snapTextColor: () => "#fff",
 
+  // Normalised live job for a printer — the SAME reading the printers table
+  // uses (state, pct, remainSec…), so a card never has to re-derive it and
+  // drift from the table. Returns null when the printer isn't connected.
+  getPrinterJob: () => null,
+
   // Printer model helpers (read state.db.printerModels at call time)
   findPrinterModel: () => null,
   printerImageUrl: () => null,

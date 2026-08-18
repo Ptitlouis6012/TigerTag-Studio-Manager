@@ -26,7 +26,11 @@ export function renderBambuJobCard(p, conn) {
 
   const layerText = isActive && (d.layerNum || d.totalLayerNum)
     ? `${d.layerNum || 0}/${d.totalLayerNum || 0}` : "";
-  const timeText = isActive ? _bblFmtDuration(d.remainingTime) : "—";
+  // `remainingTime` is `mc_remaining_time`, which Bambu reports in MINUTES —
+  // the formatter takes seconds, so a 32-minute job read as 32 seconds and
+  // rendered "0m". (The table column got this right via _getPrinterJob, which
+  // is why the two views disagreed.)
+  const timeText = isActive ? _bblFmtDuration(d.remainingTime * 60) : "—";
   const stateLabel = ctx.t("snapState_" + state) || state;
 
   const nameLine = leafName

@@ -300,8 +300,8 @@ Tous les messages reçus sur `device/{serialNumber}/report` sont du JSON. La rac
     "gcode_state": "RUNNING",
     "mc_percent": 45,
     "mc_print_stage": 2,
-    "mc_remaining_time": 3600,
-    "remaining_time": 3600,
+    "mc_remaining_time": 32,
+    "remaining_time": 32,
     "layer_num": 120,
     "total_layer_num": 300,
     "subtask_name": "my_print.gcode",
@@ -374,8 +374,8 @@ Tous les messages reçus sur `device/{serialNumber}/report` sont du JSON. La rac
 | `status` | string | Alternative à `gcode_state` |
 | `mc_percent` | int/string | Progression 0–100 (%) |
 | `mc_print_stage` | int | Étape interne. `0` = pas d'impression en cours |
-| `mc_remaining_time` | int | Temps restant en secondes (alias de `remaining_time`) |
-| `remaining_time` | int | Temps restant en secondes |
+| `mc_remaining_time` | int | Temps restant en **MINUTES** (alias de `remaining_time`). Vérifié sur matériel réel : une impression à 32 min restantes envoie `32`, pas `1920`. Cette ligne annonçait des secondes et a produit un « 0m » dans la carte latérale (v2.19.1) — convertir en secondes avant tout formatage |
+| `remaining_time` | int | Temps restant en **minutes** (voir ci-dessus) |
 | `layer_num` | int | Couche actuelle |
 | `total_layer_num` | int | Nombre total de couches |
 | `subtask_name` | string | Nom du sous-job / fichier en cours |

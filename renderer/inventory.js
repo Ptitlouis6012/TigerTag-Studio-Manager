@@ -23217,6 +23217,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     toast: (msg, type) => toast(msg, type),
     isForcedOffline: (key) => _ppForcedOfflineKeys.has(key),
     snapFmtTempPair, snapFmtDuration, snapTextColor,
+    // One reading of the live job for both surfaces. The cards used to derive
+    // their own remaining time and drifted from the table (Snapmaker showed
+    // elapsed, Bambu read minutes as seconds) — deriving it twice is what
+    // caused both.
+    getPrinterJob: (p) => _getPrinterJob(p),
     findPrinterModel, printerImageUrl, printerImageUrlFor,
     snapFilenameRel,
     SNAP_ICON_NOZZLE, SNAP_ICON_BED, SNAP_ICON_CHAMBER, SNAP_ICON_CLOCK,

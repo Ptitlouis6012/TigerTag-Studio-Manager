@@ -22,7 +22,13 @@ export function renderSnapJobCard(p, conn) {
   const thumbUrl  = ((isActive || isDone) && d.printPreviewUrl) ? d.printPreviewUrl : (fallbackImg || "");
   const layerText = isActive && (d.currentLayer || d.totalLayer)
                   ? `${d.currentLayer || 0}/${d.totalLayer || 0}` : "";
-  const durationText = isActive ? ctx.snapFmtDuration(d.printDuration) : "0m";
+  // Time REMAINING, like the printers table — this used to print `printDuration`,
+  // which is the time ELAPSED, so a job that had just started showed "0m" next to
+  // a clock while the table said 21m. Moonraker sends no remaining time, so the
+  // shared reading derives it (slicer estimate − elapsed, else extrapolated from
+  // progress); "—" while it has nothing to go on yet, never a wrong "0m".
+  const remainSec = ctx.getPrinterJob(p)?.remainSec;
+  const durationText = isActive ? (remainSec > 0 ? ctx.snapFmtDuration(remainSec) : "—") : "0m";
   const stateLabel  = ctx.t("snapState_" + jobState) || jobState;
   const isPaused    = jobState === "paused";
   const isPrinting  = jobState === "printing";
