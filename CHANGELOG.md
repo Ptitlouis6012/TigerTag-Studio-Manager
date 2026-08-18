@@ -5,6 +5,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.19.1 — 2026-08-19
+
+### Fixed
+
+- **Both printer side cards that showed "0m" remaining next to the clock, for two different reasons and one shared cause.** Each brand card derived the remaining time itself instead of reading the one the printers table uses (`_getPrinterJob`), so the two surfaces disagreed. *Bambu Lab*: `mc_remaining_time` is reported in **minutes** and was fed straight into a seconds formatter, so a 32-minute job floored to `0m`; `PROTOCOL.md` documented the field as seconds — the source of the mistake — and is corrected with the value observed on hardware. *Snapmaker*: the card printed `printDuration`, which is the time **elapsed**, so a job that had just started read `0m` beside a table saying `21m`; Moonraker sends no remaining time, so the card now reads the shared normalised job (slicer estimate − elapsed, else extrapolated from progress) and shows `—` rather than a wrong `0m` while it has nothing to derive from. The normalised reading is exposed to every brand card as `ctx.getPrinterJob` so this class of drift has one place to live; the other four brands were audited and their units are correct, so they were left alone — `renderer/printers/bambulab/cards.js`, `renderer/printers/bambulab/PROTOCOL.md`, `renderer/printers/snapmaker/cards.js`, `renderer/printers/context.js`, `renderer/inventory.js`.
+- **Six column headers in the Printers table stayed in English in every language** — Brand, Name, Model, Status, Job, Last seen were hardcoded literals sitting between two neighbours (Preview, Ends at) that did go through `t()`. They now reuse the existing table-header key family; `applyLang()` already re-renders this view, so they follow a language switch immediately — `renderer/inventory.js`.
+- **Dependency refresh — 18 advisories (1 critical, 17 high) down to 0**, entirely within the existing semver ranges: `package.json` is untouched, only the lockfile was stale. `builder-util-runtime` 9.5.1 → 9.7.0 closes GHSA-p2f4-r6v6-j797 / CVE-2026-54673 (electron-updater leaked `Authorization` and `PRIVATE-TOKEN` headers across a cross-origin redirect — `electron-updater` is a runtime dependency here, though this app's update feed is a public GitHub release that carries no credentials, so there was nothing to leak in practice); electron-builder / app-builder-lib 26.8.1 → 26.15.3 closes the AppImage uncontrolled-search-path advisory (GHSA-7g7r-gx96-252g); electron 41.3.0 → 41.10.6 closes three; plus tar (critical), undici, ws, js-yaml, tmp, form-data and ip-address. Supersedes external PR #10, which pinned the single package through an `overrides` entry — the ranges already allowed the fixed releases, so the pin was unnecessary — `package-lock.json`.
+
+### Changed
+
+- The on-demand test build covers **all three platforms** instead of Windows only (`test-build-win.yml` → `test-build.yml`): a matrix with `fail-fast: false` so one platform breaking still reports the other two, the Linux system dependencies `nfc-pcsc` needs, `CSC_IDENTITY_AUTO_DISCOVERY: false` so macOS does not hunt the keychain for an identity it will not find, a `concurrency` group that supersedes an earlier run on the same branch, and 7-day artifacts. Adds the `build:mac:nopublish` and `build:linux:nopublish` scripts it needs — `build:linux` was `--publish always`, so a test build would have tried to publish — `.github/workflows/test-build.yml`, `package.json`.
+
+---
+
 ## v2.19.0 — 2026-08-13
 
 ### Added

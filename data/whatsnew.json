@@ -7782,5 +7782,60 @@
         }
       }
     ]
+  },
+  "2.19.1": {
+    "date": "2026-08-19",
+    "items": [
+      {
+        "icon": "clock",
+        "title": {
+          "en": "Your printer finally admits how long is left",
+          "fr": "Ton imprimante avoue enfin le temps qu'il reste",
+          "de": "Dein Drucker rückt endlich mit der Restzeit raus",
+          "es": "Tu impresora por fin confiesa cuánto le queda",
+          "it": "La tua stampante ammette finalmente quanto manca",
+          "zh": "打印机终于肯说还剩多久了",
+          "pt": "Sua impressora finalmente admite quanto falta",
+          "pt-pt": "A tua impressora admite finalmente quanto falta",
+          "pl": "Drukarka wreszcie przyznaje, ile jeszcze zostało"
+        },
+        "body": {
+          "en": "Open a Bambu Lab or Snapmaker that is printing and the little clock said 0m, while the list right next to it knew perfectly well. Same number on both sides now.",
+          "fr": "En ouvrant une Bambu Lab ou une Snapmaker en cours d'impression, la petite horloge affichait 0m alors que la liste juste à côté, elle, savait très bien. Même chiffre des deux côtés maintenant.",
+          "de": "Beim Öffnen eines laufenden Bambu Lab oder Snapmaker zeigte die kleine Uhr 0m an, während die Liste daneben es genau wusste. Jetzt steht auf beiden Seiten dieselbe Zahl.",
+          "es": "Al abrir una Bambu Lab o una Snapmaker imprimiendo, el relojito marcaba 0m mientras la lista de al lado lo sabía perfectamente. Ahora es la misma cifra en los dos sitios.",
+          "zh": "打开正在打印的 Bambu Lab 或 Snapmaker，那个小时钟一直写着 0m，而旁边的列表其实心里门儿清。现在两边的数字对上了。",
+          "it": "Aprendo una Bambu Lab o una Snapmaker che sta stampando, l'orologetto segnava 0m mentre l'elenco lì accanto lo sapeva benissimo. Ora è lo stesso numero da entrambe le parti.",
+          "pt": "Ao abrir uma Bambu Lab ou Snapmaker imprimindo, o reloginho marcava 0m enquanto a lista ao lado sabia direitinho. Agora é o mesmo número dos dois lados.",
+          "pt-pt": "Ao abrir uma Bambu Lab ou Snapmaker a imprimir, o relogiozinho marcava 0m enquanto a lista mesmo ao lado sabia muito bem. Agora é o mesmo número dos dois lados.",
+          "pl": "Po otwarciu drukującej Bambu Lab albo Snapmakera zegarek pokazywał 0m, a lista obok doskonale wiedziała swoje. Teraz po obu stronach jest ta sama liczba."
+        }
+      },
+      {
+        "icon": "list",
+        "title": {
+          "en": "The printers list speaks your language now",
+          "fr": "La liste des imprimantes parle enfin ta langue",
+          "de": "Die Druckerliste spricht jetzt deine Sprache",
+          "es": "La lista de impresoras ya habla tu idioma",
+          "it": "L'elenco delle stampanti ora parla la tua lingua",
+          "zh": "打印机列表现在说你的语言了",
+          "pt": "A lista de impressoras agora fala sua língua",
+          "pt-pt": "A lista de impressoras fala agora a tua língua",
+          "pl": "Lista drukarek mówi już twoim językiem"
+        },
+        "body": {
+          "en": "Six column titles had stayed stubbornly in English, sitting right next to their translated neighbours. They finally gave in.",
+          "fr": "Six titres de colonnes restaient obstinément en anglais, juste à côté de leurs voisins traduits. Ils ont fini par céder.",
+          "de": "Sechs Spaltentitel blieben hartnäckig auf Englisch, direkt neben ihren übersetzten Nachbarn. Jetzt haben sie nachgegeben.",
+          "es": "Seis títulos de columna seguían tercamente en inglés, justo al lado de sus vecinos ya traducidos. Al final han cedido.",
+          "it": "Sei titoli di colonna restavano ostinatamente in inglese, proprio accanto ai vicini già tradotti. Alla fine hanno ceduto.",
+          "zh": "有六个列标题死活赖在英文里，旁边的邻居明明都翻译好了。现在它们终于松口了。",
+          "pt": "Seis títulos de coluna continuavam teimosamente em inglês, bem ao lado dos vizinhos já traduzidos. Acabaram cedendo.",
+          "pt-pt": "Seis títulos de coluna mantinham-se teimosamente em inglês, mesmo ao lado dos vizinhos já traduzidos. Acabaram por ceder.",
+          "pl": "Sześć nagłówków kolumn uparcie trwało po angielsku, tuż obok przetłumaczonych sąsiadów. W końcu odpuściły."
+        }
+      }
+    ]
   }
 }
