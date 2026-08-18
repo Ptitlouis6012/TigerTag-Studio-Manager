@@ -22016,15 +22016,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
               <th class="pt-th sel-th"><span class="sel-check sel-check--all" role="checkbox" tabindex="0" aria-label="Select all"></span></th>
               <th class="pt-th pt-th--brandlogo"></th>
               <th class="pt-th pt-th--thumb"></th>
-              ${th("Brand",   "brand")}
-              ${th("Name",    "name")}
-              ${th("Model",   "model")}
-              ${th("Status",  "status")}
+              ${th(esc(t("thBrand")),  "brand")}
+              ${th(esc(t("thName")),   "name")}
+              ${th(esc(t("thModel")),  "model")}
+              ${th(esc(t("thStatus")), "status")}
               <th class="pt-th pt-th--jobthumb">${esc(t("printerPreview"))}</th>
-              ${th("Job",     "job")}
+              ${th(esc(t("thJob")),    "job")}
               ${th(esc(t("printerEndsAt")), "eta", "pt-th--eta")}
-              ${th("IP",      "ip")}
-              ${th("Last seen", "lastseen")}
+              ${th("IP", "ip")}
+              ${th(esc(t("printersLastSeen")), "lastseen")}
             </tr>
           </thead>
           <tbody>${rows}</tbody>
