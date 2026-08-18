@@ -1,0 +1,101 @@
+name: Test build (all platforms)
+
+# On-demand build of all three platforms for handing a binary to a tester,
+# WITHOUT cutting a release: artifacts only — no git tag, no GitHub Release, no
+# auto-update feed, nothing published. Every binary is UNSIGNED:
+#   • Windows → SmartScreen warns ("More info" → "Run anyway")
+#   • macOS   → Gatekeeper blocks it (right-click → Open, or `xattr -dr
+#               com.apple.quarantine <app>`); it is NOT notarized
+#   • Linux   → AppImage, chmod +x and run
+#
+# Two ways to run it:
+#   • push any branch named  test/**  (this file must be on that branch)
+#   • Actions tab → "Test build (all platforms)" → Run workflow
+#
+# Native module note: nfc-pcsc is a C++ addon, so each platform MUST build on
+# its own runner — none of this can be cross-compiled.
+#
+# Artifacts are throwaway: 7-day retention, and delete them by hand once the
+# test is done rather than leaving installers lying around.
+
+on:
+  push:
+    branches:
+      - 'test/**'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+# A second push to the same test branch supersedes the first — three full
+# Electron builds is not something to queue up twice by accident.
+concurrency:
+  group: test-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    strategy:
+      # One platform failing must not cancel the other two — the whole point is
+      # to see which ones break.
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+            artifact: TigerStudio-Windows-test
+            path: dist/*.exe
+          - os: macos-latest
+            platform: mac
+            artifact: TigerStudio-macOS-test
+            path: dist/*.dmg
+          - os: ubuntu-latest
+            platform: linux
+            artifact: TigerStudio-Linux-test
+            path: dist/*.AppImage
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      # Same list as the release workflow — nfc-pcsc needs the PC/SC headers,
+      # and electron-builder needs the packaging tools.
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            libpcsclite-dev \
+            libusb-1.0-0-dev \
+            libudev-dev \
+            build-essential \
+            python3 \
+            rpm \
+            fakeroot
+
+      - run: npm ci
+
+      - name: Build ${{ matrix.platform }} (unsigned, no publish)
+        run: npm run build:${{ matrix.platform }}:nopublish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Baked in so Google sign-in works in the test build.
+          TIGERTAG_GOOGLE_DESKTOP_CLIENT_ID: ${{ secrets.TIGERTAG_GOOGLE_DESKTOP_CLIENT_ID }}
+          TIGERTAG_GOOGLE_DESKTOP_CLIENT_SECRET: ${{ secrets.TIGERTAG_GOOGLE_DESKTOP_CLIENT_SECRET }}
+          # Belt and braces on macOS: without this electron-builder still hunts
+          # the keychain for an identity and can fail the build on a runner that
+          # has none, even with identity=null in the script.
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload ${{ matrix.platform }} artifact
+        uses: actions/upload-artifact@v5
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+          if-no-files-found: error
+          retention-days: 7

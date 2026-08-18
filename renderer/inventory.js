@@ -22016,15 +22016,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
               <th class="pt-th sel-th"><span class="sel-check sel-check--all" role="checkbox" tabindex="0" aria-label="Select all"></span></th>
               <th class="pt-th pt-th--brandlogo"></th>
               <th class="pt-th pt-th--thumb"></th>
-              ${th("Brand",   "brand")}
-              ${th("Name",    "name")}
-              ${th("Model",   "model")}
-              ${th("Status",  "status")}
+              ${th(esc(t("thBrand")),  "brand")}
+              ${th(esc(t("thName")),   "name")}
+              ${th(esc(t("thModel")),  "model")}
+              ${th(esc(t("thStatus")), "status")}
               <th class="pt-th pt-th--jobthumb">${esc(t("printerPreview"))}</th>
-              ${th("Job",     "job")}
+              ${th(esc(t("thJob")),    "job")}
               ${th(esc(t("printerEndsAt")), "eta", "pt-th--eta")}
-              ${th("IP",      "ip")}
-              ${th("Last seen", "lastseen")}
+              ${th("IP", "ip")}
+              ${th(esc(t("printersLastSeen")), "lastseen")}
             </tr>
           </thead>
           <tbody>${rows}</tbody>
@@ -23217,6 +23217,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     toast: (msg, type) => toast(msg, type),
     isForcedOffline: (key) => _ppForcedOfflineKeys.has(key),
     snapFmtTempPair, snapFmtDuration, snapTextColor,
+    // One reading of the live job for both surfaces. The cards used to derive
+    // their own remaining time and drifted from the table (Snapmaker showed
+    // elapsed, Bambu read minutes as seconds) — deriving it twice is what
+    // caused both.
+    getPrinterJob: (p) => _getPrinterJob(p),
     findPrinterModel, printerImageUrl, printerImageUrlFor,
     snapFilenameRel,
     SNAP_ICON_NOZZLE, SNAP_ICON_BED, SNAP_ICON_CHAMBER, SNAP_ICON_CLOCK,

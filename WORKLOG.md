@@ -1,54 +1,38 @@
-# Worklog — v2.18.1 (in progress)
+# Worklog — v2.19.1 (in progress)
 
 ## Added
-- Add-material source picker — "+ Material" now opens a side card asking where the material comes
-  from: **From Catalogue** (opens the catalogue in grid view — picking an unfamiliar product is a
-  visual task — and yields a TigerData+) or **Manually** (you fill it in, yields a TigerData). Each
-  row shows the tier pair its path leads to — `TigerData+` `TigerTag+` / `TigerData` `TigerTag`,
-  drawn with the header stats' own capsules — so the outcome, chipless now and once burned, is
-  named before you commit; the explanation sits in the shared ⓘ bubble. No scrim, like the spool
-  detail card — the app stays visible and clickable behind it — and it joins the side-card cascade
-  as its leftmost member, so opening a spool or a printer pushes it left instead of burying it.
-  Same side card + rows as the printer add flow —
-  `renderer/inventory.html`, `renderer/inventory.js`, `renderer/css/40-printers.css`
-- "Get it on MakerWorld" button in the TigerScale panel's empty state, next to "View on GitHub" —
-  links to the printable TigerScale V3 body. Both CTAs now stack full-width so the pair reads the
-  same in all 9 locales — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`
 
 ## Changed
-- TigerScale onboarding card rebuilt around the V3 machine — the photo sits on a lit stage with a
-  "V3" generation badge, the ✓ list became six icon-led feature rows (dual NFC readers, real
-  remaining weight, on-board touchscreen + calibration wizard, account sync, offline recognition,
-  runs unattended), and both destinations keep the brand colour they already have in the sidebar
-  (GitHub slate, MakerWorld teal + package icon) —
-  `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`
-- TigerScale illustration + header icon replaced with the V3 body (empty state, scale card
-  thumbnail, README, header health icon) — `assets/img/TigerScale_Photo.png`,
-  `assets/svg/icons/icon_tigerscale_3d.svg` (masters archived in `assets-src/`)
-- The TigerScale "View on GitHub" button pointed at the V2 repo (`TigerTag-Scale`, no longer
-  developed); it now opens `Tiger-Scale-V3` — `renderer/IoT/tigerscale/index.js`
 
 ## Fixed
-- Printer photos showed as black silhouettes in the Printers list view in dark mode — the row
-  thumbnail carried a leftover `mix-blend-mode: multiply` (needed back when the catalogue images had
-  a white background; they are transparent PNGs now), which multiplied each photo with the dark row
-  background. Permanent on Windows, hover-only on macOS. Blend mode dropped — `renderer/css/40-printers.css`
-- Windows virtual smart-card readers ("Windows Hello for Business", "Microsoft Virtual Smart Card")
-  are no longer treated as NFC readers — PC/SC enumerates these TPM-backed certificate readers
-  exactly like an ACR122U and they permanently report a card present, so a user with 2 readers got a
-  3rd burn slot that never turned green and the Burn button stayed disabled. Added to the existing
-  name filter at the reader-registration gate — `services/nfc-process.js`, `docs/READER-SELECTION-BRIEF.md`
+- Snapmaker printer side card showed "0m" next to the clock on a running print while the table
+  showed the real 21m — the card printed `printDuration`, which is the time ELAPSED, not remaining.
+  Moonraker sends no remaining time, so the card now reads the same normalised job the table does
+  (slicer estimate − elapsed, else extrapolated from progress) via a new `ctx.getPrinterJob`, and
+  shows "—" rather than a wrong "0m" while there is nothing to derive from yet —
+  `renderer/printers/snapmaker/cards.js`, `renderer/printers/context.js`, `renderer/inventory.js`
+- Bambu Lab printer side card showed "0m" remaining on a running print while the table column
+  showed the real figure. `mc_remaining_time` is reported in MINUTES, but the card fed it straight
+  into a seconds formatter, so a 32-minute job floored to 0. The table was right because it goes
+  through `_getPrinterJob`, which converts. `PROTOCOL.md` documented the field as seconds — the
+  source of the mistake — and is corrected with the observed value — `renderer/printers/bambulab/cards.js`,
+  `renderer/printers/bambulab/PROTOCOL.md`
+- Dependency refresh — 18 advisories (1 critical, 17 high) down to 0, entirely within the existing
+  semver ranges: `package.json` is untouched, only the lockfile was stale. Covers the reported
+  **CVE-2026-54673** / GHSA-p2f4-r6v6-j797 (`builder-util-runtime` 9.5.1 → 9.7.0 — electron-updater
+  leaked `Authorization` / `PRIVATE-TOKEN` headers across a cross-origin redirect; `electron-updater`
+  is a runtime dependency, though our update feed is a public GitHub release that carries no
+  credentials), plus electron-builder/app-builder-lib 26.8.1 → 26.15.3 (AppImage search-path advisory),
+  electron 41.3.0 → 41.10.6 (three advisories), and tar, undici, ws, js-yaml, tmp, form-data,
+  ip-address. Supersedes external PR #10, which pinned a single package through `overrides` —
+  `package-lock.json`
+- Six column headers in the Printers table view stayed in English in every language (Brand, Name,
+  Model, Status, Job, Last seen) — they were hardcoded literals while their neighbours (Preview,
+  Ends at) went through `t()`. They now reuse the existing table-header key family; switching
+  language already re-renders this view, so they follow immediately — `renderer/inventory.js`
 
 ## Removed
-- The standalone "From Catalogue" button in the inventory action bar — it is now the first choice of
-  the "+ Material" side card, so adding a material has one entry point instead of two.
-  `renderer/inventory.html`, `renderer/inventory.js` (handler + its `_syncInvBarButtons` visibility
-  line), i18n key `catalogBtn`
 
 ## i18n
-- Added: `matSourceTitle`, `matSourceSub`, `matSourceCatalogue`, `matSourceCatalogueHint`,
-  `matSourceManual`, `matSourceManualHint` — 9 locales
-- Added: `scaleEmptyCtaModel`, `scaleEmptyBullet4`, `scaleEmptyBullet5`, `scaleEmptyBullet6` — 9 locales
-- Removed: `catalogBtn` — 9 locales
-- Rewritten for the V3 machine: `scaleEmptySub`, `scaleEmptyBullet1`, `scaleEmptyBullet2`,
-  `scaleEmptyBullet3` — 9 locales
+- Added: `thModel`, `thStatus`, `thJob` — 9 locales (the Printers table headers; `thBrand`, `thName`
+  and `printersLastSeen` already existed and are reused)
