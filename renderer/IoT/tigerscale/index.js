@@ -4,7 +4,9 @@
  * Manages the full lifecycle of TigerScale devices in the Studio Manager:
  *   • Firestore real-time subscription (scales/{mac} heartbeats)
  *   • Slide-in sidecard: health icon, panel, scale cards, chips, spool block
- *   • Local WebSocket connection (ws://ip/ws at 10 Hz) with auto-reconnect
+ *   • Local WebSocket connection (ws://ip/ws) with auto-reconnect — the
+ *     onmessage handler consumes EVERY delta the firmware pushes (no client
+ *     throttle; the firmware emits ~4 Hz deltas + a full snapshot every 30 s)
  *   • RTDB command bridge (refresh_heartbeat via PUT)
  *   • Tare button (POST /api/tare)
  *
@@ -34,7 +36,12 @@ export function initTigerScale(ctx) {
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────
-const SCALE_ONLINE_THRESHOLD_MS = 90 * 1000;   // 90 s without heartbeat → offline
+// A scale heartbeats every 30 s while its screen is on, but only every 5 min
+// once the backlight goes off (power_state "screen_off"). A screen_off scale is
+// fully awake — WiFi associated, HTTP answering — so it must NOT be called
+// offline on the active-cadence timeout. Each regime allows a few missed beats.
+const SCALE_ONLINE_ACTIVE_MS  = 90 * 1000;        // active: 30 s cadence  → offline after ~90 s
+const SCALE_ONLINE_STANDBY_MS = 11 * 60 * 1000;   // screen_off: 5 min cadence → offline after ~11 min
 
 // ── Module-level state ────────────────────────────────────────────────────
 
@@ -53,6 +60,10 @@ const _scalesDebugOpen = new Set();
 // Each entry: { ws, connected, weight, netWeight, scaleStatus, retryTimer, ip }
 const _scaleLocalState = new Map();
 
+// mac → { ps, ch } last-seen power_source / is_charging, for the debug-mode
+// transition log in the Firestore subscription (plug/unplug latency probe).
+const _scalePwrPrev = new Map();
+
 // AbortController for the delegated tare listener on the panel body.
 // Replaced on every full rebuild so we never accumulate duplicate listeners.
 let _scaleTareAbortCtrl = null;
@@ -70,9 +81,30 @@ export function subscribeScales(uid) {
     .collection("users").doc(uid).collection("scales")
     .onSnapshot(snap => {
       if (uid !== state.activeAccountId) return;
+      const t0 = (typeof performance !== "undefined") ? performance.now() : 0;
       state.scales = snap.docs.map(d => ({ mac: d.id, ...d.data() }));
+      // Diagnostics (debug mode only): timestamp every power_source/is_charging
+      // transition on reception, and measure snapshot→render. Lets a physical
+      // plug/unplug be timed against when Studio actually reflects it — power
+      // fields render on THIS snapshot, never behind the 10 s health-tick.
+      if (state.debugEnabled) {
+        for (const s of state.scales) {
+          const prev = _scalePwrPrev.get(s.mac) || {};
+          const cur  = { ps: s.power_source, ch: s.is_charging, pw: s.power_state };
+          if (prev.ps !== cur.ps || prev.ch !== cur.ch || prev.pw !== cur.pw) {
+            console.log(`[tigerscale] ${new Date().toISOString()} rx ${s.mac} `
+              + `power_state ${prev.pw}→${cur.pw} · power_source ${prev.ps}→${cur.ps} · is_charging ${prev.ch}→${cur.ch} `
+              + `· battery ${s.battery_percent} · from_cache=${snap.metadata.fromCache}`);
+          }
+          _scalePwrPrev.set(s.mac, cur);
+        }
+      }
       renderScaleHealth();
       renderScalesPanel();
+      if (state.debugEnabled) {
+        const dt = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
+        console.log(`[tigerscale] snapshot→render ${dt.toFixed(1)} ms (${state.scales.length} scale(s))`);
+      }
     }, err => console.warn("[tigerscale]", err.code, err.message));
 }
 
@@ -109,22 +141,58 @@ function closeScalesPanel() {
 // ── Health icon ────────────────────────────────────────────────────────────
 
 /**
- * Update the header status icon — three visual tiers:
- *   • scale-none      → no scale paired at all      (red, pulsing)
- *   • scale-connected → ≥1 paired AND online         (green, glow)
- *   • (default)       → paired but all offline       (muted grey)
+ * Update the header status icon (right of the TigerPod glyph) — four tiers:
+ *   • (no class)     → no scale paired at all           (grey)
+ *   • scale-active   → ≥1 scale active (screen on)       (green, glow + ping)
+ *   • scale-standby  → none active but ≥1 in standby     (blue)
+ *   • scale-offline  → paired but all offline            (red)
  */
 export function renderScaleHealth() {
   const { $, state, t } = _ctx;
   const el = $("scaleHealth");
   if (!el) return;
-  const total  = state.scales.length;
-  const online = state.scales.filter(isScaleOnline).length;
-  el.classList.toggle("scale-none",      total === 0);
-  el.classList.toggle("scale-connected", online > 0);
-  if (total === 0)       el.dataset.tooltip = t("scaleHealthNone")    || "No scale connected";
-  else if (online === 0) el.dataset.tooltip = t("scaleHealthOffline", { n: total }) || `${total} scale(s) — all offline`;
-  else                   el.dataset.tooltip = t("scaleHealthOnline",  { n: online, total }) || `${online}/${total} scale(s) online`;
+  const total   = state.scales.length;
+  const states  = state.scales.map(scaleConnState);
+  const active  = states.filter(x => x === "active").length;
+  const standby = states.filter(x => x === "standby").length;
+  const online  = active + standby;   // connected = active OR standby
+  el.classList.remove("scale-none", "scale-connected");   // legacy classes retired
+  el.classList.toggle("scale-active",  active > 0);
+  el.classList.toggle("scale-standby", active === 0 && standby > 0);
+  el.classList.toggle("scale-offline", total > 0 && online === 0);
+  if (total === 0)        el.dataset.tooltip = t("scaleHealthNone")    || "No scale connected";
+  else if (online === 0)  el.dataset.tooltip = t("scaleHealthOffline", { n: total }) || `${total} scale(s) — all offline`;
+  else if (active === 0)  el.dataset.tooltip = t("scaleHealthStandby", { n: standby }) || `${standby} scale(s) in standby`;
+  else                    el.dataset.tooltip = t("scaleHealthOnline",  { n: online, total }) || `${online}/${total} scale(s) online`;
+
+  // Battery badge overlaid on the bottom-left of the scale glyph. Shows the
+  // charge % of the online scale that has a fitted cell; with several, the
+  // LOWEST (the one you'd act on first). Colour = charging (green) / low <20 %
+  // (red) / neutral. Hidden when no online scale reports a battery.
+  let batt = null;
+  for (const s of state.scales) {
+    if (scaleConnState(s) === "offline") continue;
+    if (scaleBatteryPresent(s) === false) continue;
+    const p = scaleBatteryPercent(s);
+    if (typeof p !== "number" || !isFinite(p)) continue;
+    if (!batt || p < batt.pct) batt = { pct: p, charging: scaleIsCharging(s) === true };
+  }
+  let bel = el.querySelector(".scale-health-batt");
+  if (batt) {
+    if (!bel) { bel = document.createElement("span"); el.appendChild(bel); }
+    // iOS-style: battery outline + proportional fill + value inside. Reads
+    // "XX%" while discharging, "XX" + a bolt while charging. iOS colours:
+    // charging → green, low <20 % → red, otherwise neutral.
+    const bst = batt.charging ? "charging" : (batt.pct < 20 ? "low" : "neutral");
+    const pct = Math.max(0, Math.min(100, batt.pct));
+    bel.className = `scale-health-batt is-${bst}`;
+    bel.innerHTML = `<span class="shb-fill" style="width:${pct}%"></span>`
+      + `<span class="shb-txt">${batt.pct}${batt.charging ? "" : "%"}</span>`
+      + (batt.charging ? `<span class="shb-bolt"></span>` : "");
+    bel.style.display = "";
+  } else if (bel) {
+    bel.style.display = "none";
+  }
 }
 
 // ── Panel render ───────────────────────────────────────────────────────────
@@ -232,9 +300,9 @@ function _buildScaleCardHtml(s) {
         <div class="scale-card-id">
           <div class="scale-card-name-row">
             <span class="scale-card-name">${esc(dispName)}</span>
-            <span class="scale-card-status-pill ${online ? "is-online" : "is-offline"}">
+            <span class="scale-card-status-pill ${_scalePillClass(scaleConnState(s))}">
               <span class="scale-card-status-dot"></span>
-              <span class="scale-card-status-pill-text">${online ? t("scaleStatusOnline") : t("scaleStatusOffline")}</span>
+              <span class="scale-card-status-pill-text">${_scalePillLabel(scaleConnState(s))}</span>
             </span>
           </div>
           <div class="scale-card-mac">${esc(macFmt)}</div>
@@ -279,33 +347,45 @@ function _buildScaleChipsHtml(s) {
 
   const chips = [];
 
+  // Wi-Fi — colour follows CONNECTIVITY, not raw strength, matching the scale's
+  // own screen (green whenever connected, red only when disconnected). A scale
+  // that just heartbeated IS connected, so its link shows healthy green even at a
+  // modest RSSI — never a red alarm for a working scale. Strength still reads from
+  // the bar count (1–4 by RSSI); the exact dBm + quality label are in the tooltip.
   if (typeof wifiDbm === "number" && isFinite(wifiDbm)) {
     const q = wifiQualityLevel(wifiDbm);
-    chips.push(`<span class="scale-chip scale-chip--wifi scale-chip--wifi-${q.cls}" title="${esc(q.label)}">
-      <span class="icon icon-wifi icon-12"></span>
-      <span class="scale-chip-text">${esc(String(wifiDbm))} dBm</span>
+    const cls = online ? "ok" : "off";
+    chips.push(`<span class="scale-chip scale-chip--wifi scale-chip--wifi-${cls}" title="${esc(q.label)} · ${esc(String(wifiDbm))} dBm">
+      <span class="scale-wifi-bars" data-bars="${q.bars}" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
     </span>`);
   }
 
-  if (power) {
+  // Battery — an iOS-style pill: outline coloured by level, a proportional fill,
+  // the value INSIDE, and an orange charging bolt to the right when is_charging.
+  // battery_percent is null when no cell is fitted (null ≠ 0; a flat fitted cell
+  // reads 0 and still shows). battery_present:false is the authoritative "no
+  // battery" signal; absent (older firmware) is treated as present so nothing
+  // regresses. With no battery we fall back to a plain USB/power chip.
+  const hasBattery = scaleBatteryPresent(s) !== false && typeof battery === "number" && isFinite(battery);
+  if (hasBattery) {
+    // Colour precedence — charging, then low, then neutral. Charging OUTRANKS
+    // low: a cell below 20 % on a live charger is being fixed, not a fault, so it
+    // shows the charging colour whatever the level (matches the scale's screen).
+    const battState = charging === true ? "charging" : (battery < 20 ? "low" : "neutral");
+    const pct = Math.max(0, Math.min(100, battery));
+    const boltHtml = charging === true ? `<span class="icon icon-bolt icon-10 scale-batt-bolt"></span>` : "";
+    const ttl = charging === true ? `${battery}% · ${t("scaleChipCharging")}` : `${battery}%`;
+    chips.push(`<span class="scale-chip scale-chip--battery scale-chip--bat-${battState}" title="${esc(ttl)}">
+      <span class="scale-batt"><span class="scale-batt-fill" style="width:${pct}%"></span><span class="scale-batt-num">${esc(String(battery))}</span></span>
+      ${boltHtml}
+    </span>`);
+  } else if (power) {
     const isUsb   = String(power).toLowerCase() === "usb";
     const lbl     = isUsb ? t("scaleChipPowerUsb") : t("scaleChipPowerBattery");
     const iconCls = isUsb ? "icon-plug" : "icon-battery";
-    const boltHtml = (charging === true)
-      ? `<span class="icon icon-bolt icon-10 scale-chip-bolt"></span>`
-      : "";
     chips.push(`<span class="scale-chip scale-chip--power" title="${esc(t("scaleChipPower"))}">
       <span class="icon ${iconCls} icon-12"></span>
       <span class="scale-chip-text">${esc(lbl)}</span>
-      ${boltHtml}
-    </span>`);
-  }
-
-  if (typeof battery === "number" && isFinite(battery)) {
-    const lvl = battery >= 60 ? "high" : battery >= 25 ? "mid" : "low";
-    chips.push(`<span class="scale-chip scale-chip--battery scale-chip--bat-${lvl}" title="${esc(t("scaleChipPowerBattery"))}">
-      <span class="icon icon-battery icon-12"></span>
-      <span class="scale-chip-text">${esc(String(battery))}%</span>
     </span>`);
   }
 
@@ -452,9 +532,12 @@ function _buildScaleLocalBlockHtml(mac) {
     </div>`;
 
   // ── Weight values (toujours connecté ici grâce au early-return) ──────────
+  // Weights are physically ≥ 0; the firmware sends -1 (and sometimes 0) for
+  // "unknown" — notably containerWeight = -1 when the tag has no empty-spool
+  // weight. Guard with > 0 so an unknown never renders as "-1 g" (per API.md).
   const weightVal    = typeof st.weight === "number" ? Math.round(st.weight) : "—";
-  const containerVal = (typeof st.containerWeight === "number" && st.containerWeight !== 0) ? Math.round(st.containerWeight) : "—";
-  const filamentVal  = (typeof st.netWeight       === "number" && st.netWeight       !== 0) ? Math.round(st.netWeight)       : "—";
+  const containerVal = (typeof st.containerWeight === "number" && st.containerWeight > 0) ? Math.round(st.containerWeight) : "—";
+  const filamentVal  = (typeof st.netWeight       === "number" && st.netWeight       > 0) ? Math.round(st.netWeight)       : "—";
 
   // ── UIDs — resolve() décide quoi afficher dans chaque slot ──────────────
   const readerLbl = t("scaleReader") || "Reader";
@@ -526,9 +609,17 @@ export function disconnectScaleWs(mac) {
 }
 
 /**
- * Ping the scale at GET /api/ping, then open a WebSocket at ws://ip/ws.
- * Auto-reconnects on close (5 s). Falls back to 30 s retry when ping fails.
- * Detects superseded calls (IP changed concurrently) via Map entry checks.
+ * Open a WebSocket at ws://ip/ws — no pre-ping, we connect directly and let
+ * onclose drive the retries. Auto-reconnects on close (5 s). Detects superseded
+ * calls (IP changed concurrently) via Map entry checks.
+ *
+ * Channel split is deliberate and we keep it: live data (weight / tag / phase)
+ * rides this WS, persistent state (battery / power / wifi / fw / account) comes
+ * from Firestore — reachable from anywhere — and HTTP is used ONLY for actions
+ * (tare). We do NOT fall back to the HTTP API to READ state when the WS is down:
+ * if the WS is closed there is nothing live to show, and Firestore still carries
+ * the persistent state. (Firmware 3.7.0 exposes GET /api/status, but by design
+ * we don't poll it.)
  *
  * @param {string} mac  Raw MAC string (Firestore document ID).
  * @param {string} ip   IPv4 address from s.ip_address heartbeat field.
@@ -696,16 +787,18 @@ function _patchWsToggleBtn(mac) {
  */
 function _patchScaleCardInPlace(card, s) {
   const { state, t } = _ctx;
-  const online = isScaleOnline(s);
+  const cstate = scaleConnState(s);
+  const online = cstate !== "offline";   // active OR standby = alive
   card.querySelector(".scale-card")?.classList.toggle("is-online", online);
 
-  // Status pill
+  // Status pill — active (green) / standby (blue) / offline (red)
   const pill = card.querySelector(".scale-card-status-pill");
   if (pill) {
-    pill.classList.toggle("is-online",  online);
-    pill.classList.toggle("is-offline", !online);
+    pill.classList.toggle("is-online",  cstate === "active");
+    pill.classList.toggle("is-standby", cstate === "standby");
+    pill.classList.toggle("is-offline", cstate === "offline");
     const txt = pill.querySelector(".scale-card-status-pill-text");
-    if (txt) txt.textContent = online ? t("scaleStatusOnline") : t("scaleStatusOffline");
+    if (txt) txt.textContent = _scalePillLabel(cstate);
   }
 
   // Display name (rarely changes)
@@ -829,7 +922,8 @@ function _wireScaleCardEvents(body) {
 
   // ── TARE — hold 1 s to confirm ────────────────────────────────────────────
   // The tare button lives outside .scale-card-local so its animation
-  // is never interrupted by the 10 Hz weight refresh.
+  // is never interrupted by the live weight refresh (every WS delta re-renders
+  // that block).
   function _startTare(btn) {
     const mac = btn?.dataset.tareMac;
     if (!mac || btn.disabled) return;
@@ -838,11 +932,21 @@ function _wireScaleCardEvents(body) {
     btn.classList.add("holding");
     st._tareTimer = setTimeout(async () => {
       btn.classList.remove("holding");
-      btn.classList.add("success");
-      try { await fetch(`http://${st.ip}/api/tare`, { method: "POST" }); }
-      catch (err) { reportError("scale.tare", err); }
-      setTimeout(() => btn.classList.remove("success"), 600);
       st._tareTimer = null;
+      // Firmware 3.7.0 returns CORS headers, so we can finally READ the tare
+      // response: celebrate only on a 2xx. Previously "success" was shown BEFORE
+      // the fetch and the error was swallowed, so the button lied even when the
+      // scale was unreachable.
+      try {
+        const res = await fetch(`http://${st.ip}/api/tare`, { method: "POST" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        btn.classList.add("success");
+        setTimeout(() => btn.classList.remove("success"), 600);
+      } catch (err) {
+        reportError("scale.tare", err);
+        btn.classList.add("error");
+        setTimeout(() => btn.classList.remove("error"), 900);
+      }
     }, 1000);
   }
   function _cancelTare(btn) {
@@ -903,9 +1007,29 @@ function scaleWifiSignalDbm(s)    { return s?.wifi_signal_dbm     ?? null; }
 function scaleBatteryPercent(s)   { return s?.battery_percent     ?? null; }
 function scaleIsCharging(s)       { return s?.is_charging         ?? null; }
 function scalePowerSource(s)      { return s?.power_source        ?? null; }
+function scalePowerState(s)       { return s?.power_state         ?? null; }
+function scaleBatteryPresent(s)   { return s?.battery_present     ?? null; }
 
+// Online = heartbeat seen within the regime's window. Standby (screen_off) beats
+// only every 5 min, so it gets the longer grace — otherwise a fully-awake scale
+// with its backlight off would be wrongly shown as disconnected after 90 s.
 function isScaleOnline(s) {
-  return Date.now() - scaleTsToMs(scaleHeartbeatAt(s)) < SCALE_ONLINE_THRESHOLD_MS;
+  const gap = Date.now() - scaleTsToMs(scaleHeartbeatAt(s));
+  const standby = scalePowerState(s) === "screen_off";
+  return gap < (standby ? SCALE_ONLINE_STANDBY_MS : SCALE_ONLINE_ACTIVE_MS);
+}
+
+// Three-way connection state for ONE scale: "active" (online, screen on),
+// "standby" (online, backlight off — still fully alive and reachable), or
+// "offline". Colours: active→green, standby→blue, offline→red.
+function scaleConnState(s) {
+  if (!isScaleOnline(s)) return "offline";
+  return scalePowerState(s) === "screen_off" ? "standby" : "active";
+}
+function _scalePillClass(cs) { return cs === "active" ? "is-online" : cs === "standby" ? "is-standby" : "is-offline"; }
+function _scalePillLabel(cs) {
+  const { t } = _ctx;
+  return cs === "active" ? t("scaleStatusOnline") : cs === "standby" ? t("scaleStatusStandby") : t("scaleStatusOffline");
 }
 
 // ── Timestamp helper ───────────────────────────────────────────────────────
@@ -940,12 +1064,16 @@ function formatMacAddress(raw) {
  * Map a Wi-Fi RSSI value (negative dBm) to a quality label + CSS class suffix.
  *   ≥ -50 → "excellent"   ≥ -60 → "good"   ≥ -70 → "fair"   < -70 → "weak"
  */
+// Realistic RSSI buckets for a working ESP32 Wi-Fi link (only the bar COUNT and
+// the tooltip label use these — the chip colour is connectivity-based, above).
+// The old -50/-60/-70 cut-offs were router-adjacent and made a normal -70 dBm
+// link read as "weak". A healthy room signal is roughly -50…-67.
 function wifiQualityLevel(dbm) {
   const { t } = _ctx;
-  if (dbm >= -50) return { cls: "excellent", label: t("scaleChipWifiQualityExcellent") };
-  if (dbm >= -60) return { cls: "good",      label: t("scaleChipWifiQualityGood") };
-  if (dbm >= -70) return { cls: "fair",      label: t("scaleChipWifiQualityFair") };
-  return              { cls: "weak",      label: t("scaleChipWifiQualityWeak") };
+  if (dbm >= -67) return { cls: "excellent", bars: 4, label: t("scaleChipWifiQualityExcellent") };
+  if (dbm >= -73) return { cls: "good",      bars: 3, label: t("scaleChipWifiQualityGood") };
+  if (dbm >= -80) return { cls: "fair",      bars: 2, label: t("scaleChipWifiQualityFair") };
+  return              { cls: "weak",      bars: 1, label: t("scaleChipWifiQualityWeak") };
 }
 
 /**

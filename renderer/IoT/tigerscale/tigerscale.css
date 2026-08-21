@@ -8,12 +8,12 @@
  * sheets so these rules inherit all CSS custom properties.
  */
 
-/* ── Scale health icon (header)
-      • default          : muted grey (paired but all offline)
-      • .scale-connected : green glow (≥1 online)
-      • .scale-none      : red, fixed size, no animation — visual cue
-                           that no TigerScale is paired yet. */
-.scale-health { cursor: pointer; }
+/* ── Scale health icon (header, right of the TigerPod glyph)
+      • default         : muted grey — no scale paired
+      • .scale-active   : green glow + ping (≥1 scale active, screen on)
+      • .scale-standby  : blue (none active, ≥1 in standby / screen off)
+      • .scale-offline  : red (paired but all offline) */
+.scale-health { cursor: pointer; position: relative; }  /* anchor for .scale-live + the battery badge */
 .scale-health-icon {
   display: inline-block;
   height: 44px; aspect-ratio: 1 / 1;
@@ -28,11 +28,15 @@
   -webkit-mask-size: auto 34px; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
   opacity: .38; transition: opacity .3s, background-color .3s, filter .3s;
 }
-.scale-health.scale-connected .scale-health-icon {
+.scale-health.scale-active .scale-health-icon {
   background-color: var(--success); opacity: 1;
   filter: drop-shadow(0 0 5px var(--success));
 }
-.scale-health.scale-none .scale-health-icon {
+.scale-health.scale-standby .scale-health-icon {
+  background-color: var(--info); opacity: 1;
+  filter: drop-shadow(0 0 5px var(--info));
+}
+.scale-health.scale-offline .scale-health-icon {
   background-color: var(--danger); opacity: 1;
 }
 /* Live "ready / active" indicator — a small green dot with an expanding ping
@@ -43,12 +47,50 @@
   background: var(--success); display: none; pointer-events: none;
   box-shadow: 0 0 0 2px var(--surface);
 }
-.scale-health.scale-connected .scale-live { display: block; }
+.scale-health.scale-active .scale-live { display: block; }
 .scale-live::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
   background: var(--success); opacity: 0;
 }
-.scale-health.scale-connected .scale-live::before { animation: scale-live-ping 1.4s ease-out infinite; }
+.scale-health.scale-active .scale-live::before { animation: scale-live-ping 1.4s ease-out infinite; }
+
+/* Battery over the bottom-left of the scale glyph — styled like an iOS phone
+   battery: dark body (as on a status bar), coloured outline + nub, a proportional
+   fill in the state colour, and a WHITE bold value inside. Reads "XX%" while
+   discharging, "XX" + a bolt while charging. iOS colours: charging green / low
+   <20 % red / neutral grey. currentColor carries the state colour. */
+.scale-health-batt {
+  position: absolute; left: -4px; bottom: -1px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 1px;
+  min-width: 19px; height: 13px; padding: 0 2px; box-sizing: border-box;
+  border: 1.2px solid currentColor; border-radius: 3px;
+  background: #0e1116;          /* dark battery body — like a phone status bar */
+  color: var(--muted);         /* default neutral outline/fill */
+  box-shadow: 0 1px 3px rgba(0,0,0,.45); pointer-events: none;
+}
+.scale-health-batt::after {    /* terminal nub */
+  content: ""; position: absolute; right: -3px; top: 50%; transform: translateY(-50%);
+  width: 1.6px; height: 5px; border-radius: 0 2px 2px 0; background: currentColor;
+}
+.scale-health-batt .shb-fill {
+  position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px 0 0 2px;
+  background: currentColor;    /* solid, proportional charge level */
+}
+.scale-health-batt .shb-txt {
+  position: relative; z-index: 1;
+  color: #fff; font-weight: 800; font-size: 8px; letter-spacing: -.03em;
+  text-shadow: 0 0 1.5px rgba(0,0,0,.55);
+}
+.scale-health-batt .shb-bolt {
+  position: relative; z-index: 1; width: 5px; height: 8px; flex-shrink: 0;
+  background-color: #fff;
+  -webkit-mask-image: url('../../../assets/svg/icons/icon_bolt.svg');
+  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+  filter: drop-shadow(0 0 1px rgba(0,0,0,.5));
+}
+.scale-health-batt.is-charging { color: var(--success); }
+.scale-health-batt.is-low      { color: var(--danger); }
+.scale-health-batt.is-neutral  { color: var(--muted); }
 @keyframes scale-live-ping {
   0%   { transform: scale(1);   opacity: .55; }
   100% { transform: scale(2.6); opacity: 0; }
@@ -367,13 +409,15 @@
   font-size: 10.5px; font-weight: 600;
   text-transform: lowercase; letter-spacing: .01em; flex-shrink: 0;
 }
-.scale-card-status-pill.is-online  { background: var(--success-soft); color: var(--success); }
-.scale-card-status-pill.is-offline { background: color-mix(in srgb, var(--neutral) 12%, transparent); color: var(--muted); }
+.scale-card-status-pill.is-online  { background: var(--success-soft); color: var(--success); }  /* active  */
+.scale-card-status-pill.is-standby { background: var(--info-soft);    color: var(--info);    }  /* standby */
+.scale-card-status-pill.is-offline { background: var(--danger-soft);  color: var(--danger);  }  /* offline */
 .scale-card-status-dot {
   width: 6px; height: 6px; border-radius: 50%;
   display: inline-block; background: currentColor;
 }
-.scale-card.is-online .scale-card-status-pill.is-online .scale-card-status-dot {
+/* Glow the dot on an alive card — active (green) or standby (blue). */
+.scale-card.is-online .scale-card-status-pill .scale-card-status-dot {
   box-shadow: 0 0 4px currentColor;
 }
 .scale-card-mac {
@@ -451,17 +495,51 @@
   margin-left: 1px;
 }
 
-/* Wi-Fi quality colour coding */
-.scale-chip--wifi { color: var(--text); }
-.scale-chip--wifi-excellent { color: var(--success); border-color: var(--success-soft); background: var(--success-soft); }
-.scale-chip--wifi-good      { color: var(--success); }
-.scale-chip--wifi-fair      { color: var(--warning); }
-.scale-chip--wifi-weak      { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+/* Wi-Fi colour = connectivity, matching the scale's own screen (green whenever
+   connected, red/off only when disconnected). Strength shows via the bar count,
+   NOT the colour — so a working link is never painted as a red alarm. */
+.scale-chip--wifi     { color: var(--text); }
+.scale-chip--wifi-ok  { color: var(--success); }
+.scale-chip--wifi-off { color: var(--muted); }
 
-/* Battery level colour coding */
-.scale-chip--bat-high { color: var(--success); }
-.scale-chip--bat-mid  { color: var(--warning); }
-.scale-chip--bat-low  { color: var(--danger); border-color: var(--danger-soft); background: var(--danger-soft); }
+/* Battery colour — precedence charging → low → neutral (resolved in JS, one
+   class only). Charging OUTRANKS low, so a cell being charged never shows the
+   red alert. No chip background tint: the pill itself carries the colour. */
+.scale-chip--bat-charging { color: var(--success); }
+.scale-chip--bat-low      { color: var(--danger); }
+.scale-chip--bat-neutral  { color: var(--text); }
+
+/* Wi-Fi as reception-quality bars — colour inherited from the quality class. */
+.scale-wifi-bars { display: inline-flex; align-items: flex-end; gap: 1.5px; height: 11px; }
+.scale-wifi-bars i { width: 3px; border-radius: 1px; background: var(--border); }
+.scale-wifi-bars i:nth-child(1) { height: 4px; }
+.scale-wifi-bars i:nth-child(2) { height: 6px; }
+.scale-wifi-bars i:nth-child(3) { height: 8.5px; }
+.scale-wifi-bars i:nth-child(4) { height: 11px; }
+.scale-wifi-bars[data-bars="1"] i:nth-child(-n+1),
+.scale-wifi-bars[data-bars="2"] i:nth-child(-n+2),
+.scale-wifi-bars[data-bars="3"] i:nth-child(-n+3),
+.scale-wifi-bars[data-bars="4"] i:nth-child(-n+4) { background: currentColor; }
+
+/* Battery — iOS-style pill: coloured outline, proportional fill, value inside,
+   plus a terminal nub. Colour follows the level class (or green while charging);
+   the numeral stays var(--text) so it reads on the faint fill in either theme. */
+.scale-chip--battery { gap: 4px; padding: 4px 7px; }
+.scale-batt {
+  position: relative; width: 26px; height: 13px; box-sizing: border-box;
+  border: 1.5px solid currentColor; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.scale-batt::after {   /* terminal nub */
+  content: ""; position: absolute; right: -4px; top: 50%; transform: translateY(-50%);
+  width: 2px; height: 5px; border-radius: 0 2px 2px 0; background: currentColor;
+}
+.scale-batt-fill { position: absolute; left: 0; top: 0; bottom: 0; background: currentColor; opacity: .28; }
+.scale-batt-num {
+  position: relative; z-index: 1;
+  font-size: 9px; font-weight: 800; letter-spacing: -.03em; color: var(--text);
+}
+.scale-batt-bolt { color: var(--warning); }                   /* orange charge bolt */
 
 /* Power chip — neutral by default */
 .scale-chip--power { color: var(--muted); }
@@ -590,6 +668,7 @@
   animation: fillProgress 1s linear forwards;
 }
 .tare-hold-btn.success { background: #48bb78 !important; }
+.tare-hold-btn.error   { background: #e04345 !important; }  /* tare failed (non-2xx / unreachable) */
 
 @keyframes fillProgress {
   from { width: 0%; }
