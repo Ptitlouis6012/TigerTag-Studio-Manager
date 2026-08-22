@@ -876,6 +876,7 @@
   "scaleHealthOnline": "{{n}}/{{total}} Waage(n) online",
   "scaleHealthOffline": "{{n}} Waage(n) — alle offline",
   "scaleHealthStandby": "{{n}} Waage(n) im Standby",
+  "scaleHealthRow": "Waage #{{n}}",
   "scaleHealthNone": "TigerScale nicht verbunden",
   "scaleStatusOnline": "online",
   "scaleStatusOffline": "offline",

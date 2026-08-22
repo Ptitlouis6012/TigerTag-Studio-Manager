@@ -151,8 +151,9 @@
       <div class="sb-stats-wrap top-stats hidden" id="sbStats"></div>
       <div class="top-status-icons">
         <div id="rfidReadersBar" class="rfid-readers-bar"></div>
-        <div class="health scale-health" id="scaleHealth" data-tooltip="TigerScale not connected"><span class="scale-health-icon"></span><span class="scale-live" aria-hidden="true"></span></div>
-        <div class="health" id="health" data-tooltip="Backend: idle"><span class="icon icon-cloud-3d icon-20"></span></div>
+        <div class="health scale-health" id="scaleHealth"><span class="scale-glyphs"><span class="scale-glyph"><span class="scale-health-icon"></span></span></span></div>
+        <!-- Backend health — hidden while all is well; only shown on a network problem (offline / cache). -->
+        <div class="health hidden" id="health" data-tooltip="Backend: idle"><span class="icon icon-cloud-3d icon-20"></span></div>
         <div class="health update-health hidden" id="updateStatusIcon" data-tooltip=""><span class="update-health-icon"></span></div>
       </div>
     </header>
@@ -3156,11 +3157,16 @@
         </div>
       </div>
 
-      <!-- CTA -->
-      <a class="btn primary tigerpod-print-btn" id="tigerPodMakerWorldBtn">
-        <span class="tigerpod-btn-icon"></span>
-        <span data-i18n="tigerPodPrintBtn">Download &amp; Print STL Free</span>
-      </a>
+      <!-- CTA — two Pod models (same reader, only the 3D model to print differs) -->
+      <div class="tigerpod-print-cta" data-i18n="tigerPodPrintCta">Print the TigerPOD</div>
+      <div class="tigerpod-print-row">
+        <a class="btn primary tigerpod-print-btn" id="tigerPodMakerWorldBtn">
+          <span data-i18n="tigerPodPrintNormalBtn">Standard</span>
+        </a>
+        <a class="btn primary tigerpod-print-btn" id="tigerPodMakerWorldMiniBtn">
+          <span data-i18n="tigerPodPrintMiniBtn">Mini</span>
+        </a>
+      </div>
       <!-- Debug-only reader readout. Replaces the old "I own a TigerPOD" toggle,
            which was redundant: `hasPod` is telemetry-only and auto-set on the
            first successful scan, so a manual toggle changed nothing the next scan

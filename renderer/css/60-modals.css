@@ -3962,6 +3962,28 @@
   background: var(--primary-hover); border-color: var(--primary-hover);
   box-shadow: 0 3px 14px color-mix(in srgb, var(--primary) 45%, transparent);
 }
+/* Two Pod models: a small caption above a row of two equal buttons (Standard / Mini). */
+.tigerpod-print-cta {
+  text-align: center; font-size: 13px; font-weight: 600;
+  color: var(--muted); margin: 2px 0 8px;
+}
+.tigerpod-print-row { display: flex; gap: 10px; }
+.tigerpod-print-row .tigerpod-print-btn { flex: 1; }
+
+/* Light-theme contrast fix. The hero sits on a FIXED purple gradient in both
+   themes, so its text must stay light — the theme ink vars (var(--text)/--ink-*)
+   turn dark in light mode and become unreadable on the purple. Force light here. */
+.tigerpod-hero-product { color: #fff; }
+.tigerpod-hero-brand,
+.tigerpod-cta,
+.tigerpod-stat { color: rgba(255,255,255,.85); }
+.tigerpod-stat strong { color: #fff; }
+.tigerpod-stat-sep { color: rgba(255,255,255,.45); }
+.tigerpod-stat-free { color: rgba(255,255,255,.9); background: rgba(255,255,255,.18); }
+.tigerpod-close-btn { color: rgba(255,255,255,.85); }
+.tigerpod-close-btn:hover { color: #fff; }
+/* Numbered feature badges: white numeral on the orange circle (was var(--text)). */
+.tigerpod-feat-num { color: #fff; }
 /* Debug-only reader readout (replaces the removed ownership toggle). Only ever
    visible in debug mode; mono, compact, unobtrusive — it's a diagnostic, not UI. */
 .tigerpod-debug {
@@ -4030,7 +4052,11 @@
 }
 .cem-chip-logo {
   width: 76px; aspect-ratio: 340 / 289.1; /* viewBox of logo_tigertag.svg */
-  background-color: var(--surface);
+  /* The plate above is a FIXED dark gradient in both themes (it mimics the
+     physical reader), so its logo needs a fixed-polarity foreground. It was
+     `--surface`, which only ever read as white back when --surface was white —
+     in dark it resolves to #171a22 and the logo sank into the plate. */
+  background-color: var(--on-dark);
   -webkit-mask: url('../../assets/svg/logos/logo_tigertag.svg') center / contain no-repeat;
           mask: url('../../assets/svg/logos/logo_tigertag.svg') center / contain no-repeat;
   transition: transform .2s ease;

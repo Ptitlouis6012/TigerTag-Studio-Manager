@@ -5,6 +5,32 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.20.0 — 2026-08-22
+
+### Added
+
+- **The header scale icon is now one glyph per scale (capped at two), each coloured by its own connection state.** A single aggregate icon became `renderScaleHealth`'s per-scale render: 1 scale → 1 glyph, 2+ → 2 (never more), each `.scale-glyph` carrying `scale-active` (green) / `scale-standby` (blue) / `scale-offline` (red), and muted grey when no scale is paired. A hover popover (`.scale-health-pop`, mirroring the RFID-pod popover) lists **every** scale — one row each with a matching status dot + `Scale #N` + status label — so 3+ scales still surface fully even though the glyph count is capped. The rebuild is signature-guarded (`_scaleHealthSig`) so the live-ping animation isn't restarted on every 10 s tick / snapshot — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`, `renderer/inventory.html`. New `scaleStatusStandby` / `scaleHealthStandby` / `scaleHealthRow` i18n (9 locales).
+- **Standby is a first-class connection state.** `scaleConnState` returns `active` / `standby` / `offline`; a screen-off scale (`power_state === "screen_off"`, firmware ≥ 3.6.0) with a heartbeat inside the standby window shows **blue "standby"** rather than offline. Offline detection is regime-aware — `SCALE_ONLINE_ACTIVE_MS` 90 s (30 s cadence) vs `SCALE_ONLINE_STANDBY_MS` 11 min (5 min cadence) — so a fully-awake scale with its backlight off is never shown disconnected; a genuinely silent scale still flips to offline once its heartbeat ages past the window (needed because a scale that dies in standby keeps its last `screen_off` forever) — `renderer/IoT/tigerscale/index.js`.
+- **Battery on the header scale glyph — an iOS-style pill.** Coloured outline + terminal nub, proportional fill, and the value inside: reads `XX%` while discharging and `XX` + a charging bolt while charging. Colour precedence **charging (green) → low < 20 % (red) → neutral**; `battery_present === false` shows no gauge, and `battery_percent` null is treated as "no cell" (≠ 0) — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`.
+- **The TigerPOD modal offers both Pod models to print.** Two buttons — **Standard** and **Mini (OpenSpool)** — each opening its own MakerWorld model. The badge now opens the modal whether a reader is connected or not — `renderer/inventory.html`, `renderer/inventory.js`, `renderer/css/60-modals.css`. New `tigerPodPrintCta` / `tigerPodPrintNormalBtn` / `tigerPodPrintMiniBtn` / `tigerPodOwnLabel` / `tigerPodOwnSub` i18n (9 locales).
+- **TigerTag+ reference database refreshed to 12 211 products.** `db_update.py` re-synced every reference JSON from the live API — `assets/db/tigertag/id_catalog.json` + `last_update.json` (and the id_* datasets).
+
+### Changed
+
+- **The scale Wi-Fi indicator follows connectivity, not raw RSSI.** It was a red single bar for a perfectly working link because the thresholds were router-adjacent (excellent ≥ -50 dBm). Colour is now green while online / muted while offline (matching the scale's own screen, which is green whenever connected), with realistic bar-count thresholds; the exact dBm + quality label stay in the tooltip — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`.
+- **`rfidReadersMax` (TigerPOD reader count) is recorded on a successful read, not a bare connect,** and kept at the lifetime max — seeded from the persisted value at login so a fresh session (counter reset to 0) can no longer write a lower count over a stored 2 — `renderer/IoT/tigerscale/index.js`.
+- **The backend "cloud" indicator only appears on a real network problem.** Hidden while all is well, and shown only after **3 s of continuous disconnection** (offline / serving from cache) — suppressing the flash at startup while the cloud is still connecting. The Firestore-metadata logic and hover ping are unchanged — `renderer/inventory.html`, `renderer/inventory.js`.
+- **The tare button reads the response now that the firmware returns CORS headers.** It shows success only on a 2xx and an error state otherwise, instead of adding the "success" class before the fetch and swallowing the error (which reported success even when the scale was unreachable) — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`.
+- **Debug-mode telemetry instrumentation** in the scales Firestore subscription: a timestamped log of every `power_state` / `power_source` / `is_charging` transition (with `from_cache`) plus a `snapshot → render` timing, to measure plug/unplug and wake latency — `renderer/IoT/tigerscale/index.js`.
+
+### Fixed
+
+- **A scale in standby was wrongly marked offline after 90 s.** Since firmware 3.6.0 a screen-off scale heartbeats every 5 min, but the flat 90 s threshold treated all scales alike — it now uses the standby window (see Added) — `renderer/IoT/tigerscale/index.js`.
+- **`containerWeight` of `-1` (unknown, per the firmware contract) rendered as "-1 g".** Weights are now guarded `> 0`, so an unknown container/net weight shows "—" — `renderer/IoT/tigerscale/index.js`.
+- **Light-theme contrast in the TigerPOD modal.** The title and badges on the fixed purple header, and the numerals in the orange feature circles, used theme ink tokens that turn dark in light mode → unreadable; they are forced to white/light — `renderer/css/60-modals.css`.
+
+---
+
 ## v2.19.1 — 2026-08-19
 
 ### Fixed

@@ -7837,5 +7837,135 @@
         }
       }
     ]
+  },
+  "2.20.0": {
+    "date": "2026-08-22",
+    "items": [
+      {
+        "icon": "scale",
+        "title": {
+          "en": "Napping isn't gone",
+          "fr": "En veille ≠ déconnectée",
+          "de": "Nickerchen ≠ weg",
+          "es": "En reposo no es desconectada",
+          "it": "In pausa non vuol dire persa",
+          "zh": "待机不等于掉线",
+          "pt": "Em repouso não é offline",
+          "pt-pt": "Em repouso não é offline",
+          "pl": "Uśpiona to nie offline"
+        },
+        "body": {
+          "en": "Your scale glows blue when it's just resting its screen — still awake, still connected. Green when active, red only when it's truly gone. No more false alarms when it dims.",
+          "fr": "Ta balance passe au bleu quand elle met juste son écran en veille — bien réveillée, bien connectée. Verte quand elle bosse, rouge seulement si elle a vraiment disparu. Fini les fausses alertes quand l'écran s'éteint.",
+          "de": "Deine Waage leuchtet blau, wenn nur der Bildschirm schläft — hellwach und verbunden. Grün, wenn sie arbeitet, rot nur, wenn sie wirklich weg ist. Kein Fehlalarm mehr, wenn sie abdunkelt.",
+          "es": "Tu báscula se pone azul cuando solo apaga la pantalla: despierta y conectada. Verde cuando trabaja, roja solo si de verdad desapareció. Se acabaron las falsas alarmas.",
+          "it": "La tua bilancia diventa blu quando spegne solo lo schermo: sveglia e connessa. Verde quando lavora, rossa solo se è davvero sparita. Basta falsi allarmi.",
+          "zh": "现在秤只是熄屏时会变蓝——依然醒着、依然在线。工作时绿色，真的掉线才变红。熄屏不再误报。",
+          "pt": "Sua balança fica azul quando só apaga a tela — acordada e conectada. Verde quando trabalha, vermelha só quando some de verdade. Chega de alarme falso.",
+          "pt-pt": "A tua balança fica azul quando só apaga o ecrã — acordada e ligada. Verde quando trabalha, vermelha só quando desaparece mesmo. Acabaram os falsos alarmes.",
+          "pl": "Twoja waga świeci na niebiesko, gdy tylko gasi ekran — czuwa i jest połączona. Zielona przy pracy, czerwona tylko gdy naprawdę zniknie. Koniec fałszywych alarmów."
+        }
+      },
+      {
+        "icon": "battery",
+        "title": {
+          "en": "Battery, right on the icon",
+          "fr": "La batterie, direct sur l'icône",
+          "de": "Akku direkt am Symbol",
+          "es": "La batería, en el icono",
+          "it": "La batteria, sull'icona",
+          "zh": "电量直接显示在图标上",
+          "pt": "A bateria, direto no ícone",
+          "pt-pt": "A bateria, mesmo no ícone",
+          "pl": "Bateria prosto na ikonie"
+        },
+        "body": {
+          "en": "Your scale's charge now sits on its icon like a phone — the % while it runs, a little bolt while it charges, red when it's low.",
+          "fr": "La charge de ta balance s'affiche sur son icône comme sur un téléphone — le % quand elle tourne, un petit éclair quand elle charge, rouge quand c'est bas.",
+          "de": "Der Ladestand deiner Waage sitzt jetzt am Symbol wie beim Handy — die % im Betrieb, ein kleiner Blitz beim Laden, rot wenn's knapp wird.",
+          "es": "La carga de tu báscula aparece en su icono como en un móvil — el % mientras funciona, un rayito al cargar, roja cuando queda poco.",
+          "it": "La carica della bilancia è sull'icona come su un telefono — la % mentre lavora, un fulmine mentre carica, rossa quando è bassa.",
+          "zh": "秤的电量像手机一样显示在图标上——运行时看百分比，充电时有个小闪电，电量低变红。",
+          "pt": "A carga da balança aparece no ícone como num celular — a % enquanto funciona, um raiozinho ao carregar, vermelha quando está baixa.",
+          "pt-pt": "A carga da balança aparece no ícone como num telemóvel — a % enquanto funciona, um raiozinho a carregar, vermelha quando está baixa.",
+          "pl": "Poziom baterii wagi jest teraz na ikonie jak w telefonie — % podczas pracy, mała błyskawica przy ładowaniu, czerwony przy niskim stanie."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "Meet the TigerPOD Mini",
+          "fr": "Voici le TigerPOD Mini",
+          "de": "Der TigerPOD Mini ist da",
+          "es": "Llega el TigerPOD Mini",
+          "it": "Arriva il TigerPOD Mini",
+          "zh": "TigerPOD Mini 来了",
+          "pt": "Chegou o TigerPOD Mini",
+          "pt-pt": "Chegou o TigerPOD Mini",
+          "pl": "Poznaj TigerPOD Mini"
+        },
+        "body": {
+          "en": "Printing a TigerPOD? Now pick your size — the Standard or the new Mini for OpenSpool — each with its own one-tap download.",
+          "fr": "Tu imprimes un TigerPOD ? Choisis ta taille — le Standard ou le nouveau Mini pour OpenSpool — chacun avec son téléchargement en un clic.",
+          "de": "Du druckst einen TigerPOD? Wähl deine Größe — den Standard oder den neuen Mini für OpenSpool — jeweils mit eigenem Ein-Klick-Download.",
+          "es": "¿Imprimes un TigerPOD? Elige tamaño — el Standard o el nuevo Mini para OpenSpool — cada uno con su descarga en un toque.",
+          "it": "Stampi un TigerPOD? Scegli la taglia — lo Standard o il nuovo Mini per OpenSpool — ognuno con il suo download in un tocco.",
+          "zh": "要打印 TigerPOD？现在可以选尺寸——标准版，或适配 OpenSpool 的全新 Mini——各有一键下载。",
+          "pt": "Vai imprimir um TigerPOD? Escolha o tamanho — o Standard ou o novo Mini para OpenSpool — cada um com seu download num toque.",
+          "pt-pt": "Vais imprimir um TigerPOD? Escolhe o tamanho — o Standard ou o novo Mini para OpenSpool — cada um com o seu download num toque.",
+          "pl": "Drukujesz TigerPOD? Wybierz rozmiar — Standard albo nowy Mini do OpenSpool — każdy z pobieraniem jednym kliknięciem."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "12,000+ filaments and counting",
+          "fr": "Plus de 12 000 filaments, et ça grimpe",
+          "de": "Über 12.000 Filamente, Tendenz steigend",
+          "es": "Más de 12.000 filamentos y subiendo",
+          "it": "Oltre 12.000 filamenti e continua",
+          "zh": "12,000+ 种耗材，还在增加",
+          "pt": "Mais de 12.000 filamentos e subindo",
+          "pt-pt": "Mais de 12.000 filamentos e a subir",
+          "pl": "Ponad 12 000 filamentów i rośnie"
+        },
+        "body": {
+          "en": "The TigerTag+ library just passed 12,000 filaments. Chances are yours is already in there — ready to scan and add.",
+          "fr": "La bibliothèque TigerTag+ vient de dépasser 12 000 filaments. Le tien y est sûrement déjà — prêt à scanner et ajouter.",
+          "de": "Die TigerTag+-Bibliothek hat gerade 12.000 Filamente geknackt. Deins ist wahrscheinlich schon dabei — zum Scannen und Hinzufügen bereit.",
+          "es": "La biblioteca TigerTag+ acaba de superar los 12.000 filamentos. Seguramente el tuyo ya está — listo para escanear y añadir.",
+          "it": "La libreria TigerTag+ ha appena superato i 12.000 filamenti. Il tuo probabilmente c'è già — pronto da scansionare e aggiungere.",
+          "zh": "TigerTag+ 库刚刚突破 12,000 种耗材。你用的那款多半已经在里面了——扫一扫就能添加。",
+          "pt": "A biblioteca TigerTag+ acabou de passar de 12.000 filamentos. O seu provavelmente já está lá — pronto para escanear e adicionar.",
+          "pt-pt": "A biblioteca TigerTag+ acabou de passar os 12.000 filamentos. O teu provavelmente já lá está — pronto a digitalizar e adicionar.",
+          "pl": "Biblioteka TigerTag+ właśnie przekroczyła 12 000 filamentów. Twój pewnie już tam jest — gotowy do zeskanowania i dodania."
+        }
+      },
+      {
+        "icon": "cloud",
+        "title": {
+          "en": "The connection alert stops crying wolf",
+          "fr": "L'alerte connexion arrête de crier au loup",
+          "de": "Der Verbindungshinweis schlägt nicht mehr grundlos Alarm",
+          "es": "El aviso de conexión deja de dar falsas alarmas",
+          "it": "L'avviso di connessione smette di gridare al lupo",
+          "zh": "网络提示不再乱报警",
+          "pt": "O aviso de conexão para de dar alarme falso",
+          "pt-pt": "O aviso de ligação deixa de dar alarme falso",
+          "pl": "Alert połączenia przestaje siać panikę"
+        },
+        "body": {
+          "en": "The little network warning now shows up only when you're really offline for a few seconds — no more blink at startup while everything's actually fine.",
+          "fr": "Le petit avertissement réseau n'apparaît plus que si tu es vraiment hors ligne quelques secondes — fini le clignotement au démarrage alors que tout va bien.",
+          "de": "Der kleine Netzwerkhinweis erscheint jetzt nur noch, wenn du wirklich ein paar Sekunden offline bist — kein Blinken mehr beim Start, obwohl alles läuft.",
+          "es": "El pequeño aviso de red ahora aparece solo cuando estás realmente sin conexión unos segundos — se acabó el parpadeo al arrancar cuando todo va bien.",
+          "it": "Il piccolo avviso di rete ora compare solo se sei davvero offline per qualche secondo — niente più lampeggio all'avvio quando va tutto bene.",
+          "zh": "网络小提示现在只有在你真的掉线几秒时才出现——启动时一切正常却闪一下的情况没有了。",
+          "pt": "O pequeno aviso de rede agora aparece só quando você fica mesmo offline por alguns segundos — sem mais piscada na inicialização quando está tudo bem.",
+          "pt-pt": "O pequeno aviso de rede agora só aparece quando ficas mesmo offline uns segundos — sem mais piscar no arranque quando está tudo bem.",
+          "pl": "Mały alert sieci pojawia się teraz tylko, gdy naprawdę jesteś offline przez kilka sekund — koniec z mruganiem przy starcie, gdy wszystko gra."
+        }
+      }
+    ]
   }
 }

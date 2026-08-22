@@ -876,6 +876,7 @@
   "scaleHealthOnline": "{{n}}/{{total}} bilancia/e online",
   "scaleHealthOffline": "{{n}} bilancia/e — tutte offline",
   "scaleHealthStandby": "{{n}} bilance in standby",
+  "scaleHealthRow": "Bilancia #{{n}}",
   "scaleHealthNone": "TigerScale non connessa",
   "scaleStatusOnline": "online",
   "scaleStatusOffline": "offline",

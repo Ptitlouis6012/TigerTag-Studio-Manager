@@ -147,52 +147,69 @@ function closeScalesPanel() {
  *   • scale-standby  → none active but ≥1 in standby     (blue)
  *   • scale-offline  → paired but all offline            (red)
  */
+// Battery badge HTML for one scale's glyph (iOS-style mini battery), or "" when
+// no cell is fitted / no reading. "XX%" while discharging, "XX" + bolt charging.
+function _scaleHealthBattHtml(s) {
+  if (scaleBatteryPresent(s) === false) return "";
+  const p = scaleBatteryPercent(s);
+  if (typeof p !== "number" || !isFinite(p)) return "";
+  const charging = scaleIsCharging(s) === true;
+  const bst = charging ? "charging" : (p < 20 ? "low" : "neutral");
+  const pct = Math.max(0, Math.min(100, p));
+  return `<span class="scale-health-batt is-${bst}">`
+    + `<span class="shb-fill" style="width:${pct}%"></span>`
+    + `<span class="shb-txt">${p}${charging ? "" : "%"}</span>`
+    + (charging ? `<span class="shb-bolt"></span>` : "")
+    + `</span>`;
+}
+
+let _scaleHealthSig = "";
+
 export function renderScaleHealth() {
-  const { $, state, t } = _ctx;
+  const { $, state, t, esc } = _ctx;
   const el = $("scaleHealth");
   if (!el) return;
-  const total   = state.scales.length;
-  const states  = state.scales.map(scaleConnState);
-  const active  = states.filter(x => x === "active").length;
-  const standby = states.filter(x => x === "standby").length;
-  const online  = active + standby;   // connected = active OR standby
-  el.classList.remove("scale-none", "scale-connected");   // legacy classes retired
-  el.classList.toggle("scale-active",  active > 0);
-  el.classList.toggle("scale-standby", active === 0 && standby > 0);
-  el.classList.toggle("scale-offline", total > 0 && online === 0);
-  if (total === 0)        el.dataset.tooltip = t("scaleHealthNone")    || "No scale connected";
-  else if (online === 0)  el.dataset.tooltip = t("scaleHealthOffline", { n: total }) || `${total} scale(s) — all offline`;
-  else if (active === 0)  el.dataset.tooltip = t("scaleHealthStandby", { n: standby }) || `${standby} scale(s) in standby`;
-  else                    el.dataset.tooltip = t("scaleHealthOnline",  { n: online, total }) || `${online}/${total} scale(s) online`;
+  const scales = state.scales;
+  const total  = scales.length;
 
-  // Battery badge overlaid on the bottom-left of the scale glyph. Shows the
-  // charge % of the online scale that has a fitted cell; with several, the
-  // LOWEST (the one you'd act on first). Colour = charging (green) / low <20 %
-  // (red) / neutral. Hidden when no online scale reports a battery.
-  let batt = null;
-  for (const s of state.scales) {
-    if (scaleConnState(s) === "offline") continue;
-    if (scaleBatteryPresent(s) === false) continue;
-    const p = scaleBatteryPercent(s);
-    if (typeof p !== "number" || !isFinite(p)) continue;
-    if (!batt || p < batt.pct) batt = { pct: p, charging: scaleIsCharging(s) === true };
+  // Signature — rebuild only when something visible changes, so the ping
+  // animation isn't restarted on every 10 s tick / snapshot.
+  const sig = total === 0 ? "none" : scales.map(s =>
+    scaleConnState(s) + "/" + (scaleBatteryPresent(s) === false ? "x" : scaleBatteryPercent(s))
+      + (scaleIsCharging(s) === true ? "c" : "")).join("|");
+  if (sig === _scaleHealthSig) return;
+  _scaleHealthSig = sig;
+
+  el.removeAttribute("data-tooltip");   // replaced by the rich hover popover
+
+  if (total === 0) {
+    el.innerHTML =
+      `<span class="scale-glyphs"><span class="scale-glyph"><span class="scale-health-icon"></span></span></span>`
+      + `<div class="scale-health-pop"><div class="shp-row shp-row--empty">${esc(t("scaleHealthNone") || "No scale connected")}</div></div>`;
+    return;
   }
-  let bel = el.querySelector(".scale-health-batt");
-  if (batt) {
-    if (!bel) { bel = document.createElement("span"); el.appendChild(bel); }
-    // iOS-style: battery outline + proportional fill + value inside. Reads
-    // "XX%" while discharging, "XX" + a bolt while charging. iOS colours:
-    // charging → green, low <20 % → red, otherwise neutral.
-    const bst = batt.charging ? "charging" : (batt.pct < 20 ? "low" : "neutral");
-    const pct = Math.max(0, Math.min(100, batt.pct));
-    bel.className = `scale-health-batt is-${bst}`;
-    bel.innerHTML = `<span class="shb-fill" style="width:${pct}%"></span>`
-      + `<span class="shb-txt">${batt.pct}${batt.charging ? "" : "%"}</span>`
-      + (batt.charging ? `<span class="shb-bolt"></span>` : "");
-    bel.style.display = "";
-  } else if (bel) {
-    bel.style.display = "none";
+
+  // Up to 2 glyphs (1 scale → 1, 2+ → 2, capped), each coloured by its own state.
+  const glyphN = Math.min(total, 2);
+  let glyphs = "";
+  for (let i = 0; i < glyphN; i++) {
+    const cs = scaleConnState(scales[i]);
+    glyphs += `<span class="scale-glyph scale-${cs}">`
+      + `<span class="scale-health-icon"></span>`
+      + (cs === "active" ? `<span class="scale-live" aria-hidden="true"></span>` : "")
+      + _scaleHealthBattHtml(scales[i])
+      + `</span>`;
   }
+
+  // Popover — one row per scale (all of them): coloured status dot + "Scale #N".
+  const rows = scales.map((s, i) => {
+    const cs = scaleConnState(s);
+    return `<div class="shp-row"><span class="shp-dot shp-dot--${cs}"></span>`
+      + `<span class="shp-name">${esc(t("scaleHealthRow", { n: i + 1 }) || `Scale #${i + 1}`)}</span>`
+      + `<span class="shp-status">${esc(_scalePillLabel(cs))}</span></div>`;
+  }).join("");
+
+  el.innerHTML = `<span class="scale-glyphs">${glyphs}</span><div class="scale-health-pop">${rows}</div>`;
 }
 
 // ── Panel render ───────────────────────────────────────────────────────────

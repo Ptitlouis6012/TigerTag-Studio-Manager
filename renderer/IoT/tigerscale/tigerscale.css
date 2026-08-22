@@ -8,51 +8,65 @@
  * sheets so these rules inherit all CSS custom properties.
  */
 
-/* ── Scale health icon (header, right of the TigerPod glyph)
-      • default         : muted grey — no scale paired
-      • .scale-active   : green glow + ping (≥1 scale active, screen on)
-      • .scale-standby  : blue (none active, ≥1 in standby / screen off)
-      • .scale-offline  : red (paired but all offline) */
-.scale-health { cursor: pointer; position: relative; }  /* anchor for .scale-live + the battery badge */
+/* ── Scale health (header, right of the TigerPod glyph) — ONE glyph per scale,
+      capped at 2 (1 scale → 1, 2+ → 2). Each glyph is coloured by ITS scale:
+      green active · blue standby · red offline · muted grey when none paired.
+      A hover popover lists every scale with a matching status dot. */
+.scale-health { cursor: pointer; position: relative; }   /* anchor for the popover */
+.scale-glyphs { display: inline-flex; align-items: center; gap: 2px; }
+.scale-glyph  { position: relative; display: inline-flex; align-items: center; }  /* anchor for its ping + battery */
 .scale-health-icon {
   display: inline-block;
   height: 44px; aspect-ratio: 1 / 1;
   background-color: var(--neutral);
   -webkit-mask-image: url('../../../assets/svg/icons/icon_tigerscale_3d.svg');
-  /* The glyph is scaled inside an unchanged 44px box instead of filling it.
-     icon_tigerscale_3d.svg is a tight trace — its ink fills 100% of the viewBox
-     — while its header neighbours carry margin inside theirs (TigerPod ~75%
-     tall, TD1S ~47%). Sharing a 44px box therefore drew this one much bigger
-     than the other two; 34px of ink matches TigerPod's 33px, and keeping the
-     box at 44 leaves the header row's spacing and alignment untouched. */
+  /* 34px of ink in a 44px box — matches the TigerPod neighbour (~33px) without
+     changing the header row's spacing. */
   -webkit-mask-size: auto 34px; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
   opacity: .38; transition: opacity .3s, background-color .3s, filter .3s;
 }
-.scale-health.scale-active .scale-health-icon {
+.scale-glyph.scale-active .scale-health-icon {
   background-color: var(--success); opacity: 1;
   filter: drop-shadow(0 0 5px var(--success));
 }
-.scale-health.scale-standby .scale-health-icon {
+.scale-glyph.scale-standby .scale-health-icon {
   background-color: var(--info); opacity: 1;
   filter: drop-shadow(0 0 5px var(--info));
 }
-.scale-health.scale-offline .scale-health-icon {
+.scale-glyph.scale-offline .scale-health-icon {
   background-color: var(--danger); opacity: 1;
 }
-/* Live "ready / active" indicator — a small green dot with an expanding ping
-   ring, shown only while a scale is online (mirrors the header TigerPod dot). */
+/* Live ping — rendered only inside an active glyph (JS adds it only then). */
 .scale-live {
   position: absolute; top: 2px; right: 0;
   width: 9px; height: 9px; border-radius: 50%;
-  background: var(--success); display: none; pointer-events: none;
+  background: var(--success); pointer-events: none;
   box-shadow: 0 0 0 2px var(--surface);
 }
-.scale-health.scale-active .scale-live { display: block; }
 .scale-live::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
   background: var(--success); opacity: 0;
+  animation: scale-live-ping 1.4s ease-out infinite;
 }
-.scale-health.scale-active .scale-live::before { animation: scale-live-ping 1.4s ease-out infinite; }
+
+/* Hover popover — one row per scale: coloured status dot + "Scale #N" + status. */
+.scale-health-pop {
+  position: absolute; top: calc(100% + 7px); right: 0; left: auto;
+  transform: translateY(-4px);
+  background: var(--dark-surface); border: 1px solid var(--dark-border); border-radius: 7px;
+  padding: 5px 10px; display: flex; flex-direction: column; gap: 5px;
+  opacity: 0; pointer-events: none; transition: opacity .15s, transform .15s;
+  box-shadow: 0 4px 12px rgba(0,0,0,.3); z-index: 60;
+}
+.scale-health:hover .scale-health-pop { opacity: 1; transform: translateY(0); }
+.shp-row { display: flex; align-items: center; gap: 7px; white-space: nowrap; font-size: 11px; font-weight: 600; color: var(--on-dark); }
+.shp-row--empty { color: var(--on-dark); opacity: .7; }
+.shp-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; background: var(--neutral); }
+.shp-dot--active  { background: var(--success); }
+.shp-dot--standby { background: var(--info); }
+.shp-dot--offline { background: var(--danger); }
+.shp-name   { flex: 1; }
+.shp-status { opacity: .65; text-transform: lowercase; }
 
 /* Battery over the bottom-left of the scale glyph — styled like an iOS phone
    battery: dark body (as on a status bar), coloured outline + nub, a proportional
@@ -60,7 +74,7 @@
    discharging, "XX" + a bolt while charging. iOS colours: charging green / low
    <20 % red / neutral grey. currentColor carries the state colour. */
 .scale-health-batt {
-  position: absolute; left: -4px; bottom: -1px;
+  position: absolute; left: -2px; bottom: -1px;
   display: inline-flex; align-items: center; justify-content: center; gap: 1px;
   min-width: 19px; height: 13px; padding: 0 2px; box-sizing: border-box;
   border: 1.2px solid currentColor; border-radius: 3px;

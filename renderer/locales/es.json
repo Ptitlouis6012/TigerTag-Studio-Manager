@@ -876,6 +876,7 @@
   "scaleHealthOnline": "{{n}}/{{total}} báscula(s) en línea",
   "scaleHealthOffline": "{{n}} báscula(s) — todas fuera de línea",
   "scaleHealthStandby": "{{n}} báscula(s) en espera",
+  "scaleHealthRow": "Báscula n.º{{n}}",
   "scaleHealthNone": "TigerScale no conectada",
   "scaleStatusOnline": "en línea",
   "scaleStatusOffline": "desconectada",

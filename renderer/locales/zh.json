@@ -876,6 +876,7 @@
   "scaleHealthOnline": "{{n}}/{{total}} 个秤在线",
   "scaleHealthOffline": "{{n}} 个秤 — 全部离线",
   "scaleHealthStandby": "{{n}} 台设备待机中",
+  "scaleHealthRow": "秤 #{{n}}",
   "scaleHealthNone": "TigerScale 未连接",
   "scaleStatusOnline": "在线",
   "scaleStatusOffline": "离线",

@@ -1726,17 +1726,39 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     };
   }
 
-  /* ── health (driven by Firestore metadata) ── */
+  /* ── health (driven by Firestore metadata) — the backend cloud icon is
+       HIDDEN while all is well and only appears after 3 s of CONTINUOUS
+       disconnection (offline / serving from cache). The 3 s grace suppresses
+       the flash at startup while the cloud is still connecting; a real outage
+       (> 3 s) still shows. A healthy backend shows nothing. ── */
+  let _healthOfflineTimer = null;
+  function _clearHealthOfflineTimer() { if (_healthOfflineTimer) { clearTimeout(_healthOfflineTimer); _healthOfflineTimer = null; } }
   function setHealthLive(ms)  {
-    $("health").classList.add("ok"); $("health").classList.remove("bad");
-    $("health").dataset.tooltip = ms != null ? `${t("backendOk")} — ${ms} ms` : t("backendOk");
+    _clearHealthOfflineTimer();
+    const el = $("health"); if (!el) return;
+    el.classList.add("hidden"); el.classList.remove("bad", "ok");     // all good → hidden
+    el.dataset.tooltip = ms != null ? `${t("backendOk")} — ${ms} ms` : t("backendOk");
   }
-  function setHealthOffline() { $("health").classList.remove("ok"); $("health").classList.add("bad");    $("health").dataset.tooltip = t("backendOffline"); }
-  function setHealthIdle()    { $("health").classList.remove("ok","bad");                                $("health").dataset.tooltip = t("backendIdle"); }
+  function setHealthOffline() {
+    const el = $("health"); if (!el) return;
+    el.dataset.tooltip = t("backendOffline");
+    if (el.classList.contains("bad") || _healthOfflineTimer) return;  // already shown or pending
+    _healthOfflineTimer = setTimeout(() => {
+      _healthOfflineTimer = null;
+      const e = $("health"); if (!e) return;
+      e.classList.remove("hidden", "ok"); e.classList.add("bad");     // outage persisted 3 s → show
+    }, 3000);
+  }
+  function setHealthIdle()    {
+    _clearHealthOfflineTimer();
+    const el = $("health"); if (!el) return;
+    el.classList.add("hidden"); el.classList.remove("bad", "ok");
+    el.dataset.tooltip = t("backendIdle");
+  }
 
   // Lazy ping: only fires when user hovers the cloud icon
   let _pingInFlight = false;
-  $("health").addEventListener("mouseenter", async () => {
+  $("health")?.addEventListener("mouseenter", async () => {
     if (_pingInFlight) return;
     _pingInFlight = true;
     try {
@@ -1744,7 +1766,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const r  = await fetch(`${API_BASE}/healthz/`);
       const ms = Math.round(performance.now() - t0);
       if (r.ok) setHealthLive(ms);
-      else { $("health").classList.add("bad"); $("health").classList.remove("ok"); $("health").dataset.tooltip = `${t("backendErr", {n: r.status})} — ${ms} ms`; }
+      else { const el = $("health"); if (el) { el.classList.remove("hidden", "ok"); el.classList.add("bad"); el.dataset.tooltip = `${t("backendErr", {n: r.status})} — ${ms} ms`; } }
     } catch {
       setHealthOffline();
     } finally {
@@ -16698,6 +16720,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   /* ── TigerPOD discovery modal ── */
   const TIGERPOD_MAKERWORLD_URL = "https://makerworld.com/fr/models/1289152-tigertag-io-open-spool-pod-for-rfid-filament";
+  const TIGERPOD_MINI_MAKERWORLD_URL = "https://makerworld.com/fr/models/3190348-tigerpod-mini-for-openspool-tigertag-rfid-filament";
 
   function openTigerPodModal() {
     $("tigerPodModalOverlay").classList.add("open");
@@ -18278,6 +18301,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("tigerPodClose").addEventListener("click", closeTigerPodModal);
   $("tigerPodModalOverlay").addEventListener("click", e => { if (e.target === $("tigerPodModalOverlay")) closeTigerPodModal(); });
   $("tigerPodMakerWorldBtn").addEventListener("click", () => window.electronAPI?.openExternal(TIGERPOD_MAKERWORLD_URL));
+  $("tigerPodMakerWorldMiniBtn")?.addEventListener("click", () => window.electronAPI?.openExternal(TIGERPOD_MINI_MAKERWORLD_URL));
 
   // Cloud → chip encode modal events (wired once)
   $("cemClose")?.addEventListener("click", closeEncodeModal);
