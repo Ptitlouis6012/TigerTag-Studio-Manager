@@ -40,6 +40,20 @@ users/
     studioTimezone  string    — IANA timezone (e.g. "Europe/Paris"), from Intl.DateTimeFormat
     studioLastSeen  timestamp — server timestamp of last login (deployment targeting / churn)
 
+    ── Studio's OWN settings ─────────────────────────────────────────────────
+    They live here, on the user doc, and NOT in `prefs/app`: that document is the
+    CROSS-APP one, shared with the mobile app, which has none of these screens.
+    They also ride along with the `users/{uid}` read the app already does at boot
+    instead of costing a second fetch. Each is cached in localStorage as well, so
+    a cold start with no network paints the right thing immediately.
+    studioTheme            string  — "light" | "dark"
+    studioRackDepthOffset  map     — { zy, zx } in px: how far apart Storage draws the rows BEHIND
+                                     (zy 12-52 vertical, zx -30..30 sideways, negative leans left).
+                                     Follows the account, since it describes how you want to READ
+                                     your racks, not the screen you happen to be on.
+    vatCountry             string? — ISO country code, drives the VAT rate + currency
+    priceInputMode         string  — "HT" | "TTC": how the user types prices (the stored value stays HT)
+
     telemetry/
       studio/                 — Studio Manager metrics. The field set MUST match the
                               telemetry `hasOnly()` whitelist in firestore.rules

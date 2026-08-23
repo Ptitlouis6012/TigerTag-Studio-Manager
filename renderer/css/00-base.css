@@ -31,6 +31,13 @@
         theme like everything else rather than staying black in a light UI. */
 
   :root {
+    /* Space between the filter rows and whatever view is showing. Each view
+       container used to declare its own, with a comment pointing at another one
+       to justify the number — six copies chasing each other, and two of them
+       (Storage and Printers) had already drifted to 4 px, so the same screen
+       breathed differently depending on the view you were in. */
+    --view-gap: 8px;
+
     /* ── 1. Surfaces — an elevation ladder, lowest first ── */
     --bg: #f6f7fb;              /* the page itself */
     --surface: #ffffff;         /* cards, panels, rows */
@@ -146,6 +153,12 @@
     /* ── Geometry + type (theme-independent) ── */
     --radius: 14px;
     --radius-sm: 10px;
+    /* Layout grid — only ever drawn while arranging the storage plan. Minor
+       lines mark the snap step, major ones every fifth so distances stay
+       readable instead of turning into graph paper. */
+    --grid-line:  rgba(58,78,140,.14);
+    --grid-major: rgba(58,78,140,.30);
+
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
 
@@ -156,6 +169,10 @@
      document sitting inside a dark frame. */
   :root[data-theme="dark"] {
     --sidebar-bg: linear-gradient(175deg, #0f1117 0%, #18101f 100%);
+
+    /* On a dark ground the grid has to be lighter than the surface, not darker. */
+    --grid-line:  rgba(255,255,255,.075);
+    --grid-major: rgba(255,255,255,.16);
 
     --bg: #0f1117;
     --surface: #171a22;

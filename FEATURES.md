@@ -1,12 +1,17 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.20.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.21.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
 ## Inventory & spools
 
 - Real-time Firestore sync of the inventory — table view + grid view, column sort, full-text search (v1.0+).
+- **Colour range filter** — a rainbow bar plus a white-to-black bar for neutrals, with a draggable window that dims what falls outside it. Shared by Inventory, Favorites, the order list, Search and Storage, and it keeps its selection across views (v2.21.0).
+- Type-to-filter inside the Brand / Material / Aspect / Type / Tag dropdowns, matching anywhere in the name and ignoring case and accents (v2.21.0).
+- One add button, inside the search field, dispatching by view — material sources, printer brands or a new rack (v2.21.0).
+- One reset that clears the search, every filter and the colour window at once (v2.21.0).
+- A chime when a new spool joins the inventory, however it arrived (v2.21.0).
 - Spool detail side panel — color block, print parameters, weight slider with debounced auto-save, container, links, raw JSON view (v1.0+).
   - **Balance** weight-input mode for kitchen-scale users (type gross weight, container subtracted automatically) (v1.8.17).
   - Editable free-text spool note (28-byte UTF-8 cap with a usage bar) (v1.8.3).
@@ -154,14 +159,16 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - Optional rack subtitle — a second descriptive line under the rack name (v2.12.0).
 - Rack grid reads top-down: A1 is the top-left slot and new levels append at the bottom (v2.12.0).
 - Drag-and-drop between slots, slots ↔ unranked panel, rack-head reordering (v1.4+; "make room" slide animation everywhere v2.7.0).
-- Skyline-packing masonry layout, responsive to window resize (v1.4.3).
+- Skyline-packing masonry layout, responsive to window resize (v1.4.3); superseded by a hand-arranged **storage plan** where each rack keeps the position and stacking layer you gave it, with edge magnetism, snap guides and overlap allowed but outlined — packing now only runs on "Tidy up" (v2.21.0).
+- **Rack depth** — up to three rows of spools one behind the other, drawn in perspective, with an account-wide setting for how far apart the rows are spaced (v2.21.0).
 - Slot locking (right-click) with distinct empty-slot vs filled-slot states, and Auto-fill / Auto-store / Auto-unstorage automation (merged into one "Auto-organize" toggle, per-account and cross-device, v1.10.21).
 - Rich hover tooltip on filled slots — colour swatch, weight bar, brand, coordinates, and (when available) the material's product photo (v1.4.3; product photo v1.8.10).
 - "Spools not stored" permanent shelf panel — always-visible drop target, contextual "+ Add Rack" CTA when capacity is short (v1.4.8; permanent-shelf redesign v1.10.20; contextual CTA v1.8.11).
 - Drop-to-void unassign with a cascade-out animation (v1.4.8).
 - Press-and-hold (1.2 s) confirmation for destructive rack operations (Clear all / Delete), which also respect locked slots (v1.4.3; lock protection v1.8.6).
 - Two rack view modes — colour-fill (with remaining-weight bar) or a picture gallery of material illustrations (v1.10.31); public friend inventories land directly in picture-mode gallery (v1.10.31).
-- Snap/drop sound effects when placing or removing a spool (v1.10.31).
+- Snap/drop sound effects when placing or removing a spool (v1.10.31); a tick and a thunk when a rack is picked up and set down on the plan (v2.21.0).
+- "Spools not stored" lists the most recently added spool first (v2.21.0).
 
 ## 3D printer integration
 

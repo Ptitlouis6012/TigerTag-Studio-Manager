@@ -4,7 +4,8 @@
      ═══════════════════════════════════════════════════════════════════ */
   .inv-rack-view {
     display: flex; flex-direction: column; gap: 14px;
-    padding: 4px 0;
+    padding: 0 0 4px;
+    margin-top: var(--view-gap);
     /* Take remaining height inside #card-inv (overflow:hidden flex:column). The
        view itself does NOT scroll — the header stays put, the racks area scrolls
        on its own, and the docked panel stays full-height beside it. */
@@ -72,27 +73,7 @@
   /* Legacy meta line — kept for any other callers, but rack head no longer uses it */
   .rp-rack-meta { font-size: 11px; color: var(--muted); }
   .rp-rack-actions { display: flex; gap: 4px; flex-shrink: 0; position: relative; }
-  /* Drag handle on the rack head — left of the name. Subtle by default,
-     amber on hover to invite the user to grab. */
-  .rp-rack-grip {
-    flex-shrink: 0;
-    cursor: grab;
-    color: var(--muted);
-    font-size: 14px;
-    line-height: 1;
-    padding: 0 6px;
-    user-select: none;
-    letter-spacing: -2px;
-    transition: color .15s, background .15s;
-    border-radius: 6px;
-  }
-  .rp-rack-grip:hover { color: var(--primary); background: var(--primary-soft); }
-  .rp-rack-grip:active { cursor: grabbing; }
   .rp-rack { position: relative; }
-  /* Drag-to-reorder ("make room") — dragged rack hidden, others slide (2D translate).
-     Slide transition set inline in JS. */
-  .rp-rack--dragging { opacity: 0; }
-  .mr-reordering .rp-rack { will-change: transform; }
 
   /* "+ Rack" tile shown after the existing rack cards. Sits in the same flex
      row, hugs its content width, dashed border to look like a placeholder. */
@@ -654,6 +635,472 @@
      tracks too (like the unranked side cards) for a roomy, gallery-like grid. */
   .rp-slotview-photo .rp-slot { aspect-ratio: 1 / 1; }
   .rp-slotview-photo .rp-row-slots { grid-template-columns: repeat(var(--slots, 8), 64px); gap: 6px; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     Shelf depth — several spools one behind the other
+     ═══════════════════════════════════════════════════════════════════
+     A deep shelf draws the SAME grid once per depth, each one pushed up and
+     sideways so the row behind stays readable. Depth 0 is the front row: the
+     one you can reach, so it is on top and it is the one that carries the
+     weight bar.
+
+     The two offsets are a USER SETTING (`tigertag.rack.depthOffset`, written
+     onto #invRackView by the renderer), because how much of the row behind you
+     want to see is a matter of taste — and of how tall your racks may get.
+     `--rk-zscale` exists because picture view draws 64 px tiles against the
+     colour view's 32 px ones: an offset that reveals two thirds of a spool in
+     one mode would reveal a third in the other. Scaling by the tile size keeps
+     ONE setting honest in both. */
+  #invRackView { --rk-zy: 34px; --rk-zx: 14px; --rk-zscale: 1; }
+  /* `rp-slotview-photo` lands on #invRackView ITSELF, so a bare class selector
+     loses to the id rule above and the scale silently stayed at 1 — which left
+     the back rows only a ~20 px sliver of the 64 px picture tiles, too small to
+     see or to drop onto. The compound selector is what makes it win. */
+  #invRackView.rp-slotview-photo, #invRackView .rp-slotview-photo { --rk-zscale: 2; }
+
+  /* Resolved on the rack, not on `.rp-persp`: the row needs the same numbers to
+     reserve its top padding, and a custom property only travels DOWN the tree —
+     defining them on the plane holder left `.rp-row` reading the raw fallback
+     and ignoring the picture-view scale entirely. */
+  .rp-rack--deep {
+    --zy: calc(var(--rk-zy, 34px) * var(--rk-zscale, 1));
+    --zx: calc(var(--rk-zx, 14px) * var(--rk-zscale, 1));
+    /* The overhang is reserved on whichever side the planes lean towards — the
+       horizontal offset is signed, so it can be either one. Without this the
+       back rows spill outside the rack card and the masonry packs them wrong. */
+    --zres-r: calc((var(--depth, 1) - 1) * max(0px, var(--zx)));
+    --zres-l: calc((var(--depth, 1) - 1) * max(0px, calc(-1 * var(--zx))));
+  }
+  .rp-persp {
+    position: relative;
+    flex: 1;
+    /* Each shelf keeps its planes to itself: without this, the front row of the
+       shelf above (z-index 3) paints over the back row of the shelf below. */
+    isolation: isolate;
+    padding-left: var(--zres-l);
+    padding-right: var(--zres-r);
+  }
+  .rp-persp .rp-plane {
+    position: absolute; top: 0; left: var(--zres-l);
+    transform-origin: left bottom;
+  }
+  /* Front row: in flow, so it is what gives the holder its size. */
+  .rp-persp .rp-plane[data-depth="0"] { position: relative; left: 0; z-index: 3; }
+  /* Offset only — NEVER scaled and never faded. A slot is a slot: it holds the
+     same spool whatever row it sits in, so it is drawn at the same size and the
+     same opacity as the front row. Shrinking the back rows made them read as
+     lesser, half-real slots, and made them smaller targets for no reason. */
+  .rp-persp .rp-plane[data-depth="1"] {
+    transform: translate(var(--zx), calc(-1 * var(--zy)));
+    z-index: 2;
+  }
+  .rp-persp .rp-plane[data-depth="2"] {
+    transform: translate(calc(var(--zx) * 2), calc(-2 * var(--zy)));
+    z-index: 1;
+  }
+  .rp-persp .rp-plane { opacity: 1; }
+  /* Leaning left: shrink towards the right edge instead, or the planes drift. */
+  #invRackView.rk-zx-neg .rp-persp .rp-plane { transform-origin: right bottom; }
+  /* Cast shadow so a row reads as standing in FRONT of the one behind it. Only
+     a drop shadow — the inset white ring the base slot uses lightened the tile
+     and made a back row look washed out, as if it were see-through. */
+  .rp-persp .rp-plane[data-depth="0"] .rp-slot--filled,
+  .rp-persp .rp-plane[data-depth="1"] .rp-slot--filled,
+  .rp-persp .rp-plane[data-depth="2"] .rp-slot--filled {
+    box-shadow: -3px 4px 9px rgba(0,0,0,.28);
+  }
+  /* The colour tile of a back row covers its slot completely: no wash of the
+     slot's own background shows through, so the filament colour reads true. */
+  .rp-persp .rp-plane:not([data-depth="0"]) .rp-slot--filled { background: var(--surface); }
+  .rp-persp .rp-plane:not([data-depth="0"]) .rp-fill--full { top: 0; bottom: 0; height: 100%; }
+  /* A free spot on a back row is drawn exactly like one on the front row: a
+     shelf position reads the same wherever it sits in the depth — only the
+     offset says how far back it is. It is a drop target like any other. */
+  /* The column-number line is a `.rp-row` too, but it has no back rows to make
+     room for — giving it the depth padding added a band of empty space under the
+     rack name that grew with every extra row of depth. Shelves only. */
+  .rp-rack--deep .rp-row:not(.rp-row--header) {
+    align-items: flex-end;
+    /* Exactly the offset the back rows need, not a pixel more: the top-most slot
+       then starts at the same height whatever the depth, instead of sinking a
+       little further under the rack name with every row added. */
+    padding-top: calc((var(--depth, 1) - 1) * var(--zy));
+  }
+  /* The search / colour highlight has to beat the plane shadows above. */
+  .rp-persp .rp-plane .rp-slot--filled.rp-slot--match {
+    box-shadow: 0 0 0 2px var(--primary), 0 4px 14px rgba(0,0,0,.45);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     The plan — racks placed by hand
+     ═══════════════════════════════════════════════════════════════════ */
+  .rv-plan-btn, .rv-plan-auto {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 10px; flex-shrink: 0; align-self: center;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 9px; font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  }
+  .rv-plan-btn:hover, .rv-plan-auto:hover { background: var(--surface-hover); color: var(--text); }
+  .rv-plan-btn.on { background: var(--primary); border-color: var(--primary); color: var(--on-accent); }
+  .rv-plan-btn .icon { background: currentColor; }
+
+  /* The grid only exists while editing: the rest of the time it is chrome that
+     says nothing. Minor lines are the 24 px snap step, major ones every fifth,
+     so distances stay readable instead of turning into graph paper. It sits on
+     the scrolling content, not the frame, or it would slide out of step with
+     the racks the moment you scroll. */
+  /* The header is the handle when not arranging — grabbing anywhere else would
+     fight the spools, which are the point of the card. */
+  #invRackView:not(.is-read-only) .rp-rack-head { cursor: grab; }
+  #invRackView .rp-rack.is-plan-dragging .rp-rack-head { cursor: grabbing; }
+
+  /* The grid is painted on the SCROLL AREA, not on the column inside it.
+
+     The column is the element that gets scaled, and its own box is measured in
+     already-scaled units — so a background on it came out at the zoom squared
+     and covered a fraction of the board. On the scroller the grid is drawn once,
+     at true screen size, and `background-attachment: local` makes it travel with
+     the content so it stays lined up with the racks while panning.
+
+     `--plan-z` carries the zoom so the mesh keeps matching the 24 px snap step
+     at any scale. */
+  #invRackView.is-plan-edit .rp-racks-scroll,
+  #invRackView.is-plan-moving .rp-racks-scroll {
+    background-attachment: local;
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1));
+  }
+  /* Zoomed well out the 24 px mesh would be a few pixels wide — graph paper, not
+     a guide. Only the major lines survive down there. */
+  #invRackView.is-plan-coarse.is-plan-edit .rp-racks-scroll,
+  #invRackView.is-plan-coarse.is-plan-moving .rp-racks-scroll {
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1));
+  }
+  #invRackView.is-plan-edit .rp-rack {
+    cursor: grab;
+    outline: 2px solid transparent; outline-offset: 3px;
+    transition: outline-color .15s, box-shadow .15s;
+  }
+  #invRackView.is-plan-edit .rp-rack:hover { outline-color: var(--border-strong); }
+  #invRackView.is-plan-edit .rp-rack.is-plan-selected { outline-color: var(--primary); }
+  /* The lift is set inline by the drag handler — the layout writes an inline
+     z-index on every card, and no stylesheet rule can outrank that. */
+  #invRackView .rp-rack.is-plan-dragging {
+    cursor: grabbing; box-shadow: 0 20px 44px rgba(0,0,0,.32);
+  }
+  /* Nothing is ever refused and nothing else moves, so a card in motion is never
+     an error state — it just glides. */
+  /* Only the highlight animates. Position is never animated: nothing moves a
+     rack but the user's own hand, so an animated left/top can only ever be a
+     re-layout being drawn — which is exactly what made the plan flash through a
+     wrong arrangement on every notch of the wheel. */
+  #invRackView.is-plan-edit .rp-rack { transition: outline-color .15s, box-shadow .15s; }
+  #invRackView .rp-rack.is-plan-dragging { transition: none; }
+  /* While arranging the furniture, the contents are not the subject: swallowing
+     the pointer stops a drag from grabbing a spool instead of the rack. */
+  #invRackView.is-plan-edit .rp-grid,
+  #invRackView.is-plan-edit .rp-rack-head { pointer-events: none; }
+
+  /* Height is declared on the wrapper, not left to whatever is inside it: the
+     control has to line up with the buttons either side of it, and a child that
+     inherits an unexpected size from a global rule must not be able to push it
+     out of line. */
+  .rv-plan-zoom {
+    display: inline-flex; align-items: center; gap: 2px; align-self: center; flex-shrink: 0;
+    height: 32px; padding: 0 3px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 9px;
+  }
+  .rv-plan-zoom button {
+    width: 24px; height: 24px; border: 0; border-radius: 6px; cursor: pointer;
+    background: transparent; color: var(--muted); font-family: inherit; font-size: 15px; line-height: 1;
+  }
+  .rv-plan-zoom button:hover { background: var(--surface-hover); color: var(--text); }
+  /* Doubled class on purpose: the global `input[type="number"]` rule in
+     60-modals.css is (0,1,1) — the same weight as a two-class selector — so a
+     plain `.rv-plan-zoom .val` only tied with it and lost on load order, which
+     handed this field a 40 px height and a full border. See the CSS note in
+     CLAUDE.md; the underlying fix is to make those global rules weightless. */
+  .rv-plan-zoom .val.val {
+    /* `height` is the property that bit us: the rule below overrode the width,
+       the background, the border and the padding, but said nothing about the
+       height — so the global `input[type="number"] { height: 40px }` still
+       applied and stretched the whole control past its neighbours. A rule that
+       reclaims an element from a global one has to name EVERY property that
+       global sets, not just the ones that look wrong. */
+    height: 24px; line-height: 24px;
+    width: 34px; text-align: right; padding: 0; margin: 0;
+    background: transparent; border: 0; outline: none;
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--text);
+    -moz-appearance: textfield;
+  }
+  /* The native spinners duplicate the − / + already sitting either side. */
+  .rv-plan-zoom .val.val::-webkit-outer-spin-button,
+  .rv-plan-zoom .val.val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .rv-plan-zoom .val.val:focus { color: var(--primary); box-shadow: none; border: 0; }
+  .rv-plan-zoom .pct { font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--muted); padding-right: 4px; }
+
+  /* Alignment guides — the thin line that says WHY the rack just clicked into
+     place. They live for the length of the drag and explain the magnet; without
+     them a rack that snaps looks like a rack that jumped. */
+  .rp-plan-guides { position: absolute; inset: 0; pointer-events: none; z-index: 1001; }
+  /* The footprint a resize is heading for. Above the card on purpose: a SHRINK
+     draws it inside the rack's current box, and behind it there would be nothing
+     to see. Fill kept faint so the slots stay readable through it. */
+  .rp-plan-ghost {
+    position: absolute; z-index: 1002; pointer-events: none;
+    border: 2px dashed var(--primary); border-radius: 12px;
+    background: color-mix(in srgb, var(--primary) 7%, transparent);
+  }
+  .rp-plan-guide { position: absolute; display: block; background: var(--primary); }
+  .rp-plan-guide--v { top: 0; bottom: 0; width: 1px; margin-left: -0.5px; }
+  .rp-plan-guide--h { left: 0; right: 0; height: 1px; margin-top: -0.5px; }
+
+  /* Racks may overlap — it is the user's plan and nothing is going to shove
+     anything aside — but it is never silent. */
+  #invRackView .rp-rack.is-plan-overlapping {
+    outline-color: var(--danger);
+    box-shadow: 0 0 0 9999px rgba(216,59,59,.06) inset;
+  }
+
+  .rp-plan-grip { position: absolute; z-index: 5; display: none; }
+  #invRackView.is-plan-edit .rp-plan-grip { display: block; }
+  .rp-plan-grip--e  { top: 22px; bottom: 12px; right: -5px; width: 10px; cursor: ew-resize; }
+  .rp-plan-grip--s  { left: 12px; right: 22px; bottom: -5px; height: 10px; cursor: ns-resize; }
+  .rp-plan-grip--se { right: -7px; bottom: -7px; width: 14px; height: 14px; cursor: nwse-resize; border-radius: 4px; }
+  .rp-plan-grip--se { background: var(--surface); border: 2px solid var(--primary); }
+  .rp-plan-grip--e:hover, .rp-plan-grip--s:hover { background: color-mix(in srgb, var(--primary) 35%, transparent); border-radius: 5px; }
+  .rp-plan-size {
+    position: absolute; top: -11px; left: 12px; z-index: 6; display: none;
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    background: var(--primary); color: var(--on-accent);
+    padding: 2px 7px; border-radius: 5px; white-space: nowrap;
+  }
+  #invRackView.is-plan-edit .rp-rack.is-plan-selected .rp-plan-size,
+  #invRackView.is-plan-edit .rp-rack.is-plan-dragging .rp-plan-size { display: block; }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     Colour range filter — "I need THAT orange"
+     ═══════════════════════════════════════════════════════════════════
+     A hue window laid over a rainbow: drag its middle to change the shade,
+     pull either edge to widen it. It is a DISPLAY filter — the racks keep
+     their shape and the spools outside the window fade rather than vanish,
+     because the point is to see WHERE the colour is on the shelf. */
+
+  /* First row of the view, right under the search band. The bubble and its
+     grip stand ~7 px proud of the bar, so the top padding has to clear them
+     or a selection near the top would be cut off. */
+  /* It lives in the page shell, under the search row and above whatever view is
+     showing, so it carries its own spacing rather than borrowing a container's
+     gap — which is the right place for it: the breathing room belongs to the
+     colour row, and adding it to the search row instead would push the content
+     down in the views where these bars are hidden.
+     The top has to clear the bubble anyway, which stands five pixels proud of
+     the bar plus its shadow; the rest is the air that keeps the spectrum from
+     reading as part of the search field. */
+  .rv-hue { display: flex; align-items: center; gap: 12px; padding: 18px 2px 6px; }
+  /* Hidden where it could not filter anything: the printer views list devices,
+     not material, and Lists show what to buy rather than what you own. */
+  body.printer-filters .rv-hue,
+  body.lists-view .rv-hue { display: none; }
+  .rv-hue-bar {
+    /* One height, declared once: the grip is cut to the same value below, so a
+       taller bar can never leave a grip that no longer lines up with it. */
+    --rv-bar-h: 26px;
+    position: relative; min-width: 90px; height: var(--rv-bar-h); border-radius: 8px;
+    cursor: crosshair; touch-action: none;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.45);
+  }
+  /* The rainbow gets the lion's share: it spans 360° of hue against a plain
+     light-to-dark ramp, so it needs the resolution far more. */
+  .rv-hue-bar--hue {
+    flex: 3;
+    --rv-grad: linear-gradient(90deg,
+      hsl(0 85% 55%), hsl(40 90% 52%), hsl(60 85% 48%), hsl(110 62% 42%),
+      hsl(160 65% 40%), hsl(190 75% 46%), hsl(220 78% 55%), hsl(265 70% 58%),
+      hsl(300 65% 55%), hsl(330 78% 55%), hsl(360 85% 55%));
+    background: var(--rv-grad);
+  }
+  /* White → black, so a position on it is the inverse of lightness. The
+     checker under the pale end is what stops a white swatch from vanishing
+     into the panel behind it. */
+  .rv-hue-bar--lum {
+    flex: 1;
+    --rv-grad:
+      linear-gradient(90deg, #ffffff, #7d7d7d 50%, #000000),
+      repeating-conic-gradient(var(--surface-3) 0% 25%, var(--surface) 0% 50%) 0 0 / 10px 10px;
+    background: var(--rv-grad);
+  }
+
+  /* The selection is a BUBBLE sitting on the bar: three pixels taller than it on
+     each side — enough to lift off the bar, little enough that it still belongs
+     to it — with corners a touch
+     rounder than the bar's own, lifted by a drop shadow. It reads as the
+     colour you picked rather than as a frame drawn around it — and since the
+     spectrum is never dimmed, height is what marks the choice, not a veil over
+     everything else.
+     It carries a copy of its bar's gradient, sized to the whole bar and slid
+     into place by `redraw`, so a bubble taller than the bar still shows the
+     true colours under it with no second gradient to keep in step. The white
+     ring with a dark hairline under it survives both a pale yellow and a
+     black. */
+  .rv-hue-sel {
+    position: absolute; top: -3px; bottom: -3px; pointer-events: none;
+    border-radius: 8px; overflow: hidden;
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.5);
+    transition: box-shadow .15s ease;
+  }
+  .rv-hue-sel-grad { position: absolute; top: 0; bottom: 0; background: var(--rv-grad); }
+  /* Only while the wheel is turning — see the wheel handler for why a drag must
+     not ease. The gradient inside slides with its bubble, so the spectrum under
+     the window stays true frame by frame instead of lagging behind the edges. */
+  .rv-hue-bar--eased .rv-hue-sel,
+  .rv-hue-bar--eased .rv-hue-sel-grad {
+    transition: left .17s cubic-bezier(.4, 0, .2, 1), width .17s cubic-bezier(.4, 0, .2, 1);
+  }
+  .rv-hue-bar.is-idle .rv-hue-sel {
+    box-shadow: 0 0 0 2px rgba(255,255,255,.7), 0 0 0 3px rgba(0,0,0,.45);
+  }
+  .rv-hue-bar.near-l .rv-hue-sel, .rv-hue-bar.near-r .rv-hue-sel {
+    box-shadow: 0 0 0 2px #fff, 0 0 0 3px rgba(0,0,0,.55), 0 3px 10px rgba(0,0,0,.5),
+                0 0 0 6px rgba(255,255,255,.10);
+  }
+
+  /* Hidden by DEFAULT, shown only on the bar that actually holds a selection.
+     The rule used to be the other way round — visible unless the bar was marked
+     inactive — which meant any state I had not thought of left a handle stranded
+     on a bar that filters nothing. Defaulting to invisible puts the burden on
+     showing it, which is the side that can be checked by looking. */
+  .rv-hue-handle { display: none; }
+  .rv-hue-bar:not(.rv-hue-bar--off) .rv-hue-handle { display: block; }
+  /* The grip DRAWS NOTHING. A white bar laid over the spectrum read as an object
+     dropped on top of the picker rather than a part of it — so what signals a
+     grabbable edge is the bubble's OWN edge thickening (below), and this button
+     is left as pure hit area: wider than what it grabs, centred on its edge by
+     its own box rather than by subtracting half a width the stylesheet is free
+     to change. */
+  .rv-hue-handle {
+    position: absolute; top: -7px; bottom: -7px; width: 26px; z-index: 3;
+    background: transparent; border: 0; padding: 0; cursor: ew-resize;
+    transform: translateX(-50%);
+  }
+  /* Approach either edge and the bubble grows a lip on BOTH sides — its own
+     border getting thicker, clipped by its own corner radius, so nothing new
+     appears on the spectrum. Both, not just the one under the cursor: the pair
+     reads as the bubble becoming grabbable, where a single lip read as a lopsided
+     bubble. Which edge you will actually take is said by the cursor. The hairline
+     on the inner face keeps the white lip readable where the gradient behind it
+     is white too. */
+  /* Above the gradient, explicitly. `::before` is inserted as the FIRST child,
+     so among absolutely-positioned siblings at z-index auto it paints UNDERNEATH
+     the gradient copy — the left lip was there at full width and simply buried,
+     while `::after`, being last, showed. */
+  .rv-hue-sel::before,
+  .rv-hue-sel::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 0; z-index: 1;
+    background: #fff; transition: width .14s ease;
+  }
+  .rv-hue-sel::before { left: 0;  box-shadow: inset -1px 0 0 rgba(0,0,0,.35); }
+  .rv-hue-sel::after  { right: 0; box-shadow: inset  1px 0 0 rgba(0,0,0,.35); }
+  .rv-hue-bar.near-l .rv-hue-sel::before, .rv-hue-bar.near-l .rv-hue-sel::after,
+  .rv-hue-bar.near-r .rv-hue-sel::before, .rv-hue-bar.near-r .rv-hue-sel::after,
+  .rv-hue-bar:has(.rv-hue-handle:focus-visible) .rv-hue-sel::before,
+  .rv-hue-bar:has(.rv-hue-handle:focus-visible) .rv-hue-sel::after { width: 6px; }
+  /* A grip reached by the keyboard has no pointer nearby to thicken an edge for
+     it, so it outlines itself as well — otherwise the arrow keys would move a
+     boundary with nothing to say which one. */
+  .rv-hue-handle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+  /* Icon-only, and it sits at the HEAD of the search row rather than at the end
+     of the colour bars: it clears every filter now, not just the colour window,
+     so it belongs where the filtering starts. Sized and shaped like the search
+     field beside it, so the row reads as one strip rather than a button parked
+     next to it. */
+  .rv-hue-reset {
+    flex: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; padding: 0;
+    border: 1px solid var(--border); background: var(--surface-2);
+    transition: background .15s, border-color .15s;
+  }
+  /* Dimmed until it has something to undo. It stays clickable — the click is
+     simply a no-op — but a button that looks ready and then does nothing is the
+     thing that makes people doubt the control, so it only lights up while a
+     search, a selector or a colour window is actually filtering. */
+  .rv-hue-reset { opacity: .4; cursor: default; transition: background .15s, border-color .15s, opacity .15s; }
+  .rv-hue-reset .icon { background: var(--faint); transition: background .15s; }
+  .rv-hue-reset.is-armed { opacity: 1; cursor: pointer; border-color: var(--border-strong); }
+  .rv-hue-reset.is-armed .icon { background: var(--primary); }
+  .rv-hue-reset.is-armed:hover { background: var(--surface-hover); }
+  .rv-hue-reset.is-armed:hover .icon { background: var(--text); }
+  /* One full turn as the receipt for a reset that worked. It stays lit for the
+     whole turn and only greys out when the glyph comes to rest: the filters are
+     already gone by the first frame, so letting the state class win immediately
+     would dim the button mid-spin and make the acknowledgement look interrupted.
+     Handled here rather than by delaying the state in JS — no timer to keep in
+     step with the duration, and nothing to unwind if the click repeats. */
+  @keyframes rv-reset-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  .rv-hue-reset.is-spinning { opacity: 1; border-color: var(--border-strong); }
+  .rv-hue-reset.is-spinning .icon { background: var(--primary); animation: rv-reset-spin .5s cubic-bezier(.34, .8, .3, 1); }
+
+  /* Depth control in the storage header — a light button opening the two
+     offset sliders. Hidden unless at least one rack actually has a depth. */
+  .rv-depth-wrap { position: relative; flex-shrink: 0; align-self: center; }
+  .rv-depth-wrap.hidden { display: none; }
+  .rv-depth-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 10px;
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 9px; font-family: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  }
+  .rv-depth-btn:hover { background: var(--surface-hover); color: var(--text); }
+  .rv-depth-btn.open { border-color: var(--primary); color: var(--primary); }
+  .rv-depth-btn .icon { background: currentColor; }
+  .rv-depth-pop {
+    position: absolute; z-index: 60; top: calc(100% + 6px); right: 0;
+    width: 268px; padding: 14px;
+    background: var(--surface-raised); border: 1px solid var(--border);
+    border-radius: 12px; box-shadow: 0 18px 40px -12px rgba(0,0,0,.5);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .rv-depth-pop.hidden { display: none; }
+  .rv-depth-pop h5 { margin: 0; font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .rv-depth-row { display: flex; align-items: center; gap: 9px; }
+  .rv-depth-row .lab { width: 14px; flex-shrink: 0; text-align: center; font-size: 13px; color: var(--muted); }
+  .rv-depth-row input[type="range"] {
+    -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; height: 4px;
+    background: var(--surface-3); border-radius: 2px; outline: none; cursor: pointer;
+  }
+  .rv-depth-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 14px; height: 14px;
+    border-radius: 50%; background: var(--primary); border: 2px solid var(--surface); cursor: grab;
+  }
+  .rv-depth-row .val {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 600; color: var(--text);
+    min-width: 44px; text-align: right;
+  }
+  .rv-depth-reset {
+    align-self: flex-start;
+    padding: 6px 11px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    transition: background .15s, border-color .15s;
+  }
+  .rv-depth-reset:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+  .rv-depth-pop .hint { font-size: 11px; color: var(--faint); line-height: 1.45; margin: 0; }
   /* Depleted-spool visual cue: a thin colored strip at the bottom (so the
      spool's color is still hinted at) + a faded "0g" tag centered on the
      slot. Without this, a 0g spool's .rp-fill has height:0 → looks
@@ -896,7 +1343,18 @@
      "not stored" panel is a full-height docked column on the right. */
   .rp-board { flex: 1; min-height: 0; display: flex; gap: 14px; align-items: stretch; overflow: hidden; }
   /* Racks area scrolls on its own (header stays put, panel stays full-height). */
-  .rp-racks-scroll { flex: 1; min-width: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
+  /* Both axes scroll: with racks placed by hand the plan is as likely to run
+     off to the right as off the bottom. The bars stay hidden — panning with the
+     wheel button is the way you move around a board. */
+  .rp-racks-scroll { flex: 1; min-width: 0; overflow: auto; scrollbar-width: none; overscroll-behavior: contain; }
+  /* The empty board reads as draggable, because it is. Cards set their own
+     cursors on top of this. */
+  .rp-racks-scroll { cursor: grab; }
+  .rp-racks-scroll .rp-rack { cursor: default; }
+  .rp-racks-scroll.is-panning, .rp-racks-scroll.is-panning .rp-rack { cursor: grabbing; user-select: none; }
+  /* Nothing inside reacts while panning, or a rack would think it is being
+     dragged and the pan would leave a mess behind it. */
+  .rp-racks-scroll.is-panning * { pointer-events: none; }
   .rp-racks-scroll::-webkit-scrollbar { display: none; }
   .rp-racks-scroll > .rp-racks-col { min-width: 0; }
   /* Permanently-docked unranked-spools panel — ALWAYS visible (even empty) so it

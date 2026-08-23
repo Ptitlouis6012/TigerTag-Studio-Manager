@@ -199,8 +199,15 @@
   .rec-input-wrap:focus-within .rec-input-icon { background-color: var(--primary); }
 
   /* The two dimensions sit side by side — they're read as one setting. */
-  .rec-dims { display: flex; gap: 12px; }
-  .rec-dims .rec-field { flex: 1 1 0; min-width: 0; }
+  /* Two up, then the third on its own line. Three steppers abreast do not fit
+     the panel's width — the values were being clipped — and the split is not
+     arbitrary: levels and slots-per-level describe the FACE of the rack, depth
+     describes what sits behind it. It keeps the SAME width as the other two
+     rather than spanning the row: a stepper stretched to twice the width of its
+     neighbours reads as a different kind of control. */
+  .rec-dims { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rec-dims .rec-field { min-width: 0; }
+
   .rec-dims .rec-step { flex: 0 0 34px; }
 
   /* Live preview — dashed slot grid + the headline capacity badge floating on it. */

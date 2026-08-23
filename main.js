@@ -389,6 +389,36 @@ function normalizeUid(raw) {
 const { TigerTag } = require('tigertag');
 
 // IPC payload — toRawDict() first, then rawApi() if TigerTag+.
+/* The chip carries ONE unit byte for BOTH of its quantities — a real 1 kg tag
+   reads `measure: 1, measure_available: 1, id_unit: 35`. Our Firestore doc does
+   not follow that convention: `measure` is in the product's unit but
+   `weight_available` is always in GRAMS. The SDK's fromCloudDoc takes one of
+   each and stamps the doc's unit on both, so a kg spool went onto the chip with
+   its remaining weight multiplied by a thousand — and read back as 1 000 000 g.
+   Converted here, at the one boundary where a document becomes a chip.
+   The field is ALWAYS set, never dropped: fromCloudDoc falls back to
+   `doc.measure_gr` when it is missing, and that value is in grams too — leaving
+   it out reintroduced the very bug through the back door. A unit coarser than
+   the value rounds (1303 g on a kg tag becomes 1 kg); the resolution is the
+   format's, not ours, and the next weighing corrects it. */
+const CHIP_GRAMS_PER_UNIT = { 10: 0.001, 21: 1, 35: 1000 };   // mg / g / kg
+function _docForChip(doc) {
+  if (!doc) return doc;
+  const per = CHIP_GRAMS_PER_UNIT[doc.id_unit];
+  if (!per) return doc;                              // volume / size / area: not a weight
+  /* `measure_gr` is the fallback the SDK reaches for when the remaining weight
+     is absent — and it is in grams as well, so leaving the field unset put the
+     same thousandfold error on the chip by another route. Both candidates are
+     converted here; nothing gets to the SDK still expressed in grams. */
+  const grams = Number(doc.weight_available ?? doc.measure_gr);
+  if (!Number.isFinite(grams)) return doc;           // nothing to convert
+  const inUnit = grams / per;
+  if (!Number.isInteger(inUnit)) {
+    console.warn(`[NFC] remaining weight ${grams} g rounds to ${Math.round(inUnit)} in unit ${doc.id_unit} — the chip cannot hold it exactly`);
+  }
+  return { ...doc, weight_available: Math.round(inUnit) };
+}
+
 async function _sdkPayload(tag, readerName = null) {
   const raw = tag.toRawDict();
   if (readerName) raw._readerName = readerName;
@@ -806,7 +836,7 @@ ipcMain.handle('rfid:write-now', async (_evt, opts) => {
   // ── 1. Build the 80-byte payload from cloud doc ─────────────────────────────
   let newBytes;
   try {
-    let tag = TigerTag.fromCloudDoc(cloudDoc);
+    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc));
     if (patch && Object.keys(patch).length > 0) tag.patchFromRawDict(patch);
     newBytes = tag.toBytes(); // 80 bytes covering pages 0x04-0x17
   } catch (e) {
@@ -1025,7 +1055,7 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
   // here (not per chip). Used both as the write source and the diff reference.
   let newBytes;
   try {
-    let tag = TigerTag.fromCloudDoc(cloudDoc).patch({ timestamp: _nowChipTs() });
+    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: _nowChipTs() });
     // The displayed colour lives in `online_color_list` (hex) and is what the
     // user edits — the doc's baked color_r/g/b can lag behind it. So when a
     // colour list is present, it is the source of truth: patch the chip colour
@@ -1136,7 +1166,7 @@ ipcMain.handle('rfid:burn-one', async (_evt, { cloudDoc, timestamp, readerName }
   let pages;
   try {
     const ts  = Number.isFinite(timestamp) ? (timestamp >>> 0) : _nowChipTs();
-    const tag = TigerTag.fromCloudDoc(cloudDoc).patch({ timestamp: ts });
+    const tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: ts });
     pages = _pagesToWrite(tag.toBytes(false), null); // full write — blank chip
   } catch (e) {
     return { ok: false, error: `SDK build failed: ${e.message}` };

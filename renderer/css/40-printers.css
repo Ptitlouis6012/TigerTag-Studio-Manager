@@ -4,7 +4,8 @@
      ═══════════════════════════════════════════════════════════════════ */
   .inv-printer-view {
     display: flex; flex-direction: column; gap: 18px;
-    padding: 4px 0;
+    padding: 0 0 4px;
+    margin-top: var(--view-gap);
     flex: 1; min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -2338,7 +2339,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  margin-top: 12px;   /* match the inventory `.table-wrap` gap below the search bar */
+  margin-top: var(--view-gap);
   scrollbar-width: none;   /* hide the scrollbar (still scrolls) */
 }
 .pt-wrap::-webkit-scrollbar { width: 0; height: 0; }

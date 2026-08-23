@@ -150,6 +150,12 @@ function closeScalesPanel() {
 // Battery badge HTML for one scale's glyph (iOS-style mini battery), or "" when
 // no cell is fitted / no reading. "XX%" while discharging, "XX" + bolt charging.
 function _scaleHealthBattHtml(s) {
+  /* An OFFLINE scale has stopped reporting, so its last battery reading is only
+     what was true when it went quiet — it could be minutes or days old, and the
+     one thing a battery gauge must not do is state a level with confidence it no
+     longer has. No signal, no figure: the red glyph already says the scale is
+     out of touch, which is the honest answer. */
+  if (scaleConnState(s) === "offline") return "";
   if (scaleBatteryPresent(s) === false) return "";
   const p = scaleBatteryPercent(s);
   if (typeof p !== "number" || !isFinite(p)) return "";

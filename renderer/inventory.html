@@ -272,10 +272,6 @@
                reads as a headline figure, like the stat tiles above. Shown only
                in those views, via `body.catalog-filters`. -->
           <div class="cv-count" id="catalogViewStatus"></div>
-          <button id="btnAddProduct" class="inv-add-btn" type="button">
-            <span class="icon icon-plus icon-13"></span>
-            <span data-i18n="addProductBtn">Material</span>
-          </button>
           <!-- Cam view only: detach the camera wall into its own window. Same
                orange style as Add Device; shown via #card-inv.is-cam-view. -->
           <button id="camWallDetachTop" class="inv-add-btn" type="button" hidden>
@@ -287,7 +283,15 @@
         </div>
       </div>
       <div class="row between inv-search-row" style="gap:10px">
+        <button class="rv-hue-reset" id="rvHueReset" type="button" data-i18n-aria="rackHueReset" aria-label=""><span class="icon icon-refresh icon-14"></span></button>
         <div class="inv-search">
+          <!-- Inside the field, on the left: the same action as the header's
+               "+ Material" button, within reach of where you are already
+               typing. Its accessible name follows that button's, which changes
+               with the view (Material / Device / Rack). -->
+          <button type="button" id="searchAddBtn" class="inv-search-add" aria-label="">
+            <span class="icon icon-plus icon-14" aria-hidden="true"></span>
+          </button>
           <input id="searchInv" type="text" placeholder="Search material, brand, color, UID…" data-i18n-placeholder="searchPlaceholder" />
           <!-- Clear button — takes the magnifier's place while the field has
                text (the loupe is hidden in CSS), so only one glyph is ever shown. -->
@@ -296,12 +300,17 @@
             <span class="icon icon-close icon-13" aria-hidden="true"></span>
           </button>
           <span class="icon icon-search icon-13"></span>
+          <!-- The two ways to add material, offered right under the "+" instead
+               of in a side card: pick it from the official catalogue, or type it
+               in yourself. Filled by the renderer from the same source list the
+               side card used, so the wording lives in one place. -->
+          <div class="search-add-menu" id="searchAddMenu" hidden role="menu"></div>
         </div>
         <div class="inv-filter-group">
           <!-- Product-flag quick filters: ❤ wishlist / ★ liked (mutually exclusive) —
                placed right after the search bar, before the attribute filters. -->
           <button type="button" id="wishFilter" class="inv-flag-filter inv-flag-filter--wish" data-i18n-title="productLike" title="To order">
-            <span class="icon icon-cart-plus icon-14"></span>
+            <span class="icon icon-cart icon-14"></span>
           </button>
           <button type="button" id="likeFilter" class="inv-flag-filter inv-flag-filter--like" data-i18n-title="productFavorite" title="Favorite">
             <span class="icon icon-star icon-14"></span>
@@ -356,6 +365,23 @@
           <button id="gridSortDir" class="inv-sort-dir" type="button" data-i18n-title="sortDir" title="Sort direction">↑</button>
         </div>
       </div>
+    <!-- Always on show. Finding a colour is what this view is for, so putting
+         the finder behind a button asked the user to remember it exists. -->
+    <div class="rv-hue" id="rvHue">
+      <!-- Two axes side by side. No captions: a rainbow and a white-to-black
+           ramp say what they select on sight, and the names live on as the
+           accessible label for anyone who cannot see them. -->
+      <div class="rv-hue-bar rv-hue-bar--hue" id="rvHueBar" role="group" data-i18n-aria="rackHueHues" aria-label="">
+        <div id="rvHueSegs"></div>
+        <button class="rv-hue-handle" id="rvHueL" type="button" data-i18n-aria="rackHueEdgeL" aria-label=""></button>
+        <button class="rv-hue-handle" id="rvHueR" type="button" data-i18n-aria="rackHueEdgeR" aria-label=""></button>
+      </div>
+      <div class="rv-hue-bar rv-hue-bar--lum" id="rvLumBar" role="group" data-i18n-aria="rackHueNeutrals" aria-label="">
+        <div id="rvLumSegs"></div>
+        <button class="rv-hue-handle" id="rvLumL" type="button" data-i18n-aria="rackHueEdgeL" aria-label=""></button>
+        <button class="rv-hue-handle" id="rvLumR" type="button" data-i18n-aria="rackHueEdgeR" aria-label=""></button>
+      </div>
+    </div>
       <div id="mainResult"></div>
       <div id="invEmpty" class="empty hidden"></div>
 
@@ -1400,6 +1426,14 @@
               <button type="button" class="rec-step" data-step="rackPositionInput" data-delta="-1" aria-label="−">−</button>
               <input type="number" id="rackPositionInput" min="1" max="20" value="8" />
               <button type="button" class="rec-step" data-step="rackPositionInput" data-delta="1" aria-label="+">+</button>
+            </div>
+          </div>
+          <div class="rec-field">
+            <span class="rec-field-label" data-i18n="rackDepth">Rows deep</span>
+            <div class="rec-stepper">
+              <button type="button" class="rec-step" data-step="rackDepthInput" data-delta="-1" aria-label="−">−</button>
+              <input type="number" id="rackDepthInput" min="1" max="3" value="1" />
+              <button type="button" class="rec-step" data-step="rackDepthInput" data-delta="1" aria-label="+">+</button>
             </div>
           </div>
         </div>

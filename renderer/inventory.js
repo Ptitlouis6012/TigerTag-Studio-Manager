@@ -774,6 +774,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Refresh dynamic tooltips
     $("td1sHealth")?.setAttribute("data-tooltip", t(state.td1sConnected ? "td1sDetected" : "td1sNotDetected"));
     _syncSearchPlaceholder(); // the loop above reset #searchInv to the materials text
+    _syncSearchAddLabel();   // the inline "+" mirrors the header button's name
     // The printer filter options (State labels, brand names) aren't data-i18n,
     // so re-localise them here on a language switch while the printer view is up.
     if (_isPrinterMode(state.viewMode) && state.viewMode !== "printer-cam") populatePrinterFilters();
@@ -1714,6 +1715,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                : (Number.isInteger(data.level)    ? data.level    : null),
       rackPos:   (data.rack && Number.isInteger(data.rack.position)) ? data.rack.position
                : (Number.isInteger(data.position) ? data.position : null),
+      // Depth — how far back on the shelf, 0 = front row (the one you grab).
+      // Absent on every doc written before shelves had a depth, and on every
+      // doc in a depth-1 rack: those are all front-row, hence the 0 default.
+      // No migration: a missing field IS the answer.
+      rackDepth: (data.rack && Number.isInteger(data.rack.depth)) ? data.rack.depth : 0,
       lastUpdate: tsToMs(data.updatedAt) || tsToMs(data.last_update) || tsToMs(data.updated_at),
       // Only `deleted === true` counts as a tombstone (matches Flutter mobile
        // semantics). `deleted_at` alone is treated as historical metadata and
@@ -2915,9 +2921,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // lands on is decided HERE — a catalogue entry carries a product id, so it
   // burns to a TigerTag+; a hand-typed one burns to a plain TigerTag.
   const MAT_SOURCES = [
-    { id: "matSourceChoiceCatalogue", label: "matSourceCatalogue", hint: "matSourceCatalogueHint",
+    { id: "matSourceChoiceCatalogue", label: "matSourceCatalogue", hint: "matSourceCatalogueHint", icon: "search",
       tiers: '<span class="tag-cloud tag-cloud-plus">TigerData+</span><span class="tag-plus">TigerTag+</span>' },
-    { id: "matSourceChoiceManual",    label: "matSourceManual",    hint: "matSourceManualHint",
+    { id: "matSourceChoiceManual",    label: "matSourceManual",    hint: "matSourceManualHint", icon: "edit",
       tiers: '<span class="tag-cloud">TigerData</span><span class="tag-diy">TigerTag</span>' },
   ];
   function openMaterialSourcePicker() {
@@ -3531,15 +3537,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     else if (e.key === "Escape") { e.preventDefault(); _bulkExitPriceMode(); }
   });
 
-  $("btnAddProduct")?.addEventListener("click", () => {
-    // The header Add button is multi-purpose, dispatching by current view:
-    //   - Printer modes (grid / table / cam) → brand picker → add printer
-    //   - Storage (rack) mode                 → new rack modal
-    //   - Inventory (table / grid)            → source picker → catalogue or form
-    if (_isPrinterMode(state.viewMode))      openPrinterBrandPicker();
-    else if (state.viewMode === "rack")       openRackEditModal(null);
-    else                                      openMaterialSourcePicker();
-  });
   $("addProductClose")?.addEventListener("click", _adpCloseAllSheetsAndPanel);
   // TD1S button in ADP header: open "Set Color & TD Value" modal pre-filled
   // with the current ADP color slots. The callback writes the result back
@@ -5713,6 +5710,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   /* ── Firestore inventory subscription ── */
+  // Spool ids whose arrival has already been announced, so the pending-write and
+  // the server-confirmed snapshot of one add do not ring twice.
+  const _spoolArrivalHeard = new Set();
   function subscribeInventory(uid) {
     unsubscribeInventory();
     // Tracks the first snapshot of THIS subscription. Previously the code
@@ -5764,6 +5764,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         state.inventory = raw;
         state.rows = snapshot.docs.map(doc => normalizeRow(doc.id, doc.data()));
         _markTwinPairs(state.rows); // symmetric hasTwinPair so the link badge shows on either half
+
+        /* A spool ARRIVING — however it got here: scanned, typed in, imported,
+           or pushed from another device. Never on the first snapshot, which is
+           the whole inventory turning up at once. One sound per snapshot, so
+           importing fifty spools rings once and not fifty times, and the ids
+           already announced are remembered: a local write shows up twice, once
+           pending and once confirmed by the server. */
+        if (!isFirstSnap) {
+          const changes = snapshot.docChanges();
+          const fresh = changes.some(c =>
+            c.type === "added" && !c.doc.data()?.deleted && !_spoolArrivalHeard.has(c.doc.id));
+          changes.forEach(c => { if (c.type === "added") _spoolArrivalHeard.add(c.doc.id); });
+          if (fresh) _soundSpoolAdded();
+        }
 
 
         // On first live snapshot: silently refresh API data for every TigerTag+
@@ -6177,6 +6191,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _soundReturnHome()   { _playTones([{ f: 392.00, d: 0.10 }, { f: 587.33, t: 0.09, d: 0.18 }], { type: "sine",     gain: 0.05 }); }
   // Crisp short "snap into place" — a spool dropped into a rack slot (moved/placed).
   function _soundRackMove()     { _playTones([{ f: 523.25, d: 0.06 }, { f: 698.46, t: 0.045, d: 0.10 }], { type: "triangle", gain: 0.05 }); }
+  // Bright rising two-note on a square wave — a new spool joining the inventory.
+  // The chiptune "you just gained something" shape: a short blip, then a fourth
+  // above held long enough to ring. It is the only cue in the app meant to feel
+  // like a small reward rather than a confirmation.
+  function _soundSpoolAdded()   { _playTones([{ f: 987.77, d: 0.075 }, { f: 1318.51, t: 0.065, d: 0.30 }], { type: "square", gain: 0.04 }); }
+  // Three notes falling away — every filter dropped at once. A descent says
+  // "cleared" the way the single clicks cannot, and it only ever sounds when
+  // something was actually there to clear.
+  function _soundFiltersCleared() { _playTones([{ f: 659.25, d: 0.05 }, { f: 440.00, t: 0.045, d: 0.09 }, { f: 329.63, t: 0.09, d: 0.15 }], { type: "sine", gain: 0.045 }); }
+  // Light tick — a rack picked up off the plan. It fires on every grab, so it is
+  // the quietest cue of the set: one short blip, nothing to get tired of.
+  function _soundPlanGrab()     { _playTones([{ f: 587.33, d: 0.045 }],                              { type: "triangle", gain: 0.035 }); }
+  // Low, short thunk — a rack set back down. Deliberately well BELOW the spool
+  // cues (which live around 400-700 Hz): a whole rack landing should not sound
+  // like a single spool clicking into a slot.
+  function _soundPlanDrop()     { _playTones([{ f: 261.63, d: 0.06 }, { f: 174.61, t: 0.05, d: 0.14 }], { type: "sine",   gain: 0.05 }); }
   // Gentle descending "un-dock" — a spool pulled OUT of a rack back to "not stored".
   function _soundRackRemove()   { _playTones([{ f: 587.33, d: 0.07 }, { f: 392.00, t: 0.06,  d: 0.13 }], { type: "sine",     gain: 0.05 }); }
 
@@ -6790,6 +6820,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return document.documentElement;
   }
 
+  /* Every open dropdown's own closer. One list at a time: the button stops the
+     click from propagating (so it never reaches the document-level close that
+     would shut the list a moment after opening it) — which also means the OTHER
+     dropdowns never hear about that click, and three of them could sit open on
+     top of each other. They have to be told, so opening one closes the rest. */
+  const _cselOpen = new Set();
   // Replace a native <select>'s OS dropdown (unstylable) with an app-styled popup.
   // The <select> stays (for value + every existing populate / change handler) but
   // is visually hidden; a button mirrors it and a custom list drives selection.
@@ -6817,14 +6853,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       btn.classList.toggle("is-active", !!sel.value);
       if (sel.title) btn.title = sel.title;
     };
-    const close = () => { pop.hidden = true; wrap.classList.remove("csel--open"); };
+    const close = () => {
+      pop.hidden = true; wrap.classList.remove("csel--open"); _cselOpen.delete(close);
+      document.removeEventListener("keydown", onKey, true);
+      cursor = -1;
+    };
     const open = () => {
+      _cselOpen.forEach(c => c());   // whatever else was open goes first
       // The options live in an INNER scroller so the popup keeps its drop shadow:
       // the scroll-fade is a mask, and a mask clips to the border box — applied
       // to the popup itself it would erase the shadow painted outside it.
-      pop.innerHTML = `<div class="csel-pop-list">` + Array.from(sel.options).map((o, i) =>
+      const filterHTML = sel.options.length >= CSEL_FILTER_FROM
+        ? `<div class="csel-pop-head"><input type="search" class="csel-search" placeholder="${esc(t("searchShort"))}" aria-label="${esc(t("searchShort"))}"></div>`
+        : "";
+      pop.innerHTML = filterHTML + `<div class="csel-pop-list">` + Array.from(sel.options).map((o, i) =>
         `<button type="button" class="csel-opt${i === sel.selectedIndex ? " is-sel" : ""}" data-i="${i}">${esc(o.text)}</button>`).join("") + `</div>`;
       pop.hidden = false; wrap.classList.add("csel--open");
+      _cselOpen.add(close);
+      // Wired HERE, right after the list is built — not by the caller after
+      // open() returns. Everything below this line is placement, and a throw in
+      // any of it would have left the field on screen with nothing behind it.
+      wireFilter();
       // Right-align the popup when opening it left-aligned would push it past the
       // card's right edge. `#card-inv` is `overflow: hidden`, so an overflowing
       // popup is not merely ugly — it is CLIPPED, and the rightmost filter's list
@@ -6855,7 +6904,52 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // some". The scrollbar above is the primary cue; this just softens the cut.
       _wireScrollFade(list, { top: true });
     };
-    btn.addEventListener("click", e => { e.stopPropagation(); pop.hidden ? open() : close(); });
+    /* A filter field instead of a type-ahead. With 124 brands in the list,
+       jumping to the first "R" still leaves you scrolling — narrowing the list
+       is the shorter path, and it takes the keyboard input somewhere visible
+       rather than into a hidden buffer you have to guess the state of. It
+       matches ANYWHERE in the name, not just the start: "sun" should find both
+       Sunlu and eSun. Accents and case are ignored. Only for lists long enough
+       to warrant it; on a five-line list a search box is furniture. */
+    const CSEL_FILTER_FROM = 8;
+    const flat = str => String(str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    let cursor = -1;
+    const visibleOpts = () => [...pop.querySelectorAll(".csel-opt")].filter(o => !o.hidden);
+    const highlight = i => {
+      const opts = visibleOpts();
+      pop.querySelectorAll(".csel-opt.is-cursor").forEach(o => o.classList.remove("is-cursor"));
+      if (!opts.length) { cursor = -1; return; }
+      cursor = Math.max(0, Math.min(opts.length - 1, i));
+      opts[cursor].classList.add("is-cursor");
+      opts[cursor].scrollIntoView({ block: "nearest" });
+    };
+    const onKey = e => {
+      if (pop.hidden) return;
+      const opts = visibleOpts();
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault(); highlight(cursor + (e.key === "ArrowDown" ? 1 : -1));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        (opts[cursor] || opts[0])?.click();
+      }
+    };
+    const wireFilter = () => {
+      const input = pop.querySelector(".csel-search");
+      if (!input) return;
+      input.addEventListener("input", () => {
+        const q = flat(input.value).trim();
+        pop.querySelectorAll(".csel-opt").forEach(o => { o.hidden = !!q && !flat(o.textContent).includes(q); });
+        // Land on the first survivor, so Enter always means "the obvious one".
+        highlight(0);
+      });
+      input.addEventListener("keydown", onKey);
+      input.focus();
+    };
+    btn.addEventListener("click", e => {
+      e.stopPropagation();
+      if (pop.hidden) { open(); document.addEventListener("keydown", onKey, true); }
+      else close();
+    });
     pop.addEventListener("click", e => {
       const o = e.target.closest(".csel-opt"); if (!o) return;
       sel.selectedIndex = +o.dataset.i;
@@ -7238,7 +7332,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const aspect = state.aspectFilter || "";
     const tag = (state.tagFilter || "").toLowerCase();
     const flag = (!state.friendView && state.flagFilter) ? state.flagFilter : "";
-    const noFilter = !q && !brand && !material && !type && !aspect && !tag && !flag;
+    const hueOn = _hueFilterOn();
+    const noFilter = !q && !brand && !material && !type && !aspect && !tag && !flag && !hueOn;
     const rowsById = new Map(state.rows.map(r => [r.spoolId, r]));
     const rowMatches = r => {
       const matchSearch = !q || _rowMatchesSearch(r, q);
@@ -7248,7 +7343,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const matchAspect = !aspect || String(r.aspect1) === aspect || String(r.aspect2) === aspect;
       const matchTag = !tag || (r.tags || []).some(t => String(t).toLowerCase() === tag);
       const matchFlag = !flag || !!_getProduct(r)?.[flag];
-      return matchSearch && matchBrand && matchMaterial && matchType && matchAspect && matchTag && matchFlag;
+      const matchHue = !hueOn || _rowMatchesHue(r);
+      return matchSearch && matchBrand && matchMaterial && matchType && matchAspect && matchTag && matchFlag && matchHue;
     };
     let visible = 0;
 
@@ -10034,16 +10130,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (_isPrinterMode(mode) && (!state.unsubPrinters || !state.unsubPrinters.length) && state.activeAccountId) {
       subscribePrinters(state.activeAccountId);
     }
-    // Swap the header Add button label: "Add Product" (inventory) ↔
-    // "Add Device" (printer modes) ↔ "Add Rack" (storage mode).
-    const _addLbl = $("btnAddProduct")?.querySelector("[data-i18n]");
-    if (_addLbl) {
-      const _key = _isPrinterMode(mode) ? "addDeviceBtn"
-                 : mode === "rack"        ? "addRackBtn"
-                 :                          "addProductBtn";
-      _addLbl.dataset.i18n = _key;
-      _addLbl.textContent  = t(_key);
-    }
+    // What the "+" will do here — Material, Device or Rack — said in its name.
+    _syncSearchAddLabel();
     _syncInvBarButtons();    // .ttag Export/Import: inventory (table/grid) only
     _syncSearchPlaceholder(); // materials ↔ printer search hint
     // Right-of-search selectors: in the printer grid/table swap them to printer
@@ -10859,9 +10947,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   if (state.viewMode === "grid") { $("btnViewGrid").classList.add("active"); $("btnViewTable").classList.remove("active"); }
   else if (state.viewMode === "rack") {
     $("btnViewRack")?.classList.add("active"); $("btnViewTable").classList.remove("active");
-    // Initialise Add button label for storage mode on first load
-    const _al = $("btnAddProduct")?.querySelector("[data-i18n]");
-    if (_al) { _al.dataset.i18n = "addRackBtn"; _al.textContent = t("addRackBtn"); }
   }
   else if (_isCatalogMode(state.viewMode)) {
     // Restore a saved Search view: light its button and drop the stock-only
@@ -10872,17 +10957,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   else if (state.viewMode === "printer") {
     $("btnViewPrinter")?.classList.add("active"); $("btnViewTable").classList.remove("active");
-    // Initialise Add button label for printer mode on first load
-    const _al = $("btnAddProduct")?.querySelector("[data-i18n]");
-    if (_al) { _al.dataset.i18n = "addDeviceBtn"; _al.textContent = t("addDeviceBtn"); }
   } else if (state.viewMode === "printer-table") {
     $("btnViewPrinterTable")?.classList.add("active"); $("btnViewTable").classList.remove("active");
-    const _al = $("btnAddProduct")?.querySelector("[data-i18n]");
-    if (_al) { _al.dataset.i18n = "addDeviceBtn"; _al.textContent = t("addDeviceBtn"); }
   } else if (state.viewMode === "printer-cam") {
     $("btnViewCam")?.classList.add("active"); $("btnViewTable").classList.remove("active");
-    const _al = $("btnAddProduct")?.querySelector("[data-i18n]");
-    if (_al) { _al.dataset.i18n = "addDeviceBtn"; _al.textContent = t("addDeviceBtn"); }
     $("card-inv")?.classList.add("is-cam-view");   // hide search + add buttons, show Detach
     const _dt = $("camWallDetachTop"); if (_dt) _dt.hidden = !(window.electronAPI?.openCamWindow && !state.friendView);
   } else if (_isProductsMode(state.viewMode)) {
@@ -10960,7 +11038,35 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // because every `<img>` was destroyed and re-decoded.
   // Stats (header counters) don't depend on the search, so the class toggle
   // is sufficient.
+  /* Is anything actually filtering right now? Drives the reset button's state:
+     it should look usable only while it has something to undo. */
+  function _anyFilterActive() {
+    if (state.search || state.brandFilter || state.materialFilter || state.typeFilter
+        || state.aspectFilter || state.tagFilter || state.flagFilter || _hueFilterOn()) return true;
+    // The button lives on the search row now, so it is on screen in the printer
+    // views too — where the filters it clears are the printer ones.
+    if (state.printerBrandFilter || state.printerStatusFilter || state.printerTagFilter) return true;
+    // The Search views browse the catalogue and carry their own selectors.
+    if (_isCatalogMode(state.viewMode))
+      return ["cvType", "cvBrand", "cvMaterial", "cvSeries"].some(id => $(id)?.value);
+    return false;
+  }
+  function _syncFilterReset() {
+    $("rvHueReset")?.classList.toggle("is-armed", _anyFilterActive());
+  }
+
+  /* The inline "+" triggers the header button, so it announces whatever that
+     button currently says — Material, Device or Rack. Read from the button
+     itself rather than re-deriving the key, so the two can never disagree. */
+  function _syncSearchAddLabel() {
+    const key = _isPrinterMode(state.viewMode) ? "addDeviceBtn"
+              : state.viewMode === "rack"      ? "addRackBtn"
+              :                                  "addProductBtn";
+    $("searchAddBtn")?.setAttribute("aria-label", t(key));
+  }
+
   function _onFilterChange() {
+    _syncFilterReset();
     if (state.viewMode === "rack") { applyRackSearchDim(); return; }
     // Search views: the query is the catalogue query — re-run our own engine
     // rather than filtering spool rows that aren't on screen.
@@ -10976,6 +11082,61 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
     renderInventory();
   }
+  /* One action, two ways in. Delegating to the header button rather than
+     duplicating its handler means the inline "+" follows it wherever it goes —
+     Material, Device or Rack depending on the view — with nothing to keep in
+     step. */
+  /* In the material views the "+" offers the CHOICE straight away — catalogue or
+     by hand — instead of opening a side card whose only job was to ask that
+     question. Everywhere else it still delegates to the header button, which
+     means something different there (a printer brand, a new rack), so the two
+     can never drift apart. */
+  function closeSearchAddMenu() {
+    const m = $("searchAddMenu"); if (!m || m.hidden) return;
+    m.hidden = true;
+    $("searchAddBtn")?.setAttribute("aria-expanded", "false");
+  }
+  function openSearchAddMenu() {
+    const m = $("searchAddMenu"); if (!m) return;
+    // The label alone. Two choices whose names already say what they do do not
+    // need a sentence each — the explanation belongs where the choice is hard.
+    m.innerHTML = MAT_SOURCES.map(src => `
+      <button type="button" class="search-add-item" role="menuitem" data-src="${src.id}">
+        <span class="icon icon-${src.icon} icon-14" aria-hidden="true"></span>
+        <span>${esc(t(src.label))}</span>
+      </button>`).join("");
+    m.hidden = false;
+    $("searchAddBtn")?.setAttribute("aria-expanded", "true");
+  }
+  $("searchAddBtn")?.addEventListener("click", e => {
+    // Multi-purpose, dispatching by current view — this is the app's ONE add
+    // button now, the header's "+ Material" having been folded into it:
+    //   - Printer modes (grid / table / cam) → brand picker → add printer
+    //   - Storage (rack) mode                 → new rack modal
+    //   - Everything else                     → the two material sources below
+    if (_isPrinterMode(state.viewMode)) { openPrinterBrandPicker(); return; }
+    if (state.viewMode === "rack")      { openRackEditModal(null);  return; }
+    if (!state.activeAccountId) {
+      try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
+      return;
+    }
+    e.stopPropagation();
+    $("searchAddMenu")?.hidden === false ? closeSearchAddMenu() : openSearchAddMenu();
+  });
+  $("searchAddMenu")?.addEventListener("click", e => {
+    const it = e.target.closest?.(".search-add-item"); if (!it) return;
+    closeSearchAddMenu();
+    // Catalogue always lands on the GRID, whatever layout the inventory was in —
+    // picking a product you have never seen is a visual task.
+    if (it.dataset.src === "matSourceChoiceCatalogue") setViewMode("catalogGrid");
+    else openAddProductPanel();
+  });
+  document.addEventListener("click", e => {
+    if (e.target.closest?.("#searchAddMenu, #searchAddBtn")) return;
+    closeSearchAddMenu();
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSearchAddMenu(); });
+  document.addEventListener("scroll", closeSearchAddMenu, true);
   $("searchInv").addEventListener("input", e => {
     const v = e.target.value;
     state.search = v.trim();
@@ -12126,10 +12287,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // catalogue strings, so they never disagree with what the list displays.
   // The engine itself, extracted so the modal AND the Search views run the exact
   // same matching — one place to change how the catalogue is searched.
+  /* `color_info.colors` is the authoritative list — it holds BOTH halves of a
+     bicolor, so one matches on either of its colours exactly like a spool does.
+     `color` is the single flat value, kept as the fallback for an entry written
+     before the richer field existed. */
+  function _catColors(it) {
+    const list = it?.color_info?.colors;
+    return Array.isArray(list) && list.length ? list : [it?.color];
+  }
   function _catalogFilter(query, fBrand = "", fMat = "") {
     const raw  = String(query || "").trim().toLowerCase();
     const toks = raw.split(/\s+/).filter(Boolean);
-    const pass = e => (!fBrand || e.it.brand === fBrand) && (!fMat || e.it.material === fMat);
+    /* The colour window narrows the catalogue too — an entry carries a single
+       hex, and one that has none simply cannot answer a colour question, so it
+       drops out rather than slipping through. */
+    const pass = e => (!fBrand || e.it.brand === fBrand) && (!fMat || e.it.material === fMat)
+      && (!_hueFilterOn() || _colorsMatchHue(_catColors(e.it)));
 
     // A scanned barcode is the whole query and it means ONE product. Match it
     // exactly first and return only that — a barcode gun fires the digits and an
@@ -12503,6 +12676,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   function _catViewSearch() {
+    _syncFilterReset();   // the catalogue's own selectors arm it too
     _catViewFillFacets();
     const fType   = $("cvType")?.value || "";
     const fBrand  = $("cvBrand")?.value || "";
@@ -13004,6 +13178,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       }
       if (aspect && String(l.aspect || "") !== aspect && String(l.aspect2 || "") !== aspect) return false;
       if (tag && !(p.tags || []).some(tg => String(tg).toLowerCase() === tag)) return false;
+      // A product identity carries one colour, not a spool's three slots.
+      if (!_colorsMatchHue([l.colorHex])) return false;
       if (q) {
         const hay = [l.brand, l.material, l.series, l.colorName, p.note, p.sku, p.ean, ...(p.tags || [])]
           .filter(Boolean).join(" ").toLowerCase();
@@ -18724,8 +18900,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const _hasRacks = state.racks.length > 0;
     let storageHtml = "";
     if (_rackForSpool) {
-      const coord = String.fromCharCode(65 + r.rackLevel) + (r.rackPos + 1);
-      const lockedHere = isSlotLocked(_rackForSpool.id, r.rackLevel, r.rackPos);
+      // Coordinates gain a depth suffix only past the front row, so a normal
+      // shelf still reads "B3" and never "B3·1" — same rule as the slot tooltips.
+      const coord = String.fromCharCode(65 + r.rackLevel) + (r.rackPos + 1)
+        + (r.rackDepth > 0 ? "\u00b7" + (r.rackDepth + 1) : "");
+      const lockedHere = isSlotLocked(_rackForSpool.id, r.rackLevel, r.rackPos, r.rackDepth);
       // Clickable row → closes the detail panel, switches to Storage view,
       // and prefills the search bar with the spool's RFID UID so the user
       // visually locates it (matching slot stays bright, others dim).
@@ -21678,7 +21857,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                       : "grid";
     // Keep the brand / tag selectors in sync with the current printer set
     // (new brand or tag → fresh option) — grid + table only, cam hides them.
-    if (_printerSub !== "cam") populatePrinterFilters();
+    // ONLY while the printer view is the one on screen. These selects are SHARED
+    // with the materials views, and a connected printer pushing a status update
+    // re-renders this view from a brand callback whatever the user is currently
+    // looking at — which rewrote the Brand list with printer brands and turned
+    // Material into "State" while the user was standing in Storage, with no way
+    // to filter their own spools by brand any more.
+    if (_printerSub !== "cam" && _isPrinterMode(state.viewMode)) populatePrinterFilters();
     if (_printerSub === "table") { _renderPrinterTable(host); return; }
     if (_printerSub === "cam")   { _renderPrinterCam(host);   return; }
 
@@ -25683,7 +25868,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // renderScalesPanel / renderScaleHealth are imported at the top of this  
   // file and initTigerScale(ctx) is called during DOM setup.               
 
-  async function createRack({ name, subtitle, level, position }) {
+  // A rack's depth is how many spools fit one behind the other on a shelf.
+  // It is written only when it is more than 1, so a plain shelf keeps exactly
+  // the document it has today and nothing needs migrating.
+  const RACK_DEPTH_MAX = 3;
+  function rackDepthOf(rack) {
+    const d = rack && parseInt(rack.depth, 10);
+    return Number.isInteger(d) ? Math.max(1, Math.min(RACK_DEPTH_MAX, d)) : 1;
+  }
+
+  async function createRack({ name, subtitle, level, position, depth }) {
     const user = fbAuth().currentUser;
     if (!user) { console.warn("[createRack] no user"); return null; }
     const ts = firebase.firestore.FieldValue.serverTimestamp();
@@ -25697,6 +25891,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       createdAt: ts,
       lastUpdate: ts
     };
+    // Only written when the shelf really is deeper than one spool: a depth-1
+    // rack stays byte-for-byte the document it would have been before.
+    const d = Math.max(1, Math.min(RACK_DEPTH_MAX, parseInt(depth, 10) || 1));
+    if (d > 1) payload.depth = d;
     console.log(`[createRack] writing to users/${user.uid}/racks/`, payload);
     const doc = await fbDb().collection("users").doc(user.uid)
       .collection("racks").add(payload);
@@ -25721,13 +25919,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // legacy flat and nested rack schemas) so the query stays schema-agnostic.
     const newLevel = fields.level;
     const newPos   = fields.position;
-    if (newLevel != null || newPos != null) {
+    const newDepth = fields.depth;
+    if (newLevel != null || newPos != null || newDepth != null) {
       let freed = 0;
       state.rows.forEach(row => {
         if (row.rackId !== rackId || row.deleted) return;
         const oobLevel = (newLevel != null && Number.isInteger(row.rackLevel) && row.rackLevel >= newLevel);
         const oobPos   = (newPos   != null && Number.isInteger(row.rackPos)   && row.rackPos   >= newPos);
-        if (oobLevel || oobPos) {
+        // Same rule on the third axis: shelves that lose their back rows send
+        // whatever stood there back to the unranked panel.
+        const oobDepth = (newDepth != null && Number.isInteger(row.rackDepth)  && row.rackDepth  >= newDepth);
+        if (oobLevel || oobPos || oobDepth) {
           batch.update(invRef.doc(row.spoolId), { rack: null });
           freed++;
         }
@@ -25807,7 +26009,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Locked slots are protected from Clear all — a spool in a locked slot can
     // only be removed by deleting the spool itself.
     const targets = state.rows.filter(r =>
-      r.rackId === rackId && !r.deleted && !isSlotLocked(rackId, r.rackLevel, r.rackPos)
+      r.rackId === rackId && !r.deleted && !isSlotLocked(rackId, r.rackLevel, r.rackPos, r.rackDepth)
     );
     if (!targets.length) return 0;
     const batch = fbDb().batch();
@@ -25868,7 +26070,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // slot is already occupied (in a single Firestore batch for atomicity).
   // Twin pairs (linked RFID tags) are written together so both docs stay
   // in sync.
-  async function assignSpoolToSlot(spoolId, rackId, level, position) {
+  //
+  // `depth` is left out of the written coordinate when it is 0 (the front row),
+  // so placing a spool on a normal shelf produces exactly the document shape it
+  // produced before shelves had a depth — nothing to migrate, nothing to clean.
+  function _rackCoord(id, level, position, depth) {
+    const c = { id, level, position };
+    if (Number.isInteger(depth) && depth > 0) c.depth = depth;
+    return c;
+  }
+  // `depth` is the third coordinate (0 = front row). It defaults to 0 so every
+  // existing caller keeps placing on the front row without being touched.
+  async function assignSpoolToSlot(spoolId, rackId, level, position, depth = 0) {
     const user = fbAuth().currentUser;
     if (!user) return;
     const invRef = fbDb().collection("users").doc(user.uid).collection("inventory");
@@ -25877,6 +26090,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Find any spool currently in the target slot
     const occupant = state.rows.find(r =>
       !r.deleted && r.rackId === rackId && r.rackLevel === level && r.rackPos === position
+      && r.rackDepth === depth
       && r.spoolId !== spoolId
     );
     // Where the moved spool is coming from (may be null = unranked)
@@ -25894,14 +26108,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (occupant && moving && moving.rackId) {
       // Swap: occupant moves to the moving spool's previous slot
       writeWithTwin(occupant, {
-        rack: { id: moving.rackId, level: moving.rackLevel, position: moving.rackPos }
+        rack: _rackCoord(moving.rackId, moving.rackLevel, moving.rackPos, moving.rackDepth)
       });
     } else if (occupant) {
       // Coming from unranked → push the occupant out as unranked
       writeWithTwin(occupant, { rack: null });
     }
     // Place the new spool into the target slot (mirror to twin if any)
-    writeWithTwin(moving, { rack: { id: rackId, level, position } }, spoolId);
+    writeWithTwin(moving, { rack: _rackCoord(rackId, level, position, depth) }, spoolId);
     // Tag this spool for the next render — bounce-in animation
     _justPlacedSpools.add(spoolId);
     await batch.commit();
@@ -25930,7 +26144,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Inner HTML for a chip / filled slot — uses colorBg(row) to support any
   // color style (mono / bicolor / tricolor / rainbow / conic_gradient) and
   // overlays a fill level matching the remaining weight.
-  function slotFillInnerHTML(row) {
+  function slotFillInnerHTML(row, solid) {
+    // A back row is only ever seen as the strip peeking above the row in front
+    // of it — and the weight bar is anchored to the BOTTOM of the slot, so on a
+    // back row it is exactly the part you cannot see. Painting those tiles as a
+    // solid colour is what makes the depth readable at all: the visible sliver
+    // carries the filament's colour instead of an empty grey band. The front
+    // row keeps the weight bar, which is where the useful reading is.
+    if (solid) return `<div class="rp-fill rp-fill--full" style="background:${colorBg(row)}"></div>`;
     const cap = row.capacity || 1000;
     const cur = row.weightAvailable != null ? row.weightAvailable : 0;
     const pct = Math.max(0, Math.min(100, Math.round((cur / cap) * 100)));
@@ -25957,6 +26178,63 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       : "";
     return `${base}<img class="rp-photo" src="${esc(src)}" loading="lazy" alt=""${fb} />`;
   }
+  /* ── Depth spacing — a personal view preference ─────────────────────────
+     How far the rows behind are pushed up and sideways. It changes how the
+     racks are DRAWN and nothing else, so it is stored like the other view
+     settings (sort order, panel widths) rather than on the rack documents:
+     it is per person and per machine, never shared with a friend looking at
+     the same inventory. The values are for a 32 px tile; picture view scales
+     them by tile size in CSS so one setting stays right in both modes. */
+  const RACK_DEPTH_OFFSET_KEY = "tigertag.rack.depthOffset";
+  const RACK_DEPTH_OFFSET_DEFAULT = { zy: 34, zx: 14 };
+  function _rackDepthOffset() {
+    try {
+      const v = JSON.parse(localStorage.getItem(RACK_DEPTH_OFFSET_KEY) || "null");
+      if (v && Number.isFinite(v.zy) && Number.isFinite(v.zx)) {
+        return {
+          zy: Math.max(12, Math.min(52, v.zy)),
+          zx: Math.max(-30, Math.min(30, v.zx)),
+        };
+      }
+    } catch (_) {}
+    return { ...RACK_DEPTH_OFFSET_DEFAULT };
+  }
+  function _saveRackDepthOffset(next) {
+    // 1. localStorage — read synchronously on the very first paint, before any
+    //    document has arrived, so the racks never draw at the wrong spacing and
+    //    then jump.
+    try { localStorage.setItem(RACK_DEPTH_OFFSET_KEY, JSON.stringify(next)); } catch (_) {}
+    /* 2. users/{uid}.studioRackDepthOffset — beside `studioTheme`, `vatCountry`
+       and `priceInputMode`, where this app's own settings live. NOT `prefs/app`:
+       that document is shared with the mobile app, which has no rack plan, and
+       the theme was kept out of it for the same reason. It rides along with
+       `syncUserDoc`'s existing read at boot rather than costing a second fetch,
+       and users/{uid} is owner-only with a blacklist write rule (only `roles`
+       and `tier` are refused), so this needs no rules change. */
+    const _u = fbAuth().currentUser;
+    if (_u && _u.uid === state.activeAccountId) {
+      fbDb().collection("users").doc(_u.uid)
+        .set({ studioRackDepthOffset: { zy: next.zy, zx: next.zx } }, { merge: true })
+        .catch(err => console.warn("[Firestore] saveRackDepthOffset:", err.message));
+    }
+    _applyRackDepthOffset();
+    // Spacing the rows apart makes every deep rack taller, so the board is laid
+    // out again from the stored positions — the container's own height depends
+    // on them. Nothing is re-arranged.
+    scheduleMasonryRelayout();
+  }
+  // Written onto the view root as two custom properties — the perspective rules
+  // read them, so changing the setting repaints without re-rendering anything.
+  function _applyRackDepthOffset() {
+    const el = $("invRackView");
+    if (!el) return;
+    const { zy, zx } = _rackDepthOffset();
+    el.style.setProperty("--rk-zy", zy + "px");
+    el.style.setProperty("--rk-zx", zx + "px");
+    // Leaning left has to flip the scale origin too, or the back rows drift.
+    el.classList.toggle("rk-zx-neg", zx < 0);
+  }
+
   // Which slot-content view is active: "fill" (colour bar, default) | "photo".
   // A PUBLIC friend's inventory is always shown as the picture-mode showcase
   // (forced, not switchable) — never touches the owner's own saved preference.
@@ -25966,39 +26244,63 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   // Dispatch a slot's inner HTML by the active view. Used by BOTH renderRackView
   // and _computeRackSnapshot so surgical diffs stay coherent with what's drawn.
-  function _slotInnerHTML(row) {
-    return _rackSlotView() === "photo" ? slotPhotoInnerHTML(row) : slotFillInnerHTML(row);
+  // `back` = this slot is not the front row of its shelf. Picture view already
+  // paints a full solid tile, so it needs no special case and the illustration
+  // shows at every depth — the two view modes stay consistent.
+  function _slotInnerHTML(row, back) {
+    return _rackSlotView() === "photo" ? slotPhotoInnerHTML(row) : slotFillInnerHTML(row, back === true);
   }
 
   // Cache: which spool is currently in (rackId, level, position)?
-  function findSpoolInSlot(rackId, level, position) {
+  function findSpoolInSlot(rackId, level, position, depth = 0) {
     return state.rows.find(r =>
       !r.deleted && r.rackId === rackId &&
-      r.rackLevel === level && r.rackPos === position
+      r.rackLevel === level && r.rackPos === position && r.rackDepth === depth
     );
   }
 
   /* ── Slot locking ───────────────────────────────────────────────────────
      A locked slot blocks drag-out (if filled) and drag-in (if empty).
      Stored as an array of "<level>:<position>" strings on the rack doc. */
-  function slotLockKey(level, position) { return `${level}:${position}`; }
-  function isSlotLocked(rackId, level, position) {
+  // Two key shapes coexist, on purpose and forever:
+  //   "level:position"        — written before shelves had a depth. It means
+  //                             "this column of the shelf is locked", i.e. every
+  //                             depth at that spot. Never rewritten.
+  //   "level:position:depth"  — what is written now, one slot exactly.
+  function slotLockKey(level, position, depth = 0) { return `${level}:${position}:${depth}`; }
+  function isSlotLocked(rackId, level, position, depth = 0) {
     // Slot locks are a personal rack-management aid — irrelevant to a friend just
     // browsing someone else's Storage, so hide the padlock entirely in friend view.
     if (state.friendView) return false;
     const r = state.racks.find(x => x.id === rackId);
-    if (!r) return false;
-    return Array.isArray(r.lockedSlots)
-      && r.lockedSlots.includes(slotLockKey(level, position));
+    if (!r || !Array.isArray(r.lockedSlots)) return false;
+    return r.lockedSlots.includes(slotLockKey(level, position, depth))
+        || r.lockedSlots.includes(`${level}:${position}`);   // legacy: whole column
   }
-  async function toggleSlotLock(rackId, level, position) {
+  async function toggleSlotLock(rackId, level, position, depth = 0) {
     const user = fbAuth().currentUser;
     if (!user) return;
     const r = state.racks.find(x => x.id === rackId);
     if (!r) return;
-    const key = slotLockKey(level, position);
+    const key    = slotLockKey(level, position, depth);
+    const legacy = `${level}:${position}`;
     const cur = Array.isArray(r.lockedSlots) ? r.lockedSlots : [];
-    const next = cur.includes(key) ? cur.filter(k => k !== key) : [...cur, key];
+    let next;
+    if (cur.includes(key) || cur.includes(legacy)) {
+      // Unlocking. A legacy key locks the whole column, so it is replaced by
+      // explicit keys for the rows the user is NOT unlocking — otherwise
+      // unlocking the front row would silently free the ones behind it.
+      next = cur.filter(k => k !== key && k !== legacy);
+      if (cur.includes(legacy)) {
+        for (let d = 0; d < rackDepthOf(r); d++) {
+          if (d === depth) continue;
+          const k = slotLockKey(level, position, d);
+          if (!next.includes(k)) next.push(k);
+        }
+      }
+    } else {
+      next = [...cur, key];
+    }
     await fbDb().collection("users").doc(user.uid)
       .collection("racks").doc(rackId)
       .update({
@@ -26015,7 +26317,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const all = [];
     for (let lv = 0; lv < (r.level || 0); lv++) {
       for (let pos = 0; pos < (r.position || 0); pos++) {
-        all.push(slotLockKey(lv, pos));
+        for (let d = 0; d < rackDepthOf(r); d++) all.push(slotLockKey(lv, pos, d));
       }
     }
     await fbDb().collection("users").doc(user.uid)
@@ -26038,6 +26340,57 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Position a kebab menu against its anchor button. Uses fixed positioning so
   // the menu escapes the rack card's overflow + the racks-col flex layout.
   // Flips to the left if the button is too close to the right edge.
+  /* The plan is drawn inside a SCALED container, and a CSS transform makes its
+     element the containing block for anything `position: fixed` underneath it.
+     A menu measured in viewport coordinates therefore landed somewhere else
+     entirely — off by the zoom factor, which at 60 % put a menu belonging to
+     the right-hand rack under a rack three columns away — and it shrank with
+     the plan on top of that. Parking it on <body> while it is open gives it
+     back the viewport it is measured against, at its true size. */
+  let _rackMenuUnwatch = null;
+  function openRackMenu(menu, btn) {
+    if (!menu._rackHome) menu._rackHome = menu.parentNode;
+    document.body.appendChild(menu);
+    menu.hidden = false;
+    btn.setAttribute("aria-expanded", "true");
+    positionRackMenu(menu, btn);
+    /* Sitting on the viewport, the menu cannot follow its rack: scroll the
+       plan, pan it or zoom, and it stays hanging over whatever drifts under it
+       — still acting on the rack it was opened from. So any movement of the
+       view dismisses it, the way a native menu does.
+       `scroll` is watched in the CAPTURE phase because it does not bubble out
+       of the container that scrolls, and `pointerdown` catches the middle-drag
+       pan, which never produces a click for the click-away handler to see. */
+    const bye = e => {
+      /* The menu and its own kebab are not "movement": pressing an item must
+         reach it, and pressing the kebab again has to be the CLICK handler's
+         toggle — closing here first would have it read as shut and reopen. */
+      if (e && e.type === "pointerdown"
+          && e.target.closest?.(".rp-menu, .rp-rack-kebab")) return;
+      closeRackMenus();
+    };
+    document.addEventListener("scroll", bye, true);
+    document.addEventListener("pointerdown", bye, true);
+    window.addEventListener("wheel", bye, { capture: true, passive: true });
+    window.addEventListener("resize", bye);
+    _rackMenuUnwatch = () => {
+      document.removeEventListener("scroll", bye, true);
+      document.removeEventListener("pointerdown", bye, true);
+      window.removeEventListener("wheel", bye, { capture: true });
+      window.removeEventListener("resize", bye);
+      _rackMenuUnwatch = null;
+    };
+  }
+  function closeRackMenus() {
+    _rackMenuUnwatch?.();
+    document.querySelectorAll(".rp-menu").forEach(m => {
+      m.hidden = true;
+      // Home again, so a re-render disposes of it with its own card.
+      if (m._rackHome && m.parentNode !== m._rackHome) m._rackHome.appendChild(m);
+    });
+    document.querySelectorAll(".rp-rack-kebab[aria-expanded='true']")
+      .forEach(b => b.setAttribute("aria-expanded", "false"));
+  }
   function positionRackMenu(menu, anchorBtn) {
     const rect = anchorBtn.getBoundingClientRect();
     menu.style.position = "fixed";
@@ -26090,15 +26443,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     let placed = 0;
     outer:
     for (const r of targets) {
-      // Same order the grid renders in: top shelf (level 0 / "A") first, then down.
+      // Same order the grid renders in: top shelf (level 0 / "A") first, then
+      // down. Depth is the OUTER-most of the three so the whole front row fills
+      // before anything is buried behind it — putting a spool out of reach while
+      // the front of the shelf is still empty would be absurd.
+      const rDepth = rackDepthOf(r);
+      for (let d = 0; d < rDepth; d++) {
       for (let lv = 0; lv < r.level; lv++) {
         for (let pos = 0; pos < r.position; pos++) {
           if (!pool.length) break outer;
-          if (isSlotLocked(r.id, lv, pos)) continue;
-          if (findSpoolInSlot(r.id, lv, pos)) continue;
+          if (isSlotLocked(r.id, lv, pos, d)) continue;
+          if (findSpoolInSlot(r.id, lv, pos, d)) continue;
           const spool = pool.shift();
           const invCol = fbDb().collection("users").doc(user.uid).collection("inventory");
-          const fields = { rack: { id: r.id, level: lv, position: pos } };
+          const fields = { rack: _rackCoord(r.id, lv, pos, d) };
           batch.update(invCol.doc(spool.spoolId), fields);
           // Mirror the location to the linked twin tag, if any.
           const twinId = twinSpoolIdOf(spool);
@@ -26107,6 +26465,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           _justPlacedSpools.add(spool.spoolId);
           placed++;
         }
+      }
       }
     }
     if (!placed) return 0;
@@ -26236,7 +26595,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const targets = state.rows.filter(r =>
       !r.deleted &&
       r.rackId != null &&                                  // currently placed
-      !isSlotLocked(r.rackId, r.rackLevel, r.rackPos) &&   // a LOCKED slot keeps its spool even at 0g
+      !isSlotLocked(r.rackId, r.rackLevel, r.rackPos, r.rackDepth) &&   // a LOCKED slot keeps its spool even at 0g
       r.weightAvailable != null &&
       Number(r.weightAvailable) <= 0                       // depleted
     );
@@ -26274,15 +26633,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!spool || spool.deleted) return null;
     if (spool.rackId != null) return null;     // already placed
     for (const rack of state.racks) {
+      // Depth is the outer-most loop so nothing is buried behind while the front
+      // of the shelf is still free — same order as `autoFillEmptySlots`.
+      for (let d = 0; d < rackDepthOf(rack); d++) {
       for (let lv = (rack.level || 0) - 1; lv >= 0; lv--) {
         for (let pos = 0; pos < (rack.position || 0); pos++) {
-          if (isSlotLocked(rack.id, lv, pos)) continue;
-          if (findSpoolInSlot(rack.id, lv, pos)) continue;
+          if (isSlotLocked(rack.id, lv, pos, d)) continue;
+          if (findSpoolInSlot(rack.id, lv, pos, d)) continue;
           // Twin-aware write: when the spool has a paired twin tag we
           // mirror the location to the twin's doc inside one batch so
           // both stay synchronised.
           const invCol = fbDb().collection("users").doc(user.uid).collection("inventory");
-          const fields = { rack: { id: rack.id, level: lv, position: pos } };
+          const fields = { rack: _rackCoord(rack.id, lv, pos, d) };
           const twinId = twinSpoolIdOf(spool);
           if (twinId) {
             const batch = fbDb().batch();
@@ -26294,8 +26656,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           }
           // Tag for the bounce-in animation on next render
           _justPlacedSpools.add(spoolId);
-          return { rackId: rack.id, level: lv, position: pos, rackName: rack.name };
+          return { rackId: rack.id, level: lv, position: pos, depth: d, rackName: rack.name };
         }
+      }
       }
     }
     return null;
@@ -26303,6 +26666,416 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   // Greys out filled rack slots whose spool doesn't match the main search bar
   // (#searchInv) AND/OR the brand/material quick-filters.
+  /* ── Colour range filter ────────────────────────────────────────────────
+     "I need THAT orange." A hue window is laid over the rainbow bar in the
+     Storage header; spools whose colour falls inside it stay lit and the rest
+     fade, exactly like the search filter — the rack keeps its shape so you can
+     see WHERE the colour is, which is the whole point.
+
+     Nothing is stored: the hue is derived from the colour already on the spool,
+     so this is a display filter and it combines with the search and the quick
+     filters rather than replacing them.
+
+     Greys, whites and blacks have no meaningful hue — a near-neutral's hue is
+     numerically whatever rounding noise survived, so it would land anywhere on
+     the bar. They are pulled out of the rainbow entirely (below SAT_MIN) and
+     get their own three chips. */
+  const HUE_SAT_MIN = 15;      // % — below this a colour is a neutral, not a hue
+  // Two axes, two bars. The rainbow selects a HUE and wraps (red is at both
+  // ends of it); the greyscale selects a LIGHTNESS and does not (white and
+  // black are ends, not neighbours). Everything else about them is identical,
+  // which is why one piece of code drives both.
+  const HUE_AXIS = { span: 360, minWidth: 10, wrap: true };
+  const LUM_AXIS = { span: 100, minWidth: 8,  wrap: false };
+  const HUE_DEFAULT = { lo: 18, width: 40, active: false };
+  // Same on-screen width as the hue window, not the same number: the hue window
+  // is 40° of 360 (a ninth of its bar) and the rainbow is three times as wide,
+  // so a third of the greyscale bar is what actually looks the same. Starting it
+  // spanning the whole scale selected every neutral at once, which is a filter
+  // that has already given up.
+  const LUM_DEFAULT = { lo: 0,  width: 33, active: false };
+
+  function _hexToHsl(hex) {
+    if (!hex || typeof hex !== "string") return null;
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+    let h = 0;
+    if (d) {
+      if (mx === r) h = ((g - b) / d) % 6;
+      else if (mx === g) h = (b - r) / d + 2;
+      else h = (r - g) / d + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    const l = (mx + mn) / 2;
+    const sat = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+    return { h, s: sat * 100, l: l * 100 };
+  }
+  // A colour with (almost) no saturation has no usable hue — its hue value is
+  // whatever rounding noise survived, so it would land anywhere on the rainbow.
+  // Those go on the greyscale bar instead.
+  function _isNeutral(hsl) { return hsl.s < HUE_SAT_MIN; }
+  // The greyscale bar runs white → black, so a position on it is the INVERSE of
+  // lightness. Converting here keeps the bar and the window in the same units.
+  function _lumPos(hsl) { return 100 - hsl.l; }
+
+  function _hueFilter() {
+    // `axis` is which bar currently HOLDS the selector. There is only ever one
+    // on screen: it moves to whichever bar you touch, and the other goes back
+    // to being a plain gradient.
+    if (!state.hueFilter) state.hueFilter = { axis: "hue", hue: { ...HUE_DEFAULT }, lum: { ...LUM_DEFAULT } };
+    return state.hueFilter;
+  }
+  function _hueFilterOn() {
+    const f = _hueFilter();
+    return f.hue.active || f.lum.active;
+  }
+  // Stored as origin + width so a wrapping window stays ONE range instead of
+  // splitting into two disjoint halves at the seam.
+  function _inRange(win, v, axis) {
+    if (axis.wrap) return ((v - win.lo + axis.span) % axis.span) <= win.width;
+    return v >= win.lo && v <= win.lo + win.width;
+  }
+  // A spool matches on ANY of its colours — a bicolor is "that red" as much as
+  // it is "that white", and hiding it because only half of it matches would be
+  // the wrong answer when you are hunting for a colour on a shelf.
+  /* The colours a spool is actually PAINTED with, in the same precedence
+     `colorBg` uses to draw the swatch: the online colour list wins when it has
+     entries, and the chip's own colours are the fallback. Matching on every
+     field at once looked harmless but was not — a spool shown bright green from
+     its list often still carries a default white on the chip, so it answered to
+     "show me the whites" while looking nothing like one. The filter has to
+     match what you can see. */
+  /* Colours reach us in two shapes — `#RRGGBB` and `#RRGGBBAA` — and the second
+     is the COMMON one: 9 548 of the catalogue's 12 211 entries carry an alpha
+     channel. Anything that tests a colour has to go through here first, or it
+     silently disqualifies three quarters of the data. */
+  function _normHex(c) {
+    if (typeof c !== "string") return null;
+    const v = c.trim().replace(/^#/, "");
+    const hex6 = v.length === 8 ? v.slice(0, 6) : v;        // drop RRGGBBAA alpha
+    return /^[0-9a-fA-F]{6}$/.test(hex6) ? `#${hex6}` : null;
+  }
+  function _rowColors(r) {
+    const norm = _normHex;
+    const list = (r.colorList || []).map(norm).filter(Boolean);
+    if (list.length) return list;
+    // The chip always carries three colour slots. On a mono spool the two
+    // spare ones are not empty — they are zeroed, which reads back as a
+    // perfectly valid #000000. Taking them at face value made every single
+    // spool answer to "show me the blacks". Only the slots the spool's aspect
+    // actually uses count, which is the same rule `colorBg` paints by.
+    const asp = [r.aspect1, r.aspect2].map(a => (a || "").toLowerCase()).join(" ");
+    const used = /tricolor|tri color|tricolore|rainbow|multicolor/.test(asp) ? 3
+               : /bicolor|bi color|bicolore/.test(asp) ? 2
+               : 1;
+    return [r.colorHex, r.colorHex2, r.colorHex3].slice(0, used).map(norm).filter(Boolean);
+  }
+  /* The window tested against a plain list of colours. Spools carry up to three
+     slots; a product identity or a catalogue entry carries one — same rule
+     either way, so the colour you picked means the same thing in every view. */
+  function _colorsMatchHue(colors) {
+    const f = _hueFilter();
+    if (!_hueFilterOn()) return true;
+    for (const c of colors) {
+      const hsl = _hexToHsl(_normHex(c));
+      if (!hsl) continue;
+      if (_isNeutral(hsl)) {
+        if (f.lum.active && _inRange(f.lum, _lumPos(hsl), LUM_AXIS)) return true;
+      } else if (f.hue.active && _inRange(f.hue, hsl.h, HUE_AXIS)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function _rowMatchesHue(r) {
+    const f = _hueFilter();
+    if (!_hueFilterOn()) return true;
+    for (const c of _rowColors(r)) {
+      const hsl = _hexToHsl(c);
+      if (!hsl) continue;
+      if (_isNeutral(hsl)) {
+        if (f.lum.active && _inRange(f.lum, _lumPos(hsl), LUM_AXIS)) return true;
+      } else if (f.hue.active && _inRange(f.hue, hsl.h, HUE_AXIS)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /* The colour bars live in the page shell now, above every view, so they are
+     wired ONCE at boot instead of on every Storage render — and the window they
+     hold survives switching views, which is the point: you pick a colour and it
+     keeps meaning the same thing wherever you look for it. */
+  let _hueBarsWired = false;
+  function initHueBars() {
+    if (_hueBarsWired) return;
+    const _hueBar = $("rvHueBar"), _lumBar = $("rvLumBar");
+    _hueBarsWired = !!(_hueBar && _lumBar);
+    if (_hueBar && _lumBar) {
+      const f = _hueFilter();
+
+      /* The two bars are mutually exclusive: you are either hunting a HUE or a
+         SHADE OF GREY, never both at once. Touching one puts the other back to
+         sleep — a spool cannot be "that orange AND that grey", so letting both
+         run would mean the union of two unrelated searches, which reads as a
+         filter that stopped working. */
+      const bars = [];
+      const soloise = name => {
+        f.axis = name;
+        bars.forEach(b => { if (b.name !== name) b.win.active = false; });
+        bars.forEach(b => b.redraw());
+      };
+
+      /* One selector, driven twice. `win` is the {lo,width,active} it owns and
+         `axis` says how wide the scale is, how thin the window may get, and
+         whether the two ends are neighbours (hues wrap at red; light and dark
+         do not). */
+      const wireRangeBar = (name, bar, segsId, lId, rId, win, axis) => {
+        const redraw = () => {
+          /* The selector is drawn only where it is actually doing something: on
+             the bar that holds it, and only while a filter is on. After "Show
+             all" the spectrums are bare — a marker sitting on a bar that filters
+             nothing reads as a filter you cannot turn off. Clicking anywhere on
+             a bar starts a selection there. */
+          const owns = f.axis === name && win.active;
+          bar.classList.toggle("rv-hue-bar--off", !owns);
+          /* Shown and hidden INLINE, not through the class. Twice today a
+             stylesheet rule lost to an inline style written elsewhere, and this
+             marker kept surviving on a bar that filters nothing. An inline
+             display is the one thing nothing can outrank, so the state of the
+             handles now follows the state of the selection with no cascade in
+             between. */
+          const lEl = $(lId), rEl = $(rId);
+          if (lEl) lEl.style.display = owns ? "block" : "none";
+          if (rEl) rEl.style.display = owns ? "block" : "none";
+          if (!owns) { $(segsId).innerHTML = ""; return; }
+          const pct = v => (v / axis.span) * 100;
+          const hiRaw = win.lo + win.width, wraps = axis.wrap && hiRaw > axis.span;
+          const sel = wraps ? [[win.lo, axis.span], [0, hiRaw - axis.span]] : [[win.lo, Math.min(hiRaw, axis.span)]];
+          /* No scrim over the rest of the bar. Veiling the unselected part means
+             the colours you are choosing FROM are not the colours themselves —
+             a picker that lies about its own spectrum. The window's outline says
+             what is selected; the bar stays true everywhere. */
+          const segs = $(segsId);
+          const parts = sel.filter(([x, y]) => y - x > 0);
+          /* PATCHED in place whenever the shape is unchanged — same number of
+             pieces — instead of thrown away and rebuilt. Two reasons: a drag
+             redraws on every pointer move, and a replaced element cannot
+             animate, so the wheel could never ease from one width to the next;
+             it would always snap. Only crossing red, which splits the window in
+             two, changes the piece count and rebuilds. */
+          if (segs.children.length !== parts.length) {
+            segs.innerHTML = "";
+            for (let i = 0; i < parts.length; i++) {
+              const el = document.createElement("div");
+              el.className = "rv-hue-sel";
+              /* Sized to the WHOLE bar and pushed left by the window's own
+                 offset: the bubble then shows exactly the slice of spectrum it
+                 covers, even though it is taller than the bar, and there is no
+                 second gradient to keep in step with the first. */
+              const g = document.createElement("span");
+              g.className = "rv-hue-sel-grad";
+              el.appendChild(g);
+              segs.appendChild(el);
+            }
+          }
+          parts.forEach(([x, y], i) => {
+            const el = segs.children[i];
+            const wrapSide = wraps ? (x === 0 ? "start" : "end") : null;
+            const w = pct(y - x);
+            el.style.left = pct(x) + "%";
+            el.style.width = w + "%";
+            el.style.borderLeft = ""; el.style.borderRight = ""; el.style.borderRadius = "";
+            if (wrapSide === "start") { el.style.borderLeft = "0"; el.style.borderRadius = "0 8px 8px 0"; }
+            if (wrapSide === "end")   { el.style.borderRight = "0"; el.style.borderRadius = "8px 0 0 8px"; }
+            const g = el.firstElementChild;
+            if (g) { g.style.width = (10000 / w) + "%"; g.style.left = (-pct(x) / w * 100) + "%"; }
+          });
+          $(lId).style.left = `${pct(win.lo)}%`;
+          $(rId).style.left = `${pct(axis.wrap ? hiRaw % axis.span : Math.min(hiRaw, axis.span))}%`;
+          bar.classList.toggle("is-idle", !win.active);
+        };
+        const apply = () => { redraw(); _onFilterChange(); };
+
+        const at = clientX => {
+          const b = bar.getBoundingClientRect();
+          return Math.min(axis.span, Math.max(0, (clientX - b.left) / b.width * axis.span));
+        };
+        // Widening from the left edge moves the origin and compensates the
+        // width, so the right edge stays put — and the window never collapses
+        // below the axis minimum, or it becomes impossible to grab again.
+        const dragLeft = v => {
+          if (!axis.wrap) {
+            const right = win.lo + win.width;
+            win.lo = Math.max(0, Math.min(v, right - axis.minWidth));
+            win.width = right - win.lo;
+            return;
+          }
+          const delta = ((win.lo - v + axis.span * 1.5) % axis.span) - axis.span / 2;
+          const w = Math.min(axis.span, Math.max(axis.minWidth, win.width + delta));
+          win.lo = (win.lo - (w - win.width) + axis.span) % axis.span;
+          win.width = w;
+        };
+        const dragRight = v => {
+          if (!axis.wrap) {
+            win.width = Math.max(axis.minWidth, Math.min(axis.span - win.lo, v - win.lo));
+            return;
+          }
+          const w = (v - win.lo + axis.span) % axis.span || axis.span;
+          // A jump of more than half the scale means the pointer crossed the
+          // origin: clamp to the end it went past instead of wrapping round.
+          if (Math.abs(w - win.width) > axis.span / 2) win.width = win.width > axis.span / 2 ? axis.span : axis.minWidth;
+          else win.width = Math.min(axis.span, Math.max(axis.minWidth, w));
+        };
+        const move = v => {
+          if (!axis.wrap) { win.lo = Math.max(0, Math.min(axis.span - win.width, v)); return; }
+          win.lo = (v + axis.span) % axis.span;
+        };
+
+        let drag = null;
+        bar.addEventListener("pointerdown", e => {
+          const v = at(e.clientX);
+          // Taking the selector from the other bar: drop the window where the
+          // click landed rather than wherever it happened to be left.
+          // Nothing on show — on this bar or at all — means the click starts a
+          // selection where it landed, not a grab at an invisible window.
+          if (f.axis !== name || !win.active) { move(v - win.width / 2); win.active = true; soloise(name); }
+          if (e.target.id === lId) drag = { mode: "left" };
+          else if (e.target.id === rId) drag = { mode: "right" };
+          else if (_inRange(win, v, axis)) drag = { mode: "move", grab: axis.wrap ? (v - win.lo + axis.span) % axis.span : v - win.lo };
+          else { move(v - win.width / 2); drag = { mode: "move", grab: win.width / 2 }; }
+          win.active = true;
+          soloise(name);
+          try { bar.setPointerCapture(e.pointerId); } catch (_) {}
+          clearTimeout(bar._easeT); bar.classList.remove("rv-hue-bar--eased");
+          /* The hand closes ON THE PRESS, not on the first move after it. The
+             cursor was only ever recomputed by the hover handler, so pressing
+             down left it as it was and it took a pixel of movement to catch up
+             — the grab looked like it had not registered. */
+          bar.style.cursor = drag.mode === "move" ? "grabbing" : "ew-resize";
+          apply();
+          e.preventDefault();
+        });
+        /* The grips stay out of sight until the pointer comes for one, and only
+           the NEAREST edge surfaces: on a narrow bubble both are within reach,
+           and two grips no longer say which one you are about to take. */
+        const EDGE_NEAR = 24;   // px
+        const hover = x => {
+          const b = bar.getBoundingClientRect();
+          const px = v => b.left + (v / axis.span) * b.width;
+          const hiRaw = win.lo + win.width, wraps = axis.wrap && hiRaw > axis.span;
+          const dl = Math.abs(x - px(win.lo));
+          const dr = Math.abs(x - px(wraps ? hiRaw - axis.span : Math.min(hiRaw, axis.span)));
+          const near = win.active && Math.min(dl, dr) < EDGE_NEAR;
+          bar.classList.toggle("near-l", near && dl <= dr);
+          bar.classList.toggle("near-r", near && dr <  dl);
+          bar.style.cursor = near ? "ew-resize"
+            : (win.active && _inRange(win, at(x), axis)) ? "grab" : "crosshair";
+        };
+        bar.addEventListener("pointerleave", () => bar.classList.remove("near-l", "near-r"));
+        /* Widening without having to catch a 2 px edge. Storage zooms on the
+           wheel, so this one is claimed ONLY with the pointer inside the
+           bubble — everywhere else the wheel still belongs to the view. */
+        bar.addEventListener("wheel", e => {
+          if (!win.active || !_inRange(win, at(e.clientX), axis)) return;
+          e.preventDefault(); e.stopPropagation();
+          const step = axis.span * 0.014 * (e.deltaY > 0 ? -1 : 1);
+          /* Grown around its own centre: the colour you aimed at stays under
+             the bubble, only the tolerance around it changes. */
+          const mid = win.lo + win.width / 2;
+          const w = Math.max(axis.minWidth, Math.min(axis.span, win.width + step));
+          let lo = mid - w / 2;
+          if (axis.wrap) lo = ((lo % axis.span) + axis.span) % axis.span;
+          else lo = Math.max(0, Math.min(axis.span - w, lo));
+          win.lo = lo; win.width = w;
+          /* Eased ONLY for the wheel. The same properties are rewritten on every
+             frame of a drag, where a transition would trail the cursor; the
+             class is lifted as soon as the notches stop, and on pointerdown. */
+          bar.classList.add("rv-hue-bar--eased");
+          clearTimeout(bar._easeT);
+          bar._easeT = setTimeout(() => bar.classList.remove("rv-hue-bar--eased"), 260);
+          apply(); hover(e.clientX);
+        }, { passive: false });
+        bar.addEventListener("pointermove", e => {
+          if (!drag) { hover(e.clientX); return; }
+          const v = at(e.clientX);
+          if (drag.mode === "left") dragLeft(v);
+          else if (drag.mode === "right") dragRight(v);
+          else move(v - drag.grab);
+          apply();
+        });
+        // Released: the hand opens again, or goes back to the crosshair — decided
+        // by where the pointer actually is, not by what it was doing.
+        const end = e => { drag = null; if (e && e.clientX != null) hover(e.clientX); };
+        bar.addEventListener("pointerup", end);
+        bar.addEventListener("pointercancel", end);
+        /* Double-click INSIDE the bubble puts that bar back to sleep. Dropping a
+           colour constraint is the one filter you undo constantly while hunting,
+           and the reset button clears everything else with it — this leaves the
+           search and the selectors exactly where they were. */
+        bar.addEventListener("dblclick", e => {
+          if (!win.active || !_inRange(win, at(e.clientX), axis)) return;
+          win.active = false;
+          drag = null;                                   // the clicks started a move
+          bar.classList.remove("near-l", "near-r");
+          apply();
+        });
+        // Keyboard: each edge widens or narrows from its own side.
+        for (const [id, mode] of [[lId, "left"], [rId, "right"]]) {
+          $(id)?.addEventListener("keydown", e => {
+            const step = (e.shiftKey ? 15 : 5) * (axis.span / 360);
+            const dir = e.key === "ArrowLeft" ? -1 : e.key === "ArrowRight" ? 1 : 0;
+            if (!dir) return;
+            if (mode === "left") dragLeft(win.lo + dir * step);
+            else dragRight(win.lo + win.width + dir * step);
+            win.active = true; soloise(name); e.preventDefault(); apply();
+          });
+        }
+        bars.push({ name, win, redraw });
+        return redraw;
+      };
+
+      const redrawHue = wireRangeBar("hue", _hueBar, "rvHueSegs", "rvHueL", "rvHueR", f.hue, HUE_AXIS);
+      const redrawLum = wireRangeBar("lum", _lumBar, "rvLumSegs", "rvLumL", "rvLumR", f.lum, LUM_AXIS);
+      /* Puts back EVERYTHING, not just the colour window: the search box, the
+         brand / material / aspect / type / tag selectors, the ❤ ★ flags and, in
+         the Search views, the catalogue's own selectors. The button sits at the
+         end of the filter row and reads as that row's reset — clearing only the
+         two bars would leave a brand or a half-typed search quietly still on,
+         which is exactly the state that makes a filter look broken. */
+      $("rvHueReset")?.addEventListener("click", e => {
+        // Nothing on = nothing to undo. The button already says so by staying
+        // dim; acting anyway would spin it for a click that changed nothing.
+        if (!_anyFilterActive()) return;
+        /* One turn of the glyph as the receipt. With every filter dropping at
+           once the view can look barely different — a search that matched
+           everything, say — and without a visible acknowledgement the click
+           reads as ignored. */
+        const btn = e.currentTarget;
+        btn.classList.remove("is-spinning");
+        void btn.offsetWidth;                 // restart the animation on a repeat click
+        btn.classList.add("is-spinning");
+        btn.addEventListener("animationend", () => btn.classList.remove("is-spinning"), { once: true });
+        _soundFiltersCleared();
+        Object.assign(f.hue, HUE_DEFAULT);
+        Object.assign(f.lum, LUM_DEFAULT);
+        f.axis = "hue";            // the selector goes home with everything else
+        _clearSearchFilters();
+        // The Search views browse the catalogue, not the user's stock, so they
+        // carry their own selectors. The sort order is not a filter and stays.
+        ["cvType", "cvBrand", "cvMaterial", "cvSeries"].forEach(id => {
+          const sel = $(id);
+          if (sel) { sel.value = ""; sel.classList.remove("is-active"); sel._cselRefresh?.(); }
+        });
+        redrawHue(); redrawLum(); _onFilterChange();
+      });
+      redrawHue(); redrawLum();
+    }
+  }
+
   function applyRackSearchDim() {
     const q = (state.search || "").trim().toLowerCase();
     const brand = state.brandFilter || "";
@@ -26312,7 +27085,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const locate = state.locateUid ? String(state.locateUid).toLowerCase() : "";
     const tag = (state.tagFilter || "").toLowerCase();
     const aspect = state.aspectFilter || "";
-    const noFilter = !q && !brand && !material && !aspect && !tag && !locate;
+    const hueOn = _hueFilterOn();
+    const noFilter = !q && !brand && !material && !aspect && !tag && !locate && !hueOn;
     document.querySelectorAll("#invRackView .rp-slot--filled").forEach(el => {
       if (noFilter) {
         el.classList.remove("rp-dim");
@@ -26331,7 +27105,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const matchTag = !tag || (r.tags || []).some(t => String(t).toLowerCase() === tag);
       const matchLocate = !locate
         || String(r.uid).toLowerCase() === locate || String(r.spoolId).toLowerCase() === locate;
-      const matches = matchSearch && matchBrand && matchMaterial && matchType && matchAspect && matchTag && matchLocate;
+      const matchHue = !hueOn || _rowMatchesHue(r);
+      const matches = matchSearch && matchBrand && matchMaterial && matchType && matchAspect && matchTag && matchLocate && matchHue;
       el.classList.toggle("rp-dim", !matches);
       // Positive match indicator on the slot CONTAINER (border + glow) —
       // makes depleted spools (whose .rp-fill is invisible at 0%) still
@@ -26393,12 +27168,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Collapse twin pairs (one physical spool, two linked tags) so it shows
     // and counts once — not twice — in the unranked list, its count, and the
     // auto-fill pool.
-    // Empty (0 g) spools sink to the bottom: the rolls with filament left are
-    // the ones the user actually needs to rack, so surface those first. The
-    // sort is STABLE, so each group keeps its existing order — and the auto-fill
-    // pool is unaffected (it drops empties and the non-empty order is preserved).
+    /* Empty (0 g) spools sink to the bottom: the rolls with filament left are
+       the ones the user actually needs to rack, so surface those first.
+       Within each group, NEWEST FIRST. A spool lands here the moment it is
+       added, and what you just scanned is what you are about to put away — so
+       it belongs at the top rather than behind everything you racked months
+       ago. The date is the one the card itself shows ("Added 5mo ago"). Despite
+       its name `chipTimestamp` is NOT chip-only: a chipless TigerData spool
+       carries the same `timestamp` field, written when it is created — so every
+       spool here has one and the order is never arbitrary. The auto-fill pool is
+       unaffected either way: it drops empties and does not care about order. */
+    const addedAt = r => chipTsToMs(r.chipTimestamp) || 0;
     return deduplicateTwins(rows)
-      .sort((a, b) => (isEmptyRow(a) ? 1 : 0) - (isEmptyRow(b) ? 1 : 0));
+      .sort((a, b) => (isEmptyRow(a) ? 1 : 0) - (isEmptyRow(b) ? 1 : 0)
+                   || addedAt(b) - addedAt(a));
   }
 
   // Backwards-compat alias — older code paths called renderRacksList()
@@ -26438,13 +27221,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      match the tallest column so the page reflows correctly.
      Re-runs on:
        - every renderRackView (after innerHTML)
-       - window resize (debounced)
-       - ResizeObserver on the container (panel toggles, etc.)
+     Since the plan landed this is no longer the view's layout: it runs only for
+     an inventory that has never been arranged, and behind the explicit "Tidy up"
+     button. Nothing else may re-pack — an event that reorganises what the user
+     placed is a bug, however well meant.
      Skyline = sorted array of {x, end, y} segments representing the current
      bottom of every reserved horizontal interval.  */
-  let _masonryRO = null;
   let _masonryResizeTimer = null;
-  let _masonryLastWidth = 0;
   function layoutRacksMasonry() {
     const container = document.querySelector("#invRackView .rp-racks-col");
     if (!container) return;
@@ -26529,9 +27312,330 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     container.style.height = totalHeight + "px";
   }
+  /* ── The plan: racks placed by hand ─────────────────────────────────────
+     The masonry above packs racks as tightly as it can, in the order they were
+     created. That is a good default and a poor map: a workshop has a left wall
+     and a right wall, and the rack by the door is not "the third one". So a
+     rack can carry `bento: {x, y}` — where the user put it, in 24 px cells —
+     and the view honours it.
+
+     What is NOT stored is a width or a height: a rack's block is exactly as big
+     as the rack inside it. Dragging a corner therefore edits the RACK (adds a
+     shelf, adds a column), not a decorative box around it, and the block can
+     never lie about what it holds. */
+  const PLAN_CELL = 24;
+  // Racks whose first position is being written, so a re-render mid-flight does
+  // not queue the same write twice.
+  const _planAdopting = new Set();
+  let _planEdit = false;
+  let _planSelected = null;
+  /* Zoom is a plain view setting. It started as an editing aid — a plan bigger
+     than the window gives you nowhere to aim a rack — but stepping back to see
+     the whole workshop at once is just as useful when you are only looking for
+     a spool. Kept per machine, like the other view preferences. */
+  // 30 % is the floor: below it a rack is a smudge — you can see where things
+  // are but no longer what they hold, which is not a view of anything.
+  const PLAN_ZOOM_MIN = 30, PLAN_ZOOM_MAX = 200, PLAN_ZOOM_STEP = 10;   // percent
+  const PLAN_ZOOM_KEY = "tigertag.rack.planZoom";
+  const _clampZoom = pc => Math.max(PLAN_ZOOM_MIN, Math.min(PLAN_ZOOM_MAX, Math.round(pc)));
+  function _loadPlanZoom() {
+    const v = parseFloat(localStorage.getItem(PLAN_ZOOM_KEY));
+    return Number.isFinite(v) ? _clampZoom(v * 100) / 100 : 1;
+  }
+  let _planZoom = _loadPlanZoom();
+  /* True while the board is being panned with the wheel button. A wheel that is
+     being pressed still turns a little under the thumb, and every one of those
+     stray notches was landing on the zoom — the view crept in or out on its own
+     for as long as the button was held. */
+  let _planPanning = false;
+
+  /* Where a rack sits on the plan, in PIXELS from the top-left of the board.
+
+     Pixels rather than grid cells because racks snap to each OTHER — flush
+     against a neighbour's edge, or aligned with it — and a neighbour's edge
+     almost never falls on a 24 px line. The grid is still there as a fallback
+     magnet, it just is not the unit.
+
+     `plan` is the field; `bento` is what the first version wrote, in cells, and
+     is read as a fallback so nobody's arrangement is lost. Only `plan` is
+     written from now on — no migration, the old field simply stops being used. */
+  /* Stacking order, like layers in a drawing app: the rack you moved last sits
+     in front of whatever it covers. Stored with the position because it IS part
+     of where a rack sits — two racks overlapping and no way to say which one is
+     on top would make the plan unreadable. */
+  function rackPlanZ(r) {
+    const z = r && r.plan && r.plan.z;
+    return Number.isFinite(z) ? z : 0;
+  }
+  function nextPlanZ() {
+    return state.racks.reduce((m, r) => Math.max(m, rackPlanZ(r)), 0) + 1;
+  }
+
+  function rackPlanPos(r) {
+    const p = r && r.plan;
+    if (p && Number.isFinite(p.x) && Number.isFinite(p.y)) {
+      return { x: Math.max(0, Math.round(p.x)), y: Math.max(0, Math.round(p.y)) };
+    }
+    const b = r && r.bento;
+    if (b && Number.isFinite(b.x) && Number.isFinite(b.y)) {
+      return { x: Math.max(0, Math.round(b.x)) * PLAN_CELL, y: Math.max(0, Math.round(b.y)) * PLAN_CELL };
+    }
+    return null;
+  }
+  // The plan is opt-in: until the user has arranged something, the masonry runs
+  // and nothing about the view changes.
+  function planInUse() { return state.racks.some(r => rackPlanPos(r)); }
+  function _planContainer() { return document.querySelector("#invRackView .rp-racks-col"); }
+
+  /* Places every rack at its own coordinates. Racks without any (a new one, or
+     one created on another machine before the plan existed) are dropped below
+     the arrangement rather than on top of it. */
+  function layoutRacksPlan() {
+    const container = _planContainer();
+    if (!container) return;
+    container.style.position = "relative";
+    let bottom = 0, placedRight = 0;
+    const orphans = [];
+    Array.from(container.children).forEach(el => {
+      const id = el.dataset.rackId;
+      const r = id ? state.racks.find(x => x.id === id) : null;
+      const pos = r ? rackPlanPos(r) : null;
+      el.style.position = "absolute";
+      if (!pos) { orphans.push(el); return; }
+      el.style.left = pos.x + "px";
+      el.style.top  = pos.y + "px";
+      bottom = Math.max(bottom, pos.y + el.offsetHeight);
+      placedRight = Math.max(placedRight, pos.x + el.offsetWidth);
+    });
+    /* Anything unplaced — a rack just created, or one made on another machine —
+       goes in a row underneath, and is then GIVEN that place for good. Leaving it
+       computed on the fly meant its spot depended on the sizes of everything else
+       at that instant, so it wandered whenever the view changed. A rack's place
+       has to be data like any other. The "+ Rack" tile has no id and stays
+       computed, which is correct: it is furniture of the view, not of the plan. */
+    let x = 0;
+    const y = bottom + (bottom ? 14 : 0);
+    orphans.forEach(el => {
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      const id = el.dataset.rackId;
+      if (id && !_planAdopting.has(id)) {
+        _planAdopting.add(id);
+        saveRackPlanPos(id, x, y).finally(() => _planAdopting.delete(id));
+      }
+      x += el.offsetWidth + 14;
+      placedRight = Math.max(placedRight, x);
+      bottom = Math.max(bottom, y + el.offsetHeight);
+    });
+    // The transform is visual only — offsets and footprints stay in plan units,
+    // so nothing downstream has to know about the zoom. The height is scaled by
+    // hand because a transform does not change layout, and the scroll area would
+    // otherwise keep a full-size empty tail below the racks.
+    /* The stored z is a counter that only grows; what goes on the elements is a
+       compact 1..N, so a rack can never climb above the drag layer or the
+       alignment guides no matter how many times it has been moved. */
+    Array.from(container.children)
+      .filter(el => el.dataset.rackId)
+      .map(el => ({ el, z: rackPlanZ(state.racks.find(v => v.id === el.dataset.rackId)) }))
+      .sort((a, b) => a.z - b.z)
+      .forEach((it, i) => { it.el.style.zIndex = String(i + 1); });
+
+    // The grid lives on the scroll area and needs to know the scale to keep its
+    // mesh on the snap step; below half size it drops to major lines only.
+    const view = $("invRackView");
+    if (view) {
+      view.style.setProperty("--plan-z", String(_planZoom));
+      view.classList.toggle("is-plan-coarse", _planZoom < 0.5);
+    }
+    container.style.transformOrigin = "0 0";
+    container.style.transform = _planZoom === 1 ? "" : `scale(${_planZoom})`;
+    container.style.height = Math.ceil(bottom * _planZoom) + "px";
+    /* The width has to be declared too, always. Absolutely-positioned children
+       give their container no width of its own, and a transform tells layout
+       nothing — so without this the scroll area believes the plan fits and
+       `scrollLeft` simply cannot move. That is what stopped the board from
+       panning sideways. Never narrower than the viewport, or the racks would be
+       squeezed into a column again. */
+    const avail = container.parentElement ? container.parentElement.clientWidth : 0;
+    container.style.width = Math.max(avail, Math.ceil(placedRight * _planZoom)) + "px";
+  }
+
+  /* Which layout runs. Once the user has arranged anything, the plan is the
+     layout — full stop.
+
+     There used to be a "the window is too narrow, fall back to the packer" rule
+     here, from before the board could be panned and zoomed. It had to go: the
+     column's own width is now something the plan SETS, so the test was reading
+     back its own output, and a zoom step could drop it under the threshold. The
+     packer then re-placed every rack, the next render put them back, and because
+     cards animate their position you saw the whole plan flash through another
+     arrangement on every notch of the wheel. A small window is navigable now —
+     that is what the panning and the zoom are for. */
+  function layoutRacks() {
+    const container = _planContainer();
+    if (!container) return;
+    if (planInUse()) layoutRacksPlan();
+    else layoutRacksMasonry();
+  }
+
+  /* Persist a rack's place on the plan. Only `bento` is written, so
+     `updateRack`'s shrink-orphaning pass — which keys off level/position/depth —
+     stays out of the way. */
+  async function saveRackPlanPos(rackId, x, y, z = nextPlanZ()) {
+    const r = state.racks.find(v => v.id === rackId);
+    if (r) r.plan = { x, y, z };                      // optimistic: no render wait
+    try { await updateRack(rackId, { plan: { x, y, z } }); }
+    catch (e) { reportError("rack.plan.move", e); }
+  }
+
+  /* Entering the plan for the first time freezes whatever the masonry had
+     produced, so the user starts from the arrangement already on screen instead
+     of a pile in the corner. */
+  async function seedPlanFromMasonry() {
+    const container = _planContainer();
+    if (!container) return;
+    const writes = [];
+    let seedZ = 1;
+    Array.from(container.children).forEach(el => {
+      const id = el.dataset.rackId;
+      if (!id) return;
+      const x = Math.max(0, Math.round(parseFloat(el.style.left || "0")));
+      const y = Math.max(0, Math.round(parseFloat(el.style.top  || "0")));
+      const r = state.racks.find(v => v.id === id);
+      const z = seedZ++;
+      if (r) r.plan = { x, y, z };
+      writes.push(updateRack(id, { plan: { x, y, z } }));
+    });
+    try { await Promise.all(writes); } catch (e) { reportError("rack.plan.seed", e); }
+  }
+
+  /* The footprint of a rack's block, in cells. Measured, never estimated: the
+     block is exactly as big as the rack inside it. */
+  /* Sizes are kept in PIXELS while positions stay in cells. Rounding a rack's
+     width up to whole cells added up to 23 px of width that is not there, so two
+     racks sitting comfortably side by side already overlapped in the model — and
+     a one-cell push could never clear a phantom overlap. The rack could still be
+     dragged down, where gaps are larger, but never sideways: it behaved as if it
+     were stuck in a vertical lane. */
+  /* ── Snapping ─────────────────────────────────────────────────────────
+     Nothing on the plan ever moves except the rack you are holding. That is the
+     whole design: a rack's place is something you author, not a layout the app
+     computes, and every push wrote a neighbour's position to the database behind
+     your back. Four rounds of "why did that one move?" were the symptom.
+
+     What keeps free placement tidy instead is magnetism. While you drag, the
+     rack looks for a nearby edge to lock onto — flush against a neighbour, or
+     lined up with it — and falls back to the grid when there is nothing to grab.
+     The same trick every drawing tool uses, and nothing moves that you did not
+     move yourself. */
+  const PLAN_SNAP = 8;          // px — how close an edge has to be to grab
+
+  function _planFoot(el) {
+    return { w: el.offsetWidth, h: el.offsetHeight };
+  }
+  // Every rack on the board except the one being dragged, in pixels.
+  function planNeighbours(exceptId) {
+    const container = _planContainer();
+    if (!container) return [];
+    return Array.from(container.children)
+      .filter(el => el.dataset.rackId && el.dataset.rackId !== exceptId)
+      .map(el => {
+        const r = state.racks.find(v => v.id === el.dataset.rackId);
+        const p = r ? rackPlanPos(r) : null;
+        return p ? { id: el.dataset.rackId, ...p, ..._planFoot(el) } : null;
+      })
+      .filter(Boolean);
+  }
+  function planOverlaps(box, neighbours) {
+    return neighbours.some(o =>
+      box.x < o.x + o.w && box.x + box.w > o.x && box.y < o.y + o.h && box.y + box.h > o.y);
+  }
+
+  /* Returns the snapped position plus the guides to draw. Each axis is solved on
+     its own: a rack can be flush against one neighbour sideways while lining up
+     with a different one vertically, which is exactly how you tidy a shelf wall. */
+  function planSnap(x, y, w, h, neighbours) {
+    const pick = (want, cands) => {
+      let best = null;
+      for (const c of cands) {
+        const d = Math.abs(c.at - want);
+        if (d <= PLAN_SNAP && (!best || d < best.d)) best = { ...c, d };
+      }
+      return best;
+    };
+    const xc = [], yc = [];
+    for (const o of neighbours) {
+      // Sideways: flush to either side, or edges/centres lined up.
+      xc.push({ at: o.x + o.w,             guide: o.x + o.w });                 // my left  → its right
+      xc.push({ at: o.x - w,               guide: o.x });                       // my right → its left
+      xc.push({ at: o.x,                   guide: o.x });                       // left edges aligned
+      xc.push({ at: o.x + o.w - w,         guide: o.x + o.w });                 // right edges aligned
+      xc.push({ at: o.x + o.w / 2 - w / 2, guide: o.x + o.w / 2 });             // centred on it
+      yc.push({ at: o.y + o.h,             guide: o.y + o.h });
+      yc.push({ at: o.y - h,               guide: o.y });
+      yc.push({ at: o.y,                   guide: o.y });
+      yc.push({ at: o.y + o.h - h,         guide: o.y + o.h });
+      yc.push({ at: o.y + o.h / 2 - h / 2, guide: o.y + o.h / 2 });
+    }
+    const sx = pick(x, xc), sy = pick(y, yc);
+    // The grid only gets a say where no neighbour offered anything closer.
+    const gx = Math.round(x / PLAN_CELL) * PLAN_CELL;
+    const gy = Math.round(y / PLAN_CELL) * PLAN_CELL;
+    return {
+      x: Math.max(0, sx ? Math.round(sx.at) : (Math.abs(gx - x) <= PLAN_SNAP ? gx : Math.round(x))),
+      y: Math.max(0, sy ? Math.round(sy.at) : (Math.abs(gy - y) <= PLAN_SNAP ? gy : Math.round(y))),
+      guideX: sx ? sx.guide : null,
+      guideY: sy ? sy.guide : null,
+    };
+  }
+
+  // The thin lines that say WHY the rack just clicked into place.
+  function planDrawGuides(guideX, guideY) {
+    const container = _planContainer();
+    if (!container) return;
+    let layer = container.querySelector(".rp-plan-guides");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.className = "rp-plan-guides";
+      container.appendChild(layer);
+    }
+    layer.innerHTML =
+      (guideX != null ? `<i class="rp-plan-guide rp-plan-guide--v" style="left:${guideX}px"></i>` : "") +
+      (guideY != null ? `<i class="rp-plan-guide rp-plan-guide--h" style="top:${guideY}px"></i>` : "");
+  }
+  function planClearGuides() {
+    _planContainer()?.querySelector(".rp-plan-guides")?.remove();
+  }
+
+  /* The footprint a resize is heading for, drawn live. Until now the only thing
+     that moved while you dragged a grip was the "3 × 3" badge — the card kept
+     its old box until you let go, so you were sizing a rack blind and only found
+     out afterwards. Rebuilding the grid on every pixel would be wasteful and
+     would fight the drag; an outline says the same thing for nothing.
+     Coordinates are PLAN px (offsetWidth, like the cards), while the pitches are
+     measured on screen and therefore scaled — hence the division by the zoom. */
+  function planDrawGhost(x, y, w, h) {
+    const container = _planContainer(); if (!container) return;
+    let el = container.querySelector(".rp-plan-ghost");
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "rp-plan-ghost";
+      container.appendChild(el);
+    }
+    el.style.left = x + "px"; el.style.top = y + "px";
+    el.style.width = Math.max(0, w) + "px"; el.style.height = Math.max(0, h) + "px";
+  }
+  function planClearGhost() {
+    _planContainer()?.querySelector(".rp-plan-ghost")?.remove();
+  }
+
+  /* Re-applies the CURRENT layout after the window changes size. It goes through
+     the dispatcher on purpose: re-placing racks from their stored positions is
+     idempotent, re-packing them is not. Only "Tidy up" may re-pack, and only
+     because the user asked. */
   function scheduleMasonryRelayout() {
     clearTimeout(_masonryResizeTimer);
-    _masonryResizeTimer = setTimeout(layoutRacksMasonry, 60);
+    _masonryResizeTimer = setTimeout(layoutRacks, 60);
   }
   // One global window-resize listener (registered lazily, never duplicated)
   if (typeof window !== "undefined" && !window._racksMasonryWired) {
@@ -26543,32 +27647,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      write the new `order` index back to Firestore for every rack that shifted.
      The state.racks array is sorted client-side by `order` so the next snapshot
      re-render reflects the new positions. */
-  async function reorderRacks(srcId, targetId, beforeTarget) {
-    const user = fbAuth().currentUser;
-    if (!user) return;
-    const list = state.racks.slice();
-    const srcIdx = list.findIndex(r => r.id === srcId);
-    if (srcIdx === -1) return;
-    const [moved] = list.splice(srcIdx, 1);
-    let targetIdx = list.findIndex(r => r.id === targetId);
-    if (targetIdx === -1) return;
-    list.splice(beforeTarget ? targetIdx : targetIdx + 1, 0, moved);
-    // Racks whose index changed (capture BEFORE mutating .order).
-    const changed = list.filter((r, i) => r.order !== i);
-    // Optimistic: apply the new order + re-render instantly (snapshot confirms).
-    list.forEach((r, i) => { r.order = i; });
-    state.racks = list;
-    renderRackView();
-    // Persist only the changed ones, in one batch.
-    if (changed.length) {
-      const ref = fbDb().collection("users").doc(user.uid).collection("racks");
-      const batch = fbDb().batch();
-      const ts = firebase.firestore.FieldValue.serverTimestamp();
-      changed.forEach(r => batch.update(ref.doc(r.id), { order: r.order, lastUpdate: ts }));
-      await batch.commit();
-    }
-    console.log(`[reorderRacks] moved ${srcId} ${beforeTarget ? "before" : "after"} ${targetId} — wrote ${changed.length} order(s)`);
-  }
 
   /* ── Rich hover tooltip for filled rack slots ──────────────────────────
      A single floating element (#rackHoverTip) is reused for every slot. On
@@ -26733,12 +27811,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   let _lastRackViewSig = "";
   function _rackViewSig() {
     const racks = state.racks.map(r =>
-      `${r.id}:${r.name || ""}:${r.subtitle || ""}:${r.level || 0}x${r.position || 0}:${(r.lockedSlots || []).join(",")}`
+      `${r.id}:${r.name || ""}:${r.subtitle || ""}:${r.level || 0}x${r.position || 0}x${rackDepthOf(r)}:${(r.lockedSlots || []).join(",")}`
     ).join("|");
     const spools = state.rows
       .filter(r => !r.deleted)
       .map(r => [
-        r.spoolId, r.rackId || "", r.rackLevel ?? "", r.rackPos ?? "",
+        // rackDepth belongs here with the other two coordinates: without it a move
+        // that only changes which row of the shelf a spool sits on produces an
+        // identical signature, the early-return above fires, and the view keeps
+        // showing the spool where it was until some other change forces a render.
+        r.spoolId, r.rackId || "", r.rackLevel ?? "", r.rackPos ?? "", r.rackDepth ?? "",
         r.weightAvailable ?? "", r.capacity ?? "",
         r.colorHex || "", r.colorHex2 || "", r.colorHex3 || "",
         (r.colorList || []).join(","), r.colorType || "",
@@ -26750,6 +27832,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return [
       state.lang, state.friendView ? 1 : 0, _autoManageOn() ? 1 : 0,
       state.invLoading ? 1 : 0, state.racks.length, _rackSlotView(), racks, spools,
+      _planEdit ? 1 : 0,
+      state.racks.map(r => { const p = rackPlanPos(r); return p ? `${r.id}@${p.x},${p.y}z${rackPlanZ(r)}` : r.id; }).join(","),
     ].join("§");
   }
 
@@ -26765,8 +27849,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // slot patch would otherwise succeed as a no-op and skip the header rebuild —
     // the new value only appeared after leaving + re-entering the view.
     return state.racks.map(r =>
-      `${r.id}:${r.name || ""}:${r.subtitle || ""}:${r.level || 0}x${r.position || 0}:${(r.lockedSlots || []).join(",")}`
-    ).join("|");
+      `${r.id}:${r.name || ""}:${r.subtitle || ""}:${r.level || 0}x${r.position || 0}x${rackDepthOf(r)}:${(r.lockedSlots || []).join(",")}`
+    ).join("|")
+    // Plan editing adds grips and a grid to every card while changing not one
+    // slot — without it here the slot patcher would report "nothing to do" and
+    // return before the rebuild could happen.
+    + "|plan:" + (_planEdit ? 1 : 0);
   }
   // Map "rackId|level|pos" → { sid, fill } for every occupied slot, plus the
   // stored / unstored spoolId sets. Computed the SAME way renderRackView draws
@@ -26775,13 +27863,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const slotByKey = new Map();
     const storedSet = new Set();
     state.racks.forEach(rk => {
-      const lv = rk.level || 0, ps = rk.position || 0;
+      const lv = rk.level || 0, ps = rk.position || 0, dp = rackDepthOf(rk);
       for (let l = 0; l < lv; l++) {
         for (let p = 0; p < ps; p++) {
-          const occ = findSpoolInSlot(rk.id, l, p);
-          if (occ) {
-            slotByKey.set(`${rk.id}|${l}|${p}`, { sid: occ.spoolId, fill: _slotInnerHTML(occ) });
-            storedSet.add(occ.spoolId);
+          for (let d = 0; d < dp; d++) {
+            const occ = findSpoolInSlot(rk.id, l, p, d);
+            if (occ) {
+              slotByKey.set(`${rk.id}|${l}|${p}|${d}`, { sid: occ.spoolId, fill: _slotInnerHTML(occ, d > 0) });
+              storedSet.add(occ.spoolId);
+            }
           }
         }
       }
@@ -26819,9 +27909,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const p = prev.slotByKey.get(key);
       const n = next.slotByKey.get(key);
       if (p && n && p.sid === n.sid && p.fill === n.fill) continue; // unchanged
-      const [rid, lv, pos] = key.split("|");
+      const [rid, lv, pos, d] = key.split("|");
       const cell = list.querySelector(
-        `.rp-slot[data-rack="${CSS.escape(rid)}"][data-level="${lv}"][data-pos="${pos}"]`
+        `.rp-slot[data-rack="${CSS.escape(rid)}"][data-level="${lv}"][data-pos="${pos}"][data-depth="${d}"]`
       );
       if (!cell) return false; // DOM out of sync → safer to full-rebuild
       const locked = cell.classList.contains("rp-slot--locked");
@@ -26856,13 +27946,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     state.racks.forEach(rk => {
       const el = list.querySelector(`.rp-rack[data-rack-id="${CSS.escape(rk.id)}"] .rp-rack-count-num`);
       if (!el) return;
-      const lv = rk.level || 0, ps = rk.position || 0;
+      const lv = rk.level || 0, ps = rk.position || 0, dp = rackDepthOf(rk);
       let lockedEmpty = 0;
       (Array.isArray(rk.lockedSlots) ? rk.lockedSlots : []).forEach(k => {
-        const [kl, kp] = k.split(":").map(Number);
-        if (kl >= 0 && kl < lv && kp >= 0 && kp < ps && !next.slotByKey.has(`${rk.id}|${kl}|${kp}`)) lockedEmpty++;
+        const parts = k.split(":").map(Number);
+        const [kl, kp] = parts;
+        if (!(kl >= 0 && kl < lv && kp >= 0 && kp < ps)) return;
+        const depths = parts.length > 2
+          ? (parts[2] >= 0 && parts[2] < dp ? [parts[2]] : [])
+          : Array.from({ length: dp }, (_, i) => i);
+        depths.forEach(kd => { if (!next.slotByKey.has(`${rk.id}|${kl}|${kp}|${kd}`)) lockedEmpty++; });
       });
-      const txt = `${filledByRack.get(rk.id) || 0}/${Math.max(0, lv * ps - lockedEmpty)}`;
+      const txt = `${filledByRack.get(rk.id) || 0}/${Math.max(0, lv * ps * dp - lockedEmpty)}`;
       if (el.textContent !== txt) el.textContent = txt;
     });
     // Bounce-in the just-placed pucks, then strip the class (mirrors the full path).
@@ -26975,22 +28070,28 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (!Number.isInteger(x.rackLevel) || !Number.isInteger(x.rackPos)) return false;
       if (x.rackLevel < 0 || x.rackLevel >= (rk.level    || 0)) return false;
       if (x.rackPos   < 0 || x.rackPos   >= (rk.position || 0)) return false;
+      if (!Number.isInteger(x.rackDepth) || x.rackDepth < 0 || x.rackDepth >= rackDepthOf(rk)) return false;
       return true;
     };
     let totalSlotsAll = 0, filledSlotsAll = 0, lockedSlotsAll = 0, lockedEmptyAll = 0;
     state.racks.forEach(r => {
-      const lvN = r.level || 0, psN = r.position || 0;
-      totalSlotsAll += lvN * psN;
+      const lvN = r.level || 0, psN = r.position || 0, dpN = rackDepthOf(r);
+      totalSlotsAll += lvN * psN * dpN;
       const locks = Array.isArray(r.lockedSlots) ? r.lockedSlots : [];
-      lockedSlotsAll += locks.length;
+      // A legacy two-segment key locks a whole column, so it stands for one
+      // locked slot per depth.
+      lockedSlotsAll += locks.reduce((n, k) => n + (k.split(":").length > 2 ? 1 : dpN), 0);
       // A locked-but-EMPTY slot (case 1, "unusable") is dead space: it can't
       // hold material, so it's subtracted from the available count below.
       // A locked-but-FILLED slot (case 2, "pinned") is already counted as filled.
       locks.forEach(key => {
-        const [klv, kpos] = key.split(":").map(Number);
-        if (klv >= 0 && klv < lvN && kpos >= 0 && kpos < psN && !findSpoolInSlot(r.id, klv, kpos)) {
-          lockedEmptyAll++;
-        }
+        const parts = key.split(":").map(Number);
+        const [klv, kpos] = parts;
+        if (!(klv >= 0 && klv < lvN && kpos >= 0 && kpos < psN)) return;
+        const depths = parts.length > 2
+          ? (parts[2] >= 0 && parts[2] < dpN ? [parts[2]] : [])
+          : Array.from({ length: dpN }, (_, i) => i);
+        depths.forEach(kd => { if (!findSpoolInSlot(r.id, klv, kpos, kd)) lockedEmptyAll++; });
       });
     });
     // Count one slot per physical spool — a twin pair (2 linked tags) occupies
@@ -27041,6 +28142,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const showcase = !!state.friendView?.isPublic;
     list.classList.toggle("rp-slotview-photo", slotView === "photo");
     list.classList.toggle("rp-showcase", showcase);
+    // The spacing control is pointless — and confusing — on an inventory where
+    // no shelf has anything behind, so it only appears when one does.
+    const anyDeepRack = state.racks.some(r => rackDepthOf(r) > 1);
+    _applyRackDepthOffset();
     let html = `
       <div class="rv-header">
         <div class="rv-stats" role="group" aria-label="Storage overview">
@@ -27083,6 +28188,49 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="view-toggle rv-slotview-toggle" role="group" aria-label="${esc(t("rackViewMode"))}">
           <button type="button" id="rpSlotViewFill" class="${slotView === "fill" ? "active" : ""}" title="${esc(t("rackViewColor"))}" aria-label="${esc(t("rackViewColor"))}"><span class="icon icon-palette icon-14"></span></button>
           <button type="button" id="rpSlotViewPhoto" class="${slotView === "photo" ? "active" : ""}" title="${esc(t("rackViewPhoto"))}" aria-label="${esc(t("rackViewPhoto"))}"><span class="icon icon-image icon-14"></span></button>
+        </div>` : ""}
+        ${readOnly ? "" : `
+        <!-- Plan editing. Off by default: the storage view is for finding and
+             moving material, and furniture is not rearranged every day. -->
+        <!-- "Tidy up" sits BEFORE the toggle: it is an action you take while
+             arranging, and the toggle is what ends the session — the way out
+             belongs at the end of the row, not in the middle of it. -->
+        ${_planEdit ? `<button type="button" class="rv-plan-auto" id="rvPlanAuto">${esc(t("rackPlanAuto"))}</button>` : ""}
+        <button type="button" class="rv-plan-btn${_planEdit ? " on" : ""}" id="rvPlanBtn" aria-pressed="${_planEdit ? "true" : "false"}">
+          <span class="icon icon-grip icon-14"></span>
+          <span>${esc(_planEdit ? t("rackPlanDone") : t("rackPlanEdit"))}</span>
+        </button>`}
+        <div class="rv-plan-zoom" role="group" aria-label="${esc(t("rackPlanZoom"))}">
+          <button type="button" id="rvPlanZoomOut" aria-label="${esc(t("rackPlanZoomOut"))}">−</button>
+          <input class="val" id="rvPlanZoomVal" type="number" inputmode="numeric"
+                 min="${PLAN_ZOOM_MIN}" max="${PLAN_ZOOM_MAX}" step="${PLAN_ZOOM_STEP}"
+                 value="${Math.round(_planZoom * 100)}" aria-label="${esc(t("rackPlanZoom"))}"><span class="pct">%</span>
+          <button type="button" id="rvPlanZoomIn" aria-label="${esc(t("rackPlanZoomIn"))}">+</button>
+        </div>
+        ${anyDeepRack ? `
+        <!-- Depth spacing — a personal view setting, so it lives next to the
+             view switch and never touches what is in the rack. Only rendered
+             when at least one rack actually has rows behind. -->
+        <div class="rv-depth-wrap" id="rvDepthWrap">
+          <button type="button" class="rv-depth-btn" id="rvDepthBtn" aria-expanded="false" aria-controls="rvDepthPop">
+            <span class="icon icon-rack-grid icon-14"></span>
+            <span>${esc(t("rackDepthView"))}</span>
+          </button>
+          <div class="rv-depth-pop hidden" id="rvDepthPop" role="dialog" aria-label="${esc(t("rackDepthView"))}">
+            <h5>${esc(t("rackDepthSpacing"))}</h5>
+            <div class="rv-depth-row">
+              <span class="lab">↕</span>
+              <input type="range" id="rvDepthZY" min="12" max="52" step="2" value="${_rackDepthOffset().zy}" aria-label="${esc(t("rackDepthSpacingV"))}">
+              <span class="val" id="rvDepthZYVal">${_rackDepthOffset().zy} px</span>
+            </div>
+            <div class="rv-depth-row">
+              <span class="lab">↔</span>
+              <input type="range" id="rvDepthZX" min="-30" max="30" step="2" value="${_rackDepthOffset().zx}" aria-label="${esc(t("rackDepthSpacingH"))}">
+              <span class="val" id="rvDepthZXVal">${_rackDepthOffset().zx} px</span>
+            </div>
+            <button type="button" class="rv-depth-reset" id="rvDepthReset">${esc(t("rackDepthReset"))}</button>
+            <p class="hint">${esc(t("rackDepthHint"))}</p>
+          </div>
         </div>` : ""}
       </div>`;
 
@@ -27136,35 +28284,58 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       rows.push(`<div class="rp-row rp-row--header"><span class="rp-row-label"></span><div class="rp-row-slots" style="--slots:${r.position}">${colHeaderCells.join("")}</div></div>`);
       // Level 0 ("A") is the TOP shelf and A1 the top-left slot, so the grid reads like
       // text; growing the rack appends the new levels at the bottom.
-      for (let lv = 0; lv < r.level; lv++) {
-        const cells = [];
-        for (let pos = 0; pos < r.position; pos++) {
-          const occ    = findSpoolInSlot(r.id, lv, pos);
-          const locked = isSlotLocked(r.id, lv, pos);
-          // Two locked sub-states with distinct meaning + visual:
-          //   pinned   = locked + occupied → material can't be moved / cleared
-          //   unusable = locked + empty    → dead slot, excluded from "available"
-          const lockCls = locked ? (occ ? " rp-slot--locked rp-slot--pinned" : " rp-slot--locked rp-slot--unusable") : "";
-          const coord = `${shelfLetter(lv)}${pos + 1}`;
-          if (occ) {
-            // Bounce-in marker if this spool was just placed (drop / auto-fill).
-            // The class is consumed once and stripped after the animation.
-            const justPlaced = _justPlacedSpools.has(occ.spoolId) || _justFilledSlots.has(`${r.id}|${lv}|${pos}`);
-            const bounceCls = justPlaced ? " rp-slot--just-placed" : "";
-            // No native title — the rich custom tooltip (#rackHoverTip) handles
-            // the on-hover info bubble. draggable=false on locked filled slots.
-            cells.push(`<div class="rp-slot rp-slot--filled${lockCls}${bounceCls}" draggable="${(readOnly || locked) ? "false" : "true"}"
-                              data-rack="${esc(r.id)}" data-level="${lv}" data-pos="${pos}"
+      // A shelf can be several spools deep. Each depth is the SAME grid, drawn
+      // behind the previous one and pushed up-and-sideways so the row behind
+      // stays readable — see `.rp-persp` in 30-racks.css. Depth 0 is the front
+      // row: the one you can actually reach, so it is the one that carries the
+      // weight bar, the labels and the drop shadow. A depth-1 rack renders a
+      // single plane, i.e. exactly the markup it rendered before.
+      const rDepth = rackDepthOf(r);
+      const buildSlot = (lv, pos, d) => {
+        const occ    = findSpoolInSlot(r.id, lv, pos, d);
+        const locked = isSlotLocked(r.id, lv, pos, d);
+        // Two locked sub-states with distinct meaning + visual:
+        //   pinned   = locked + occupied → material can't be moved / cleared
+        //   unusable = locked + empty    → dead slot, excluded from "available"
+        const lockCls = locked ? (occ ? " rp-slot--locked rp-slot--pinned" : " rp-slot--locked rp-slot--unusable") : "";
+        // Coordinates gain a depth suffix only past the front row, so a normal
+        // shelf still reads "B3" and never "B3·1".
+        const coord = `${shelfLetter(lv)}${pos + 1}${d > 0 ? "\u00b7" + (d + 1) : ""}`;
+        const dAttr = ` data-depth="${d}"`;
+        if (occ) {
+          // Bounce-in marker if this spool was just placed (drop / auto-fill).
+          // The class is consumed once and stripped after the animation.
+          const justPlaced = _justPlacedSpools.has(occ.spoolId) || _justFilledSlots.has(`${r.id}|${lv}|${pos}|${d}`);
+          const bounceCls = justPlaced ? " rp-slot--just-placed" : "";
+          // No native title — the rich custom tooltip (#rackHoverTip) handles
+          // the on-hover info bubble. draggable=false on locked filled slots.
+          return `<div class="rp-slot rp-slot--filled${lockCls}${bounceCls}" draggable="${(readOnly || locked) ? "false" : "true"}"
+                              data-rack="${esc(r.id)}" data-level="${lv}" data-pos="${pos}"${dAttr}
                               data-spool-id="${esc(occ.spoolId)}"
-                              data-coord="${coord}">${_slotInnerHTML(occ)}</div>`);
-          } else {
-            const tip = locked ? `[${coord}] ${t("rackUnusableTip")}` : `[${coord}]`;
-            cells.push(`<div class="rp-slot${lockCls}" data-rack="${esc(r.id)}" data-level="${lv}" data-pos="${pos}" title="${tip}" data-coord="${coord}"></div>`);
-          }
+                              data-coord="${coord}">${_slotInnerHTML(occ, d > 0)}</div>`;
         }
-        rows.push(`<div class="rp-row"><span class="rp-row-label">${shelfLetter(lv)}</span><div class="rp-row-slots" style="--slots:${r.position}">${cells.join("")}</div></div>`);
+        const tip = locked ? `[${coord}] ${t("rackUnusableTip")}` : `[${coord}]`;
+        return `<div class="rp-slot${lockCls}" data-rack="${esc(r.id)}" data-level="${lv}" data-pos="${pos}"${dAttr} title="${tip}" data-coord="${coord}"></div>`;
+      };
+      for (let lv = 0; lv < r.level; lv++) {
+        let body;
+        if (rDepth === 1) {
+          const cells = [];
+          for (let pos = 0; pos < r.position; pos++) cells.push(buildSlot(lv, pos, 0));
+          body = `<div class="rp-row-slots" style="--slots:${r.position}">${cells.join("")}</div>`;
+        } else {
+          // Back planes are painted first so the front one sits on top of them.
+          const planes = [];
+          for (let d = rDepth - 1; d >= 0; d--) {
+            const cells = [];
+            for (let pos = 0; pos < r.position; pos++) cells.push(buildSlot(lv, pos, d));
+            planes.push(`<div class="rp-plane" data-depth="${d}"><div class="rp-row-slots" style="--slots:${r.position}">${cells.join("")}</div></div>`);
+          }
+          body = `<div class="rp-persp">${planes.join("")}</div>`;
+        }
+        rows.push(`<div class="rp-row"><span class="rp-row-label">${shelfLetter(lv)}</span>${body}</div>`);
       }
-      const totalSlots = r.level * r.position;
+      const totalSlots = r.level * r.position * rDepth;
       // Twin pairs share one slot — collapse so the count can't exceed capacity.
       // Reuses `_isInValidSlot` from the stats block above so per-rack and
       // global numbers stay consistent (excludes orphans / out-of-bounds coords).
@@ -27175,16 +28346,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const allLocked  = lockedCnt > 0 && lockedCnt === totalSlots;
       // Drop locked-empty (unusable) slots from this rack's denominator too,
       // mirroring the global "usable capacity" count in the stats bar.
+      // A two-segment key is the legacy "whole column" form and therefore
+      // stands for one slot per depth, which is why it is expanded here.
       let lockedEmptyCnt = 0;
       (Array.isArray(r.lockedSlots) ? r.lockedSlots : []).forEach(key => {
-        const [klv, kpos] = key.split(":").map(Number);
-        if (klv >= 0 && klv < r.level && kpos >= 0 && kpos < r.position
-            && !findSpoolInSlot(r.id, klv, kpos)) lockedEmptyCnt++;
+        const parts = key.split(":").map(Number);
+        const [klv, kpos] = parts;
+        if (!(klv >= 0 && klv < r.level && kpos >= 0 && kpos < r.position)) return;
+        const depths = parts.length > 2
+          ? (parts[2] >= 0 && parts[2] < rDepth ? [parts[2]] : [])
+          : Array.from({ length: rDepth }, (_, i) => i);
+        depths.forEach(kd => { if (!findSpoolInSlot(r.id, klv, kpos, kd)) lockedEmptyCnt++; });
       });
       const usableSlots = Math.max(0, totalSlots - lockedEmptyCnt);
-      return `<div class="rp-rack" data-rack-id="${esc(r.id)}">
+      // Plan grips: the right one adds/removes COLUMNS, the bottom one SHELVES,
+      // the corner both. They edit the rack itself — the block is only ever as
+      // big as what it holds — so they are the same action as the stepper in the
+      // rack panel, done by hand.
+      const planGrips = (_planEdit && !readOnly) ? `
+        <span class="rp-plan-grip rp-plan-grip--e"  data-grip="e"  data-rack-id="${esc(r.id)}"></span>
+        <span class="rp-plan-grip rp-plan-grip--s"  data-grip="s"  data-rack-id="${esc(r.id)}"></span>
+        <span class="rp-plan-grip rp-plan-grip--se" data-grip="se" data-rack-id="${esc(r.id)}"></span>
+        <span class="rp-plan-size" data-rack-id="${esc(r.id)}">${r.level} × ${r.position}</span>` : "";
+      return `<div class="rp-rack${rDepth > 1 ? " rp-rack--deep" : ""}${_planSelected === r.id && _planEdit ? " is-plan-selected" : ""}" data-rack-id="${esc(r.id)}" style="--depth:${rDepth}">${planGrips}
         <div class="rp-rack-head">
-          ${readOnly ? "" : `<span class="rp-rack-grip" title="Drag to reorder" draggable="true" data-rack-drag-id="${esc(r.id)}">⋮⋮</span>`}
           <div class="rp-rack-info">
             <div class="rp-rack-name">
               <span class="rp-rack-name-text">${esc(r.name)}</span>
@@ -27294,28 +28479,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // and absolutely-position each rack at its skyline-best position.
     // Also (re)wire a ResizeObserver so panel toggles / viewport tweaks reflow.
     requestAnimationFrame(() => {
-      layoutRacksMasonry();
+      layoutRacks();
       // The racks column only gets its scrollable height after masonry sets the
       // absolute layout, so restore its scroll here (not right after innerHTML).
       if (_prevRacksScroll) {
         const _racksEl = list.querySelector(".rp-racks-scroll");
         if (_racksEl) _racksEl.scrollTop = _prevRacksScroll;
       }
-      const target = document.querySelector("#invRackView .rp-racks-col");
-      if (target && typeof ResizeObserver !== "undefined") {
-        if (_masonryRO) _masonryRO.disconnect();
-        // Only react to WIDTH changes — height changes are caused by US
-        // setting container.style.height, which would loop.
-        _masonryRO = new ResizeObserver(entries => {
-          const w = Math.round(entries[0]?.contentRect?.width || 0);
-          if (w && Math.abs(w - _masonryLastWidth) > 1) {
-            _masonryLastWidth = w;
-            scheduleMasonryRelayout();
-          }
-        });
-        _masonryRO.observe(target);
-        _masonryLastWidth = Math.round(target.clientWidth);
-      }
+      /* No observer on the column any more. It watched the column's WIDTH and
+         re-packed on every change — but the width is now something the plan
+         itself writes, so a zoom that made the board wider than the window fed
+         straight back into a full re-pack and threw away the arrangement. An
+         event that reorganises what the user placed has no business existing. */
     });
 
     // ── Staggered bounce-in for newly placed slots
@@ -27386,23 +28561,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
 
     // ── Wire rack head kebab → opens contextual menu
+    // A re-render while a menu was open leaves it parked on <body> with no card
+    // to go home to — sweep those before wiring the new ones.
+    document.querySelectorAll("body > .rp-menu").forEach(m => m.remove());
     list.querySelectorAll(".rp-rack-kebab").forEach(btn => {
       btn.addEventListener("click", e => {
         e.stopPropagation();
         const card = btn.closest("[data-rack-id]");
         if (!card) return;
-        const menu = card.querySelector(".rp-menu");
+        /* An OPEN menu is parked on <body> (see openRackMenu), so it is no
+           longer inside its card — look it up by the rack it belongs to as
+           well, or the second click finds nothing and the toggle never
+           closes. */
+        const menu = card.querySelector(".rp-menu")
+          || document.querySelector(`.rp-menu[data-menu-for="${CSS.escape(card.dataset.rackId || "")}"]`);
         if (!menu) return;
         const isOpen = !menu.hidden;
-        // Close any other open menus first
-        document.querySelectorAll(".rp-menu").forEach(m => { m.hidden = true; });
-        document.querySelectorAll(".rp-rack-kebab[aria-expanded='true']").forEach(b => b.setAttribute("aria-expanded", "false"));
+        closeRackMenus();          // one at a time
         if (isOpen) return;
-        menu.hidden = false;
-        btn.setAttribute("aria-expanded", "true");
-        // Position the menu — anchor to the kebab button. Use fixed positioning
-        // so the menu can escape rack overflow. Compute on open and on resize.
-        positionRackMenu(menu, btn);
+        // Anchored to the kebab, positioned fixed so it can escape the rack's
+        // own overflow — see openRackMenu for why it moves to <body> to do it.
+        openRackMenu(menu, btn);
       });
     });
     // Click-away → close any open kebab menu
@@ -27411,8 +28590,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       document.addEventListener("click", e => {
         if (e.target.closest(".rp-menu")) return;
         if (e.target.closest(".rp-rack-kebab")) return;
-        document.querySelectorAll(".rp-menu").forEach(m => { m.hidden = true; });
-        document.querySelectorAll(".rp-rack-kebab[aria-expanded='true']").forEach(b => b.setAttribute("aria-expanded", "false"));
+        closeRackMenus();
       });
     }
     // Wire all menu items. Two flavours:
@@ -27425,12 +28603,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (!card) return;
       const rackId = card.dataset.rackId;
       const action = btn.dataset.action;
-      const closeMenu = () => {
-        const menu = card.querySelector(".rp-menu");
-        if (menu) menu.hidden = true;
-        const kebab = card.querySelector(".rp-rack-kebab");
-        if (kebab) kebab.setAttribute("aria-expanded", "false");
-      };
+      const closeMenu = closeRackMenus;
       const runAction = async () => {
         const rack = state.racks.find(r => r.id === rackId);
         if (!rack) return;
@@ -27528,6 +28701,298 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("rpSlotViewFill")?.addEventListener("click", () => _setSlotView("fill"));
     $("rpSlotViewPhoto")?.addEventListener("click", () => _setSlotView("photo"));
 
+    // ── Pan with the wheel button, the way every drawing and CAD tool does.
+    //    Hold it down and the board follows the mouse on both axes. It works in
+    //    the normal view as much as while arranging — a plan laid out by hand is
+    //    as likely to run off to the right as off the bottom, and reaching for a
+    //    scrollbar to cross it is the wrong gesture.
+    const _scroller = list.querySelector(".rp-racks-scroll");
+    if (_scroller) {
+      let pan = null;
+      const endPan = () => {
+        if (!pan) return;
+        pan = null;
+        _planPanning = false;
+        _scroller.classList.remove("is-panning");
+      };
+      // Belt and braces: a mouse-up anywhere ends the pan, so releasing the
+      // button off the board cannot leave the view stuck in panning mode.
+      window.addEventListener("pointerup", endPan);
+      _scroller.addEventListener("pointerdown", e => {
+        /* The wheel button anywhere, or the left button on empty board. Dragging
+           the background is what everyone tries first, and there is nothing else
+           it could mean: a click that lands on no rack is not aimed at anything. */
+        const onEmpty = e.button === 0 && !e.target.closest(".rp-rack, .rp-rack-add, button, input, a");
+        if (e.button !== 1 && !onEmpty) return;
+        e.preventDefault();                  // stops the browser's own auto-scroll
+        pan = { x: e.clientX, y: e.clientY, sl: _scroller.scrollLeft, st: _scroller.scrollTop };
+        _planPanning = true;
+        try { _scroller.setPointerCapture(e.pointerId); } catch (_) {}
+        _scroller.classList.add("is-panning");
+      });
+      _scroller.addEventListener("pointermove", e => {
+        if (!pan) return;
+        _scroller.scrollLeft = pan.sl - (e.clientX - pan.x);
+        _scroller.scrollTop  = pan.st - (e.clientY - pan.y);
+      });
+      _scroller.addEventListener("pointerup", endPan);
+      _scroller.addEventListener("pointercancel", endPan);
+      // Chromium still opens its auto-scroll widget off the compatibility mouse
+      // event on some platforms; this is what actually keeps it away.
+      _scroller.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
+      _scroller.addEventListener("auxclick", e => { if (e.button === 1) e.preventDefault(); });
+    }
+
+    // ── The plan: move a rack, or grow it by its grip ────────────────────
+    //    Only ever live in edit mode, so in the normal view the very same cards
+    //    keep their click-to-open and their slots stay droppable.
+    $("rvPlanBtn")?.addEventListener("click", async () => {
+      const entering = !_planEdit;
+      if (entering && !planInUse()) await seedPlanFromMasonry();
+      _planEdit = entering;
+      _planSelected = null;
+      renderRackView();
+    });
+    /* Zooming holds a point still. Scaling from the top-left corner alone made
+       the whole plan slide towards it — the racks appeared to move even though
+       none of them had changed place. So the point under the cursor (or the
+       middle of the view, when the buttons are used) is pinned: the scroll is
+       adjusted by exactly what the scale added, and everything stays where the
+       eye left it. */
+    const _applyPlanZoom = (pc, anchor) => {
+      const next = _clampZoom(pc) / 100;
+      const f = $("rvPlanZoomVal");
+      if (next === _planZoom) { if (f) f.value = Math.round(_planZoom * 100); return; }
+      const sc = list.querySelector(".rp-racks-scroll");
+      const prev = _planZoom;
+      let hold = null;
+      if (sc) {
+        const box = sc.getBoundingClientRect();
+        // Where to hold, as an offset inside the visible area.
+        const ax = anchor ? anchor.x - box.left : box.width / 2;
+        const ay = anchor ? anchor.y - box.top  : box.height / 2;
+        // The same spot in plan coordinates, which the scale does not change.
+        hold = { ax, ay, cx: (sc.scrollLeft + ax) / prev, cy: (sc.scrollTop + ay) / prev };
+      }
+      _planZoom = next;
+      try { localStorage.setItem(PLAN_ZOOM_KEY, String(next)); } catch (_) {}
+      layoutRacks();
+      if (sc && hold) {
+        sc.scrollLeft = Math.max(0, hold.cx * next - hold.ax);
+        sc.scrollTop  = Math.max(0, hold.cy * next - hold.ay);
+      }
+      if (f) f.value = Math.round(_planZoom * 100);
+    };
+    // The buttons walk in round tens from wherever you are — typing 63 and then
+    // pressing + gives 70, not 73, so the steps stay on the same ladder.
+    const _stepPlanZoom = (dir, anchor) => {
+      const cur = Math.round(_planZoom * 100);
+      const next = dir > 0
+        ? (Math.floor(cur / PLAN_ZOOM_STEP) + 1) * PLAN_ZOOM_STEP
+        : (Math.ceil(cur / PLAN_ZOOM_STEP) - 1) * PLAN_ZOOM_STEP;
+      _applyPlanZoom(next, anchor);
+    };
+    $("rvPlanZoomOut")?.addEventListener("click", () => _stepPlanZoom(-1));
+    $("rvPlanZoomIn")?.addEventListener("click", () => _stepPlanZoom(1));
+    $("rvPlanZoomVal")?.addEventListener("change", e => _applyPlanZoom(parseFloat(e.target.value)));
+    $("rvPlanZoomVal")?.addEventListener("keydown", e => { if (e.key === "Enter") e.target.blur(); });
+    // Wheel zoom, held under ⌘ / Ctrl. A bare wheel keeps scrolling the plan —
+    // it is often taller than the window even zoomed out, and a view that
+    // cannot be scrolled any more is a worse trade than one keystroke.
+    /* The wheel zooms, it does not scroll — the board convention, and the one
+       that makes sense now that holding the wheel button pans. Bound to the
+       storage area alone so the "not stored" list beside it keeps scrolling
+       normally; binding it to the whole view took that away. */
+    list.querySelector(".rp-racks-scroll")?.addEventListener("wheel", e => {
+      e.preventDefault();
+      if (_planPanning) return;      // the wheel is being held down, not turned on purpose
+      _stepPlanZoom(e.deltaY > 0 ? -1 : 1, { x: e.clientX, y: e.clientY });
+    }, { passive: false });
+
+    $("rvPlanAuto")?.addEventListener("click", async () => {
+      // Explicit opt-out: hands the arrangement back to the packer. It is the
+      // only thing here that discards what the user placed, so it is a button
+      // they press, never something that happens to them.
+      const container = _planContainer();
+      if (!container) return;
+      state.racks.forEach(r => { delete r.bento; });
+      layoutRacksMasonry();
+      await seedPlanFromMasonry();
+      renderRackView();
+    });
+
+    /* Moving a rack needs no mode. It is the frequent, harmless action — you
+       shove a shelf across the plan the way you would across a floor — so it is
+       done by grabbing the rack's HEADER and dragging, always. The slots below
+       stay what they are: somewhere to drop a spool.
+
+       "Arrange" is kept for what is neither frequent nor harmless: the resize
+       grips, which edit the rack itself and can send spools back to Not stored,
+       plus the permanent grid and Tidy up. */
+    if (!readOnly) {
+      const container = _planContainer();
+      const view = $("invRackView");
+      view?.classList.toggle("is-plan-edit", _planEdit);
+      let g = null;
+      container?.addEventListener("pointerdown", e => {
+        if (e.button !== 0) return;                       // the wheel button pans
+        const grip = e.target.closest(".rp-plan-grip");
+        const card = e.target.closest(".rp-rack");
+        // Outside the arrange mode only the header is a handle, and never the
+        // controls sitting in it — a rack must not start sliding because you
+        // reached for its kebab menu.
+        if (!_planEdit && !grip) {
+          if (!e.target.closest(".rp-rack-head")) return;
+          if (e.target.closest("button, .rp-rack-actions, .rp-menu")) return;
+        }
+        const markSelected = id => {
+          _planSelected = id;
+          container.querySelectorAll(".rp-rack").forEach(el =>
+            el.classList.toggle("is-plan-selected", el.dataset.rackId === id));
+        };
+        if (!card) { markSelected(null); return; }
+        const r = state.racks.find(v => v.id === card.dataset.rackId);
+        if (!r) return;
+        markSelected(r.id);
+        const pos = rackPlanPos(r) || { x: 0, y: 0 };
+        // A slot's pitch is what one column costs on screen; a row's is what one
+        // shelf costs. Both are measured, so they stay right in either view mode
+        // and at any depth spacing.
+        const slotEl = card.querySelector(".rp-slot");
+        const rowEl  = card.querySelector(".rp-row:not(.rp-row--header)");
+        const foot = _planFoot(card);
+        g = {
+          r, card, mode: grip ? "resize" : "move", grip: grip?.dataset.grip || null,
+          sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
+          ol: r.level, op: r.position,
+          w: foot.w, h: foot.h,
+          // Read once: nothing else on the board is going to move, so there is
+          // nothing to re-read while the drag runs.
+          neighbours: grip ? [] : planNeighbours(r.id),
+          pitchX: slotEl ? slotEl.getBoundingClientRect().width + 4 : 36,
+          pitchY: rowEl ? rowEl.getBoundingClientRect().height : 60,
+        };
+        try { card.setPointerCapture(e.pointerId); } catch (_) {}
+        /* Straight onto the element, not via the class: the layout writes an
+           inline z-index on every card, and an inline style beats a stylesheet
+           rule however specific it is — so `.is-plan-dragging` never won and the
+           rack only came forward on the next render, once the move was over. */
+        card.style.zIndex = "1000";
+        card.classList.add("is-plan-dragging");
+        view?.classList.add("is-plan-moving");   // the grid appears for the drag
+        _soundPlanGrab();
+        e.preventDefault();
+      });
+      container?.addEventListener("pointermove", e => {
+        if (!g) return;
+        const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+        if (g.mode === "move") {
+          // The cursor decides where the rack goes. Nothing else on the board
+          // moves — the magnets only adjust the rack you are holding.
+          const z = _planZoom || 1;
+          const want = { x: Math.max(0, g.ox + dx / z), y: Math.max(0, g.oy + dy / z) };
+          const snapped = planSnap(want.x, want.y, g.w, g.h, g.neighbours);
+          if (snapped.x === g.nx && snapped.y === g.ny) return;
+          g.nx = snapped.x; g.ny = snapped.y;
+          g.card.style.left = snapped.x + "px";
+          g.card.style.top  = snapped.y + "px";
+          planDrawGuides(snapped.guideX, snapped.guideY);
+          // Overlapping is allowed — it is your plan — but never silent.
+          g.card.classList.toggle("is-plan-overlapping",
+            planOverlaps({ x: snapped.x, y: snapped.y, w: g.w, h: g.h }, g.neighbours));
+        } else {
+          const nl = (g.grip === "e") ? g.ol : Math.min(15, Math.max(1, g.ol + Math.round(dy / g.pitchY)));
+          const np = (g.grip === "s") ? g.op : Math.min(20, Math.max(1, g.op + Math.round(dx / g.pitchX)));
+          if (nl === g.nl && np === g.np) return;
+          g.nl = nl; g.np = np;
+          const badge = g.card.querySelector(".rp-plan-size");
+          if (badge) badge.textContent = `${nl} × ${np}`;
+          planDrawGhost(g.ox, g.oy,
+            g.w + (np - g.op) * (g.pitchX / _planZoom),
+            g.h + (nl - g.ol) * (g.pitchY / _planZoom));
+        }
+      });
+      const endPlanGesture = async () => {
+        view?.classList.remove("is-plan-moving");
+        if (!g) return;
+        const gg = g; g = null;
+        /* On every release, including a drop back where it started: the sound
+           answers the gesture, not the outcome. Staying silent when nothing
+           moved would read as a drag that failed. */
+        _soundPlanDrop();
+        gg.card.classList.remove("is-plan-dragging", "is-plan-overlapping");
+        planClearGuides();
+        planClearGhost();
+        if (gg.mode === "move") {
+          const nx = gg.nx ?? gg.ox, ny = gg.ny ?? gg.oy;
+          if (nx === gg.ox && ny === gg.oy) { layoutRacks(); return; }   // hand the layer back
+          await saveRackPlanPos(gg.r.id, nx, ny);
+          layoutRacks();
+          return;
+        }
+        const nl = gg.nl ?? gg.ol, np = gg.np ?? gg.op;
+        if (nl === gg.ol && np === gg.op) { layoutRacks(); return; }
+        // Shrinking sends whatever stood in the removed slots back to the
+        // unranked panel — the same rule the rack panel already applies — so it
+        // is confirmed rather than done silently.
+        const lost = state.rows.filter(x => x.rackId === gg.r.id && !x.deleted
+          && ((Number.isInteger(x.rackLevel) && x.rackLevel >= nl) || (Number.isInteger(x.rackPos) && x.rackPos >= np))).length;
+        if (lost > 0 && !confirm(t("rackPlanShrinkConfirm", { n: lost }))) { layoutRacks(); return; }
+        try { await updateRack(gg.r.id, { level: nl, position: np }); }
+        catch (err) { reportError("rack.plan.resize", err); }
+      };
+      container?.addEventListener("pointerup", endPlanGesture);
+      container?.addEventListener("pointercancel", endPlanGesture);
+      /* A release that lands outside the board — off the window, on another app —
+         never reaches the container, and the grid stayed up afterwards as if a
+         drag were still running. The window always hears it. */
+      window.addEventListener("pointerup", endPlanGesture);
+      window.addEventListener("blur", endPlanGesture);
+    }
+
+    // ── Colour range. Two bars, one behaviour: drag the middle of the window
+    //    to slide it, pull an edge to widen it. Every interaction only re-runs
+    //    the dim pass, so the racks are never rebuilt — no flicker, no lost
+    //    scroll, no reloaded illustrations while you sweep.
+
+    // ── Depth spacing popover. Moving a slider only rewrites two custom
+    //    properties, so the racks repaint without a single node being rebuilt —
+    //    no flicker, no lost scroll, no cancelled drag.
+    const _depthBtn = $("rvDepthBtn"), _depthPop = $("rvDepthPop");
+    if (_depthBtn && _depthPop) {
+      const _setDepthPop = (open) => {
+        _depthPop.classList.toggle("hidden", !open);
+        _depthBtn.classList.toggle("open", open);
+        _depthBtn.setAttribute("aria-expanded", open ? "true" : "false");
+      };
+      _depthBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        _setDepthPop(_depthPop.classList.contains("hidden"));
+      });
+      _depthPop.addEventListener("click", e => e.stopPropagation());
+      document.addEventListener("click", () => _setDepthPop(false));
+      document.addEventListener("keydown", e => { if (e.key === "Escape") _setDepthPop(false); });
+      const _syncDepthInputs = () => {
+        const { zy, zx } = _rackDepthOffset();
+        if ($("rvDepthZY")) { $("rvDepthZY").value = zy; $("rvDepthZYVal").textContent = zy + " px"; }
+        if ($("rvDepthZX")) { $("rvDepthZX").value = zx; $("rvDepthZXVal").textContent = zx + " px"; }
+      };
+      $("rvDepthZY")?.addEventListener("input", e => {
+        const cur = _rackDepthOffset();
+        $("rvDepthZYVal").textContent = e.target.value + " px";
+        _saveRackDepthOffset({ ...cur, zy: parseInt(e.target.value, 10) });
+      });
+      $("rvDepthZX")?.addEventListener("input", e => {
+        const cur = _rackDepthOffset();
+        $("rvDepthZXVal").textContent = e.target.value + " px";
+        _saveRackDepthOffset({ ...cur, zx: parseInt(e.target.value, 10) });
+      });
+      $("rvDepthReset")?.addEventListener("click", () => {
+        _saveRackDepthOffset({ ...RACK_DEPTH_OFFSET_DEFAULT });
+        _syncDepthInputs();
+      });
+    }
+
     // ── Click on a filled slot or unranked row → open the spool detail panel
     wireRackSlotOpen();
 
@@ -27538,17 +29003,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // are more unstored spools than free slots.
     $("rpSideAddRackBtn")?.addEventListener("click", () => openRackEditModal(null));
 
-    // ── Drag-to-reorder racks — same "make room" animation as printers, but the
-    // drag only starts from the head grip (spools inside a rack stay draggable for
-    // storage). `handleSel` scopes the reorder to grip-drags.
-    _wireMakeRoomDnd(list, {
-      itemSel: ".rp-rack[data-rack-id]",
-      handleSel: ".rp-rack-grip",
-      idOf: el => el.dataset.rackId,
-      isGrid: true,
-      draggingClass: "rp-rack--dragging",
-      onReorder: (dragId, targetId, before) => reorderRacks(dragId, targetId, before).catch(err => reportError("rack.reorder", err)),
-    });
+    // Racks are no longer reordered by dragging a grip: where a rack sits is now
+    // WHERE THE USER PUT IT on the plan, not its rank in a list. Two ways to move
+    // the same thing is one too many, and the grip's "make room" shuffle fought
+    // the plan's free placement — grabbing a card would silently rewrite `order`
+    // behind the arrangement. `order` survives as the iteration order used when
+    // tidying up, nothing more.
 
     // Toggle unranked panel (slide in/out from the right, NO backdrop overlay).
     // The "not stored" panel is now a permanent docked column (rendered only when
@@ -27581,8 +29041,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           const rackId = slot.dataset.rack;
           const lv     = parseInt(slot.dataset.level, 10);
           const pos    = parseInt(slot.dataset.pos, 10);
+          const dep    = parseInt(slot.dataset.depth, 10) || 0;
           if (!rackId || isNaN(lv) || isNaN(pos)) return;
-          try { await toggleSlotLock(rackId, lv, pos); }
+          try { await toggleSlotLock(rackId, lv, pos, dep); }
           catch (err) { reportError("rack.toggleLock", err); }
         });
       });
@@ -27674,7 +29135,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (rackId) {
           const lv  = parseInt(el.dataset.level, 10);
           const pos = parseInt(el.dataset.pos, 10);
-          if (isSlotLocked(rackId, lv, pos)) { e.preventDefault(); return; }
+          const dep = parseInt(el.dataset.depth, 10) || 0;
+          if (isSlotLocked(rackId, lv, pos, dep)) { e.preventDefault(); return; }
         }
         e.dataTransfer.setData("text/plain", sid);
         e.dataTransfer.effectAllowed = "move";
@@ -27751,8 +29213,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         const rackId = slot.dataset.rack;
         const lv  = parseInt(slot.dataset.level, 10);
         const pos = parseInt(slot.dataset.pos, 10);
+        const dep = parseInt(slot.dataset.depth, 10) || 0;
         clearOtherDropHighlights(slot);
-        const locked = isSlotLocked(rackId, lv, pos);
+        const locked = isSlotLocked(rackId, lv, pos, dep);
         if (locked) {
           slot.classList.remove("rp-slot--drop");
           slot.classList.add("rp-slot--drop-deny");
@@ -27774,7 +29237,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         const rackId = slot.dataset.rack;
         const lv  = parseInt(slot.dataset.level, 10);
         const pos = parseInt(slot.dataset.pos, 10);
-        if (isSlotLocked(rackId, lv, pos)) {
+        const dep = parseInt(slot.dataset.depth, 10) || 0;
+        if (isSlotLocked(rackId, lv, pos, dep)) {
           e.dataTransfer.dropEffect = "none";
           // Keep dragenter's class set; don't toggle on every dragover frame
           return;
@@ -27811,11 +29275,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         const rackId = slot.dataset.rack;
         const level  = parseInt(slot.dataset.level, 10);
         const pos    = parseInt(slot.dataset.pos, 10);
-        if (isSlotLocked(rackId, level, pos)) return;   // locked target rejects
+        const dep    = parseInt(slot.dataset.depth, 10) || 0;
+        if (isSlotLocked(rackId, level, pos, dep)) return;   // locked target rejects
         // "Snap into place" cue — skip when dropped back onto its own slot (no move).
         const _mv = state.rows.find(r => r.spoolId === sid);
-        if (!_mv || _mv.rackId !== rackId || _mv.rackLevel !== level || _mv.rackPos !== pos) _soundRackMove();
-        try { await assignSpoolToSlot(sid, rackId, level, pos); }
+        if (!_mv || _mv.rackId !== rackId || _mv.rackLevel !== level || _mv.rackPos !== pos || _mv.rackDepth !== dep) _soundRackMove();
+        try { await assignSpoolToSlot(sid, rackId, level, pos, dep); }
         catch (err) { console.warn("[assignSpoolToSlot]", err.message); }
       });
     });
@@ -27924,7 +29389,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return new Promise(resolve => {
       if (!row || !row.rackId) { resolve(); return; }
       const sourceSlot = document.querySelector(
-        `#invRackView .rp-slot[data-rack="${CSS.escape(row.rackId)}"][data-level="${row.rackLevel}"][data-pos="${row.rackPos}"]`
+        `#invRackView .rp-slot[data-rack="${CSS.escape(row.rackId)}"][data-level="${row.rackLevel}"][data-pos="${row.rackPos}"][data-depth="${row.rackDepth || 0}"]`
       );
       // Tag the spool so the next render bounces it in at its new home.
       // Same mechanism that auto-fill / auto-store use for landed spools.
@@ -27960,6 +29425,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     $("rackSubtitleInput").value = rack?.subtitle || "";
     $("rackLevelInput").value = rack?.level || 5;
     $("rackPositionInput").value = rack?.position || 8;
+    $("rackDepthInput").value = rackDepthOf(rack);
     $("rackEditResult").textContent = "";
     // Reset any leftover field-level error bubbles from a previous open
     document.querySelectorAll("#rackEditPanel .rec-field.is-invalid").forEach(f => {
@@ -28048,38 +29514,43 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function updateRackTotalLabel() {
     const lv = parseInt($("rackLevelInput")?.value, 10);
     const ps = parseInt($("rackPositionInput")?.value, 10);
+    const dp = Math.max(1, Math.min(RACK_DEPTH_MAX, parseInt($("rackDepthInput")?.value, 10) || 1));
     const num = $("recTotalNum");
     const lbl = $("recTotalLbl");
     if (!num || !lbl) return;
-    const total = (Number.isFinite(lv) && Number.isFinite(ps) && lv > 0 && ps > 0) ? lv * ps : null;
+    const total = (Number.isFinite(lv) && Number.isFinite(ps) && lv > 0 && ps > 0) ? lv * ps * dp : null;
     num.textContent = total != null ? String(total) : "—";
     lbl.textContent = t("rackSlots") || "slots";
-    renderRackPreview(lv, ps);
+    renderRackPreview(lv, ps, dp);
   }
 
   // Live preview of the rack about to be created: one dashed box per slot, so the
   // shape of the rack is visible before it exists. Rebuilt only when the dimensions
   // actually change (the grid is cheap, but the guard keeps typing jank-free).
   let _recPrevSig = "";
-  function renderRackPreview(lv, ps) {
+  function renderRackPreview(lv, ps, dp = 1) {
     const grid = $("recPreviewGrid");
     const cap = $("recPreviewCaption");
     if (!grid) return;
     const ok = Number.isFinite(lv) && Number.isFinite(ps) && lv > 0 && ps > 0;
-    if (cap) cap.textContent = ok ? t("rackPreviewDims", { l: lv, p: ps }) : "";
+    if (cap) cap.textContent = ok
+      ? (dp > 1 ? t("rackPreviewDimsDeep", { l: lv, p: ps, d: dp }) : t("rackPreviewDims", { l: lv, p: ps }))
+      : "";
     _recSyncPreviewText();
     // When editing an existing rack, show what is actually stored in it — the same
     // slot artwork the Storage view draws, so the preview is the rack, not a blank plan.
+    // Only the front row is drawn: the preview is a plan of the shelf, and a
+    // stack of translucent plates would say less than the slot count already does.
     const occupancy = ok && _editingRackId
       ? Array.from({ length: lv }, (_, l) =>
-          Array.from({ length: ps }, (_, p) => findSpoolInSlot(_editingRackId, l, p) || null))
+          Array.from({ length: ps }, (_, p) => findSpoolInSlot(_editingRackId, l, p, 0) || null))
       : null;
     // Occupancy is part of the signature — otherwise resizing a rack whose contents
     // changed underneath would keep painting the stale grid.
     const occSig = occupancy
       ? occupancy.map(row => row.map(o => o ? o.spoolId : "").join(",")).join("|")
       : "";
-    const sig = ok ? `${lv}x${ps}|${_editingRackId || ""}|${occSig}` : "";
+    const sig = ok ? `${lv}x${ps}x${dp}|${_editingRackId || ""}|${occSig}` : "";
     if (sig === _recPrevSig) return;
     _recPrevSig = sig;
     if (!ok) { grid.innerHTML = ""; return; }
@@ -28114,6 +29585,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("rackSubtitleInput")?.addEventListener("input", _recSyncPreviewText);
   $("rackLevelInput")?.addEventListener("input", updateRackTotalLabel);
   $("rackPositionInput")?.addEventListener("input", updateRackTotalLabel);
+  $("rackDepthInput")?.addEventListener("input", updateRackTotalLabel);
 
   // Field-level validation helpers — red border + tooltip bubble next to the field
   function setFieldError(input, msg) {
@@ -28137,7 +29609,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     field.querySelector(".rec-field-err")?.remove();
   }
   // Auto-clear errors as soon as the user types in a field
-  ["rackNameInput", "rackLevelInput", "rackPositionInput"].forEach(id => {
+  ["rackNameInput", "rackLevelInput", "rackPositionInput", "rackDepthInput"].forEach(id => {
     $(id)?.addEventListener("input", () => clearFieldError($(id)));
   });
 
@@ -28146,6 +29618,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const subtitle = $("rackSubtitleInput").value.trim();
     const level    = parseInt($("rackLevelInput").value, 10);
     const position = parseInt($("rackPositionInput").value, 10);
+    const depth    = Math.max(1, Math.min(RACK_DEPTH_MAX, parseInt($("rackDepthInput").value, 10) || 1));
     // Clear any previous errors before re-validating
     [$("rackNameInput"), $("rackLevelInput"), $("rackPositionInput")].forEach(clearFieldError);
     let firstInvalid = null;
@@ -28166,9 +29639,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     setLoading($("rackEditSave"), true);   // spinner + disabled until Firestore confirms
     try {
       if (_editingRackId) {
-        await updateRack(_editingRackId, { name, subtitle, level, position });
+        // `depth` is always written on an edit — including back down to 1 — so a
+        // shelf can lose its back rows again. `updateRack` orphans whatever stood
+        // there, exactly as it already does when a rack loses rows or columns.
+        await updateRack(_editingRackId, { name, subtitle, level, position, depth });
       } else {
-        await createRack({ name, subtitle, level, position });
+        await createRack({ name, subtitle, level, position, depth });
       }
       closeRackEditModal();
     } catch (e) {
@@ -28273,7 +29749,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     requestAnimationFrame(_positionActiveViewPill);   // re-aim once layout settles
     // A friend's inventory is read-only — hide the write action (Add product /
     // Add device) since it can't act on a friend's docs.
-    $("btnAddProduct")?.classList.toggle("hidden", !!state.friendView);
+    $("searchAddBtn")?.classList.toggle("hidden", !!state.friendView);
     _syncInvBarButtons();   // hide the .ttag Export/Import bar on a friend view
     // The cam-wall "Detach" button is meaningless in a friend view (no cameras) —
     // force-hide it here so it can never linger from a prior cam session.
@@ -31110,6 +32586,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         state.theme = data.studioTheme;
         applyTheme(data.studioTheme);
       }
+      /* Depth spacing — how far apart the rows behind are drawn. It follows the
+         ACCOUNT, not the machine: it describes how you want to read your racks,
+         which is the same wish on whatever screen you open them. Applied only
+         when it differs from what this device already has, so a boot on the
+         machine that set it repaints nothing. */
+      const _rdo = data.studioRackDepthOffset;
+      if (_rdo && Number.isFinite(_rdo.zy) && Number.isFinite(_rdo.zx)) {
+        const cur = _rackDepthOffset();
+        // Clamped before it is stored, not only when it is read back: a value
+        // from outside this app's sliders has no business sitting in the cache.
+        const _rdoOk = { zy: Math.max(12, Math.min(52, _rdo.zy)), zx: Math.max(-30, Math.min(30, _rdo.zx)) };
+        if (_rdoOk.zy !== cur.zy || _rdoOk.zx !== cur.zx) {
+          try { localStorage.setItem(RACK_DEPTH_OFFSET_KEY, JSON.stringify(_rdoOk)); } catch (_) {}
+          _applyRackDepthOffset();
+          if (state.viewMode === "rack") scheduleMasonryRelayout();
+        }
+      }
       state.discordSeen    = !!data.discordSeen;     // "nudge done" flags (per account, synced)
       state.githubSeen     = !!data.githubSeen;
       state.makerworldSeen = !!data.makerworldSeen;
@@ -31451,6 +32944,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   loadLocales().then(() => {
     applyTranslations();
     ColdStart.mark("locales-ready");
+    /* Wired HERE and not beside the other filter selects up top: this module is
+       one long body, and everything the colour bars need — the axes, the
+       defaults, the `let` guarding a second call — is declared far below that
+       point. A `let` does not exist before its own declaration runs, so calling
+       into it from the top threw on module evaluation and took the whole
+       renderer down with it, sign-in included. */
+    initHueBars();
+    _syncFilterReset();
     return loadLookups();
   }).then(() => {
     ColdStart.mark("lookups-ready");
@@ -31782,7 +33283,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // chip rewrite). Long-term direction: push the DB weight back to the
       // chip on demand so they stay in sync — until then, DB wins on rescan.
       if (!preserveDbWeight) {
-        doc.weight_available = tagData.measure_available_gr || tagData.measure_gr || 0;
+        /* CAPPED at the spool's own capacity. The SDK scales the remaining
+           quantity by the chip's starting unit, so a chip carrying 1000 next to
+           a "kg" unit reports a million grams — and a spool cannot hold more
+           than it holds. The cap is a guard rail rather than a fix for one
+           cause: whatever puts an impossible figure on a chip, whoever wrote it,
+           a stock entry never exceeds its own capacity. It only ever pulls a
+           value DOWN, so a legitimate reading passes through untouched. */
+        const capG   = Number(tagData.measure_gr) || 0;
+        const availG = Number(tagData.measure_available_gr) || capG || 0;
+        doc.weight_available = capG > 0 ? Math.min(availG, capG) : availG;
       }
 
       // message — chip field, but omit when empty (saves space, easier to spot real data)

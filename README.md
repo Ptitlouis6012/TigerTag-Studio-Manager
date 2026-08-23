@@ -125,6 +125,7 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Multi-select** — tick several spools (or printers) and delete them together, with a hold-to-confirm
 - **Guided chip update** — a step-by-step panel to re-write an existing chip: place it on the reader, UID-match check, verified write
 - **Export / import `.ttag` files** — back up a spool or a whole selection to a portable file, keep it, carry it on a USB stick or share it, then import it back anywhere. Works for TigerData, TigerTag and TigerTag+ alike; import through a validate → preview → accept flow and choose **Restore** (put everything back exactly as it was) or **Import** (fresh spools you own). Pull in several files at once by browsing, pasting a link, or dragging them onto the window
+- **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, Search and Storage alike
 
 ### 🖨 3D Printer integration
 Live integrations for 6 brands — real-time temperatures, filament per slot, active print job, camera:
@@ -149,8 +150,10 @@ Some brands also expose a **live control panel** (Snapmaker, Elegoo, Anycubic): 
 <img src="assets/img/Panda_Feed_Rack.png" width="480" alt="A filament rack in Tiger Studio Manager" />
 
 Organize your filament collection into physical racks — drag spools onto slots, auto-fill from inventory, and always know where each spool sits:
-- **Drag-and-drop rack editor** — Skyline masonry layout, slot locking, auto-fill / auto-store
-- **Rack builder** — a three-step side card: name and subtitle, levels and slots per level with − / + steppers, and a live preview that shows an existing rack's real contents while you resize it
+- **Storage plan** — place each rack where it really stands: drag it by its header, and it snaps to its neighbours' edges as you go. Nothing else on the board moves, and the arrangement follows your account
+- **Rack depth** — up to three rows of spools one behind the other, drawn in perspective so the one at the back stays readable
+- **Drag-and-drop rack editor** — slot locking, auto-fill / auto-store
+- **Rack builder** — a three-step side card: name and subtitle, levels, slots per level and rows deep with − / + steppers, and a live preview that shows an existing rack's real contents while you resize it
 - **Unranked panel** — spools not yet assigned to a rack, always visible at a glance
 - **Rich hover tooltip** on filled slots — color swatch, weight bar, brand, and coordinates
 

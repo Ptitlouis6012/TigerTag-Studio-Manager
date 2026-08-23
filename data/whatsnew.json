@@ -7967,5 +7967,160 @@
         }
       }
     ]
+  },
+  "2.21.0": {
+    "date": "2026-08-23",
+    "items": [
+      {
+        "icon": "rack-grid",
+        "title": {
+          "en": "Racks got a back row",
+          "fr": "Les racks ont une arrière-boutique",
+          "de": "Regale haben jetzt eine hintere Reihe",
+          "es": "Las estanterías tienen fondo",
+          "it": "Gli scaffali hanno una fila dietro",
+          "zh": "货架有了后排",
+          "pt": "As estantes ganharam fundo",
+          "pt-pt": "As estantes ganharam fundo",
+          "pl": "Regały mają teraz drugi rząd"
+        },
+        "body": {
+          "en": "Your racks can hold spools behind spools now — up to three rows deep, drawn so you can still see what's hiding at the back.",
+          "fr": "Vos racks peuvent ranger des bobines derrière les bobines — jusqu'à trois rangées, dessinées pour qu'on voie encore ce qui se cache au fond.",
+          "de": "Eure Regale halten jetzt Spulen hinter Spulen — bis zu drei Reihen tief, und man sieht trotzdem, was hinten steckt.",
+          "es": "Ahora guardan bobinas detrás de bobinas — hasta tres filas, dibujadas para que sigas viendo lo que hay al fondo.",
+          "it": "Ora tengono bobine dietro le bobine — fino a tre file, disegnate in modo da vedere ancora cosa si nasconde in fondo.",
+          "zh": "货架现在能前后放线材了，最多三排，后排也照样看得清。",
+          "pt": "Agora guardam bobinas atrás de bobinas — até três filas, desenhadas para você continuar vendo o que está lá atrás.",
+          "pt-pt": "Agora guardam bobinas atrás de bobinas — até três filas, desenhadas para continuar a ver o que está lá atrás.",
+          "pl": "Trzymają szpule za szpulami — do trzech rzędów, narysowanych tak, że wciąż widać, co stoi z tyłu."
+        }
+      },
+      {
+        "icon": "grip",
+        "title": {
+          "en": "Put your racks where they really are",
+          "fr": "Placez vos racks là où ils sont vraiment",
+          "de": "Stellt eure Regale dahin, wo sie wirklich stehen",
+          "es": "Coloca tus estanterías donde están de verdad",
+          "it": "Metti gli scaffali dove stanno davvero",
+          "zh": "把货架摆到它们真正在的位置",
+          "pt": "Ponha as estantes onde elas realmente estão",
+          "pt-pt": "Coloque as estantes onde elas realmente estão",
+          "pl": "Postaw regały tam, gdzie naprawdę stoją"
+        },
+        "body": {
+          "en": "Grab a rack by its header and drop it anywhere. They snap neatly to each other, and nothing else on the board budges.",
+          "fr": "Attrapez un rack par son en-tête et posez-le où vous voulez. Ils s'aimantent proprement entre eux, et rien d'autre ne bouge.",
+          "de": "Regal an der Kopfzeile packen und ablegen, wo ihr wollt. Sie rasten sauber aneinander, sonst rührt sich nichts.",
+          "es": "Agarra una por su cabecera y suéltala donde quieras. Se imantan entre ellas, y nada más se mueve.",
+          "it": "Prendi uno scaffale dall'intestazione e posalo dove vuoi. Si calamitano tra loro, e nient'altro si sposta.",
+          "zh": "抓住标题栏拖到任意位置，货架之间会自动吸附对齐，其他的一律不动。",
+          "pt": "Pegue uma pelo cabeçalho e solte onde quiser. Elas se imantam entre si, e mais nada se mexe.",
+          "pt-pt": "Agarre uma pelo cabeçalho e largue onde quiser. Ficam magnetizadas umas às outras, e mais nada se mexe.",
+          "pl": "Złap regał za nagłówek i upuść, gdzie chcesz. Przyciągają się do siebie, a poza tym nic się nie rusza."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Point at a colour, find the spool",
+          "fr": "Montrez une couleur, trouvez la bobine",
+          "de": "Auf eine Farbe zeigen, Spule finden",
+          "es": "Señala un color, encuentra la bobina",
+          "it": "Indica un colore, trova la bobina",
+          "zh": "指一个颜色，找到那卷线材",
+          "pt": "Aponte uma cor, ache a bobina",
+          "pt-pt": "Aponte uma cor, encontre a bobina",
+          "pl": "Wskaż kolor, znajdź szpulę"
+        },
+        "body": {
+          "en": "Slide the bubble along the rainbow and your shelves light up wherever that shade lives. Greys get a bar of their own.",
+          "fr": "Faites glisser la bulle sur l'arc-en-ciel et vos étagères s'allument là où cette teinte se cache. Les gris ont leur propre barre.",
+          "de": "Zieht die Blase über den Regenbogen, und eure Regale leuchten dort auf, wo dieser Ton wohnt. Graustufen haben ihren eigenen Balken.",
+          "es": "Desliza la burbuja por el arcoíris y tus baldas se encienden donde vive ese tono. Los grises tienen su propia barra.",
+          "it": "Trascina la bolla sull'arcobaleno e i ripiani si accendono dove abita quella tinta. I grigi hanno la loro barra.",
+          "zh": "在彩虹条上拖动气泡，货架上藏着这个色调的位置就会亮起来。灰色有自己的一条。",
+          "pt": "Arraste a bolha pelo arco-íris e suas prateleiras acendem onde esse tom mora. Os cinzas têm a barra deles.",
+          "pt-pt": "Arraste a bolha pelo arco-íris e as prateleiras acendem onde esse tom mora. Os cinzentos têm a barra deles.",
+          "pl": "Przesuń bąbelek po tęczy, a półki rozświetlą się tam, gdzie mieszka ten odcień. Szarości mają własny pasek."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "Stop scrolling through 124 brands",
+          "fr": "Fini le défilement des 124 marques",
+          "de": "Schluss mit dem Scrollen durch 124 Marken",
+          "es": "Se acabó bajar por 124 marcas",
+          "it": "Basta scorrere 124 marche",
+          "zh": "不用再翻 124 个品牌了",
+          "pt": "Chega de rolar 124 marcas",
+          "pt-pt": "Chega de percorrer 124 marcas",
+          "pl": "Koniec przewijania 124 marek"
+        },
+        "body": {
+          "en": "Open Brand, Material or Tag and just start typing. Type “sun” and both Sunlu and eSun show up.",
+          "fr": "Ouvrez Marque, Matière ou Étiquette et tapez. « sun » fait sortir Sunlu et eSun.",
+          "de": "Marke, Material oder Tag öffnen und einfach tippen. „sun“ holt Sunlu und eSun.",
+          "es": "Abre Marca, Material o Etiqueta y escribe. «sun» saca Sunlu y eSun.",
+          "it": "Apri Marca, Materiale o Tag e scrivi. «sun» tira fuori Sunlu ed eSun.",
+          "zh": "打开品牌、材料或标签直接打字。输入 sun，Sunlu 和 eSun 都会出来。",
+          "pt": "Abra Marca, Material ou Etiqueta e digite. «sun» traz Sunlu e eSun.",
+          "pt-pt": "Abra Marca, Material ou Etiqueta e escreva. «sun» traz Sunlu e eSun.",
+          "pl": "Otwórz Markę, Materiał albo Tag i po prostu pisz. „sun” wyciąga Sunlu i eSun."
+        }
+      },
+      {
+        "icon": "plus",
+        "title": {
+          "en": "The + moved in with the search bar",
+          "fr": "Le + a emménagé dans la barre de recherche",
+          "de": "Das + ist in die Suchleiste gezogen",
+          "es": "El + se ha mudado a la barra de búsqueda",
+          "it": "Il + si è trasferito nella barra di ricerca",
+          "zh": "加号搬进了搜索栏",
+          "pt": "O + mudou-se para a barra de busca",
+          "pt-pt": "O + mudou-se para a barra de pesquisa",
+          "pl": "Plus przeprowadził się do paska wyszukiwania"
+        },
+        "body": {
+          "en": "One button now adds whatever the view is about — material, a printer, or a rack — right where you're already typing.",
+          "fr": "Un seul bouton ajoute ce que la vue réclame — matière, imprimante ou rack — là où vos doigts sont déjà.",
+          "de": "Ein Knopf fügt hinzu, worum es in der Ansicht geht — Material, Drucker oder Regal — genau da, wo ihr sowieso tippt.",
+          "es": "Un solo botón añade lo que toca en cada vista — material, impresora o estantería — justo donde ya estás escribiendo.",
+          "it": "Un solo pulsante aggiunge quello che serve alla vista — materiale, stampante o scaffale — dove stai già digitando.",
+          "zh": "一个按钮就能添加当前视图要的东西——线材、打印机或货架——就在你打字的地方。",
+          "pt": "Um botão só adiciona o que a tela pede — material, impressora ou estante — bem onde você já está digitando.",
+          "pt-pt": "Um só botão adiciona o que o ecrã pede — material, impressora ou estante — mesmo onde já está a escrever.",
+          "pl": "Jeden przycisk dodaje to, o co chodzi w danym widoku — materiał, drukarkę albo regał — dokładnie tam, gdzie już piszesz."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "Your kilo is a kilo again",
+          "fr": "Votre kilo est redevenu un kilo",
+          "de": "Euer Kilo ist wieder ein Kilo",
+          "es": "Tu kilo vuelve a ser un kilo",
+          "it": "Il tuo chilo è di nuovo un chilo",
+          "zh": "一公斤又是一公斤了",
+          "pt": "Seu quilo voltou a ser um quilo",
+          "pt-pt": "O seu quilo voltou a ser um quilo",
+          "pl": "Twój kilogram znów waży kilogram"
+        },
+        "body": {
+          "en": "A spool could land in your stock claiming a thousand kilos. Not any more — nothing comes in weighing more than it holds.",
+          "fr": "Une bobine pouvait entrer en stock en annonçant mille kilos. Plus maintenant : rien n'entre en pesant plus qu'il ne contient.",
+          "de": "Eine Spule konnte mit tausend Kilo im Bestand landen. Nicht mehr: nichts kommt schwerer rein, als es fasst.",
+          "es": "Una bobina podía entrar al stock diciendo mil kilos. Ya no: nada entra pesando más de lo que cabe.",
+          "it": "Una bobina poteva entrare in magazzino dichiarando mille chili. Non più: niente entra pesando più di quanto contenga.",
+          "zh": "以前一卷线材可能带着一千公斤进库存。现在不会了：没有东西能比它装得下的还重。",
+          "pt": "Uma bobina podia entrar no estoque dizendo mil quilos. Não mais: nada entra pesando mais do que cabe.",
+          "pt-pt": "Uma bobina podia entrar no stock a dizer mil quilos. Já não: nada entra a pesar mais do que aquilo que leva.",
+          "pl": "Szpula potrafiła wejść do stanu z tysiącem kilogramów. Już nie: nic nie wchodzi cięższe, niż mieści."
+        }
+      }
+    ]
   }
 }
