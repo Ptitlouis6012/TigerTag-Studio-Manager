@@ -8122,5 +8122,35 @@
         }
       }
     ]
+  },
+  "2.21.1": {
+    "date": "2026-08-24",
+    "items": [
+      {
+        "icon": "rack-grid",
+        "title": {
+          "en": "Your racks stay put now",
+          "fr": "Vos racks ne se vident plus",
+          "de": "Eure Regale bleiben jetzt, wie sie sind",
+          "es": "Tus estanterías ya no se vacían",
+          "it": "I tuoi scaffali restano come li hai lasciati",
+          "zh": "货架不会再自己清空了",
+          "pt": "Suas estantes não se esvaziam mais",
+          "pt-pt": "As suas estantes já não se esvaziam",
+          "pl": "Regały nie opróżniają się już same"
+        },
+        "body": {
+          "en": "Spools stored on a back row were being thrown out at startup. They stay exactly where you put them.",
+          "fr": "Les bobines rangées sur une rangée arrière se faisaient éjecter au démarrage. Elles restent exactement où vous les avez mises.",
+          "de": "Spulen in einer hinteren Reihe flogen beim Start wieder raus. Sie bleiben jetzt genau da, wo ihr sie hingestellt habt.",
+          "es": "Las bobinas guardadas en una fila trasera salían despedidas al arrancar. Se quedan justo donde las pusiste.",
+          "it": "Le bobine messe in una fila dietro venivano sbalzate fuori all'avvio. Ora restano esattamente dove le hai messe.",
+          "zh": "放在后排的线材以前一开机就被踢出货架。现在它们会待在你放的位置。",
+          "pt": "Bobinas guardadas numa fila de trás eram expulsas ao iniciar. Agora ficam exatamente onde você as colocou.",
+          "pt-pt": "As bobinas guardadas numa fila de trás eram expulsas ao arrancar. Agora ficam exatamente onde as colocou.",
+          "pl": "Szpule odłożone w tylnym rzędzie wylatywały przy starcie. Zostają dokładnie tam, gdzie je postawiłeś."
+        }
+      }
+    ]
   }
 }

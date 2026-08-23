@@ -5,6 +5,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.21.1 — 2026-08-24
+
+### Fixed
+
+- **Every spool in a back row was unranked on launch.** A two-deep rack came back with only its front row filled and the rest sitting in "Not stored" — written straight to Firestore, so the arrangement was gone for good. `healDuplicateSlots` finds two spools sharing one slot and evicts the extras, and its slot key was `rackId | level | position` — **without the depth**. A spool behind therefore shared a key with the spool in front of it, so a full two-deep column read as a pile of duplicates and everything but the front one was written back to `rack: null`. Caught in the app's own log: `[racks] self-heal: 57 spool(s) in already-occupied slots → unranked`. The depth is part of the key now: two rows deep is not a collision, it is the feature. It fired ~2 s after launch, behind the "What's New" window, so the damage only surfaced when that window was dismissed — which made it look like closing it was the cause — `renderer/inventory.js`.
+- **One half of a twin pair was unranked on launch, at random.** A twin pair is ONE physical spool wearing two chips, so both halves legitimately share a slot, and the heal groups them before it counts. But only one of the two documents carries `twin_tag_uid` — which is exactly why `_markTwinPairs` flags both sides rather than trusting the field — while `twinSpoolIdOf` only ever read that one direction. The pair therefore read as a legitimate couple or as two rivals depending on which half the heal visited first. The lookup now resolves both ways. This was never confined to the heal: **nine** call sites resolve a twin, including `assignSpoolToSlot`'s twin mirror, which reached only one of the two documents depending on the direction — the asymmetry predates rack depth and was merely surfaced by it — `renderer/inventory.js`.
+- **Two heuristics that write `rack: null` on real spools now refuse to run when they would clear a large share of the stock.** The duplicate-slot heal and the orphan-reference sweep both act on a guess — "you are on top of someone" / "your rack no longer exists" — and a guess that erases where a user put a quarter of their collection has misread something rather than found that much genuine mess. Both step aside and say so in the log instead of writing the mistake to every document they can reach. The orphan sweep additionally waits for a racks snapshot **confirmed by the server** (`!snap.metadata.fromCache`): a cold start is served from a local cache that may name fewer racks than exist, and acting on it would unrank everything living in the racks it forgot — `renderer/inventory.js`.
+
+---
+
 ## v2.21.0 — 2026-08-23
 
 ### Added

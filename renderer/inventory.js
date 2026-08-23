@@ -21272,6 +21272,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         // racks bleeding back in.
         if (state.friendView) return;
         state.racksLoading = false;   // first (or any) snapshot arrived → drop the spinner
+        /* Cached or authoritative? A cold start serves the local cache first,
+           and a cache that is stale or partial names fewer racks than really
+           exist. Anything DESTRUCTIVE keyed on "this rack does not exist" has
+           to wait for the server's word — see the orphan sweep. */
+        if (!snap.metadata.fromCache) _racksFromServer = true;
         const racks = snap.docs.map(d => ({ id: d.id, ...d.data() }));
         racks.sort((a, b) => {
           const oa = a.order ?? 999, ob = b.order ?? 999;
@@ -21293,8 +21298,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         scheduleStudioStateRecord();  // re-arm deferred telemetry (rack counts changed)
       }, err => { state.racksLoading = false; console.warn("[racks]", err.code, err.message); renderRacksList(); });
   }
+  // True once a racks snapshot has come from the SERVER for the active account.
+  // Reset on unsubscribe, so an account switch starts from cache-only again.
+  let _racksFromServer = false;
   function unsubscribeRacks() {
     if (state.unsubRacks) { state.unsubRacks(); state.unsubRacks = null; }
+    _racksFromServer = false;
     _racksLoadedFor = null;   // racks no longer loaded → re-arm the automation barrier
   }
 
@@ -26057,13 +26066,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // `twinUid`. Storage location must mirror to BOTH docs so a scan of
   // either tag returns the correct rack/level/position. This helper
   // returns the twin's spoolId or null when there's no twin.
+  /* A twin pair is ONE physical spool wearing two chips, so the link has to
+     read the same from either half. Only one of the two docs usually carries
+     `twin_tag_uid` — which is why `_markTwinPairs` flags both sides rather than
+     trusting the field — so a one-way lookup answered for one half and null for
+     the other. Everything that acts on a pair inherited that asymmetry: writing
+     a slot reached only one doc, and the duplicate-slot heal split a pair into
+     two "units" sharing a slot and unranked one of them, depending purely on
+     which half it happened to visit first. Both directions now. */
   function twinSpoolIdOf(row) {
-    if (!row || !row.twinUid) return null;
-    const twin = state.rows.find(r =>
-      r.spoolId !== row.spoolId &&
-      (String(r.uid) === String(row.twinUid) || String(r.spoolId) === String(row.twinUid))
+    if (!row) return null;
+    if (row.twinUid) {
+      const fwd = state.rows.find(r =>
+        r.spoolId !== row.spoolId &&
+        (String(r.uid) === String(row.twinUid) || String(r.spoolId) === String(row.twinUid))
+      );
+      if (fwd) return fwd.spoolId;
+    }
+    // Nothing on this doc — look for the half that points AT it.
+    const back = state.rows.find(r =>
+      r.spoolId !== row.spoolId && r.twinUid &&
+      (String(r.twinUid) === String(row.uid) || String(r.twinUid) === String(row.spoolId))
     );
-    return twin ? twin.spoolId : null;
+    return back ? back.spoolId : null;
   }
 
   // Assign / move / unassign a spool to a slot. Performs a swap if the target
@@ -26488,7 +26513,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const bySlot = new Map();
     for (const r of state.rows) {
       if (r.deleted || !r.rackId || r.rackLevel == null || r.rackPos == null) continue;
-      const key = `${r.rackId}|${r.rackLevel}|${r.rackPos}`;
+      /* THE DEPTH IS PART OF THE SLOT. Without it every spool in a back row
+         shared a key with the one in front of it, so this heal read a full
+         two-deep column as a pile of duplicates and unranked all but the front
+         one — 57 spools in one launch. A shelf holds one spool per (level,
+         position, DEPTH); two rows deep is not a collision, it is the feature. */
+      const key = `${r.rackId}|${r.rackLevel}|${r.rackPos}|${r.rackDepth ?? 0}`;
       let arr = bySlot.get(key); if (!arr) bySlot.set(key, arr = []);
       arr.push(r);
     }
@@ -26510,6 +26540,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       for (let i = 1; i < units.length; i++) for (const r of units[i]) evictIds.push(r.spoolId);
     }
     if (!evictIds.length) return;
+    /* Same guard rail as the orphan sweep: this writes `rack: null` on real
+       spools from a heuristic, and a heuristic that wants to unrack a large
+       share of the stock has misread something rather than found that much
+       genuine duplication. It steps aside and says so instead of writing the
+       mistake to every document it can reach. */
+    const racked = state.rows.filter(r => !r.deleted && r.rackId).length;
+    if (racked > 0 && evictIds.length > racked * 0.25) {
+      console.warn(`[racks] self-heal REFUSED — it wanted to unrank ${evictIds.length} of ${racked} racked spools. `
+        + `That is not duplication; nothing was changed.`);
+      return;
+    }
     console.warn(`[racks] self-heal: ${evictIds.length} spool(s) in already-occupied slots → unranked:`, evictIds);
     try {
       const col = fbDb(uid).collection("users").doc(uid).collection("inventory");
@@ -28106,11 +28147,26 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Guarded so it runs at most once per renderRackView call AND not at all
     // while inventory or racks are still loading (to avoid clearing valid
     // rackIds before the rack doc has arrived).
-    if (!state.invLoading && state.racks.length > 0 && !_orphanCleanupInFlight) {
-      const orphans = state.rows.filter(x =>
-        !x.deleted && x.rackId && !racksById.has(x.rackId)
-      );
-      if (orphans.length > 0) {
+    /* This sweep WRITES `rack: null` on real spools, from a guess — "your rack
+       is gone, so your slot is meaningless". A guess that erases where a user
+       put every one of their spools has to be held to a much higher bar than a
+       render, so it now needs all three:
+         • the inventory settled AND the racks list confirmed BY THE SERVER —
+           a cold start serves a cache that may name fewer racks than exist, and
+           acting on it unracks everything living in the racks it forgot;
+         • something to clean — and something PLAUSIBLE: a genuine leftover is a
+           handful of spools pointing at a rack that was deleted. Half the stock
+           is not a leftover, it is a bug, and the sweep steps aside and says so
+           rather than writing the mistake to every document it can reach. */
+    const ORPHAN_SWEEP_MAX_SHARE = 0.25;
+    if (!state.invLoading && _racksFromServer && state.racks.length > 0 && !_orphanCleanupInFlight) {
+      const racked  = state.rows.filter(x => !x.deleted && x.rackId);
+      const orphans = racked.filter(x => !racksById.has(x.rackId));
+      if (orphans.length > 0 && orphans.length > racked.length * ORPHAN_SWEEP_MAX_SHARE) {
+        console.warn(`[rack-cleanup] REFUSED — ${orphans.length} of ${racked.length} racked spools point at a rack `
+          + `not in the ${state.racks.length} we hold. That is not a leftover; nothing was cleared.`);
+      } else if (orphans.length > 0) {
+        console.log(`[rack-cleanup] clearing ${orphans.length} of ${racked.length} racked spool(s)`);
         _orphanCleanupInFlight = true;
         _cleanupOrphanRackRefs(orphans).finally(() => { _orphanCleanupInFlight = false; });
       }
