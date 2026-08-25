@@ -7,8 +7,10 @@
     padding: 0 0 4px;
     margin-top: var(--view-gap);
     flex: 1; min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
+    /* The VIEW no longer scrolls — the board inside it does. Two nested
+       scrollers fight each other, and panning has to move the one that holds
+       the coordinates. */
+    overflow: hidden;
     scrollbar-width: none;                 /* Firefox — hide the vertical scrollbar */
   }
   .inv-printer-view::-webkit-scrollbar { width: 0; height: 0; }   /* Chromium */
@@ -65,37 +67,25 @@
     font-weight: 500;
   }
 
-  .printers-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 12px;
+  /* There is no flow layout left: the printer view is a board, and a board
+     places its cards by coordinate. The grid and flex variants that used to lay
+     them out were the old organisation — they fought the absolute positioning
+     and were the last thing still deciding where a machine went. */
+  .printers-grid { display: block; position: relative; }
+
+  /* The board's own scroller — the cards never move, this does. */
+  .printers-scroll {
+    flex: 1; min-height: 0; overflow: auto;
+    scrollbar-width: none;
+    position: relative;
   }
-  /* Flat, single-grid mode (used after the brand-grouping was removed —
-     the user owns the ordering via drag & drop, and sortIndex is the
-     single source of truth across all brands). */
-  .printers-grid--flex {
-    display: flex; flex-wrap: wrap; gap: 12px;
-  }
-  .printers-grid--flex .printer-card {
-    flex: 0 1 240px;
-  }
-  /* Full-width row that breaks the flex flow between Online / Offline groups.
-     Only rendered when both groups have at least one printer. */
-  .printers-section-hdr {
-    width: 100%;
-    font-size: .72em;
-    font-weight: 600;
-    letter-spacing: .04em;
-    text-transform: uppercase;
-    color: var(--muted);
-    padding: 4px 2px 0;
-    margin-bottom: -4px; /* tighten gap before the first card of the group */
-  }
-  .printers-section-hdr--offline {
-    margin-top: 4px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border);
-  }
+  .printers-scroll::-webkit-scrollbar { display: none; }
+  .printers-scroll.is-panning { cursor: grabbing; user-select: none; }
+  /* Same row as Storage's: the arrange toggle first — it is an action you take
+     while placing machines — then the zoom. */
+  .pv-plan-bar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 0 2px 8px; }
+
+
   /* Connect / Disconnect button in the printer side-card header.
      data-conn="active"   → printer is connected or connecting → danger tint (clicking disconnects)
      data-conn="inactive" → printer is offline / unknown       → accent tint  (clicking connects) */
@@ -113,6 +103,219 @@
     background: color-mix(in srgb, var(--primary) 12%, transparent);
     color: var(--primary);
   }
+  /* ── The printer plan ──────────────────────────────────────────────────
+     Cards placed by hand rather than reflowed by state. Absolute inside a
+     positioned board, exactly like the storage plan — where a machine sits is
+     something you decide once. */
+  .printers-grid--plan { display: block; position: relative; }
+  .printers-grid--plan .printer-card {
+    position: absolute; margin: 0; flex: none; width: 240px;
+    /* Laid out like a rack card: the name on a head row at the top, the
+       machine centred in the body below it. */
+    padding: 12px; gap: 10px; min-height: 150px;
+  }
+  /* Grab is offered where a grab is possible. Outside Arrange the card opens a
+     panel and only its handle moves it, so a card-wide `grab` would promise a
+     drag that the card no longer accepts. */
+  #invPrinterView.is-plan-edit .printers-grid--plan .printer-card { cursor: grab; }
+  /* ── The three states of a board object, in the order they must win ──────
+     Held < selected < colliding. Written together and at ONE specificity so
+     the outcome is decided by this order rather than by which selector happens
+     to carry an extra class — that is how a lift ended up outranking a
+     collision warning once already. */
+  .printers-grid--plan .printer-card.is-plan-dragging,
+  .printers-grid--plan .slots-card.is-plan-dragging {
+    cursor: grabbing; box-shadow: 0 14px 34px rgba(0,0,0,.45);
+    /* HELD. Without it the only sign was a shadow, which on a dark board under
+       a card that had barely moved yet is no sign at all — you could not tell
+       a grab that took from one that missed. */
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+  .printers-grid--plan .printer-card.is-plan-selected,
+  .printers-grid--plan .slots-card.is-plan-selected {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+  .printers-grid--plan .printer-card.is-plan-overlapping,
+  .printers-grid--plan .slots-card.is-plan-overlapping {
+    outline: 2px solid var(--danger); outline-offset: 2px;
+  }
+
+  /* ── The slot widget ─────────────────────────────────────────────────────
+     The machine's bays as their OWN object on the board, so a unit can be put
+     where it really stands rather than stuck under the card of the machine it
+     feeds. Deliberately quieter than a printer card — it is an accessory, and
+     two things competing for attention side by side read as two machines. */
+  .printers-grid--plan .slots-card {
+    /* Sized to its bays, not to a machine card. Now that a square is a fixed
+       size, a fixed-width widget just leaves dead space to the right of a
+       four-bay machine — and dead space next to content reads as something
+       missing. Capped at a card's width so a long machine name cannot stretch
+       it out of proportion. */
+    /* No width cap any more: the bays decide how wide it is, and five of them
+       at picture size are wider than a machine card. It is its own object on
+       the board — nothing requires it to match a card's footprint. */
+    position: absolute; width: fit-content; min-width: 150px;
+    display: flex; flex-direction: column; gap: 8px;
+    padding: 12px;
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .slots-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  /* Whose bays these are. The widget is meaningless without it — a row of
+     squares floating on a board belongs to nothing. */
+  .slots-card-name {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .printers-grid--plan .slots-card .rp-rack-btn { opacity: 0; transition: opacity .15s, background .15s; }
+  .printers-grid--plan .slots-card:hover .rp-rack-btn,
+  .printers-grid--plan .slots-card .rp-rack-btn:focus-visible { opacity: 1; }
+  .printers-grid--plan .slots-card .rp-rack-move { cursor: grab; }
+  /* Inside the widget the strip is the content, not a footnote under a bar. */
+  .slots-card .printer-card-slots { margin-top: 0; }
+  /* One block per unit — an AMS, a holder pair, the spool arm. They are separate
+     objects on the bench, so they are separated here too rather than run into
+     one long line. */
+  .slots-unit { display: flex; flex-direction: column; gap: 5px; }
+  .slots-unit + .slots-unit { margin-top: 10px; }
+  .slots-unit-name {
+    font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Feed slots ──────────────────────────────────────────────────────────
+     What the machine is holding right now, under its progress bar. Colour is
+     the message; the name comes on hover. The strip only exists while connected,
+     so its absence already says "no live link" without a word. */
+  /* The SAME bay as a rack's in PICTURE view: 64 px square, 6 px apart — the
+     numbers come from `.rp-slotview-photo .rp-row-slots` / `.rp-slot` in the
+     storage view, not from a value chosen to look right here. That view's slot
+     is square because what sits in it is square; the colour view's 3/5 box is
+     a spool seen from the front, a different drawing of the same bay. A machine
+     bay and a shelf bay hold the same object, so neither may look like a
+     different size. Change these only alongside the rack. */
+  #invPrinterView { --pcs-size: 64px; --pcs-gap: 6px; }
+  .printer-card-slots {
+    /* ONE size for every bay, on every card. Columns used to be `1fr`, so the
+       square's size depended on how many the machine had — a four-bay machine
+       drew bigger squares than a five-bay one standing next to it, and the eye
+       read that as a difference in importance. A bay is a bay: same square
+       everywhere, like the slots of a rack. */
+    display: grid;
+    grid-template-columns: repeat(var(--pcs-cols, 5), var(--pcs-size));
+    justify-content: start;
+    gap: var(--pcs-gap); margin-top: 10px;
+  }
+  /* The same square the machine's own panel draws, sized for a board card. Kept
+     square by its own ratio, but capped: eight bays on a two-AMS machine must
+     not turn the card into a column of tiles. */
+  .pcs-slot {
+    position: relative;
+    display: flex; align-items: center; justify-content: center;
+    width: var(--pcs-size); aspect-ratio: 1 / 1;
+    border-radius: 5px;
+    background: var(--pcs-color, var(--surface-3));
+    color: var(--pcs-ink, var(--text));
+    /* A mid-grey ring rather than a black one: black filament on a dark board
+       has no edge of its own and the square dissolves into the card, while a
+       black ring would vanish on a white spool. Grey reads against both. */
+    box-shadow: inset 0 0 0 1px rgba(128,132,148,.42);
+    overflow: hidden;
+  }
+  .pcs-slot-txt {
+    font-size: 11px; font-weight: 800; letter-spacing: .02em; line-height: 1;
+    text-transform: uppercase;
+    max-width: 100%; padding: 0 2px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* An empty bay is drawn, not skipped — the count of places is information in
+     itself, and a strip that shortened when a spool ran out would read as the
+     machine having lost a slot. */
+  .pcs-slot.is-empty {
+    background: transparent;
+    color: var(--muted);
+    box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  /* Instant tooltip, no native `title` delay. Same technique as the crop tool. */
+  .pcs-slot::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 6px); left: 50%;
+    transform: translateX(-50%) translateY(3px);
+    padding: 5px 9px; border-radius: 7px;
+    background: var(--dark-surface); color: var(--on-dark);
+    font-size: 11px; font-weight: 600; white-space: nowrap;
+    box-shadow: 0 6px 18px rgba(0,0,0,.28);
+    opacity: 0; pointer-events: none; z-index: 20;
+    transition: opacity .12s ease, transform .12s ease;
+  }
+  .pcs-slot:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* The end chips anchor to their own edge instead of centring: a card sitting
+     at the left of the board had its first label cut in half by the window. */
+  .pcs-slot:first-child::after  { left: 0; transform: translateY(3px); }
+  .pcs-slot:first-child:hover::after { transform: translateY(0); }
+  .pcs-slot:last-child::after   { left: auto; right: 0; transform: translateY(3px); }
+  .pcs-slot:last-child:hover::after  { transform: translateY(0); }
+  /* The ⋮ shows on hover only — the same rule the racks use, so a resting board
+     shows machines rather than controls. */
+  .printers-grid--plan .printer-card .rp-rack-btn { opacity: 0; transition: opacity .15s, background .15s; }
+  .printers-grid--plan .printer-card:hover .rp-rack-btn,
+  .printers-grid--plan .printer-card .rp-rack-btn:focus-visible,
+  .printers-grid--plan .printer-card .rp-rack-kebab[aria-expanded="true"] { opacity: 1; }
+  /* The one control whose press is a drag, not a click — so it says so, and it
+     is the only thing on a resting card that offers to be grabbed. */
+  .printers-grid--plan .printer-card .rp-rack-move { cursor: grab; }
+  .printers-grid--plan .printer-card-head {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+  }
+  .printers-grid--plan .printer-card-thumb {
+    flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;
+  }
+  .printers-grid--plan .printer-card-thumb img { max-width: 100%; max-height: 100px; object-fit: contain; }
+  /* The track is always drawn on a reachable machine — an empty one says
+     "connected, idle" just as clearly as a full one says "nearly done". */
+  .printer-card-prog {
+    height: 4px; border-radius: 999px; overflow: hidden;
+    background: var(--surface-3); flex: none;
+  }
+  .printer-card-prog > span {
+    display: block; height: 100%; width: 0;
+    border-radius: inherit; background: var(--primary);
+    transition: width .4s ease;
+  }
+
+  /* THE SAME mesh as the storage board — two scales of line, drawn on the
+     SCROLLER at true screen size rather than on the scaled canvas (where it
+     would shrink with the zoom and cover only a fraction of the board), with
+     `background-attachment: local` so it travels with the content and stays
+     lined up with the machines while panning. `--plan-z` carries the zoom, so
+     the mesh keeps matching the 24 px snap step at any scale. Shown only while
+     arranging or actually moving one — the rest of the time a mesh under the
+     machines is noise. */
+  #invPrinterView.is-plan-edit .printers-scroll,
+  #invPrinterView.is-plan-moving .printers-scroll {
+    background-attachment: local;
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1));
+  }
+  /* Zoomed well out the 24 px mesh would be graph paper, not a guide. */
+  #invPrinterView.is-plan-coarse.is-plan-edit .printers-scroll,
+  #invPrinterView.is-plan-coarse.is-plan-moving .printers-scroll {
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1));
+  }
+
   .printer-card {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -143,34 +346,7 @@
     -webkit-user-drag: none;
   }
   /* ── Drag handle (left edge of every card) ────────────────────────── */
-  .printer-card-drag {
-    position: absolute; top: 0; left: 0; bottom: 0; width: 18px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: grab;
-    color: var(--muted);
-    opacity: .4;
-    transition: opacity .15s, background .15s;
-    border-radius: 14px 0 0 14px;
-  }
-  .printer-card:hover .printer-card-drag { opacity: 1; }
-  .printer-card-drag:hover { background: var(--surface-2); }
-  .printer-card-drag:active { cursor: grabbing; }
-  /* Six-dot grip rendered as two columns of three radial dots. */
-  .printer-card-drag-dots {
-    display: block; width: 7px; height: 14px;
-    background-image:
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px),
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px),
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px),
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px),
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px),
-      radial-gradient(circle, currentColor 1.1px, transparent 1.6px);
-    background-size: 3px 3px;
-    background-repeat: no-repeat;
-    background-position:
-      0 0, 0 5px, 0 10px,
-      4px 0, 4px 5px, 4px 10px;
-  }
+
 
   /* ── Drag-to-reorder ("make room") ────────────────────────────────────
      Cards slide (2D translate) to open the drop gap; the dragged card is
@@ -415,46 +591,6 @@
   .printer-online--side.is-checking {
     background: rgba(245, 158, 11, .14);
     border-color: rgba(245, 158, 11, .3);
-  }
-
-  /* "Add a printer" card — sits at the end of the grid as a permanent
-     affordance. Dashed border + centered + icon to read as a slot. */
-  .printer-card--add {
-    flex: 0 1 240px;
-    background: transparent;
-    border: 2px dashed var(--border);
-    color: var(--muted);
-    padding: 18px 14px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 6px;
-    min-height: 200px;
-    font-family: inherit;
-    cursor: pointer;
-    transition: border-color .15s, color .15s, background .15s, transform .05s;
-  }
-  .printer-card--add:hover {
-    border-color: var(--primary);
-    color: var(--primary);
-    background: color-mix(in srgb, var(--info) 4%, transparent);
-  }
-  .printer-card--add:active { transform: translateY(1px); }
-  .printer-add-plus {
-    width: 36px; height: 36px;
-    border-radius: 50%;
-    background: var(--surface-2);
-    display: flex; align-items: center; justify-content: center;
-    transition: background .15s;
-  }
-  .printer-card--add:hover .printer-add-plus { background: color-mix(in srgb, var(--info) 12%, transparent); }
-  .printer-add-plus .icon { background: currentColor; }
-  .printer-add-title {
-    font-size: 14px; font-weight: 600;
-    margin-top: 4px;
-  }
-  .printer-add-sub {
-    font-size: 12px;
-    text-align: center;
-    line-height: 1.4;
   }
 
   /* ── Add printer modals (brand picker + form) ───────────────────────── */

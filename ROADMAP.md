@@ -125,6 +125,46 @@ Grouped by domain. Versions in parentheses are the release that landed the featu
 
 ## 🚧 Next up — concrete work
 
+### One board for machines, AMS and racks
+
+The printer view becomes the storage plan — same grid, same zoom, same panning,
+same free placement — and then the pieces join up:
+
+1. **The printer view is a plan.** Grid, zoom, wheel, middle-drag pan, cards
+   placed by hand. Sections are already gone; the plan machinery is the rack
+   view's, made board-agnostic rather than copied.
+2. **An AMS is a rack assigned to a printer.** Derived automatically from the
+   slots the machine reports when it connects — so it carries no shape of its
+   own: it cannot be resized or deleted, only moved. Everything already built
+   for racks (slots, drag-drop, locking, depth, the colour filter) then applies
+   with nothing rewritten, and each unit can sit where it really stands next to
+   its machine. **Deleting a printer deletes the AMS racks bound to it** —
+   they describe hardware that is no longer there.
+2b. **The slots show on the machine's own card first.** Before any rack exists,
+   a connected machine displays its feed slots as a row of colour chips under
+   the progress bar, each naming its filament on hover (*R3D · PLA SnapSpeed*).
+   It is the cheapest possible proof that the driver's slot data is correct and
+   complete — and it is worth having on its own, so it ships before the rack.
+3. **One unified board** — racks, printers and AMS together, so a spool can be
+   dragged off a shelf straight into a machine's slot.
+
+The load-bearing idea is the second: treat an AMS as a rack with a printer id,
+and the third step nearly falls out of the first two.
+
+**Binding a rack to a machine.** The rack carries `printer: { brand, id, unit }`
+— the printer's document id, plus which unit of it this is, because one machine
+can have several AMS/CFS units and each is its own rack, free to sit where that
+unit really stands. Deleting the printer deletes every rack that names it. A
+bound rack shows its machine on its card, so the pair reads as a pair.
+
+**Not every machine has an AMS, and it does not matter.** A Snapmaker U1 has
+four tool-changer nozzles rather than a magazine; it still becomes one rack of
+one row × four slots. The rack does not model the hardware's kind — only how
+many places it offers and which machine they belong to. The slot count comes
+from the connection (`nozzleCount` for the U1), and it survives disconnection,
+because a machine being asleep does not remove its bays.
+
+
 Items where the spec is written and we know roughly how to do it. Ranked by ratio (impact / effort × risk).
 
 > ### 🐿️🐿️ Sprint mode — days, not months
@@ -713,6 +753,77 @@ Today a spool lives in **one** place: its rack slot (`rack: { id, level, positio
 **The idea**: when we connect to a printer, materialise a **virtual storage** that mirrors the machine's detected feed slots, then let the user assign their inventory spools to those slots **exactly like racks** — same drag-drop / right-click grammar. Crucially this is a **second, simultaneous location**: assigning a spool to *Bambu Lab → AMS slot A2* must **not** clear its rack assignment. The rack is the spool's **home** (where it physically returns); the printer slot is a **provisional mount** layered on top. So a spool can read as *"Rack B · level 2 · slot 3 — currently loaded in Bambu Lab X1C / AMS A2"* at the same time.
 
 > **Why dual-location and not a move?** Physically a spool is either in the rack or on the printer — but the user wants the home slot remembered so unmounting sends it back to the right place, and so the rack view doesn't "lose" a spool just because it's printing right now. The printer mount is therefore an **overlay**, never a relocation.
+
+#### ⚠️ The hard part is not the transport — it is the material mapping
+
+Writing to a machine is **already solved**: every brand's filament sheet pushes a
+set-filament command today (Bambu `ams_filament_setting` over MQTT, and the
+equivalent per brand). Assigning a spool to a slot therefore reuses a path that
+already exists and is proven.
+
+What does **not** exist is the translation. Each brand ships its **own** vendor +
+material catalogue (`SNAP_FIL_VENDOR_MATERIALS`, `CRE_FIL_VENDOR_MATERIALS`,
+`FFG_FIL_VENDOR_MATERIALS`, Bambu's material list), and they are not the same
+shape:
+
+- **Bambu needs an exact id** — `tray_info_idx` / `bambuID`, a number from its own
+  catalogue. A string it has never heard of is not an option.
+- **The others take vendor + material strings**, falling back to a `Generic`
+  vendor list when they do not know the brand.
+
+So assigning *R3D · PLA Basic* means resolving a TigerTag identity into whatever
+that particular machine can be told. It is lossy — a printer that has never heard
+of R3D can still be told "Generic PLA" with the right colour and temperatures,
+which is the honest answer — and a payload a machine does not recognise is
+**refused outright**, so this is a decision per brand, not a lookup.
+
+**This mapping already exists — in the MOBILE app.** Tiger NFC Connect
+(`TigerTag_RFID_Connect`) scans a spool and pushes it into the machine today, for
+all six brands. Studio must **port that logic, not re-derive it**: a second,
+independently-guessed mapping would drift and the two apps would set the same
+spool differently on the same printer.
+
+**Port the LEGACY per-brand pages, not `lib/printers_link/`.** The newer
+`printers_link` drivers are the tidier code but they have regressed against the
+per-brand screens that were proven on hardware, in three places:
+
+| Brand | `printers_link` does | the legacy page does — port THIS |
+|---|---|---|
+| Bambu | never passes the tag's own `onlineBambuID`, so it always resolves through the catalogue | `bambu_mqtt_page.dart` — priority chain: tag `onlineBambuID` (unless `'-'`) → catalogue `metadata.bambuID` → `'GFA00'` |
+| Elegoo | always `method 2003` + refresh `2005`; colour without the `#` | `elegoo_mqtt_page.dart` — `1055` when the Canvas hub is absent, `2003` when present (matching the slicer), colour as `#RRGGBB` |
+| Creality | hardcodes `name: 'Generic <type>'`, discarding the resolved label | `creality_websocket_page.dart` — uses the product's own Creality label when there is one |
+
+**The catalogue: Studio is already better placed than mobile.** The mapping table
+is the material catalogue itself — `metadata.bambuID` (Bambu `tray_info_idx`) and
+`metadata.crealityID` (Creality `rfid`). Mobile ships a **truncated** copy of it,
+missing `material_type`, `filled_type` and `crealityPressureAdvance`, so its Bambu
+`tray_type` silently degrades to the raw label and its Creality pressure is always
+the default. Studio's bundled `assets/db/tigertag/id_material.json` is the
+**complete** 113-entry version (80 with `bambuID`, 67 with `crealityID`, 109 with
+`material_type`) and is already refreshed from the API. Read it from there; do not
+copy mobile's asset.
+
+**The fallback policy to copy: never refuse, always substitute a Generic.**
+Unknown vendor → the literal `Generic`. Unknown material → `GFA00` (Bambu Generic
+PLA) / `'0'` (Creality) / `0x0000` (Elegoo) plus that brand's default temperatures.
+Colour and temperatures travel cleanly in every case; only the *identity* is lossy.
+
+**One mobile defect NOT to copy:** an unrecognised material id resolves to the
+literal string `"Unknown Material"`, which is then pushed to the printer as the
+filament type. An unknown id must fall back to the Generic entry, not send a
+sentence as a material name.
+
+**Temperatures come from the CATALOGUE, not from the chip.** Mobile deliberately
+uses `recommended.nozzleTempMin/Max` and ignores both the chip's own temperature
+bytes and the product API's. Match that, or the two apps will set different
+temperatures for the same spool.
+
+**Post-write refresh is part of the write.** Bambu re-issues `pushall` on the ack;
+Elegoo refreshes at +1000 ms (a documented firmware processing window); Snapmaker
+queries `print_task_config` at +500 ms; FlashForge polls `/detail` at +1 s and
+deliberately does not await its POST. These delays are firmware tolerances, not
+cosmetics — a port that drops them looks frozen or shows stale slots.
+
 
 #### 🗃️ Data model
 

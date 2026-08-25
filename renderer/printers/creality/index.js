@@ -1617,7 +1617,68 @@ document.getElementById("creFilEditSave")?.addEventListener("click", async () =>
 });
 
 // ── Self-registration ─────────────────────────────────────────────────────
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function creGetSlots(printer) {
+  const conn = _creConns.get(creKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const boxes = conn.data?.boxsInfoRaw?.boxsInfo?.materialBoxs || [];
+  const out = [];
+  boxes.forEach(b => {
+    (b?.materials || []).forEach((m, i) => {
+      out.push({
+        key: `${b?.id ?? 0}:${i}`,
+        // Box 0 is the external tray; the CFS units number from 1.
+        label: (b?.id === 0 || b?.id == null) ? 'Ext.' : `${b.id}${'ABCD'[i] || i + 1}`,
+        color: m?.color || null,
+        material: m?.type || null,
+        vendor: m?.vendor || null,
+        empty: !m?.state || (!m?.color && !m?.type),
+      });
+    });
+  });
+  return out;
+}
+
+
+/* ── Storage units ──────────────────────────────────────────────────────── */
+export function creGetUnits(printer) {
+  const conn = _creConns.get(creKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const boxes = conn.data?.boxsInfoRaw?.boxsInfo?.materialBoxs || [];
+  // Box 0 is the external tray; the CFS units number from 1.
+  return boxes.map((b, bi) => {
+    const mats = b?.materials || [];
+    const boxId = b?.id ?? bi;
+    const isExt = boxId === 0;
+    return {
+      kind: isExt ? 'ext' : 'cfs',
+      index: isExt ? 0 : Math.max(0, boxId - 1),
+      label: '', hwId: boxId != null ? String(boxId) : null,
+      rows: 1, cols: mats.length || 1,
+      slots: mats.map((m, i) => ({
+        index: i,
+        label: isExt ? 'Ext.' : `${boxId}${'ABCD'[i] || i + 1}`,
+        hw: { boxId, slotId: i },
+        color: m?.color || null,
+        material: m?.type || null,
+        vendor: m?.vendor || null,
+        empty: !m?.state || (!m?.color && !m?.type),
+      })),
+    };
+  });
+}
+
 registerBrand('creality', {
+  getUnits:             creGetUnits,
+  getSlots:             creGetSlots,
   meta, schema, helper,
   renderJobCard:        renderCreJobCard,
   renderTempCard:       renderCreTempCard,

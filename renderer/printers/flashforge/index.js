@@ -1535,7 +1535,61 @@ $("ffgFilEditSave")?.addEventListener("click", async () => {
 });
 
 // ── Self-registration ─────────────────────────────────────────────────────
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function ffgGetSlots(printer) {
+  const conn = _ffgConns.get(ffgKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  return (conn.data?.filaments || []).map((f, i) => {
+    const id = f?.slotId || (i + 1);
+    return {
+      key: `s${id}`,
+      label: f?.slotKind === 'ext' ? 'Ext.'
+           : f?.slotKind === 'tool' ? `T${id}`
+           : f?.slotKind === 'ms' ? `1${'ABCD'[(id - 1) | 0] || ''}`
+           : `${id}`,
+      color: f?.color || null,
+      material: f?.type || null,
+      vendor: f?.vendor || null,
+      // The station reports a colour for a bay it has been TOLD about even when
+      // nothing is in it, so the sensor has the last word here.
+      empty: f?.hasFilament === false || (!f?.color && !f?.type),
+    };
+  });
+}
+
+
+/* ── Storage units ──────────────────────────────────────────────────────── */
+export function ffgGetUnits(printer) {
+  const slots = ffgGetSlots(printer);
+  if (!slots.length) return [];
+  const conn = _ffgConns.get(ffgKey(printer));
+  const fils = conn?.data?.filaments || [];
+  /* The external arm and the multi-colour station are two separate objects on
+     the bench, and the machine reports them in one list — split by what each
+     slot says it belongs to. */
+  const units = [];
+  const ext = slots.filter((_, i) => fils[i]?.slotKind === 'ext');
+  const rest = slots.filter((_, i) => fils[i]?.slotKind !== 'ext');
+  if (ext.length) units.push({ kind: 'ext', index: 0, label: '', hwId: null,
+    rows: 1, cols: ext.length,
+    slots: ext.map((s, i) => ({ ...s, index: i, hw: { external: true } })) });
+  if (rest.length) units.push({ kind: 'holder', index: 0, label: '', hwId: null,
+    rows: 1, cols: rest.length,
+    slots: rest.map((s, i) => ({ ...s, index: i, hw: { slot: i + 1 } })) });
+  return units;
+}
+
 registerBrand('flashforge', {
+  getUnits:             ffgGetUnits,
+  getSlots:             ffgGetSlots,
   meta, schema, helper,
   renderJobCard:        renderFfgJobCard,
   renderTempCard:       renderFfgTempCard,

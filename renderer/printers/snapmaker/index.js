@@ -1652,7 +1652,55 @@ document.addEventListener("pointercancel", () => { _snapJobPointerDown = false; 
 
 // ── Self-registration ─────────────────────────────────────────────────────
 
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function snapGetSlots(printer) {
+  const conn = _snapConns.get(snapKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  return (conn.data?.filaments || []).map((f, i) => ({
+    key: `e${i + 1}`,
+    label: `E${i + 1}`,
+    color: f?.color || null,
+    // The square carries the FAMILY — PLA, ABS, PETG. The variant (Basic,
+    // Matte, SnapSpeed) is what tells two spools apart once you already know
+    // it is PLA, so it belongs on hover: on the square it just pushed the
+    // family out and left "MAT…" where "PLA" should be.
+    material: f?.type || null,
+    detail: f?.subType || null,
+    vendor: f?.vendor || null,
+    empty: !f?.color && !f?.type,
+  }));
+}
+
+
+/* ── Storage units ────────────────────────────────────────────────────────
+   What this machine's filament is held IN, not just how many places there are.
+   See docs/printer-storage-terms.md for the shared vocabulary. */
+export function snapGetUnits(printer) {
+  const slots = snapGetSlots(printer);
+  if (!slots.length) return [];
+  /* The U1 shows one row of four in its own interface, and that is what the
+     firmware reports — even though 1/2 sit on the left and 3/4 on the right,
+     stacked. One unit here; the user splits it if their bench says otherwise.
+     Snapmaker plans one AMS per print head, so this deliberately takes the
+     count it is GIVEN rather than assuming four. */
+  return [{
+    kind: 'holder', index: 0, label: '', hwId: null,
+    rows: 1, cols: slots.length,
+    slots: slots.map((s, i) => ({ ...s, index: i, hw: { extruder: i } })),
+  }];
+}
+
 registerBrand('snapmaker', {
+  getUnits:             snapGetUnits,
+  getSlots:             snapGetSlots,
   meta, schema, helper,
   renderJobCard:        renderSnapJobCard,
   renderTempCard:       renderSnapTempCard,

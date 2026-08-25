@@ -1592,7 +1592,52 @@ document.getElementById('elgFileSheetRefresh')?.addEventListener('click', () => 
 
 // ── Self-registration ─────────────────────────────────────────────────────
 
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function elegooGetSlots(printer) {
+  const conn = _elegooConns.get(elegooKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const fils = conn.data?.filaments || [];
+  const mono = conn.data?._canvasConnected === false || fils.length === 1;
+  return fils.map((f, i) => ({
+    key: `t${i}`,
+    label: mono ? 'Ext.' : `${i + 1}`,
+    color: f?.color || null,
+    material: f?.type || null,
+    detail: f?.name || null,
+    vendor: f?.vendor || null,
+    empty: !f?.color && !f?.type,
+  }));
+}
+
+
+/* ── Storage units ──────────────────────────────────────────────────────── */
+export function elegooGetUnits(printer) {
+  const slots = elegooGetSlots(printer);
+  if (!slots.length) return [];
+  const conn = _elegooConns.get(elegooKey(printer));
+  /* Canvas hub or the lone external arm — never both at once. Which one is
+     PRESENT flips when the hub is unplugged; the other unit's document is kept
+     either way, because the accessory comes back and what was assigned in it
+     has to still be there. */
+  const mono = conn?.data?._canvasConnected === false || slots.length === 1;
+  return [{
+    kind: mono ? 'ext' : 'holder', index: 0, label: '', hwId: null,
+    rows: 1, cols: slots.length,
+    slots: slots.map((s, i) => ({ ...s, index: i, hw: { canvasId: 0, trayId: i } })),
+  }];
+}
+
 registerBrand('elegoo', {
+  getUnits:             elegooGetUnits,
+  getSlots:             elegooGetSlots,
   meta, schema, helper,
   renderJobCard:        renderElegooJobCard,
   renderTempCard:       renderElegooTempCard,

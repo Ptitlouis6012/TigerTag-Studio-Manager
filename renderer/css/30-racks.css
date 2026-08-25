@@ -118,17 +118,23 @@
   .rp-rack-btn--danger:hover { background: var(--danger-soft); }
   .rp-rack-btn--danger:hover .icon { background: var(--danger); }
 
-  /* Kebab button — fades in on rack hover, fully visible when its menu is open
-     or when the rack is keyboard-focused. Reduces visual noise at rest. */
-  .rp-rack-kebab {
+  /* Head buttons — fade in on rack hover, fully visible when a menu is open or
+     when the rack is keyboard-focused. Reduces visual noise at rest. */
+  .rp-rack-kebab,
+  .rp-rack-move {
     opacity: 0;
     transition: opacity .15s, background .15s;
   }
   .rp-rack:hover .rp-rack-kebab,
+  .rp-rack:hover .rp-rack-move,
   .rp-rack-kebab:focus-visible,
+  .rp-rack-move:focus-visible,
   .rp-rack-kebab[aria-expanded="true"] {
     opacity: 1;
   }
+  /* The one control whose press is a drag rather than a click — so it says so,
+     and it is the only thing on a resting card that offers to be grabbed. */
+  .rp-rack-move { cursor: grab; }
   .rp-rack-kebab[aria-expanded="true"] {
     background: var(--border);
   }
@@ -796,11 +802,19 @@
     transition: outline-color .15s, box-shadow .15s;
   }
   #invRackView.is-plan-edit .rp-rack:hover { outline-color: var(--border-strong); }
-  #invRackView.is-plan-edit .rp-rack.is-plan-selected { outline-color: var(--primary); }
+  /* Picked up, in the drawing-program sense — and NOT tied to Arrange: a
+     selection you cannot see is a selection that will surprise you the moment
+     you drag something. */
+  #invRackView .rp-rack.is-plan-selected {
+    outline: 2px solid var(--primary); outline-offset: 3px;
+  }
   /* The lift is set inline by the drag handler — the layout writes an inline
      z-index on every card, and no stylesheet rule can outrank that. */
   #invRackView .rp-rack.is-plan-dragging {
     cursor: grabbing; box-shadow: 0 20px 44px rgba(0,0,0,.32);
+    /* HELD. A shadow alone is not a sign on a card that has barely moved — the
+       collision rule below still outranks this, so a bad landing stays red. */
+    outline: 2px solid var(--primary); outline-offset: 3px;
   }
   /* Nothing is ever refused and nothing else moves, so a card in motion is never
      an error state — it just glides. */
@@ -868,12 +882,37 @@
   .rp-plan-guide { position: absolute; display: block; background: var(--primary); }
   .rp-plan-guide--v { top: 0; bottom: 0; width: 1px; margin-left: -0.5px; }
   .rp-plan-guide--h { left: 0; right: 0; height: 1px; margin-top: -0.5px; }
+  /* The rubber band, shared by both boards. Drawn in board coordinates so it
+     stays under the pointer at any zoom, and above the cards so you can see
+     what it is sweeping. */
+  /* The closed hand belongs to the GESTURE, not to the element under the
+     pointer. It has to appear on the press itself — before anything has moved —
+     and stay closed while the pointer travels over other cards, the mesh, the
+     guides or the panel, any of which carries its own cursor. Only a body-level
+     override survives crossing all of them.
+
+     `!important` is warranted here, for once: the cards declare `cursor: grab`
+     from an id-scoped selector, which no amount of class doubling can outrank,
+     and this is a transient state that must win over everything by definition. */
+  body.is-plan-grabbing, body.is-plan-grabbing * { cursor: grabbing !important; }
+
+  .rp-plan-marquee {
+    position: absolute; z-index: 900; pointer-events: none;
+    border: 1px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border-radius: 3px;
+  }
 
   /* Racks may overlap — it is the user's plan and nothing is going to shove
-     anything aside — but it is never silent. */
+     anything aside — but it is never silent.
+
+     The outline is declared in FULL here, not merely recoloured. Only Arrange
+     mode gives a card its `outline: 2px solid transparent` base, so outside it
+     a lone `outline-color` had no style to paint — and the warning went missing
+     in exactly the place it was needed, on a rack dragged by its head in the
+     normal view. */
   #invRackView .rp-rack.is-plan-overlapping {
-    outline-color: var(--danger);
-    box-shadow: 0 0 0 9999px rgba(216,59,59,.06) inset;
+    outline: 2px solid var(--danger); outline-offset: 3px;
   }
 
   .rp-plan-grip { position: absolute; z-index: 5; display: none; }

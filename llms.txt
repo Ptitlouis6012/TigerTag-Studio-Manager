@@ -81,6 +81,15 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
   /racks/{rackId}          → rack layout docs
   /printers/{brand}/devices/{id}
                            → one doc per known printer of that brand (connection + identity)
+  /printers/{brand}/devices/{id}.units.{unitId}
+                           → the machine's FILAMENT STORAGE, a MAP field: one entry per unit
+                             (an AMS / CFS / ACE box, a holder pair, the external arm).
+                             Carries its shape (rows x cols), its label, `present`, a
+                             position on EACH board (planPrinters / planRacks) and its
+                             slots — each slot holding what the user assigned (`uids`)
+                             and what the machine last reported in it (`seenAt` + colour,
+                             material, vendor). Vocabulary + full shape:
+                             docs/printer-storage-terms.md
   /printerSeen/{brand:id}  → { ts } last-seen stamp per printer, drives the online/offline column
   /prefs/app               → { lang }
   /scales/{mac}            → TigerScale heartbeat
@@ -293,6 +302,10 @@ Tiger Studio Manager is the desktop app of a wider open hardware + software ecos
 - `ROADMAP.md` — what's done / in progress / backlog, grouped by domain
 - `DEVLOG.md` — per-session engineering journal
 - `renderer/printers/<brand>/PROTOCOL.md` — self-contained agent skill per printer brand
+- `docs/printer-storage-terms.md` — the agreed words for a printer's filament storage
+  (`slot` = one place for one spool, `unit` = the physical box grouping slots: AMS / AMS HT /
+  CFS / ACE / holder / ext). READ IT before naming anything in this area — every brand names
+  the same object differently, and one unit maps to one bound rack
 - `TIGERTAG_FIREBASE_INTEGRATION.md` — third-party Firebase integration guide
 - `FEATURES.md` — consolidated catalogue of every shipped feature, tagged by version
 - `CODEMAP-main.md` — line ranges for every section of `main.js`

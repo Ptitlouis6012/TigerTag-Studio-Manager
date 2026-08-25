@@ -1072,7 +1072,87 @@ $('bblFilEditSave')?.addEventListener('click', () => {
 
 // ── Self-registration ──────────────────────────────────────────────────────
 
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function bambuGetSlots(printer) {
+  const conn = _bambuConns.get(bambuKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const d = conn.data || {};
+  const slot = (key, label, t) => ({
+    key, label,
+    color: t?.color || null,
+    material: t?.type || null,
+    vendor: t?.vendor || t?.brand || null,
+    empty: !t?.color && !t?.type,
+  });
+  /* The spool holder on the side of the machine is NOT part of any AMS — it is
+     its own object, and reading only the AMS modules dropped it silently. It
+     comes first here, exactly as it does on the machine's own panel. */
+  const out = [slot('ext', 'Ext.', d.externalTray ?? null)];
+  const mods = [...(d.ams || [])].sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+  mods.forEach((m, mi) => {
+    // Always four bays per unit: a module reports only the trays it has seen,
+    // and a short list would renumber the ones after the gap.
+    for (let ti = 0; ti < 4; ti++) {
+      const t = (m?.tray || [])[ti] ?? null;
+      out.push(slot(`ams${m?.id ?? mi}:${t?.id ?? ti}`, `${'ABCDEFGH'[mi] || mi + 1}${ti + 1}`, t));
+    }
+  });
+  return out;
+}
+
+
+/* ── Storage units ────────────────────────────────────────────────────────
+   One rule for the whole range: every Bambu speaks the same MQTT, so an A1, a
+   P2, an X1 or an H2 needs no special case here. */
+export function bambuGetUnits(printer) {
+  const conn = _bambuConns.get(bambuKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const d = conn.data || {};
+  const slot = (label, t, hw) => ({
+    label, hw,
+    color: t?.color || null,
+    material: t?.type || null,
+    vendor: t?.vendor || t?.brand || null,
+    empty: !t?.color && !t?.type,
+  });
+  const units = [{
+    kind: 'ext', index: 0, label: '', hwId: null, rows: 1, cols: 1,
+    // 255/254 is how Bambu addresses the spool holder on the side.
+    slots: [{ ...slot('Ext.', d.externalTray ?? null, { amsId: 255, trayId: 254 }), index: 0 }],
+  }];
+  const mods = [...(d.ams || [])].sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
+  mods.forEach((m, mi) => {
+    // An AMS HT holds one spool; every other unit holds four. The module tells
+    // us which by how many trays it carries.
+    const n = (m?.tray || []).length === 1 ? 1 : 4;
+    const amsId = Number(m?.id ?? mi);
+    units.push({
+      kind: n === 1 ? 'amsHt' : 'ams', index: mi, label: '',
+      // The AMS's own id — what makes the same physical box recognisable after
+      // a reconnect, however the user reorders them.
+      hwId: m?.id != null ? String(m.id) : null,
+      rows: 1, cols: n,
+      slots: Array.from({ length: n }, (_, ti) => ({
+        ...slot(`${'ABCDEFGH'[mi] || mi + 1}${ti + 1}`, (m?.tray || [])[ti] ?? null,
+                { amsId, trayId: ti }),
+        index: ti,
+      })),
+    });
+  });
+  return units;
+}
+
 registerBrand('bambulab', {
+  getUnits:             bambuGetUnits,
+  getSlots:             bambuGetSlots,
   meta, schema, helper,
   renderJobCard:        renderBambuJobCard,
   renderTempCard:       renderBambuTempCard,

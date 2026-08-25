@@ -21394,6 +21394,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             return String(a.printerName || "").localeCompare(String(b.printerName || ""));
           });
           state.printers = all;
+          // The machines have just arrived — their units can now be recorded.
+          syncAllPrinterUnits();
           scheduleStudioStateRecord();  // re-arm deferred telemetry (printer count changed)
           // Snapmaker: resolve the latest paxx firmware release (throttled to
           // one API call per 24 h inside paxx.js — repeated snapshots are a
@@ -21652,31 +21654,148 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!job) return "";
     return `${job.state}|${job.isActive ? 1 : 0}|${job.pct}|${job.remainSec ?? ""}|${job.filename ?? ""}`;
   }
+  /* Only the fill moves. The card is a machine, a name, a dot and a track; a
+     job starting or finishing changes one width, so there is nothing to rebuild
+     and nothing that can shift the card under the pointer. */
+  /* What a machine is holding, whatever it is. Each brand normalises its own
+     wire format behind `getSlots`; a brand that has not (or a machine that is
+     not connected) simply answers with nothing, and the card shows no strip. */
+  function _printerSlots(p) {
+    try { return brands.get(p.brand)?.getSlots?.(p) || []; }
+    catch (e) { return []; }
+  }
+  /* The strip under the progress bar — the SAME squares the machine's own panel
+     shows, at board size: coloured, with the material written on them. A row of
+     bare colour swatches asked you to already know which spool was which; the
+     material is the one word that makes a bay identifiable at a glance. The rest
+     — the bay's name and the filament's brand — comes on hover. */
+  function _printerSlotsHtml(p) {
+    return _slotStripHtml(_printerSlots(p));
+  }
+  function _slotStripHtml(slots, forceCols) {
+    if (!slots || !slots.length) return "";
+    /* Five across at most, and the rows are BALANCED. Eight squares on one row
+       shrink until the material is an ellipsis — the one thing the square is
+       there to say — so they wrap; but wrapping at a fixed width leaves an X1C's
+       five bays as a row of four and a lone straggler. Rows are counted first,
+       then divided evenly: 5 → 5, 8 → 4+4, 9 → 5+4. */
+    const rows = Math.ceil(slots.length / 5);
+    const cols = forceCols || Math.ceil(slots.length / rows);
+    return `<div class="printer-card-slots" style="--pcs-cols:${cols}">${slots.map(s => {
+      const full  = [s.material, s.detail].filter(Boolean).join(" ");
+      const name  = [s.vendor, full].filter(Boolean).join(" · ");
+      const tip   = `${s.label}${name ? " — " + name : ""}`;
+      /* Three states, not two — the machine's own panel makes the same
+         distinction. Nothing known about the bay reads "?"; a bay whose colour
+         came through without a declared material reads "—", because there IS
+         something there and the square should not claim otherwise. */
+      const filled = !s.empty && !!s.color;
+      // Ink chosen against the spool's own colour, or a black square swallows
+      // its own label.
+      const style = filled
+        ? `--pcs-color:${esc(s.color)};--pcs-ink:${isColorDark(s.color) ? "var(--on-dark)" : "#14161c"}`
+        : "";
+      return `<span class="pcs-slot${filled ? "" : " is-empty"}" data-tip="${esc(tip)}" style="${style}"
+                 ><span class="pcs-slot-txt">${esc(s.material || (filled ? "—" : "?"))}</span></span>`;
+    }).join("")}</div>`;
+  }
+
+  /* The machine's bays, as a board object. Absent when the machine reports
+     nothing — a widget for a link that is down would be a frame around a guess. */
+  /* One row per UNIT, named. A machine's storage is not a single strip: an X1C
+     with two AMS and a spool arm is three separate boxes standing in three
+     places, and a flat line of thirteen squares says none of that. Each unit
+     will become its own movable object next; showing them apart first is what
+     makes that step obvious rather than surprising. */
+  function _makeSlotsWidget(p) {
+    const units = _printerUnits(p);
+    if (!units.length) return "";
+    const body = units.map(u => `
+      <div class="slots-unit">
+        <div class="slots-unit-name">${esc(_unitLabel(u))}</div>
+        ${_slotStripHtml(u.slots, u.cols)}
+      </div>`).join("");
+    const key = `${p.brand}:${p.id}`;
+    return `
+      <div class="slots-card" data-board-id="${esc(SLOTS_PREFIX + key)}"
+           data-printer-key="${esc(key)}">
+        <div class="rp-rack-head slots-card-head">
+          <div class="rp-rack-info">
+            <div class="slots-card-name">${esc(p.printerName || p.brand)}</div>
+          </div>
+          <div class="rp-rack-actions">
+            <button class="rp-rack-btn rp-rack-move" data-action="move" aria-label="${esc(t("actionMove"))}"><span class="icon icon-move icon-18"></span></button>
+          </div>
+        </div>
+        ${body}
+      </div>`;
+  }
+
+  /* What the user reads on a unit. The brand's own wording, because that is
+     what is printed on the box in front of them — and units that carry no name
+     at all (a Snapmaker U1's holders are simply numbered) are labelled by the
+     slots they hold rather than by a word invented here. */
+  const _UNIT_WORD = { ams: "AMS", amsHt: "AMS HT", cfs: "CFS", ace: "ACE", ext: "Ext." };
+  function _unitLabel(u) {
+    if (u.label) return u.label;                 // the user renamed it
+    if (u.kind === "ext") return "Ext.";
+    const word = _UNIT_WORD[u.kind];
+    if (word) return `${word} ${(u.index || 0) + 1}`;
+    const first = u.slots?.[0]?.label, last = u.slots?.[u.slots.length - 1]?.label;
+    return first && last && first !== last ? `${first}–${last}` : (first || "");
+  }
+
   function _patchGridJobs() {
     if (!_isPrinterMode(state.viewMode)) return;
+    document.querySelectorAll("#invPrinterView .printer-card-job").forEach(el => el.remove());
     state.printers.forEach(p => {
-      const card = document.querySelector(`[data-printer-key="${esc(p.brand + ":" + p.id)}"]`);
-      if (!card) return;
+      const card = document.querySelector(`#invPrinterView .printer-card[data-printer-key="${CSS.escape(p.brand + ":" + p.id)}"]`);
+      const fill = card?.querySelector(".printer-card-prog > span");
+      if (!fill) return;
       const job = _getPrinterJob(p);
-      const existing = card.querySelector(".printer-card-job");
-      if (!job) {
-        if (existing) { existing.remove(); card._lastJobSig = ""; }
-        return;
-      }
-      const sig = _jobSignature(job);
-      if (existing && card._lastJobSig === sig) return; // no real change, skip the rebuild
-      card._lastJobSig = sig;
-      const html = _jobCardHtml(job);
-      if (existing) { existing.outerHTML = html; }
-      else {
-        const foot = card.querySelector(".printer-card-foot");
-        if (foot) foot.insertAdjacentHTML("beforebegin", html);
-      }
+      const pct = (job && job.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+      const next = pct + "%";
+      if (fill.style.width !== next) fill.style.width = next;
     });
+    _patchSlotsWidgets();
+    syncAllPrinterUnits();
   }
 
   // Table view: the job cell HTML. Shared by _renderPrinterTable (initial
   // build) and _patchTableJobs (live surgical update) so the two never drift.
+  /* A spool swap is not a status change, so nothing would rebuild anything for
+     it. The widgets are patched in place instead — and a whole one is only ever
+     added or removed, never rebuilt around, so a board full of them is not
+     redrawn because one machine changed colour. */
+  function _patchSlotsWidgets() {
+    const container = _printerPlanContainer();
+    if (!container) return;
+    state.printers.forEach(p => {
+      const id = SLOTS_PREFIX + `${p.brand}:${p.id}`;
+      const el = container.querySelector(`.slots-card[data-board-id="${CSS.escape(id)}"]`);
+      const html = _makeSlotsWidget(p);
+      if (!el && html) { container.insertAdjacentHTML("beforeend", html); layoutPrintersPlan(); return; }
+      if (el && !html) { el.remove(); return; }
+      if (!el || !html) return;
+      /* The units are swapped as a block: a spool change alters one strip, but
+         plugging an AMS in adds a whole row, and patching strip-by-strip would
+         have to invent the row that is not there yet. The widget is small and
+         holds nothing live — no video, no open menu — so replacing its body is
+         cheap and cannot lose anything. */
+      const head = el.querySelector(".slots-card-head");
+      const nextBody = _makeSlotsWidget(p);
+      if (!nextBody) return;
+      const tmp = document.createElement("div");
+      tmp.innerHTML = nextBody;
+      const fresh = Array.from(tmp.firstElementChild.querySelectorAll(".slots-unit"))
+        .map(n => n.outerHTML).join("");
+      const cur = Array.from(el.querySelectorAll(".slots-unit")).map(n => n.outerHTML).join("");
+      if (fresh === cur) return;
+      el.querySelectorAll(".slots-unit").forEach(n => n.remove());
+      head?.insertAdjacentHTML("afterend", fresh);
+    });
+  }
+
   function _jobCellHtml(job) {
     if (!job) return `<span class="pt-job-idle">—</span>`;
     if (!job.isActive)
@@ -21791,19 +21910,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       .join("|");
   }
 
-  // Refresh the grid when the online set changes: re-render so the name dots,
-  // section split (CONNECTED / OFFLINE) and ordering all stay in sync.
+  /* A machine coming or going now touches ONE dot. It used to re-render the
+     whole grid, because the split into CONNECTED / OFFLINE meant the order
+     itself depended on the state — the cards were rebuilt and re-placed every
+     time a printer blinked. Nothing about a card's position depends on its
+     state any more, so nothing about its position needs recomputing. */
   function _patchGridStatus() {
     if (!_isPrinterMode(state.viewMode)) return;
-    // The grid card's only status signal is the dot left of the name, whose
-    // state is baked into the grid signature (online bit per printer). So a
-    // full re-render on signature change is all we need — there is no longer
-    // an in-card badge to patch surgically.
     const sig = _printerGridSignature();
-    if (sig !== _lastPrinterGridSignature) {
-      _lastPrinterGridSignature = sig;
-      renderPrintersView();
-    }
+    if (sig === _lastPrinterGridSignature) return;
+    _lastPrinterGridSignature = sig;
+    document.querySelectorAll("#invPrinterView .printer-card[data-printer-key]").forEach(card => {
+      const p = state.printers.find(v => `${v.brand}:${v.id}` === card.dataset.printerKey);
+      if (!p) return;
+      card.querySelector(".printer-card-name-dot")
+        ?.classList.toggle("is-online", !!_isPrinterOnline(p));
+    });
   }
 
   /* ── Render the user's 3D printers in the main panel.
@@ -21893,11 +22015,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const _isOnline = p => _isPrinterOnline(p);
 
     // Partition into connected / offline while preserving each group's sortIndex order.
-    const _onlineList  = state.printers.filter(p =>  _isOnline(p));
-    const _offlineList = state.printers.filter(p => !_isOnline(p));
-    const _showSections = _onlineList.length > 0 && _offlineList.length > 0;
-    // Render order: online first, then offline. Within each group, sortIndex is preserved.
-    const _orderedPrinters = [..._onlineList, ..._offlineList];
+    /* No partition, no ordering: on a board, the DOM order decides nothing —
+       each card carries its own coordinates. Sorting by state was the whole
+       reason a printer moved when it blinked. */
+    const _orderedPrinters = state.printers;
 
     // One flat grid — all brands mixed, ordered strictly by user-defined
     // sortIndex (set via drag & drop). Each card carries its brand pill so
@@ -21920,59 +22041,105 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
       // Same for Creality — opens a brief WS to port 9999.
       if (p.brand === "creality"   && p.ip) crePingPrinter(p);
+      /* A MINIMAL card: the machine, its name, and a dot saying whether it is
+         reachable. The protocol, the connection type and "last seen" were
+         reference data on a board you glance at — they belong in the detail
+         panel and the table, where you go to look something up. The brand is
+         still there, as the logo on the photo rather than a word. */
       const online      = _isOnline(p);
-      // "Last seen online" — same source as the printers table: currently
-      // connected → "just now"; otherwise the persisted last-online time.
-      const _ls         = _printerLastSeen.get(`${p.brand}:${p.id}`);
-      const lastSeen    = online ? t("agoNow") : (_ls ? timeAgo(_ls) : "—");
       return `
         <div class="printer-card${p.isActive ? " printer-card--active" : ""}${state.selectedPrinters.has(`${p.brand}:${p.id}`) ? " row-selected" : ""}"
              data-brand="${esc(p.brand)}" data-id="${esc(p.id)}"
              data-printer-key="${esc(`${p.brand}:${p.id}`)}"
-             draggable="true">
+             data-board-id="${esc(`${p.brand}:${p.id}`)}">
           <span class="sel-check" aria-hidden="true"></span>
-          <div class="printer-card-drag" title="${esc(t("printerDragHint"))}" aria-hidden="true">
-            <span class="printer-card-drag-dots"></span>
-          </div>
-          <div class="printer-card-name">
-            <span class="printer-card-name-dot${online ? " is-online" : ""}" aria-hidden="true"></span>
-            <span class="printer-card-name-txt">${safeName}</span>
+          <!-- The same head as a rack card: the name on the left, a ⋮ on the
+               right holding whatever this machine can be asked to do. Reusing
+               the rack classes is deliberate — the menu's opening, its
+               dismissal on any view movement and its styling all come for
+               free, and the two boards stay identical by construction. -->
+          <div class="rp-rack-head printer-card-head">
+            <div class="rp-rack-info">
+              <div class="printer-card-name">
+                <span class="printer-card-name-dot${online ? " is-online" : ""}" aria-hidden="true"></span>
+                <span class="printer-card-name-txt">${safeName}</span>
+              </div>
+            </div>
+            <div class="rp-rack-actions">
+              <button class="rp-rack-btn rp-rack-move" data-action="move" aria-label="${esc(t("actionMove"))}"><span class="icon icon-move icon-18"></span></button>
+              <button class="rp-rack-btn rp-rack-kebab" data-action="kebab" aria-label="${esc(t("rackActionMore"))}" aria-haspopup="menu" aria-expanded="false"><span class="icon icon-kebab icon-18"></span></button>
+              <div class="rp-menu" data-menu-for="${esc(`${p.brand}:${p.id}`)}" hidden>
+                <button class="rp-menu-item" data-paction="open"><span class="icon icon-info icon-14"></span><span>${esc(t("printerCardOpen"))}</span></button>
+                <button class="rp-menu-item" data-paction="settings"><span class="icon icon-settings icon-14"></span><span>${esc(t("printerCardSettings"))}</span></button>
+                <div class="rp-menu-sep"></div>
+                <button class="rp-menu-item rp-menu-item--danger rp-menu-item--hold" data-paction="delete"><span class="hold-progress"></span><span class="icon icon-trash icon-14"></span><span class="rp-menu-label">${esc(t("printerCardDelete"))}</span></button>
+              </div>
+            </div>
           </div>
           ${imgSrc ? `<div class="printer-card-thumb"><img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge"><span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span></span>` : ""}</div>` : ""}
-          <div class="printer-card-head">
-            <span class="printer-brand-pill" style="--brand-accent:${meta.accent}">${esc(meta.label)}</span>
-            ${p.isActive ? `<span class="printer-active-badge">${esc(t("printersActive"))}</span>` : ""}
-          </div>
-          ${(() => { const job = _getPrinterJob(p); return job ? _jobCardHtml(job) : ""; })()}
-          <div class="printer-card-foot">
-            <span class="printer-card-conn">${esc(p.mode === "cloud" ? t("printerConnCloud") : (meta.connLan || meta.connection))}</span>
-            <span class="printer-card-updated">${esc(t("printersLastSeen"))} · ${esc(lastSeen)}</span>
-          </div>
+          ${(() => {
+            /* A progress track under EVERY machine, connected or not, printing
+               or not. An empty track says "nothing in progress" just as clearly
+               as a full one says "nearly done", and every card keeps the same
+               shape whatever its state — which is the whole point of a board
+               you read at a glance. A bar that comes and goes would make cards
+               change height on their own, exactly what this view was rebuilt to
+               stop. */
+            const job = _getPrinterJob(p);
+            const pct = (job && job.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+            return `<div class="printer-card-prog"><span style="width:${pct}%"></span></div>`;
+          })()}
         </div>`;
     };
 
-    // Assemble grid HTML: section headers only when both groups are non-empty.
-    const _hdrOnline  = `<div class="printers-section-hdr">${esc(t("printersSectionOnline"))}</div>`;
-    const _hdrOffline = `<div class="printers-section-hdr printers-section-hdr--offline">${esc(t("printersSectionOffline"))}</div>`;
-    const cards = _showSections
-      ? _hdrOnline  + _onlineList.map(_makeCard).join("")
-      + _hdrOffline + _offlineList.map(_makeCard).join("")
-      : _orderedPrinters.map(_makeCard).join("");
+    /* ONE flat list. The grid used to break into "Connected" and "Offline"
+       sections, which meant a machine losing its link changed place — you lost
+       track of it at the moment you were looking for it, and a card you had put
+       somewhere never stayed put. The state is already a coloured dot on the
+       card; it does not also need to be a change of address. */
+    /* The slots left the machine's card and became their own object. On the
+       card they were stuck to it: they could not be put where the unit really
+       stands, could not be seen while the card is elsewhere, and grew the card
+       every time a bay was added. As a widget they are placed like anything
+       else on the board — and this is the shape an AMS rack will take, so the
+       board learns to hold more than machines once rather than twice. */
+    const cards = _orderedPrinters.map(_makeCard).join("")
+                + _orderedPrinters.map(_makeSlotsWidget).join("");
 
-    // Trailing "+" card so users can add a new printer directly from the
-    // grid. The card itself isn't draggable / sortable — it's a fixed
-    // affordance that always sits at the end of the flex flow.
-    const addCard = `
-      <button type="button" class="printer-card printer-card--add" id="printerAddCard">
-        <span class="printer-add-plus"><span class="icon icon-plus icon-18"></span></span>
-        <span class="printer-add-title">${esc(t("printerAddTitle"))}</span>
-        <span class="printer-add-sub">${esc(t("printerAddSub"))}</span>
-      </button>`;
 
+    /* The board lives in its own scroller: the cards are placed in plan
+       coordinates and the scroller is what moves over them, so panning and
+       zooming never touch a single position. */
     host.innerHTML = `
-      <div class="printers-grid printers-grid--flex">${cards}${addCard}</div>`;
+      <div class="pv-plan-bar">
+        <button type="button" class="rv-plan-btn${_printerArrange ? " on" : ""}" id="pvArrangeBtn"
+                aria-pressed="${_printerArrange ? "true" : "false"}">
+          <span class="icon icon-grip icon-14"></span>
+          <span>${esc(_printerArrange ? t("rackPlanDone") : t("rackPlanEdit"))}</span>
+        </button>
+        <div class="rv-plan-zoom" role="group" aria-label="${esc(t("rackPlanZoom"))}">
+          <button type="button" id="pvZoomOut" aria-label="${esc(t("rackPlanZoomOut"))}">−</button>
+          <input class="val" id="pvZoomVal" type="number" inputmode="numeric"
+                 min="${PLAN_ZOOM_MIN}" max="${PLAN_ZOOM_MAX}" step="${PLAN_ZOOM_STEP}"
+                 value="${Math.round(_printerZoom * 100)}" aria-label="${esc(t("rackPlanZoom"))}"><span class="pct">%</span>
+          <button type="button" id="pvZoomIn" aria-label="${esc(t("rackPlanZoomIn"))}">+</button>
+        </div>
+      </div>
+      <div class="printers-scroll">
+        <div class="printers-grid printers-grid--plan">${cards}</div>
+      </div>`;
 
-    wirePrinterDnd(host);
+    /* No sort drag-and-drop on the board. Two ways to move the same card is one
+       too many, and the old one rewrote `sortIndex` behind the arrangement —
+       exactly the fight the racks had. `sortIndex` still orders the table. */
+    wirePrinterPlanDrag(host);
+    wirePlanPan(host.querySelector(".printers-scroll"), ".printer-card");
+    wirePrinterZoom(host);
+    wirePrinterArrange(host);
+    wirePrinterCardMenus(host);
+    wirePrinterMarquee(host);
+    _syncPlanSelection();
+    layoutPrintersPlan();
     // Snapshot the online set so the next surgical patch can detect whether
     // a card needs to move between sections.
     _lastPrinterGridSignature = _printerGridSignature();
@@ -22023,16 +22190,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     host.querySelectorAll("[data-printer-key]").forEach(el => {
       const p = state.printers.find(x => `${x.brand}:${x.id}` === el.dataset.printerKey);
       el.classList.toggle("hidden", !!p && !shown(p));
-    });
-    // Grid: hide a section header once all of its cards are filtered out.
-    host.querySelectorAll(".printers-section-hdr").forEach(hdr => {
-      let allHidden = true, any = false;
-      for (let n = hdr.nextElementSibling; n && !n.classList.contains("printers-section-hdr"); n = n.nextElementSibling) {
-        if (!n.hasAttribute("data-printer-key")) continue; // skip the trailing add-card
-        any = true;
-        if (!n.classList.contains("hidden")) { allHidden = false; break; }
-      }
-      hdr.classList.toggle("hidden", any && allHidden);
     });
   }
   // Repopulate the right-of-search selectors for the printer view: reuse the
@@ -22653,36 +22810,459 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     host.addEventListener("dragend", () => { clear(); onDragEnd?.(); });
   }
 
-  function wirePrinterDnd(host) {
-    _wireMakeRoomDnd(host, {
-      itemSel: ".printer-card[data-id]",   // the trailing "+" add card has no data-id
-      idOf: el => `${el.dataset.brand}:${el.dataset.id}`,
-      isGrid: true,
-      draggingClass: "printer-card--dragging",
-      onReorder: (dragId, targetId, before) => applyPrinterReorder(dragId, targetId, before),
-      // Suppress the click that can fire right after a drop.
-      onDragEnd: () => { _printerJustDragged = true; setTimeout(() => { _printerJustDragged = false; }, 50); },
+  /* ── The printer plan ────────────────────────────────────────────────────
+     Same idea as the storage plan, and for the same reason: a printer is a
+     machine standing somewhere in a room, and where its card sits should be
+     something you decide once, not something the app rearranges under you.
+     The grid used to split into "Connected" and "Offline" sections, so a
+     machine that dropped its link MOVED — you lost it exactly when you were
+     looking for it. The state is already a coloured dot on the card; it did not
+     also need to be a change of address. */
+  function _printerPlanContainer() { return document.querySelector("#invPrinterView .printers-grid"); }
+  const _printerKey = p => `${p.brand}:${p.id}`;
+  /* ── Board objects ────────────────────────────────────────────────────────
+     The board used to hold exactly one kind of thing: a machine's card. It now
+     holds two — the card, and the machine's feed slots as their own movable
+     widget — and it will hold AMS racks next. So placement, snapping, selection
+     and dragging key off ONE attribute, `data-board-id`, and never off what the
+     object happens to be. `brand:id` is the machine; `slots:brand:id` is its
+     slot widget. Adding a third kind means adding a case here, not a second
+     copy of the board. */
+  const SLOTS_PREFIX = "slots:";
+  function _boardObj(boardId) {
+    if (!boardId) return null;
+    const slots = boardId.startsWith(SLOTS_PREFIX);
+    const key = slots ? boardId.slice(SLOTS_PREFIX.length) : boardId;
+    const p = state.printers.find(v => _printerKey(v) === key);
+    return p ? { p, slots } : null;
+  }
+  function boardPos(boardId) {
+    const o = _boardObj(boardId);
+    if (!o) return null;
+    return o.slots ? printerSlotsPlanPos(o.p) : printerPlanPos(o.p);
+  }
+  function boardZ(boardId) {
+    const o = _boardObj(boardId);
+    if (!o) return 0;
+    return o.slots ? (Number.isFinite(o.p.slotsPlan?.z) ? o.p.slotsPlan.z : 0) : printerPlanZ(o.p);
+  }
+  function boardSave(boardId, x, y, z) {
+    const o = _boardObj(boardId);
+    if (!o) return Promise.resolve();
+    return o.slots ? saveSlotsPlanPos(o.p, x, y, z) : savePrinterPlanPos(o.p, x, y, z);
+  }
+
+  function printerPlanPos(p) {
+    const q = p && p.plan;
+    return (q && Number.isFinite(q.x) && Number.isFinite(q.y))
+      ? { x: Math.max(0, Math.round(q.x)), y: Math.max(0, Math.round(q.y)) } : null;
+  }
+  const printerPlanZ = p => (p && Number.isFinite(p.plan?.z)) ? p.plan.z : 0;
+  /* The widget's own coordinates, kept on the machine's document beside the
+     card's. Never placed → it sits just under its machine, which is where you
+     would have put it anyway, and it is given that spot for good on first
+     layout so it stops depending on the card's height. */
+  function printerSlotsPlanPos(p) {
+    const q = p && p.slotsPlan;
+    return (q && Number.isFinite(q.x) && Number.isFinite(q.y))
+      ? { x: Math.max(0, Math.round(q.x)), y: Math.max(0, Math.round(q.y)) } : null;
+  }
+  const nextSlotsPlanZ = () => state.printers.reduce(
+    (m, p) => Math.max(m, Number.isFinite(p.slotsPlan?.z) ? p.slotsPlan.z : 0), 0) + 1;
+  async function saveSlotsPlanPos(printer, x, y, z = nextSlotsPlanZ()) {
+    const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
+    if (live) live.slotsPlan = { x, y, z };     // optimistic: no render wait
+    const uid = state.activeAccountId;
+    if (!uid) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc(printer.brand)
+        .collection("devices").doc(printer.id)
+        .set({ slotsPlan: { x, y, z } }, { merge: true });
+    } catch (e) { console.warn("[printer-plan] slots save failed:", e?.message || e); }
+  }
+  const nextPrinterPlanZ = () => state.printers.reduce((m, p) => Math.max(m, printerPlanZ(p)), 0) + 1;
+  const printerPlanInUse = () => state.printers.some(printerPlanPos);
+
+  async function savePrinterPlanPos(printer, x, y, z = nextPrinterPlanZ()) {
+    const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
+    if (live) live.plan = { x, y, z };          // optimistic: no render wait
+    const uid = state.activeAccountId;
+    if (!uid) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc(printer.brand)
+        .collection("devices").doc(printer.id)
+        .set({ plan: { x, y, z } }, { merge: true });
+    } catch (e) { console.warn("[printer-plan] save failed:", e?.message || e); }
+  }
+
+  /* Places every card at its own coordinates. A printer that has never been
+     placed — a new one, or one added on another machine — flows below the
+     arrangement rather than landing on top of it. */
+  /* Every machine gets coordinates the FIRST time the board is shown, taken
+     from where the old flow had already put it — so the view does not visibly
+     rearrange itself on the way in, and from that moment on every card has an
+     X/Y of its own. Without this the board never switched on: it waited for a
+     position that nothing was ever going to create. */
+  async function seedPrinterPlan() {
+    const container = _printerPlanContainer();
+    if (!container || printerPlanInUse()) return false;
+    const seeds = [];
+    Array.from(container.children).forEach(el => {
+      const key = el.dataset.printerKey; if (!key) return;
+      const p = state.printers.find(v => _printerKey(v) === key); if (!p) return;
+      const x = Math.max(0, Math.round(el.offsetLeft / PLAN_CELL) * PLAN_CELL);
+      const y = Math.max(0, Math.round(el.offsetTop  / PLAN_CELL) * PLAN_CELL);
+      p.plan = { x, y, z: seeds.length + 1 };
+      seeds.push(p);
+    });
+    if (!seeds.length) return false;
+    const uid = state.activeAccountId;
+    if (uid) {
+      try {
+        const batch = fbDb(uid).batch();
+        seeds.forEach(p => batch.set(
+          fbDb(uid).collection("users").doc(uid).collection("printers").doc(p.brand)
+            .collection("devices").doc(p.id),
+          { plan: p.plan }, { merge: true }));
+        await batch.commit();
+      } catch (e) { console.warn("[printer-plan] seed failed:", e?.message || e); }
+    }
+    return true;
+  }
+
+  // One adoption in flight per object, so a re-layout mid-write does not queue
+  // a second one for the same thing.
+  const _planAdoptingBoard = new Set();
+  function layoutPrintersPlan() {
+    const container = _printerPlanContainer();
+    if (!container) return;
+    if (!printerPlanInUse()) { seedPrinterPlan().then(ok => { if (ok) layoutPrintersPlan(); }); return; }
+    container.classList.add("printers-grid--plan");
+    let bottom = 0, right = 0;
+    const orphans = [];
+    Array.from(container.children).forEach(el => {
+      const id  = el.dataset.boardId;
+      const pos = id ? boardPos(id) : null;
+      el.style.position = "absolute";
+      if (!pos) { orphans.push(el); return; }
+      el.style.left = pos.x + "px";
+      el.style.top  = pos.y + "px";
+      el.style.zIndex = String(boardZ(id) || 1);
+      bottom = Math.max(bottom, pos.y + el.offsetHeight);
+      right  = Math.max(right,  pos.x + el.offsetWidth);
+    });
+    let ox = 0;
+    orphans.forEach(el => {
+      /* A slot widget that has never been placed goes UNDER its own machine —
+         that is where you would have put it — and is then given that spot for
+         good, so it stops depending on the card's height and stays put when a
+         bay is added. Anything else flows below the arrangement. */
+      const id = el.dataset.boardId || "";
+      const own = id.startsWith(SLOTS_PREFIX)
+        ? container.querySelector(`.printer-card[data-board-id="${CSS.escape(id.slice(SLOTS_PREFIX.length))}"]`)
+        : null;
+      const x = own ? own.offsetLeft : ox;
+      const y = own ? own.offsetTop + own.offsetHeight + 12 : bottom + PLAN_CELL;
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      if (id && !_planAdoptingBoard.has(id)) {
+        _planAdoptingBoard.add(id);
+        boardSave(id, Math.max(0, x), Math.max(0, y), nextSlotsPlanZ())
+          .finally(() => _planAdoptingBoard.delete(id));
+      }
+      if (!own) { ox += el.offsetWidth + 12; right = Math.max(right, ox); }
+      right  = Math.max(right,  x + el.offsetWidth);
+      bottom = Math.max(bottom, y + el.offsetHeight);
+    });
+    /* Compact the stacking to 1..N: a machine can never climb above the drag
+       layer or the guides, however many times it has been moved. */
+    Array.from(container.children)
+      .filter(el => el.dataset.boardId)
+      .map(el => ({ el, z: boardZ(el.dataset.boardId) }))
+      .sort((a, b) => a.z - b.z)
+      .forEach((it, i) => { it.el.style.zIndex = String(i + 1); });
+
+    container.style.position = "relative";
+    /* The scale is on the BOARD, so the cards keep their own untouched
+       coordinates — zooming can never be mistaken for something having moved. */
+    // The mesh lives on the scroller and needs the scale to keep its lines on
+    // the snap step; below half size it drops to major lines only.
+    const view = document.getElementById("invPrinterView");
+    if (view) {
+      view.style.setProperty("--plan-z", String(_printerZoom));
+      view.classList.toggle("is-plan-coarse", _printerZoom < 0.5);
+    }
+    container.style.transformOrigin = "0 0";
+    container.style.transform = _printerZoom === 1 ? "" : `scale(${_printerZoom})`;
+    /* Both sizes are DECLARED, and never smaller than the viewport. Absolutely
+       positioned children give their container no size of its own, and a
+       transform tells layout nothing — so a board sized to its contents leaves
+       nowhere to drop a machine except where one already is, and the scroll
+       cannot move past the last card. There is always empty board. */
+    const box  = container.parentElement;
+    const availW = box ? box.clientWidth  : 0;
+    const availH = box ? box.clientHeight : 0;
+    container.style.width  = Math.max(availW, Math.ceil((right  + 240) * _printerZoom)) + "px";
+    container.style.height = Math.max(availH, Math.ceil((bottom + 200) * _printerZoom)) + "px";
+    container.style.minWidth = "";
+  }
+
+  /* Zooming holds a point still: the spot under the cursor (or the middle of the
+     view, from the buttons) is pinned by adjusting the scroll by exactly what
+     the scale added. Without it the whole board slides toward the corner and
+     every machine appears to move. */
+  function applyPrinterZoom(pc, anchor) {
+    const next = _clampZoom(pc) / 100;
+    const field = document.getElementById("pvZoomVal");
+    if (next === _printerZoom) { if (field) field.value = Math.round(_printerZoom * 100); return; }
+    const sc = document.querySelector("#invPrinterView .printers-scroll");
+    const prev = _printerZoom;
+    let hold = null;
+    if (sc) {
+      const box = sc.getBoundingClientRect();
+      const ax = anchor ? anchor.x - box.left : box.width / 2;
+      const ay = anchor ? anchor.y - box.top  : box.height / 2;
+      hold = { ax, ay, cx: (sc.scrollLeft + ax) / prev, cy: (sc.scrollTop + ay) / prev };
+    }
+    _printerZoom = next;
+    try { localStorage.setItem(PRINTER_ZOOM_KEY, String(next)); } catch (_) {}
+    layoutPrintersPlan();
+    if (sc && hold) {
+      sc.scrollLeft = Math.max(0, hold.cx * next - hold.ax);
+      sc.scrollTop  = Math.max(0, hold.cy * next - hold.ay);
+    }
+    if (field) field.value = Math.round(_printerZoom * 100);
+  }
+  // The buttons walk in round tens from wherever you are — typing 63 then
+  // pressing + gives 70, not 73, so the steps stay on one ladder.
+  function stepPrinterZoom(dir, anchor) {
+    const cur = Math.round(_printerZoom * 100);
+    applyPrinterZoom(dir > 0
+      ? (Math.floor(cur / PLAN_ZOOM_STEP) + 1) * PLAN_ZOOM_STEP
+      : (Math.ceil(cur / PLAN_ZOOM_STEP) - 1) * PLAN_ZOOM_STEP, anchor);
+  }
+
+  /* Grab a card by its grip and put it where the machine actually stands.
+     Magnetism and guides are the storage plan's, told to look at this container
+     — one implementation, two boards. */
+  /* A selection that belongs to the board, not to the bulk-action mode: it
+     exists to move several machines at once, so it is cleared by anything that
+     is not selecting, and it never touches `state.selectedPrinters` (which
+     drives the checkboxes and the delete bar — a different job entirely). */
+  const _planSel = new Set();
+  function _syncPlanSelection() {
+    document.querySelectorAll("#invPrinterView .printer-card[data-printer-key]").forEach(el =>
+      el.classList.toggle("is-plan-selected", _planSel.has(el.dataset.printerKey)));
+  }
+  function _clearPlanSelection() { _planSel.clear(); _syncPlanSelection(); }
+
+  function wirePrinterMarquee(host) {
+    wirePlanMarquee(host.querySelector(".printers-scroll"), {
+      boardOf: () => host.querySelector(".printers-grid"),
+      itemSel: "[data-board-id]",
+      blockSel: "[data-board-id]",
+      keyOf: el => el.dataset.boardId,
+      posOf: boardPos,
+      zoomOf: () => _printerZoom,
+      sel: _planSel, sync: _syncPlanSelection, clear: _clearPlanSelection,
     });
   }
 
-  // Reorder state.printers by moving `dragId` next to `targetId`, then
-  // persist the new sortIndex 0..N-1 to Firestore.
-  function applyPrinterReorder(dragId, targetId, before) {
-    const all = state.printers.slice();
-    const find = id => all.findIndex(p => `${p.brand}:${p.id}` === id);
-    const di = find(dragId);
-    if (di < 0) return;
-    const [moved] = all.splice(di, 1);
-    let ti = find(targetId);
-    if (ti < 0) return; // shouldn't happen
-    if (!before) ti += 1;
-    all.splice(ti, 0, moved);
-    // Apply new sortIndex 0..N-1 in-memory so the next render is instant.
-    all.forEach((p, idx) => { p.sortIndex = idx; });
-    state.printers = all;
-    renderPrintersView();
-    persistPrinterSortIndices(all);
+  function wirePrinterPlanDrag(host) {
+    const container = host.querySelector(".printers-grid");
+    if (!container || container._planWired) return;
+    container._planWired = true;
+    let g = null;
+    container.addEventListener("pointerdown", e => {
+      const card = e.target.closest?.("[data-board-id]");
+      if (!card) return;
+      /* The move handle is a button, so it has to be recognised BEFORE buttons
+         are dismissed — it is the one control on the card whose press is a
+         drag rather than a click. */
+      const handle = e.target.closest('[data-action="move"]');
+      /* In Arrange the whole card is the handle: you came here to place things,
+         and aiming at a small target for every machine is the tedium the mode
+         exists to remove. Outside it the card belongs to its other life — a
+         click opens the panel — so only the handle moves it, and nothing slides
+         because you reached for something on it. */
+      if (!handle && !_printerArrange) return;
+      if (!handle && e.target.closest("button, input, a, .sel-check")) return;
+      const bid = card.dataset.boardId;
+      if (!_boardObj(bid)) return;
+      /* Shift picks an object up into the selection instead of moving it. */
+      if (e.shiftKey) {
+        const k = bid;
+        _planSel.has(k) ? _planSel.delete(k) : _planSel.add(k);
+        _syncPlanSelection();
+        e.preventDefault();
+        return;
+      }
+      /* Grabbing a SELECTED machine takes the whole selection with it, at their
+         existing offsets — that is what selecting several was for. Grabbing an
+         unselected one drops the selection and moves that one alone, which is
+         how every drawing program behaves. */
+      if (!_planSel.has(bid)) _clearPlanSelection();
+      if (handle) e.preventDefault();
+      const pos = boardPos(bid) || { x: card.offsetLeft, y: card.offsetTop };
+      const followers = [..._planSel]
+        .filter(k => k !== bid)
+        .map(k => {
+          const q = boardPos(k);
+          const el = container.querySelector(`[data-board-id="${CSS.escape(k)}"]`);
+          return (q && el) ? { id: k, el, dx: q.x - pos.x, dy: q.y - pos.y } : null;
+        })
+        .filter(Boolean);
+      g = { id: bid, card, followers, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
+            w: card.offsetWidth, h: card.offsetHeight,
+            neighbours: planNeighboursIn(container, "boardId", boardPos, bid)
+              // An object being carried cannot also be something to snap to.
+              .filter(o => !_planSel.has(o.id)) };
+      try { card.setPointerCapture(e.pointerId); } catch (_) {}
+      // The hand closes on the press. The MOVE still waits for real travel
+      // below — but a grab that looks like nothing happened is a grab you
+      // repeat, and the two are separate questions.
+      document.body.classList.add("is-plan-grabbing");
+      /* NOT dragging yet — pressed. The whole card is the handle, so a press is
+         also how you open a machine's panel; the drag only begins once the
+         pointer has actually travelled, and until then the click is left alone. */
+      g.moved = false;
+    });
+    const DRAG_SLOP = 4;   // px — below this, it is a click
+    container.addEventListener("pointermove", e => {
+      if (!g) return;
+      if (g.moved && planPointerOffBoard(e, container.closest(".printers-scroll"))) { end(); return; }
+      const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
+      if (!g.moved) {
+        if (Math.abs(dx) < DRAG_SLOP && Math.abs(dy) < DRAG_SLOP) return;
+        g.moved = true;
+        // Inline, because the layout writes an inline z-index the stylesheet
+        // cannot outrank — the same lesson the racks taught.
+        g.card.style.zIndex = "1000";
+        g.card.classList.add("is-plan-dragging");
+        g.followers.forEach(f => { f.el.style.zIndex = "1000"; f.el.classList.add("is-plan-dragging"); });
+        document.getElementById("invPrinterView")?.classList.add("is-plan-moving");
+      }
+      e.preventDefault();
+      /* The pointer moves in SCREEN pixels, the card lives in plan coordinates,
+         and the board between them is scaled — so the delta has to be converted
+         or the card trails the cursor by exactly the zoom factor. */
+      const z = _printerZoom || 1;
+      const want = planSnap(g.ox + dx / z, g.oy + dy / z, g.w, g.h, g.neighbours);
+      g.nx = want.x; g.ny = want.y;
+      g.card.style.left = want.x + "px";
+      g.card.style.top  = want.y + "px";
+      /* Overlapping is allowed — it is your plan — but never silent. Each
+         machine in a group answers for its own landing spot, so the red edge
+         says WHICH one is on top of something. It warns; it never refuses. */
+      g.card.classList.toggle("is-plan-overlapping",
+        planOverlaps({ x: want.x, y: want.y, w: g.w, h: g.h }, g.neighbours));
+      g.followers.forEach(f => {
+        f.el.style.left = (want.x + f.dx) + "px";
+        f.el.style.top  = (want.y + f.dy) + "px";
+        f.el.classList.toggle("is-plan-overlapping", planOverlaps(
+          { x: want.x + f.dx, y: want.y + f.dy, w: f.el.offsetWidth, h: f.el.offsetHeight }, g.neighbours));
+      });
+      planDrawGuides(want.guideX, want.guideY, container);
+    });
+    const end = async () => {
+      document.body.classList.remove("is-plan-grabbing");
+      if (!g) return;
+      const gg = g; g = null;
+      gg.card.classList.remove("is-plan-dragging", "is-plan-overlapping");
+      gg.followers.forEach(f => f.el.classList.remove("is-plan-dragging", "is-plan-overlapping"));
+      document.getElementById("invPrinterView")?.classList.remove("is-plan-moving");
+      planClearGuides(container);
+      if (!gg.moved) return;                  // a click, not a move
+      // Swallow the click the release is about to fire, so dropping a card does
+      // not also open its panel.
+      _printerJustDragged = true;
+      setTimeout(() => { _printerJustDragged = false; }, 50);
+      const nx = gg.nx ?? gg.ox, ny = gg.ny ?? gg.oy;
+      if (nx === gg.ox && ny === gg.oy) { layoutPrintersPlan(); return; }
+      const z = nextPrinterPlanZ();
+      await Promise.all([
+        boardSave(gg.id, nx, ny, z),
+        // Each follower keeps the gap it had, so a group moves as one shape.
+        ...gg.followers.map(f => boardSave(f.id, Math.max(0, nx + f.dx), Math.max(0, ny + f.dy), z)),
+      ]);
+      layoutPrintersPlan();
+    };
+    container.addEventListener("pointerup", end);
+    container.addEventListener("pointercancel", end);
   }
+
+  // Arranging is a mode you enter, exactly as in Storage: the mesh stays up for
+  // as long as you are placing machines, and gets out of the way after.
+  let _printerArrange = false;
+  function wirePrinterArrange(host) {
+    document.getElementById("pvArrangeBtn")?.addEventListener("click", () => {
+      _printerArrange = !_printerArrange;
+      renderPrintersView();
+    });
+    host.classList.toggle("is-plan-edit", _printerArrange);
+  }
+
+  /* The ⋮ on a machine's card. Opening, closing on any movement of the view and
+     the click-away are the board's shared machinery — the same functions the
+     rack menus use, so the two behave identically without a second copy. */
+  function wirePrinterCardMenus(host) {
+    document.querySelectorAll("body > .rp-menu").forEach(m => m.remove());   // strays from a previous render
+    host.querySelectorAll(".printer-card .rp-rack-kebab").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        const card = btn.closest(".printer-card[data-printer-key]"); if (!card) return;
+        const key  = card.dataset.printerKey;
+        const menu = card.querySelector(".rp-menu")
+          || document.querySelector(`.rp-menu[data-menu-for="${CSS.escape(key)}"]`);
+        if (!menu) return;
+        const isOpen = !menu.hidden;
+        closeRackMenus();
+        if (isOpen) return;
+        openRackMenu(menu, btn);
+      });
+    });
+    host.querySelectorAll(".printer-card .rp-menu-item[data-paction]").forEach(btn => {
+      const card = btn.closest(".printer-card[data-printer-key]"); if (!card) return;
+      const { brand, id } = card.dataset;
+      const run = async () => {
+        closeRackMenus();
+        const p = state.printers.find(v => v.brand === brand && v.id === id);
+        if (!p) return;
+        if (btn.dataset.paction === "open")     { openPrinterDetail(brand, id); return; }
+        if (btn.dataset.paction === "settings") { openPrinterAddForm(brand, p); return; }
+        try {
+          await fbDb(state.activeAccountId).collection("users").doc(state.activeAccountId)
+            .collection("printers").doc(brand).collection("devices").doc(id).delete();
+        } catch (e) { console.warn("[printers] delete failed:", e?.code, e?.message); }
+      };
+      // Deleting is held, not clicked — the same 1.5 s a rack asks for.
+      if (btn.classList.contains("rp-menu-item--hold")) setupHoldToConfirm(btn, 1500, run);
+      else btn.addEventListener("click", e => { e.stopPropagation(); run(); });
+    });
+  }
+
+  function wirePrinterZoom(host) {
+    const sc = host.querySelector(".printers-scroll");
+    document.getElementById("pvZoomOut")?.addEventListener("click", () => stepPrinterZoom(-1));
+    document.getElementById("pvZoomIn") ?.addEventListener("click", () => stepPrinterZoom(+1));
+    const field = document.getElementById("pvZoomVal");
+    field?.addEventListener("change", () => applyPrinterZoom(parseFloat(field.value)));
+    field?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); field.blur(); } });
+    if (sc && !sc._zoomWired) {
+      sc._zoomWired = true;
+      sc.addEventListener("wheel", e => {
+        // A wheel held down still turns a little under the thumb; those stray
+        // notches were landing on the zoom while the user was only panning.
+        if (_planPanning) return;
+        e.preventDefault();
+        stepPrinterZoom(e.deltaY < 0 ? +1 : -1, { x: e.clientX, y: e.clientY });
+      }, { passive: false });
+    }
+  }
+
+
 
   async function persistPrinterSortIndices(orderedPrinters) {
     const uid = state.activeAccountId;
@@ -22820,6 +23400,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (state.bulkSelect && _isPrinterMode(state.viewMode)) return;   // select mode: clicks pick, not open
     const printer = state.printers.find(p => p.brand === brand && p.id === id);
     if (!printer) return;
+    /* The card is a switch, not a one-way door: clicking the machine whose panel
+       is already open closes it. Reaching for the ✕ to undo the click you just
+       made is a trip across the window for something the card itself can say. */
+    if ($("printerPanel")?.classList.contains("open")
+        && _activePrinter && _activePrinter.brand === brand && _activePrinter.id === id) {
+      closePrinterDetail();
+      return;
+    }
     closeNotifs();   // opening a printer takes over the right side — dismiss notifs
     // Switching from one open printer card to another → slide-swap (ghost of the
     // outgoing card, new one slides in on top). Same transition as the spool
@@ -22988,7 +23576,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("invPrinterView")?.addEventListener("mousedown", e => {
     const card = e.target.closest(".printer-card:not(.printer-card--add)");
     const row  = e.target.closest(".pt-row");
-    if (card) _pendingPrinterOpen = { brand: card.dataset.brand, id: card.dataset.id };
+    /* The ⋮, its menu and the move handle sit on the card without being it.
+       Arming the fallback from them meant a press on the ⋮ opened the panel
+       behind the menu: the click handler skips those targets, so it never got
+       to cancel what the press had already armed. */
+    if (e.target.closest(".rp-rack-actions, .rp-menu")) _pendingPrinterOpen = null;
+    else if (card) _pendingPrinterOpen = { brand: card.dataset.brand, id: card.dataset.id };
     else if (row) _pendingPrinterOpen = { brand: row.dataset.brand, id: row.dataset.id };
     else _pendingPrinterOpen = null;
   });
@@ -23025,8 +23618,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (el) { e.stopPropagation(); _togglePrinterSelected(el.dataset.printerKey, e.shiftKey); }
       return;
     }
-    const card = e.target.closest(".printer-card:not(.printer-card--add)");
-    if (card) {
+    const card = e.target.closest(".printer-card");
+    // The ⋮ and its menu belong to the card but are not the card: pressing them
+    // asks for the menu, not for the panel behind it.
+    if (card && !e.target.closest(".rp-rack-actions, .rp-menu")) {
       _pendingPrinterOpen = null;
       if (_printerJustDragged) return;
       const brand = card.dataset.brand, id = card.dataset.id;
@@ -23064,7 +23659,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       openPrinterDetail(camCard.dataset.brand, camCard.dataset.id);
       return;
     }
-    if (e.target.closest("#printerAddCard")) openPrinterBrandPicker();
   });
   $("printerPanelClose")?.addEventListener("click", closePrinterDetail);
   $("printerCloseTab")?.addEventListener("click", closePrinterDetail);
@@ -23474,7 +24068,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         }, 500);
       }
     },
-    onPrintersViewChange:  () => { if (state.viewMode === "printer-cam") _patchCamWall(); else renderPrintersView(); },
+    /* Every brand calls this when a machine's live state moves — the moment its
+       units may have changed. */
+    onPrintersViewChange:  () => { syncAllPrinterUnits();
+                                   if (state.viewMode === "printer-cam") _patchCamWall(); else renderPrintersView(); },
     // Status-only refresh: in grid/table view we just patch the per-card
     // online badges (cheap, preserves `<img>` decoding state). Falls back to
     // a full rebuild inside `_patchGridStatus` when the online set actually
@@ -25886,6 +26483,136 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return Number.isInteger(d) ? Math.max(1, Math.min(RACK_DEPTH_MAX, d)) : 1;
   }
 
+  /* ── A machine's storage units, on the machine's own document ─────────────
+     A `units` MAP on the machine's own document, keyed by unit id. A map, not
+     an array, because Firestore updates a map's keys individually — writing
+     `units.ams_0.planRacks` leaves its neighbours untouched — which is the one
+     thing an array cannot do and the only reason a subcollection was ever
+     considered. And on the document rather than beside it, because the units
+     are few, are always read WITH the machine and always written together: a
+     subcollection would have cost a query per printer for nothing, and hidden
+     the data from anyone reading the printer document.
+
+     The id is derived from the machine's own identity for the unit, so the same
+     physical box is recognised on every reconnect and can never be seeded
+     twice. See docs/printer-storage-terms.md for the agreed shape. */
+  function _unitKey(u) {
+    return `${u.kind}_${u.hwId != null && u.hwId !== "" ? String(u.hwId).replace(/[^\w-]/g, "") : u.index}`;
+  }
+  function _deviceDoc(uid, printer) {
+    return fbDb(uid).collection("users").doc(uid)
+      .collection("printers").doc(printer.brand)
+      .collection("devices").doc(printer.id);
+  }
+  function _printerUnits(p) {
+    try { return brands.get(p.brand)?.getUnits?.(p) || []; }
+    catch (e) { return []; }
+  }
+
+  // What is in flight, so a burst of live ticks cannot queue several writes for
+  // the same unit.
+  const _unitSyncing = new Set();
+  /* Brings the stored units in line with what the machine reports.
+
+     TWO THINGS ARE NEVER OVERWRITTEN: the fields the USER owns — `label`,
+     `rows`/`cols`, and both board positions — and `uids`, what they put in a
+     slot. The machine is authoritative about what EXISTS and what is loaded in
+     it; it knows nothing about where the box sits in the room or what the owner
+     decided to call it. A seeder that rewrote those would undo the arrangement
+     every time a printer reconnected.
+
+     A unit that stops being reported is marked `present: false`, never deleted:
+     unplugging an Elegoo's Canvas hub must not throw away what was assigned in
+     it, because the hub comes back. */
+  async function syncPrinterUnits(printer) {
+    const uid = state.activeAccountId;
+    if (!uid || state.friendView || !printer) return;
+    const live = _printerUnits(printer);
+    if (!live.length) return;                 // nothing reported → say nothing
+    const key = _printerKey(printer);
+    if (_unitSyncing.has(key)) return;
+    _unitSyncing.add(key);
+    try {
+      // Already in hand: the printers subscription carries the whole document.
+      const stored = state.printers.find(v => _printerKey(v) === key)?.units || {};
+      const seenAt = Date.now();
+      const patch = {};
+      let writes = 0;
+      const seen = new Set();
+
+      for (const u of live) {
+        const id = _unitKey(u);
+        seen.add(id);
+        const cur = stored[id] || null;
+        const slots = u.slots.map((s, i) => {
+          const was = cur?.slots?.[i] || null;
+          const out = {
+            index: s.index ?? i,
+            label: s.label || "",
+            hw: s.hw || {},
+            uids: Array.isArray(was?.uids) ? was.uids : [],   // the user's, untouched
+            seenAt,
+            color: s.color || null,
+            material: s.material || null,
+            subType: s.detail || null,
+            vendor: s.vendor || null,
+          };
+          if (s.bambuTrayInfoIdx) out.bambuTrayInfoIdx = s.bambuTrayInfoIdx;
+          return out;
+        });
+        const next = {
+          kind: u.kind, index: u.index, hwId: u.hwId ?? null,
+          present: true, slots,
+          // Seeded once, then the user's for good.
+          label: cur?.label ?? (u.label || ""),
+          rows:  Number.isFinite(cur?.rows) ? cur.rows : u.rows,
+          cols:  Number.isFinite(cur?.cols) ? cur.cols : u.cols,
+        };
+        /* Only write when something the machine OWNS actually differs. This runs
+           on every live tick; comparing with the volatile parts blanked out is
+           what stops a unit rewriting itself once a second. */
+        const bare = o => JSON.stringify({
+          kind: o.kind, index: o.index, hwId: o.hwId ?? null, present: o.present !== false,
+          slots: (o.slots || []).map(x => ({
+            index: x.index, label: x.label, hw: x.hw,
+            color: x.color ?? null, material: x.material ?? null,
+            subType: x.subType ?? null, vendor: x.vendor ?? null,
+            bambuTrayInfoIdx: x.bambuTrayInfoIdx ?? null,
+          })),
+        });
+        if (!cur || bare(cur) !== bare(next)) {
+          /* Written key by key, so a unit the user is moving right now cannot be
+             flattened by a refresh of its neighbour. */
+          Object.entries(next).forEach(([k, v]) => { patch[`units.${id}.${k}`] = v; });
+          writes++;
+        }
+      }
+      // Reported no more → absent, not gone.
+      for (const [id, cur] of Object.entries(stored)) {
+        if (seen.has(id) || cur.present === false) continue;
+        patch[`units.${id}.present`] = false;
+        writes++;
+      }
+      if (writes) await _deviceDoc(uid, printer).update(patch);
+    } catch (e) {
+      console.warn("[printer-units] sync failed:", e?.code, e?.message);
+    } finally {
+      _unitSyncing.delete(key);
+    }
+  }
+
+  function syncAllPrinterUnits() {
+    if (!state.activeAccountId || state.friendView) return;
+    state.printers.forEach(p => { syncPrinterUnits(p); });
+  }
+
+
+
+  /* What a machine reports in one bay, as the inner markup of an unassigned
+     slot. Shared by the initial render and the live patch below — two copies
+     would let the slot change shape the first time it refreshed. */
+
+
   async function createRack({ name, subtitle, level, position, depth }) {
     const user = fbAuth().currentUser;
     if (!user) { console.warn("[createRack] no user"); return null; }
@@ -27369,7 +28096,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // not queue the same write twice.
   const _planAdopting = new Set();
   let _planEdit = false;
-  let _planSelected = null;
+  /* Which racks are picked up. A SET, not one id: the board behaves like a
+     drawing program — sweep a box, shift-click to add, drag one of them and the
+     whole group travels. Board-local, and cleared by anything that is not
+     selecting. */
+  const _rackSel = new Set();
+  function _syncRackSelection() {
+    document.querySelectorAll("#invRackView .rp-rack[data-rack-id]").forEach(el =>
+      el.classList.toggle("is-plan-selected", _rackSel.has(el.dataset.rackId)));
+  }
+  function _clearRackSelection() { _rackSel.clear(); _syncRackSelection(); }
   /* Zoom is a plain view setting. It started as an editing aid — a plan bigger
      than the window gives you nowhere to aim a rack — but stepping back to see
      the whole workshop at once is just as useful when you are only looking for
@@ -27384,6 +28120,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return Number.isFinite(v) ? _clampZoom(v * 100) / 100 : 1;
   }
   let _planZoom = _loadPlanZoom();
+  // The printer board keeps its own zoom: the two plans hold different things at
+  // different scales, and a single value would fight itself between the views.
+  const PRINTER_ZOOM_KEY = "tigertag.printer.planZoom";
+  const _loadPrinterZoom = () => {
+    const v = parseFloat(localStorage.getItem(PRINTER_ZOOM_KEY));
+    return Number.isFinite(v) ? _clampZoom(v * 100) / 100 : 1;
+  };
+  let _printerZoom = _loadPrinterZoom();
   /* True while the board is being panned with the wheel button. A wheel that is
      being pressed still turns a little under the thumb, and every one of those
      stray notches was landing on the zoom — the view crept in or out on its own
@@ -27575,17 +28319,137 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return { w: el.offsetWidth, h: el.offsetHeight };
   }
   // Every rack on the board except the one being dragged, in pixels.
-  function planNeighbours(exceptId) {
-    const container = _planContainer();
+  /* The boxes a dragged card can snap to. Told WHERE to look and HOW to read a
+     position, so the same magnetism serves the rack plan and the printer plan
+     without either knowing about the other. */
+  /* Panning, for any board — the WHEEL BUTTON, anywhere.
+
+     The left button on empty background used to pan too, until it started
+     drawing a selection box there: one press cannot mean both. So a board that
+     can sweep says so with `canLeftPan`, and keeps the left button for the box;
+     a board that cannot — Storage outside Arrange — keeps the old drag-the-
+     backdrop panning, which is what everyone tries first. */
+  function wirePlanPan(scroller, itemSel, canLeftPan) {
+    if (!scroller || scroller._panWired) return;
+    scroller._panWired = true;
+    let pan = null;
+    const endPan = () => {
+      if (!pan) return;
+      pan = null;
+      _planPanning = false;
+      scroller.classList.remove("is-panning");
+    };
+    // Belt and braces: a mouse-up anywhere ends the pan, so releasing the button
+    // off the board cannot leave the view stuck in panning mode.
+    window.addEventListener("pointerup", endPan);
+    scroller.addEventListener("pointerdown", e => {
+      const leftOnEmpty = e.button === 0 && canLeftPan?.()
+        && !e.target.closest(`${itemSel}, button, input, a`);
+      if (e.button !== 1 && !leftOnEmpty) return;
+      e.preventDefault();                  // stops the browser's own auto-scroll
+      pan = { x: e.clientX, y: e.clientY, sl: scroller.scrollLeft, st: scroller.scrollTop };
+      _planPanning = true;
+      try { scroller.setPointerCapture(e.pointerId); } catch (_) {}
+      scroller.classList.add("is-panning");
+    });
+    scroller.addEventListener("pointermove", e => {
+      if (!pan) return;
+      scroller.scrollLeft = pan.sl - (e.clientX - pan.x);
+      scroller.scrollTop  = pan.st - (e.clientY - pan.y);
+    });
+    scroller.addEventListener("pointerup", endPan);
+    scroller.addEventListener("pointercancel", endPan);
+    // Chromium still opens its auto-scroll widget off the compatibility mouse
+    // event on some platforms; this is what actually keeps it away.
+    scroller.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
+    scroller.addEventListener("auxclick", e => { if (e.button === 1) e.preventDefault(); });
+  }
+
+  /* Drag the empty board to draw a box; everything it touches is taken. Shift
+     adds to what is already selected instead of replacing it.
+
+     ONE implementation for both boards. The racks and the machines are meant to
+     behave identically — writing the gesture twice is how they drift apart, and
+     a selection that works differently on two boards that look the same is worse
+     than no selection at all. The board tells this what its items are (`itemSel`
+     + `keyOf`), where they sit (`posOf`), how far it is zoomed (`zoomOf`) and
+     which Set holds the answer. */
+  function wirePlanMarquee(scroller, cfg) {
+    if (!scroller || scroller._marqueeWired) return;
+    scroller._marqueeWired = true;
+    let m = null;
+    /* Board coordinates, not screen ones — the board is scaled between the two,
+       so a box drawn in screen pixels would drift from the pointer by exactly
+       the zoom factor. The board is re-read on every gesture because a render
+       can replace it under a scroller that survives. */
+    const at = (e, board) => {
+      const z = cfg.zoomOf() || 1, box = board.getBoundingClientRect();
+      return { x: (e.clientX - box.left) / z, y: (e.clientY - box.top) / z };
+    };
+    scroller.addEventListener("pointerdown", e => {
+      // Left button on bare board only: the wheel button pans, and a press on
+      // an item is a move.
+      const board = cfg.boardOf();
+      if (e.button !== 0 || !board || cfg.enabled?.() === false) return;
+      if (e.target.closest(`${cfg.blockSel || cfg.itemSel}, button, input, a`)) return;
+      const p = at(e, board);
+      m = { x0: p.x, y0: p.y, add: e.shiftKey, board };
+      if (!m.add) cfg.clear();
+      m.el = document.createElement("div");
+      m.el.className = "rp-plan-marquee";
+      board.appendChild(m.el);
+      try { scroller.setPointerCapture(e.pointerId); } catch (_) {}
+      e.preventDefault();
+    });
+    scroller.addEventListener("pointermove", e => {
+      if (!m) return;
+      const p = at(e, m.board);
+      const r = { x: Math.min(m.x0, p.x), y: Math.min(m.y0, p.y),
+                  w: Math.abs(p.x - m.x0), h: Math.abs(p.y - m.y0) };
+      Object.assign(m.el.style, { left: r.x + "px", top: r.y + "px", width: r.w + "px", height: r.h + "px" });
+      // Live: you see what you are about to take while you are still drawing.
+      m.board.querySelectorAll(cfg.itemSel).forEach(el => {
+        const key = cfg.keyOf(el), pos = key != null ? cfg.posOf(key) : null;
+        if (!pos) return;
+        const hit = r.x < pos.x + el.offsetWidth && r.x + r.w > pos.x
+                 && r.y < pos.y + el.offsetHeight && r.y + r.h > pos.y;
+        if (hit) cfg.sel.add(key);
+        else if (!m.add) cfg.sel.delete(key);
+      });
+      cfg.sync();
+    });
+    const endM = () => { if (!m) return; m.el.remove(); m = null; };
+    scroller.addEventListener("pointerup", endM);
+    scroller.addEventListener("pointercancel", endM);
+  }
+
+  function planNeighboursIn(container, attr, posOf, exceptId) {
     if (!container) return [];
     return Array.from(container.children)
-      .filter(el => el.dataset.rackId && el.dataset.rackId !== exceptId)
+      .filter(el => el.dataset[attr] && el.dataset[attr] !== exceptId)
       .map(el => {
-        const r = state.racks.find(v => v.id === el.dataset.rackId);
-        const p = r ? rackPlanPos(r) : null;
-        return p ? { id: el.dataset.rackId, ...p, ..._planFoot(el) } : null;
+        const p = posOf(el.dataset[attr]);
+        return p ? { id: el.dataset[attr], ...p, ..._planFoot(el) } : null;
       })
       .filter(Boolean);
+  }
+  function planNeighbours(exceptId) {
+    return planNeighboursIn(_planContainer(), "rackId",
+      id => { const r = state.racks.find(v => v.id === id); return r ? rackPlanPos(r) : null; },
+      exceptId);
+  }
+  /* Only the card in your hand turns red. The cards it lands on are left alone:
+     they did not move, nothing is being asked of them, and lighting up the whole
+     neighbourhood turns one clear answer into a wall of red. */
+  /* Has the pointer wandered off the board? The card is holding pointer capture,
+     so no `pointerleave` will ever fire for it — the card went on following a
+     cursor that had left the map, and you had to travel back inside just to let
+     go of it. Leaving the scroll area drops it where it last stood. */
+  function planPointerOffBoard(e, scroller) {
+    if (!scroller) return false;
+    const b = scroller.getBoundingClientRect();
+    return e.clientX < b.left || e.clientX > b.right
+        || e.clientY < b.top  || e.clientY > b.bottom;
   }
   function planOverlaps(box, neighbours) {
     return neighbours.some(o =>
@@ -27631,8 +28495,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   // The thin lines that say WHY the rack just clicked into place.
-  function planDrawGuides(guideX, guideY) {
-    const container = _planContainer();
+  function planDrawGuides(guideX, guideY, container = _planContainer()) {
     if (!container) return;
     let layer = container.querySelector(".rp-plan-guides");
     if (!layer) {
@@ -27644,8 +28507,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       (guideX != null ? `<i class="rp-plan-guide rp-plan-guide--v" style="left:${guideX}px"></i>` : "") +
       (guideY != null ? `<i class="rp-plan-guide rp-plan-guide--h" style="top:${guideY}px"></i>` : "");
   }
-  function planClearGuides() {
-    _planContainer()?.querySelector(".rp-plan-guides")?.remove();
+  function planClearGuides(container = _planContainer()) {
+    container?.querySelector(".rp-plan-guides")?.remove();
   }
 
   /* The footprint a resize is heading for, drawn live. Until now the only thing
@@ -28424,7 +29287,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <span class="rp-plan-grip rp-plan-grip--s"  data-grip="s"  data-rack-id="${esc(r.id)}"></span>
         <span class="rp-plan-grip rp-plan-grip--se" data-grip="se" data-rack-id="${esc(r.id)}"></span>
         <span class="rp-plan-size" data-rack-id="${esc(r.id)}">${r.level} × ${r.position}</span>` : "";
-      return `<div class="rp-rack${rDepth > 1 ? " rp-rack--deep" : ""}${_planSelected === r.id && _planEdit ? " is-plan-selected" : ""}" data-rack-id="${esc(r.id)}" style="--depth:${rDepth}">${planGrips}
+      return `<div class="rp-rack${rDepth > 1 ? " rp-rack--deep" : ""}${_rackSel.has(r.id) ? " is-plan-selected" : ""}" data-rack-id="${esc(r.id)}" style="--depth:${rDepth}">${planGrips}
         <div class="rp-rack-head">
           <div class="rp-rack-info">
             <div class="rp-rack-name">
@@ -28435,6 +29298,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             ${r.subtitle ? `<div class="rp-rack-subtitle">${esc(r.subtitle)}</div>` : ""}
           </div>
           ${readOnly ? "" : `<div class="rp-rack-actions">
+            <button class="rp-rack-btn rp-rack-move" data-action="move" aria-label="${esc(t("actionMove"))}"><span class="icon icon-move icon-18"></span></button>
             <button class="rp-rack-btn rp-rack-kebab" data-action="kebab" title="${esc(t("rackActionMore"))}" aria-label="${esc(t("rackActionMore"))}" aria-haspopup="menu" aria-expanded="false"><span class="icon icon-kebab icon-18"></span></button>
             <div class="rp-menu" data-menu-for="${esc(r.id)}" hidden>
               <button class="rp-menu-item" data-action="edit"><span class="icon icon-edit icon-14"></span><span>${esc(t("rackActionEdit"))}</span></button>
@@ -28762,42 +29626,25 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     //    the normal view as much as while arranging — a plan laid out by hand is
     //    as likely to run off to the right as off the bottom, and reaching for a
     //    scrollbar to cross it is the wrong gesture.
-    const _scroller = list.querySelector(".rp-racks-scroll");
-    if (_scroller) {
-      let pan = null;
-      const endPan = () => {
-        if (!pan) return;
-        pan = null;
-        _planPanning = false;
-        _scroller.classList.remove("is-panning");
-      };
-      // Belt and braces: a mouse-up anywhere ends the pan, so releasing the
-      // button off the board cannot leave the view stuck in panning mode.
-      window.addEventListener("pointerup", endPan);
-      _scroller.addEventListener("pointerdown", e => {
-        /* The wheel button anywhere, or the left button on empty board. Dragging
-           the background is what everyone tries first, and there is nothing else
-           it could mean: a click that lands on no rack is not aimed at anything. */
-        const onEmpty = e.button === 0 && !e.target.closest(".rp-rack, .rp-rack-add, button, input, a");
-        if (e.button !== 1 && !onEmpty) return;
-        e.preventDefault();                  // stops the browser's own auto-scroll
-        pan = { x: e.clientX, y: e.clientY, sl: _scroller.scrollLeft, st: _scroller.scrollTop };
-        _planPanning = true;
-        try { _scroller.setPointerCapture(e.pointerId); } catch (_) {}
-        _scroller.classList.add("is-panning");
-      });
-      _scroller.addEventListener("pointermove", e => {
-        if (!pan) return;
-        _scroller.scrollLeft = pan.sl - (e.clientX - pan.x);
-        _scroller.scrollTop  = pan.st - (e.clientY - pan.y);
-      });
-      _scroller.addEventListener("pointerup", endPan);
-      _scroller.addEventListener("pointercancel", endPan);
-      // Chromium still opens its auto-scroll widget off the compatibility mouse
-      // event on some platforms; this is what actually keeps it away.
-      _scroller.addEventListener("mousedown", e => { if (e.button === 1) e.preventDefault(); });
-      _scroller.addEventListener("auxclick", e => { if (e.button === 1) e.preventDefault(); });
-    }
+    wirePlanPan(list.querySelector(".rp-racks-scroll"), ".rp-rack, .rp-rack-add",
+      () => !_planEdit);
+    /* Arrange only. Outside it a press on the board belongs to the racks — the
+       slots stay droppable and a rack is one click from opening — so a box
+       drawn across them would be a second meaning for the same gesture. The
+       machines have no such second life, which is why their board sweeps at any
+       time and this one does not. Coordinates are required too: while the racks
+       still flow in a column there is no region to sweep. */
+    wirePlanMarquee(list.querySelector(".rp-racks-scroll"), {
+      boardOf: _planContainer,
+      enabled: () => _planEdit && planInUse(),
+      itemSel: ".rp-rack[data-rack-id]",
+      blockSel: ".rp-rack, .rp-rack-add",
+      keyOf: el => el.dataset.rackId,
+      posOf: id => { const v = state.racks.find(n => n.id === id); return v ? rackPlanPos(v) : null; },
+      zoomOf: () => _planZoom,
+      sel: _rackSel, sync: _syncRackSelection, clear: _clearRackSelection,
+    });
+    _syncRackSelection();
 
     // ── The plan: move a rack, or grow it by its grip ────────────────────
     //    Only ever live in edit mode, so in the normal view the very same cards
@@ -28806,7 +29653,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const entering = !_planEdit;
       if (entering && !planInUse()) await seedPlanFromMasonry();
       _planEdit = entering;
-      _planSelected = null;
+      _clearRackSelection();
       renderRackView();
     });
     /* Zooming holds a point still. Scaling from the top-left corner alone made
@@ -28894,22 +29741,33 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (e.button !== 0) return;                       // the wheel button pans
         const grip = e.target.closest(".rp-plan-grip");
         const card = e.target.closest(".rp-rack");
-        // Outside the arrange mode only the header is a handle, and never the
-        // controls sitting in it — a rack must not start sliding because you
-        // reached for its kebab menu.
-        if (!_planEdit && !grip) {
-          if (!e.target.closest(".rp-rack-head")) return;
-          if (e.target.closest("button, .rp-rack-actions, .rp-menu")) return;
-        }
-        const markSelected = id => {
-          _planSelected = id;
-          container.querySelectorAll(".rp-rack").forEach(el =>
-            el.classList.toggle("is-plan-selected", el.dataset.rackId === id));
-        };
-        if (!card) { markSelected(null); return; }
+        /* The move handle is a button, so it must be recognised BEFORE buttons
+           are dismissed — it is the one control whose press is a drag. */
+        const handle = e.target.closest('[data-action="move"]');
+        /* Outside Arrange the handle is the ONLY way to move a rack. The head
+           used to be the grip, which meant a rack slid whenever you reached
+           past its title, and nothing on a resting card said it could be moved
+           at all. In Arrange the whole card stays the handle — you came here to
+           place things, and aiming at a small target every time is the tedium
+           the mode exists to remove. */
+        if (!_planEdit && !grip && !handle) return;
+        if (!card) return;          // pressing bare board is the band's business
         const r = state.racks.find(v => v.id === card.dataset.rackId);
         if (!r) return;
-        markSelected(r.id);
+        /* Shift picks a rack up into the selection instead of moving it —
+           in Arrange, where selecting several is a thing you can do at all. */
+        if (e.shiftKey && !grip && _planEdit) {
+          _rackSel.has(r.id) ? _rackSel.delete(r.id) : _rackSel.add(r.id);
+          _syncRackSelection();
+          e.preventDefault();
+          return;
+        }
+        /* Grabbing a SELECTED rack takes the whole selection with it, at their
+           existing offsets — that is what selecting several was for. Grabbing an
+           unselected one drops the selection and moves that one alone. A resize
+           grip edits its own rack and nothing else, so it never carries a
+           group. */
+        if (grip || !_rackSel.has(r.id)) _clearRackSelection();
         const pos = rackPlanPos(r) || { x: 0, y: 0 };
         // A slot's pitch is what one column costs on screen; a row's is what one
         // shelf costs. Both are measured, so they stay right in either view mode
@@ -28917,6 +29775,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         const slotEl = card.querySelector(".rp-slot");
         const rowEl  = card.querySelector(".rp-row:not(.rp-row--header)");
         const foot = _planFoot(card);
+        // Everything else being carried, and the gap it keeps from the rack
+        // under the pointer — that gap is what makes a group move as one shape
+        // instead of collapsing onto the cursor.
+        const followers = (grip || !_planEdit) ? [] : [..._rackSel].filter(id => id !== r.id).map(id => {
+          const v = state.racks.find(n => n.id === id);
+          const q = v ? rackPlanPos(v) : null;
+          const el = container.querySelector(`.rp-rack[data-rack-id="${CSS.escape(id)}"]`);
+          return (q && el) ? { id, el, dx: q.x - pos.x, dy: q.y - pos.y } : null;
+        }).filter(Boolean);
         g = {
           r, card, mode: grip ? "resize" : "move", grip: grip?.dataset.grip || null,
           sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
@@ -28924,7 +29791,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           w: foot.w, h: foot.h,
           // Read once: nothing else on the board is going to move, so there is
           // nothing to re-read while the drag runs.
-          neighbours: grip ? [] : planNeighbours(r.id),
+          followers,
+          // A rack being carried cannot also be something to snap to.
+          neighbours: grip ? [] : planNeighbours(r.id).filter(o => !_rackSel.has(o.id)),
           pitchX: slotEl ? slotEl.getBoundingClientRect().width + 4 : 36,
           pitchY: rowEl ? rowEl.getBoundingClientRect().height : 60,
         };
@@ -28935,12 +29804,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
            rack only came forward on the next render, once the move was over. */
         card.style.zIndex = "1000";
         card.classList.add("is-plan-dragging");
+        followers.forEach(f => { f.el.style.zIndex = "1000"; f.el.classList.add("is-plan-dragging"); });
+        // The hand closes on the press, not on the first pixel of travel.
+        document.body.classList.add("is-plan-grabbing");
         view?.classList.add("is-plan-moving");   // the grid appears for the drag
         _soundPlanGrab();
         e.preventDefault();
       });
       container?.addEventListener("pointermove", e => {
         if (!g) return;
+        if (planPointerOffBoard(e, container.closest(".rp-racks-scroll"))) { endPlanGesture(); return; }
         const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
         if (g.mode === "move") {
           // The cursor decides where the rack goes. Nothing else on the board
@@ -28953,9 +29826,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           g.card.style.left = snapped.x + "px";
           g.card.style.top  = snapped.y + "px";
           planDrawGuides(snapped.guideX, snapped.guideY);
-          // Overlapping is allowed — it is your plan — but never silent.
+          /* Overlapping is allowed — it is your plan — but never silent. Each
+             rack in a group answers for its own landing spot, so the red edge
+             says WHICH one is on top of something, not merely that the group
+             is, and the rack being SAT ON lights up too. It warns; it never
+             refuses the drop. */
           g.card.classList.toggle("is-plan-overlapping",
             planOverlaps({ x: snapped.x, y: snapped.y, w: g.w, h: g.h }, g.neighbours));
+          g.followers.forEach(f => {
+            f.el.style.left = (snapped.x + f.dx) + "px";
+            f.el.style.top  = (snapped.y + f.dy) + "px";
+            const fw = _planFoot(f.el);
+            f.el.classList.toggle("is-plan-overlapping", planOverlaps(
+              { x: snapped.x + f.dx, y: snapped.y + f.dy, w: fw.w, h: fw.h }, g.neighbours));
+          });
         } else {
           const nl = (g.grip === "e") ? g.ol : Math.min(15, Math.max(1, g.ol + Math.round(dy / g.pitchY)));
           const np = (g.grip === "s") ? g.op : Math.min(20, Math.max(1, g.op + Math.round(dx / g.pitchX)));
@@ -28970,6 +29854,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       });
       const endPlanGesture = async () => {
         view?.classList.remove("is-plan-moving");
+        document.body.classList.remove("is-plan-grabbing");
         if (!g) return;
         const gg = g; g = null;
         /* On every release, including a drop back where it started: the sound
@@ -28977,12 +29862,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
            moved would read as a drag that failed. */
         _soundPlanDrop();
         gg.card.classList.remove("is-plan-dragging", "is-plan-overlapping");
+        gg.followers?.forEach(f => f.el.classList.remove("is-plan-dragging", "is-plan-overlapping"));
         planClearGuides();
         planClearGhost();
         if (gg.mode === "move") {
           const nx = gg.nx ?? gg.ox, ny = gg.ny ?? gg.oy;
           if (nx === gg.ox && ny === gg.oy) { layoutRacks(); return; }   // hand the layer back
-          await saveRackPlanPos(gg.r.id, nx, ny);
+          // One shared z for the whole group, so a move never reshuffles which
+          // rack of it sits above which.
+          const z = nextPlanZ();
+          await Promise.all([
+            saveRackPlanPos(gg.r.id, nx, ny, z),
+            ...gg.followers.map(f => saveRackPlanPos(f.id, Math.max(0, nx + f.dx), Math.max(0, ny + f.dy), z)),
+          ]);
           layoutRacks();
           return;
         }

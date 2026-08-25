@@ -2165,7 +2165,83 @@ export function closeAcuFileSheet() {
 
 // ── Self-registration ──────────────────────────────────────────────────────
 
+
+/* ── Feed slots, normalised ───────────────────────────────────────────────
+   What the machine is holding, in the ONE shape the rest of the app reads:
+   `[{ key, label, color, material, vendor, empty }]`. Every brand keeps its
+   own wire format — an AMS tray, a CFS material, an ACE slot and a tool-changer
+   nozzle are all different objects — and until now each one was unpacked inline,
+   inside the markup of its own filament card. That made the slots impossible to
+   show anywhere else without copying the unpacking with it.
+   Empty while disconnected: these describe what is loaded RIGHT NOW. */
+export function acuGetSlots(printer) {
+  const conn = _acuConns.get(acuKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const d = conn.data || {};
+  const real = Array.isArray(d.boxes) ? d.boxes : [];
+  // A machine with no ACE reports its lone external spool on another channel;
+  // the filament card synthesises box -1 for it, and so must this.
+  let boxes = real;
+  if (!real.some(b => b.id === -1) && d.extShelf) {
+    boxes = [{ id: -1, slots: [{ index: 0, type: d.extShelf.type, color: d.extShelf.color }] }, ...real];
+  }
+  const sorted = [...boxes].sort((a, b) =>
+    a.id === b.id ? 0 : a.id === -1 ? -1 : b.id === -1 ? 1 : a.id - b.id);
+  const out = [];
+  sorted.forEach(b => {
+    (b?.slots || []).forEach((s, i) => {
+      out.push({
+        key: `${b?.id}:${s?.index ?? i}`,
+        label: b?.id === -1 ? 'Ext.' : `${(b?.id ?? 0) + 1}${'ABCD'[i] || i + 1}`,
+        color: s?.color || null,
+        material: s?.type || null,
+        vendor: s?.vendor || s?.brand || null,
+        empty: !s?.color && !s?.type,
+      });
+    });
+  });
+  return out;
+}
+
+
+/* ── Storage units ──────────────────────────────────────────────────────── */
+export function acuGetUnits(printer) {
+  const conn = _acuConns.get(acuKey(printer));
+  if (!conn || conn.status !== 'connected') return [];
+  const d = conn.data || {};
+  const real = Array.isArray(d.boxes) ? d.boxes : [];
+  let boxes = real;
+  if (!real.some(b => b.id === -1) && d.extShelf) {
+    boxes = [{ id: -1, slots: [{ index: 0, type: d.extShelf.type, color: d.extShelf.color }] }, ...real];
+  }
+  const sorted = [...boxes].sort((a, b) =>
+    a.id === b.id ? 0 : a.id === -1 ? -1 : b.id === -1 ? 1 : a.id - b.id);
+  /* Box -1 is the external box and is itself MULTI-SLOT — a Kobra X reports it
+     with four. Collapsing it to one cell would lose three (PROTOCOL.md). */
+  return sorted.map((b, bi) => {
+    const slots = b?.slots || [];
+    const isExt = b?.id === -1;
+    return {
+      kind: isExt ? 'ext' : 'ace',
+      index: isExt ? 0 : Math.max(0, Number(b?.id ?? bi)),
+      label: '', hwId: b?.id != null ? String(b.id) : null,
+      rows: 1, cols: slots.length || 1,
+      slots: slots.map((s, i) => ({
+        index: i,
+        label: isExt ? `E${i + 1}` : `${(Number(b?.id) || 0) + 1}${'ABCD'[i] || i + 1}`,
+        hw: { boxId: b?.id, slotIndex: s?.index ?? i },
+        color: s?.color || null,
+        material: s?.type || null,
+        vendor: s?.vendor || s?.brand || null,
+        empty: !s?.color && !s?.type,
+      })),
+    };
+  });
+}
+
 registerBrand("anycubic", {
+  getUnits:             acuGetUnits,
+  getSlots:             acuGetSlots,
   meta, schema, helper,
   renderFilamentCard:   renderAcuFilamentCard,
   renderSettingsWidget: schemaWidget(schema),

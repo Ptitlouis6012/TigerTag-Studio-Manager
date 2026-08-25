@@ -174,6 +174,43 @@ users/
             isActive         boolean
             sortIndex, camSortIndex  number — user ordering (grid + cam wall)
             camSize          string?   — "1x" | "2x" cam-wall tile size
+            units            map?      — the machine's filament storage, keyed by unit
+              {unitId}/        id: one entry per physical unit (an AMS / CFS / ACE box, a
+                               holder pair, the external arm). A MAP, so Firestore can
+                               update one unit's keys without rewriting its neighbours
+                               (`units.ams_0.planRacks`) — an array could not. The key is
+                               derived from the machine's own identity for the unit, so
+                               the same box is recognised on reconnect and can never be
+                               seeded twice.
+                kind      string   — ams | amsHt | cfs | ace | holder | ext
+                index     number   — the n-th unit of that kind on this machine
+                label     string   — user-renamable; seeded empty
+                rows,cols number   — the unit's shape (2 x 1 for a stacked pair)
+                hwId      string?  — the machine's own id for the unit, when it has one
+                present   boolean  — the ACCESSORY is plugged in. NOT "the machine is
+                                     online": an absent unit is never deleted, because
+                                     unplugging an Elegoo Canvas hub must not discard
+                                     what was assigned in it.
+                planPrinters map? — { x, y, z } on the Printers board
+                planRacks    map? — { x, y, z } on the Storage board
+                slots     array    — [{ index, label, hw, uids, seenAt, color, material,
+                                     subType, vendor, … }]. `hw` is strictly what
+                                     addresses the slot on the wire (Bambu amsId/trayId,
+                                     Creality boxId/slotId…). `uids` is what the USER
+                                     assigned — two entries for a twin spool, one
+                                     physical spool with two chips. The remaining fields
+                                     are what the MACHINE last reported, stamped with
+                                     `seenAt` so a reader can tell whether it is ten
+                                     seconds or three weeks old. Brand specifics are
+                                     named fields (`bambuTrayInfoIdx`, `crealityRfid`),
+                                     never a blob.
+                                     Vocabulary + rationale: docs/printer-storage-terms.md
+            plan             map?      — where the machine's CARD sits on the printer
+                                          board: { x, y, z } in board pixels.
+            slotsPlan        map?      — where its FEED-SLOT widget sits on that same
+                                          board: { x, y, z }. Separate from the storage
+                                          board's coordinates, which live on the rack —
+                                          two boards, two coordinate spaces.
             tags             string[]? — user-defined free-form labels (Shopify-style), same editor as spool tags but a separate namespace (printer tags never mix with spool tags). Studio metadata only. Owner-write, no rule change needed (printers subtree has no field whitelist). Cross-app field — mobile ignores it until it implements printer tags
             updatedAt        timestamp
             discovery        map?       — last mDNS/HTTP discovery snapshot (raw + derived)
@@ -199,6 +236,17 @@ users/
         position    number    — column count (1-20)
         createdAt   timestamp
         lastUpdate  timestamp
+        printer     map?      — set ONLY on a rack that IS a machine's feed bays
+                                (AMS / CFS / ACE / tool-changer): { brand, id, unit }.
+                                `id` is the printer device id; `unit` numbers the
+                                units of one machine (0, 1, …) so two AMS on the same
+                                printer are two racks, each placeable where its box
+                                really stands. Its presence is what marks the rack as
+                                derived: no separate flag, and the document id is
+                                derived from the binding (`printer_{brand}_{id}_u{unit}`)
+                                so it can never be created twice. Such a rack is not
+                                resizable (its shape is the hardware's) and is deleted
+                                with its printer.
         …                     — slot locks / sortIndex as used by the storage view
       (a spool references its slot via inventory.{spoolId}.rack = { id, level, position })
 
