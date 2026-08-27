@@ -344,7 +344,6 @@ function _buildScaleCardHtml(s) {
         </div>
       </div>
       <div class="scale-card-chips">${_buildScaleChipsHtml(s)}</div>
-      <div class="scale-card-spool-host">${_buildScaleSpoolBlockHtml(s)}</div>
     </div>
     <div class="scale-card-local" data-local-mac="${esc(s.mac)}">${_buildScaleLocalBlockHtml(s.mac)}</div>
     <button class="tare-hold-btn" data-tare-mac="${esc(s.mac)}"${wsOn ? "" : " disabled"}>
@@ -379,7 +378,7 @@ function _buildScaleChipsHtml(s) {
     const q = wifiQualityLevel(wifiDbm);
     const cls = online ? "ok" : "off";
     chips.push(`<span class="scale-chip scale-chip--wifi scale-chip--wifi-${cls}" title="${esc(q.label)} · ${esc(String(wifiDbm))} dBm">
-      <span class="scale-wifi-bars" data-bars="${q.bars}" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="icon icon-wifi icon-13" aria-hidden="true"></span>
     </span>`);
   }
 
@@ -429,48 +428,6 @@ function _buildScaleChipsHtml(s) {
   return chips.join("");
 }
 
-// Build the current-spool block inner HTML.
-// v2 schema: current_spool_uid_1 / _2 are plain UID strings cross-referenced
-// against state.rows for the friendly label / colour / weight.
-function _buildScaleSpoolBlockHtml(s) {
-  const { esc, state } = _ctx;
-  const uid1 = scaleCurrentSpoolUid1(s);
-  const uid2 = scaleCurrentSpoolUid2(s);
-  const findRowByUid = uid => state.rows.find(x =>
-    String(x.uid) === String(uid) || String(x.spoolId) === String(uid));
-
-  const renderSpool = (uid) => {
-    if (!uid) return "";
-    const r       = findRowByUid(uid);
-    const fillBg  = r ? _ctx.colorBg(r) : "rgba(150,150,150,.2)";
-    const fillHtml = r ? _ctx.slotFillInnerHTML(r) : "";
-    const titleLn = r?.colorName && r.colorName !== "-" ? r.colorName : (r?.material || uid);
-    const subLn   = r ? [r.brand, r.material].filter(Boolean).join(" · ") : `uid=${uid}`;
-    const wAvail  = r?.weightAvailable ?? "—";
-    return `
-      <div class="scale-last-spool">
-        <div class="scale-last-puck" style="background:${fillBg}">${fillHtml}</div>
-        <div class="scale-last-meta">
-          <div class="scale-last-name">${esc(String(titleLn))}</div>
-          <div class="scale-last-sub">${esc(subLn)}</div>
-        </div>
-        <div class="scale-last-w">${esc(String(wAvail))}<span class="scale-last-w-unit">g</span></div>
-      </div>`;
-  };
-
-  if (!uid1 && !uid2) {
-    return `<div class="scale-last-empty">${esc(_ctx.t("scaleNoActivity"))}</div>`;
-  }
-  if (uid1 && uid2) {
-    const r1 = findRowByUid(uid1);
-    const r2 = findRowByUid(uid2);
-    const isTwinPair = r1?.twinUid && (String(r1.twinUid) === String(uid2)) ||
-                       r2?.twinUid && (String(r2.twinUid) === String(uid1));
-    return isTwinPair ? renderSpool(uid1) : (renderSpool(uid1) + renderSpool(uid2));
-  }
-  return renderSpool(uid1 || uid2);
-}
-
 // ── WebSocket local live block ─────────────────────────────────────────────
 
 /**
@@ -501,19 +458,28 @@ function _scaleLocalStatusText(status) {
  * Build the inner HTML of a scale's local WebSocket live block.
  * Returns "" when no IP is known yet (host div stays empty → hidden via CSS).
  */
-/** Map scaleStatus firmware string → { text, bg } for the send-state badge. */
-function _scaleStatusBadgeInfo(status) {
+/** Map scaleStatus firmware string → { text, bg } for the send-state badge.
+ *  Colours match the firmware's own LVCOL_GREEN/ACCENT/YELLOW/RED/ORANGE
+ *  (TigerTagSplashESP32.ino §1) so the badge reads the same as the scale's
+ *  own screen: green=ready/done, blue=in-progress, yellow=stabilizing,
+ *  orange=remove-spool, red=error. Text goes through t() — idle/ready/
+ *  scanning/stable/send/success reuse the existing scaleStatus* keys, the
+ *  other three (countdown/error/remove-spool) have their own scaleBadge*
+ *  keys, all 9 locales. */
+function _scaleStatusBadgeInfo(status, t) {
   if (!status) return null;
-  if (status === "idle")    return { text: "Ready",               bg: "rgba(72,187,120,0.35)" };
-  if (status === "ready")   return { text: "Ready for next spool",bg: "rgba(72,187,120,0.35)" };
-  if (status.startsWith("scanning:")) return { text: "Scanning RFID…",  bg: "rgba(100,160,255,0.30)" };
-  if (status.startsWith("stable:"))   return { text: "Stabilizing…",    bg: "rgba(255,200,80,0.30)"  };
-  if (/^\d+$/.test(status)) return { text: `Send in ${status}s`,  bg: "rgba(255,255,255,0.22)" };
-  if (status === "send")    return { text: "Sending…",             bg: "rgba(255,255,255,0.22)" };
-  if (status === "success") return { text: "Sent",                 bg: "rgba(72,187,120,0.40)"  };
-  if (status === "error")   return { text: "Error",                bg: "rgba(245,101,101,0.40)" };
-  if (status === "done")    return { text: "Remove spool",         bg: "rgba(255,160,50,0.35)"  };
-  return { text: status, bg: "rgba(255,255,255,0.18)" };
+  const GREEN = "rgba(59,165,93,0.30)", ACCENT = "rgba(47,127,255,0.30)",
+        YELLOW = "rgba(242,183,5,0.30)", RED = "rgba(226,75,74,0.35)",
+        ORANGE = "rgba(232,130,30,0.30)", NEUTRAL = "rgba(138,147,166,0.25)";
+  if (status === "idle" || status === "ready") return { text: t("scaleStatusReady"),  bg: GREEN };
+  if (status.startsWith("scanning:")) return { text: t("scaleStatusScanning"), bg: ACCENT };
+  if (status.startsWith("stable:"))   return { text: t("scaleStatusStable"),   bg: YELLOW };
+  if (/^\d+$/.test(status)) return { text: t("scaleBadgeSendIn", { n: status }), bg: ACCENT };
+  if (status === "send")    return { text: t("scaleStatusSending"),    bg: ACCENT };
+  if (status === "success") return { text: t("scaleStatusSuccess"),    bg: GREEN };
+  if (status === "error")   return { text: t("scaleBadgeError"),       bg: RED };
+  if (status === "done")    return { text: t("scaleBadgeRemoveSpool"), bg: ORANGE };
+  return { text: status, bg: NEUTRAL };
 }
 
 function _buildScaleLocalBlockHtml(mac) {
@@ -526,13 +492,13 @@ function _buildScaleLocalBlockHtml(mac) {
   const s  = state.scales.find(x => x.mac === mac);
   const name = scaleDisplayName(s) || "TigerScale";
 
-  // ── Status badge (top-left overlay) ───────────────────────────────────────
-  const badgeInfo = _scaleStatusBadgeInfo(st.scaleStatus);
+  // ── Status badge ───────────────────────────────────────────────────────
+  const badgeInfo = _scaleStatusBadgeInfo(st.scaleStatus, t);
   const badgeHtml = badgeInfo
-    ? `<div class="send-status" style="background:${badgeInfo.bg}">${badgeInfo.text}</div>`
-    : `<div class="send-status" style="display:none"></div>`;
+    ? `<span class="send-status" style="background:${badgeInfo.bg}">${esc(badgeInfo.text)}</span>`
+    : `<span class="send-status" style="visibility:hidden">·</span>`;
 
-  // ── Filament panel — données venant du WebSocket ──────────────────────────
+  // ── Brand/material — données venant du WebSocket ──────────────────────────
   const uidLeft  = st?.uidLeft  ?? null;
   const uidRight = st?.uidRight ?? null;
   const uidTwin  = st?.uidTwin  ?? null;
@@ -542,17 +508,12 @@ function _buildScaleLocalBlockHtml(mac) {
   const hexMatch = (st?.color || "").match(/#([0-9A-Fa-f]{6})\b/);
   const dotColor = hexMatch ? `#${hexMatch[1]}` : "rgba(255,255,255,0.25)";
   const hasInfo  = brand.length > 0 || material.length > 0;
-  const filamentPanelHtml = `<div class="filament-panel"${hasInfo ? "" : ' style="display:none"'}>
-      <div class="filament-color-dot" style="background:${esc(dotColor)}"></div>
-      <div class="filament-panel-row">
-        <span class="filament-panel-label">BRAND</span>
-        <span class="filament-panel-value">${esc(brand || "—")}</span>
+  const brandBlockHtml = hasInfo ? `
+      <div class="brand-row">
+        <span class="brand-dot" style="background:${esc(dotColor)}"></span>
+        <span class="brand-name">${esc(brand || "—")}</span>
       </div>
-      <div class="filament-panel-row">
-        <span class="filament-panel-label">MATERIAL</span>
-        <span class="filament-panel-value">${esc(material || "—")}</span>
-      </div>
-    </div>`;
+      ${material ? `<span class="material-name">${esc(material)}</span>` : ""}` : "";
 
   // ── Weight values (toujours connecté ici grâce au early-return) ──────────
   // Weights are physically ≥ 0; the firmware sends -1 (and sometimes 0) for
@@ -562,44 +523,64 @@ function _buildScaleLocalBlockHtml(mac) {
   const containerVal = (typeof st.containerWeight === "number" && st.containerWeight > 0) ? Math.round(st.containerWeight) : "—";
   const filamentVal  = (typeof st.netWeight       === "number" && st.netWeight       > 0) ? Math.round(st.netWeight)       : "—";
 
-  // ── UIDs — resolve() décide quoi afficher dans chaque slot ──────────────
-  const readerLbl = t("scaleReader") || "Reader";
-  const resolve = (physical, otherPhysical) => {
-    if (physical)                      return { text: physical, twin: false };
-    if (otherPhysical && uidTwin)      return { text: uidTwin,  twin: true  };
-    if (otherPhysical)                 return { text: 'Twin', twin: true };
-    return                                    { text: '—',       twin: false };
-  };
-  const L = resolve(uidLeft,  uidRight);
-  const R = resolve(uidRight, uidLeft);
+  // ── Rack location — same resolve as the detail panel's "Storage location"
+  // section (r.rackId/rackLevel/rackPos, coord letter+number formatting),
+  // for whichever spool is actually on the scale right now. Real Firestore
+  // data, not firmware-pushed — the firmware only knows the raw UIDs. ──────
+  // Twin badge — mirrors the physical scale's own pairing indicator
+  // (TigerTagSplashESP32.ino ~13561-13585): hidden with no chip at all, BLUE
+  // when the spool is twinned (both antennas reading a pair, or a single chip
+  // whose partner is known from Firestore), GREY when it's a genuine single
+  // chip with no twin. Not a plain show/hide — a single chip still gets the
+  // badge, just muted.
+  const hasAnyChip = !!(uidLeft || uidRight);
+  const isTwinned  = !!(uidLeft && uidRight) || !!uidTwin;
+  const twinBadgeHtml = hasAnyChip
+    ? `<span class="mc-twin-badge card-tl-badge ${isTwinned ? "card-tl-badge--twin" : "card-tl-badge--single"}" title="${esc(t("twinBadge") || "Twin")}"><span class="icon icon-link icon-11"></span></span>`
+    : "";
+
+  const scannedUid = uidLeft || uidRight || uidTwin;
+  const scannedRow = scannedUid
+    ? state.rows.find(x => String(x.uid) === String(scannedUid) || String(x.spoolId) === String(scannedUid))
+    : null;
+  const rackFor = (scannedRow && scannedRow.rackId && scannedRow.rackLevel != null && scannedRow.rackPos != null)
+    ? state.racks.find(x => x.id === scannedRow.rackId) : null;
+  const rackCoord = rackFor
+    ? String.fromCharCode(65 + scannedRow.rackLevel) + (scannedRow.rackPos + 1)
+      + (scannedRow.rackDepth > 0 ? "·" + (scannedRow.rackDepth + 1) : "")
+    : null;
 
   return `<div class="sc2-live-card">
-    ${badgeHtml}
-    ${filamentPanelHtml}
-    <div class="sc2-inner">
-      <div class="user-name">${esc(name)}</div>
-      <div class="weight-display">
-        <span class="sc2-weight-num">${esc(String(weightVal))}</span><span class="weight-unit">g</span>
+    <div class="top-strip">
+      ${badgeHtml}
+      <span class="user-name">${esc(name)}</span>
+    </div>
+    <div class="main-card">
+      <div class="mc-left">
+        ${twinBadgeHtml}
+        <div class="weight-display">
+          <span class="sc2-weight-num">${esc(String(weightVal))}</span><span class="weight-unit">g</span>
+        </div>
+        <div class="brand-block">${brandBlockHtml}</div>
       </div>
-      <div class="weight-meta-row">
-        <div class="weight-meta-item">
-          <span class="weight-meta-label">${esc(t("scaleContainerLabel") || "CONTAINER")}</span>
-          <span class="weight-meta-value">${containerVal === "—" ? "—" : `${esc(String(containerVal))} g`}</span>
+      <div class="mc-vdiv"></div>
+      <div class="mc-right">
+        <div class="mc-row">
+          <span class="mc-label">${esc(t("scaleContainerLabel") || "CONTAINER")}</span>
+          <span class="mc-value">${containerVal === "—" ? "—" : `${esc(String(containerVal))} g`}</span>
         </div>
-        <div class="weight-meta-sep"></div>
-        <div class="weight-meta-item">
-          <span class="weight-meta-label">${esc(t("scaleFilamentLabel") || "FILAMENT")}</span>
-          <span class="weight-meta-value">${filamentVal === "—" ? "—" : `${esc(String(filamentVal))} g`}</span>
+        <div class="mc-row">
+          <span class="mc-label">${esc(t("scaleFilamentLabel") || "FILAMENT")}</span>
+          <span class="mc-value">${filamentVal === "—" ? "—" : `${esc(String(filamentVal))} g`}</span>
         </div>
-      </div>
-      <div class="uid-rows">
-        <div class="uid-row">
-          <span class="uid-chip-label" data-tooltip="Left">◀ ${esc(readerLbl)}</span>
-          <span class="uid-value${L.twin ? " uid-value--twin" : ""}">${esc(L.text)}</span>
+        <div class="mc-hdiv"></div>
+        <div class="mc-loc-row">
+          <span class="mc-loc-icon mc-loc-icon--home"></span>
+          <span class="mc-loc-value">${esc(rackFor ? rackFor.name : "—")}</span>
         </div>
-        <div class="uid-row">
-          <span class="uid-chip-label" data-tooltip="Right">${esc(readerLbl)} ▶</span>
-          <span class="uid-value${R.twin ? " uid-value--twin" : ""}">${esc(R.text)}</span>
+        <div class="mc-loc-row">
+          <span class="mc-loc-icon mc-loc-icon--pin"></span>
+          <span class="mc-loc-value">${esc(rackCoord || "—")}</span>
         </div>
       </div>
     </div>
@@ -721,6 +702,28 @@ export function connectScaleWs(mac, ip) {
     if (_scaleLocalState.get(mac)?.ws !== ws) return;
     try {
       const data = JSON.parse(e.data);
+      // The firmware's OWN on-device pairing badge never trusts the raw
+      // uid_left/uid_right/uid_twin fields it broadcasts over WS directly —
+      // it keeps a separate, debounced lastUID/lastUID2 pair internally and
+      // resets BOTH to empty once the platform is genuinely empty, only
+      // repopulating them from confirmed reads (TigerTagSplashESP32.ino
+      // §RFID ~line 15191-15329). Mirror that reset here: without it, a
+      // single-chip spool can inherit the previous weighing's uid_right and
+      // flash the wrong badge colour until the new cycle's own fields happen
+      // to overwrite it.
+      // NB: "done" ("remove spool" prompt) and "error" are NOT boundaries —
+      // the chip is still physically on the platform at that point. Resetting
+      // there made the badge vanish the instant "done" fired and only
+      // reappear a few seconds later on the next delta, well before the user
+      // had actually removed the spool. Only "idle"/"ready" mean an empty
+      // platform.
+      const prevStatus = st.scaleStatus;
+      const CYCLE_BOUNDARY = new Set(["idle", "ready"]);
+      const enteringNewScan = typeof data.scaleStatus === "string"
+        && data.scaleStatus.startsWith("scanning:")
+        && !(typeof prevStatus === "string" && prevStatus.startsWith("scanning:"));
+      const atCycleBoundary = typeof data.scaleStatus === "string" && CYCLE_BOUNDARY.has(data.scaleStatus);
+      if (enteringNewScan || atCycleBoundary) { st.uidLeft = null; st.uidRight = null; st.uidTwin = null; }
       // Firmware uses camelCase (not snake_case)
       if (typeof data.weight          === "number") st.weight          = data.weight;
       if (typeof data.netWeight       === "number") st.netWeight       = data.netWeight;
@@ -733,11 +736,25 @@ export function connectScaleWs(mac, ip) {
       if (typeof data.color    === "string") st.color    = data.color;
       // Spool retiré → effacer le panneau filament
       if (data.scaleStatus === "ready") { st.brand = ""; st.material = ""; st.color = ""; }
-      // NFC reader UIDs (prefer _left/_right, fallback to uid/uid2)
+      // NFC reader UIDs (prefer _left/_right, fallback to uid/uid2) — applied
+      // AFTER the cycle-boundary reset above so a same-message confirmed UID
+      // still lands correctly.
+      //
+      // The firmware broadcasts DELTAS: a field is only included in a message
+      // when it actually changed, so "uid_left absent from this message" means
+      // "unchanged" (still whatever it was), NOT "this firmware has no
+      // uid_left concept". The uid/uid2 fallback below exists for genuinely
+      // older single-reader firmware that never sends uid_left/uid_right at
+      // all — so it must only ever fire before we've seen either split field
+      // from THIS scale, never merely because one is missing from one
+      // message. Without st.usesSplitUids, a message carrying uid_right (a
+      // single chip, right reader) but omitting the unchanged uid_left wrongly
+      // copied uid into uid_left too, faking a twin pair (both sides equal).
+      if ("uid_left" in data || "uid_right" in data) st.usesSplitUids = true;
       if ("uid_left"  in data) st.uidLeft  = data.uid_left  || null;
       if ("uid_right" in data) st.uidRight = data.uid_right || null;
-      if ("uid"      in data && !("uid_left"  in data)) st.uidLeft  = data.uid      || null;
-      if ("uid2"     in data && !("uid_right" in data)) st.uidRight = data.uid2     || null;
+      if (!st.usesSplitUids && "uid"  in data) st.uidLeft  = data.uid  || null;
+      if (!st.usesSplitUids && "uid2" in data) st.uidRight = data.uid2 || null;
       if ("uid_twin" in data)                           st.uidTwin  = data.uid_twin || null;
       _scaleLogPush(st, mac, '←', e.data);
     } catch {
@@ -834,10 +851,6 @@ function _patchScaleCardInPlace(card, s) {
   // Chips strip
   const chipsHost = card.querySelector(".scale-card-chips");
   if (chipsHost) chipsHost.innerHTML = _buildScaleChipsHtml(s);
-
-  // Spool block
-  const spoolHost = card.querySelector(".scale-card-spool-host");
-  if (spoolHost) spoolHost.innerHTML = _buildScaleSpoolBlockHtml(s);
 
   // Live gradient block — refresh on every heartbeat too
   _refreshScaleLocalBlock(s.mac);
@@ -1024,8 +1037,6 @@ function _startHealthTick() {
 
 function scaleHeartbeatAt(s)      { return s?.last_heartbeat_at   ?? null; }
 function scaleDisplayName(s)      { return s?.display_name        ?? null; }
-function scaleCurrentSpoolUid1(s) { return s?.current_spool_uid_1 ?? null; }
-function scaleCurrentSpoolUid2(s) { return s?.current_spool_uid_2 ?? null; }
 function scaleWifiSignalDbm(s)    { return s?.wifi_signal_dbm     ?? null; }
 function scaleBatteryPercent(s)   { return s?.battery_percent     ?? null; }
 function scaleIsCharging(s)       { return s?.is_charging         ?? null; }
