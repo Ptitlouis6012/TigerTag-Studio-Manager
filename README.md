@@ -145,6 +145,8 @@ The **printers table** shows, per printer: a live **print preview** (the model o
 
 Some brands also expose a **live control panel** (Snapmaker, Elegoo, Anycubic): home / jog the axes, set nozzle & bed targets, toggle the light, control the part-cooling fan, pick the print-speed mode, and load / unload filament per slot.
 
+The **printer board** lays your fleet out the way your workshop actually looks: place every machine by hand on a plan you zoom and pan, and it stays where you put it — a printer going offline no longer changes place. Beside each machine you can show its **filament units** (Ext., AMS 1, AMS 2, CFS, ACE…) as separate boxes with their slots, colours and materials at the same size as your storage racks, and a **temperature widget** that stays put when the printer sleeps. Cards can be **grouped for good**, so moving one carries the whole set.
+
 ### 📦 Storage / Racks
 
 <p align="center"><img src="assets/img/Panda_Feed_Rack.png" width="480" alt="A filament rack in Tiger Studio Manager" /></p>

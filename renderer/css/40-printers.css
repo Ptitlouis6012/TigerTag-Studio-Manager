@@ -162,7 +162,10 @@
      pointer: it is a mark ON the board, not an object on it — pressing the
      empty space inside it must still start a selection sweep. */
   .printers-grid--plan .plan-cluster {
-    position: absolute; z-index: 0; pointer-events: none;
+    /* The z is set by the layout, just under the group's own lowest card — a
+       fixed 0 here left the ring behind every machine on the board, including
+       the ones its group had just been moved on top of. */
+    position: absolute; pointer-events: none;
     border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, transparent);
     border-radius: 20px;
     background: color-mix(in srgb, var(--primary) 6%, transparent);

@@ -8152,5 +8152,160 @@
         }
       }
     ]
+  },
+  "2.22.0": {
+    "date": "2026-08-28",
+    "items": [
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Your printers, where you actually put them",
+          "fr": "Tes imprimantes, là où elles sont vraiment",
+          "de": "Deine Drucker, da wo sie wirklich stehen",
+          "es": "Tus impresoras, donde de verdad están",
+          "it": "Le tue stampanti, dove stanno davvero",
+          "zh": "你的打印机，摆在它们真正的位置",
+          "pt": "Suas impressoras, onde elas realmente ficam",
+          "pt-pt": "As tuas impressoras, onde elas estão mesmo",
+          "pl": "Twoje drukarki tam, gdzie naprawdę stoją"
+        },
+        "body": {
+          "en": "Drag each machine onto a board that looks like your workshop. Zoom, pan, arrange — and it stays exactly like that next time you open the app.",
+          "fr": "Pose chaque machine sur un plan qui ressemble à ton atelier. Zoome, déplace, agence — et tout est encore là au prochain lancement.",
+          "de": "Zieh jede Maschine auf einen Plan, der aussieht wie deine Werkstatt. Zoomen, schieben, anordnen — und beim nächsten Start steht alles noch genau so.",
+          "es": "Coloca cada máquina en un plano que se parece a tu taller. Amplía, desplaza, ordena — y al abrir la app sigue todo igual.",
+          "it": "Metti ogni macchina su una mappa che somiglia al tuo laboratorio. Zoom, trascina, sistema — e alla riapertura è tutto lì.",
+          "zh": "把每台机器摆到一张像你工作间的图上。缩放、拖动、随意布置——下次打开还是原样。",
+          "pt": "Coloque cada máquina em um mapa parecido com sua oficina. Dê zoom, arraste, organize — e continua tudo assim na próxima vez.",
+          "pt-pt": "Põe cada máquina num mapa parecido com a tua oficina. Zoom, arrastar, organizar — e fica tudo assim para a próxima.",
+          "pl": "Ustaw każdą maszynę na planie, który wygląda jak twój warsztat. Powiększaj, przesuwaj, układaj — i tak zostanie."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "Your AMS boxes, one by one",
+          "fr": "Tes boîtes AMS, une par une",
+          "de": "Deine AMS-Boxen, einzeln",
+          "es": "Tus cajas AMS, una a una",
+          "it": "Le tue scatole AMS, una per una",
+          "zh": "你的 AMS 料盒，一个一个来",
+          "pt": "Suas caixas AMS, uma a uma",
+          "pt-pt": "As tuas caixas AMS, uma a uma",
+          "pl": "Twoje moduły AMS, jeden po drugim"
+        },
+        "body": {
+          "en": "Each filament unit now shows up as its own box with its own slots — colours, materials and all. Keep them tucked beside the printer, or scatter them where they really stand.",
+          "fr": "Chaque unité de filament a maintenant sa propre boîte et ses propres emplacements — couleurs et matières comprises. Garde-les collées à l'imprimante, ou pose-les là où elles sont vraiment.",
+          "de": "Jede Filament-Einheit ist jetzt eine eigene Box mit eigenen Fächern — Farben und Materialien inklusive. Lass sie am Drucker kleben oder stell sie dahin, wo sie wirklich stehen.",
+          "es": "Cada unidad de filamento tiene ahora su propia caja y sus propias ranuras — colores y materiales incluidos. Déjalas junto a la impresora o repártelas donde están de verdad.",
+          "it": "Ogni unità filamento ha ora la sua scatola e i suoi slot — colori e materiali compresi. Tienile attaccate alla stampante o mettile dove stanno davvero.",
+          "zh": "每个耗材单元现在都是独立的一盒，带自己的槽位——颜色和材料都有。可以贴着打印机放，也可以摆到它们真正的位置。",
+          "pt": "Cada unidade de filamento agora é uma caixa própria com seus slots — cores e materiais inclusos. Deixe coladas na impressora ou espalhe onde elas realmente estão.",
+          "pt-pt": "Cada unidade de filamento tem agora a sua caixa e os seus slots — cores e materiais incluídos. Deixa-as coladas à impressora ou põe-nas onde estão mesmo.",
+          "pl": "Każdy moduł filamentu ma teraz własne pudełko i własne sloty — z kolorami i materiałami. Trzymaj je przy drukarce albo rozstaw tam, gdzie naprawdę stoją."
+        }
+      },
+      {
+        "icon": "flame",
+        "title": {
+          "en": "Temperatures at a glance",
+          "fr": "Les températures d'un coup d'œil",
+          "de": "Temperaturen auf einen Blick",
+          "es": "Las temperaturas de un vistazo",
+          "it": "Le temperature a colpo d'occhio",
+          "zh": "温度一眼就看到",
+          "pt": "As temperaturas num relance",
+          "pt-pt": "As temperaturas num relance",
+          "pl": "Temperatury na pierwszy rzut oka"
+        },
+        "body": {
+          "en": "Pin a little temperature panel next to any machine. It stays put when the printer is asleep, so nothing shuffles around behind your back.",
+          "fr": "Accroche un petit panneau de températures à côté de n'importe quelle machine. Il reste en place quand l'imprimante dort, donc rien ne bouge dans ton dos.",
+          "de": "Häng neben jede Maschine eine kleine Temperaturanzeige. Sie bleibt liegen, wenn der Drucker schläft — so verrutscht dir nichts hinter deinem Rücken.",
+          "es": "Coloca un pequeño panel de temperaturas junto a cualquier máquina. Se queda ahí aunque la impresora duerma, así nada se mueve a tus espaldas.",
+          "it": "Attacca un pannellino delle temperature accanto a qualsiasi macchina. Resta lì anche a stampante spenta, così niente si sposta alle tue spalle.",
+          "zh": "给任意一台机器旁边挂一块小小的温度面板。打印机休眠时它也不动，布局不会背着你重排。",
+          "pt": "Fixe um painelzinho de temperaturas ao lado de qualquer máquina. Ele fica lá mesmo com a impressora dormindo, então nada se mexe pelas suas costas.",
+          "pt-pt": "Fixa um painelzinho de temperaturas ao lado de qualquer máquina. Fica lá mesmo com a impressora a dormir, por isso nada se mexe nas tuas costas.",
+          "pl": "Przypnij obok dowolnej maszyny małą tabliczkę z temperaturami. Zostaje na miejscu, gdy drukarka śpi — nic się nie przestawia za twoimi plecami."
+        }
+      },
+      {
+        "icon": "link",
+        "title": {
+          "en": "Cards that stick together",
+          "fr": "Des cartes qui restent collées",
+          "de": "Karten, die zusammenbleiben",
+          "es": "Tarjetas que se quedan juntas",
+          "it": "Schede che restano insieme",
+          "zh": "黏在一起的卡片",
+          "pt": "Cartões que ficam grudados",
+          "pt-pt": "Cartões que ficam colados",
+          "pl": "Karty, które trzymają się razem"
+        },
+        "body": {
+          "en": "Pick a few, right-click, group them. Move one and the whole set follows, spacing intact. Right-click again when you want them to go their separate ways.",
+          "fr": "Sélectionnes-en quelques-unes, clic droit, groupe. Tu en bouges une, tout le paquet suit, écarts compris. Re-clic droit quand tu veux qu'elles reprennent leur liberté.",
+          "de": "Ein paar auswählen, Rechtsklick, gruppieren. Du bewegst eine, der ganze Satz kommt mit — Abstände inklusive. Rechtsklick, wenn sie wieder getrennte Wege gehen sollen.",
+          "es": "Selecciona unas cuantas, clic derecho, agrupa. Mueves una y el grupo entero la sigue, con sus distancias. Clic derecho otra vez cuando quieras separarlas.",
+          "it": "Selezionane qualcuna, tasto destro, raggruppa. Ne muovi una e tutto il gruppo la segue, spazi compresi. Tasto destro di nuovo quando vuoi separarle.",
+          "zh": "选中几张，右键，成组。拖动一张，整组跟着走，间距不变。想让它们各奔东西时，再右键一次。",
+          "pt": "Selecione algumas, clique com o direito, agrupe. Move uma e o conjunto inteiro vai junto, com os espaços. Clique de novo quando quiser separá-las.",
+          "pt-pt": "Seleciona algumas, clica com o direito, agrupa. Moves uma e o conjunto vai todo atrás, com os espaços. Clica outra vez quando quiseres separá-las.",
+          "pl": "Zaznacz kilka, prawy przycisk, zgrupuj. Ruszasz jedną — cały zestaw idzie za nią, z zachowaniem odstępów. Prawy przycisk znowu, gdy mają się rozejść."
+        }
+      },
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "Your spool info stops vanishing",
+          "fr": "Les infos de tes bobines arrêtent de disparaître",
+          "de": "Deine Spulendaten verschwinden nicht mehr",
+          "es": "La info de tus bobinas deja de esfumarse",
+          "it": "I dati delle tue bobine smettono di sparire",
+          "zh": "你的线盘信息不再凭空消失",
+          "pt": "As informações do seu carretel param de sumir",
+          "pt-pt": "As informações do teu rolo deixam de desaparecer",
+          "pl": "Dane twojej szpuli przestają znikać"
+        },
+        "body": {
+          "en": "Updating a spool's chip used to quietly reset its weight and forget its masterspool and its shelf. It doesn't any more — what you entered stays yours.",
+          "fr": "Mettre la puce d'une bobine à jour remettait discrètement son poids à zéro et oubliait son masterspool et son étagère. C'est fini — ce que tu as saisi reste à toi.",
+          "de": "Wer den Chip einer Spule aktualisierte, setzte klammheimlich ihr Gewicht zurück und verlor Masterspool und Regalplatz. Vorbei — was du eingetragen hast, bleibt dir.",
+          "es": "Actualizar el chip de una bobina reiniciaba su peso en silencio y olvidaba su masterspool y su estante. Se acabó — lo que escribiste sigue siendo tuyo.",
+          "it": "Aggiornare il chip di una bobina ne azzerava il peso di nascosto e dimenticava masterspool e scaffale. Finita — quello che hai scritto resta tuo.",
+          "zh": "以前更新线盘芯片，会悄悄把重量清零，还忘掉料架和货位。现在不会了——你填的东西就是你的。",
+          "pt": "Atualizar o chip de um carretel zerava o peso em silêncio e esquecia o masterspool e a prateleira. Acabou — o que você digitou continua sendo seu.",
+          "pt-pt": "Atualizar o chip de um rolo repunha o peso a zero em silêncio e esquecia o masterspool e a prateleira. Acabou — o que escreveste continua teu.",
+          "pl": "Aktualizacja chipa szpuli po cichu zerowała jej wagę i gubiła masterspool oraz półkę. Koniec z tym — to, co wpisałeś, zostaje twoje."
+        }
+      },
+      {
+        "icon": "bulb",
+        "title": {
+          "en": "Your TD value comes home",
+          "fr": "Ta valeur TD revient à la maison",
+          "de": "Dein TD-Wert kommt zurück",
+          "es": "Tu valor TD vuelve a casa",
+          "it": "Il tuo valore TD torna a casa",
+          "zh": "你的 TD 数值回来了",
+          "pt": "Seu valor TD volta para casa",
+          "pt-pt": "O teu valor TD volta para casa",
+          "pl": "Twoja wartość TD wraca do domu"
+        },
+        "body": {
+          "en": "It was written on the chip the whole time — the app just wasn't reading it back. Now it does.",
+          "fr": "Elle était sur la puce depuis le début — l'application ne la relisait simplement pas. Maintenant si.",
+          "de": "Er stand die ganze Zeit auf dem Chip — die App hat ihn nur nicht zurückgelesen. Jetzt schon.",
+          "es": "Estaba en el chip desde el principio — la app simplemente no lo leía de vuelta. Ahora sí.",
+          "it": "Era sul chip fin dall'inizio — l'app semplicemente non lo rileggeva. Ora sì.",
+          "zh": "它一直都写在芯片里——只是应用没把它读回来。现在读了。",
+          "pt": "Ele estava no chip esse tempo todo — o app só não lia de volta. Agora lê.",
+          "pt-pt": "Estava no chip desde o início — a aplicação é que não o lia de volta. Agora lê.",
+          "pl": "Cały czas był zapisany na chipie — aplikacja go po prostu nie odczytywała. Teraz odczytuje."
+        }
+      }
+    ]
   }
 }

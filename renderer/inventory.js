@@ -21759,24 +21759,31 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // occupy the same shape and the widget does not resize when a link returns.
     return `<section class="snap-block"><div class="snap-temps">${pill("icon-nozzle")}${pill("icon-bed")}</div></section>`;
   }
-  function _makeTempWidget(p) {
-    if (!widgetOn(p, "temp")) return "";
-    const live = _printerTempHtml(p);
-    const body = live || _tempOfflineHtml();
+  /* The frame EVERY simple widget wears: the same head, the same move handle,
+     the same board id. Only the body differs, and only the body is a widget's
+     business — a new kind that had to re-state all of this would drift from the
+     others the first time one of them changed. */
+  function _widgetFrame(p, w, body, stale) {
     const key = `${p.brand}:${p.id}`;
     return `
-      <div class="slots-card temp-card${live ? "" : " is-stale"}" data-board-id="${esc(TEMP_PREFIX + key)}" data-printer-key="${esc(key)}">
+      <div class="slots-card ${esc(w.kind)}-card${stale ? " is-stale" : ""}" data-board-id="${esc(w.prefix + key)}" data-printer-key="${esc(key)}">
         <div class="rp-rack-head slots-card-head">
           <div class="rp-rack-info">
-            <div class="slots-card-name">${esc(t("boardTempTitle"))}</div>
+            <div class="slots-card-name">${esc(t(w.labelKey))}</div>
             <div class="slots-card-owner">${esc(p.printerName || p.brand)}</div>
           </div>
           <div class="rp-rack-actions">
             <button class="rp-rack-btn rp-rack-move" data-action="move" aria-label="${esc(t("actionMove"))}"><span class="icon icon-move icon-18"></span></button>
           </div>
         </div>
-        <div class="temp-card-body">${body}</div>
+        <div class="${esc(w.kind)}-card-body">${body}</div>
       </div>`;
+  }
+  function _makeTempWidget(p) {
+    const w = SIMPLE_WIDGETS.find(x => x.kind === "temp");
+    if (!widgetOn(p, "temp")) return "";
+    const live = _printerTempHtml(p);
+    return _widgetFrame(p, w, live || _tempOfflineHtml(), !live);
   }
 
 
@@ -21845,6 +21852,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      it. The widgets are patched in place instead — and a whole one is only ever
      added or removed, never rebuilt around, so a board full of them is not
      redrawn because one machine changed colour. */
+  /* ONE BROKEN WIDGET MUST NOT TAKE THE BOARD DOWN. The render assembles every
+     card into one string before assigning `host.innerHTML`, so anything that
+     throws in a builder means the assignment never happens — the view keeps what
+     it had and looks like it simply refused to switch, with nothing on screen to
+     say why. A widget that fails is skipped and says so; everything else draws.
+
+     At module scope, not inside the render: the patch path needs it too, and a
+     helper that only half the callers can reach is a helper that will be called
+     from the wrong place. */
+  const _safe = (fn, p) => {
+    try { return fn(p) || ""; }
+    catch (e) { console.warn("[board] widget failed for", _printerKey(p), e); return ""; }
+  };
+
   function _patchSlotsWidgets() {
     // Adding or removing a widget under a hand that is holding one is the same
     // mistake in miniature. It waits too.
@@ -21890,21 +21911,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       el.querySelectorAll(".slots-unit").forEach(n => n.remove());
       el.querySelector(".slots-card-head")?.insertAdjacentHTML("afterend", fresh);
     });
-    /* Temperatures change every second or two. Only the BODY is replaced, never
-       the frame — rebuilding the card would drop the ⋮ menu the user has open
-       and re-run its wiring for a number that ticked. */
-    state.printers.forEach(p => {
-      const id = `${TEMP_PREFIX}${p.brand}:${p.id}`;
-      if (!widgetOn(p, "temp")) return;     // switched off → the sweep takes it
-      const live = _printerTempHtml(p);
-      const html = live || _tempOfflineHtml();
-      alive.add(id);                           // always: the widget never leaves
-      const el = container.querySelector(`.temp-card[data-board-id="${CSS.escape(id)}"]`);
-      if (!el) { container.insertAdjacentHTML("beforeend", _makeTempWidget(p)); added = true; return; }
-      el.classList.toggle("is-stale", !live);
-      const body = el.querySelector(".temp-card-body");
-      if (body && body.innerHTML !== html) body.innerHTML = html;
-    });
+    /* Every simple widget, the same way: only the BODY is ever replaced, never
+       the frame — rebuilding the card would drop the ⋮ the user has open and
+       re-run its wiring for a value that ticked. A widget with live media must
+       therefore return a body that does not change while the stream runs, or
+       supply its own `refresh`. */
+    SIMPLE_WIDGETS.forEach(w => state.printers.forEach(p => {
+      if (!widgetOn(p, w.kind)) return;    // switched off → the sweep takes it
+      const id = w.prefix + `${p.brand}:${p.id}`;
+      alive.add(id);                       // on: it stays, live link or not
+      const el = container.querySelector(`.${w.kind}-card[data-board-id="${CSS.escape(id)}"]`);
+      const html = _safe(w.render, p);
+      if (!el) {
+        if (html) { container.insertAdjacentHTML("beforeend", html); added = true; w.wire?.(container); }
+        return;
+      }
+      if (w.refresh) { w.refresh(el, p); return; }
+      const tmp = document.createElement("div");
+      tmp.innerHTML = html;
+      const next = tmp.querySelector(`.${w.kind}-card-body`);
+      const body = el.querySelector(`.${w.kind}-card-body`);
+      if (next && body && body.innerHTML !== next.innerHTML) body.innerHTML = next.innerHTML;
+      el.classList.toggle("is-stale", !!tmp.firstElementChild?.classList.contains("is-stale"));
+    }));
     // A machine that went offline reports nothing; its widgets go with it. The
     // stored units stay — only what is DRAWN follows the live link.
     container.querySelectorAll(".slots-card[data-board-id]").forEach(el => {
@@ -22271,19 +22300,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
        every time a bay was added. As a widget they are placed like anything
        else on the board — and this is the shape an AMS rack will take, so the
        board learns to hold more than machines once rather than twice. */
-    /* ONE BROKEN WIDGET MUST NOT TAKE THE BOARD DOWN. All of this is assembled
-       before `host.innerHTML` is assigned, so anything that throws in here means
-       the assignment never happens — the view keeps whatever it had and looks
-       like it simply refused to switch, with nothing on screen to say why. A
-       widget that fails is skipped and says so in the console; the machines and
-       everything else still draw. */
-    const _safe = (fn, p) => {
-      try { return fn(p) || ""; }
-      catch (e) { console.warn("[board] widget failed for", _printerKey(p), e); return ""; }
-    };
     const cards = _orderedPrinters.map(p => _safe(_makeCard, p)).join("")
                 + _orderedPrinters.map(p => _safe(_makeUnitWidgets, p)).join("")
-                + _orderedPrinters.map(p => _safe(_makeTempWidget, p)).join("");
+                + SIMPLE_WIDGETS.map(w =>
+                    _orderedPrinters.map(p => _safe(w.render, p)).join("")).join("");
 
 
     /* The board lives in its own scroller: the cards are placed in plan
@@ -23028,9 +23048,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      The switch lives on the MACHINE's ⋮, not the widget's: a widget you have
      hidden has no ⋮ left to bring it back with. */
   const BOARD_WIDGETS = [
+    /* STORAGE is deliberately not like the others and keeps its own paths: its
+       units are a map with their own keys, so it owns two prefixes (`units:` for
+       the group, `unit:` per unit) and a position per unit. Forcing it into the
+       table would make the table worse, not the storage better. It has no
+       `simple: true`, and every loop below skips it. */
     { kind: "units", labelKey: "boardUnitsTitle" },
-    { kind: "temp",  labelKey: "boardTempTitle"  },
+    /* A SIMPLE widget: one card per machine, one position, one group binding.
+       Everything the board needs to know about it is these six fields — see
+       docs/printer-board-widgets.md. Adding another is one entry here plus its
+       CSS; nothing else in the board should have to learn its name. */
+    { kind: "temp", labelKey: "boardTempTitle", simple: true,
+      prefix: "temp:", unitTag: "#temp",
+      planField: "tempPlan", clusterField: "tempPlanCluster",
+      render: p => _makeTempWidget(p) },
   ];
+  const SIMPLE_WIDGETS = BOARD_WIDGETS.filter(w => w.simple);
+  const _widgetByTag = tag => SIMPLE_WIDGETS.find(w => w.unitTag === tag) || null;
+  /* Longest prefix first, ALWAYS. `unit:` is a prefix of `units:`, and any new
+     kind can collide the same way; matching in declaration order would resolve
+     `units:…` as a unit of a machine called "s". */
+  const _widgetByPrefix = id =>
+    SIMPLE_WIDGETS.filter(w => id.startsWith(w.prefix))
+                  .sort((a, b) => b.prefix.length - a.prefix.length)[0] || null;
   /* A switch the user has just flipped, until the record catches up.
 
      Exactly the problem the board's positions had: the printers subscription
@@ -23061,9 +23101,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
        other object keeps its place. */
     if (!on) {
       const gone = firebase.firestore.FieldValue.delete();
-      if (kind === "temp") {
-        patch.tempPlan = gone;
-        if (live) delete live.tempPlan;
+      const w = SIMPLE_WIDGETS.find(x => x.kind === kind);
+      if (w) {
+        patch[w.planField] = gone;
+        if (live) delete live[w.planField];
       } else if (kind === "units") {
         patch.unitsPlan = gone;
         if (live) delete live.unitsPlan;
@@ -23098,7 +23139,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
-  const TEMP_PREFIX  = "temp:";     // a machine's temperatures, as a widget
   const UNIT_PREFIX  = "unit:";     // one unit, placed on its own
   const GROUP_PREFIX = "units:";    // a machine's units, in one widget
   /* Grouped is the default, because that is how most benches look: the boxes
@@ -23119,9 +23159,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const p = state.printers.find(v => _printerKey(v) === boardId.slice(GROUP_PREFIX.length));
       return p ? { p, unit: "*" } : null;        // "*" = all of them, as one
     }
-    if (boardId.startsWith(TEMP_PREFIX)) {
-      const p = state.printers.find(v => _printerKey(v) === boardId.slice(TEMP_PREFIX.length));
-      return p ? { p, unit: "#temp" } : null;    // not storage — its own widget
+    const w = _widgetByPrefix(boardId);
+    if (w) {
+      const p = state.printers.find(v => _printerKey(v) === boardId.slice(w.prefix.length));
+      return p ? { p, unit: w.unitTag } : null;
     }
     const p = state.printers.find(v => _printerKey(v) === boardId);
     return p ? { p, unit: null } : null;
@@ -23167,7 +23208,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
 
   const _unitPlan = o => (o.unit === "*" ? o.p.unitsPlan
-                        : o.unit === "#temp" ? o.p.tempPlan
+                        : _widgetByTag(o.unit) ? o.p[_widgetByTag(o.unit).planField]
                         : o.p.units?.[o.unit]?.planPrinters) || null;
   function boardPos(boardId) {
     const o = _boardObj(boardId);
@@ -23203,7 +23244,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   const nextBoardZ = () => state.printers.reduce((m, p) => {
     let n = Math.max(m, printerPlanZ(p),
                      Number.isFinite(p.unitsPlan?.z) ? p.unitsPlan.z : 0,
-                     Number.isFinite(p.tempPlan?.z)  ? p.tempPlan.z  : 0);
+                     ...SIMPLE_WIDGETS.map(w => Number.isFinite(p[w.planField]?.z) ? p[w.planField].z : 0));
     for (const u of Object.values(p.units || {}))
       n = Math.max(n, Number.isFinite(u?.planPrinters?.z) ? u.planPrinters.z : 0);
     return n;
@@ -23211,9 +23252,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   async function saveUnitPlanPos(printer, unitKey, x, y, z = nextBoardZ()) {
     const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
     const grouped = unitKey === "*";
-    const isTemp = unitKey === "#temp";
+    const w = _widgetByTag(unitKey);
     if (live) {                                  // optimistic: no render wait
-      if (isTemp) live.tempPlan = { x, y, z };
+      if (w) live[w.planField] = { x, y, z };
       else if (grouped) live.unitsPlan = { x, y, z };
       else {
         live.units = live.units || {};
@@ -23225,7 +23266,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     try {
       // Key by key, so moving one unit cannot flatten a neighbour's fields.
       await _deviceDoc(uid, printer).update(
-        isTemp  ? { tempPlan:  { x, y, z } } :
+        w       ? { [w.planField]: { x, y, z } } :
         grouped ? { unitsPlan: { x, y, z } }
                 : { [`units.${unitKey}.planPrinters`]: { x, y, z } });
     } catch (e) { console.warn("[printer-units] plan save failed:", e?.message || e); }
@@ -23283,7 +23324,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
        it sat there alone, which is exactly what a binding is meant to prevent.
        Every kind of widget belongs here; forgetting one is how the next kind
        will break in the same way. */
-    if (widgetOn(p, "temp")) ids.push(TEMP_PREFIX + key);
+    SIMPLE_WIDGETS.forEach(w => { if (widgetOn(p, w.kind)) ids.push(w.prefix + key); });
     return ids;
   }
   function clusterOf(boardId) {
@@ -23291,7 +23332,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!o) return null;
     if (!o.unit)            return o.p.planCluster || null;
     if (o.unit === "*")     return o.p.unitsPlanCluster || null;
-    if (o.unit === "#temp") return o.p.tempPlanCluster || null;
+    const w = _widgetByTag(o.unit);
+    if (w) return o.p[w.clusterField] || null;
     return o.p.units?.[o.unit]?.planPrintersCluster || null;
   }
   /* Everything bound to that cluster right now. A cluster of ONE is no cluster:
@@ -23314,7 +23356,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      reads. */
   const _printerInClusters = (p, cids) =>
     cids.has(p.planCluster) || cids.has(p.unitsPlanCluster)
-    || cids.has(p.tempPlanCluster)
+    || SIMPLE_WIDGETS.some(w => cids.has(p[w.clusterField]))
     || Object.values(p.units || {}).some(u => cids.has(u?.planPrintersCluster));
   /* Binds a set of boards — or releases them, with `cid` null — in ONE write
      per machine: a card and its units widget live in the same document, and two
@@ -23333,9 +23375,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       } else if (o.unit === "*") {                       // its units, as one
         e.patch.unitsPlanCluster = cid || gone;
         if (cid) o.p.unitsPlanCluster = cid; else delete o.p.unitsPlanCluster;
-      } else if (o.unit === "#temp") {                   // its temperatures
-        e.patch.tempPlanCluster = cid || gone;
-        if (cid) o.p.tempPlanCluster = cid; else delete o.p.tempPlanCluster;
+      } else if (_widgetByTag(o.unit)) {                  // one of its widgets
+        const w = _widgetByTag(o.unit);
+        e.patch[w.clusterField] = cid || gone;
+        if (cid) o.p[w.clusterField] = cid; else delete o.p[w.clusterField];
       } else {                                           // one unit of it
         e.patch[`units.${o.unit}.planPrintersCluster`] = cid || gone;
         o.p.units = o.p.units || {};
@@ -23598,7 +23641,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       .filter(el => el.dataset.boardId)
       .map(el => ({ el, z: boardZ(el.dataset.boardId) }))
       .sort((a, b) => a.z - b.z)
-      .forEach((it, i) => { it.el.style.zIndex = String(i + 1); });
+      /* EVEN numbers, leaving the odd ones free. A group's outline has to sit
+         directly beneath its own cards and yet above whatever the group is
+         standing on — move a group over another machine and its ring must come
+         with it, not stay behind. Spacing the cards two apart leaves exactly one
+         slot under each for its ring. */
+      .forEach((it, i) => { it.el.style.zIndex = String((i + 1) * 2); });
 
     container.style.position = "relative";
     /* The scale is on the BOARD, so the cards keep their own untouched
@@ -23668,6 +23716,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         container.appendChild(el);
       }
       kept.add(cid);
+      /* Just under the LOWEST card it rings, so it travels with its group and
+         never sinks behind a machine the group was moved on top of. */
+      const zs = Array.from(container.children)
+        .filter(n => n.dataset.boardId && clusterOf(n.dataset.boardId) === cid)
+        .map(n => parseInt(n.style.zIndex, 10) || 0)
+        .filter(Boolean);
+      const z = zs.length ? Math.min(...zs) - 1 : 0;
+      if (el.style.zIndex !== String(z)) el.style.zIndex = String(z);
       // Written only when they differ, so an unchanged ring is not touched at all.
       const next = {
         left:   (box.x1 - CLUSTER_PAD) + "px",
@@ -29533,13 +29589,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      ones below it. Each step clears the exact obstacle that blocked it, so the
      walk always terminates — at worst below everything in the column.
 
-     Nothing here dodges SIDEWAYS. A free spot to the left or right would put the
-     widget somewhere the user did not ask for; the board's own rule covers what
-     is left over — overlapping is allowed, it is your plan, and it is drawn in
-     red rather than prevented. */
+     ONLY THIS MACHINE'S OWN THINGS are in the way. Another printer's card
+     sitting under this one is not an obstacle: pushing past it would send the
+     widget far from the machine it belongs to, and being near its machine is the
+     whole point — you can move a card that overlaps in one gesture, but you have
+     to go looking for one that landed three rows down. The board already treats
+     overlapping as allowed and merely draws it in red.
+
+     Nothing here dodges SIDEWAYS either, for the same reason. */
   function planStackUnder(container, owner, ownIds, w, h, exceptId) {
     const boxes = Array.from(container.children)
-      .filter(el => el.dataset.boardId && el.dataset.boardId !== exceptId && el.offsetWidth)
+      .filter(el => el.dataset.boardId && el.dataset.boardId !== exceptId
+                 && el.offsetWidth && ownIds.has(el.dataset.boardId))
       .map(el => ({ id: el.dataset.boardId,
                     x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0,
                     w: el.offsetWidth, h: el.offsetHeight }));
@@ -35213,6 +35274,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           // value on rescan. Fresh writes (new chip / chip rewritten) seed
           // the weight from the chip as before.
           let preserveDbWeight = false;
+          // The chip always carries the TD (`td_raw`); the document holds the
+          // float everything displays. Only a TD ALREADY in the document can be
+          // overwritten by the chip's older value, so that alone is protected —
+          // an absent one is filled in from the chip on the very next scan.
+          let preserveTd = false;
           if (existing.exists) {
             const stored = existing.data();
             if (stored.timestamp !== tagData.timestamp) {
@@ -35222,6 +35288,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             } else {
               console.log('[RFID] Updating chip:', uid);
               preserveDbWeight = true;
+              preserveTd = stored.TD != null;
               // Auto-sync: push the DB weight onto the chip when they diverge.
               // The slider only writes to Firestore — nothing else ever updates
               // the chip's "Measure Available" field — so on rescan the chip
@@ -35247,7 +35314,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           } else {
             console.log('[RFID] New chip — creating:', uid);
           }
-          await _writeChipDoc(docRef, tagData, twinUid, { preserveDbWeight });
+          await _writeChipDoc(docRef, tagData, twinUid, { preserveDbWeight, preserveTd });
           processedUids.push(uid);
           // Census + tag+ signature backup for this physical chip. Each UID is
           // its own chip — twins are two distinct physical chips, recorded (and
@@ -35286,7 +35353,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // ── Build and write one chip document to Firestore ───────────────────────
     // tagData  = toRawDict() output  (+ _api for TigerTag+, + _readerName)
     // twinUid  = partner chip UID, null if solo scan
-    async function _writeChipDoc(docRef, tagData, twinUid, { preserveDbWeight = false } = {}) {
+    async function _writeChipDoc(docRef, tagData, twinUid, { preserveDbWeight = false, preserveTd = false } = {}) {
       // Write strictly what the chip reported via SDK toRawDict() — nothing invented.
       // Field name mapping: SDK snake_case → Firestore schema (data1-7 convention).
       const doc = {
@@ -35351,6 +35418,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         const capG   = Number(tagData.measure_gr) || 0;
         const availG = Number(tagData.measure_available_gr) || capG || 0;
         doc.weight_available = capG > 0 ? Math.min(availG, capG) : availG;
+      }
+
+      if (!preserveTd && Number(tagData.td_raw) > 0) {
+        /* Rebuild the DISPLAYED TD from the chip. `td_raw` is the chip's own
+           encoding (TD x 10); `TD` is the float every screen actually reads, and
+           nothing but the TD1S ever writes it — so a document seeded from a chip
+           showed no TD at all while the chip carried one, and a spool deleted and
+           rescanned silently lost a measurement that was never lost. Seeding
+           Guarded by the DOCUMENT's own value, not by how the record was seeded:
+           a TD just measured but not yet burned must survive a rescan, while an
+           absent one has nothing to protect and is filled from the chip. */
+        doc.TD = Math.max(0.1, Math.min(100, Number(tagData.td_raw) / 10));
       }
 
       // message — chip field, but omit when empty (saves space, easier to spot real data)

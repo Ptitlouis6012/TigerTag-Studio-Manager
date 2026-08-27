@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.21.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.22.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -302,6 +302,9 @@ Tiger Studio Manager is the desktop app of a wider open hardware + software ecos
 - `ROADMAP.md` — what's done / in progress / backlog, grouped by domain
 - `DEVLOG.md` — per-session engineering journal
 - `renderer/printers/<brand>/PROTOCOL.md` — self-contained agent skill per printer brand
+- `docs/printer-board-widgets.md` — how to add a widget to the printer board, what it
+  costs today (thirteen edits in eleven places), the traps that cost an evening, and the
+  registry that would reduce it to one entry. READ IT before adding a board widget
 - `docs/printer-storage-terms.md` — the agreed words for a printer's filament storage
   (`slot` = one place for one spool, `unit` = the physical box grouping slots: AMS / AMS HT /
   CFS / ACE / holder / ext). READ IT before naming anything in this area — every brand names

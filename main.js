@@ -864,7 +864,7 @@ ipcMain.handle('rfid:write-now', async (_evt, opts) => {
     } else {
       // rawPagesHex now starts at page 0x04 — first 80 bytes are pages 0x04-0x17 (toBytes() range)
       const oldUserBytes = Buffer.from(readResult.rawPagesHex, 'hex').slice(0, 80);
-      pages = _pagesToWrite(newBytes, oldUserBytes);
+      pages = _pagesToWrite(_keepChipTimestamp(newBytes, oldUserBytes), oldUserBytes);
     }
   } else {
     pages = _pagesToWrite(newBytes, null); // full write — all 20 pages
@@ -1037,7 +1037,7 @@ ipcMain.handle('rfid:erase', async (_evt, { targets } = {}) => {
 //
 // opts = {
 //   cloudDoc : Firestore doc (id_material, data1-7, color_*, weight_available, …)
-//   targets  : [{ readerName, uid }]  — readers that currently hold a blank chip
+//   targets  : [{ readerName, uid }]  — readers holding one of THIS spool's chips
 //              UID is known by the renderer from state.nfcCardPresent
 // }
 //
@@ -1055,7 +1055,17 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
   // here (not per chip). Used both as the write source and the diff reference.
   let newBytes;
   try {
-    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: _nowChipTs() });
+    // KEEP the doc's timestamp. Both callers of this handler update a chip that
+    // already has a Firestore document — creation goes through `rfid:burn-one`,
+    // which is handed its timestamp and records it on the doc. Stamping a fresh
+    // one here left the chip and its own document disagreeing, so the next read
+    // saw "timestamp changed" — the test for a chip reprogrammed ELSEWHERE — and
+    // deleted the document to start clean, taking the user's weight, masterspool
+    // and rack with it. This is only the best value to START from: whenever the
+    // chip can be read, `_keepChipTimestamp` overlays the chip's own before the
+    // diff, so the creation date is never rewritten even by a drifted document.
+    const _keepTs = Number(cloudDoc?.timestamp) > 0 ? Number(cloudDoc.timestamp) : _nowChipTs();
+    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: _keepTs });
     // The displayed colour lives in `online_color_list` (hex) and is what the
     // user edits — the doc's baked color_r/g/b can lag behind it. So when a
     // colour list is present, it is the source of truth: patch the chip colour
@@ -1123,7 +1133,7 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
     const rd = await _readChip(readerName);
     if (rd.ok && rd.rawPagesHex) {
       const oldUserBytes = Buffer.from(rd.rawPagesHex, 'hex').slice(0, 80);
-      pages = _pagesToWrite(newBytes, oldUserBytes);
+      pages = _pagesToWrite(_keepChipTimestamp(newBytes, oldUserBytes), oldUserBytes);
     } else {
       console.warn(`[NFC] encode-cloud: ${readerName} surgical read failed, full write:`, rd.error);
       pages = _pagesToWrite(newBytes, null);
@@ -1397,6 +1407,20 @@ ipcMain.handle('catalog:fetch-all', async () => {
     return { ok: false, error: e.message };
   }
 });
+
+// Helper — force the chip's OWN creation timestamp into an outgoing payload.
+// The timestamp (payload offset 32, u32 BE — exactly one 4-byte page) is stamped
+// once when a tag is burned and NEVER again: it is the chip's creation date and,
+// under the name `twin_tag_pairing_id`, the key that pairs a twin with its other
+// half. Rewriting it therefore destroys the pairing. Overlaying the chip's value
+// before the surgical diff makes that page identical by construction, so it can
+// never end up among the pages written — whatever the document happens to hold.
+function _keepChipTimestamp(newUserBytes, oldUserBytes) {
+  if (!oldUserBytes || oldUserBytes.length < 36) return newUserBytes;
+  const out = Buffer.from(newUserBytes);
+  oldUserBytes.copy(out, 32, 32, 36);
+  return out;
+}
 
 // Helper — split 80-byte user-data buffer into page descriptors.
 // If oldUserBytes is provided, only includes pages where bytes differ (surgical mode).

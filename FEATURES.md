@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.21.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.22.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -188,6 +188,13 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - Printer tags, with the same autocomplete UX as spool tags, plus a search bar and Brand/State/Tags filters in the Printers view (v2.0.0).
 - Printer error alerts surfacing the machine's own message and code (Anycubic first) (v1.10.4).
 - Snapmaker Paxx-firmware helper — always-current download link, up-to-date indicator, per-printer update notification (v1.10.29).
+- **Printer board** — the Printers view is a hand-arranged plan like Storage: machines placed on a permanent grid with magnetism and guides, wheel zoom from 30 %, middle-drag panning, position saved per account. Replaces the Connected/Offline partition, so a machine never changes place when its link drops (v2.22.0).
+- **Filament storage as units on the board** — one named block per physical unit (Ext., AMS 1, AMS 2, CFS, ACE, holder pair), shown from the record at startup and dimmed until the link comes up, kept grouped beside the machine or split into individually placeable objects. Slots are drawn at a rack slot's exact size and scale, with four states (unknown, assigned-not-loaded, colour-only, loaded) and hover naming bay, brand and variant (v2.22.0).
+- **Units stored on the machine** — a `units` map on the device document, one entry per physical unit carrying its shape, user-renamable label, a position on each board, and its slots (user assignments plus the machine's last report, stamped with `seenAt`). A unit that stops being reported is marked absent rather than deleted (v2.22.0).
+- **Temperature widget on the board** — the machine's own temperature card, placed like any other object, staying visible and dimmed when the printer is silent (v2.22.0).
+- **Permanent card clusters** — select several cards, right-click and group them so moving one carries the whole set at its existing offsets; the binding lives on the members and is released where they stand (v2.22.0).
+- **Per-machine widget switches** in the card's ⋮, each widget appearing in the first free place down its own machine's column (v2.22.0).
+- **Rubber-band selection and group moves on both boards**, plus a move handle on every card that is the only grab point outside Arrange mode (v2.22.0).
 
 ## Printer cameras
 
