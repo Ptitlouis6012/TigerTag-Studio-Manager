@@ -1558,9 +1558,10 @@ export function ffgGetSlots(printer) {
       color: f?.color || null,
       material: f?.type || null,
       vendor: f?.vendor || null,
+      empty: !f?.color && !f?.type,
       // The station reports a colour for a bay it has been TOLD about even when
-      // nothing is in it, so the sensor has the last word here.
-      empty: f?.hasFilament === false || (!f?.color && !f?.type),
+      // nothing is in it, so the sensor has the last word on whether it is full.
+      loaded: f?.hasFilament !== false,
     };
   });
 }
@@ -1587,7 +1588,20 @@ export function ffgGetUnits(printer) {
   return units;
 }
 
+
+/* ── Temperature, for the board ───────────────────────────────────────────
+   The machine's own temperature card, rendered as-is. Reusing it rather than
+   normalising into a seventh shape is deliberate: the pills already carry the
+   current/target pair, the heating state and the active-tool highlight, and a
+   parallel version would drift from the panel the first time either changed.
+   Read-only on the board — the setpoint editors are the panel's. */
+export function ffgGetTempHtml(printer) {
+  const conn = _ffgConns.get(ffgKey(printer));
+  return (conn && conn.status === 'connected') ? renderFfgTempCard(conn) : "";
+}
+
 registerBrand('flashforge', {
+  getTempHtml:          ffgGetTempHtml,
   getUnits:             ffgGetUnits,
   getSlots:             ffgGetSlots,
   meta, schema, helper,

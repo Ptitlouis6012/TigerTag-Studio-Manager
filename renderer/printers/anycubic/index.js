@@ -2197,6 +2197,11 @@ export function acuGetSlots(printer) {
         material: s?.type || null,
         vendor: s?.vendor || s?.brand || null,
         empty: !s?.color && !s?.type,
+        /* Configured is not the same as LOADED. An ACE reports status 5 for a
+           spool actually mounted; a bay that has been told what it holds but
+           has nothing in it reports something else, and drawing it as full
+           would say there is filament there when there is not. */
+        loaded: !(( s?.color || s?.type) && s?.status != null && s.status !== 5),
       });
     });
   });
@@ -2234,12 +2239,30 @@ export function acuGetUnits(printer) {
         material: s?.type || null,
         vendor: s?.vendor || s?.brand || null,
         empty: !s?.color && !s?.type,
+        /* Configured is not the same as LOADED. An ACE reports status 5 for a
+           spool actually mounted; a bay that has been told what it holds but
+           has nothing in it reports something else, and drawing it as full
+           would say there is filament there when there is not. */
+        loaded: !(( s?.color || s?.type) && s?.status != null && s.status !== 5),
       })),
     };
   });
 }
 
+
+/* ── Temperature, for the board ───────────────────────────────────────────
+   The machine's own temperature card, rendered as-is. Reusing it rather than
+   normalising into a seventh shape is deliberate: the pills already carry the
+   current/target pair, the heating state and the active-tool highlight, and a
+   parallel version would drift from the panel the first time either changed.
+   Read-only on the board — the setpoint editors are the panel's. */
+export function acuGetTempHtml(printer) {
+  const conn = _acuConns.get(acuKey(printer));
+  return (conn && conn.status === 'connected') ? renderAcuTempCard(conn) : "";
+}
+
 registerBrand("anycubic", {
+  getTempHtml:          acuGetTempHtml,
   getUnits:             acuGetUnits,
   getSlots:             acuGetSlots,
   meta, schema, helper,

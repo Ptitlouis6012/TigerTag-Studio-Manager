@@ -200,6 +200,37 @@
   .rp-menu-item--danger .icon { background: var(--danger); }
   .rp-menu-item--danger:hover { background: var(--danger-soft); }
   .rp-menu-item--danger:hover .icon { background: var(--danger); }
+  /* A heading inside a menu, for a group of switches. Quiet: it names a section,
+     it is not something you can press. */
+  .rp-menu-head {
+    padding: 6px 12px 3px; font-size: 10px; font-weight: 700;
+    letter-spacing: .04em; text-transform: uppercase; color: var(--muted);
+  }
+  /* A menu item that is a SWITCH, not an action: the label on the left, the
+     switch on the right, the way a settings row reads everywhere else. A tick
+     said "this happened"; a switch says "this is a thing you set", which is
+     what these are. */
+  .rp-menu-item--toggle { justify-content: space-between; gap: 14px; }
+  .rp-menu-item--toggle .rp-menu-label { flex: 1; min-width: 0; }
+  .rp-menu-switch {
+    flex-shrink: 0; position: relative; width: 30px; height: 17px;
+    border-radius: 999px; background: var(--surface-3);
+    box-shadow: inset 0 0 0 1px var(--border);
+    transition: background .15s, box-shadow .15s;
+  }
+  .rp-menu-switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px;
+    width: 13px; height: 13px; border-radius: 50%;
+    background: var(--muted);
+    transition: transform .15s, background .15s;
+  }
+  .rp-menu-item--toggle.is-on .rp-menu-switch {
+    background: var(--primary); box-shadow: inset 0 0 0 1px var(--primary);
+  }
+  .rp-menu-item--toggle.is-on .rp-menu-switch::after {
+    transform: translateX(13px); background: #fff;
+  }
+
   .rp-menu-sep {
     height: 1px;
     background: var(--border);

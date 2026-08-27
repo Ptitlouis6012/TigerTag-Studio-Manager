@@ -1698,7 +1698,20 @@ export function snapGetUnits(printer) {
   }];
 }
 
+
+/* ── Temperature, for the board ───────────────────────────────────────────
+   The machine's own temperature card, rendered as-is. Reusing it rather than
+   normalising into a seventh shape is deliberate: the pills already carry the
+   current/target pair, the heating state and the active-tool highlight, and a
+   parallel version would drift from the panel the first time either changed.
+   Read-only on the board — the setpoint editors are the panel's. */
+export function snapGetTempHtml(printer) {
+  const conn = _snapConns.get(snapKey(printer));
+  return (conn && conn.status === 'connected') ? renderSnapTempCard(conn) : "";
+}
+
 registerBrand('snapmaker', {
+  getTempHtml:          snapGetTempHtml,
   getUnits:             snapGetUnits,
   getSlots:             snapGetSlots,
   meta, schema, helper,

@@ -193,6 +193,8 @@ users/
                                      what was assigned in it.
                 planPrinters map? — { x, y, z } on the Printers board
                 planRacks    map? — { x, y, z } on the Storage board
+                planPrintersCluster string? — the cluster this unit's widget belongs to
+                                     on the Printers board (see `planCluster` below)
                 slots     array    — [{ index, label, hw, uids, seenAt, color, material,
                                      subType, vendor, … }]. `hw` is strictly what
                                      addresses the slot on the wire (Bambu amsId/trayId,
@@ -207,10 +209,42 @@ users/
                                      Vocabulary + rationale: docs/printer-storage-terms.md
             plan             map?      — where the machine's CARD sits on the printer
                                           board: { x, y, z } in board pixels.
-            slotsPlan        map?      — where its FEED-SLOT widget sits on that same
-                                          board: { x, y, z }. Separate from the storage
-                                          board's coordinates, which live on the rack —
-                                          two boards, two coordinate spaces.
+            unitsPlan        map?      — where its units sit on that board WHEN GROUPED:
+                                          { x, y, z }. Kept even while split, so grouping
+                                          again finds the group where it was left.
+            planCluster      string?   — the cluster this machine's CARD belongs to on the
+                                          printer board: several objects the user bound
+                                          together, so selecting any one selects the whole
+                                          set and dragging one moves them all. The binding
+                                          lives on the MEMBERS, beside the coordinates it
+                                          binds, never in a collection of its own — so
+                                          deleting a machine takes its membership with it
+                                          and a cluster can never point at a card that no
+                                          longer exists. Absent = not bound to anything;
+                                          a cluster left with a single member is no
+                                          cluster. Deliberately not called a group: that
+                                          word is already the inventory's spool grouping,
+                                          the user's Lists, and `unitsPlan` below.
+            unitsPlanCluster string?   — same, for its units widget when they are grouped.
+            widgets          map?      — which of the machine's widgets are on the
+                                          board: { units, temp } → boolean. ABSENT
+                                          MEANS SHOWN, so a machine nobody has touched
+                                          puts everything up and only a deliberate
+                                          choice is ever written. The switches live on
+                                          the machine's ⋮ — a hidden widget has no menu
+                                          of its own left to bring it back with.
+            tempPlan         map?      — where its TEMPERATURE widget sits on that
+                                          board: { x, y, z }. Not storage — the board
+                                          addresses every kind through one
+                                          `data-board-id`, so a further widget needs no
+                                          new machinery, only a case.
+            unitsSplit       boolean?  — the user chose to place each unit separately.
+                                          Absent/false = grouped, which is the default
+                                          because that is how most benches look. The two
+                                          arrangements are stored apart (this position for
+                                          the group, `units.{id}.planPrinters` for each
+                                          unit), so flipping between them never discards
+                                          the other.
             tags             string[]? — user-defined free-form labels (Shopify-style), same editor as spool tags but a separate namespace (printer tags never mix with spool tags). Studio metadata only. Owner-write, no rule change needed (printers subtree has no field whitelist). Cross-app field — mobile ignores it until it implements printer tags
             updatedAt        timestamp
             discovery        map?       — last mDNS/HTTP discovery snapshot (raw + derived)

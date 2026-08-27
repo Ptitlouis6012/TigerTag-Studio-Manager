@@ -1150,7 +1150,24 @@ export function bambuGetUnits(printer) {
   return units;
 }
 
+
+/* ── Temperature, for the board ───────────────────────────────────────────
+   The machine's own temperature card, rendered as-is. Reusing it rather than
+   normalising into a seventh shape is deliberate: the pills already carry the
+   current/target pair, the heating state and the active-tool highlight, and a
+   parallel version would drift from the panel the first time either changed.
+   Read-only on the board — the setpoint editors are the panel's. */
+export function bambuGetTempHtml(printer) {
+  const conn = _bambuConns.get(bambuKey(printer));
+  if (!conn || conn.status !== 'connected') return "";
+  // Same chamber rule the panel applies: only the actively-heated models get an
+  // editable setpoint, and passing it keeps the two views telling one story.
+  const heatedChamber = [6, 7, 8, 9, 11, 12].includes(bambuModelId(printer));
+  return renderBambuTempCard(conn, heatedChamber);
+}
+
 registerBrand('bambulab', {
+  getTempHtml:          bambuGetTempHtml,
   getUnits:             bambuGetUnits,
   getSlots:             bambuGetSlots,
   meta, schema, helper,

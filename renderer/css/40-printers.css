@@ -83,7 +83,23 @@
   .printers-scroll.is-panning { cursor: grabbing; user-select: none; }
   /* Same row as Storage's: the arrange toggle first — it is an action you take
      while placing machines — then the zoom. */
-  .pv-plan-bar { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 0 2px 8px; }
+  /* The controls float OVER the board, top right, instead of sitting on a strip
+     above it. That strip cost a full row of height on every screen for two
+     controls used occasionally — and the board is the thing you came to look at.
+     Floating also puts them where the eye already goes when it wants a control,
+     the same corner every map application uses.
+
+     Anchored to the VIEW, not to the board. Sticky inside the scroller only
+     holds vertically — pan sideways and the controls sail off with the content —
+     so they are placed against the view itself, which does not scroll. */
+  .pv-plan-bar {
+    position: absolute; top: 8px; right: 10px; z-index: 60;
+    display: flex; align-items: center; gap: 8px;
+    pointer-events: none;
+  }
+  /* Only the controls themselves take the pointer; the strip between them must
+     not swallow a rubber band started near the top of the board. */
+  .pv-plan-bar > * { pointer-events: auto; }
 
 
   /* Connect / Disconnect button in the printer side-card header.
@@ -109,7 +125,7 @@
      something you decide once. */
   .printers-grid--plan { display: block; position: relative; }
   .printers-grid--plan .printer-card {
-    position: absolute; margin: 0; flex: none; width: 240px;
+    position: absolute; margin: 0; flex: none; width: var(--board-card-w);
     /* Laid out like a rack card: the name on a head row at the top, the
        machine centred in the body below it. */
     padding: 12px; gap: 10px; min-height: 150px;
@@ -140,6 +156,31 @@
     outline: 2px solid var(--danger); outline-offset: 2px;
   }
 
+  /* ── A cluster: cards bound together for good ────────────────────────────
+     One outline around the whole set, behind the cards it rings, so what
+     belongs together is readable without touching anything. Deaf to the
+     pointer: it is a mark ON the board, not an object on it — pressing the
+     empty space inside it must still start a selection sweep. */
+  .printers-grid--plan .plan-cluster {
+    position: absolute; z-index: 0; pointer-events: none;
+    border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, transparent);
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+    animation: plan-cluster-in .16s ease-out;
+  }
+  @keyframes plan-cluster-in { from { opacity: 0; } to { opacity: 1; } }
+  /* The board's own right-click menu. Same component as a kebab menu — it just
+     drops from the cursor instead of from a button, so it grows from the corner
+     the pointer is in. */
+  .rp-menu--ctx { transform-origin: top left; }
+  .rp-menu--ctx .rp-menu-item[disabled] { opacity: .45; cursor: default; }
+  .rp-menu--ctx .rp-menu-item[disabled]:hover { background: transparent; }
+  .rp-menu--ctx .rp-menu-item[disabled]:hover .icon { background: var(--muted); }
+  .rp-menu-hint {
+    padding: 2px 12px 6px; max-width: 230px;
+    font-size: 11px; line-height: 1.35; color: var(--muted);
+  }
+
   /* ── The slot widget ─────────────────────────────────────────────────────
      The machine's bays as their OWN object on the board, so a unit can be put
      where it really stands rather than stuck under the card of the machine it
@@ -151,15 +192,24 @@
        four-bay machine — and dead space next to content reads as something
        missing. Capped at a card's width so a long machine name cannot stretch
        it out of proportion. */
-    /* No width cap any more: the bays decide how wide it is, and five of them
-       at picture size are wider than a machine card. It is its own object on
-       the board — nothing requires it to match a card's footprint. */
-    position: absolute; width: fit-content; min-width: 150px;
+    /* The shared width as a FLOOR, not a cap: a one-slot unit still matches the
+       machine card beside it, and a five-slot one is allowed to be wider rather
+       than squeezing its squares. Uniform where it can be, honest where it
+       cannot. */
+    position: absolute; width: fit-content; min-width: var(--board-card-w);
     display: flex; flex-direction: column; gap: 8px;
     padding: 12px;
     background: var(--surface-2); border: 1px solid var(--border);
     border-radius: 14px;
   }
+  /* Last known, not live. The machine is off or unreachable, so what is drawn
+     is the record rather than a reading — dimmed and desaturated, because
+     showing stale contents as though they were current is the one version of
+     this that would actually mislead. It still reads: you can see what is in
+     the boxes, you just cannot mistake it for now. */
+  .printers-grid--plan .slots-card.is-stale { opacity: .55; }
+  .printers-grid--plan .slots-card.is-stale .pcs-slot { filter: saturate(.35); }
+  .printers-grid--plan .slots-card.is-stale:hover { opacity: .85; }
   .slots-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   /* Whose bays these are. The widget is meaningless without it — a row of
      squares floating on a board belongs to nothing. */
@@ -167,12 +217,37 @@
     font-size: 12px; font-weight: 700; color: var(--muted);
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  /* Which machine a lone unit feeds. Only shown when the units are split: in a
+     group the card is already named after the machine, and repeating it under
+     its own title would say nothing. */
+  .slots-card-owner {
+    font-size: 10px; font-weight: 600; color: var(--muted); opacity: .65;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
   .printers-grid--plan .slots-card .rp-rack-btn { opacity: 0; transition: opacity .15s, background .15s; }
   .printers-grid--plan .slots-card:hover .rp-rack-btn,
   .printers-grid--plan .slots-card .rp-rack-btn:focus-visible { opacity: 1; }
   .printers-grid--plan .slots-card .rp-rack-move { cursor: grab; }
+  .printers-grid--plan .slots-card .rp-rack-kebab[aria-expanded="true"] { opacity: 1; }
   /* Inside the widget the strip is the content, not a footnote under a bar. */
   .slots-card .printer-card-slots { margin-top: 0; }
+
+
+
+  /* ── The temperature widget ──────────────────────────────────────────────
+     The machine's own temperature pills, at board size. The panel's block
+     chrome — its section frame and heading — is dropped: the widget already has
+     a head saying what it is, and a title inside a title is the redundancy the
+     board is meant to avoid. */
+  .temp-card .temp-card-body .snap-block { margin: 0; padding: 0; border: 0; background: none; }
+  .temp-card .temp-card-body .snap-block-title { display: none; }
+  /* Read-only here. The pills are editable setpoints in the panel, and their
+     editors live there — offering a control that does nothing would be worse
+     than offering none. */
+  .temp-card .temp-card-body { pointer-events: none; }
+  .temp-card .temp-card-body .snap-temp { cursor: default; }
+  .temp-card .temp-card-body .snap-temp-row,
+  .temp-card .temp-card-body .snap-temps { flex-wrap: wrap; gap: 6px; }
   /* One block per unit — an AMS, a holder pair, the spool arm. They are separate
      objects on the bench, so they are separated here too rather than run into
      one long line. */
@@ -194,7 +269,18 @@
      a spool seen from the front, a different drawing of the same bay. A machine
      bay and a shelf bay hold the same object, so neither may look like a
      different size. Change these only alongside the rack. */
-  #invPrinterView { --pcs-size: 64px; --pcs-gap: 6px; }
+  #invPrinterView {
+    /* The board's controls hover over it, so it is their frame of reference. */
+    position: relative;
+    --pcs-size: 64px; --pcs-gap: 6px;
+    /* ONE width for everything on the board. Derived, not chosen: it is exactly
+       what a four-slot unit measures — 12 px of padding and 1 px of border on
+       each side, plus four squares and the three gaps between them — so a
+       machine card and the unit beside it line up instead of one being
+       mysteriously two pixels narrower. Change a slot's size and this follows,
+       which is the whole point of computing it rather than picking a number. */
+    --board-card-w: calc(26px + 4 * var(--pcs-size) + 3 * var(--pcs-gap));
+  }
   .printer-card-slots {
     /* ONE size for every bay, on every card. Columns used to be `1fr`, so the
        square's size depended on how many the machine had — a four-bay machine
@@ -235,6 +321,15 @@
     background: transparent;
     color: var(--muted);
     box-shadow: inset 0 0 0 1px var(--border-strong);
+  }
+  /* Told what it holds, but holding nothing. Its own colour as a ring so you
+     can still see WHICH filament the bay is set to, and a hollow centre so you
+     cannot mistake it for one that is loaded — exactly what the machine's own
+     panel draws. */
+  .pcs-slot.is-unmounted {
+    background: transparent;
+    color: var(--muted);
+    box-shadow: inset 0 0 0 2px var(--pcs-color, var(--border-strong));
   }
   /* Instant tooltip, no native `title` delay. Same technique as the crop tool. */
   .pcs-slot::after {

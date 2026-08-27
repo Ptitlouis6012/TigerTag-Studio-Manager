@@ -344,7 +344,12 @@ function _acuFmtTemp(v) {
   return (typeof v === "number" && v >= 0) ? `${Math.round(v)}` : "—";
 }
 function _acuFmtTempPair(cur, tgt) {
-  return `${_acuFmtTemp(cur)}/${_acuFmtTemp(tgt)}°C`;
+  /* An unreported SETPOINT reads 0, not a dash. The two mean different things:
+     a dash says "no idea", and for a reading that is honest — but a heater the
+     machine has not been given a target for IS at zero, and that is exactly what
+     the pill's own editor already assumes when you click it. Showing a dash beside
+     an editor pre-filled with 0 made the card disagree with itself. */
+  return `${_acuFmtTemp(cur)}/${typeof tgt === "number" && tgt >= 0 ? Math.round(tgt) : 0}°C`;
 }
 function _acuFmtDuration(seconds) {
   const s = Math.max(0, Math.floor(seconds || 0));

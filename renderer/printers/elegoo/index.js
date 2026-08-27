@@ -1635,7 +1635,20 @@ export function elegooGetUnits(printer) {
   }];
 }
 
+
+/* ── Temperature, for the board ───────────────────────────────────────────
+   The machine's own temperature card, rendered as-is. Reusing it rather than
+   normalising into a seventh shape is deliberate: the pills already carry the
+   current/target pair, the heating state and the active-tool highlight, and a
+   parallel version would drift from the panel the first time either changed.
+   Read-only on the board — the setpoint editors are the panel's. */
+export function elegooGetTempHtml(printer) {
+  const conn = _elegooConns.get(elegooKey(printer));
+  return (conn && conn.status === 'connected') ? renderElegooTempCard(conn) : "";
+}
+
 registerBrand('elegoo', {
+  getTempHtml:          elegooGetTempHtml,
   getUnits:             elegooGetUnits,
   getSlots:             elegooGetSlots,
   meta, schema, helper,
