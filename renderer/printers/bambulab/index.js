@@ -1053,17 +1053,21 @@ $('bblFilEditSave')?.addEventListener('click', () => {
     },
   });
 
-  // Optimistic local update
+  // Optimistic local update — into the INTERNAL shape ({ color: "#RRGGBB" }),
+  // not the wire's ({ tray_color: "RRGGBBAA" }). Both were wrong here: the
+  // external tray kept the unparsed 8-hex string, and the AMS branch wrote a
+  // `tray_color` field nothing downstream reads — so choosing a colour did
+  // nothing visible until the printer's next report happened to overwrite it.
   const d = conn.data;
   if (isExt) {
     if (!d.externalTray) d.externalTray = {};
-    d.externalTray.color = trayColor;
+    d.externalTray.color = _parseColor(trayColor);
     d.externalTray.type  = _bblSelMat.label;
   } else {
     const mod = d.ams?.[amsId];
     if (mod?.tray) {
       const slot = mod.tray.find(t => parseInt(t.id, 10) === trayId);
-      if (slot) { slot.tray_color = trayColor; slot.type = _bblSelMat.label; }
+      if (slot) { slot.color = _parseColor(trayColor); slot.type = _bblSelMat.label; }
     }
   }
 

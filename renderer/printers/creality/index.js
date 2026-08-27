@@ -1183,15 +1183,22 @@ function renderCreControlCard(p, conn) {
     </section>`;
 }
 
+/* Creality broadcasts a colour as bare hex with NO leading '#', and sometimes
+   with a stray leading '0' making it seven characters ("0FF5722"). Neither form
+   is a CSS colour, so it has to be normalised before it reaches any stylesheet.
+   Module-scope on purpose: this used to live inside renderCreFilamentCard, so
+   the panel painted its swatches correctly while getSlots/getUnits — written
+   later — published the RAW value and every CFS slot on the printer board came
+   out grey. One parser, every consumer. */
+function parseCreHex(s) {
+  let h = String(s || "").trim().replace(/^#/, "");
+  if (h.length === 7 && h[0] === "0") h = h.slice(1);
+  return h.length === 6 ? `#${h}` : null;
+}
+
 function renderCreFilamentCard(p, conn) {
   const d = conn.data;
   if (conn.status !== "connected") return "";
-
-  const parseCreHex = s => {
-    let h = String(s || "").trim().replace(/^#/, "");
-    if (h.length === 7 && h[0] === "0") h = h.slice(1);
-    return h.length === 6 ? `#${h}` : null;
-  };
 
   const raw      = d.boxsInfoRaw;
   const boxsInfo = raw?.boxsInfo;
@@ -1637,7 +1644,7 @@ export function creGetSlots(printer) {
         key: `${b?.id ?? 0}:${i}`,
         // Box 0 is the external tray; the CFS units number from 1.
         label: (b?.id === 0 || b?.id == null) ? 'Ext.' : `${b.id}${'ABCD'[i] || i + 1}`,
-        color: m?.color || null,
+        color: parseCreHex(m?.color),
         material: m?.type || null,
         vendor: m?.vendor || null,
         empty: !m?.state || (!m?.color && !m?.type),
@@ -1667,7 +1674,7 @@ export function creGetUnits(printer) {
         index: i,
         label: isExt ? 'Ext.' : `${boxId}${'ABCD'[i] || i + 1}`,
         hw: { boxId, slotId: i },
-        color: m?.color || null,
+        color: parseCreHex(m?.color),
         material: m?.type || null,
         vendor: m?.vendor || null,
         empty: !m?.state || (!m?.color && !m?.type),

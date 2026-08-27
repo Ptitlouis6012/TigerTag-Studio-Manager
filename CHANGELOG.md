@@ -5,6 +5,28 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.23.0 — 2026-08-28
+
+### Added
+
+- **A `Refill` container** at the top of the picker (type *Without MasterSpool*, `container_weight: 0`), for a spool stored with no masterspool at all — the net weight is then the spool's own. Illustrated by a bare refill coil rather than a crossed-out spool: every other row shows the object you have, and without a masterspool the object is the filament itself. Uncoloured on purpose — a coil's colour is the filament's, not the container's, so any real colour would be wrong for most spools. Cut out to a transparent 256×256 like the rest of the catalogue. Contributed by [@Ptitlouis6012](https://github.com/Ptitlouis6012) ([#17](https://github.com/TigerTag-Project/TigerTag-Studio-Manager/pull/17)) — `data/container_spool/spools_filament.json`.
+
+### Changed
+
+- **The TigerScale live card mirrors the scale's own weigh screen**: weight and vertical divider on the left, container and filament values plus the spool's rack location on the right, on a dark inner panel using the firmware's palette (`LVCOL_GREEN/ACCENT/YELLOW/RED/ORANGE`) so a status badge reads the same on both screens. The rack location is real Firestore data in the detail panel's coordinate format, not a placeholder. The hand-rolled cellular-bars WiFi indicator gives way to the app's own `icon-wifi` glyph, and the redundant "last known spool" row goes, superseded by the block's own brand/material display. Contributed by [@Ptitlouis6012](https://github.com/Ptitlouis6012) ([#16](https://github.com/TigerTag-Project/TigerTag-Studio-Manager/pull/16)) — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`.
+- **Tare is a key beneath the screen**, inside the card, instead of a button floating under it — where it sits on the scale itself, wearing the firmware's tones and its two-line face (the fixed `0.0` above the word, as the device prints it; it is part of the key's face, not a reading). The `.sc2-live-card` frame moved out of the live block to make room: the button stays a SIBLING of `.scale-card-local`, never a child, because that block is replaced wholesale on every WS delta (10 Hz) and a hold in progress would be cancelled. Disconnecting now hides the whole card, Tare included, rather than leaving an empty bordered box around a dead button — `renderer/IoT/tigerscale/index.js`, `renderer/IoT/tigerscale/tigerscale.css`.
+- `scaleTareBtn` is the operation's name in capitals, as the firmware prints it (TARE / TARA / 去皮), replacing the conjugated forms (Tarer, Tarieren, Taruj) — the key belongs to the device and should speak its language.
+
+### Fixed
+
+- **Every Creality CFS slot came out grey on the printer board** while the machine's own panel showed the right colours. Creality broadcasts a colour as bare hex with no `#`, sometimes with a stray leading zero (`0FF5722`) — neither is a CSS colour. `parseCreHex` was defined INSIDE `renderCreFilamentCard`, so `creGetSlots`/`creGetUnits`, written later, read `boxsInfoRaw` and published a value no stylesheet could interpret. The parser is module-scope now and both feeds use it. Creality was the only brand whose board feed read the raw payload rather than the driver's normalised state; the other five were checked. Reported by a user — `renderer/printers/creality/index.js`.
+- Choosing a filament colour on a Bambu Lab machine changed nothing on screen until the printer's next report: the optimistic local update wrote the WIRE shape into the INTERNAL one — the external tray kept the unparsed `RRGGBBAA` string, and the AMS branch set a `tray_color` field nothing downstream reads (the internal slot is `{ id, color, type, active }`). Both now go through `_parseColor` into `.color`. Found while checking whether the Creality defect had siblings — `renderer/printers/bambulab/index.js`.
+- Switching language left an open Scales panel in the previous one: its cards are built once by `renderScalesPanel()` and only patched surgically afterwards, so nothing revisited their text — it is rebuilt with the rest of the reactive chain now. Contributed by [@Ptitlouis6012](https://github.com/Ptitlouis6012) ([#16](https://github.com/TigerTag-Project/TigerTag-Studio-Manager/pull/16)) — `renderer/inventory.js`.
+- The TigerScale's name was invisible in light theme: it sits on the card's shell, which follows the theme, but was painted a hardcoded white meant for the firmware's dark inner screen — `renderer/IoT/tigerscale/tigerscale.css`.
+- The Tare button's hold fill could not be seen in light theme: it was painted `var(--ink-40)`, which flips to a dark ink there, over a key that keeps the firmware's dark tone in both themes. An invisible fill reads as a broken button, since nothing else happens until the hold completes — `renderer/IoT/tigerscale/tigerscale.css`.
+
+---
+
 ## v2.22.0 — 2026-08-28
 
 ### Added

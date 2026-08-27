@@ -3,8 +3,8 @@
     "id": "custom_no_masterspool",
     "brandId": 0,
     "brand": "Generic",
-    "label": "No Masterspool",
-    "type": "Customizable",
+    "label": "Refill",
+    "type": "Without MasterSpool",
     "container_weight": 0,
     "img": "../assets/img/spool_filament/oem_no_masterspool.png"
   },

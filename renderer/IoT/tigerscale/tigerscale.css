@@ -269,8 +269,11 @@
   padding: 4px 10px; border-radius: 999px;
   letter-spacing: .03em; white-space: nowrap; color: #fff;
 }
+/* Same reason as the Tare strip: the name sits on the card SHELL, not on the
+   firmware's dark screen, so it follows the theme. Unchanged in dark, where
+   --text is near-white; it was simply invisible in light. */
 .top-strip .user-name {
-  font-size: 13px; font-weight: 700; color: #fff; letter-spacing: .01em;
+  font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: .01em;
 }
 
 /* ── Main card — weight+brand (left) | container/filament/rack (right) ── */
@@ -523,43 +526,64 @@
 }
 
 /* ── Scale local WebSocket live block ── */
-.scale-card-local:empty { display: none; }
-/* Quand la card WS est vide (déconnecté), masquer aussi le bouton TARE */
-.scale-card-local:empty ~ .tare-hold-btn { display: none; }
+/* Disconnected → the live block builds nothing → the WHOLE card goes, Tare
+   included, rather than leaving an empty bordered box with a dead button in it. */
+.sc2-live-card:has(> .scale-card-local:empty) { display: none; }
 
 /* ── TARE hold-to-confirm button ──────────────────────────────────────
-   Sibling of .scale-card-local in .scale-entry so it is never
-   re-rendered at 10 Hz. Hold 1 s to send POST /api/tare. */
+   Inside .sc2-live-card, directly under .main-card — the key beneath the
+   screen, the way it sits on the scale itself. It therefore wears the
+   firmware's own tones (--fw-card on --fw-border) rather than the app's, so it
+   reads as part of the device instead of a control the app parked nearby.
+
+   It is a SIBLING of .scale-card-local, never a child: that block is replaced
+   wholesale on every WS delta (10 Hz), which would cancel a hold in progress.
+   Hold 1 s to send POST /api/tare. */
 .tare-hold-btn {
   position: relative; overflow: hidden;
   width: 100%;
-  padding: 14px 20px;
-  border: 1px solid var(--border); border-radius: 14px;
-  background: var(--surface-2);
+  margin: 10px 0 0;
+  padding: 9px 20px 10px;
+  border: 1px solid var(--fw-border);
+  border-radius: 12px;
+  background: var(--fw-card);
+  /* Always light: the key is always on the firmware's dark tone, in both themes. */
   color: #fff;
-  font-size: 0.95em; font-weight: 700;
-  letter-spacing: .02em;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-  margin-bottom: 12px;
+  transition: background .15s, transform .1s;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
   display: flex; align-items: center; justify-content: center;
 }
-.tare-hold-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); }
-.tare-hold-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.tare-hold-btn:hover:not(:disabled)  { background: color-mix(in srgb, #fff 8%, var(--fw-card)); }
+.tare-hold-btn:active:not(:disabled) { transform: translateY(1px); }
 .tare-hold-btn:disabled { opacity: .35; cursor: default; }
 
-/* Visible label — au-dessus du fill */
-.tare-text { position: relative; z-index: 2; }
+/* Visible face — au-dessus du fill. Two lines, like the key on the scale
+   itself: the reading on top, the word beneath it. */
+.tare-face {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+}
+.tare-value {
+  font-size: 19px; font-weight: 800; line-height: 1.05;
+  letter-spacing: -.02em; color: #fff;
+}
+.tare-text {
+  font-size: 10.5px; font-weight: 700; line-height: 1;
+  letter-spacing: .09em; color: rgba(255, 255, 255, .82);
+}
 
-/* Fill blanc qui grandit de gauche à droite sous le label */
+/* Fill blanc qui grandit de gauche à droite sous le label.
+   Explicitly light rather than var(--ink-40): the key keeps the firmware's dark
+   tone in BOTH themes, and --ink-40 flips to a dark ink in light theme, which
+   would leave the hold with no visible progress at all. */
 .tare-progress {
   position: absolute;
   left: 0; top: 0;
   height: 100%; width: 0;
-  background: var(--ink-40);
+  background: rgba(255, 255, 255, .26);
   transition: none;
   z-index: 1;
 }

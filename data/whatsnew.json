@@ -8307,5 +8307,110 @@
         }
       }
     ]
+  },
+  "2.23.0": {
+    "date": "2026-08-28",
+    "items": [
+      {
+        "icon": "package",
+        "title": {
+          "en": "For spools with no spool",
+          "fr": "Pour les bobines sans bobine",
+          "de": "Für Spulen ohne Spule",
+          "es": "Para bobinas sin bobina",
+          "it": "Per le bobine senza bobina",
+          "zh": "给「没有盘」的料盘",
+          "pt": "Para carretéis sem carretel",
+          "pt-pt": "Para rolos sem rolo",
+          "pl": "Dla szpul bez szpuli"
+        },
+        "body": {
+          "en": "Keeping a refill as a bare coil, with nothing around it? Pick **Refill** in the container list and the weight you see is the filament's own — nothing to subtract.",
+          "fr": "Tu gardes une recharge en couronne nue, sans rien autour ? Choisis **Refill** dans la liste des contenants et le poids affiché est celui du filament seul — rien à soustraire.",
+          "de": "Du bewahrst ein Refill als nackten Ring auf, ohne alles drumherum? Wähl **Refill** in der Behälterliste — das angezeigte Gewicht ist dann das des Filaments allein, nichts abzuziehen.",
+          "es": "¿Guardas una recarga como bobina desnuda, sin nada alrededor? Elige **Refill** en la lista de contenedores y el peso que ves es solo el del filamento — nada que restar.",
+          "it": "Tieni una ricarica come matassa nuda, senza niente attorno? Scegli **Refill** nella lista dei contenitori e il peso mostrato è solo quello del filamento — niente da sottrarre.",
+          "zh": "把补充装当成一圈裸料收着，外面什么都没有？在容器列表里选 **Refill**，显示的重量就是耗材本身，不用再减。",
+          "pt": "Guarda um refil como rolo nu, sem nada em volta? Escolha **Refill** na lista de recipientes e o peso mostrado é só o do filamento — nada a subtrair.",
+          "pt-pt": "Guardas um refill como rolo nu, sem nada à volta? Escolhe **Refill** na lista de recipientes e o peso mostrado é só o do filamento — nada a subtrair.",
+          "pl": "Trzymasz wkład jako goły krążek, bez niczego dookoła? Wybierz **Refill** na liście pojemników — pokazana waga to sama żyłka, nic do odejmowania."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "Your scale card, like your scale",
+          "fr": "La carte de ta balance, comme ta balance",
+          "de": "Deine Waagen-Karte, wie deine Waage",
+          "es": "La tarjeta de tu báscula, como tu báscula",
+          "it": "La scheda della bilancia, come la bilancia",
+          "zh": "秤的卡片，长得就像秤",
+          "pt": "O cartão da sua balança, igual à balança",
+          "pt-pt": "O cartão da tua balança, igual à balança",
+          "pl": "Karta wagi wygląda jak waga"
+        },
+        "body": {
+          "en": "Same layout as the screen on the scale, down to the Tare key beneath it. And it now tells you which shelf and slot that spool lives on.",
+          "fr": "La même disposition que l'écran de la balance, jusqu'à la touche Tare en dessous. Et elle t'indique désormais sur quelle étagère et quel emplacement vit cette bobine.",
+          "de": "Dasselbe Layout wie der Bildschirm der Waage, bis hin zur Tara-Taste darunter. Und sie sagt dir jetzt, in welchem Regal und Fach diese Spule wohnt.",
+          "es": "La misma disposición que la pantalla de la báscula, hasta la tecla Tara debajo. Y ahora te dice en qué estante y hueco vive esa bobina.",
+          "it": "Lo stesso schema dello schermo della bilancia, tasto Tara compreso. E adesso ti dice su quale scaffale e in quale posto vive quella bobina.",
+          "zh": "布局和秤上的屏幕一模一样，连下面那颗去皮键都在。它现在还会告诉你这盘料放在哪一层、哪一格。",
+          "pt": "O mesmo layout da tela da balança, incluindo a tecla Tara embaixo. E agora mostra em qual prateleira e vaga aquele carretel mora.",
+          "pt-pt": "A mesma disposição do ecrã da balança, incluindo a tecla Tara por baixo. E agora diz-te em que prateleira e lugar vive aquele rolo.",
+          "pl": "Ten sam układ co ekran wagi, łącznie z klawiszem Tara pod spodem. A teraz mówi też, na której półce i w którym miejscu mieszka ta szpula."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Creality colours, back from grey",
+          "fr": "Les couleurs Creality sortent du gris",
+          "de": "Creality-Farben, zurück aus dem Grau",
+          "es": "Los colores Creality salen del gris",
+          "it": "I colori Creality escono dal grigio",
+          "zh": "Creality 的颜色不再一片灰",
+          "pt": "As cores Creality saem do cinza",
+          "pt-pt": "As cores Creality saem do cinzento",
+          "pl": "Kolory Creality wracają z szarości"
+        },
+        "body": {
+          "en": "Every slot of a CFS unit showed up grey on the printer board while the printer's own page had the colours right. They match now.",
+          "fr": "Tous les emplacements d'une unité CFS ressortaient gris sur le plan des imprimantes alors que la page de l'imprimante affichait les bonnes couleurs. Les deux sont d'accord maintenant.",
+          "de": "Alle Fächer einer CFS-Einheit erschienen auf dem Drucker-Plan grau, während die Seite des Druckers die Farben richtig zeigte. Jetzt stimmen beide überein.",
+          "es": "Todos los huecos de una unidad CFS salían grises en el plano de impresoras mientras la página de la impresora tenía bien los colores. Ahora coinciden.",
+          "it": "Tutti gli alloggiamenti di un'unità CFS uscivano grigi sulla mappa delle stampanti mentre la pagina della stampante mostrava i colori giusti. Ora concordano.",
+          "zh": "CFS 单元的每个槽位在打印机布局图上都是灰的，而打印机自己的页面颜色却是对的。现在两边一致了。",
+          "pt": "Todos os slots de uma unidade CFS apareciam cinza no mapa de impressoras enquanto a página da impressora mostrava as cores certas. Agora batem.",
+          "pt-pt": "Todos os slots de uma unidade CFS apareciam cinzentos no mapa de impressoras enquanto a página da impressora mostrava as cores certas. Agora coincidem.",
+          "pl": "Wszystkie sloty modułu CFS wychodziły szare na planie drukarek, choć strona samej drukarki miała kolory dobrze. Teraz się zgadzają."
+        }
+      },
+      {
+        "icon": "edit",
+        "title": {
+          "en": "Bambu colours answer right away",
+          "fr": "Les couleurs Bambu répondent tout de suite",
+          "de": "Bambu-Farben reagieren sofort",
+          "es": "Los colores Bambu responden al instante",
+          "it": "I colori Bambu rispondono subito",
+          "zh": "Bambu 选色立刻就有反应",
+          "pt": "As cores Bambu respondem na hora",
+          "pt-pt": "As cores Bambu respondem logo",
+          "pl": "Kolory Bambu reagują od razu"
+        },
+        "body": {
+          "en": "Picking a filament colour used to look like it had done nothing until the printer got round to mentioning it. It shows up the moment you choose.",
+          "fr": "Choisir une couleur de filament donnait l'impression que rien ne s'était passé, jusqu'à ce que l'imprimante veuille bien en parler. Ça s'affiche à l'instant où tu choisis.",
+          "de": "Eine Filamentfarbe zu wählen sah so aus, als wäre nichts passiert — bis der Drucker es irgendwann erwähnte. Jetzt erscheint es im Moment der Wahl.",
+          "es": "Elegir un color de filamento parecía no hacer nada hasta que la impresora se dignaba a mencionarlo. Ahora aparece en el momento en que eliges.",
+          "it": "Scegliere un colore di filamento sembrava non fare nulla finché la stampante non si degnava di dirlo. Ora compare nell'istante in cui scegli.",
+          "zh": "以前选耗材颜色，看起来像什么都没发生，直到打印机想起来汇报一声。现在你一选就显示。",
+          "pt": "Escolher uma cor de filamento parecia não fazer nada até a impressora resolver comentar. Agora aparece no instante em que você escolhe.",
+          "pt-pt": "Escolher uma cor de filamento parecia não fazer nada até a impressora se dignar a comentar. Agora aparece no instante em que escolhes.",
+          "pl": "Wybór koloru filamentu wyglądał, jakby nic się nie stało — dopóki drukarka nie raczyła o tym wspomnieć. Teraz widać to w chwili wyboru."
+        }
+      }
+    ]
   }
 }

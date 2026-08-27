@@ -345,11 +345,19 @@ function _buildScaleCardHtml(s) {
       </div>
       <div class="scale-card-chips">${_buildScaleChipsHtml(s)}</div>
     </div>
-    <div class="scale-card-local" data-local-mac="${esc(s.mac)}">${_buildScaleLocalBlockHtml(s.mac)}</div>
-    <button class="tare-hold-btn" data-tare-mac="${esc(s.mac)}"${wsOn ? "" : " disabled"}>
-      <span class="tare-text">${t("scaleTareBtn") || "TARE"}</span>
-      <span class="tare-progress"></span>
-    </button>
+    <div class="sc2-live-card">
+      <div class="scale-card-local" data-local-mac="${esc(s.mac)}">${_buildScaleLocalBlockHtml(s.mac)}</div>
+      <button class="tare-hold-btn" data-tare-mac="${esc(s.mac)}"${wsOn ? "" : " disabled"}>
+        <span class="tare-face">
+          <!-- The scale prints a fixed 0.0 above the word on its own key — it is
+               part of the button's face, not a reading. If the firmware ever
+               broadcasts a real tare offset, this is the span to wire it to. -->
+          <span class="tare-value">0.0</span>
+          <span class="tare-text">${t("scaleTareBtn") || "TARE"}</span>
+        </span>
+        <span class="tare-progress"></span>
+      </button>
+    </div>
     <div class="scale-card-log" data-log-mac="${esc(s.mac)}">${_buildScaleLogHtml(s.mac)}</div>
     ${debugJson}
   </div>`;
@@ -550,8 +558,9 @@ function _buildScaleLocalBlockHtml(mac) {
       + (scannedRow.rackDepth > 0 ? "·" + (scannedRow.rackDepth + 1) : "")
     : null;
 
-  return `<div class="sc2-live-card">
-    <div class="top-strip">
+  // Only the card's CONTENTS — the .sc2-live-card frame lives in the card shell
+  // so the Tare button can sit inside it without being re-rendered at 10 Hz.
+  return `<div class="top-strip">
       ${badgeHtml}
       <span class="user-name">${esc(name)}</span>
     </div>
@@ -583,8 +592,7 @@ function _buildScaleLocalBlockHtml(mac) {
           <span class="mc-loc-value">${esc(rackCoord || "—")}</span>
         </div>
       </div>
-    </div>
-  </div>`;
+    </div>`;
 }
 
 /**
