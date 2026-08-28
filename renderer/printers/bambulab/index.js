@@ -1053,23 +1053,16 @@ $('bblFilEditSave')?.addEventListener('click', () => {
     },
   });
 
-  // Optimistic local update — into the INTERNAL shape ({ color: "#RRGGBB" }),
-  // not the wire's ({ tray_color: "RRGGBBAA" }). Both were wrong here: the
-  // external tray kept the unparsed 8-hex string, and the AMS branch wrote a
-  // `tray_color` field nothing downstream reads — so choosing a colour did
-  // nothing visible until the printer's next report happened to overwrite it.
-  const d = conn.data;
-  if (isExt) {
-    if (!d.externalTray) d.externalTray = {};
-    d.externalTray.color = _parseColor(trayColor);
-    d.externalTray.type  = _bblSelMat.label;
-  } else {
-    const mod = d.ams?.[amsId];
-    if (mod?.tray) {
-      const slot = mod.tray.find(t => parseInt(t.id, 10) === trayId);
-      if (slot) { slot.color = _parseColor(trayColor); slot.type = _bblSelMat.label; }
-    }
-  }
+  // NO optimistic local update. What a slot holds is the PRINTER's to state,
+  // not ours to guess: the request above can be refused, land on another slot,
+  // or be overridden by the machine, and a swatch that changed on click would
+  // then be showing something that was never true. The display follows the
+  // machine's own report, and only that — it arrives within a second or two.
+  //
+  // Predicting it here is what an earlier version did, badly enough that it had
+  // no visible effect at all (it wrote the wire's `tray_color` into a shape that
+  // reads `.color`); repairing that mechanism was the wrong call — the mechanism
+  // should not exist.
 
   closeBambuFilamentEdit();
 });

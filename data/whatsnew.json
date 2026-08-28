@@ -8308,7 +8308,7 @@
       }
     ]
   },
-  "2.23.0": {
+  "2.23.1": {
     "date": "2026-08-28",
     "items": [
       {
@@ -8384,31 +8384,6 @@
           "pt": "Todos os slots de uma unidade CFS apareciam cinza no mapa de impressoras enquanto a página da impressora mostrava as cores certas. Agora batem.",
           "pt-pt": "Todos os slots de uma unidade CFS apareciam cinzentos no mapa de impressoras enquanto a página da impressora mostrava as cores certas. Agora coincidem.",
           "pl": "Wszystkie sloty modułu CFS wychodziły szare na planie drukarek, choć strona samej drukarki miała kolory dobrze. Teraz się zgadzają."
-        }
-      },
-      {
-        "icon": "edit",
-        "title": {
-          "en": "Bambu colours answer right away",
-          "fr": "Les couleurs Bambu répondent tout de suite",
-          "de": "Bambu-Farben reagieren sofort",
-          "es": "Los colores Bambu responden al instante",
-          "it": "I colori Bambu rispondono subito",
-          "zh": "Bambu 选色立刻就有反应",
-          "pt": "As cores Bambu respondem na hora",
-          "pt-pt": "As cores Bambu respondem logo",
-          "pl": "Kolory Bambu reagują od razu"
-        },
-        "body": {
-          "en": "Picking a filament colour used to look like it had done nothing until the printer got round to mentioning it. It shows up the moment you choose.",
-          "fr": "Choisir une couleur de filament donnait l'impression que rien ne s'était passé, jusqu'à ce que l'imprimante veuille bien en parler. Ça s'affiche à l'instant où tu choisis.",
-          "de": "Eine Filamentfarbe zu wählen sah so aus, als wäre nichts passiert — bis der Drucker es irgendwann erwähnte. Jetzt erscheint es im Moment der Wahl.",
-          "es": "Elegir un color de filamento parecía no hacer nada hasta que la impresora se dignaba a mencionarlo. Ahora aparece en el momento en que eliges.",
-          "it": "Scegliere un colore di filamento sembrava non fare nulla finché la stampante non si degnava di dirlo. Ora compare nell'istante in cui scegli.",
-          "zh": "以前选耗材颜色，看起来像什么都没发生，直到打印机想起来汇报一声。现在你一选就显示。",
-          "pt": "Escolher uma cor de filamento parecia não fazer nada até a impressora resolver comentar. Agora aparece no instante em que você escolhe.",
-          "pt-pt": "Escolher uma cor de filamento parecia não fazer nada até a impressora se dignar a comentar. Agora aparece no instante em que escolhes.",
-          "pl": "Wybór koloru filamentu wyglądał, jakby nic się nie stało — dopóki drukarka nie raczyła o tym wspomnieć. Teraz widać to w chwili wyboru."
         }
       }
     ]

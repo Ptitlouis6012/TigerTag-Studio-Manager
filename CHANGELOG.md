@@ -5,7 +5,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
-## v2.23.0 — 2026-08-28
+## v2.23.1 — 2026-08-28
 
 ### Added
 
@@ -20,7 +20,6 @@ Versions follow [Semantic Versioning](https://semver.org/).
 ### Fixed
 
 - **Every Creality CFS slot came out grey on the printer board** while the machine's own panel showed the right colours. Creality broadcasts a colour as bare hex with no `#`, sometimes with a stray leading zero (`0FF5722`) — neither is a CSS colour. `parseCreHex` was defined INSIDE `renderCreFilamentCard`, so `creGetSlots`/`creGetUnits`, written later, read `boxsInfoRaw` and published a value no stylesheet could interpret. The parser is module-scope now and both feeds use it. Creality was the only brand whose board feed read the raw payload rather than the driver's normalised state; the other five were checked. Reported by a user — `renderer/printers/creality/index.js`.
-- Choosing a filament colour on a Bambu Lab machine changed nothing on screen until the printer's next report: the optimistic local update wrote the WIRE shape into the INTERNAL one — the external tray kept the unparsed `RRGGBBAA` string, and the AMS branch set a `tray_color` field nothing downstream reads (the internal slot is `{ id, color, type, active }`). Both now go through `_parseColor` into `.color`. Found while checking whether the Creality defect had siblings — `renderer/printers/bambulab/index.js`.
 - Switching language left an open Scales panel in the previous one: its cards are built once by `renderScalesPanel()` and only patched surgically afterwards, so nothing revisited their text — it is rebuilt with the rest of the reactive chain now. Contributed by [@Ptitlouis6012](https://github.com/Ptitlouis6012) ([#16](https://github.com/TigerTag-Project/TigerTag-Studio-Manager/pull/16)) — `renderer/inventory.js`.
 - The TigerScale's name was invisible in light theme: it sits on the card's shell, which follows the theme, but was painted a hardcoded white meant for the firmware's dark inner screen — `renderer/IoT/tigerscale/tigerscale.css`.
 - The Tare button's hold fill could not be seen in light theme: it was painted `var(--ink-40)`, which flips to a dark ink there, over a key that keeps the firmware's dark tone in both themes. An invisible fill reads as a broken button, since nothing else happens until the hold completes — `renderer/IoT/tigerscale/tigerscale.css`.
