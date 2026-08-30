@@ -147,6 +147,8 @@ Some brands also expose a **live control panel** (Snapmaker, Elegoo, Anycubic): 
 
 The **printer board** lays your fleet out the way your workshop actually looks: place every machine by hand on a plan you zoom and pan, and it stays where you put it — a printer going offline no longer changes place. Beside each machine you can show its **filament units** (Ext., AMS 1, AMS 2, CFS, ACE…) as separate boxes with their slots, colours and materials at the same size as your storage racks, and a **temperature widget** that stays put when the printer sleeps. Cards can be **grouped for good**, so moving one carries the whole set.
 
+The **camera view** works the same way: drag each camera where you want it, pull its corner to give it exactly the size it deserves, and use **Arrange** to snap them against each other with the same grid and guides as the other two plans. A camera keeps its place and its size while its printer sleeps, and one sent fullscreen fills the whole screen.
+
 Each machine's card can also show **what it is printing** — preview, percentage, time left, finish time and layers — and **its camera**: hover the printer's photo, press play, and the photo gives way to the live feed. **Pause and stop** sit on the card while it prints, so you never have to go looking for the machine. Nothing streams until you ask for it, and the board, the camera wall and the printer's own page share a single connection to each machine.
 
 ### 📦 Storage / Racks

@@ -8492,5 +8492,110 @@
         }
       }
     ]
+  },
+  "2.25.0": {
+    "date": "2026-08-30",
+    "items": [
+      {
+        "icon": "grip",
+        "title": {
+          "en": "Your cameras, where you actually want them",
+          "fr": "Vos caméras, là où vous les voulez vraiment",
+          "de": "Ihre Kameras – genau dort, wo Sie sie haben wollen",
+          "es": "Tus cámaras, donde de verdad las quieres",
+          "it": "Le tue telecamere, dove le vuoi davvero",
+          "zh": "摄像头，想放哪儿就放哪儿",
+          "pt": "Suas câmeras, onde você realmente quer",
+          "pt-pt": "As suas câmaras, onde realmente as quer",
+          "pl": "Twoje kamery dokładnie tam, gdzie chcesz"
+        },
+        "body": {
+          "en": "The camera view is no longer a grid that decides for you. Drag each camera anywhere, and pull its corner to make it exactly as big as it deserves. The big printer gets the big picture.",
+          "fr": "La vue caméra ne décide plus à votre place. Déplacez chaque caméra où bon vous semble, et tirez son coin pour lui donner exactement la taille qu'elle mérite. La grosse imprimante a droit à la grande image.",
+          "de": "Die Kameraansicht entscheidet nicht mehr für Sie. Ziehen Sie jede Kamera dorthin, wo Sie sie haben wollen, und an der Ecke genau so groß, wie sie es verdient. Der große Drucker bekommt das große Bild.",
+          "es": "La vista de cámaras ya no decide por ti. Arrastra cada cámara donde quieras y tira de su esquina para darle justo el tamaño que merece. La impresora grande se lleva la imagen grande.",
+          "it": "La vista telecamere non decide più al posto tuo. Trascina ogni telecamera dove vuoi e tirane l'angolo per darle esattamente la dimensione che merita. Alla stampante grande, l'immagine grande.",
+          "zh": "摄像头视图不再替你做主。想把哪台拖到哪儿都行，拖角落就能调到你要的大小。大机器,自然配大画面。",
+          "pt": "A vista de câmeras não decide mais por você. Arraste cada câmera para onde quiser e puxe o canto para dar a ela exatamente o tamanho que merece. A impressora grande fica com a imagem grande.",
+          "pt-pt": "A vista de câmaras já não decide por si. Arraste cada câmara para onde quiser e puxe o canto para lhe dar exactamente o tamanho que merece. A impressora grande fica com a imagem grande.",
+          "pl": "Widok kamer już nie decyduje za ciebie. Przeciągnij każdą, gdzie chcesz, a za róg ustaw dokładnie taki rozmiar, na jaki zasługuje. Duża drukarka dostaje duży obraz."
+        }
+      },
+      {
+        "icon": "rack-grid",
+        "title": {
+          "en": "Line them up without squinting",
+          "fr": "Alignez-les sans plisser les yeux",
+          "de": "Ausrichten, ohne zu schielen",
+          "es": "Alinéalas sin entrecerrar los ojos",
+          "it": "Allineale senza strizzare gli occhi",
+          "zh": "不用眯着眼也能对齐",
+          "pt": "Alinhe tudo sem apertar os olhos",
+          "pt-pt": "Alinhe-as sem semicerrar os olhos",
+          "pl": "Wyrównaj je bez mrużenia oczu"
+        },
+        "body": {
+          "en": "An Arrange button turns on a grid, and cameras click neatly against each other with a little line telling you why. Sweep across several to move them together — same feel as your storage and printer boards.",
+          "fr": "Un bouton Agencer fait apparaître une grille, et les caméras se collent proprement les unes aux autres avec un petit trait qui explique pourquoi. Balayez-en plusieurs pour les déplacer ensemble — exactement comme sur vos plans de rangement et d'imprimantes.",
+          "de": "Eine Taste blendet ein Raster ein, und Kameras rasten sauber aneinander – eine feine Linie sagt Ihnen, warum. Mehrere mit einem Zug auswählen und gemeinsam verschieben: genau wie bei Lager und Druckern.",
+          "es": "Un botón Organizar enciende una rejilla y las cámaras encajan limpiamente entre sí, con una línea fina que te dice por qué. Selecciona varias de una pasada para moverlas juntas, igual que en tus planos de almacenamiento e impresoras.",
+          "it": "Un pulsante Disponi accende una griglia e le telecamere si agganciano ordinatamente tra loro, con una linea sottile che ti spiega perché. Selezionane più insieme con una passata per spostarle in blocco, come nei piani di stoccaggio e stampanti.",
+          "zh": "点一下「排列」就会出现网格，摄像头会整齐地贴到一起，还有一条细线告诉你为什么。框选多个就能一起挪动——和收纳、打印机视图手感一致。",
+          "pt": "Um botão Organizar acende uma grade, e as câmeras encaixam certinho umas nas outras, com uma linha fina explicando o porquê. Selecione várias de uma vez para movê-las juntas, igual aos seus planos de estoque e impressoras.",
+          "pt-pt": "Um botão Organizar acende uma grelha e as câmaras encaixam certinhas umas nas outras, com uma linha fina a explicar porquê. Seleccione várias de uma vez para as mover em conjunto, tal como nos planos de arrumação e impressoras.",
+          "pl": "Przycisk Rozmieść włącza siatkę, a kamery równo przyklejają się do siebie — cienka linia mówi dlaczego. Zaznacz kilka jednym ruchem i przesuń razem, tak samo jak w widoku magazynu i drukarek."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Fullscreen that means it",
+          "fr": "Un plein écran qui ne fait pas semblant",
+          "de": "Vollbild, das es ernst meint",
+          "es": "Pantalla completa de verdad",
+          "it": "Schermo intero, sul serio",
+          "zh": "真正的全屏",
+          "pt": "Tela cheia de verdade",
+          "pt-pt": "Ecrã inteiro a sério",
+          "pl": "Pełny ekran, który nie udaje"
+        },
+        "body": {
+          "en": "Send a camera fullscreen and it takes the whole screen — nothing left around the edges. Press the same button to come back out, which it politely refused to do before.",
+          "fr": "Mettez une caméra en plein écran et elle prend tout l'écran, sans rien qui traîne autour. Le même bouton vous ramène — ce qu'il refusait poliment de faire jusqu'ici.",
+          "de": "Eine Kamera im Vollbild nimmt jetzt den ganzen Bildschirm ein, ohne Reste an den Rändern. Dieselbe Taste bringt Sie wieder heraus – was sie vorher höflich verweigert hat.",
+          "es": "Pon una cámara a pantalla completa y ocupa toda la pantalla, sin nada rondando por los bordes. El mismo botón te saca de ahí, cosa que antes se negaba amablemente a hacer.",
+          "it": "Metti una telecamera a schermo intero e prende tutto lo schermo, senza niente attorno. Lo stesso pulsante ti riporta indietro: cosa che prima si rifiutava gentilmente di fare.",
+          "zh": "把摄像头切到全屏,它就真的占满整块屏幕,边上什么都不剩。再按同一个按钮就能退出——以前它可是委婉地拒绝这么做。",
+          "pt": "Coloque uma câmera em tela cheia e ela ocupa a tela inteira, sem sobras nas bordas. O mesmo botão te traz de volta, coisa que antes ele educadamente se recusava a fazer.",
+          "pt-pt": "Ponha uma câmara em ecrã inteiro e ela ocupa o ecrã todo, sem sobras nas margens. O mesmo botão traz-lhe de volta, coisa que antes recusava educadamente fazer.",
+          "pl": "Przełącz kamerę na pełny ekran, a zajmie cały ekran — nic nie zostanie po bokach. Ten sam przycisk cię z niego wyprowadzi, czego wcześniej uprzejmie odmawiał."
+        }
+      },
+      {
+        "icon": "bug",
+        "title": {
+          "en": "Intel Macs can watch their printers again",
+          "fr": "Les Mac Intel peuvent à nouveau regarder leurs imprimantes",
+          "de": "Intel-Macs können ihren Druckern wieder zusehen",
+          "es": "Los Mac Intel vuelven a poder ver sus impresoras",
+          "it": "I Mac Intel possono di nuovo guardare le loro stampanti",
+          "zh": "Intel 版 Mac 又能看打印机了",
+          "pt": "Macs Intel voltam a ver suas impressoras",
+          "pt-pt": "Os Mac Intel voltam a ver as suas impressoras",
+          "pl": "Maki z Intelem znowu popatrzą na drukarki"
+        },
+        "body": {
+          "en": "On an Intel Mac, opening a camera used to shut the whole app down on the spot. The download was carrying a piece built for Apple Silicon machines only. It now brings the right one.",
+          "fr": "Sur un Mac Intel, ouvrir une caméra fermait l'application net. Le téléchargement embarquait un morceau prévu pour les seules machines Apple Silicon. Il apporte maintenant le bon.",
+          "de": "Auf einem Intel-Mac hat das Öffnen einer Kamera die App auf der Stelle beendet. Im Download steckte ein Bestandteil, der nur für Apple-Silicon-Rechner gebaut war. Jetzt kommt der richtige mit.",
+          "es": "En un Mac Intel, abrir una cámara cerraba la aplicación en el acto. La descarga llevaba una pieza hecha solo para máquinas Apple Silicon. Ahora trae la correcta.",
+          "it": "Su un Mac Intel, aprire una telecamera chiudeva l'app all'istante. Il download conteneva un pezzo costruito solo per le macchine Apple Silicon. Ora porta quello giusto.",
+          "zh": "在 Intel 版 Mac 上,打开摄像头会让整个应用当场退出。下载包里带的是只给 Apple Silicon 机型用的组件。现在带的是对的那个。",
+          "pt": "Em um Mac Intel, abrir uma câmera fechava o aplicativo na hora. O download trazia uma peça feita só para máquinas Apple Silicon. Agora vem a certa.",
+          "pt-pt": "Num Mac Intel, abrir uma câmara fechava a aplicação de imediato. A transferência trazia uma peça feita só para máquinas Apple Silicon. Agora traz a correcta.",
+          "pl": "Na Maku z Intelem otwarcie kamery zamykało całą aplikację na miejscu. W pobranym pakiecie był element zbudowany wyłącznie dla maszyn Apple Silicon. Teraz trafia tam właściwy."
+        }
+      }
+    ]
   }
 }

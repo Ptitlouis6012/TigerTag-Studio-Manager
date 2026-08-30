@@ -1084,6 +1084,7 @@
   "camSizeNormal": "Normalny (1×)",
   "camSizeWide": "Szeroki (2×)",
   "camSizeFullscreen": "Pełny ekran",
+  "camSizeExitFullscreen": "Zamknij pełny ekran",
   "tigerPodModalTitle": "Wydrukuj swój TigerPOD teraz!",
   "tigerPodModalDesc": "Podstawka do druku 3D do wypalania chipów NFC TigerTag bezpośrednio na szpulach.",
   "tigerPodPrintBtn": "Pobierz i drukuj STL za darmo",

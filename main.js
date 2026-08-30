@@ -3182,8 +3182,31 @@ let _ffmpegBin = null;
     'C:\\Program Files\\ffmpeg\\bin\\ffmpeg.exe',  // Windows (manual install)
     'ffmpeg',                                      // PATH fallback
   );
+  /* ACCESSIBLE IS NOT RUNNABLE. `accessSync(X_OK)` answers "is this file
+     executable", never "can THIS cpu execute it" — so on an Intel Mac the
+     bundled arm64 binary passed the test, was adopted, and every fallback below
+     it (Homebrew's, the one on PATH) was never reached. spawn then failed with
+     EBADARCH, errno -86, "bad CPU type in executable".
+
+     So each candidate is asked to run before it is trusted. One short
+     synchronous probe at startup, and it also catches the cases an arch check
+     would miss: a missing shared library, a quarantined file, a broken
+     download. */
+  const _runnable = (p) => {
+    try {
+      const r = require('child_process').spawnSync(p, ['-version'],
+        { timeout: 4000, stdio: 'ignore', windowsHide: true });
+      return !r.error && r.status === 0;
+    } catch (_) { return false; }
+  };
   for (const p of candidates) {
-    try { fs.accessSync(p, fs.constants.X_OK); _ffmpegBin = p; break; } catch (_) {}
+    // A bare name ('ffmpeg') is resolved against PATH by spawn, but accessSync
+    // resolves it against the CWD — so testing it here would reject the PATH
+    // fallback every time. Let the probe answer for it.
+    const isBareName = !p.includes('/') && !p.includes('\\');
+    if (!isBareName) { try { fs.accessSync(p, fs.constants.X_OK); } catch (_) { continue; } }
+    if (!_runnable(p)) { console.warn(`[ffmpeg] ${p} is present but will not run here — skipping`); continue; }
+    _ffmpegBin = p; break;
   }
   if (_ffmpegBin) console.log(`[ffmpeg] using ${_ffmpegBin}`);
   else console.warn(`[ffmpeg] NOT FOUND — checked: ${candidates.join(' · ')}`);
@@ -3361,7 +3384,15 @@ let _ffmpegBin = null;
       const rtspUrl = `rtsps://bblp:${password}@${ip}:322/streaming/live/1`;
       console.log(`[bambu-rtsp:${key}] launching ffmpeg → rtsps://bblp:***@${ip}:322 (bin: ${_ffmpegBin})`);
 
-      const proc = spawn(_ffmpegBin, [
+      /* GUARDED, because spawn can throw SYNCHRONOUSLY. The `proc.on('error')`
+         handler below only catches failures reported as an event; a bad CPU
+         type, a vanished binary or a permission refusal throws right here, on
+         the assignment — before that handler exists. Unguarded, it reached the
+         main process as an uncaught exception and Electron put a crash dialog in
+         front of the user, for a camera that simply could not start. */
+      let proc;
+      try {
+      proc = spawn(_ffmpegBin, [
         '-loglevel', 'error',          // show errors in main-process console
         '-rtsp_transport', 'tcp',
         // Low-latency input: by default ffmpeg buffers/probes the stream for
@@ -3383,6 +3414,13 @@ let _ffmpegBin = null;
         '-qscale:v', '3',
         'pipe:1',
       ], { stdio: ['ignore', 'pipe', 'pipe'] }); // pipe stderr for logging
+      } catch (err) {
+        /* The camera is unavailable — that is all. The window is told so it can
+           show its own fallback, and the app carries on: a printer whose video
+           will not start is not a reason to interrupt the person using it. */
+        console.error(`[bambu-rtsp:${key}] cannot start ffmpeg (${_ffmpegBin}):`, err?.message || err);
+        return;   // the window keeps its own placeholder; nothing else is disturbed
+      }
 
       proc._stopped = false;
       _bambuRtspProcs.set(key, proc);
@@ -3563,7 +3601,11 @@ let _ffmpegBin = null;
       const flvUrl = url || `http://${ip}:18088/flv`;
       console.log(`[acu-cam:${key}] launching ffmpeg → ${flvUrl} (bin: ${_ffmpegBin})`);
 
-      const proc = _acuSpawn(_ffmpegBin, [
+      /* Guarded like the Bambu RTSP spawn above: spawn throws SYNCHRONOUSLY on a
+         bad CPU type or a missing binary, so proc.on('error') never sees it. */
+      let proc;
+      try {
+      proc = _acuSpawn(_ffmpegBin, [
         '-loglevel', 'error',
         '-i', flvUrl,
         '-vf', 'fps=5',                // ~5 fps is plenty for a status cam
@@ -3572,6 +3614,10 @@ let _ffmpegBin = null;
         '-qscale:v', '3',
         'pipe:1',
       ], { stdio: ['ignore', 'pipe', 'pipe'] });
+      } catch (err) {
+        console.error(`[acu-cam:${key}] cannot start ffmpeg (${_ffmpegBin}):`, err?.message || err);
+        return;   // camera unavailable; the app carries on
+      }
 
       proc._stopped = false;
       _acuCamProcs.set(key, proc);

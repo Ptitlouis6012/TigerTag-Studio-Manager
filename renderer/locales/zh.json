@@ -1085,6 +1085,7 @@
   "camSizeNormal": "正常 (1×)",
   "camSizeWide": "宽屏 (2×)",
   "camSizeFullscreen": "全屏",
+  "camSizeExitFullscreen": "退出全屏",
   "tigerPodModalTitle": "立即打印你的TigerPOD！",
   "tigerPodModalDesc": "一款3D可打印支架，用于直接在线轴上烧录TigerTag NFC芯片。",
   "tigerPodPrintBtn": "免费下载并打印STL",

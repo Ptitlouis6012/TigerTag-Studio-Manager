@@ -23198,12 +23198,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       }
     });
 
-    const _sizeBtn = (csize, s, label) => {
-      const titles = { sm: t("camSizeCompact") || "Compact (½×)", "1x": t("camSizeNormal") || "Normal", "2x": t("camSizeWide") || "Wide (2×)", fs: t("camSizeFullscreen") || "Fullscreen" };
-      return `<button class="cam-size-btn${csize === s ? " cam-size-btn--active" : ""}" data-size="${s}" title="${titles[s] || s}">${label}</button>`;
-    };
-    const fsIcon = `<svg width="9" height="9" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-
     const camCards = _wallPrinters.map((p, idx) => {
       const camHtml = _camHtmlMap.get(`${p.brand}:${p.id}`)
         || `<div class="cam-wall-offline"><span class="icon icon-eye-off icon-24"></span></div>`;
@@ -23217,7 +23211,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           <div class="cam-wall-card-head">
             <span class="printer-brand-pill" style="--brand-accent:${esc(meta.accent)}">${esc(meta.label)}</span>
             <span class="cam-wall-card-name">${esc(p.printerName || "(unnamed)")}</span>
-            <div class="cam-size-btns">${_sizeBtn(csize,"fs",fsIcon)}</div>
+            <div class="cam-size-btns">${_camFsBtn(csize)}</div>
           </div>
           ${camHtml}
           <span class="cam-resize" data-cam-resize aria-hidden="true"></span>
@@ -23658,12 +23652,34 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _saveCamSizes() {
     try { localStorage.setItem("tigertag.camSizes", JSON.stringify(Object.fromEntries(_camSizes))); } catch {}
   }
+  /* The fullscreen key is a SWITCH, so it carries the size it will PUT YOU IN,
+     never the state you are in. It used to be hard-wired to "fs": pressing it
+     while fullscreen asked for fullscreen again, which is nothing, and the only
+     way back out was the Escape key or a click on the picture. A key that visibly
+     does nothing reads as broken. */
+  const CAM_FS_ICON = `<svg width="9" height="9" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const CAM_FS_EXIT_ICON = `<svg width="9" height="9" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M5 1v4H1M13 5H9V1M9 13V9h4M1 9h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  const _camFsBtn = (csize) => {
+    const on = csize === "fs";
+    return `<button class="cam-size-btn${on ? " cam-size-btn--active" : ""}" data-size="${on ? "1x" : "fs"}"`
+      + ` title="${esc(on ? (t("camSizeExitFullscreen") || "Exit fullscreen") : (t("camSizeFullscreen") || "Fullscreen"))}">`
+      + `${on ? CAM_FS_EXIT_ICON : CAM_FS_ICON}</button>`;
+  };
+
   function _applyCamSize(card, size) {
     card.classList.remove("cam-wall-card--sm", "cam-wall-card--2x", "cam-wall-card--fs");
     if (size === "sm") card.classList.add("cam-wall-card--sm");
     if (size === "2x") card.classList.add("cam-wall-card--2x");
     if (size === "fs") card.classList.add("cam-wall-card--fs");
-    card.querySelectorAll(".cam-size-btn").forEach(b => b.classList.toggle("cam-size-btn--active", b.dataset.size === size));
+    /* The card is never re-rendered — it holds a live stream — so the key is
+       flipped in place rather than rebuilt with the head around it. */
+    const on = size === "fs";
+    card.querySelectorAll(".cam-size-btn").forEach(b => {
+      b.dataset.size = on ? "1x" : "fs";
+      b.title = on ? (t("camSizeExitFullscreen") || "Exit fullscreen") : (t("camSizeFullscreen") || "Fullscreen");
+      b.innerHTML = on ? CAM_FS_EXIT_ICON : CAM_FS_ICON;
+      b.classList.toggle("cam-size-btn--active", on);
+    });
   }
 
   // Lightweight cam-wall patch — updates only CSS (size + order) on existing
@@ -23698,6 +23714,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
   }
 
+  /* Leaving fullscreen is not always our doing: Esc, the green button and the
+     system all do it behind our back. The card's state is written from what the
+     browser ACTUALLY did rather than from what we asked for, or the button would
+     keep claiming fullscreen over a card that had come back down. */
+  document.addEventListener("fullscreenchange", () => {
+    document.querySelectorAll(".cam-wall-card--fs").forEach(card => {
+      if (document.fullscreenElement !== card) _setCamSize(card, "1x");
+    });
+  });
+
   // Write-through helper: updates localStorage cache + DOM + Firestore atomically.
   function _setCamSize(card, size) {
     const ckey = `${card.dataset.brand}:${card.dataset.id}`;
@@ -23708,6 +23734,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
        surface is measured again — and the card gets its inline geometry back on
        the way out. */
     _layoutCamWall(card.closest(".cam-wall"));
+    /* A REAL fullscreen. `position: fixed` only ever covered the APP WINDOW —
+       the title bar, the menu bar and the dock stayed in front of a view whose
+       entire point is to fill the screen. requestFullscreen puts the card in the
+       browser's top layer at screen size instead, and it MOVES NO ELEMENT, so
+       the live stream inside it is never interrupted. It has to be called in the
+       click's own task, which it is: nothing above this line awaits. */
+    if (size === "fs") {
+      if (card.requestFullscreen && document.fullscreenElement !== card) {
+        card.requestFullscreen().catch(err => {
+          /* Refused (no user gesture, or the platform said no) — fall back to
+             the window-filling card rather than leaving a dead button. */
+          console.warn("[cam] fullscreen refused:", err?.message || err);
+        });
+      }
+    } else if (document.fullscreenElement === card) {
+      document.exitFullscreen?.().catch(() => {});
+    }
     const p = state.printers.find(x => `${x.brand}:${x.id}` === ckey);
     if (p) { p.camSize = size; persistCamSize(p, size); }
   }

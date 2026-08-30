@@ -100,19 +100,19 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 
 | L | What | IPC |
 |---|---|---|
-| 2629-2660 | Timelapse video download (`timelapse:download`) | — |
-| 2661-2733 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
-| 2734-2765 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) | — |
+| 3057-3086 | Timelapse video download (`timelapse:download`) | — |
+| 3087-3159 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
+| 3160-3214 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3121-3121)
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3215-3483)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 2766-2825 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
-| 2826-2910 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
-| 2911-3019 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags | — |
+| 3215-3275 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
+| 3276-3365 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
+| 3366-3483 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3585-3593)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L3484-3815)
 
 | L | What | Anchors / IPC |
 |---|---|---|

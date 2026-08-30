@@ -43,4 +43,7 @@ echo "[build] Building macOS DMG + ZIP (x64 + arm64), signing with Developer ID,
 echo "[build] This will take several minutes (notarization usually 1–5 min)."
 echo
 
+# Stage one ffmpeg per architecture, or the x64 DMG ships the arm64 binary.
+node scripts/prepare-ffmpeg.mjs darwin
+
 exec npx electron-builder --mac

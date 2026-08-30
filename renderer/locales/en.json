@@ -1085,6 +1085,7 @@
   "camSizeNormal": "Normal (1×)",
   "camSizeWide": "Wide (2×)",
   "camSizeFullscreen": "Fullscreen",
+  "camSizeExitFullscreen": "Exit fullscreen",
   "tigerPodModalTitle": "Print your TigerPOD Now !",
   "tigerPodModalDesc": "A 3D-printable stand to Burn TigerTag NFC chips directly on your filament spools.",
   "tigerPodPrintBtn": "Download & Print STL Free",

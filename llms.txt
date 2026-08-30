@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.24.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.25.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -80,7 +80,13 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
   /lists/{listId}          → user-made lists of product identities (itemKeys[]), shareable
   /racks/{rackId}          → rack layout docs
   /printers/{brand}/devices/{id}
-                           → one doc per known printer of that brand (connection + identity)
+                           → one doc per known printer of that brand (connection + identity).
+                             THREE independent plans place things by hand, each with its own
+                             field: the printer board (`plan`), the storage board and the
+                             CAMERA VIEW (`camWallPlan: {x,y,z,w}` — the only one carrying a
+                             width, since a camera is resized freely). A camera's place on the
+                             printer board (`camPlan`) is a different object from its place on
+                             the camera view; the two are never the same record.
   /printers/{brand}/devices/{id}.units.{unitId}
                            → the machine's FILAMENT STORAGE, a MAP field: one entry per unit
                              (an AMS / CFS / ACE box, a holder pair, the external arm).

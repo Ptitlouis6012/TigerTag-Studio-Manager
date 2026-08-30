@@ -2743,12 +2743,20 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 /* 2× wide — spans 4 sub-columns */
 .cam-wall-card--2x { grid-column: span 4; }
 
-/* Fullscreen — header back in normal flow, always visible */
+/* Fullscreen — header back in normal flow, always visible.
+   The card is put in the top layer by the Fullscreen API, which is what makes it
+   cover the SCREEN rather than the app window. These rules stay because they are
+   also the fallback when the platform refuses the request — then the card fills
+   the window, as it always used to. The background is stated explicitly: a
+   fullscreen element is painted against nothing, so a transparent card would
+   show black around its own content. */
 .cam-wall-card--fs {
   position: fixed; inset: 0; z-index: 200;
   border-radius: 0; border: none;
   display: flex; flex-direction: column;
+  background: var(--surface);
 }
+.cam-wall-card--fs:fullscreen { width: 100%; height: 100%; }
 .cam-wall-card--fs .cam-wall-card-head {
   position: relative; opacity: 1; flex-shrink: 0;
   background: var(--surface); border-bottom: 1px solid var(--border);

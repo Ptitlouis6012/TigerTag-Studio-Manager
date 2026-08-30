@@ -1085,6 +1085,7 @@
   "camSizeNormal": "Normal (1×)",
   "camSizeWide": "Large (2×)",
   "camSizeFullscreen": "Plein écran",
+  "camSizeExitFullscreen": "Quitter le plein écran",
   "tigerPodModalTitle": "Imprimez votre TigerPOD !",
   "tigerPodModalDesc": "Un support imprimable en 3D pour graver les puces NFC TigerTag directement sur vos bobines.",
   "tigerPodPrintBtn": "Télécharger & Imprimer STL Gratuit",

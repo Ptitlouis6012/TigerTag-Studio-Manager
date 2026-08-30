@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.24.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.25.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -203,9 +203,9 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 ## Printer cameras
 
 - Per-brand camera widget architecture (`renderCamBanner` dispatch, brand-specific `widget_camera.js` modules) supporting MJPEG, WebRTC/RTSP and iframe transports (v1.4.7+).
-- Camera wall view — all online printer cameras in one grid, with click-to-open sidecard (v1.7.1).
+- Camera view as a free plan — each camera placed by hand on a pan/zoom surface and resized freely by a corner grip, with an Arrange mode carrying the storage plan's mesh, magnetism, alignment guides and sweep-selection; a placed camera keeps its spot and size while its machine is offline (v1.7.1 as a grid, free plan v2.25.0).
 - Detached Camera Wall — standalone window showing every camera simultaneously, zero-copy frame forwarding via `BroadcastChannel` (v1.8.2).
-- Camera-wall size controls (½×/1×/2×/fullscreen) and CSS-`order`-based drag reorder that never interrupts a live stream (v1.7.2).
+- True fullscreen for a single camera via the Fullscreen API — fills the screen rather than the app window, and never recreates the card, so the live stream survives (v1.7.2 as a window-filling card, real fullscreen v2.25.0).
 - Shared MJPEG multiplexer (`cam_manager.js`) — one upstream connection serves every consumer (sidecard + cam wall) simultaneously, respecting single-client firmware limits (v1.7.2; FlashForge-specific precursor v1.7.1).
 - Creality single shared `RTCPeerConnection` across every surface that shows its camera (v1.8.2).
 

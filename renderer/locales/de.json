@@ -1085,6 +1085,7 @@
   "camSizeNormal": "Normal (1×)",
   "camSizeWide": "Breit (2×)",
   "camSizeFullscreen": "Vollbild",
+  "camSizeExitFullscreen": "Vollbild beenden",
   "tigerPodModalTitle": "Drucke deinen TigerPOD jetzt!",
   "tigerPodModalDesc": "Ein 3D-druckbarer Ständer zum Brennen von TigerTag NFC-Chips direkt auf deine Filamentspulen.",
   "tigerPodPrintBtn": "STL kostenlos herunterladen & drucken",
