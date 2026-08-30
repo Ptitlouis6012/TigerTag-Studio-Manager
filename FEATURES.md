@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.23.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.24.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -196,6 +196,9 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - **Permanent card clusters** — select several cards, right-click and group them so moving one carries the whole set at its existing offsets; the binding lives on the members and is released where they stand (v2.22.0).
 - **Per-machine widget switches** in the card's ⋮, each widget appearing in the first free place down its own machine's column (v2.22.0).
 - **Rubber-band selection and group moves on both boards**, plus a move handle on every card that is the only grab point outside Arrange mode (v2.22.0).
+- **Print widget** on the printer board — preview, file, percentage and bar, state, remaining time, finish clock and layer count, from the same normalised job the table and the card read (v2.24.0).
+- **Camera widget and camera on the machine card** — a play key over the printer's photo swaps it for the live feed; off by default and silent until asked, since a camera costs one connection per machine. Board, camera wall and side panel share a single upstream stream (v2.24.0).
+- **Pause and stop on a machine's board card while it prints**, stop guarded by hold-to-confirm. Every brand answers one `controlJob(printer, action)`, so a card acts on the machine it belongs to rather than on whichever side panel is open (v2.24.0).
 
 ## Printer cameras
 

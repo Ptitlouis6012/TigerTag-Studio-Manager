@@ -8387,5 +8387,110 @@
         }
       }
     ]
+  },
+  "2.24.0": {
+    "date": "2026-08-30",
+    "items": [
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Watch a print without opening anything",
+          "fr": "Suivre une impression sans rien ouvrir",
+          "de": "Einen Druck verfolgen, ohne etwas zu öffnen",
+          "es": "Seguir una impresión sin abrir nada",
+          "it": "Seguire una stampa senza aprire nulla",
+          "zh": "不用点开就能看进度",
+          "pt": "Acompanhar uma impressão sem abrir nada",
+          "pt-pt": "Seguir uma impressão sem abrir nada",
+          "pl": "Śledź wydruk, nic nie otwierając"
+        },
+        "body": {
+          "en": "A new Print widget for your board: what's on the bed, the file, the percentage, the time left, the finish time and the layer count. Put it where you like.",
+          "fr": "Un nouveau widget Impression pour ton plan : ce qu'il y a sur le plateau, le fichier, le pourcentage, le temps restant, l'heure de fin et le compte de couches. Pose-le où tu veux.",
+          "de": "Ein neues Druck-Widget für deinen Plan: was auf dem Bett liegt, die Datei, der Prozentsatz, die Restzeit, die Endzeit und die Schichtzahl. Leg es hin, wo du willst.",
+          "es": "Un nuevo widget Impresión para tu plano: lo que hay en la cama, el archivo, el porcentaje, el tiempo restante, la hora de fin y las capas. Colócalo donde quieras.",
+          "it": "Un nuovo widget Stampa per la tua mappa: cosa c'è sul piatto, il file, la percentuale, il tempo che resta, l'ora di fine e il conteggio strati. Mettilo dove vuoi.",
+          "zh": "新增「打印」小卡：床上是什么、文件名、百分比、剩余时间、结束时间和层数。想放哪儿就放哪儿。",
+          "pt": "Um novo widget Impressão para o seu mapa: o que está na mesa, o arquivo, a porcentagem, o tempo restante, a hora de término e as camadas. Coloque onde quiser.",
+          "pt-pt": "Um novo widget Impressão para o teu mapa: o que está na mesa, o ficheiro, a percentagem, o tempo que falta, a hora de fim e as camadas. Põe onde quiseres.",
+          "pl": "Nowy kafelek Wydruk na twoim planie: co leży na stole, plik, procent, pozostały czas, godzina końca i liczba warstw. Postaw go gdzie chcesz."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Press play, see inside",
+          "fr": "Appuie sur lecture, regarde dedans",
+          "de": "Auf Play drücken, reinschauen",
+          "es": "Pulsa reproducir y mira dentro",
+          "it": "Premi play e guarda dentro",
+          "zh": "点一下播放，看看里面",
+          "pt": "Toque em reproduzir e veja dentro",
+          "pt-pt": "Carrega em reproduzir e vê lá dentro",
+          "pl": "Naciśnij play i zajrzyj do środka"
+        },
+        "body": {
+          "en": "Hover a printer's photo on the board and press play — the photo gives way to its camera. Nothing streams until you ask, so a board full of machines stays quiet.",
+          "fr": "Survole la photo d'une imprimante sur le plan et appuie sur lecture — la photo laisse place à sa caméra. Rien ne diffuse tant que tu ne le demandes pas, donc un plan rempli de machines reste tranquille.",
+          "de": "Fahr über das Foto eines Druckers auf dem Plan und drück Play — das Foto weicht seiner Kamera. Nichts überträgt, bis du fragst, also bleibt ein voller Plan ruhig.",
+          "es": "Pasa por encima de la foto de una impresora en el plano y pulsa reproducir — la foto deja paso a su cámara. Nada emite hasta que lo pides, así que un plano lleno de máquinas se queda tranquilo.",
+          "it": "Passa sulla foto di una stampante nella mappa e premi play — la foto lascia il posto alla sua telecamera. Niente trasmette finché non lo chiedi, così una mappa piena di macchine resta tranquilla.",
+          "zh": "把鼠标移到图上某台打印机的照片，点播放——照片就换成它的画面。你不点就不推流，所以摆满机器的图也很安静。",
+          "pt": "Passe o mouse na foto de uma impressora no mapa e toque em reproduzir — a foto dá lugar à câmera. Nada transmite até você pedir, então um mapa cheio de máquinas fica quieto.",
+          "pt-pt": "Passa por cima da foto de uma impressora no mapa e carrega em reproduzir — a foto dá lugar à câmara. Nada transmite até pedires, por isso um mapa cheio de máquinas fica sossegado.",
+          "pl": "Najedź na zdjęcie drukarki na planie i naciśnij play — zdjęcie ustąpi miejsca kamerze. Nic nie leci, dopóki nie poprosisz, więc plan pełen maszyn zostaje cichy."
+        }
+      },
+      {
+        "icon": "pause",
+        "title": {
+          "en": "Pause without hunting for the machine",
+          "fr": "Mettre en pause sans chercher la machine",
+          "de": "Pausieren, ohne die Maschine zu suchen",
+          "es": "Pausar sin buscar la máquina",
+          "it": "Mettere in pausa senza cercare la macchina",
+          "zh": "暂停不用满屏找机器",
+          "pt": "Pausar sem procurar a máquina",
+          "pt-pt": "Pausar sem procurar a máquina",
+          "pl": "Pauza bez szukania maszyny"
+        },
+        "body": {
+          "en": "Pause and stop now sit on the card of whichever machine is printing. Stop asks you to hold it for a moment — ending a print that started hours ago should take more than a slip of the mouse.",
+          "fr": "Pause et arrêt sont maintenant sur la carte de la machine qui imprime. L'arrêt demande de rester appuyé un instant — mettre fin à une impression lancée il y a des heures mérite mieux qu'un clic qui dérape.",
+          "de": "Pause und Stopp sitzen jetzt auf der Karte der Maschine, die gerade druckt. Stopp will kurz gehalten werden — einen Druck zu beenden, der vor Stunden begann, sollte mehr brauchen als einen verrutschten Klick.",
+          "es": "Pausa y parada están ahora en la tarjeta de la máquina que imprime. Parar pide que mantengas pulsado un momento — terminar una impresión empezada hace horas merece más que un clic que se escapa.",
+          "it": "Pausa e stop ora stanno sulla scheda della macchina che sta stampando. Lo stop chiede di tenerlo premuto un attimo — chiudere una stampa iniziata ore fa merita più di un clic scivolato.",
+          "zh": "暂停和停止现在就在正在打印那台机器的卡片上。停止要按住一会儿——结束一个几小时前开始的活儿，不该败给一次手滑。",
+          "pt": "Pausar e parar agora ficam no cartão da máquina que está imprimindo. Parar pede que você segure um instante — encerrar uma impressão de horas merece mais que um clique que escapou.",
+          "pt-pt": "Pausar e parar estão agora no cartão da máquina que está a imprimir. Parar pede que segures um instante — acabar com uma impressão de horas merece mais do que um clique que escorregou.",
+          "pl": "Pauza i stop są teraz na karcie maszyny, która drukuje. Stop trzeba chwilę przytrzymać — kończenie wydruku sprzed kilku godzin nie powinno zależeć od jednego ześlizgu myszy."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "en": "Cameras that stop playing hide-and-seek",
+          "fr": "Les caméras arrêtent de jouer à cache-cache",
+          "de": "Kameras hören auf, Verstecken zu spielen",
+          "es": "Las cámaras dejan de jugar al escondite",
+          "it": "Le telecamere smettono di giocare a nascondino",
+          "zh": "摄像头不再玩捉迷藏",
+          "pt": "As câmeras param de brincar de esconde-esconde",
+          "pt-pt": "As câmaras deixam de brincar às escondidas",
+          "pl": "Kamery przestają grać w chowanego"
+        },
+        "body": {
+          "en": "A feed showing in one place and black in another, or going dark for seconds when you switched views — that's over. One connection to the machine, shared by every view that wants it.",
+          "fr": "Un flux visible à un endroit et noir à un autre, ou qui s'éteignait quelques secondes à chaque changement de vue — c'est fini. Une seule connexion à la machine, partagée par toutes les vues qui la veulent.",
+          "de": "Ein Bild, das an einer Stelle läuft und woanders schwarz bleibt, oder das beim Ansichtswechsel sekundenlang ausging — vorbei. Eine Verbindung zur Maschine, geteilt von jeder Ansicht, die sie will.",
+          "es": "Una señal que se veía en un sitio y quedaba negra en otro, o que se apagaba unos segundos al cambiar de vista — se acabó. Una sola conexión a la máquina, compartida por todas las vistas que la quieran.",
+          "it": "Un flusso visibile in un punto e nero in un altro, o che si spegneva per qualche secondo cambiando vista — finita. Una sola connessione alla macchina, condivisa da ogni vista che la vuole.",
+          "zh": "一个地方有画面、另一个地方全黑，或者一切换视图就黑几秒——不会了。到机器只有一条连接，谁想看谁共享。",
+          "pt": "Um vídeo aparecendo num lugar e preto noutro, ou apagando por segundos ao trocar de vista — acabou. Uma conexão com a máquina, compartilhada por todas as vistas que a quiserem.",
+          "pt-pt": "Um vídeo a aparecer num sítio e preto noutro, ou a apagar-se por segundos ao mudar de vista — acabou. Uma ligação à máquina, partilhada por todas as vistas que a queiram.",
+          "pl": "Obraz widoczny w jednym miejscu i czarny w innym albo gasnący na kilka sekund przy zmianie widoku — koniec z tym. Jedno połączenie z maszyną, dzielone przez każdy widok, który go chce."
+        }
+      }
+    ]
   }
 }
