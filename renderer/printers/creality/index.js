@@ -1696,6 +1696,11 @@ export function creGetTempHtml(printer) {
 }
 
 registerBrand('creality', {
+  /* Pause / resume / stop THIS printer, named explicitly. The panel's own
+     buttons reach the same code through `_activePrinter` — the machine whose
+     panel is open — which is right there and wrong anywhere else: the board
+     shows every machine at once, so a card has to say which one it means. */
+  controlJob: (p, a) => (a === 'stop' ? creActionStop(p) : creActionPause(p)),
   getTempHtml:          creGetTempHtml,
   getUnits:             creGetUnits,
   getSlots:             creGetSlots,

@@ -2262,6 +2262,11 @@ export function acuGetTempHtml(printer) {
 }
 
 registerBrand("anycubic", {
+  /* Pause / resume / stop THIS printer, named explicitly. The panel's own
+     buttons reach the same code through `_activePrinter` — the machine whose
+     panel is open — which is right there and wrong anywhere else: the board
+     shows every machine at once, so a card has to say which one it means. */
+  controlJob: (p, a) => { const c = acuGetConn(acuKey(p)); if (c) acuPrintControl(c, a); },
   getTempHtml:          acuGetTempHtml,
   getUnits:             acuGetUnits,
   getSlots:             acuGetSlots,

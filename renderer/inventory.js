@@ -10139,6 +10139,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // class); materials views restore the full set on their next render.
     const _printerFilters = _isPrinterMode(mode) && mode !== "printer-cam";
     document.body.classList.toggle("printer-filters", _printerFilters);
+    /* The camera wall drops the printer FILTERS (there is nothing to filter on a
+       wall of live feeds) — but `printer-filters` was also what hid the colour
+       finder, so dropping one brought the other back: a rainbow and a grey ramp
+       over three camera feeds, selecting a spool colour on a screen that holds
+       no spools. The wall says so itself now, and the two concerns stop sharing
+       a switch. */
+    document.body.classList.toggle("cam-wall-view", mode === "printer-cam");
     if (_printerFilters) populatePrinterFilters();
     // Products views reuse the search + Brand / Material / Tag / ❤ / ★ selectors,
     // but hide the Version filter (no per-version notion for a product identity).
@@ -10975,6 +10982,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // initial render, so launching straight into a printer view would otherwise
   // show the materials filters (Material / Version) instead of the printer ones.
   const _bootPrinterFilters = _isPrinterMode(state.viewMode) && state.viewMode !== "printer-cam";
+  document.body.classList.toggle("cam-wall-view", state.viewMode === "printer-cam");
   document.body.classList.toggle("printer-filters", _bootPrinterFilters);
   if (_bootPrinterFilters) populatePrinterFilters();
   document.body.classList.toggle("products-filters", _isProductsMode(state.viewMode));
@@ -21605,7 +21613,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       }
     }
 
-    return { state, pct, isActive, isDone, filename, remainSec, thumbUrl };
+    /* Paused, from the machine's own report. Most brands say it in the state
+       word; Creality reports a numeric state that collapses to "printing" and
+       carries the pause in its own `isPaused` field, so both are consulted. It
+       decides which way the board's key points — ▶ or ⏸ — and a card that
+       showed the wrong one would ask the user to resume a running print. */
+    const paused = state === "paused" || d.isPaused === true;
+
+    /* Layers, under the six names the six firmwares chose for the same pair.
+       Normalised here rather than at each call site: the board widget, the table
+       and the panel all want "12 / 395" and none of them should have to know
+       that Bambu says `layerNum` and Elegoo says `printLayerCur`. */
+    const layer = p.brand === "bambulab"   ? d.layerNum
+                : p.brand === "anycubic"   ? d.currLayer
+                : p.brand === "elegoo"     ? d.printLayerCur
+                : p.brand === "creality"   ? d.layer
+                : d.currentLayer;                       // snapmaker, flashforge
+    const layerTotal = p.brand === "bambulab" ? d.totalLayerNum
+                     : p.brand === "anycubic" ? d.totalLayers
+                     : p.brand === "elegoo"   ? d.printLayerTotal
+                     : d.totalLayer;                    // creality, snapmaker, flashforge
+
+    return { state, pct, isActive, isDone, paused, filename, remainSec, thumbUrl,
+             layer: Number(layer) || 0, layerTotal: Number(layerTotal) || 0 };
   }
   // Table thumbnail cell HTML — the print preview (active or just-finished), or
   // empty when idle/unavailable. thumbUrl is already gated in _getPrinterJob.
@@ -21779,6 +21809,267 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="${esc(w.kind)}-card-body">${body}</div>
       </div>`;
   }
+  /* THE PRINT WIDGET — the panel's job block, placeable on the board: preview,
+     file, percentage, bar, state, remaining time, finish clock and layers.
+     It reads `_getPrinterJob`, the same normalised job the table and the card
+     already use, so a brand's wording never reaches this far.
+
+     It stays when the machine is silent, dimmed with dashes, exactly as the
+     temperatures do: a dashboard the user arranged must not rearrange itself
+     because a printer went quiet. */
+  function _makeJobWidget(p) {
+    const w = SIMPLE_WIDGETS.find(x => x.kind === "job");
+    if (!widgetOn(p, "job")) return "";
+    const job   = _getPrinterJob(p);
+    const pct   = (job?.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+    const label = job ? (t("snapState_" + job.state) || job.state) : "—";
+    /* No preview → the MACHINE's own photo, the same fallback chain the panel's
+       hero uses (model image, then the brand's placeholder). An empty grey
+       square told you nothing; the printer at least says which machine this
+       widget belongs to when it is idle. Drawn `contain`, not `cover`: a
+       product shot cropped to a square is unrecognisable. */
+    const thumbUrl = job?.thumbUrl || null;
+    const fallback = printerImageUrlFor(p.brand, p.printerModelId)
+                  || printerImageUrl(findPrinterModel(p.brand, "0"));
+    const shown    = thumbUrl || fallback || "";
+    const thumb = `<div class="job-card-thumb${thumbUrl ? "" : " job-card-thumb--printer"}"${
+      shown ? ` style="background-image:url('${esc(shown)}')"` : ""}></div>`;
+    const layers = job?.layerTotal > 0 ? `${job.layer} / ${job.layerTotal}` : "—";
+    const remain = job?.isActive && job.remainSec > 0 ? _fmtRemain(job.remainSec) : "—";
+    /* The state sits WITH the percentage — they answer the same question, and a
+       badge alone on a line was asking for a whole row to say one word. The
+       layer count needs no label either: "0 / 395" beside a time reads as a
+       count of steps, and the word was the widest thing in the widget. */
+    const body = `
+      <div class="job-card-top">
+        ${thumb}
+        <div class="job-card-meta">
+          <div class="job-card-file">${esc(job?.filename ? _truncFilename(job.filename) : "—")}</div>
+          <div class="job-card-line">
+            <div class="job-card-pct"><span class="job-card-pct-n">${pct}</span><span class="job-card-pct-u">%</span></div>
+            <span class="snap-job-state snap-job-state--${esc(job?.state || "idle")} snap-job-state--compact">${esc(label)}</span>
+          </div>
+        </div>
+      </div>
+      <div class="job-card-bar"><span style="width:${pct}%"></span></div>
+      <div class="job-card-row">
+        <span class="job-card-time">${esc(remain)} · ${esc(_fmtEndClock(job))}</span>
+        <span class="job-card-val">${esc(layers)}</span>
+      </div>`;
+    return _widgetFrame(p, w, body, !job);
+  }
+
+  /* Its own refresh, because it holds an IMAGE. The generic path replaces a
+     widget's whole body whenever it differs, which for this one would re-set the
+     preview's background-image on every percent — the table already learned that
+     lesson (`_jobThumbSig`). Each field is written on its own instead, and the
+     preview only when its URL genuinely changes. */
+  function _refreshJobWidget(el, p) {
+    const job  = _getPrinterJob(p);
+    const pct  = (job?.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+    const set  = (sel, txt) => { const n = el.querySelector(sel); if (n && n.textContent !== txt) n.textContent = txt; };
+
+    const thumb = el.querySelector(".job-card-thumb");
+    if (thumb) {
+      const url  = job?.thumbUrl
+                || printerImageUrlFor(p.brand, p.printerModelId)
+                || printerImageUrl(findPrinterModel(p.brand, "0"))
+                || "";
+      const want = url ? `url("${url}")` : "";
+      const has  = thumb.style.backgroundImage || "";
+      if (want.replace(/["']/g, "") !== has.replace(/["']/g, "")) {
+        thumb.style.backgroundImage = want;
+      }
+      thumb.classList.toggle("job-card-thumb--printer", !job?.thumbUrl);
+    }
+    set(".job-card-file", job?.filename ? _truncFilename(job.filename) : "—");
+    set(".job-card-pct-n", String(pct));
+    const fill = el.querySelector(".job-card-bar > span");
+    if (fill && fill.style.width !== pct + "%") fill.style.width = pct + "%";
+    const pill = el.querySelector(".snap-job-state");
+    if (pill) {
+      const st = job?.state || "idle";
+      const cls = `snap-job-state snap-job-state--${st} snap-job-state--compact`;
+      if (pill.className !== cls) pill.className = cls;
+      set(".snap-job-state", t("snapState_" + st) || st);
+    }
+    set(".job-card-time",
+        `${job?.isActive && job.remainSec > 0 ? _fmtRemain(job.remainSec) : "—"} · ${_fmtEndClock(job)}`);
+    set(".job-card-val", job?.layerTotal > 0 ? `${job.layer} / ${job.layerTotal}` : "—");
+    el.classList.toggle("is-stale", !job);
+  }
+
+  /* THE CAMERA WIDGET — the machine's own live feed, placeable on the board.
+     It reuses `renderCamBanner`, the same dispatcher the side panel and the cam
+     wall use, so no transport is reimplemented here: MJPEG, WebRTC and iframe
+     all arrive already solved, and the shared multiplexer means a feed shown in
+     two places still opens ONE upstream connection. */
+  /* PLAY IS EXPLICIT, and the set is session-only on purpose. A camera is the
+     only widget that costs a network connection per machine: drawn on sight, a
+     board of ten printers opened ten streams the moment it appeared — and the
+     unreachable ones spent the whole time retrying. So the widget can be placed,
+     sized and arranged for nothing, and shows its feed when asked. Not stored:
+     "I want to look now" is not a setting, and a board reopened tomorrow should
+     be quiet again. */
+  const _camPlaying = new Set();
+  /* THE BOARD'S OWN BANNER. FlashForge holds ONE stream at a time, and its panel
+     banner opens that stream itself — several cards, or a card and an open
+     panel, would fight over it. The camera wall already solved this: its banner
+     is an empty <img> fed by the shared multiplexer, so every consumer is served
+     by a single upstream connection. The board is a wall too, so it asks the
+     same way. (The panel banner also carries a fixed element id, which cannot be
+     right on a view that draws one per machine.) */
+  const _boardCamHtml = p =>
+    p.brand === "flashforge" ? renderFfgCamWallBanner(p) : renderCamBanner(p);
+  const _camOfflineHtml = () =>
+    `<div class="cam-card-off"><span class="icon icon-eye-off icon-24"></span></div>`;
+  const _camPlayHtml = key =>
+    `<div class="cam-card-off"><button type="button" class="cam-play" data-cam-play="${esc(key)}"
+       aria-label="${esc(t("boardCamPlay"))}"><span class="icon icon-play icon-24"></span></button></div>`;
+  function _camBodyHtml(p) {
+    if (!_isPrinterOnline(p)) return _camOfflineHtml();
+    const key = _printerKey(p);
+    if (!_camPlaying.has(key)) return _camPlayHtml(key);
+    return _boardCamHtml(p) || _camOfflineHtml();     // brand turns out to have none
+  }
+  /* Pressing play — from the widget or from the machine's own card — means the
+     same thing, so it lights both. The shared multiplexer keeps that to ONE
+     upstream connection: the card and the widget are two consumers of the same
+     stream, not two streams. */
+  /* Wake a machine's link, the way the camera wall does before it draws: one
+     idempotent kick per brand. Pressing play cannot show a feed that has never
+     been asked for — Bambu in particular streams only once something requests
+     it, which is why its picture appeared solely after opening the side panel.
+     Kicking is safe to repeat: every brand's connect returns early when it is
+     already up. */
+  function _camKick(p) {
+    try {
+      if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
+      if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "creality"   && p.ip)               creConnect(p);
+      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p);
+      if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
+      if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p);
+    } catch (e) { console.warn("[board-cam] kick failed for", _printerKey(p), e?.message || e); }
+  }
+  /* The feed rarely exists the instant play is pressed — the link is still
+     coming up. So play ASKS, and this puts the picture in place as soon as
+     there is one: it runs on every tick, and does nothing at all once the feed
+     is in the DOM. Cheap enough to be unconditional, and it is what makes the
+     card catch up on its own instead of waiting for a full redraw. */
+  function _camCatchUp() {
+    if (!_camPlaying.size) return;
+    const root = document.getElementById("invPrinterView");
+    if (!root) return;
+    let placed = false;
+    _camPlaying.forEach(key => {
+      const p = state.printers.find(v => _printerKey(v) === key);
+      if (!p || !_isPrinterOnline(p)) return;
+      const thumb = root.querySelector(`.printer-card[data-printer-key="${CSS.escape(key)}"] .printer-card-thumb`);
+      if (!thumb || thumb.querySelector(".pp-cam-full")) return;
+      const html = _boardCamHtml(p);
+      if (!html) return;
+      thumb.querySelector("img")?.remove();
+      thumb.querySelector(".cam-play")?.remove();
+      thumb.insertAdjacentHTML("afterbegin", html);
+      placed = true;
+    });
+    if (placed) _wireCamWidgets(root);
+  }
+
+  function _camShow(key) {
+    _camPlaying.add(key);
+    const p = state.printers.find(v => _printerKey(v) === key);
+    const root = document.getElementById("invPrinterView");
+    if (!p || !root) return;
+    _camKick(p);
+    const widget = root.querySelector(`.cam-card[data-printer-key="${CSS.escape(key)}"]`);
+    if (widget) _refreshCamWidget(widget, p);
+    const thumb = root.querySelector(`.printer-card[data-printer-key="${CSS.escape(key)}"] .printer-card-thumb`);
+    if (thumb) {
+      const html = _boardCamHtml(p);
+      if (html) {
+        thumb.querySelector("img")?.remove();
+        thumb.querySelector(".cam-play")?.remove();
+        thumb.insertAdjacentHTML("afterbegin", html);
+      }
+    }
+    _wireCamWidgets(root);
+  }
+
+  function _makeCamWidget(p) {
+    const w = SIMPLE_WIDGETS.find(x => x.kind === "cam");
+    if (!widgetOn(p, "cam")) return "";
+    return _widgetFrame(p, w, _camBodyHtml(p), !_isPrinterOnline(p));
+  }
+  /* ITS OWN REFRESH, and the strictest of the three. The body holds a STREAM:
+     replacing it tears the connection down and starts it again, so a feed
+     rebuilt on every tick would stutter forever. Only one thing changes what
+     this widget shows — the machine coming or going — so that alone rebuilds
+     it, and it re-attaches afterwards. Everything else leaves the DOM alone. */
+  /* Three states, and the body is rebuilt ONLY when it moves between them:
+     off (machine gone), idle (here, not asked for), live (streaming). Read from
+     the DOM rather than remembered, so a rebuild elsewhere cannot desynchronise
+     it. Anything short of a state change leaves the element alone — that is what
+     keeps a running stream from being torn down and restarted on every tick. */
+  const _camElState = el =>
+    el.querySelector(".cam-play") ? "idle"
+    : el.querySelector(".cam-card-off") ? "off" : "live";
+  function _refreshCamWidget(el, p) {
+    const want = !_isPrinterOnline(p) ? "off"
+               : _camPlaying.has(_printerKey(p)) ? "live" : "idle";
+    if (_camElState(el) === want) return;
+    const body = el.querySelector(".cam-card-body");
+    if (!body) return;
+    body.innerHTML = _camBodyHtml(p);
+    el.classList.toggle("is-stale", want === "off");
+    _wireCamWidgets(el.parentElement || el);
+  }
+  /* Post-render attachment. Two brands need their stream started and their
+     element registered as a consumer; the rest carry their source in the markup
+     and need nothing. Idempotent by design — a live session is reused rather
+     than reopened, which is what lets this run after every board render. */
+  /* What this board handed to the mux, so it can hand it back on the next
+     rebuild. Held here rather than read from the DOM at that moment, because by
+     then the elements are already gone. */
+  const _prevPlanImgs = [];
+  function _wireCamWidgets(container) {
+    if (!container) return;
+    /* The play key. Marked once so a re-wire after every board render cannot
+       stack listeners on a button that survived it. */
+    container.querySelectorAll("[data-cam-play]").forEach(btn => {
+      if (btn._camWired) return;
+      btn._camWired = true;
+      btn.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); });
+      btn.addEventListener("click", e => {
+        e.preventDefault(); e.stopPropagation();
+        _camShow(btn.dataset.camPlay);
+      });
+    });
+    container.querySelectorAll("[data-ffg-cam-key]").forEach(img => {
+      const key = img.dataset.ffgCamKey;
+      const p   = state.printers.find(x => ffgKey(x) === key);
+      const url = p ? ffgCamBaseUrl(p) : null;
+      if (url) { ffgMuxStart(key, url); ffgMuxRegister(key, img); _prevPlanImgs.push({ key, img }); }
+    });
+    /* Bambu starts its camera only when a surface asks for it: the background
+       auto-connect passes `skipCam`, so nothing streams until something wants to
+       look — which is why the feed used to appear only after opening the side
+       panel, the one place that asked. The board's play key asks the same way.
+       Frames then reach every element carrying the printer's key, board and
+       panel alike, over the one connection the main process holds. */
+    state.printers
+      .filter(p => _camPlaying.has(_printerKey(p)))
+      .forEach(_camKick);
+    if (container.querySelector(".cre-cam-video")) {
+      state.printers
+        .filter(p => p.brand === "creality" && p.ip && widgetOn(p, "cam")
+                  && _isPrinterOnline(p) && _camPlaying.has(_printerKey(p)))
+        .forEach(p => startCreCam(p.ip));
+      reAttachCreCamConsumers();
+    }
+  }
+
   function _makeTempWidget(p) {
     const w = SIMPLE_WIDGETS.find(x => x.kind === "temp");
     if (!widgetOn(p, "temp")) return "";
@@ -21791,11 +22082,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _makeUnitWidgets(p) {
     if (!widgetOn(p, "units")) return "";
     const units = _printerUnits(p);
-    if (!units.length) return "";
-    if (unitsAreSplit(p)) return units.map(u => _makeUnitWidget(p, u)).join("");
+    /* A machine that has never reported still gets its card. It used to draw
+       nothing at all, which left the widget switched on and nowhere to be seen —
+       so it could not be placed, and the arrangement had to be done again once
+       the printer finally connected. The other widgets already hold their ground
+       when a machine is quiet; storage now does too, showing one unknown bay
+       rather than inventing a number of them. */
+    const empty = !units.length;
+    if (!empty && unitsAreSplit(p)) return units.map(u => _makeUnitWidget(p, u)).join("");
     const key = `${p.brand}:${p.id}`;
     return `
-      <div class="slots-card${units.some(u => u.stale) ? " is-stale" : ""}" data-board-id="${esc(GROUP_PREFIX + key)}" data-printer-key="${esc(key)}">
+      <div class="slots-card${empty || units.some(u => u.stale) ? " is-stale" : ""}" data-board-id="${esc(GROUP_PREFIX + key)}" data-printer-key="${esc(key)}">
         <div class="rp-rack-head slots-card-head">
           <div class="rp-rack-info">
             <div class="slots-card-name">${esc(p.printerName || p.brand)}</div>
@@ -21808,9 +22105,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             </div>
           </div>
         </div>
-        ${units.map(u => `
+        ${(empty ? [{ label: "—", slots: [{ label: "", empty: true }], cols: 1 }] : units).map(u => `
           <div class="slots-unit">
-            <div class="slots-unit-name">${esc(_unitLabel(u))}</div>
+            <div class="slots-unit-name">${esc(empty ? "—" : _unitLabel(u))}</div>
             ${_slotStripHtml(u.slots, u.cols)}
           </div>`).join("")}
       </div>`;
@@ -21841,8 +22138,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const pct = (job && job.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
       const next = pct + "%";
       if (fill.style.width !== next) fill.style.width = next;
+
+      /* The two job keys. A print STARTING or ENDING changes the card's shape,
+         so that goes through the board's own rebuild: it happens rarely, and
+         hand-inserting a button would mean hand-wiring it too. A pause flipping
+         changes nothing structural and happens while you watch, so the key is
+         turned over in place — icon, action and label — leaving its listener,
+         and any hold in progress on its neighbour, untouched. */
+      const keys     = card.querySelector(".printer-card-jobkeys");
+      const pauseBtn = keys?.querySelector('[data-pjob="pause"], [data-pjob="resume"]');
+      const wantKeys = !!job?.isActive;
+      if (wantKeys !== !!pauseBtn) {
+        _deferPrinterRender();
+      } else if (pauseBtn) {
+        const want = job.paused ? "resume" : "pause";
+        if (pauseBtn.dataset.pjob !== want) {
+          pauseBtn.dataset.pjob = want;
+          pauseBtn.setAttribute("aria-label", t(job.paused ? "snapPrintResume" : "snapPrintPause"));
+          const ic = pauseBtn.querySelector(".icon");
+          if (ic) ic.className = `icon ${job.paused ? "icon-play" : "icon-pause"} icon-14`;
+        }
+      }
     });
     _patchSlotsWidgets();
+    _camCatchUp();
     syncAllPrinterUnits();
   }
 
@@ -21877,8 +22196,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     state.printers.forEach(p => {
       if (!widgetOn(p, "units")) return;    // switched off → the sweep takes it
       const units = _printerUnits(p);
-      if (!units.length) return;
-      if (unitsAreSplit(p)) {
+      /* A machine with nothing reported still keeps its card — it is switched
+         on, so it has to be somewhere the user can place it. Without this the
+         sweep below would take back the placeholder the render had just drawn,
+         once per tick. Splitting is skipped: there is nothing to split. */
+      if (units.length && unitsAreSplit(p)) {
         units.forEach(u => {
           const id = `${UNIT_PREFIX}${p.brand}:${p.id}:${_unitKey(u)}`;
           alive.add(id);
@@ -21898,7 +22220,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       alive.add(id);
       const el = container.querySelector(`.slots-card[data-board-id="${CSS.escape(id)}"]`);
       if (!el) { container.insertAdjacentHTML("beforeend", _makeUnitWidgets(p)); added = true; return; }
-      el.classList.toggle("is-stale", units.some(u => u.stale));
+      el.classList.toggle("is-stale", !units.length || units.some(u => u.stale));
       /* Inside a group the units are swapped as a block: plugging an AMS in adds
          a whole row, and patching strip by strip would have to invent a row that
          is not there yet. The widget holds nothing live — no video, no open menu
@@ -22180,6 +22502,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Material into "State" while the user was standing in Storage, with no way
     // to filter their own spools by brand any more.
     if (_printerSub !== "cam" && _isPrinterMode(state.viewMode)) populatePrinterFilters();
+    /* HAND BACK the mux consumers this board registered — before the rebuild
+       destroys their elements, AND before we branch away to the table or the
+       camera wall. Placed after the branch it only fired on a board redraw, so
+       LEAVING the board left its images registered for ever: the stream never
+       saw its last consumer go, never stopped, and kept FlashForge's single
+       client slot — which is exactly why the camera view then showed a black
+       card while the board had a picture. The side panel already gives its own
+       back on close; the board must do the same when it stops being on screen. */
+    _prevPlanImgs.forEach(({ key, img }) => { try { ffgMuxUnregister(key, img); } catch {} });
+    _prevPlanImgs.length = 0;
+
     if (_printerSub === "table") { _renderPrinterTable(host); return; }
     if (_printerSub === "cam")   { _renderPrinterCam(host);   return; }
 
@@ -22232,6 +22565,35 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
          panel and the table, where you go to look something up. The brand is
          still there, as the logo on the photo rather than a word. */
       const online      = _isOnline(p);
+      /* The machine's own photo gives way to its camera, on demand. Computing
+         the banner is also the availability test — it returns nothing for a
+         brand or a model without one — so a machine that cannot be watched
+         simply never shows the key. */
+      const _camKey   = `${p.brand}:${p.id}`;
+      const _camMaybe = online ? _boardCamHtml(p) : "";
+      const _camLive  = (_camMaybe && _camPlaying.has(_camKey)) ? _camMaybe : "";
+      /* Pause and stop, ON THE CARD, only while a job is running — the same two
+         controls the machine's own panel offers, brought to where you are
+         actually looking when you are watching a fleet. They name their printer
+         through the card's own `data-printer-key` instead of relying on which
+         panel happens to be open, which is the whole difference: the panel has
+         one machine, the board has all of them.
+
+         Stop is hold-to-confirm. It destroys a print that may be hours in, and
+         a board shows many machines at once — a stray click landing on the
+         wrong card must not be enough to end one. Pause stays a plain click:
+         it is reversible by the button next to it. */
+      const job     = _getPrinterJob(p);
+      const jobBtns = job?.isActive ? `
+                <button class="rp-job-btn" data-pjob="${job.paused ? "resume" : "pause"}"
+                        aria-label="${esc(t(job.paused ? "snapPrintResume" : "snapPrintPause"))}">
+                  <span class="icon ${job.paused ? "icon-play" : "icon-pause"} icon-14"></span>
+                </button>
+                <button class="rp-job-btn rp-job-btn--stop" data-pjob="stop"
+                        aria-label="${esc(t("snapPrintCancel"))}">
+                  <span class="hold-progress"></span>
+                  <span class="icon icon-stop icon-14"></span>
+                </button>` : "";
       return `
         <div class="printer-card${p.isActive ? " printer-card--active" : ""}${state.selectedPrinters.has(`${p.brand}:${p.id}`) ? " row-selected" : ""}"
              data-brand="${esc(p.brand)}" data-id="${esc(p.id)}"
@@ -22273,7 +22635,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
               </div>
             </div>
           </div>
-          ${imgSrc ? `<div class="printer-card-thumb"><img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge"><span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span></span>` : ""}</div>` : ""}
+          ${imgSrc || _camLive ? `<div class="printer-card-thumb">${
+              _camLive
+                ? _camLive
+                : `<img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>`
+            }${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge"><span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span></span>` : ""}${
+              !_camLive && _camMaybe
+                ? `<button type="button" class="cam-play cam-play--card" data-cam-play="${esc(_camKey)}" aria-label="${esc(t("boardCamPlay"))}"><span class="icon icon-play icon-18"></span></button>`
+                : ""
+            }${jobBtns ? `<div class="printer-card-jobkeys">${jobBtns}</div>` : ""}</div>` : ""}
           ${(() => {
             /* A progress track under EVERY machine, connected or not, printing
                or not. An empty track says "nothing in progress" just as clearly
@@ -22331,6 +22701,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     /* No sort drag-and-drop on the board. Two ways to move the same card is one
        too many, and the old one rewrote `sortIndex` behind the arrangement —
        exactly the fight the racks had. `sortIndex` still orders the table. */
+    /* Widgets that need wiring get it after a FULL render too, not only when
+       one is switched on. The hook existed but was called from the patch path
+       alone, so anything needing it worked once and was dead after the next
+       rebuild — switching views, a reload, any brand tick that redraws the
+       board. A camera is the case that makes this visible: its stream is
+       attached here, and without this it would attach once and never again. */
+    {
+      const _plan = host.querySelector(".printers-grid");
+      if (_plan) SIMPLE_WIDGETS.forEach(w => { try { w.wire?.(_plan); } catch (e) { console.warn("[board] wire failed for", w.kind, e); } });
+    }
     wirePrinterPlanDrag(host);
     wirePlanPan(host.querySelector(".printers-scroll"), ".printer-card");
     wirePrinterZoom(host);
@@ -23047,21 +23427,38 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      touched puts everything up, and only a deliberate choice is ever written.
      The switch lives on the MACHINE's ⋮, not the widget's: a widget you have
      hidden has no ⋮ left to bring it back with. */
+  /* THE ORDER HERE IS THE MENU'S ORDER — a machine's ⋮ lists the widgets exactly
+     like this, so the one reached for most sits at the top. Nothing else depends
+     on it: every consumer filters on `simple` or looks a widget up by kind or by
+     prefix, never by position. */
   const BOARD_WIDGETS = [
+    /* A SIMPLE widget: one card per machine, one position, one group binding.
+       Everything the board needs to know about it is these six fields — see
+       docs/printer-board-widgets.md. Adding another is one entry here plus its
+       CSS; nothing else in the board should have to learn its name. */
+    { kind: "job", labelKey: "boardJobTitle", simple: true,
+      prefix: "job:", unitTag: "#job",
+      planField: "jobPlan", clusterField: "jobPlanCluster",
+      render: p => _makeJobWidget(p),
+      refresh: (el, p) => _refreshJobWidget(el, p) },
+    { kind: "temp", labelKey: "boardTempTitle", simple: true,
+      prefix: "temp:", unitTag: "#temp",
+      planField: "tempPlan", clusterField: "tempPlanCluster",
+      render: p => _makeTempWidget(p) },
     /* STORAGE is deliberately not like the others and keeps its own paths: its
        units are a map with their own keys, so it owns two prefixes (`units:` for
        the group, `unit:` per unit) and a position per unit. Forcing it into the
        table would make the table worse, not the storage better. It has no
        `simple: true`, and every loop below skips it. */
     { kind: "units", labelKey: "boardUnitsTitle" },
-    /* A SIMPLE widget: one card per machine, one position, one group binding.
-       Everything the board needs to know about it is these six fields — see
-       docs/printer-board-widgets.md. Adding another is one entry here plus its
-       CSS; nothing else in the board should have to learn its name. */
-    { kind: "temp", labelKey: "boardTempTitle", simple: true,
-      prefix: "temp:", unitTag: "#temp",
-      planField: "tempPlan", clusterField: "tempPlanCluster",
-      render: p => _makeTempWidget(p) },
+    /* Last, and the only one switched OFF by default: it is the one that costs
+       a connection to the machine. */
+    { kind: "cam", labelKey: "boardCamTitle", simple: true, defaultOff: true,
+      prefix: "cam:", unitTag: "#cam",
+      planField: "camPlan", clusterField: "camPlanCluster",
+      render:  p => _makeCamWidget(p),
+      refresh: (el, p) => _refreshCamWidget(el, p),
+      wire:    container => _wireCamWidgets(container) },
   ];
   const SIMPLE_WIDGETS = BOARD_WIDGETS.filter(w => w.simple);
   const _widgetByTag = tag => SIMPLE_WIDGETS.find(w => w.unitTag === tag) || null;
@@ -23083,7 +23480,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   const widgetOn = (p, kind) => {
     const pinned = _widgetJustSet.get(_widgetPin(p, kind));
     if (pinned !== undefined) return pinned;
-    return p?.widgets?.[kind] !== false;
+    const v = p?.widgets?.[kind];
+    if (v !== undefined) return v !== false;
+    /* ABSENT MEANS SHOWN — except where being shown costs something. The camera
+       opens a connection to the machine, so it is the one widget you ask for
+       rather than one you switch off; the others are free to draw and belong on
+       the board by default. */
+    return !BOARD_WIDGETS.find(w => w.kind === kind)?.defaultOff;
   };
   async function setWidgetOn(printer, kind, on) {
     const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
@@ -23315,8 +23718,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const key = _printerKey(p);
     const ids = [key];
     const units = _printerUnits(p);
-    if (units.length && widgetOn(p, "units")) {
-      if (unitsAreSplit(p)) units.forEach(u => ids.push(`${UNIT_PREFIX}${key}:${_unitKey(u)}`));
+    /* Switched ON is what makes it one of the machine's objects — not whether
+       the machine has reported anything. A card drawn as a placeholder is still
+       a card: left out of this list it could not be bound into the machine's
+       cluster, so it stayed behind when the machine moved, and the placement
+       walk did not count it as the machine's own either. */
+    if (widgetOn(p, "units")) {
+      if (units.length && unitsAreSplit(p)) units.forEach(u => ids.push(`${UNIT_PREFIX}${key}:${_unitKey(u)}`));
       else ids.push(GROUP_PREFIX + key);
     }
     /* The temperature widget is one of the machine's boards too. Leaving it out
@@ -23606,12 +24014,21 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
          real arrangement with a computed one, which is exactly what "everything
          moved when I regrouped one machine" looks like.
 
-         So a unit is adopted only when its machine's `units` map is present:
-         that map is what carries the positions, and if it is there, an absent
-         position is genuinely absent. Same discipline as the rack sweep — never
-         write on the strength of a read that may still be incomplete. */
+         So the test has to match WHERE the position lives. A single unit's is
+         inside the machine's `units` map, so that map must have arrived before
+         an absent position means anything. But a widget's — and the units
+         group's — is a plain field on the machine's own document (`tempPlan`,
+         `jobPlan`, `unitsPlan`), which arrives WITH the machine: the machine
+         being here is already proof. Keying all of them on `units` meant a
+         printer that has NEVER connected, and so has no units, could never
+         adopt its widgets — they were drawn but never recorded, and so never
+         bound to their machine either, which is why switching one on left it
+         loose while a connected machine's travelled with it. Same discipline as
+         the rack sweep — never write on the strength of a read that may still
+         be incomplete — applied to the right read. */
       const owner_ = ownerKey ? state.printers.find(v => _printerKey(v) === ownerKey) : null;
-      const loaded = !ownerKey || !!owner_?.units;
+      const _perUnit = !!(_own?.unit && _own.unit !== "*" && !_widgetByTag(_own.unit));
+      const loaded = !ownerKey || (_perUnit ? !!owner_?.units : !!owner_);
       if (id && loaded && !_planAdoptingBoard.has(id)) {
         _planAdoptingBoard.add(id);
         boardSave(id, Math.max(0, x), Math.max(0, y), nextBoardZ())
@@ -24082,6 +24499,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (isOpen) return;
         openRackMenu(menu, btn);
       });
+    });
+    /* Job keys on the board. Every brand answers the same `controlJob(printer,
+       action)`, so nothing here knows a protocol: the card says which machine,
+       the button says what to do. The press is swallowed — without it the click
+       would also reach the card underneath and open its panel, or arm a drag. */
+    host.querySelectorAll(".printer-card [data-pjob]").forEach(btn => {
+      const card = btn.closest("[data-printer-key]"); if (!card) return;
+      const p = state.printers.find(v => `${v.brand}:${v.id}` === card.dataset.printerKey);
+      if (!p) return;
+      /* Read at press time, never captured: the pause key is turned over IN
+         PLACE when the machine pauses, so a value taken at wiring time would
+         send "pause" to an already-paused printer. */
+      const send = () => { try { brands.get(p.brand)?.controlJob?.(p, btn.dataset.pjob); }
+                           catch (e) { console.warn("[board-job] failed:", e?.message || e); } };
+      btn.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); });
+      if (btn.dataset.pjob === "stop") setupHoldToConfirm(btn, 1500, send);
+      else btn.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); send(); });
     });
     host.querySelectorAll(".printer-card .rp-menu-item[data-paction], .slots-card .rp-menu-item[data-paction]").forEach(btn => {
       const card = btn.closest("[data-printer-key]"); if (!card) return;
@@ -29503,7 +29937,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       Object.assign(m.el.style, { left: r.x + "px", top: r.y + "px", width: r.w + "px", height: r.h + "px" });
       // Live: you see what you are about to take while you are still drawing.
       m.board.querySelectorAll(cfg.itemSel).forEach(el => {
-        const key = cfg.keyOf(el), pos = key != null ? cfg.posOf(key) : null;
+        const key = cfg.keyOf(el);
+        let pos = key != null ? cfg.posOf(key) : null;
+        /* SWEEP WHAT IS DRAWN, not only what is recorded. An object can be on
+           the board with no stored position: a widget only records one once its
+           machine has reported, so the widgets of a printer that has NEVER
+           connected are laid out, visible — and were silently un-sweepable,
+           while every card around them selected normally. Where it is drawn is
+           a position; it is the one the user is pointing at. */
+        if (!pos && el.style.left) {
+          pos = { x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0 };
+        }
         if (!pos) return;
         const hit = r.x < pos.x + el.offsetWidth && r.x + r.w > pos.x
                  && r.y < pos.y + el.offsetHeight && r.y + r.h > pos.y;

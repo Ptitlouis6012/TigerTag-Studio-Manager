@@ -1164,6 +1164,11 @@ export function bambuGetTempHtml(printer) {
 }
 
 registerBrand('bambulab', {
+  /* Pause / resume / stop THIS printer, named explicitly. The panel's own
+     buttons reach the same code through `_activePrinter` — the machine whose
+     panel is open — which is right there and wrong anywhere else: the board
+     shows every machine at once, so a card has to say which one it means. */
+  controlJob: (p, a) => { const c = bambuGetConn(bambuKey(p)); if (c) bambuPrintControl(c, a); },
   getTempHtml:          bambuGetTempHtml,
   getUnits:             bambuGetUnits,
   getSlots:             bambuGetSlots,

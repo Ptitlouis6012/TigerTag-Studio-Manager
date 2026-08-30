@@ -169,9 +169,17 @@
     border: 1.5px dashed color-mix(in srgb, var(--primary) 55%, transparent);
     border-radius: 20px;
     background: color-mix(in srgb, var(--primary) 6%, transparent);
-    animation: plan-cluster-in .16s ease-out;
+    /* SHOWN ONLY WHILE SOMETHING IS BEING MOVED. At rest the rings describe a
+       state you already know and cover the board in orange — on a busy plan
+       they compete with the cards they are meant to serve. During a move they
+       are the one thing you need: which objects are coming with you. Every ring
+       appears, not just the one you took, so you can also see what you are
+       about to land among. Opacity rather than display, so the layout keeps
+       patching them in place and they fade rather than blink. */
+    opacity: 0;
+    transition: opacity .14s ease-out;
   }
-  @keyframes plan-cluster-in { from { opacity: 0; } to { opacity: 1; } }
+  body.is-plan-grabbing .printers-grid--plan .plan-cluster { opacity: 1; }
   /* The board's own right-click menu. Same component as a kebab menu — it just
      drops from the cursor instead of from a button, so it grows from the corner
      the pointer is in. */
@@ -199,7 +207,14 @@
        machine card beside it, and a five-slot one is allowed to be wider rather
        than squeezing its squares. Uniform where it can be, honest where it
        cannot. */
-    position: absolute; width: fit-content; min-width: var(--board-card-w);
+    /* max-content, NOT fit-content. On an absolutely positioned box fit-content
+       is capped by the space left to the container's right edge, so the same
+       widget was one width in the middle of the board and a narrower, wrapped
+       one near the edge — a Snapmaker's five pills folding onto two rows and
+       the card changing size as you dragged it. max-content asks only what the
+       content needs; the board then grows to hold it, which is what a plan you
+       pan around is for. */
+    position: absolute; width: max-content; min-width: var(--board-card-w);
     display: flex; flex-direction: column; gap: 8px;
     padding: 12px;
     background: var(--surface-2); border: 1px solid var(--border);
@@ -366,7 +381,21 @@
     display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   }
   .printers-grid--plan .printer-card-thumb {
-    flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;
+    /* ALWAYS the frame a feed would need, photo or no photo. Sized by the image
+       inside it, the box was one height with a product shot and a taller one
+       with a 16:9 stream — so a card grew the moment you pressed play and the
+       whole column shifted under it. The height is stated from the board's card
+       width instead, and the photo is simply centred in it: pressing play swaps
+       the contents and moves nothing. Stated outright rather than as an
+       aspect-ratio, because the card sizes itself to its content and a
+       percentage inside it resolves to nothing. */
+    flex: none; height: calc(var(--board-card-w) * 9 / 16);
+    display: flex; align-items: center; justify-content: center; min-height: 0;
+    /* Not clipped on the board: the job keys stack down the left edge under the
+       brand badge and the photo area is only as tall as the card lets it be, so
+       clipping would cut the stop key in half. Safe — the photo itself is bounded
+       by its own max-width/max-height, so nothing else can spill. */
+    overflow: visible;
   }
   .printers-grid--plan .printer-card-thumb img { max-width: 100%; max-height: 100px; object-fit: contain; }
   /* The track is always drawn on a reachable machine — an empty one says
@@ -2752,3 +2781,177 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   /* (Earlier .pba-brand-row wrapper removed — tutorial pill now lives inside
      .pba-brand between the labels and the chevron. Pill styling is in
      60-modals.css — .pba-brand-tuto-link.) */
+
+  /* ── Job keys on a board card — pause / stop while a print runs ──────────
+     A COLUMN down the RIGHT edge of the photo, mirroring the brand badge on the
+     left: the left side is the badge's, and a stack beneath it left the photo
+     nothing to breathe in. They keep the badge's plate so the two edges read as
+     a pair. The head's row above is the card's own controls (move, ⋮) — what
+     this app can do to the card — while these are what the machine can be told
+     to do; keeping them apart is what lets each be read at a glance. Present
+     only while a job runs, which is the only time they mean anything. */
+  .printer-card-jobkeys {
+    position: absolute; top: 8px; right: 8px; z-index: 2;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .printer-card-jobkeys .rp-job-btn {
+    position: relative; overflow: hidden;
+    width: 34px; height: 34px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: none; border-radius: 9px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+    cursor: pointer; transition: background .15s;
+  }
+  /* The panel's own colours — blue for pause/resume, red for stop — so the same
+     two controls look the same wherever you meet them. One difference, and it is
+     forced: the panel tints over transparency, while these sit on a PHOTO, so
+     the tint is composited over the opaque plate instead. A translucent wash
+     over a bright print bed would leave them unreadable. */
+  .printer-card-jobkeys .rp-job-btn        { background: color-mix(in srgb, var(--info) 14%, var(--surface)); }
+  .printer-card-jobkeys .rp-job-btn:hover  { background: color-mix(in srgb, var(--info) 26%, var(--surface)); }
+  .printer-card-jobkeys .rp-job-btn .icon  { background: var(--primary); position: relative; z-index: 1; }
+  .printer-card-jobkeys .rp-job-btn.is-confirming        { background: var(--primary); }
+  .printer-card-jobkeys .rp-job-btn.is-confirming .icon  { background: var(--on-accent); }
+
+  .printer-card-jobkeys .rp-job-btn--stop       { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+  .printer-card-jobkeys .rp-job-btn--stop:hover { background: color-mix(in srgb, var(--danger) 26%, var(--surface)); }
+  .printer-card-jobkeys .rp-job-btn--stop .icon { background: var(--danger); }
+  .printer-card-jobkeys .rp-job-btn--stop.is-confirming       { background: var(--danger); }
+  .printer-card-jobkeys .rp-job-btn--stop.is-confirming .icon { background: var(--on-accent); }
+  /* The hold fill MUST be visible against the key's own plate — a hold button
+     whose progress cannot be seen reads as broken, because nothing happens
+     until the hold completes and the user lets go first. */
+  .printer-card-jobkeys .rp-job-btn--stop .hold-progress {
+    position: absolute; left: 0; top: 0;
+    width: 0; height: 100%;
+    background: color-mix(in srgb, var(--danger) 34%, transparent);
+    opacity: 1;
+    pointer-events: none;
+  }
+
+  /* ── Print widget on the board ───────────────────────────────────────────
+     The panel's job block, placeable: preview, file, percentage, bar, state,
+     remaining time, finish clock, layers. It keeps the board's card width like
+     every other widget, so a machine's column stays a column. */
+  .job-card-body { display: flex; flex-direction: column; gap: 8px; padding: 2px 0 0; }
+  .job-card-top  { display: flex; align-items: center; gap: 10px; }
+  .job-card-thumb {
+    width: 54px; height: 54px; flex: none; border-radius: 8px;
+    background: var(--surface-2) center/cover no-repeat;
+    border: 1px solid var(--border);
+  }
+  /* Falling back to the machine's photo: shown whole, not cropped, and set back
+     a little so it reads as "no print" rather than as this print's preview. */
+  .job-card-thumb--printer {
+    background-size: contain;
+    background-color: var(--surface-2);
+    opacity: .7;
+  }
+  .job-card-meta { flex: 1; min-width: 0; }
+  .job-card-file {
+    font-size: 11.5px; color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  /* Percentage and state on ONE line: they answer the same question. */
+  .job-card-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .job-card-pct { display: flex; align-items: baseline; font-size: 26px; font-weight: 800; line-height: 1.1; color: var(--text); letter-spacing: -.02em; }
+  .job-card-pct-u { font-size: 14px; font-weight: 700; color: var(--muted); margin-left: 2px; }
+  .job-card-bar {
+    height: 5px; border-radius: 999px; overflow: hidden;
+    background: var(--surface-3); flex: none;
+  }
+  .job-card-bar > span { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+  .job-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .job-card-time { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+  .job-card-val  { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  /* Dimmed whole when the machine is not talking — the same treatment the
+     storage and temperature widgets get, so a quiet machine reads the same
+     everywhere on the board. */
+  .job-card.is-stale .job-card-body { opacity: .55; filter: saturate(.5); }
+
+  /* ── Camera widget on the board ──────────────────────────────────────────
+     The feed fills the card's width and keeps a 16:9 frame, so a machine that
+     goes offline does not change the widget's size and shuffle the board. The
+     banner's own markup — <img>, <video>, <iframe> depending on the brand — is
+     stretched to fill it rather than restyled per transport. */
+  /* NO percentage width and NO aspect-ratio here. The card sizes itself to its
+     content (`width: max-content`), so a percentage inside it is circular — the
+     browser resolves it as `auto`, the body contributes nothing to the card's
+     width, and an aspect-ratio computed from a zero width gives a zero height:
+     the widget drew its head and an invisible body. The frame is stated
+     outright instead, from the board's own card width. */
+  .cam-card-body {
+    position: relative; align-self: stretch;
+    min-width: var(--board-card-w);
+    overflow: hidden; border-radius: 10px; background: var(--surface-3);
+  }
+  /* Empty or idle, the frame keeps the shape a feed would give it, so the widget
+     does not change size the moment you press play. */
+  .cam-card-off { aspect-ratio: 16 / 9; }
+  /* Offline: the same frame, empty — never a collapsed card. */
+  .cam-card-off { width: 100%; display: flex; align-items: center; justify-content: center; }
+  .cam-card-off .icon { background: var(--muted); opacity: .5; }
+  /* The play key. Big enough to be the obvious thing in an empty frame, quiet
+     enough not to look like an alert on a board full of them. */
+  .cam-play {
+    width: 46px; height: 46px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 50%;
+    background: var(--surface); cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .cam-play .icon { background: var(--text); opacity: .85; }
+  .cam-play:hover { background: color-mix(in srgb, var(--primary) 18%, var(--surface)); }
+  .cam-play:hover .icon { background: var(--primary); opacity: 1; }
+  .cam-play:active { transform: scale(.94); }
+  /* On a machine card the key is centred over the photo and smaller — it shares
+     the frame with the brand badge and the job keys, so it must read as one
+     control among three rather than as the card's subject. */
+  .cam-play--card {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: 34px; height: 34px; z-index: 2;
+    opacity: 0; transition: opacity .15s, background .15s;
+  }
+  .printer-card:hover .cam-play--card,
+  .cam-play--card:focus-visible { opacity: 1; }
+  .cam-play--card:active { transform: translate(-50%, -50%) scale(.94); }
+  /* The feed takes the photo's place: same box, filled rather than contained —
+     a camera frame cropped to the card reads better than one letterboxed. */
+  /* The feed goes straight into the photo box, with NO wrapper — exactly the
+     shape the camera wall uses. A wrapper of my own sat between the box and the
+     16:9 element and took a height neither of them had asked for, which is what
+     left a black band under the picture. */
+
+  /* ── Feeds in a board frame — SIZED AS THE CAMERA WALL SIZES ITS OWN ──────
+     Copied from `.cam-wall-card`, not reinvented: that view already answers
+     "a feed in a box that is not the side panel". It clears the 200px floor
+     `.pp-cam-full` carries for the panel, and names each brand's own element,
+     because they letterbox by choice — right in the panel, where losing an edge
+     would hide part of the bed; wrong on a thumbnail read at a glance. */
+  .cam-card-body .pp-cam-full,
+  .printer-card-thumb .pp-cam-full { min-height: 0; }
+  .cam-card-body .pp-cam-full,
+  .cam-card-body .snap-camera-frame,
+  .cam-card-body .cre-cam-video,
+  .cam-card-body img[src*="8898"],
+  .printer-card-thumb .pp-cam-full,
+  .printer-card-thumb .snap-camera-frame,
+  .printer-card-thumb .cre-cam-video,
+  .printer-card-thumb img[src*="8898"] { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
+  /* A feed FILLS its box; the box alone decides the shape. Needed because the
+     photo area sizes any image to its intrinsic size (`width/height: auto`,
+     `object-fit: contain`) — right for a product shot, wrong for a camera, which
+     sat small and centred inside a correctly-shaped 16:9 frame. The camera wall
+     never needed this rule: its cards hold no product photo. */
+  .cam-card-body .pp-cam-full > img,
+  .cam-card-body .pp-cam-full > video,
+  .printer-card-thumb .pp-cam-full > img,
+  .printer-card-thumb .pp-cam-full > video {
+    display: block;
+    width: 100%; height: 100%;
+    max-width: none; max-height: none;
+    object-fit: cover;
+  }
+  /* The stale dimming the other widgets get would double up on a frame that is
+     already empty, so the camera says it once. */
+  .printers-grid--plan .cam-card.is-stale { opacity: 1; }

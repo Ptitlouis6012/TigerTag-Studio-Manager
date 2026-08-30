@@ -14,7 +14,18 @@
  *   camUnsubscribe(key, imgEl) — remove consumer; starts grace timer if last
  */
 
-const GRACE_MS = 2000;
+/* How long a stream survives with nobody watching. Two seconds was shorter than
+   a view change takes: the board handed the feed back, the stream died before
+   the arriving view had finished rendering, and that view then rebuilt it from
+   nothing — a fresh connection, then the wait for a first JPEG. Seconds of black
+   on every switch, for a feed the app was holding a moment earlier.
+
+   Twelve seconds outlives any switch, so the new view subscribes to a LIVE
+   stream and is handed the last frame at once — the picture is simply there.
+   The camera is still released when you actually stop looking, which is what a
+   single-client printer needs; it is just no longer released between two views
+   that both want it. */
+const GRACE_MS = 12000;
 
 // Per-key state: { key, abort, url, consumers: Set<img>, lastFrame, running, graceTimer }
 const _streams = new Map();
@@ -36,9 +47,30 @@ export function camStart(key, url) {
     return;
   }
   if (s) { clearTimeout(s.graceTimer); s.graceTimer = null; }
+  /* CARRY THE CONSUMERS OVER. A restart used to hand the new stream an empty
+     set, so everything registered BEFORE it was orphaned and never fed again —
+     each surface registers once, when it opens, and never learns that the
+     stream underneath was replaced. Whoever registered last got the picture and
+     the others stayed black: a side panel opened while the feed was failing, a
+     card already on screen when another view started it.
+
+     Elements no longer in the document are dropped on the way. That prune is
+     what lets a stream notice its last consumer has gone — the condition that
+     arms its stop, and with it the release of a single-client camera. */
+  const kept = s ? [...s.consumers].filter(el => el && el.isConnected) : [];
+  /* HAND THE LAST PICTURE OVER TOO, and hand it over BEFORE the teardown. Stopping
+     a stream blanks its consumers (`src` removed) and revokes the frame they are
+     showing — right when a stream really ends, wrong when it is merely being
+     replaced: the elements we just decided to keep were being emptied and their
+     image revoked underneath them. That is the broken-image icon and the alt text
+     appearing a second after a feed opened perfectly. Cleared from the old stream
+     first, so the teardown finds nothing to blank and nothing to revoke; the new
+     stream owns the frame and releases it when its own first frame lands. */
+  const carried = s ? s.lastFrame : null;
+  if (s) { s.consumers = new Set(); s.lastFrame = null; }
   _stopStream(s);
-  const stream = { key, abort: new AbortController(), url, consumers: new Set(),
-                   lastFrame: null, running: true, graceTimer: null };
+  const stream = { key, abort: new AbortController(), url, consumers: new Set(kept),
+                   lastFrame: carried, running: true, graceTimer: null, retryTimer: null };
   _streams.set(key, stream);
   _pump(stream).catch(() => {});
 }
@@ -94,6 +126,7 @@ export function camUnsubscribe(key, imgEl) {
 function _stopStream(s) {
   if (!s) return;
   s.running = false;
+  clearTimeout(s.retryTimer); s.retryTimer = null;
   s.abort.abort();
   if (s.lastFrame) { URL.revokeObjectURL(s.lastFrame); s.lastFrame = null; }
   s.consumers.forEach(el => { try { el.src = "about:blank"; el.removeAttribute("src"); } catch {} });
@@ -139,6 +172,23 @@ async function _pump(stream) {
     if (e?.name !== "AbortError") console.warn("[cam-mgr]", e.message);
   } finally {
     stream.running = false;
+    /* RETRY WHILE SOMEONE IS STILL WATCHING. A camera that accepts ONE client —
+       FlashForge's does — refuses every attempt made in the gap between a view
+       handing the stream back and the printer actually closing it. Switching
+       from one view to another lands in that gap almost every time. Nothing
+       retried, so the arriving view stayed black for good while the one that got
+       there first kept the picture; and a stream is only ever re-asked for by a
+       render, which the side panel does once and never again.
+
+       Stops on its own: with no consumer still in the document, or once the
+       stream has been replaced, it does not run. */
+    const live = [...stream.consumers].filter(el => el && el.isConnected);
+    if (live.length && _streams.get(stream.key) === stream && !stream.abort.signal.aborted) {
+      clearTimeout(stream.retryTimer);
+      stream.retryTimer = setTimeout(() => {
+        if (_streams.get(stream.key) === stream) camStart(stream.key, stream.url);
+      }, 2500);
+    }
   }
 }
 

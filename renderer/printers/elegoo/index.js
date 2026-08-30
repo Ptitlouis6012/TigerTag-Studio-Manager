@@ -1648,6 +1648,12 @@ export function elegooGetTempHtml(printer) {
 }
 
 registerBrand('elegoo', {
+  /* Pause / resume / stop THIS printer, named explicitly. The panel's own
+     buttons reach the same code through `_activePrinter` — the machine whose
+     panel is open — which is right there and wrong anywhere else: the board
+     shows every machine at once, so a card has to say which one it means. */
+  controlJob: (p, a) => { const c = elegooGetConn(elegooKey(p));
+    if (c) _elgPublish(c, a === 'pause' ? 1021 : a === 'resume' ? 1023 : 1022, {}); },
   getTempHtml:          elegooGetTempHtml,
   getUnits:             elegooGetUnits,
   getSlots:             elegooGetSlots,

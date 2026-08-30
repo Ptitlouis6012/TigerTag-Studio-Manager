@@ -985,6 +985,7 @@
   /* Hidden where it could not filter anything: the printer views list devices,
      not material, and Lists show what to buy rather than what you own. */
   body.printer-filters .rv-hue,
+  body.cam-wall-view .rv-hue,
   body.lists-view .rv-hue { display: none; }
   .rv-hue-bar {
     /* One height, declared once: the grip is cut to the same value below, so a
