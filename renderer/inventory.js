@@ -23134,9 +23134,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       _camHtmlMap.set(`${p.brand}:${p.id}`, html);
       return true;
     });
+    /* A CAMERA THAT HAS BEEN PLACED KEEPS ITS PLACE. A wall that dropped a card
+       the moment its machine went quiet destroyed the arrangement it was there
+       to hold: come back after a printer slept and the others had closed the gap
+       — or rather, they had not, but the hole was indistinguishable from a
+       camera you had never placed. Anything with a stored position is drawn at
+       that position and at that size, dimmed and empty, so the layout you built
+       survives the machines being off. Only a camera that has never been placed
+       is absent; there is nothing of it to preserve. */
+    const _offlinePlaced = _camOrdered.filter(p =>
+      !_onlinePrinters.includes(p) && _camWallPos(p));
+    const _wallPrinters = [..._onlinePrinters, ..._offlinePlaced];
 
     // ── Step 2: Empty state ────────────────────────────────────────────────────
-    if (!_onlinePrinters.length) {
+    if (!_wallPrinters.length) {
       host.innerHTML = `
         <div class="printers-empty-card">
           <span class="icon icon-eye-on icon-32"></span>
@@ -23156,19 +23167,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         Array.from(existingWall.querySelectorAll(".cam-wall-card"))
           .map(c => `${c.dataset.brand}:${c.dataset.id}`)
       );
-      const newKeys = new Set(_onlinePrinters.map(p => `${p.brand}:${p.id}`));
+      const newKeys = new Set(_wallPrinters.map(p => `${p.brand}:${p.id}`));
       const sameSet = existingKeys.size === newKeys.size &&
                       [...newKeys].every(k => existingKeys.has(k));
       if (sameSet) {
-        _onlinePrinters.forEach((p, idx) => {
+        _wallPrinters.forEach((p, idx) => {
           const card = existingWall.querySelector(
             `[data-brand="${p.brand}"][data-id="${p.id}"]`
           );
           if (!card) return;
           const csize = p.camSize || _camSizes.get(`${p.brand}:${p.id}`) || "1x";
           _applyCamSize(card, csize);
-          card.style.order = idx;
         });
+        /* Positions, not order. The size may have changed, so the layout runs —
+           it MOVES existing cards and never recreates one, which is the whole
+           reason this patch path exists: a rebuild would restart every stream. */
+        _layoutCamWall(existingWall);
         return;
       }
     }
@@ -23190,25 +23204,49 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     };
     const fsIcon = `<svg width="9" height="9" viewBox="0 0 14 14" fill="none" aria-hidden="true"><path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-    const camCards = _onlinePrinters.map((p, idx) => {
-      const camHtml = _camHtmlMap.get(`${p.brand}:${p.id}`);
+    const camCards = _wallPrinters.map((p, idx) => {
+      const camHtml = _camHtmlMap.get(`${p.brand}:${p.id}`)
+        || `<div class="cam-wall-offline"><span class="icon icon-eye-off icon-24"></span></div>`;
       const meta    = PRINTER_BRAND_META[p.brand] || { label: p.brand, accent: "#888" };
       const ckey    = `${p.brand}:${p.id}`;
       const csize   = p.camSize || _camSizes.get(ckey) || "1x";
       const sizeCls = csize === "sm" ? " cam-wall-card--sm" : csize === "2x" ? " cam-wall-card--2x" : csize === "fs" ? " cam-wall-card--fs" : "";
       // style.order is set explicitly so DnD can reorder via CSS without moving DOM nodes.
       return `
-        <div class="cam-wall-card${sizeCls}" data-brand="${esc(p.brand)}" data-id="${esc(p.id)}" draggable="true" style="order:${idx}">
+        <div class="cam-wall-card${sizeCls}${_camHtmlMap.has(ckey) ? "" : " cam-wall-card--offline"}" data-brand="${esc(p.brand)}" data-id="${esc(p.id)}" data-cam-key="${esc(ckey)}">
           <div class="cam-wall-card-head">
             <span class="printer-brand-pill" style="--brand-accent:${esc(meta.accent)}">${esc(meta.label)}</span>
             <span class="cam-wall-card-name">${esc(p.printerName || "(unnamed)")}</span>
-            <div class="cam-size-btns">${_sizeBtn(csize,"sm","½×")}${_sizeBtn(csize,"1x","1×")}${_sizeBtn(csize,"2x","2×")}${_sizeBtn(csize,"fs",fsIcon)}</div>
+            <div class="cam-size-btns">${_sizeBtn(csize,"fs",fsIcon)}</div>
           </div>
           ${camHtml}
+          <span class="cam-resize" data-cam-resize aria-hidden="true"></span>
         </div>`;
     });
 
-    host.innerHTML = `<div class="cam-wall">${camCards.join("")}</div>`;
+    /* The same bar as the other two plans, to the character: same classes, same
+       order, same numeric field with its own `%` beside it. Written differently
+       it LOOKED different — a text field with the percent inside it takes the
+       default width, which is why this one sprawled while theirs stayed a neat
+       pill. Three views that behave alike must also be built alike. */
+    host.innerHTML = `
+      <div class="pv-plan-bar">
+        <button type="button" class="rv-plan-btn${_camArrange ? " on" : ""}" id="cwArrangeBtn"
+                aria-pressed="${_camArrange ? "true" : "false"}">
+          <span class="icon icon-grip icon-14"></span>
+          <span>${esc(_camArrange ? t("rackPlanDone") : t("rackPlanEdit"))}</span>
+        </button>
+        <div class="rv-plan-zoom" role="group" aria-label="${esc(t("rackPlanZoom"))}">
+          <button type="button" id="cwZoomOut" aria-label="${esc(t("rackPlanZoomOut"))}">−</button>
+          <input class="val" id="cwZoomVal" type="number" inputmode="numeric"
+                 min="${PLAN_ZOOM_MIN}" max="${PLAN_ZOOM_MAX}" step="${PLAN_ZOOM_STEP}"
+                 value="${Math.round(_camZoom * 100)}" aria-label="${esc(t("rackPlanZoom"))}"><span class="pct">%</span>
+          <button type="button" id="cwZoomIn" aria-label="${esc(t("rackPlanZoomIn"))}">+</button>
+        </div>
+      </div>
+      <div class="printers-scroll cam-scroll">
+        <div class="cam-wall cam-wall--plan">${camCards.join("")}</div>
+      </div>`;
 
     host.querySelectorAll("[data-ffg-cam-key]").forEach(img => {
       const key = img.dataset.ffgCamKey;
@@ -23222,7 +23260,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // reAttachCreCamConsumers() handles both the "first render" and the "came back
     // after navigating to table/grid" cases without reopening a peer connection.
     {
-      const crePrinters = _onlinePrinters.filter(p => p.brand === "creality" && p.ip);
+      const crePrinters = _onlinePrinters.filter(p => p.brand === "creality" && p.ip);   // live only
       // One independent WebRTC session per printer (per IP) — different Crealities
       // are different peers, so each card shows ITS OWN camera. Idempotent: a live
       // session is reused + re-attached rather than reopened.
@@ -23233,7 +23271,253 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // (The "Detach" button now lives in the toolbar actions slot, shown only in
     // Cam view — see #camWallDetachTop. No in-wall toolbar anymore.)
 
-    wireCamWallDnd(host);
+    _layoutCamWall(host.querySelector(".cam-wall"));
+    wireCamWallPlan(host);
+  }
+
+  /* Everything that makes the wall a board: move a card, sweep a selection, pan
+     and zoom the surface. Deliberately the SAME primitives the other two views
+     use — `wirePlanPan`, `wirePlanMarquee`, `planFreeSpot` — so the three cannot
+     drift apart in feel.
+
+     A card is moved by its handle only. On the other boards the whole card is a
+     handle outside Arrange mode; here it cannot be, because the card IS a live
+     video the user will click, drag on, and put fullscreen. */
+  function wireCamWallPlan(host) {
+    const wall = host.querySelector(".cam-wall");
+    const scroller = host.querySelector(".cam-scroll");
+    if (!wall || !scroller || wall._camWired) return;
+    wall._camWired = true;
+
+    let g = null;
+    wall.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      /* THE HEAD IS ALWAYS A HANDLE. It is chrome, not picture, so grabbing it can
+         never be mistaken for a click on the video — which is why it works
+         outside Arrange too, where the card itself must stay clickable. Arranging
+         then extends the handle to the whole card, the same bargain the other two
+         boards strike. Buttons inside the head keep their clicks either way. */
+      if (e.target.closest?.(".cam-size-btns, [data-cam-resize]")) return;
+      const card = (_camArrange ? e.target.closest?.(".cam-wall-card") : null)
+                || e.target.closest?.(".cam-wall-card-head")?.closest(".cam-wall-card");
+      if (!card) return;
+      e.preventDefault(); e.stopPropagation();
+      const key = card.dataset.camKey;
+      /* Move the whole selection when the card taken is part of one, each at its
+         own offset — the same gesture the other boards give you. */
+      /* The card actually grabbed leads the list: it is the one the magnetism
+         speaks for, and the rest of the set follows at its own offset. */
+      const keys = _camSel.has(key) ? [key, ...[..._camSel].filter(k => k !== key)] : [key];
+      const items = keys.map(k => {
+        const el = wall.querySelector(`.cam-wall-card[data-cam-key="${CSS.escape(k)}"]`);
+        return el ? { k, el, x0: parseFloat(el.style.left) || 0, y0: parseFloat(el.style.top) || 0 } : null;
+      }).filter(Boolean);
+      /* Everything NOT in the hand is something to align against — the same
+         magnetism the storage and printer plans use, told to look at this
+         container. Measured once at the grab: they cannot move during it. */
+      const moving = new Set(keys);
+      const neighbours = Array.from(wall.children)
+        .filter(el => el.dataset.camKey && !moving.has(el.dataset.camKey) && el.offsetWidth)
+        .map(el => ({ x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0,
+                      w: el.offsetWidth, h: el.offsetHeight }));
+      g = { items, neighbours, sx: e.clientX, sy: e.clientY, moved: false };
+      /* WHAT IS IN THE HAND COMES TO THE FRONT, and it has to be said inline:
+         the layout writes each card's depth as an inline style, which no
+         stylesheet rule can outrank — so a card being dragged stayed buried
+         under the ones it was passing over. Their relative order within the set
+         is kept, so a group moves as it looked. */
+      /* THE MESH APPEARS THE MOMENT YOU TAKE SOMETHING, in or out of Arrange.
+         Outside it there is nothing else to say that a gesture has become an
+         edit — the card simply starts following the pointer — and a grid that
+         shows up under your hand explains the snapping before it happens. */
+      host.classList.add("is-plan-moving");
+      items.forEach((i, n) => {
+        _camHeld.add(i.k);
+        i.el.classList.add("is-plan-dragging");
+        i.z0 = i.el.style.zIndex;
+        i.el.style.zIndex = String(9000 + n);
+      });
+      document.body.classList.add("is-plan-grabbing");
+      try { card.setPointerCapture(e.pointerId); } catch {}
+    });
+    wall.addEventListener("pointermove", e => {
+      if (!g) return;
+      const z = _camZoom || 1;
+      const dx = (e.clientX - g.sx) / z, dy = (e.clientY - g.sy) / z;
+      if (!g.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      /* RAISED THE INSTANT THIS BECOMES A MOVE, not when it ends. Setting it in
+         the drop meant setting it after the writes were awaited — and the click
+         that follows a release fires long before a Firestore round-trip
+         resolves, so the guard was always too late and the panel opened anyway. */
+      g.moved = true;
+      _camJustDragged = true;
+      /* The leader is snapped — flush to a neighbour's edge, or edges and centres
+         lined up — and the whole set is shifted by whatever that snap decided, so
+         a group keeps its internal spacing exactly. The guides say WHY it clicked
+         into place; without them the magnetism feels like the card resisting. */
+      const lead = g.items[0];
+      const want = planSnap(lead.x0 + dx, lead.y0 + dy,
+                            lead.el.offsetWidth, lead.el.offsetHeight, g.neighbours);
+      const ddx = want.x - lead.x0, ddy = want.y - lead.y0;
+      g.items.forEach(i => {
+        i.el.style.left = Math.max(0, Math.round(i.x0 + ddx)) + "px";
+        i.el.style.top  = Math.max(0, Math.round(i.y0 + ddy)) + "px";
+      });
+      planDrawGuides(want.guideX, want.guideY, wall);
+    });
+    const drop = async () => {
+      if (!g) return;
+      const gg = g; g = null;
+      document.body.classList.remove("is-plan-grabbing");
+      host.classList.remove("is-plan-moving");
+      planClearGuides(wall);
+      /* Synchronously, before anything is awaited: the click that ends the
+         gesture is already on its way. */
+      if (gg.moved) { _camJustDragged = true; setTimeout(() => { _camJustDragged = false; }, 120); }
+      /* Released only once the writes have landed — the same discipline the
+         printer board needed: a snapshot arriving in between would redraw the
+         wall from coordinates the user has already moved on from. */
+      await Promise.all(gg.items.map(i => {
+        const p = state.printers.find(v => _printerKey(v) === i.k);
+        return p ? _camWallSave(p, parseFloat(i.el.style.left) || 0, parseFloat(i.el.style.top) || 0) : null;
+      }));
+      /* Dropped LAST means dropped ON TOP, for good: the save above gave each
+         card a fresh depth, so the inline value is restored from the record
+         rather than from what it was before the grab. */
+      gg.items.forEach(i => {
+        _camHeld.delete(i.k);
+        i.el.classList.remove("is-plan-dragging");
+        const p = state.printers.find(v => _printerKey(v) === i.k);
+        i.el.style.zIndex = String((p && _camWallZ(p)) || i.z0 || 1);
+      });
+    };
+    wall.addEventListener("pointerup", drop);
+    wall.addEventListener("pointercancel", drop);
+    window.addEventListener("pointerup", () => { if (g) drop(); });
+
+    /* THE GRIP. Resizing writes the element's width directly and nothing else —
+       no rebuild, no re-render — because the card holds a running video: the one
+       rule this whole view is built on. Only the release touches the record. */
+    let rz = null;
+    wall.addEventListener("pointerdown", e => {
+      if (e.button !== 0) return;
+      const grip = e.target.closest?.("[data-cam-resize]");
+      if (!grip) return;
+      const card = grip.closest(".cam-wall-card"); if (!card) return;
+      e.preventDefault(); e.stopPropagation();
+      rz = { card, key: card.dataset.camKey, sx: e.clientX, w0: card.offsetWidth };
+      _camResizing.add(rz.key);
+      card.classList.add("is-resizing");
+      host.classList.add("is-plan-moving");
+      document.body.classList.add("is-plan-grabbing");
+      try { card.setPointerCapture(e.pointerId); } catch {}
+    });
+    wall.addEventListener("pointermove", e => {
+      if (!rz) return;
+      const w = Math.round((rz.w0 + (e.clientX - rz.sx) / (_camZoom || 1)) / 8) * 8;
+      rz.card.style.width = Math.max(CAM_W_MIN, Math.min(CAM_W_MAX, w)) + "px";
+    });
+    const endResize = async () => {
+      if (!rz) return;
+      const r = rz; rz = null;
+      document.body.classList.remove("is-plan-grabbing");
+      host.classList.remove("is-plan-moving");
+      r.card.classList.remove("is-resizing");
+      const p = state.printers.find(v => _printerKey(v) === r.key);
+      if (p) await _camWallSave(p, parseFloat(r.card.style.left) || 0,
+                                  parseFloat(r.card.style.top) || 0,
+                                  _camWallZ(p) || _camNextZ(),
+                                  r.card.offsetWidth);
+      _camResizing.delete(r.key);
+      _layoutCamWall(wall);           // the surface grows to hold the new size
+    };
+    wall.addEventListener("pointerup", endResize);
+    wall.addEventListener("pointercancel", endResize);
+    window.addEventListener("pointerup", () => { if (rz) endResize(); });
+
+    /* The left button belongs to the SELECTION while arranging, and to the view
+       the rest of the time — the same bargain the storage plan strikes. Sweeping
+       and panning both start on empty surface, so one of them has to yield, and
+       arranging is precisely when you mean to pick cards rather than travel.
+       The wheel button pans in both modes, so the view is never trapped. */
+    wirePlanPan(scroller, ".cam-wall-card", () => !_camArrange);
+    wirePlanMarquee(scroller, {
+      boardOf: () => wall,
+      itemSel: ".cam-wall-card[data-cam-key]",
+      blockSel: ".cam-wall-card",
+      keyOf: el => el.dataset.camKey,
+      posOf: k => { const p = state.printers.find(v => _printerKey(v) === k); return p ? _camWallPos(p) : null; },
+      zoomOf: () => _camZoom,
+      enabled: () => _camArrange,
+      sel: _camSel,
+      sync: () => wall.querySelectorAll(".cam-wall-card").forEach(el =>
+        el.classList.toggle("is-plan-selected", _camSel.has(el.dataset.camKey))),
+      clear: () => { _camSel.clear(); wall.querySelectorAll(".cam-wall-card").forEach(el => el.classList.remove("is-plan-selected")); },
+    });
+
+    /* THE SAME ZOOM AS THE OTHER PLANS, down to holding the point under the
+       cursor still: the same bounds, the same round-ten ladder, the same anchor
+       arithmetic. A zoom that let the board slide under the pointer reads as
+       something having MOVED, which on a view whose whole purpose is where
+       things are is exactly the wrong impression. */
+    const setZoom = (pc, anchor) => {
+      const next = _clampZoom(pc) / 100;
+      const f = host.querySelector("#cwZoomVal");
+      if (next === _camZoom) { if (f) f.value = Math.round(_camZoom * 100); return; }
+      const prev = _camZoom;
+      let hold = null;
+      const box = scroller.getBoundingClientRect();
+      const ax = anchor ? anchor.x - box.left : box.width / 2;
+      const ay = anchor ? anchor.y - box.top  : box.height / 2;
+      hold = { ax, ay, cx: (scroller.scrollLeft + ax) / prev, cy: (scroller.scrollTop + ay) / prev };
+      _camZoom = next;
+      try { localStorage.setItem("tigertag.camwall.zoom", String(_camZoom)); } catch {}
+      if (f) f.value = Math.round(_camZoom * 100);
+      host.classList.toggle("is-plan-coarse", _camZoom < .55);
+      host.style.setProperty("--plan-z", String(_camZoom));
+      _layoutCamWall(wall);
+      scroller.scrollLeft = Math.max(0, hold.cx * next - hold.ax);
+      scroller.scrollTop  = Math.max(0, hold.cy * next - hold.ay);
+    };
+    const stepZoom = (dir, anchor) => {
+      const cur = Math.round(_camZoom * 100);
+      setZoom(dir > 0 ? (Math.floor(cur / PLAN_ZOOM_STEP) + 1) * PLAN_ZOOM_STEP
+                      : (Math.ceil(cur / PLAN_ZOOM_STEP) - 1) * PLAN_ZOOM_STEP, anchor);
+    };
+    const applyArrange = () => {
+      host.classList.toggle("is-plan-edit", _camArrange);
+      host.classList.toggle("is-plan-coarse", _camZoom < .55);
+      host.style.setProperty("--plan-z", String(_camZoom));
+      const b = host.querySelector("#cwArrangeBtn");
+      if (b) {
+        b.classList.toggle("on", _camArrange);
+        b.setAttribute("aria-pressed", _camArrange ? "true" : "false");
+        const lbl = b.querySelector("span:last-child");
+        if (lbl) lbl.textContent = _camArrange ? t("rackPlanDone") : t("rackPlanEdit");
+      }
+    };
+    applyArrange();
+    host.querySelector("#cwArrangeBtn")?.addEventListener("click", () => {
+      _camArrange = !_camArrange;
+      try { localStorage.setItem("tigertag.camwall.arrange", _camArrange ? "1" : "0"); } catch {}
+      if (!_camArrange) { _camSel.clear(); wall.querySelectorAll(".cam-wall-card").forEach(el => el.classList.remove("is-plan-selected")); }
+      applyArrange();
+    });
+    host.querySelector("#cwZoomOut")?.addEventListener("click", () => stepZoom(-1));
+    host.querySelector("#cwZoomIn") ?.addEventListener("click", () => stepZoom(+1));
+    const cwField = host.querySelector("#cwZoomVal");
+    cwField?.addEventListener("change", () => setZoom(parseFloat(cwField.value)));
+    cwField?.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); cwField.blur(); } });
+    if (!scroller._camZoomWired) {
+      scroller._camZoomWired = true;
+      scroller.addEventListener("wheel", e => {
+        /* A wheel held down still turns a little under the thumb, and those stray
+           notches were landing on the zoom while the user was only panning. */
+        if (_planPanning) return;
+        e.preventDefault();
+        stepZoom(e.deltaY < 0 ? +1 : -1, { x: e.clientX, y: e.clientY });
+      }, { passive: false });
+    }
   }
 
   /* ── Printer drag & drop reordering ────────────────────────────────────
@@ -23244,6 +23528,125 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      known from its `brand` property, which we set when ingesting the
      snapshot, so the path resolution is local.                            */
   let _printerJustDragged = false;
+
+  /* ── The camera wall is a PLAN ────────────────────────────────────────────
+     Same model as the storage and printer boards: cards sit where the user put
+     them, on a surface you pan and zoom, instead of flowing in a grid. It reuses
+     the shared primitives — the rubber band, the panning, the free-spot search —
+     so the three views behave identically by construction rather than by
+     resemblance.
+
+     Positions live on the device document as `camWallPlan`. A field of its own,
+     because a machine's camera WIDGET on the printer board already owns
+     `camPlan`, and the same camera is placed independently in the two views.
+
+     ONE RULE GOVERNS EVERYTHING HERE: a card holds a live stream, so it is never
+     recreated — only moved. Every path below positions existing elements. */
+  let _camArrange = localStorage.getItem("tigertag.camwall.arrange") === "1";
+  let _camZoom = (() => {
+    const v = parseFloat(localStorage.getItem("tigertag.camwall.zoom") || "1");
+    return Number.isFinite(v) && v >= .3 && v <= 2 ? v : 1;
+  })();
+  const CAM_W_MIN = 160, CAM_W_MAX = 1200, CAM_W_DEF = 320;
+  const _camWallPos = p => {
+    const q = p?.camWallPlan;
+    return (q && Number.isFinite(q.x) && Number.isFinite(q.y))
+      ? { x: Math.max(0, Math.round(q.x)), y: Math.max(0, Math.round(q.y)) } : null;
+  };
+  /* Width is part of where a camera IS, so it travels with the position rather
+     than in a separate setting. Only the width is stored: the picture is 16:9
+     and the head has a fixed height, so one number describes the card. Three
+     preset sizes were a stand-in for this — with a grip you can drag, they were
+     three answers to a question the user can now answer exactly. */
+  const _camWallW = p => {
+    const w = Number(p?.camWallPlan?.w);
+    return Number.isFinite(w) ? Math.max(CAM_W_MIN, Math.min(CAM_W_MAX, w)) : CAM_W_DEF;
+  };
+  const _camWallZ = p => Number.isFinite(p?.camWallPlan?.z) ? p.camWallPlan.z : 0;
+  const _camNextZ = () =>
+    1 + state.printers.reduce((m, p) => Math.max(m, _camWallZ(p)), 0);
+  async function _camWallSave(printer, x, y, z = _camNextZ(), w = _camWallW(printer)) {
+    const plan = { x, y, z, w };
+    const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
+    if (live) live.camWallPlan = plan;            // optimistic: no render wait
+    const uid = state.activeAccountId;
+    if (!uid) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc(printer.brand)
+        .collection("devices").doc(printer.id)
+        .set({ camWallPlan: plan }, { merge: true });
+    } catch (e) { console.warn("[cam-plan] save failed:", e?.message || e); }
+  }
+  const _camAdopting = new Set();
+  /* Places every card at its own coordinates. A camera never placed — a machine
+     that just came online — flows below the arrangement rather than landing on
+     top of it, and is GIVEN that spot for good: left computed, it would drift
+     every time a neighbour changed size. */
+  function _layoutCamWall(container) {
+    if (!container) return;
+    const orphans = [];
+    let bottom = 0, right = 0;
+    /* WIDTHS FIRST, in their own pass. The free-spot search measures a card to
+       find room for it, and a card not yet given its width measures whatever the
+       stylesheet last left it — which is how a first render dealt every camera a
+       slot the wrong size and piled them on top of each other. */
+    Array.from(container.children).forEach(el => {
+      const key = el.dataset.camKey; if (!key) return;
+      /* FULLSCREEN LEAVES THE PLAN. It pins itself to the window, and the layout
+         writes position, size and depth as INLINE styles — which no stylesheet
+         can outrank, so a card sent fullscreen simply grew inside the surface
+         instead of covering it. Its inline geometry is cleared and never
+         rewritten while it is up there; the next layout after it comes back
+         restores it. */
+      if (el.classList.contains("cam-wall-card--fs")) {
+        el.style.position = el.style.left = el.style.top = el.style.width = el.style.zIndex = "";
+        return;
+      }
+      const p = state.printers.find(v => _printerKey(v) === key);
+      el.style.position = "absolute";
+      if (p && !_camResizing.has(key)) el.style.width = _camWallW(p) + "px";
+    });
+    Array.from(container.children).forEach(el => {
+      const key = el.dataset.camKey; if (!key) return;
+      if (el.classList.contains("cam-wall-card--fs")) return;   // not on the plan
+      if (_camHeld.has(key)) return;               // in the user's hand
+      const p = state.printers.find(v => _printerKey(v) === key);
+      const pos = p ? _camWallPos(p) : null;
+      if (!pos) { orphans.push({ el, p }); return; }
+      el.style.left = pos.x + "px";
+      el.style.top  = pos.y + "px";
+      el.style.zIndex = String(_camWallZ(p) || 1);
+      bottom = Math.max(bottom, pos.y + el.offsetHeight);
+      right  = Math.max(right,  pos.x + el.offsetWidth);
+    });
+    let ox = 0;
+    orphans.forEach(({ el, p }) => {
+      const { x, y } = planFreeSpot(container, { x: ox, y: bottom + PLAN_CELL },
+                                    el.offsetWidth, el.offsetHeight, el.dataset.camKey);
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      if (p && !_camAdopting.has(el.dataset.camKey)) {
+        _camAdopting.add(el.dataset.camKey);
+        _camWallSave(p, x, y).finally(() => _camAdopting.delete(el.dataset.camKey));
+      }
+      ox += el.offsetWidth + 12;
+      right  = Math.max(right,  x + el.offsetWidth);
+      bottom = Math.max(bottom, y + el.offsetHeight);
+    });
+    container.style.width  = (right  + 240) + "px";
+    container.style.height = (bottom + 240) + "px";
+    container.style.transform = `scale(${_camZoom})`;
+  }
+  const _camHeld = new Set();
+  const _camSel  = new Set();
+  const _camResizing = new Set();
+  /* A gesture that MOVED something is not a request for a destination. The click
+     that ends a drag lands on the card, and without this it opened the machine's
+     panel over the wall the user was laying out. Same 50 ms window the printer
+     board uses: long enough to cover the click, short enough never to swallow a
+     real one. */
+  let _camJustDragged = false;
 
   // Per-card size preferences for the cam wall: "1x" | "2x" | "fs".
   // Persisted in localStorage so the layout survives app restarts.
@@ -23301,6 +23704,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     _camSizes.set(ckey, size);
     _saveCamSizes();
     _applyCamSize(card, size);
+    /* Entering or leaving fullscreen changes what the plan contains, so the
+       surface is measured again — and the card gets its inline geometry back on
+       the way out. */
+    _layoutCamWall(card.closest(".cam-wall"));
     const p = state.printers.find(x => `${x.brand}:${x.id}` === ckey);
     if (p) { p.camSize = size; persistCamSize(p, size); }
   }
@@ -24790,39 +25197,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
-  function wireCamWallDnd(host) {
-    const grid = host.querySelector(".cam-wall");
-    if (!grid) return;
-    // Same "make room" animation as the printer grid. `_applyCamWallReorder` shuffles
-    // CSS `order` only (never detaches nodes), so live WebRTC/iframe streams keep
-    // running while the cards slide.
-    _wireMakeRoomDnd(grid, {
-      itemSel: ".cam-wall-card",
-      idOf: el => `${el.dataset.brand}:${el.dataset.id}`,
-      isGrid: true,
-      draggingClass: "cam-wall-card--dragging",
-      onReorder: (dragId, targetId, before) => _applyCamWallReorder(grid, dragId, targetId, before),
-    });
-  }
+  /* The wall's drag-to-reorder is gone with the grid it served: on a plan a card
+     is MOVED, not resequenced, so `camSortIndex` no longer decides anything the
+     user sees. It survives only as the order unplaced cameras flow in on their
+     very first render. */
 
-  function _applyCamWallReorder(grid, dragId, targetId, before) {
-    // Reorder using CSS `order` — never moves DOM nodes so iframe/WebRTC streams
-    // are not interrupted (browsers reload iframes on any DOM detach+reattach).
-    const cards = Array.from(grid.querySelectorAll(".cam-wall-card"))
-      .sort((a, b) => (parseInt(a.style.order) || 0) - (parseInt(b.style.order) || 0));
-    const dragIdx = cards.findIndex(c => `${c.dataset.brand}:${c.dataset.id}` === dragId);
-    const tgtIdx  = cards.findIndex(c => `${c.dataset.brand}:${c.dataset.id}` === targetId);
-    if (dragIdx === -1 || tgtIdx === -1) return;
-    const [dragCard] = cards.splice(dragIdx, 1);
-    const newTgt = cards.findIndex(c => `${c.dataset.brand}:${c.dataset.id}` === targetId);
-    cards.splice(before ? newTgt : newTgt + 1, 0, dragCard);
-    cards.forEach((card, idx) => {
-      card.style.order = idx;
-      const p = state.printers.find(x => x.brand === card.dataset.brand && x.id === card.dataset.id);
-      if (p) p.camSortIndex = idx;
-    });
-    persistCamWallOrder(cards.map(c => ({ brand: c.dataset.brand, id: c.dataset.id })));
-  }
+
+
 
   /* ── Printer detail side panel ─────────────────────────────────────────
      Slide-in panel mirroring the inventory detail panel. Shows everything
@@ -25117,6 +25498,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
     const camCard = e.target.closest(".cam-wall-card");
     if (camCard) {
+      /* Arranging makes the whole card a handle, so every placement ends in a
+         click on it — and a panel sliding open over the wall you are laying out
+         is the opposite of what you came here to do. Outside Arrange the head is
+         still a handle, so a drag that just ended must not read as a request for
+         a destination either. The resize grip is excluded for the same reason. */
+      if (_camArrange || _camJustDragged || e.target.closest("[data-cam-resize]")) return;
       if (camCard.classList.contains("cam-wall-card--fs")) {
         _setCamSize(camCard, "1x");
         return;

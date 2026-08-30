@@ -2955,3 +2955,148 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   /* The stale dimming the other widgets get would double up on a frame that is
      already empty, so the camera says it once. */
   .printers-grid--plan .cam-card.is-stale { opacity: 1; }
+
+  /* ── The camera wall as a PLAN ───────────────────────────────────────────
+     Same surface as the storage and printer boards: cards placed by hand, a
+     scroller that pans over them, a zoom that scales the whole thing from its
+     top-left. The grid, the flow order and the ½×/1×/2× presets are gone — a
+     grip answers the size question exactly instead of in three steps. */
+  .cam-scroll { position: relative; overflow: auto; height: 100%; }
+  .cam-wall--plan {
+    position: relative;
+    display: block;                 /* not a grid any more — cards are placed */
+    transform-origin: 0 0;
+    min-height: 240px;
+  }
+  .cam-wall--plan .cam-wall-card {
+    position: absolute;
+    grid-column: auto;              /* neutralise the old span rules */
+    margin: 0;
+    /* The card is only as tall as its head plus a 16:9 picture, so ONE number —
+       the width — describes it. */
+    height: auto;
+  }
+  /* No z-index here: the layout writes each card's depth inline, which this
+     could never outrank. The lift is done in the drag itself, on the element. */
+  .cam-wall--plan .cam-wall-card.is-plan-dragging { cursor: grabbing; }
+  .cam-wall--plan .cam-wall-card.is-plan-selected,
+  .cam-wall--plan .cam-wall-card.is-resizing {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  /* The move handle sits in the head, first, exactly like a rack's and a
+     machine's — the card itself cannot be the handle here, because it is a video
+     the user will click, drag across and put fullscreen. */
+  /* The grip. Bottom-right, quiet until the card is hovered — a permanent
+     handle on every camera would read as clutter on a wall of ten. */
+  .cam-resize {
+    position: absolute; right: 0; bottom: 0;
+    width: 18px; height: 18px;
+    cursor: nwse-resize;
+    opacity: 0; transition: opacity .15s;
+    z-index: 3;
+  }
+  .cam-resize::after {
+    content: ""; position: absolute; right: 3px; bottom: 3px;
+    width: 9px; height: 9px;
+    border-right: 2px solid var(--on-dark); border-bottom: 2px solid var(--on-dark);
+    border-bottom-right-radius: 3px; opacity: .75;
+  }
+  .cam-wall--plan .cam-wall-card:hover .cam-resize,
+  .cam-wall--plan .cam-wall-card.is-resizing .cam-resize { opacity: 1; }
+  /* Fullscreen leaves the plan entirely — pinned to the window, not placed on
+     the surface beneath it. The layout stops writing inline geometry on this
+     card while it is up, which is what lets these rules apply at all. */
+  .cam-wall--plan .cam-wall-card--fs {
+    position: fixed; inset: 0; width: auto; height: auto;
+    outline: none; z-index: 2000;
+  }
+
+  /* ── Arranging the camera wall ───────────────────────────────────────────
+     The same mesh the storage plan draws, at the same 24 px step, scaled by the
+     zoom so it keeps matching the snap. Only while arranging: a wall you are
+     watching should show pictures, not graph paper. */
+  #invPrinterView.is-plan-edit .cam-scroll,
+  #invPrinterView.is-plan-moving .cam-scroll {
+    background-attachment: local;
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1)),
+      calc(24px * var(--plan-z, 1))  calc(24px * var(--plan-z, 1));
+  }
+  /* Zoomed well out the fine mesh is graph paper rather than a guide. */
+  #invPrinterView.is-plan-coarse.is-plan-edit .cam-scroll,
+  #invPrinterView.is-plan-coarse.is-plan-moving .cam-scroll {
+    background-image:
+      linear-gradient(var(--grid-major) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-major) 1px, transparent 1px);
+    background-size:
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1)),
+      calc(120px * var(--plan-z, 1)) calc(120px * var(--plan-z, 1));
+  }
+  /* While arranging the card is a thing you move, so it says so — and its head
+     stops hiding, because that is where its name and its controls live and you
+     are now working with the cards rather than watching them. */
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card { cursor: grab; outline: 1px solid var(--border); }
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card:hover { outline-color: var(--border-strong); }
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card-head { opacity: 1; }
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-resize { opacity: 1; }
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-plan-dragging { cursor: grabbing; }
+  /* The head offers the grab, in both modes — it is the part of the card that is
+     not the picture, so taking hold of it is never ambiguous. */
+  .cam-wall--plan .cam-wall-card-head { cursor: grab; }
+  .cam-wall--plan .cam-wall-card-head .cam-size-btns { cursor: default; }
+  .cam-wall--plan .cam-wall-card.is-plan-dragging .cam-wall-card-head { cursor: grabbing; }
+
+  /* A placed camera whose machine is quiet keeps its place and its size, drawn
+     empty and set back. Dimmed rather than hidden: the arrangement is the point
+     of this view, and a card that vanished when a printer slept would take a
+     piece of it with it — while a solid black rectangle would read as a feed
+     that had failed. Its head stays reachable, so it can still be moved and
+     resized while the machine is off. */
+  .cam-wall-card--offline { opacity: .5; }
+  .cam-wall-card--offline:hover { opacity: .8; }
+  .cam-wall-offline {
+    width: 100%; aspect-ratio: 16 / 9;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--surface-2);
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+  }
+  .cam-wall-offline .icon { background: var(--muted); opacity: .6; }
+
+  /* ── The states of a camera card, in the order they must win ─────────────
+     Arranging draws a plain border on every card, and that rule carries the
+     view's id — so at lower specificity a SELECTION was silently overruled by
+     it, and hovering a selected card overruled it again. Written here at the
+     same weight and after it, so the outcome is decided by this order rather
+     than by which selector happens to carry an extra class. Same accent, same
+     2px, same offset as the storage and printer boards: a selection has to look
+     identical wherever it is made. */
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-plan-selected,
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-plan-selected:hover,
+  #invPrinterView .cam-wall--plan .cam-wall-card.is-plan-selected,
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-resizing,
+  #invPrinterView .cam-wall--plan .cam-wall-card.is-resizing {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+  }
+  /* Held beats selected: while a set is moving, what is in the hand is what you
+     need to see. */
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-plan-dragging,
+  #invPrinterView.is-plan-edit .cam-wall--plan .cam-wall-card.is-plan-dragging:hover,
+  #invPrinterView .cam-wall--plan .cam-wall-card.is-plan-dragging {
+    outline: 2px solid var(--primary); outline-offset: 2px;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .5);
+  }
+
+  /* The alignment guides must sit above the card being dragged. On the storage
+     plan its cards live at a low depth, so the shared 1001 clears them; here a
+     held card is lifted to the front deliberately, and the guides have to clear
+     THAT — a guide hidden behind the thing it is guiding explains nothing. */
+  .cam-wall--plan .rp-plan-guides { z-index: 9500; }
