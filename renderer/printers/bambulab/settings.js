@@ -6,7 +6,9 @@
 export const meta = {
   label: "Bambu Lab",
   accent: "#1ba84e",
-  connection: "MQTT (LAN)"
+  // Brand-picker capability line: both modes are offered — the local broker, and
+  // the account's cloud broker for machines added by signing in (PROTOCOL.md §17).
+  connection: "MQTT (LAN / Cloud)"
 };
 
 export const schema = {

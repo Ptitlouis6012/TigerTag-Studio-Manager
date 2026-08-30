@@ -112,7 +112,15 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3276-3365 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
 | 3366-3483 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3484-3815)
+## Bambu Lab cloud — REST + shared cloud MQTT (L3484-3801)
+
+| L | What | Anchors / IPC |
+|---|---|---|
+| 3484-3576 | Tolerant REST helper over ELECTRON's `net` — Chromium's stack on purpose, because the login sits behind Cloudflare, which reads the TLS fingerprint | `_bblFetch`, `_bblHeaders` |
+| 3577-3700 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
+| 3701-3801 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
+
+## Anycubic LAN — MQTT, provisioning, FLV camera (L3802-4133)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -121,7 +129,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3213-3235 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3236-3343 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L3738-4099)
+## Anycubic cloud — REST + cloud MQTT (L4134-4599)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -131,8 +139,8 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3668-3704 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
 | 3705-3809 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
 
-## App lifecycle (L3810-3870)
+## App lifecycle (L4600-4665)
 
 | L | What |
 |---|---|
-| 3810-3870 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |
+| 4600-4665 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |

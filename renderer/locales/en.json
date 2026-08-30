@@ -776,6 +776,27 @@
   "snapAddChoiceScanHint": "Auto-detect on your local network",
   "snapAddChoiceManual": "Enter IP address",
   "snapAddChoiceManualHint": "If you already know its IP",
+  "bblCloudChoice": "Use my Bambu Lab account",
+  "bblCloudChoiceHint": "Finds all your printers on their own",
+  "bblCloudTitle": "Sign in to Bambu Lab",
+  "bblCloudSub": "Your email, a code, and your printers show up.",
+  "bblCloudEmailPh": "you@example.com",
+  "bblCloudSendCode": "Send me a code",
+  "bblCloudCodePh": "The code from your inbox",
+  "bblCloudSignIn": "Sign in",
+  "bblCloudChangeEmail": "Change",
+  "bblCloudCodeSent": "Code sent — good for 10 minutes. Look for a mail from Bambu Lab.",
+  "bblCloudErrCode": "That code isn't right. Check it and try again.",
+  "bblCloudErrExpired": "That code has expired. We've sent a fresh one.",
+  "bblCloudErrBlocked": "Bambu Lab is turning us away right now. Give it a minute.",
+  "bblCloudErrGeneric": "Sign-in didn't go through. Try again.",
+  "bblCloudNoPrinters": "No printers on this account yet.",
+  "bblCloudPick": "Tick the ones you want",
+  "bblCloudAddSelected": {
+    "one": "Add this printer",
+    "other": "Add these {{n}} printers"
+  },
+  "bblCloudAddFailed": "Couldn't add that printer.",
   "ffgAddChoiceTitle": "Add FlashForge printer",
   "creAddChoiceTitle": "Add Creality printer",
   "bambuAddChoiceTitle": "Add Bambu Lab printer",
@@ -1569,5 +1590,9 @@
   "catalogCreateOk": "Added — {{name}}. Nothing left to type.",
   "catalogCreateError": "That one did not make it. Give it another go.",
   "catalogAdd": "Add to my inventory",
-  "bulkHiddenWarn": "[object Object]"
+  "bulkHiddenWarn": {
+    "one": "1 selected item is hidden by the current filter.",
+    "other": "{{n}} selected items are hidden by the current filter."
+  },
+  "printerCloudMode": "Reached through the cloud"
 }

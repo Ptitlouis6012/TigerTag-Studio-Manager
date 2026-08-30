@@ -128,7 +128,9 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, Search and Storage alike
 
 ### 🖨 3D Printer integration
-Live integrations for 6 brands — real-time temperatures, filament per slot, active print job, camera:
+Live integrations for 6 brands — real-time temperatures, filament per slot, active print job, camera. **Bambu Lab printers can be added by signing in with your Bambu account**: your email, the code they send back, and every machine on the account is offered with its picture — reachable from anywhere, not only from your own network.
+
+Every brand at a glance:
 
 | Brand | Protocol | Status |
 |---|---|---|

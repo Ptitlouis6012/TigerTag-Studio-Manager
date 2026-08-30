@@ -128,6 +128,7 @@ function _closeAll() {
   _closePanel('bblChoiceOverlay');
   _closePanel('bblScanOverlay');
   _closePanel('bblManualOverlay');
+  _closePanel('bblCloudOverlay');
 }
 
 // ── Lazy DOM creation ────────────────────────────────────────────────────────
@@ -143,6 +144,57 @@ function _ensureDOM() {
   root.innerHTML = /* html */`
 
 <!-- ═══════════════════════════════════════════════════════════════════════════
+     Bambu Lab — Cloud sign-in (email + code → the account's machines)
+     One screen, two steps: the code field and the sign-in key only appear once a
+     code has actually been sent, so the panel opens asking exactly one thing.
+     ═════════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="bblCloudOverlay" role="dialog" aria-modal="true">
+  <div class="modal-card pba-card">
+    <div class="pba-header">
+      <div class="pba-header-text">
+        <div class="pba-title" data-i18n="bblCloudTitle">Sign in to Bambu Lab</div>
+        <div class="pba-sub"   data-i18n="bblCloudSub">Your email, a code, and your printers show up.</div>
+      </div>
+      <button class="modal-close" id="bblCloudClose">✕</button>
+    </div>
+    <div class="snap-scan-body bbl-cloud-body">
+      <div class="bbl-cloud-form" id="bblCloudEmailRow">
+        <input type="email" class="snap-add-ip-input bbl-cloud-input" id="bblCloudEmail"
+               autocomplete="email" spellcheck="false" data-i18n-placeholder="bblCloudEmailPh">
+        <button type="button" class="adf-btn adf-btn--primary" id="bblCloudSendCode"
+                data-i18n="bblCloudSendCode">Send me a code</button>
+      </div>
+      <div class="bbl-cloud-sent" id="bblCloudSentRow" hidden>
+        <span class="bbl-cloud-sent-addr" id="bblCloudSentAddr"></span>
+        <button type="button" class="bbl-cloud-change" id="bblCloudChange"
+                data-i18n="bblCloudChangeEmail">Change</button>
+      </div>
+      <div class="bbl-cloud-form" id="bblCloudCodeRow" hidden>
+        <input type="text" class="snap-add-ip-input bbl-cloud-input" id="bblCloudCode"
+               inputmode="numeric" autocomplete="one-time-code" spellcheck="false"
+               data-i18n-placeholder="bblCloudCodePh">
+        <button type="button" class="adf-btn adf-btn--primary" id="bblCloudSignIn"
+                data-i18n="bblCloudSignIn">Sign in</button>
+      </div>
+      <div class="bbl-cloud-note" id="bblCloudNote" hidden></div>
+      <div class="bbl-cloud-pick" id="bblCloudPick" hidden data-i18n="bblCloudPick">Pick the ones you want</div>
+      <div class="snap-scan-results" id="bblCloudResults"></div>
+      <div class="bbl-cloud-raw" id="bblCloudRaw" hidden></div>
+    </div>
+    <div class="pba-footer">
+      <button class="adf-btn adf-btn--secondary" id="bblCloudBack">
+        <span class="icon icon-chevron-l icon-13"></span>
+        <span data-i18n="printerAddBack">Back</span>
+      </button>
+      <button type="button" class="adf-btn adf-btn--primary" id="bblCloudAddBtn" hidden>
+        <span class="icon icon-plus icon-13"></span>
+        <span class="label"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════════
      Bambu Lab — Choice modal (Scan vs Manual)
      ═════════════════════════════════════════════════════════════════════════ -->
 <div class="modal-overlay" id="bblChoiceOverlay" role="dialog" aria-modal="true">
@@ -155,6 +207,14 @@ function _ensureDOM() {
       <button class="modal-close" id="bblChoiceClose">✕</button>
     </div>
     <div class="pba-brands">
+      <button type="button" class="pba-brand" id="bblChoiceCloud">
+        <span class="pba-brand-dot" style="background:#1ba84e"></span>
+        <span class="pba-brand-text">
+          <span class="pba-brand-label" data-i18n="bblCloudChoice">Use my Bambu Lab account</span>
+          <span class="pba-brand-conn"  data-i18n="bblCloudChoiceHint">Finds all your printers on their own</span>
+        </span>
+        <span class="icon icon-chevron-r icon-13 pba-brand-chev"></span>
+      </button>
       <button type="button" class="pba-brand" id="bblChoiceScan">
         <span class="pba-brand-dot" style="background:#1ba84e"></span>
         <span class="pba-brand-text">
@@ -354,6 +414,21 @@ function _wireDOM() {
   $('bblChoiceTuto')?.addEventListener('click', () => ctx.openTutorial('bambulab'));
   $('bblChoiceScan')?.addEventListener('click', () => { _closePanel('bblChoiceOverlay'); _openScanPanel(); });
   $('bblChoiceManual')?.addEventListener('click', () => { _closePanel('bblChoiceOverlay'); _openManualPanel(); });
+  $('bblChoiceCloud')?.addEventListener('click', () => { _closePanel('bblChoiceOverlay'); _openCloudPanel(); });
+
+  $('bblCloudClose')?.addEventListener('click', _closeAll);
+  $('bblCloudOverlay')?.addEventListener('click', e => { if (e.target.id === 'bblCloudOverlay') _closeAll(); });
+  $('bblCloudBack')?.addEventListener('click', () => { _closePanel('bblCloudOverlay'); _openPanel('bblChoiceOverlay'); });
+  $('bblCloudSendCode')?.addEventListener('click', _bblCloudSendCode);
+  $('bblCloudSignIn')?.addEventListener('click', _bblCloudSignIn);
+  $('bblCloudAddBtn')?.addEventListener('click', _bblCloudAddPicked);
+  $('bblCloudChange')?.addEventListener('click', () => {
+    _bblCloudStep(1); _bblCloudNote(null); $('bblCloudEmail')?.focus();
+  });
+  /* Enter carries on from whichever field the user is in — asking for a code,
+     then signing in. Typing a code and pressing Enter is the whole gesture. */
+  $('bblCloudEmail')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); _bblCloudSendCode(); } });
+  $('bblCloudCode')?.addEventListener('keydown',  e => { if (e.key === 'Enter') { e.preventDefault(); _bblCloudSignIn();  } });
 
   $('bblScanClose')?.addEventListener('click', _closeAll);
   $('bblScanOverlay')?.addEventListener('click', e => { if (e.target.id === 'bblScanOverlay') _closeAll(); });
@@ -418,6 +493,265 @@ function _wireDOM() {
   $('bblManualBack')?.addEventListener('click', () => { _closePanel('bblManualOverlay'); _openPanel('bblChoiceOverlay'); });
   $('bblManualProbeBtn')?.addEventListener('click', _handleManualProbe);
   $('bblManualIpInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') _handleManualProbe(); });
+}
+
+// ── Cloud sign-in logic ──────────────────────────────────────────────────────
+// Email → code → the account's machines, and every machine arrives carrying its
+// own LAN access code, handed over by the cloud. That is what makes this the
+// easy way in: nothing has to be read off the printer's screen and typed.
+// Protocol + validated pitfalls: docs/bambu_connect_cloud.md.
+
+/* `$` in this file is a local of _wireDOM; these run at module level. */
+const _el = (id) => document.getElementById(id);
+
+let _bblCloudEmail = '';
+let _bblCloudDevices = [];
+const _bblCloudPicked = new Set();
+
+function _bblCloudNote(msgKey, isError) {
+  const el = _el('bblCloudNote');
+  if (!el) return;
+  if (!msgKey) { el.hidden = true; el.textContent = ''; return; }
+  el.textContent = ctx.t(msgKey);
+  el.classList.toggle('is-error', !!isError);
+  el.hidden = false;
+}
+
+/* Two steps, one at a time: the address, then the code. Showing both at once
+   asks a question the user cannot yet answer — the code does not exist until the
+   first step is done. The address stays readable, with a way back to it, because
+   the commonest reason the code never arrives is a typo in the email. */
+function _bblCloudStep(n) {
+  const emailRow = _el('bblCloudEmailRow');
+  const sentRow  = _el('bblCloudSentRow');
+  const codeRow  = _el('bblCloudCodeRow');
+  const addr     = _el('bblCloudSentAddr');
+  if (emailRow) emailRow.hidden = n !== 1;
+  if (sentRow)  sentRow.hidden  = n !== 2;
+  if (codeRow)  codeRow.hidden  = n !== 2;
+  if (addr && n === 2) addr.textContent = _bblCloudEmail;
+}
+
+function _bblCloudBusy(on) {
+  _el('bblCloudSendCode')?.toggleAttribute('disabled', on);
+  _el('bblCloudSignIn')?.toggleAttribute('disabled', on);
+}
+
+async function _bblCloudSendCode() {
+  const email = String(_el('bblCloudEmail')?.value || '').trim();
+  if (!email || !email.includes('@')) return;
+  _bblCloudEmail = email;
+  _bblCloudBusy(true);
+  const r = await window.bambulab?.cloud?.sendCode({ email });
+  _bblCloudBusy(false);
+  if (!r?.ok) {
+    _bblCloudNote(r?.error === 'cloudflare' ? 'bblCloudErrBlocked' : 'bblCloudErrGeneric', true);
+    return;
+  }
+  /* The code is single-use and short-lived, and asking for another one kills the
+     previous — so the field is revealed and focused straight away rather than
+     left for the user to find. */
+  _bblCloudStep(2);
+  _bblCloudNote('bblCloudCodeSent', false);
+  _el('bblCloudCode')?.focus();
+}
+
+async function _bblCloudSignIn() {
+  const code = String(_el('bblCloudCode')?.value || '').trim();
+  if (!code || !_bblCloudEmail) return;
+  _bblCloudBusy(true);
+  const r = await window.bambulab?.cloud?.login({ email: _bblCloudEmail, code });
+
+  if (!r?.ok) {
+    _bblCloudBusy(false);
+    if (r?.error === 'code-expired') {
+      /* Expired is not the same as wrong: one needs a new code, the other needs
+         a better one. Bambu has already sent a replacement by this point. */
+      _bblCloudNote('bblCloudErrExpired', true);
+      _el('bblCloudCode').value = '';
+    } else if (r?.error === 'code-incorrect') {
+      _bblCloudNote('bblCloudErrCode', true);
+    } else if (r?.error === 'cloudflare') {
+      _bblCloudNote('bblCloudErrBlocked', true);
+    } else {
+      _bblCloudNote('bblCloudErrGeneric', true);
+    }
+    return;
+  }
+
+  /* The MQTT username has to be asked for: the token is no longer a JWT, so
+     there is nothing in it to read. Without the uid the broker refuses the
+     connection without ever saying why. */
+  const who = await window.bambulab?.cloud?.uid({ token: r.token });
+  if (!who?.ok) { _bblCloudBusy(false); _bblCloudNote('bblCloudErrGeneric', true); return; }
+
+  await ctx.saveBambuCloudSession?.({
+    email: _bblCloudEmail, uid: who.uid, token: r.token,
+    expiresIn: r.expiresIn, region: 'us',
+  });
+
+  const bind = await window.bambulab?.cloud?.bind({ token: r.token });
+  _bblCloudBusy(false);
+  if (!bind?.ok) { _bblCloudNote('bblCloudErrGeneric', true); return; }
+  _bblCloudNote(null);
+  _bblCloudShowRaw(bind.devices || []);
+  _bblCloudRenderDevices(bind.devices || []);
+}
+
+/* Built like a scan result, because that is what it is: a machine you are being
+   offered, with its picture so you can tell an X1C from a P1P at a glance
+   instead of reading serial numbers. The model comes from the code the cloud
+   reports, falling back to the serial's prefix. */
+function _bblCloudDeviceCardHtml(d) {
+  const modelId   = bambuModelIdFromCode(d.modelCode, d.devId);
+  const matched   = ctx.findPrinterModel('bambulab', modelId);
+  const fallback  = ctx.findPrinterModel('bambulab', '0');
+  const imgUrl    = ctx.printerImageUrl(matched) || ctx.printerImageUrl(fallback);
+  const thumbHtml = imgUrl
+    ? `<img src="${ctx.esc(imgUrl)}" alt="" onerror="this.style.opacity='.15'"/>` : '';
+  const title     = d.name || d.devId;
+  const modelLine = d.model && d.model !== title ? d.model : '';
+
+  return `
+    <div class="snap-scan-card bbl-cloud-device" role="checkbox" aria-checked="false"
+         tabindex="0" data-dev-id="${ctx.esc(d.devId)}">
+      <span class="snap-scan-card-thumb">${thumbHtml}</span>
+      <span class="snap-scan-card-main">
+        <span class="snap-scan-card-title">
+          <span class="bbl-cloud-dot${d.online ? ' is-online' : ''}"></span>
+          <span class="snap-scan-card-title-text">${ctx.esc(title)}</span>
+        </span>
+        ${modelLine ? `<span class="snap-scan-card-line snap-scan-card-line--model">${ctx.esc(modelLine)}</span>` : ''}
+        <span class="snap-scan-card-line snap-scan-card-line--sn">SN · ${ctx.esc(d.devId)}</span>
+      </span>
+      <span class="bbl-cloud-tick" aria-hidden="true">
+        <span class="icon icon-check icon-13"></span>
+      </span>
+    </div>`;
+}
+
+/* The account's machine list, verbatim, for whoever is building on top of it.
+   Debug mode only — it is a developer's view of a payload, not something to put
+   in front of someone who came here to add a printer. */
+function _bblCloudShowRaw(devices) {
+  const box = _el('bblCloudRaw');
+  if (!box) return;
+  if (!ctx.isDebugEnabled?.()) { box.hidden = true; return; }
+  const json = JSON.stringify(devices, null, 2);
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="bbl-cloud-raw-head">
+      <span>RAW · /iot-service/api/user/bind</span>
+      <button type="button" class="snap-log-detail-copy" data-copy="${ctx.esc(json)}">
+        <span class="icon icon-copy icon-13"></span>
+        <span>${ctx.esc(ctx.t('copyLabel'))}</span>
+      </button>
+    </div>
+    <pre class="bbl-cloud-raw-body">${ctx.esc(json)}</pre>`;
+  box.querySelector('[data-copy]')?.addEventListener('click', (e) => {
+    navigator.clipboard?.writeText(e.currentTarget.dataset.copy || '');
+  });
+}
+
+function _bblCloudRenderDevices(devices) {
+  const results = _el('bblCloudResults');
+  const pick    = _el('bblCloudPick');
+  if (!results) return;
+  results.innerHTML = '';
+  if (!devices.length) { _bblCloudNote('bblCloudNoPrinters', false); return; }
+  if (pick) pick.hidden = false;
+
+  _bblCloudDevices = devices;
+  _bblCloudPicked.clear();
+
+  let built = 0;
+  for (const d of devices) {
+    const wrap = document.createElement('div');
+    /* Guarded per card: a single machine whose model or picture cannot be
+       resolved must not take the whole list down with it — a silently empty list
+       after a successful sign-in is the worst possible outcome here. */
+    try {
+      wrap.innerHTML = _bblCloudDeviceCardHtml(d);
+    } catch (err) {
+      console.error('[bambu-cloud] cannot build the card for', d?.devId, err);
+      continue;
+    }
+    const card = wrap.firstElementChild;
+    if (!card) { console.error('[bambu-cloud] empty card for', d?.devId); continue; }
+    built++;
+    const toggle = () => {
+      const on = !_bblCloudPicked.has(d.devId);
+      if (on) _bblCloudPicked.add(d.devId); else _bblCloudPicked.delete(d.devId);
+      card.classList.toggle('is-picked', on);
+      card.setAttribute('aria-checked', String(on));
+      _bblCloudSyncAddBtn();
+    };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+    });
+    results.appendChild(card);
+  }
+  /* Sign-in worked but nothing could be drawn — say it rather than showing an
+     empty space that reads as "no printers". */
+  if (!built) _bblCloudNote('bblCloudAddFailed', true);
+  _bblCloudSyncAddBtn();
+}
+
+/* ONE key for the whole selection, carrying its own count. Adding a machine per
+   click closed the panel each time, so picking three meant signing in three
+   times over. */
+function _bblCloudSyncAddBtn() {
+  const btn = _el('bblCloudAddBtn');
+  if (!btn) return;
+  const n = _bblCloudPicked.size;
+  btn.hidden = n === 0;
+  const label = btn.querySelector('.label');
+  if (label) label.textContent = ctx.t('bblCloudAddSelected', { n });
+}
+
+async function _bblCloudAddPicked() {
+  const chosen = _bblCloudDevices.filter(d => _bblCloudPicked.has(d.devId));
+  if (!chosen.length) return;
+  const btn = _el('bblCloudAddBtn');
+  btn?.setAttribute('disabled', '');
+
+  let lastId = null, failed = 0;
+  for (const d of chosen) {
+    const r = await ctx.addBambuCloudPrinter?.({
+      devId:      d.devId,
+      name:       d.name,
+      accessCode: d.accessCode,
+      modelCode:  d.modelCode,
+      /* The catalogue entry, resolved from the code the cloud reports (falling
+         back to the serial's prefix). It decides the printer's picture AND its
+         camera transport, so leaving it unset gave a "?" thumbnail and the wrong
+         kind of camera. */
+      printerModelId: bambuModelIdFromCode(d.modelCode, d.devId),
+    });
+    if (r?.ok) lastId = r.id; else failed++;
+  }
+  btn?.removeAttribute('disabled');
+
+  /* A half-done job is reported, not closed over: the panel stays so the picks
+     that failed are still on screen and can be tried again. */
+  if (failed) { _bblCloudNote('bblCloudAddFailed', true); return; }
+  _closeAll();
+  if (lastId) ctx.finishPrinterAdd?.('bambulab', lastId);
+}
+
+function _openCloudPanel() {
+  _ensureDOM();
+  _bblCloudEmail = '';
+  _bblCloudStep(1);
+  const pick = _el('bblCloudPick');    if (pick) pick.hidden = true;
+  const raw  = _el('bblCloudRaw');     if (raw)  { raw.hidden = true; raw.innerHTML = ''; }
+  _bblCloudDevices = []; _bblCloudPicked.clear(); _bblCloudSyncAddBtn();
+  const res  = _el('bblCloudResults'); if (res)  res.innerHTML = '';
+  _bblCloudNote(null);
+  const codeInput = _el('bblCloudCode'); if (codeInput) codeInput.value = '';
+  _openPanel('bblCloudOverlay');
+  _el('bblCloudEmail')?.focus();
 }
 
 // ── Scan panel logic ─────────────────────────────────────────────────────────

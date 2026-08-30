@@ -2,6 +2,11 @@
 
 > Référence complète pour implémenter l'intégration Bambu Lab dans une app Node.js/Electron.
 > Extraite de l'app Flutter TigerTag Connect (tigertag_connect1).
+>
+> **Deux modes.** Les sections 1 à 16 décrivent le mode **LAN** (broker local, une
+> connexion par machine). La section **17** décrit le mode **CLOUD** (broker de
+> compte, joignable de partout) — même `push_status`, donc tout le parsing des
+> sections 6 à 9 s'y applique tel quel.
 
 ---
 
@@ -1280,6 +1285,205 @@ caisson, **P10** aux. secondaire. Lecture : `cooling_fan_speed` (P1),
 | **Double-tête** (afficher les 2 buses droite/gauche) | ✅ implémenté — 2 pastilles R/L, buse active surlignée, consigne par tête (`M104 T{id}`) |
 | **Râtelier de buses** (UI type T1-T… avec type/diamètre/usure) | ⏳ TODO |
 | Airduct UI / buzzer / lumières H2 (chamber_light2, heatbed_light) | ⏳ backlog |
+
+---
+
+## 17. CLOUD mode — reaching a printer through Bambu's cloud
+
+> Written in English, unlike the rest of this file, per the project rule that all
+> documentation is English. The sections above predate that and are French.
+>
+> Product-level spec, Firebase model and multi-device token strategy:
+> `docs/bambu_connect_cloud.md`. This section is the wire reference.
+
+### 17.1 The one thing that makes this cheap
+
+**The cloud broker delivers the very same `print.push_status` the LAN broker
+does.** Everything in sections 6 to 9 — states, temperatures, AMS, colours,
+job — applies unchanged. Only the transport and the credential differ, so the
+driver emits cloud messages on the SAME renderer channel as LAN ones and reuses
+the whole parser.
+
+Two structural differences:
+
+| | LAN | Cloud |
+|---|---|---|
+| Broker | one per printer, at its IP | **one per ACCOUNT**, every machine a topic on it |
+| Credential | that printer's 8-char access code | an account access token (~3 months) |
+| Reached from | the same network | anywhere |
+
+### 17.2 REST — and why it must go through Electron's `net`
+
+`api.bambulab.com` sits behind **Cloudflare**, which judges callers by their TLS
+fingerprint. Node's `https`, `fetch`/undici and plain `curl` are answered with a
+403 challenge page — which is why the reference Python implementation
+(`pybambu`) reaches for `cloudscraper` / `curl_cffi` impersonation.
+
+**Electron's `net` IS Chromium's network stack**, so the fingerprint is a real
+browser's and no impersonation is needed. Validated August 2026: the whole
+sign-in chain succeeds from the main process. Do NOT move these calls to the
+renderer (CORS) or to `fetch` (fingerprint).
+
+Send the slicer's own network-agent headers:
+
+```
+User-Agent: bambu_network_agent/01.09.05.01
+X-BBL-Client-Name: OrcaSlicer
+X-BBL-Client-Type: slicer
+X-BBL-Client-Version: 01.09.05.51
+X-BBL-Language: en-US
+X-BBL-OS-Type: macos|windows|linux
+```
+
+**Parse every response tolerantly.** Bambu's failures are frequently not JSON —
+a 404 returns prose, a Cloudflare block returns HTML. A naive `JSON.parse` turns
+a handled error into a crash.
+
+| Purpose | Endpoint |
+|---|---|
+| Email code | `POST /v1/user-service/user/sendemail/code` — `{ email, type: "codeLogin" }` |
+| Login | `POST /v1/user-service/user/login` — `{ account, code }` or `{ account, password, apiError: "" }` |
+| Second factor | `POST https://bambulab.com/api/sign-in/tfa` — `{ tfaKey, tfaCode }` — **different host** |
+| uid | `GET /v1/design-user-service/my/preference` |
+| Machines | `GET /v1/iot-service/api/user/bind` |
+| Firmware | `GET /v1/iot-service/api/user/device/version?dev_id=…` |
+
+### 17.3 Sign-in
+
+```
+sendemail/code(email)  →  login(email, code)  →  accessToken
+```
+
+- The emailed code is **single-use and valid 10 minutes** (stated by the mail
+  itself). Each new request **invalidates the previous one**, so ask for one and
+  use it straight away. Mail comes from `noreply@notify.bambulab.com`, subject
+  *Account Verification* — worth telling the user, it is what they will search
+  for in their spam folder.
+- For an account linked to Google SSO the code is the **only** way in: there is
+  no password to offer.
+- `login` answers in one of three shapes, and only the first is a success:
+  - `accessToken` present → done;
+  - `loginType: "verifyCode"` → an emailed code is required;
+  - `loginType: "tfa"` → keep `tfaKey`, finish against the TFA host — where the
+    token comes back **in a `token` COOKIE**, not in the body.
+- A rejected code is a **400 that distinguishes the two cases**: `code: 1` the
+  code expired (Bambu has already sent a replacement), `code: 2` it was wrong.
+  Do not flatten them — one needs a new code, the other needs a better one.
+
+### 17.4 uid — the MQTT username
+
+The MQTT username is `u_<uid>`, and the uid must be **asked for**: the access
+token is **no longer a JWT** (opaque `AQC…`), so nothing can be read out of it.
+
+- Use `design-user-service/my/preference`. The similarly-named
+  `/v1/user-service/my/preference` returns **404 with a non-JSON body**.
+- If the uid is missing the broker refuses the connection **without saying why**.
+  Check it before connecting.
+
+### 17.5 The machine list — and the free LAN credentials
+
+`GET /v1/iot-service/api/user/bind` returns, per machine: `dev_id` (which IS the
+serial), `name`, `online`, `dev_product_name`, `dev_model_name`, `dev_structure`,
+`nozzle_diameter`, `print_status`, and **`dev_access_code`**.
+
+That access code is what makes the setup effortless: the camera and every local
+transport are derivable from the login alone, with nothing to read off the
+printer's screen.
+
+⚠️ **`print_status` is NOT a liveness signal.** Observed on a real account: a
+machine with `online: false` still reported `print_status: "ACTIVE"`. Only
+`online` says whether it is reachable.
+
+⚠️ `dev_model_name` for an X1 Carbon is **`BL-P001`** (the LAN discovery table
+only knew `BL-P002`). See Annexe A / §12.5 for the code → model mapping.
+
+### 17.6 Cloud MQTT
+
+```
+Host : us.mqtt.bambulab.com  |  eu.mqtt.bambulab.com
+Port : 8883 (TLS)
+User : u_<uid>
+Pass : <accessToken>          (the whole token, no prefix)
+```
+
+- **Region**: try `us`, fall back to `eu` when the broker refuses the
+  credentials, and store which one worked. There is no way to ask beforehand.
+- **client_id must be unique per device.** The same account may be connected from
+  the phone and from another machine; a shared id makes the broker kick the
+  previous connection.
+- Topics are the LAN ones: subscribe `device/<dev_id>/report`, publish
+  `device/<dev_id>/request`. Every command in §5 works unchanged.
+- **`pushall` on every (re)connection**, and only then: the X1 repeats its whole
+  object on each message, but the P1 sends only what CHANGED, so without a first
+  full push there is nothing to apply the deltas to. Asking a P1 repeatedly makes
+  it lag.
+- One client for the account: subscriptions must be **restored on reconnect**
+  (mqtt.js reconnects by itself, and a silent reconnection that forgot its topics
+  is a board that quietly stops updating).
+
+### 17.7 What the cloud does NOT give: the address
+
+The `bind` response carries no IP. The machine reports its own, in the telemetry:
+
+1. `print.ipcam.rtsp_url` — `rtsps://192.168.20.110:322/streaming/live/1`, the
+   address literally. The value `"disable"` means the user turned the camera off
+   on the printer's screen; it is not an address.
+2. Failing that, `print.net.info[0].ip` — a **little-endian** 32-bit integer, so
+   the first byte of the address is the LOW byte of the number:
+   `${n & 255}.${(n>>8) & 255}.${(n>>16) & 255}.${(n>>>24) & 255}`.
+   Use the **unsigned** `>>>` for the last byte, or an address above 127 in that
+   position yields a negative number. Validated: `1846847680` → `192.168.20.110`,
+   agreeing with the camera URL from the same payload.
+
+⚠️ **Compare it on every report, do not adopt it once.** An address is a DHCP
+lease and it changes; a value adopted a single time goes stale for good the day
+the router hands out a different one, and the camera stays broken because nothing
+ever looks again. The comparison is a string compare, so the steady state costs
+nothing. On a real change, tear the camera stream down before restarting it — it
+points at a machine that is no longer there.
+
+With the address plus the access code from §17.5, the LAN camera works for a
+cloud printer: `rtsps://bblp:<code>@<ip>:322/streaming/live/1`. It still requires
+**LAN Mode Liveview** enabled on the printer's screen (§10.2).
+
+### 17.8 HMS codes — decoding
+
+`print.hms` is an array of `{ attr, code }`; empty means OK. The lookup key is
+the four 16-bit halves, uppercase hex, zero-padded:
+
+```js
+[attr >>> 16, attr & 0xFFFF, code >>> 16, code & 0xFFFF]
+  .map(v => v.toString(16).toUpperCase().padStart(4, '0')).join('')
+```
+
+Validated: `{ attr: 83887360, code: 65543 }` → `0500050000010007` →
+*"MQTT Command verification failed. Please update Studio (including the network
+plugin) or Handy to the latest version."* — i.e. recent firmware verifies command
+signatures, which is worth knowing when a control silently does nothing.
+
+Tables (all locales) ship with `pybambu`: `hms_error_text/hms_<lang>.json.gz`,
+under the `device_hms` key.
+
+### 17.9 Received but not yet used
+
+Confirmed present in a real X1C payload and read by nothing today:
+`wifi_signal` (`"-40dBm"`), `nozzle_type` + `device.nozzle.info[].wear`,
+`hms`, `printer.print_time`, `sdcard`, `upgrade_state`.
+
+### 17.10 Pitfalls, in one list
+
+- [ ] REST from the MAIN process via Electron's `net` — anything else meets Cloudflare.
+- [ ] Tolerant parsing on every response; errors are often not JSON.
+- [ ] uid via `design-user-service` (the other one 404s). The token is NOT a JWT.
+- [ ] Region `us` first, `eu` on refusal; store the answer.
+- [ ] Email code: single-use, 10 minutes, each request kills the last.
+- [ ] Distinguish expired (`code: 1`) from wrong (`code: 2`).
+- [ ] Unique `client_id`, or the broker drops your other session.
+- [ ] `pushall` once per connection; P1 sends deltas.
+- [ ] Re-subscribe after an automatic reconnect.
+- [ ] `print_status` is not liveness — `online` is.
+- [ ] The address is a DHCP lease: re-check it on every report.
+- [ ] `net.info[0].ip` is little-endian, unsigned on the last byte.
 
 ---
 

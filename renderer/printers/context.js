@@ -63,6 +63,19 @@ export const ctx = {
   addAnycubicCloudPrinter: async (_rec) => ({ ok: false, error: "not-wired" }),
   // Refresh the cloud token on all Anycubic cloud printers (after a re-grab).
   updateAnycubicCloudToken: async (_email, _token) => ({ ok: false, error: "not-wired" }),
+  /* Bambu Lab cloud. The account session (token, uid, region) is stored ONCE,
+     apart from the machines, and every cloud printer reads it — see
+     docs/bambu_connect_cloud.md §6. It is deliberately not a field on the
+     printer: Firestore reads a document whole, so a secret sitting in a machine's
+     record would travel with that record the day printers become friend-visible.
+     Implemented in inventory.js. */
+  saveBambuCloudSession: async (_session) => ({ ok: false, error: "not-wired" }),
+  getBambuCloudSession:  async () => null,
+  addBambuCloudPrinter:  async (_rec) => ({ ok: false, error: "not-wired" }),
+  // A cloud printer's LAN access code, and its address once telemetry reveals it.
+  getBambuDeviceSecret:  async (_devId) => null,
+  saveBambuLanAddress:   async (_printer, _ip) => {},
+  saveBambuAccessCode:   async (_printer, _code) => {},
   // Persist a printer's resolved model id (printerModelId) to Firestore.
   // Used by brand drivers to auto-correct the model after the first
   // authenticated connection, when the add-by-IP probe couldn't identify it.

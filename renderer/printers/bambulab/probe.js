@@ -35,6 +35,7 @@ const BBL_CODE_TO_ID = {
   O1E: '9',        // H2D Pro
   O1C: '11',       // H2C
   '00M': '5',      // X1C
+  'BL-P001': '5',  // X1C — the code the cloud's device list reports
   'BL-P002': '5',  // X1C (legacy code)
   '3DPRINTER-X1': '5',
   '3DPRINTER-X1-CARBON': '5',

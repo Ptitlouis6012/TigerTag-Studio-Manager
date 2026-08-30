@@ -776,6 +776,27 @@
   "snapAddChoiceScanHint": "在本地网络中自动发现",
   "snapAddChoiceManual": "输入 IP 地址",
   "snapAddChoiceManualHint": "如果你已经知道它的 IP",
+  "bblCloudChoice": "使用我的拓竹账号",
+  "bblCloudChoiceHint": "自动找出你所有的机器",
+  "bblCloudTitle": "登录拓竹账号",
+  "bblCloudSub": "填邮箱,收验证码,机器自己就出来了。",
+  "bblCloudEmailPh": "you@example.com",
+  "bblCloudSendCode": "给我发验证码",
+  "bblCloudCodePh": "邮箱里收到的验证码",
+  "bblCloudSignIn": "登录",
+  "bblCloudChangeEmail": "更改",
+  "bblCloudCodeSent": "验证码已发送,10 分钟内有效。留意拓竹发来的邮件。",
+  "bblCloudErrCode": "这个验证码不对,核对一下再试。",
+  "bblCloudErrExpired": "验证码过期了,已经给你重发一个。",
+  "bblCloudErrBlocked": "拓竹这会儿把我们挡在门外了,等一分钟再来。",
+  "bblCloudErrGeneric": "登录没成功,再试一次。",
+  "bblCloudNoPrinters": "这个账号下还没有机器。",
+  "bblCloudPick": "勾选你想要的",
+  "bblCloudAddSelected": {
+    "one": "添加这台打印机",
+    "other": "添加这 {{n}} 台打印机"
+  },
+  "bblCloudAddFailed": "这台机器没能添加成功。",
   "ffgAddChoiceTitle": "添加FlashForge打印机",
   "creAddChoiceTitle": "添加 Creality 打印机",
   "bambuAddChoiceTitle": "添加 Bambu Lab 打印机",
@@ -1569,5 +1590,9 @@
   "catalogCreateOk": "已添加 — {{name}}，一个字都不用填。",
   "catalogCreateError": "这卷没成功，再试一次。",
   "catalogAdd": "加入我的库存",
-  "bulkHiddenWarn": "[object Object]"
+  "bulkHiddenWarn": {
+    "one": "有 1 个已选项被当前筛选隐藏。",
+    "other": "有 {{n}} 个已选项被当前筛选隐藏。"
+  },
+  "printerCloudMode": "通过云端连接"
 }

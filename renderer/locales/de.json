@@ -776,6 +776,27 @@
   "snapAddChoiceScanHint": "Automatisch im lokalen Netzwerk finden",
   "snapAddChoiceManual": "IP-Adresse eingeben",
   "snapAddChoiceManualHint": "Wenn du ihre IP schon kennst",
+  "bblCloudChoice": "Mein Bambu-Lab-Konto verwenden",
+  "bblCloudChoiceHint": "Findet alle deine Drucker von selbst",
+  "bblCloudTitle": "Bei Bambu Lab anmelden",
+  "bblCloudSub": "Deine E-Mail, ein Code, und deine Drucker erscheinen.",
+  "bblCloudEmailPh": "du@beispiel.de",
+  "bblCloudSendCode": "Code schicken",
+  "bblCloudCodePh": "Der Code aus deinem Postfach",
+  "bblCloudSignIn": "Anmelden",
+  "bblCloudChangeEmail": "Ändern",
+  "bblCloudCodeSent": "Code gesendet — 10 Minuten gültig. Halte Ausschau nach einer Mail von Bambu Lab.",
+  "bblCloudErrCode": "Dieser Code stimmt nicht. Prüfe ihn und versuche es erneut.",
+  "bblCloudErrExpired": "Der Code ist abgelaufen. Wir haben dir einen neuen geschickt.",
+  "bblCloudErrBlocked": "Bambu Lab lässt uns gerade nicht durch. Warte einen Moment.",
+  "bblCloudErrGeneric": "Die Anmeldung hat nicht geklappt. Versuch es erneut.",
+  "bblCloudNoPrinters": "Auf diesem Konto sind noch keine Drucker.",
+  "bblCloudPick": "Hake die gewünschten ab",
+  "bblCloudAddSelected": {
+    "one": "Diesen Drucker hinzufügen",
+    "other": "Diese {{n}} Drucker hinzufügen"
+  },
+  "bblCloudAddFailed": "Dieser Drucker ließ sich nicht hinzufügen.",
   "ffgAddChoiceTitle": "FlashForge-Drucker hinzufügen",
   "creAddChoiceTitle": "Creality-Drucker hinzufügen",
   "bambuAddChoiceTitle": "Bambu Lab-Drucker hinzufügen",
@@ -1569,5 +1590,9 @@
   "catalogCreateOk": "Hinzugefügt — {{name}}. Nichts zu tippen.",
   "catalogCreateError": "Die hat es nicht geschafft. Versuch es nochmal.",
   "catalogAdd": "Zu meinem Bestand",
-  "bulkHiddenWarn": "[object Object]"
+  "bulkHiddenWarn": {
+    "one": "1 ausgewähltes Element ist durch den aktuellen Filter ausgeblendet.",
+    "other": "{{n}} ausgewählte Elemente sind durch den aktuellen Filter ausgeblendet."
+  },
+  "printerCloudMode": "Über die Cloud erreichbar"
 }

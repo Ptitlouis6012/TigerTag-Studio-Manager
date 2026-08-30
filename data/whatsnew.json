@@ -8597,5 +8597,110 @@
         }
       }
     ]
+  },
+  "2.26.0": {
+    "date": "2026-08-31",
+    "items": [
+      {
+        "icon": "cloud",
+        "title": {
+          "en": "Your Bambu printers, in one sign-in",
+          "fr": "Tes Bambu, en une connexion",
+          "de": "Deine Bambu-Drucker mit einer Anmeldung",
+          "es": "Tus Bambu, con una sola conexión",
+          "it": "Le tue Bambu, con un solo accesso",
+          "zh": "一次登录,拓竹机器全到齐",
+          "pt": "Suas Bambu, com um único login",
+          "pt-pt": "As suas Bambu, com um único início de sessão",
+          "pl": "Twoje Bambu po jednym logowaniu"
+        },
+        "body": {
+          "en": "Type your email, type the code Bambu sends back, and every printer on the account turns up with its photo. Tick the ones you want. Nothing to read off the printer's screen, nothing to copy by hand.",
+          "fr": "Tu tapes ton e-mail, tu tapes le code que Bambu te renvoie, et toutes tes machines apparaissent avec leur photo. Tu coches celles que tu veux. Rien à lire sur l'écran de l'imprimante, rien à recopier.",
+          "de": "E-Mail eintippen, den Code eintippen, den Bambu zurückschickt — und alle Drucker des Kontos erscheinen mitsamt Foto. Ankreuzen, fertig. Nichts vom Druckerdisplay ablesen, nichts abtippen.",
+          "es": "Escribes tu correo, escribes el código que Bambu te devuelve, y todas tus impresoras aparecen con su foto. Marcas las que quieras. Nada que leer en la pantalla de la impresora, nada que copiar a mano.",
+          "it": "Scrivi la tua email, scrivi il codice che Bambu ti rimanda, e tutte le tue stampanti compaiono con la loro foto. Spunti quelle che vuoi. Niente da leggere sul display della stampante, niente da ricopiare.",
+          "zh": "填邮箱,填拓竹发来的验证码,账号下所有机器连照片一起冒出来。勾你要的就行。不用去看机器屏幕,也不用手抄任何东西。",
+          "pt": "Você digita seu e-mail, digita o código que a Bambu manda de volta, e todas as suas impressoras aparecem com foto. Marca as que quiser. Nada para ler na tela da impressora, nada para copiar à mão.",
+          "pt-pt": "Escreve o seu e-mail, escreve o código que a Bambu devolve, e todas as suas impressoras aparecem com foto. Marca as que quiser. Nada para ler no ecrã da impressora, nada para copiar à mão.",
+          "pl": "Wpisujesz e-mail, wpisujesz kod, który odsyła Bambu — i wszystkie drukarki z konta pojawiają się razem ze zdjęciem. Zaznaczasz te, które chcesz. Nic do odczytywania z ekranu drukarki, nic do przepisywania."
+        }
+      },
+      {
+        "icon": "link",
+        "title": {
+          "en": "And they answer when you're out",
+          "fr": "Et elles répondent même quand tu n'es pas là",
+          "de": "Und sie antworten auch von unterwegs",
+          "es": "Y responden aunque no estés en casa",
+          "it": "E rispondono anche quando non sei a casa",
+          "zh": "人不在家,它们照样回话",
+          "pt": "E respondem mesmo quando você não está",
+          "pt-pt": "E respondem mesmo quando não está em casa",
+          "pl": "I odpowiadają, gdy cię nie ma"
+        },
+        "body": {
+          "en": "A printer added this way keeps reporting from anywhere, not just from your own network. And its dot becomes a little cloud, so one glance tells you whether a quiet machine is actually a problem.",
+          "fr": "Une machine ajoutée comme ça continue de donner des nouvelles où que tu sois, pas seulement depuis ton réseau. Et sa pastille devient un petit nuage : un coup d'œil suffit pour savoir si une machine silencieuse est vraiment un souci.",
+          "de": "Ein so hinzugefügter Drucker meldet sich von überall, nicht nur aus dem eigenen Netz. Und sein Punkt wird zur kleinen Wolke — ein Blick genügt, um zu wissen, ob ein stiller Drucker wirklich ein Problem ist.",
+          "es": "Una impresora añadida así sigue dando señales estés donde estés, no solo desde tu red. Y su punto se convierte en una nubecita: de un vistazo sabes si una máquina callada es un problema de verdad.",
+          "it": "Una stampante aggiunta così continua a farsi sentire ovunque tu sia, non solo dalla tua rete. E il suo pallino diventa una nuvoletta: un'occhiata basta per capire se una macchina silenziosa è davvero un problema.",
+          "zh": "这样添加的机器,人在哪儿都能收到它的消息,不限于自家网络。它的圆点还会变成一朵小云——瞄一眼就知道,安静的机器是不是真出了事。",
+          "pt": "Uma impressora adicionada assim continua dando notícias de onde você estiver, não só da sua rede. E o ponto dela vira uma nuvenzinha: um olhar basta para saber se uma máquina calada é problema de verdade.",
+          "pt-pt": "Uma impressora adicionada assim continua a dar notícias esteja onde estiver, não só da sua rede. E o ponto dela passa a nuvenzinha: um olhar basta para saber se uma máquina calada é mesmo um problema.",
+          "pl": "Drukarka dodana w ten sposób daje znać z każdego miejsca, nie tylko z twojej sieci. A jej kropka zmienia się w chmurkę — jedno spojrzenie wystarczy, by wiedzieć, czy milcząca maszyna to naprawdę kłopot."
+        }
+      },
+      {
+        "icon": "bug",
+        "title": {
+          "en": "A failed print no longer takes the page with it",
+          "fr": "Une impression ratée n'emporte plus toute la page",
+          "de": "Ein fehlgeschlagener Druck reißt nicht mehr alles mit",
+          "es": "Una impresión fallida ya no se lleva la página con ella",
+          "it": "Una stampa fallita non si porta più via tutta la pagina",
+          "zh": "一次失败的打印,不再把整页拖下水",
+          "pt": "Uma impressão que falha não leva mais a página junto",
+          "pt-pt": "Uma impressão falhada já não leva a página com ela",
+          "pl": "Nieudany wydruk nie zabiera już ze sobą całej strony"
+        },
+        "body": {
+          "en": "On a Bambu Lab machine, the moment a print failed everything went blank — filament, temperatures, the print itself. It all stays put now. Your AMS also stops being forgotten between restarts.",
+          "fr": "Sur une Bambu Lab, dès qu'une impression échouait, tout disparaissait — filament, températures, l'impression elle-même. Tout reste en place. Et ton AMS cesse d'être oublié d'un redémarrage à l'autre.",
+          "de": "Auf einer Bambu Lab wurde alles leer, sobald ein Druck fehlschlug — Filament, Temperaturen, der Druck selbst. Das bleibt jetzt stehen. Und dein AMS wird zwischen Neustarts nicht mehr vergessen.",
+          "es": "En una Bambu Lab, en cuanto una impresión fallaba todo se vaciaba: filamento, temperaturas, la propia impresión. Ahora todo se queda. Y tu AMS deja de olvidarse entre reinicios.",
+          "it": "Su una Bambu Lab, appena una stampa falliva spariva tutto: filamento, temperature, la stampa stessa. Ora resta al suo posto. E il tuo AMS smette di essere dimenticato tra un riavvio e l'altro.",
+          "zh": "在拓竹机器上,打印一失败,什么都没了——耗材、温度、连打印本身。现在全都留着。你的 AMS 也不会在重启之间被忘掉了。",
+          "pt": "Numa Bambu Lab, assim que uma impressão falhava tudo sumia: filamento, temperaturas, a própria impressão. Agora fica tudo. E seu AMS para de ser esquecido entre reinícios.",
+          "pt-pt": "Numa Bambu Lab, assim que uma impressão falhava desaparecia tudo: filamento, temperaturas, a própria impressão. Agora fica tudo. E o seu AMS deixa de ser esquecido entre reinícios.",
+          "pl": "Na Bambu Lab wystarczyło, że wydruk się nie udał, i znikało wszystko — filament, temperatury, sam wydruk. Teraz wszystko zostaje. Twój AMS też przestaje być zapominany między uruchomieniami."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "You can see what's printing again",
+          "fr": "Tu revois ce qui est en train de s'imprimer",
+          "de": "Du siehst wieder, was gerade gedruckt wird",
+          "es": "Vuelves a ver lo que se está imprimiendo",
+          "it": "Rivedi cosa si sta stampando",
+          "zh": "又能看见正在打印的东西了",
+          "pt": "Você volta a ver o que está imprimindo",
+          "pt-pt": "Volta a ver o que está a imprimir",
+          "pl": "Znowu widzisz, co się drukuje"
+        },
+        "body": {
+          "en": "Bambu Lab prints get their preview picture back, and are listed under the project name you gave them instead of a file buried inside the archive.",
+          "fr": "Les impressions Bambu Lab retrouvent leur aperçu, et portent le nom du projet que tu leur as donné plutôt qu'un fichier planqué au fond de l'archive.",
+          "de": "Bambu-Lab-Drucke bekommen ihr Vorschaubild zurück und laufen unter dem Projektnamen, den du vergeben hast, statt unter einer Datei tief im Archiv.",
+          "es": "Las impresiones Bambu Lab recuperan su vista previa y aparecen con el nombre de proyecto que les pusiste, en vez de un archivo escondido dentro del paquete.",
+          "it": "Le stampe Bambu Lab riprendono la loro anteprima e portano il nome del progetto che hai dato, invece di un file sepolto nell'archivio.",
+          "zh": "拓竹的打印任务重新有了预览图,名字也换回你起的项目名,而不是压缩包深处的某个文件。",
+          "pt": "As impressões Bambu Lab recuperam a miniatura e aparecem com o nome do projeto que você deu, em vez de um arquivo enterrado no pacote.",
+          "pt-pt": "As impressões Bambu Lab recuperam a miniatura e aparecem com o nome do projecto que lhes deu, em vez de um ficheiro enterrado no arquivo.",
+          "pl": "Wydruki Bambu Lab odzyskują podgląd i figurują pod nazwą projektu, którą im nadałeś, a nie pod plikiem schowanym w archiwum."
+        }
+      }
+    ]
   }
 }

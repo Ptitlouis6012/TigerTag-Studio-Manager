@@ -179,7 +179,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Inventory subscription + auth + account list (L5617-6115)
+## Inventory subscription + auth + account list (L5617-6290)
 | L | What | Anchors |
 |---|---|---|
 | 4330-4438 | **Firestore inventory subscription** — `onSnapshot` with friend-view defense-in-depth | `subscribeInventory`, `unsubscribeInventory` |
@@ -188,7 +188,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Stats / twins / filters (L6161-6577)
+## Stats / twins / filters (L6291-6750)
 | L | What | Anchors |
 |---|---|---|
 | 4732-4777 | Key status, row sort, load action, **stats** | `renderStats`, `loadInventory` |
@@ -302,7 +302,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printer detail side panel (L23860-27754)
+## Printer detail side panel (L23860-27940)
 | L | What | Anchors |
 |---|---|---|
 | 10087-10649 | Open/close lifecycle (connect/disconnect per brand), conn button, refresh | `openPrinterDetail`, `closePrinterDetail`, `refreshOpenPrinterDetail` |
@@ -312,7 +312,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Add-printer flow (L26321-28100)
+## Add-printer flow (L26321-28320)
 Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.js` owns the shell.
 
 | L | What | Anchors |
@@ -324,7 +324,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Racks CRUD + slots (L27114-30560)
+## Racks CRUD + slots (L27114-30850)
 | L | What | Anchors |
 |---|---|---|
 | 12392-12526 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
@@ -336,7 +336,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Storage view render + DnD (L29437-32440)
+## Storage view render + DnD (L29437-32620)
 | L | What | Anchors |
 |---|---|---|
 | 13246-13885 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |

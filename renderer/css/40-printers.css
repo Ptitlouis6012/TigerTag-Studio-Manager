@@ -523,6 +523,44 @@
     background: var(--neutral);       /* offline — fixed grey */
     flex-shrink: 0;
   }
+  /* A cloud machine's status dot IS a cloud — same colour code, same heartbeat,
+     different shape. It says how the printer is reached AND whether it answers,
+     in one mark instead of two.
+
+     THE GLYPH IS DRAWN BY THE PSEUDO-ELEMENT, not by the element itself, and
+     that is the whole trick: masking is applied AFTER filtering, so a glow put
+     on a masked element — `box-shadow` or `drop-shadow` alike — is clipped away
+     with everything outside the silhouette and never shows. Leaving the element
+     unmasked lets it carry the halo, exactly the one the round dot uses, while
+     the cloud is painted on top. The icon is the FILLED cloud: masking an
+     outline would paint only the outline, giving a hollow ring. */
+  .printer-card-name-dot.is-cloud {
+    position: relative;
+    /* One dimension forced, the other derived — the project rule for anything
+       masked, so the glyph can never be squashed. Square, because the halo
+       behind it is a circle. */
+    height: 13px; width: auto; aspect-ratio: 1;
+    border-radius: 50%;
+    background: transparent;
+    /* No `box-shadow: none` here on purpose: the halo is the shared online
+       rule's, so a cloud breathes exactly like a round dot and an offline one
+       stays bare, with nothing to keep in step by hand. */
+  }
+  .printer-card-name-dot.is-cloud::before {
+    content: ""; position: absolute; inset: 0;
+    background: var(--neutral);
+    -webkit-mask-image: url('../../assets/svg/icons/icon_cloud_filled.svg');
+            mask-image: url('../../assets/svg/icons/icon_cloud_filled.svg');
+    -webkit-mask-size: contain;  mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center;  mask-position: center;
+  }
+  .printer-card-name-dot.is-cloud.is-online {
+    background: transparent;     /* beats the round rule's green fill */
+    animation: printer-name-dot-pulse 1.8s ease-in-out infinite;
+  }
+  .printer-card-name-dot.is-cloud.is-online::before { background: var(--success); }
+
   .printer-card-name-dot.is-online {
     background: var(--success);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
@@ -1341,6 +1379,108 @@
      scan cards rendering at 70px while their content needed 100px,
      spilling the thumbnail past the bottom border. */
   .snap-scan-body > * { flex-shrink: 0; }
+  /* Bambu Lab cloud sign-in — one field and one key per line. The code row is
+     hidden until a code has actually been sent, so the panel opens asking a
+     single question instead of showing a form with a field you cannot yet fill. */
+  /* Field, then key beneath it — the same shape the add-by-IP panel uses, and
+     the field gets the full width it needs for an email address. */
+  .bbl-cloud-form {
+    display: flex; flex-direction: column; gap: 8px; align-items: stretch;
+  }
+  /* `display: flex` on a CLASS outranks the `display: none` the browser gives
+     [hidden], so without this the second step showed alongside the first — both
+     questions asked at once, one of them unanswerable. */
+  .bbl-cloud-form[hidden] { display: none; }
+  /* The shared input carries `flex: 1`, meant for the row it was written for.
+     In a COLUMN the main axis is vertical, so that grow/basis pair governs the
+     HEIGHT and quietly discards its own 36px — the field came out squashed. Held
+     to its natural height, it is the same field as everywhere else. */
+  .bbl-cloud-form .bbl-cloud-input { flex: 0 0 auto; width: 100%; min-width: 0; }
+  .bbl-cloud-form .adf-btn { width: 100%; justify-content: center; }
+  /* Step 2's reminder of the address the code went to, and the way back to
+     step 1 — a typo in the email is the commonest reason a code never arrives. */
+  .bbl-cloud-sent {
+    display: flex; align-items: baseline; gap: 8px;
+    font-size: 12px; color: var(--muted);
+  }
+  .bbl-cloud-sent[hidden] { display: none; }
+  .bbl-cloud-sent-addr { color: var(--text); overflow-wrap: anywhere; }
+  .bbl-cloud-change {
+    background: none; border: none; padding: 0;
+    color: var(--primary); font: inherit; cursor: pointer;
+    text-decoration: underline; flex-shrink: 0;
+  }
+
+  .bbl-cloud-note {
+    font-size: 12px; line-height: 1.45;
+    color: var(--muted);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+  .bbl-cloud-note.is-error { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
+  .bbl-cloud-pick {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted);
+  }
+  .bbl-cloud-device.is-busy { opacity: .55; pointer-events: none; }
+  /* `.adf-btn` is `display: inline-flex`, and a class outranks the `display:
+     none` the browser gives [hidden] — so the key stayed on screen with nothing
+     ticked. Third time this trap has been sprung in this panel. */
+  #bblCloudAddBtn[hidden] { display: none; }
+
+  /* The tick box, where the scan card puts its chevron: a scan result takes you
+     somewhere, this one is picked. Empty outline until chosen, then filled. */
+  .bbl-cloud-tick {
+    width: 20px; height: 20px; flex-shrink: 0;
+    border: 1.5px solid var(--border); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    color: transparent; background: transparent;
+    transition: background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .bbl-cloud-device.is-picked .bbl-cloud-tick {
+    background: var(--primary); border-color: var(--primary); color: var(--on-accent);
+  }
+  /* Chosen cards are ringed in the accent, at the offset the storage and printer
+     boards use — a selection has to look the same wherever it is made. */
+  .bbl-cloud-device.is-picked {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+  }
+  /* Online marker, inline with the name — a machine that is asleep can still be
+     added, so this reports a state rather than gating the choice. */
+  .bbl-cloud-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--muted); flex-shrink: 0; margin-right: 7px;
+  }
+  .bbl-cloud-dot.is-online {
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+  }
+
+  /* The account's machine list verbatim — debug mode only. */
+  .bbl-cloud-raw {
+    border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-2); overflow: hidden;
+  }
+  .bbl-cloud-raw[hidden] { display: none; }
+  .bbl-cloud-raw-head {
+    /* The shared copy key is `position: absolute`; without an anchor here it
+       climbed to the modal card and floated over the panel's top-right corner. */
+    position: relative;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 10px; font-size: 10px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .bbl-cloud-raw-body {
+    margin: 0; padding: 10px;
+    max-height: 240px; overflow: auto;
+    font-family: var(--mono); font-size: 11px; line-height: 1.45;
+    color: var(--text); white-space: pre;
+  }
+
   /* Anycubic cloud sign-in — the embedded <webview> fills the card body so the
      official login page reads like a native side-card. Two-class selector beats
      the `.snap-scan-body > *` flex-shrink:0 above so the wrap can actually flex. */

@@ -19,6 +19,7 @@ import { meta, schema, helper } from './settings.js';
 import { renderBambuJobCard, renderBambuTempCard, renderBambuFilamentCard, renderBambuControlCard } from './cards.js';
 import { schemaWidget } from '../modal-helpers.js';
 import { morphInner } from '../dom-morph.js';
+import { bambuModelIdFromCode } from './probe.js';
 
 const $ = id => document.getElementById(id);
 
@@ -49,6 +50,12 @@ export function bambuUsesJpegCam(p) {
 // ── Public key helpers ─────────────────────────────────────────────────────
 
 export function bambuKey(p) { return `${p.brand}:${p.id}`; }
+
+/* Reached through Bambu's cloud instead of the local network. The record then
+   carries `cloudUid` / `cloudToken` / `cloudRegion` for the account's broker,
+   and `serialNumber` doubles as the cloud's `dev_id` — they are the same
+   string. See docs/bambu_connect_cloud.md. */
+export function bambuIsCloud(p) { return p?.mode === "cloud"; }
 export function bambuGetConn(key) { return _bambuConns.get(key) ?? null; }
 
 // ── Online status ──────────────────────────────────────────────────────────
@@ -126,7 +133,11 @@ export function bambuConnect(printer, { skipCam = false } = {}) {
 
   if (existing) {
     if (existing.status === "connected" || existing.status === "connecting") {
-      if (existing.ip === ip) {
+      /* A CLOUD connection does not depend on the address at all — it runs on the
+         account's broker, and the address is only ever used for the camera. So a
+         cloud printer is "already connected" whatever its IP says, and an address
+         that has just been learned can never be read as a different machine. */
+      if (existing.ip === ip || existing.cloud) {
         if (!skipCam && ip && password && !existing.data?.lastCamUrl && !existing.data?.camDisabled) {
           if (bambuUsesJpegCam(printer)) {
             window.bambulab?.camStart({ key, ip, password });
@@ -152,6 +163,10 @@ export function bambuConnect(printer, { skipCam = false } = {}) {
     ip,
     serial,
     password,
+    /* Reached through Bambu's cloud rather than the local network. Everything
+       downstream — parser, cards, controls — is shared; only the transport and
+       the credential differ. */
+    cloud:        bambuIsCloud(printer),
     modelId:      bambuModelId(printer), // numeric id — used to shape model-specific commands
     status:       "connecting",
     lastError:    null,
@@ -192,8 +207,31 @@ export function bambuConnect(printer, { skipCam = false } = {}) {
     }
   }
 
-  // Initiate MQTT connection in the main process
-  window.bambulab?.connect({ key, ip, serial, password });
+  // Initiate the MQTT connection in the main process.
+  if (conn.cloud) {
+    /* Cloud mode: the broker belongs to the ACCOUNT, not to this machine, so the
+       client is opened once (the call is idempotent) and this printer merely
+       adds its own topic to it. Its telemetry comes back on the very same
+       channel a LAN printer's does — see the cloud bridge in preload.js.
+       The credentials are NOT on the printer: one account session serves every
+       cloud machine, and a secret has no business sitting in a record meant to
+       be displayed (docs/bambu_connect_cloud.md §6). */
+    (async () => {
+      const sess = await ctx.getBambuCloudSession?.();
+      if (!sess?.accessToken || !sess?.bambuUid) {
+        conn.status = "error:no-cloud-session";
+        _bblNotify(conn, /*statusChanged*/ true);
+        return;
+      }
+      if (!_bambuConns.has(key)) return;   // disconnected while we were reading
+      window.bambulab?.cloud?.connect({
+        uid: sess.bambuUid, token: sess.accessToken, region: sess.region,
+      });
+      window.bambulab?.cloud?.subscribe({ key, devId: serial });
+    })();
+  } else {
+    window.bambulab?.connect({ key, ip, serial, password });
+  }
 }
 
 /** Stop only the camera stream (JPEG TCP + RTSP); keep the MQTT session alive. */
@@ -212,7 +250,11 @@ export function bambuDisconnect(key) {
   if (conn.data?.lastCamUrl) URL.revokeObjectURL(conn.data.lastCamUrl);
   window.bambulab?.camStop(key);
   window.bambulab?.camStopRtsp(key);
-  window.bambulab?.disconnect(key);
+  /* A cloud printer drops its topic; the account's client stays up for the
+     others. Tearing the shared client down here would disconnect every other
+     cloud machine along with this one. */
+  if (conn.cloud) window.bambulab?.cloud?.unsubscribe({ devId: conn.serial });
+  else            window.bambulab?.disconnect(key);
   _bambuConns.delete(key);
 }
 
@@ -221,7 +263,8 @@ export function bambuDisconnect(key) {
 function _publish(conn, payload) {
   if (!conn) return;
   _bblLogPush(conn, "→", payload);
-  window.bambulab?.publish(conn.key, payload);
+  if (conn.cloud) window.bambulab?.cloud?.publish({ devId: conn.serial, payload });
+  else            window.bambulab?.publish(conn.key, payload);
 }
 
 // ── Machine control commands ────────────────────────────────────────────────
@@ -360,6 +403,11 @@ function _scheduleRefresh(conn) {
 // Using single global listeners avoids accumulating duplicate handlers
 // when bambuConnect is called repeatedly (e.g. panel open → close → open).
 
+/* Debug handle. The driver's live state is module-private, so when a machine
+   misbehaves there is no way to ask it what it actually holds — every diagnosis
+   becomes guesswork about code that looks correct. Read-only, costs nothing. */
+if (typeof window !== "undefined") window.__bbl = { conns: _bambuConns };
+
 if (typeof window !== "undefined" && window.bambulab) {
   window.bambulab.onStatus((key, status) => {
     const conn = _bambuConns.get(key);
@@ -388,6 +436,21 @@ if (typeof window !== "undefined" && window.bambulab) {
     // All other badge-only updates are handled by _bambuRefreshOnlineUI below.
     _bblNotify(conn, /*statusChanged*/ wasOnline !== isOnline);
     _bambuRefreshOnlineUI(key);
+  });
+
+  /* The account's broker reports once for every cloud printer at once, so the
+     LAN init sequence is run per cloud connection when it comes up. The main
+     process already asks for a full state on subscribe; what is added here is
+     the version query and the refresh schedule, so a cloud machine behaves
+     exactly like a local one. */
+  window.bambulab.cloud?.onStatus?.((status) => {
+    if (status !== "connected") return;
+    for (const conn of _bambuConns.values()) {
+      if (!conn.cloud) continue;
+      conn.lastError = null;
+      _publish(conn, { info: { sequence_id: _nextSeq(), command: "get_version" } });
+      _scheduleRefresh(conn);
+    }
   });
 
   window.bambulab.onMessage((key, _topic, data) => {
@@ -455,13 +518,25 @@ function _decodePackedTemp32(raw) {
   return { current: v & 0xFFFF, target: (v >> 16) & 0xFFFF };
 }
 
+/* Only STRING candidates count. `print.state` is a NUMBER on this firmware
+   (7 on the X1C), and calling `.toLowerCase()` on it threw — from the very first
+   line of the merge, so nothing after it ran: no temperatures, no AMS, no job.
+   The board then showed the external spool alone, and the layer that stores
+   units believed it and wrote the AMS down as absent, in Firestore, for good.
+   It only fires when the printer reports FAILED or ERROR, which is why it lay
+   dormant for months and surfaced the day a print failed. */
+function _pickState(...vals) {
+  for (const v of vals) if (typeof v === "string" && v) return v.toLowerCase();
+  return "";
+}
+
 function _normState(p) {
-  const raw = (p.gcode_state || p.print_type || p.state || p.status || "").toLowerCase();
+  const raw = _pickState(p.gcode_state, p.print_type, p.state, p.status);
   // No state field present in this message — return null so the caller
   // doesn't overwrite an existing valid state with a false "idle".
   if (!raw) return null;
   if (["failed", "failure", "error"].includes(raw)) {
-    const alt = (p.print_type || p.state || p.status || "").toLowerCase();
+    const alt = _pickState(p.print_type, p.state, p.status);
     if (alt && alt !== raw && ["idle", "finish", "finished"].includes(alt)) return "idle";
   }
   switch (raw) {
@@ -512,7 +587,9 @@ const _BBL_ACTIVE = new Set(["printing", "preparing", "busy", "paused"]);
 
 // Fetch the current print's model preview via FTPS (main process, PROTOCOL.md §11).
 // Throttled: at most one fetch per (file, plate) key, retried every ~10 s until it
-// lands. Cloud-mode printers (no LAN ip/password) are skipped. On success the
+// lands. Needs an address and an access code — which a CLOUD printer now has too,
+// having learned the first from its telemetry and been handed the second by the
+// cloud, so its preview works whenever it is on the same network as you. On success the
 // data-URI is stored on conn.data.printPreviewUrl and the UI is re-rendered.
 function _bblFetchThumbnail(conn, rawFile, plateIdx) {
   if (!window.bambulab?.fetchThumbnail || !conn?.ip || !conn?.password || !rawFile) return;
@@ -556,7 +633,13 @@ function _bblMerge(conn, msg) {
 
   // Filename (first non-empty field wins). Keep the RAW path too — it's the FTPS
   // hint for the thumbnail fetch (exact name looked up in /model, then /cache, /).
-  const fn = p.gcode_file || p.subtask_name || p.project_file
+  /* The PROJECT name first, not the gcode path. `gcode_file` is a path INSIDE
+     the archive — `/data/Metadata/plate_1.gcode` — while the `.3mf` sitting on
+     the printer is named after the job: `TigerPod_Mini_A1.3mf`. Hinting with the
+     former made the thumbnail lookup search for `plate_1.3mf`, which exists
+     nowhere, so no preview was ever found; and it put `plate_1.gcode` on the
+     card where Bambu's own app shows the project's name. */
+  const fn = p.subtask_name || p.gcode_file || p.project_file
            || p.project_name || p.filename || p.task_name || p.ipcam?.file_name;
   if (fn) {
     try { d.printFilename = decodeURIComponent(String(fn).split("/").pop()); }
@@ -575,6 +658,38 @@ function _bblMerge(conn, msg) {
     _bblFetchThumbnail(conn, fn, d.plateIdx);
   } else if (d.printState === "idle" || d.printState === "failed" || d.printState === "error") {
     if (d.printPreviewUrl) { d.printPreviewUrl = null; conn._thumbKey = null; }
+  }
+
+  /* A cloud printer tells us where it lives. The cloud handed over its access
+     code and its serial when it was added; the address is the one thing missing,
+     and the machine reports it itself — so a printer added with nothing but an
+     email ends up with everything one added by hand on the network has, and its
+     camera comes up without a single question asked. Done once per connection:
+     the address is worth a Firestore write when it is learned, not on every
+     status push. */
+  /* Correct the model once the machine has spoken. A printer whose catalogue
+     entry never resolved shows a "?" for a picture and would be given the wrong
+     kind of camera; the serial says what it is, and the mechanism to write it
+     back already exists for the add-by-IP flow that cannot identify a model
+     either. Once, and only when it is genuinely unset. */
+  if (!conn._modelFixed) {
+    conn._modelFixed = true;
+    const printer = ctx.getState?.().printers?.find(x => bambuKey(x) === conn.key);
+    if (printer && (!printer.printerModelId || printer.printerModelId === "0")) {
+      const resolved = bambuModelIdFromCode(printer.modelCode, conn.serial);
+      if (resolved && resolved !== "0") ctx.updatePrinterModel?.(printer, resolved);
+    }
+  }
+
+  if (conn.cloud) {
+    const found = _bblIpFromTelemetry(p);
+    /* Compared on EVERY report, not adopted once: a printer's address is a DHCP
+       lease, and it changes. Adopting it a single time meant the day the router
+       handed out a different one, the stored address went stale for good and the
+       camera stayed broken — nothing would ever look again. The comparison is a
+       string compare against what we already hold, so the steady state costs
+       nothing and only a real change does any work. */
+    if (found && found !== conn.ip) _bblAdoptLanAddress(conn, found);
   }
 
   // Camera disable flag (PROTOCOL.md §10): when the user turns the LAN camera
@@ -631,6 +746,11 @@ function _bblMerge(conn, msg) {
     if (p.bed_target_temper    != null) d.bedTarget      = Math.round(+p.bed_target_temper);
     if (p.chamber_temper       != null) d.chamberCurrent = Math.round(+p.chamber_temper);
   }
+
+  /* `msg: 0` is a complete state, `msg: 1` a delta (validated on an X1C, both
+     over LAN and cloud). Some firmwares omit the field, so an AMS block is taken
+     as proof of a full picture too. */
+  if (msg.print?.msg === 0 || p.ams?.ams) conn._sawFullState = true;
 
   // ── AMS — merge by module ID, then by tray ID ──────────────────────────
   // Never replace the whole array: partial updates only contain changed
@@ -788,6 +908,63 @@ function _bblLogPush(conn, dir, raw) {
   const rawStr = typeof raw === "string" ? raw : JSON.stringify(raw);
   conn.log.push({ dir, ts, summary, raw: rawStr });
   if (conn.log.length > BBL_LOG_MAX) conn.log.splice(0, conn.log.length - BBL_LOG_MAX);
+}
+
+/* Where the printer lives, read from its own telemetry. Two sources, in order
+   of trust: the camera URL it advertises, which carries the address literally,
+   and failing that its network block — where the address is a LITTLE-ENDIAN
+   integer, so the first byte of the address is the low byte of the number. */
+function _bblIpFromTelemetry(p) {
+  const url = p?.ipcam?.rtsp_url;
+  if (typeof url === "string" && url !== "disable") {
+    const m = /rtsps?:\/\/(?:[^@/]*@)?(\d{1,3}(?:\.\d{1,3}){3})/.exec(url);
+    if (m) return m[1];
+  }
+  const n = p?.net?.info?.[0]?.ip;
+  if (typeof n === "number" && n > 0) {
+    return `${n & 255}.${(n >> 8) & 255}.${(n >> 16) & 255}.${(n >>> 24) & 255}`;
+  }
+  return null;
+}
+
+/* Adopt the address: remember it, fetch the access code the cloud filed away
+   when this printer was added, persist the pair so it survives a restart, and
+   start the camera — which could not run before for want of exactly these two
+   values. The printer keeps talking over the cloud; what it gains is everything
+   local that needs an address. */
+async function _bblAdoptLanAddress(conn, ip) {
+  const moved = !!conn.ip && conn.ip !== ip;
+  conn.ip = ip;                 // set FIRST: the next report must see it and stay quiet
+  /* The stream points at the old address, so it is torn down before the new one
+     starts — otherwise the camera keeps failing against a machine that is no
+     longer there. */
+  if (moved) {
+    window.bambulab?.camStop(conn.key);
+    window.bambulab?.camStopRtsp(conn.key);
+  }
+  const printer = ctx.getState?.().printers?.find(x => bambuKey(x) === conn.key);
+  /* Written only when it differs from the record — the address is re-derived on
+     every report, and writing an unchanged value would be one Firestore write
+     per status push. */
+  if (printer && (printer.broker || "") !== ip) ctx.saveBambuLanAddress?.(printer, ip);
+
+  /* Repair a record written before the access code moved onto the machine's own
+     document: it was filed apart at first, which left the settings form showing
+     an empty required field. Read it back once and put it where it belongs. */
+  if (!conn.password) {
+    const secret = await ctx.getBambuDeviceSecret?.(conn.serial);
+    if (secret?.devAccessCode) {
+      conn.password = secret.devAccessCode;
+      if (printer) ctx.saveBambuAccessCode?.(printer, secret.devAccessCode);
+    }
+  }
+  if (!conn.password || conn.data?.camDisabled) return;
+  if (!_bambuConns.has(conn.key)) return;      // disconnected while we were reading
+  if (bambuUsesJpegCam(printer || { printerModelId: "0" })) {
+    window.bambulab?.camStart({ key: conn.key, ip, password: conn.password });
+  } else {
+    window.bambulab?.camStartRtsp({ key: conn.key, ip, password: conn.password });
+  }
 }
 
 // ── Live block renderer ────────────────────────────────────────────────────
@@ -1113,6 +1290,18 @@ export function bambuGetUnits(printer) {
   const conn = _bambuConns.get(bambuKey(printer));
   if (!conn || conn.status !== 'connected') return [];
   const d = conn.data || {};
+  /* TWO ways to be allowed to answer, and one of them is required.
+     Either we HOLD AMS data — then it exists, say so — or we have seen a FULL
+     state, which is the only thing that makes "there is no AMS" a fact rather
+     than an assumption.
+
+     Anything else stays silent, and that silence matters: a printer sends one
+     complete picture and then DELTAS, and a delta carries no filament. A
+     connection questioned in between would answer with the external spool alone,
+     which reads as authoritative — and the layer above PERSISTS what it is told,
+     writing `present: false` onto the AMS in Firestore, where it survives every
+     reload. The stored record is shown meanwhile, marked stale. */
+  if (!d.ams?.length && !conn._sawFullState) return [];
   const slot = (label, t, hw) => ({
     label, hw,
     color: t?.color || null,

@@ -48,8 +48,11 @@ Content-Type: application/json
 { "email": "<EMAIL>", "type": "codeLogin" }
 ```
 
-> ⚠️ **Validé juin 2026** : le code email est **à usage unique** et **expire vite** (~quelques min).
+> ⚠️ **Validé juin 2026, précisé août 2026** : le code email est **à usage unique** et vaut
+> **exactement 10 minutes** (annoncé par le mail lui-même, pas seulement « quelques minutes »).
 > Chaque nouvel envoi **invalide le précédent**. En cas de réutilisation → `HTTP 400 {}`.
+> Le mail part de **`noreply@notify.bambulab.com`**, objet *Account Verification* — utile à dire
+> à l'utilisateur, c'est ce qu'il cherchera dans ses indésirables.
 > Pour les comptes liés Google (cas réel : `benoit@atome3d.com`), c'est la **seule** voie : pas de
 > mot de passe à réinitialiser.
 
@@ -66,8 +69,23 @@ Content-Type: application/json
 Réponse : on récupère `accessToken` (et `refreshToken`, souvent identique). Validité ~**3 mois**
 (`expiresIn` ≈ 7 776 000 s).
 
-> ⚠️ 2FA : si `loginType: "verifyCode"` ou présence d'un `tfaKey` → étape supplémentaire
-> (cf. `/v1/user-service/user/tfa/login`). Le flow par **code email évite généralement le 2FA**.
+> ⚠️ 2FA : si `loginType: "verifyCode"` ou présence d'un `tfaKey` → étape supplémentaire.
+> **Corrigé août 2026** : l'endpoint n'est PAS `/v1/user-service/user/tfa/login` mais
+> **`POST https://bambulab.com/api/sign-in/tfa`** (`{ tfaKey, tfaCode }`) — hôte différent — et le
+> jeton revient dans un **COOKIE `token`**, pas dans le corps. Le lire dans le corps ne rend rien.
+> Le flow par **code email évite généralement le 2FA**.
+
+> ⚠️ **Cloudflare (validé août 2026)** — non mentionné dans la version initiale de ce document, et
+> c'est pourtant la première chose qui bloque. `api.bambulab.com` est derrière Cloudflare, qui juge
+> l'appelant sur son **empreinte TLS** : `https` de Node, `fetch`/undici et `curl` reçoivent une page
+> de défi 403 (d'où le recours à `cloudscraper` / `curl_cffi` dans l'implémentation Python de
+> référence). Le **`net` d'Electron EST la pile Chromium** : empreinte de vrai navigateur, aucune
+> imitation nécessaire. Les appels doivent donc partir du **processus principal** — pas du renderer
+> (CORS), pas de `fetch`.
+
+> ⚠️ **Code refusé : distinguer les deux cas.** Un code rejeté revient en `400` porteur d'un
+> discriminant : `code: 1` = **expiré** (Bambu en a déjà renvoyé un neuf), `code: 2` = **incorrect**.
+> Les confondre envoie l'utilisateur retaper indéfiniment un code déjà mort.
 
 ### 1.3 Résoudre l'`uid` (indispensable pour le MQTT)
 
@@ -77,10 +95,10 @@ Réponse : on récupère `accessToken` (et `refreshToken`, souvent identique). V
 ```
 GET https://api.bambulab.com/v1/design-user-service/my/preference
 Authorization: Bearer <accessToken>
-→ { "uid": 1504114800, ... }
+→ { "uid": 1000000000, ... }
 ```
 
-Le **username MQTT** = `"u_" + uid` (ex. `u_1504114800`).
+Le **username MQTT** = `"u_" + uid` (ex. `u_1000000000`).
 
 > ⚠️ **Piège validé** : l'endpoint `/v1/user-service/my/preference` (sans `design-`) répond **404**
 > avec un corps **non-JSON** → un `json.loads` naïf crashe (`Extra data: line 1 column 5`).
@@ -102,34 +120,42 @@ GET https://api.bambulab.com/v1/iot-service/api/user/bind
 Authorization: Bearer <accessToken>
 ```
 
-Réponse réelle (validée, 2 machines du compte) :
+Réponse réelle (validée, 2 machines du compte) — **valeurs anonymisées** : les codes d'accès et
+numéros de série d'origine étaient de VRAIES machines, publiés dans ce dépôt public. Un
+`dev_access_code` ouvre la caméra, le FTP et le MQTT local : ne jamais en écrire un ici.
 
 ```json
 {
   "devices": [
     {
-      "dev_id": "00M09A322200726",
+      "dev_id": "00M00X000000000",
       "name": "X1C Home",
       "online": true,
       "print_status": "ACTIVE",
       "dev_model_name": "BL-P001",
       "dev_product_name": "X1 Carbon",
-      "dev_access_code": "da64c712",   // ⭐ access code LAN fourni PAR LE CLOUD
+      "dev_access_code": "AAAAAAAA",   // ⭐ access code LAN fourni PAR LE CLOUD
       "nozzle_diameter": 0.4,
       "dev_structure": "CoreXY"
     },
     {
-      "dev_id": "01S00C351300198",
+      "dev_id": "01S00X000000000",
       "name": "P1P Office",
       "online": false,
       "dev_model_name": "C11",
       "dev_product_name": "P1P",
-      "dev_access_code": "25841488",
+      "dev_access_code": "BBBBBBBB",
       "nozzle_diameter": 0.4
     }
   ]
 }
 ```
+
+> ⚠️ **`print_status` n'est PAS un indicateur de présence** (validé août 2026) : une machine à
+> `online: false` annonce quand même `print_status: "ACTIVE"`. Seul `online` dit si elle répond.
+
+> ⚠️ `dev_model_name` d'une X1 Carbon vaut **`BL-P001`** — la table de résolution LAN ne connaissait
+> que `BL-P002`, la machine n'était identifiée que par le préfixe de son numéro de série.
 
 > ⭐ **Point clé pour l'auto-setup** : `dev_access_code` est **livré par le cloud**. Tu n'as donc
 > **rien à demander à l'utilisateur** pour configurer la caméra LAN et le MQTT local éventuel — tout
@@ -216,9 +242,14 @@ print.vt_tray              → bobine externe (id 254/255)
 
 ### 4.2 IP locale (utile caméra) — depuis le cloud
 
-- Direct : `print.ipcam.rtsp_url` = `rtsps://192.168.20.154:322/streaming/live/1`.
+> ⚠️ **L'adresse est un bail DHCP : la comparer à CHAQUE rapport**, jamais l'adopter une seule fois.
+> Adoptée une fois, elle devient périmée pour toujours le jour où le routeur en distribue une autre,
+> et la caméra reste cassée sans que rien ne regarde à nouveau. Sur changement réel, couper le flux
+> avant de le relancer — il pointe sur une machine qui n'est plus là.
+
+- Direct : `print.ipcam.rtsp_url` = `rtsps://192.168.1.154:322/streaming/live/1`.
 - Sinon : `print.net.info[0].ip` est un **entier little-endian**.
-  Décodage validé : `2585045184` → `192.168.20.154` via
+  Décodage validé : `2585045184` → `192.168.1.154` via
   `ip = f"{n&255}.{(n>>8)&255}.{(n>>16)&255}.{(n>>24)&255}"`.
 
 ---
@@ -281,7 +312,7 @@ l'intention « jamais ami/public ».
 ```
 users/{uid}/printers/bambulab/
   devices/{dev_id}              ← AFFICHAGE SEUL (jamais de secret ici)
-    devId: "00M09A322200726"
+    devId: "00M00X000000000"
     name: "X1C Home"
     model: "X1 Carbon"          // dev_product_name
     modelCode: "BL-P001"        // dev_model_name
@@ -289,7 +320,7 @@ users/{uid}/printers/bambulab/
     nozzleDiameter: 0.4
     online: bool
     firmware: string
-    cameraIp: "192.168.20.154"  // dérivable, pas secret
+    cameraIp: "192.168.1.154"  // dérivable, pas secret
     lastState:                  // dernier push_status « aplati » (cache d'affichage)
       gcodeState, mcPercent, remainingMin, layerNum, totalLayerNum,
       nozzleTemp, bedTemp, chamberTemp, wifi, ams: [...], updatedAt
@@ -299,7 +330,7 @@ users/{uid}/printers/bambulab/
       email, region: "us"|"eu", bambuUid, mqttUsername: "u_<uid>",
       accessToken, refreshToken, tokenExpiresAt, refreshInProgress?, updatedAt
     {dev_id}                    ← doc par machine : secrets LAN
-      dev_access_code: "da64c712"   // caméra RTSPS / FTP / MQTT LAN
+      dev_access_code: "AAAAAAAA"   // caméra RTSPS / FTP / MQTT LAN
 ```
 
 > **Pourquoi `secrets/` à part de `devices/`** : Firestore lit en **tout-ou-rien par document** (pas

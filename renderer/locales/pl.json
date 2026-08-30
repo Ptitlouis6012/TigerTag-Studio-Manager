@@ -775,6 +775,27 @@
   "snapAddChoiceScanHint": "Automatyczne wykrywanie w sieci lokalnej",
   "snapAddChoiceManual": "Wpisz adres IP",
   "snapAddChoiceManualHint": "Jeśli znasz już jej IP",
+  "bblCloudChoice": "Użyj mojego konta Bambu Lab",
+  "bblCloudChoiceHint": "Sam znajdzie wszystkie twoje maszyny",
+  "bblCloudTitle": "Zaloguj się do Bambu Lab",
+  "bblCloudSub": "Twój e-mail, kod — i maszyny same się pojawią.",
+  "bblCloudEmailPh": "ty@przyklad.com",
+  "bblCloudSendCode": "Wyślij mi kod",
+  "bblCloudCodePh": "Kod z twojej skrzynki",
+  "bblCloudSignIn": "Zaloguj",
+  "bblCloudChangeEmail": "Zmień",
+  "bblCloudCodeSent": "Kod wysłany — ważny 10 minut. Wypatruj maila od Bambu Lab.",
+  "bblCloudErrCode": "Ten kod się nie zgadza. Sprawdź go i spróbuj ponownie.",
+  "bblCloudErrExpired": "Kod wygasł. Wysłaliśmy ci nowy.",
+  "bblCloudErrBlocked": "Bambu Lab właśnie nas nie wpuszcza. Daj tej sprawie minutę.",
+  "bblCloudErrGeneric": "Logowanie nie przeszło. Spróbuj ponownie.",
+  "bblCloudNoPrinters": "Na tym koncie nie ma jeszcze maszyn.",
+  "bblCloudPick": "Zaznacz te, które chcesz",
+  "bblCloudAddSelected": {
+    "one": "Dodaj tę drukarkę",
+    "other": "Dodaj drukarki ({{n}})"
+  },
+  "bblCloudAddFailed": "Nie udało się dodać tej maszyny.",
   "ffgAddChoiceTitle": "Dodaj drukarkę FlashForge",
   "creAddChoiceTitle": "Dodaj drukarkę Creality",
   "bambuAddChoiceTitle": "Dodaj drukarkę Bambu Lab",
@@ -1568,5 +1589,9 @@
   "catalogCreateOk": "Dodano — {{name}}. Nic do wpisywania.",
   "catalogCreateError": "Ta nie przeszła. Spróbuj jeszcze raz.",
   "catalogAdd": "Dodaj do mojego magazynu",
-  "bulkHiddenWarn": "[object Object]"
+  "bulkHiddenWarn": {
+    "one": "1 zaznaczony element jest ukryty przez bieżący filtr.",
+    "other": "Ukrytych przez bieżący filtr zaznaczonych elementów: {{n}}."
+  },
+  "printerCloudMode": "Osiągalna przez chmurę"
 }

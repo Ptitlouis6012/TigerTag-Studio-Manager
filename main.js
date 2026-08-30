@@ -3481,6 +3481,342 @@ let _ffmpegBin = null;
   });
 }
 
+// ── Bambu Lab CLOUD — REST (api.bambulab.com) + ONE shared cloud MQTT client ──
+//    Protocol notes: docs/bambu_connect_cloud.md.
+//
+//    The cloud broker delivers the VERY SAME `print.push_status` the LAN broker
+//    does, so cloud messages are emitted on the SAME `bambulab:message` channel
+//    as LAN ones and the renderer's parser, cards, job block and controls are
+//    reused untouched. Only two things differ: the broker is per-ACCOUNT, so
+//    there is one client for every printer rather than one each, and the
+//    credential is an account access token instead of a per-printer LAN code.
+//
+//    REST goes through ELECTRON'S `net` — not node's `https`, not global fetch —
+//    and that is not a detail. api.bambulab.com sits behind Cloudflare, which
+//    reads the TLS fingerprint of whoever calls: plain HTTP clients are answered
+//    with a 403 challenge page, which is why the reference Python implementation
+//    reaches for `cloudscraper` / `curl_cffi` impersonation. Electron's `net` IS
+//    Chromium's network stack, so the fingerprint is a real browser's and no
+//    impersonation is needed.
+{
+  const bblNet = require('electron').net;
+  const mqtt   = require('mqtt');   // required per block, as the other brands do
+
+  const BBL_API = 'https://api.bambulab.com';
+  const BBL_URL = {
+    login:      `${BBL_API}/v1/user-service/user/login`,
+    emailCode:  `${BBL_API}/v1/user-service/user/sendemail/code`,
+    tfaLogin:   'https://bambulab.com/api/sign-in/tfa',
+    bind:       `${BBL_API}/v1/iot-service/api/user/bind`,
+    // NOT /v1/user-service/my/preference — that one 404s with a NON-JSON body.
+    preference: `${BBL_API}/v1/design-user-service/my/preference`,
+    version:    `${BBL_API}/v1/iot-service/api/user/device/version`,
+  };
+
+  /* The slicer's own network-agent headers: Bambu's edge treats a client that
+     looks like one of theirs far better than an anonymous one, and these are
+     what the maintained Python implementation sends. */
+  const _bblOsType = process.platform === 'win32' ? 'windows'
+                   : process.platform === 'darwin' ? 'macos' : 'linux';
+  const _bblHeaders = () => ({
+    'User-Agent': 'bambu_network_agent/01.09.05.01',
+    'X-BBL-Client-Name': 'OrcaSlicer',
+    'X-BBL-Client-Type': 'slicer',
+    'X-BBL-Client-Version': '01.09.05.51',
+    'X-BBL-Language': 'en-US',
+    'X-BBL-OS-Type': _bblOsType,
+    'X-BBL-Agent-Version': '01.09.05.01',
+    'X-BBL-Executable-info': '{}',
+    'X-BBL-Agent-OS-Type': _bblOsType,
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  });
+
+  /* Every REST answer is parsed TOLERANTLY. Bambu's failures are frequently not
+     JSON at all — a 404 returns prose, a Cloudflare block returns HTML — and a
+     naive JSON.parse turns a handled error into a crash. */
+  function _bblFetch(url, { method = 'GET', body = null, token = null } = {}) {
+    return new Promise((resolve) => {
+      let req;
+      try {
+        req = bblNet.request({ method, url, useSessionCookies: false });
+      } catch (err) {
+        resolve({ ok: false, status: 0, json: null, text: '', error: String(err?.message || err) });
+        return;
+      }
+      const headers = _bblHeaders();
+      if (token) headers.Authorization = `Bearer ${token}`;
+      for (const [k, v] of Object.entries(headers)) req.setHeader(k, v);
+
+      req.on('response', (res) => {
+        const chunks = [];
+        res.on('data', (c) => chunks.push(c));
+        res.on('end', () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          let json = null;
+          try { json = JSON.parse(text); } catch (_) { /* not JSON — expected on errors */ }
+          const status = res.statusCode;
+          const setCookie = res.headers['set-cookie'] || [];
+          const cookies = {};
+          for (const line of [].concat(setCookie)) {
+            const m = /^([^=]+)=([^;]*)/.exec(String(line).trim());
+            if (m) cookies[m[1]] = m[2];
+          }
+          /* Cloudflare answers 403/429 with an HTML challenge. Naming it is what
+             lets the UI say "try again shortly" instead of "wrong password". */
+          const blocked = (status === 403 || status === 429) && /cloudflare/i.test(text);
+          resolve({ ok: status >= 200 && status < 300, status, json, text, cookies, blocked });
+        });
+      });
+      req.on('error', (err) => {
+        resolve({ ok: false, status: 0, json: null, text: '', error: String(err?.message || err) });
+      });
+      if (body) req.write(JSON.stringify(body));
+      req.end();
+    });
+  }
+
+  /* Ask Bambu to email a login code. This is the ONLY way in for an account
+     linked to Google SSO — there is no password to offer. The code is single-use
+     and short-lived, and each new request invalidates the previous one, so it is
+     asked for once and used straight away. */
+  ipcMain.handle('bambulab:cloud-send-code', async (_evt, { email } = {}) => {
+    if (!email) return { ok: false, error: 'missing-email' };
+    const r = await _bblFetch(BBL_URL.emailCode, {
+      method: 'POST', body: { email, type: 'codeLogin' },
+    });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+    return r.ok ? { ok: true } : { ok: false, error: r.json?.message || `http-${r.status}` };
+  });
+
+  /* Log in, by code or by password. Bambu answers in one of three shapes and
+     only the first is a success: a token outright, or a demand for an emailed
+     code, or a demand for a second factor (which is completed elsewhere, against
+     a DIFFERENT host, and hands the token back in a COOKIE rather than a body). */
+  ipcMain.handle('bambulab:cloud-login', async (_evt, { email, code, password } = {}) => {
+    if (!email || (!code && !password)) return { ok: false, error: 'missing-credentials' };
+    const body = code ? { account: email, code }
+                      : { account: email, password, apiError: '' };
+    const r = await _bblFetch(BBL_URL.login, { method: 'POST', body });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+
+    /* A rejected CODE comes back as a 400 that distinguishes expired from wrong.
+       Telling those apart is the difference between "ask for a new one" and
+       "type it again", so they are not flattened into one failure. */
+    if (r.status === 400) {
+      const c = r.json?.code;
+      if (c === 1) return { ok: false, error: 'code-expired' };
+      if (c === 2) return { ok: false, error: 'code-incorrect' };
+      return { ok: false, error: r.json?.message || 'login-refused' };
+    }
+    if (!r.ok) return { ok: false, error: r.json?.message || `http-${r.status}` };
+
+    const token = r.json?.accessToken || '';
+    if (token) return { ok: true, token, expiresIn: r.json?.expiresIn || 0 };
+
+    const loginType = r.json?.loginType || null;
+    if (loginType === 'verifyCode') return { ok: false, need: 'code' };
+    if (loginType === 'tfa')        return { ok: false, need: 'tfa', tfaKey: r.json?.tfaKey || '' };
+    return { ok: false, error: 'login-not-understood' };
+  });
+
+  /* Second factor. Note the different host, and that the token arrives as a
+     COOKIE — reading it from the body returns nothing at all. */
+  ipcMain.handle('bambulab:cloud-tfa', async (_evt, { tfaKey, code } = {}) => {
+    if (!tfaKey || !code) return { ok: false, error: 'missing-credentials' };
+    const r = await _bblFetch(BBL_URL.tfaLogin, {
+      method: 'POST', body: { tfaKey, tfaCode: code },
+    });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+    const token = r.cookies?.token || '';
+    if (!token) return { ok: false, error: r.ok ? 'tfa-no-token' : `http-${r.status}` };
+    return { ok: true, token };
+  });
+
+  /* The MQTT username is `u_<uid>`, and the uid has to be ASKED FOR: the access
+     token is no longer a JWT (it is an opaque `AQC…` string), so nothing can be
+     read out of it. A JWT is still accepted, for the day Bambu changes back. */
+  ipcMain.handle('bambulab:cloud-uid', async (_evt, { token } = {}) => {
+    if (!token) return { ok: false, error: 'missing-token' };
+    const parts = String(token).split('.');
+    if (parts.length === 3) {
+      try {
+        const claims = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
+        if (claims?.username) return { ok: true, mqttUsername: claims.username, uid: claims.username.replace(/^u_/, '') };
+      } catch (_) { /* not a JWT after all — ask the API */ }
+    }
+    const r = await _bblFetch(BBL_URL.preference, { token });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+    const uid = r.json?.uid;
+    if (!uid) return { ok: false, error: r.ok ? 'uid-missing' : `http-${r.status}` };
+    return { ok: true, uid: String(uid), mqttUsername: `u_${uid}` };
+  });
+
+  /* Every printer bound to the account — AND its LAN access code, which the
+     cloud simply hands over. That is what makes the setup effortless: the camera
+     and any local connection are derivable from the login, with nothing for the
+     user to find on the machine's screen and type in. */
+  ipcMain.handle('bambulab:cloud-bind', async (_evt, { token } = {}) => {
+    if (!token) return { ok: false, error: 'missing-token' };
+    const r = await _bblFetch(BBL_URL.bind, { token });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+    if (!r.ok) return { ok: false, error: r.json?.message || `http-${r.status}` };
+    const devices = (r.json?.devices || []).map(d => ({
+      devId:        d.dev_id,
+      name:         d.name || '',
+      online:       !!d.online,
+      model:        d.dev_product_name || '',
+      modelCode:    d.dev_model_name || '',
+      structure:    d.dev_structure || '',
+      nozzle:       d.nozzle_diameter || null,
+      accessCode:   d.dev_access_code || '',
+      printStatus:  d.print_status || '',
+    }));
+    return { ok: true, devices };
+  });
+
+  ipcMain.handle('bambulab:cloud-device-version', async (_evt, { token, devId } = {}) => {
+    if (!token || !devId) return { ok: false, error: 'missing-params' };
+    const r = await _bblFetch(`${BBL_URL.version}?dev_id=${encodeURIComponent(devId)}`, { token });
+    if (!r.ok) return { ok: false, error: `http-${r.status}` };
+    return { ok: true, devices: r.json?.devices || [] };
+  });
+
+  // ── Shared cloud MQTT ──────────────────────────────────────────────────────
+  //    ONE client for the whole account, not one per printer: the broker is the
+  //    user's, and every machine is a topic on it. Subscriptions are kept in a
+  //    map so a reconnect can restore them — mqtt.js reconnects on its own, and
+  //    a silent reconnection that forgot its topics is a board that quietly
+  //    stops updating.
+  let _bblCloudClient = null;                 // the live client, or null
+  let _bblCloudWc     = null;                 // the window to report to
+  const _bblCloudSubs = new Map();            // devId → key
+
+  function _bblCloudSend(channel, ...args) {
+    if (_bblCloudWc && !_bblCloudWc.isDestroyed()) _bblCloudWc.send(channel, ...args);
+  }
+
+  /* A full state is asked for on every (re)connection. The X1 repeats its whole
+     object on each message, but the P1 sends only what CHANGED — so without this
+     first full push there is nothing to apply the deltas to. It is sent once per
+     connection and never on a timer: asking a P1 repeatedly makes it lag. */
+  function _bblCloudPushAll(devId) {
+    try {
+      _bblCloudClient?.publish(`device/${devId}/request`, JSON.stringify({
+        pushing: { sequence_id: '0', command: 'pushall', version: 1, push_target: 1 },
+      }), { qos: 1 });
+    } catch (_) {}
+  }
+
+  function _bblCloudOpen(uid, token, region, event) {
+    const host = `${region}.mqtt.bambulab.com`;
+    const client = mqtt.connect({
+      host, port: 8883,
+      protocol: 'mqtts',
+      rejectUnauthorized: false,
+      username: `u_${uid}`,
+      password: token,
+      /* Unique per device on purpose: the same account may be connected from the
+         phone and from another machine, and a shared client id makes the broker
+         kick the previous connection. */
+      clientId: `studio_${uid}_${Date.now().toString(36)}`,
+      keepalive: 30,
+      clean: true,
+      connectTimeout: 15000,
+      reconnectPeriod: 5000,
+    });
+    _bblCloudClient = client;
+    _bblCloudWc = event.sender;
+
+    client.on('connect', () => {
+      _bblCloudSend('bambulab:cloud-status', 'connected', region);
+      for (const devId of _bblCloudSubs.keys()) {
+        try { client.subscribe(`device/${devId}/report`, { qos: 0 }); } catch (_) {}
+        _bblCloudPushAll(devId);
+      }
+    });
+
+    client.on('message', (topic, payload) => {
+      const devId = /^device\/([^/]+)\/report$/.exec(topic)?.[1];
+      const key = devId && _bblCloudSubs.get(devId);
+      if (!key) return;
+      try {
+        /* Emitted on the LAN channel deliberately: same payload, same parser. */
+        _bblCloudSend('bambulab:message', key, topic, JSON.parse(payload.toString()));
+      } catch (_) {}
+    });
+
+    client.on('error', (err) => {
+      const msg = String(err?.message || err);
+      /* A broker that refuses the credentials on one region usually accepts them
+         on the other: the account is pinned to a region and there is no way to
+         ask which one beforehand. So the refusal is not an error yet — it is the
+         signal to try the other side, once, and report which one worked so it
+         can be remembered. */
+      const notAuthorized = /not authorized|Connection refused/i.test(msg);
+      if (notAuthorized && region === 'us') {
+        try { client.end(true); } catch (_) {}
+        _bblCloudClient = null;
+        _bblCloudSend('bambulab:cloud-status', 'switching-region', 'eu');
+        _bblCloudOpen(uid, token, 'eu', event);
+        return;
+      }
+      _bblCloudSend('bambulab:cloud-status', `error:${msg}`, region);
+    });
+    client.on('close',   () => _bblCloudSend('bambulab:cloud-status', 'disconnected', region));
+    client.on('offline', () => _bblCloudSend('bambulab:cloud-status', 'offline', region));
+  }
+
+  ipcMain.on('bambulab:cloud-connect', (event, { uid, token, region } = {}) => {
+    if (!uid || !token) { event.sender.send('bambulab:cloud-status', 'error:missing-params', ''); return; }
+    if (_bblCloudClient) {
+      /* Already up — but the window asking may be a NEW one (the renderer
+         reloads; this process does not). Re-point the sender, or telemetry would
+         keep being posted to a page that no longer exists. */
+      _bblCloudWc = event.sender;
+      return;                                 // idempotent: one client per account
+    }
+    /* Guarded: this runs in the MAIN process, where an uncaught exception is a
+       crash dialog in front of the user. A broker that will not open is a
+       printer that stays offline — never a reason to take the app down. */
+    try {
+      _bblCloudOpen(uid, token, region === 'eu' ? 'eu' : 'us', event);
+    } catch (err) {
+      console.error('[bambu-cloud] cannot open the cloud broker:', err?.message || err);
+      _bblCloudClient = null;
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('bambulab:cloud-status', `error:${err?.message || err}`, region || '');
+      }
+    }
+  });
+
+  ipcMain.on('bambulab:cloud-subscribe', (_evt, { key, devId } = {}) => {
+    if (!key || !devId) return;
+    _bblCloudSubs.set(devId, key);
+    if (!_bblCloudClient?.connected) return;  // the connect handler will catch up
+    try { _bblCloudClient.subscribe(`device/${devId}/report`, { qos: 0 }); } catch (_) {}
+    _bblCloudPushAll(devId);
+  });
+
+  ipcMain.on('bambulab:cloud-unsubscribe', (_evt, { devId } = {}) => {
+    if (!devId) return;
+    _bblCloudSubs.delete(devId);
+    try { _bblCloudClient?.unsubscribe(`device/${devId}/report`); } catch (_) {}
+  });
+
+  ipcMain.on('bambulab:cloud-publish', (_evt, { devId, payload } = {}) => {
+    if (!devId || !payload) return;
+    try { _bblCloudClient?.publish(`device/${devId}/request`, JSON.stringify(payload), { qos: 1 }); }
+    catch (_) {}
+  });
+
+  ipcMain.on('bambulab:cloud-disconnect', () => {
+    if (_bblCloudClient) { try { _bblCloudClient.end(true); } catch (_) {} }
+    _bblCloudClient = null;
+    _bblCloudSubs.clear();
+  });
+}
+
 // ── Anycubic LAN — MQTT TLS (port 9883) + slicer-config provisioning
 //    Protocol notes: renderer/printers/anycubic/PROTOCOL.md.
 //    The printer's local broker uses a self-signed cert and requests an

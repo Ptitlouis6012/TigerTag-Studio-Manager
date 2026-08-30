@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.25.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.26.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -96,6 +96,15 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
                              and what the machine last reported in it (`seenAt` + colour,
                              material, vendor). Vocabulary + full shape:
                              docs/printer-storage-terms.md
+  /printers/{brand}/secrets/{doc}
+                           → SECRETS ONLY, a deliberate sibling of `devices/`.
+                             `cloud_session` holds the Bambu account token, uid and
+                             region — ONE per account, shared by every cloud printer;
+                             `{dev_id}` holds that machine's LAN access code.
+                             They are kept OUT of `devices/` because Firestore serves
+                             a document whole: the day printers become friend-visible,
+                             a friend-read must be scoped to `devices/**` alone, and a
+                             secret stored on a printer's record would travel with it.
   /printerSeen/{brand:id}  → { ts } last-seen stamp per printer, drives the online/offline column
   /prefs/app               → { lang }
   /scales/{mac}            → TigerScale heartbeat
@@ -214,7 +223,7 @@ Each brand has `renderer/printers/<brand>/PROTOCOL.md` (self-contained spec) and
 
 | Brand | Protocol | Port |
 |---|---|---|
-| Bambu Lab | MQTTS TLS | 8883 |
+| Bambu Lab | MQTTS TLS (LAN) + account cloud MQTT / REST | 8883 |
 | Creality | WebSocket | 9999 |
 | Elegoo | MQTT | 1883 |
 | FlashForge | HTTP poll + TCP M-codes | 8898 / 8899 |
@@ -238,7 +247,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), filament edit per 
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1468 keys × 9 locales as of v2.20.1.
+1512 keys × 9 locales as of v2.25.0.
 
 ## CSS conventions
 

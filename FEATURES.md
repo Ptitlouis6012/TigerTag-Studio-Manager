@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.25.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.26.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -175,7 +175,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 
 Live integrations across six brands, each with real-time temperatures, per-slot filament, active print job data, and (where hardware supports it) a camera feed and machine controls:
 
-- **Bambu Lab** — MQTTS 8883 (TLS), LAN mode; job/temp/AMS cards, camera (JPEG-TCP + RTSP by model), full machine controls (jog/home/light/fans/speed/heated chamber where supported), print-plate thumbnails via FTPS+3mf extraction, H2-series dual-nozzle display (v1.6.0; full controls v1.10.7; thumbnails v2.1.0).
+- **Bambu Lab** — LAN (MQTTS 8883 TLS) **and cloud**: sign in with a Bambu account and every printer on it is offered with its picture, ticked one or several at a time, arriving with the LAN access code the cloud hands over; cloud machines report from anywhere and learn their own address from telemetry, so their camera starts unattended on the same network (cloud v2.26.0). Job/temp/AMS cards, camera (JPEG-TCP + RTSP by model), full machine controls (jog/home/light/fans/speed/heated chamber where supported), print-plate thumbnails via FTPS+3mf extraction, H2-series dual-nozzle display (v1.6.0; full controls v1.10.7; thumbnails v2.1.0).
 - **Creality** — WebSocket 9999 with heartbeat; job/temp cards, CFS colour-box grid, WebRTC camera, full machine controls (jog/home/temps/fans), per-slot CFS load/unload (v1.4.15; controls v1.10.13).
 - **Elegoo** — MQTT 1883 + UDP discovery 52700; job/temp/filament (mono + 4-slot Canvas) cards, XY-jog control card, fan cards, files/history sheet, filament edit sheet (v1.6.0).
 - **FlashForge** — HTTP polling 8898 + MJPEG camera; 5-slot matlStation grid, tool-changer support (Creator 5 Pro), official 24-swatch colour-palette constraint, lifetime-stats info panel (v1.4.11; monitoring & controls v1.10.10).

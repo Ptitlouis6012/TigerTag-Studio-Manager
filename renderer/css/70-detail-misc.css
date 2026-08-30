@@ -805,12 +805,16 @@
     position: absolute; left: 5px; top: 50%; transform: translateY(-50%);
     width: 30px; height: 30px; border-radius: 50%; z-index: 2;
     display: inline-flex; align-items: center; justify-content: center;
-    padding: 0; border: 0; background: transparent; cursor: pointer;
+    padding: 0; border: 0; cursor: pointer;
+    /* Filled in the accent rather than a grey glyph on nothing: it is the way in
+       to adding a spool, sitting inside a search field that reads as somewhere to
+       type — so it has to look like a button rather than an ornament. */
+    background: var(--primary);
     transition: background .15s;
   }
-  .inv-search-add .icon { background: var(--muted); transition: background .15s; }
-  .inv-search-add:hover { background: var(--surface-3); }
-  .inv-search-add:hover .icon { background: var(--primary); }
+  .inv-search-add .icon { background: var(--on-accent); transition: background .15s; }
+  .inv-search-add:hover { background: var(--primary-hover); }
+  .inv-search-add:hover .icon { background: var(--on-accent); }
   .inv-search-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
   /* The add menu, hung under the "+" rather than opening a side card: two
      choices and one line of consequence each do not need a panel. */
@@ -1905,6 +1909,44 @@
     background: var(--neutral);          /* offline — fixed grey */
     flex-shrink: 0;
   }
+  /* A cloud machine's status dot IS a cloud — same colour code, same heartbeat,
+     different shape. It says how the printer is reached AND whether it answers,
+     in one mark instead of two.
+
+     THE GLYPH IS DRAWN BY THE PSEUDO-ELEMENT, not by the element itself, and
+     that is the whole trick: masking is applied AFTER filtering, so a glow put
+     on a masked element — `box-shadow` or `drop-shadow` alike — is clipped away
+     with everything outside the silhouette and never shows. Leaving the element
+     unmasked lets it carry the halo, exactly the one the round dot uses, while
+     the cloud is painted on top. The icon is the FILLED cloud: masking an
+     outline would paint only the outline, giving a hollow ring. */
+  .pp-title-dot.is-cloud {
+    position: relative;
+    /* One dimension forced, the other derived — the project rule for anything
+       masked, so the glyph can never be squashed. Square, because the halo
+       behind it is a circle. */
+    height: 13px; width: auto; aspect-ratio: 1;
+    border-radius: 50%;
+    background: transparent;
+    /* No `box-shadow: none` here on purpose: the halo is the shared online
+       rule's, so a cloud breathes exactly like a round dot and an offline one
+       stays bare, with nothing to keep in step by hand. */
+  }
+  .pp-title-dot.is-cloud::before {
+    content: ""; position: absolute; inset: 0;
+    background: var(--neutral);
+    -webkit-mask-image: url('../../assets/svg/icons/icon_cloud_filled.svg');
+            mask-image: url('../../assets/svg/icons/icon_cloud_filled.svg');
+    -webkit-mask-size: contain;  mask-size: contain;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    -webkit-mask-position: center;  mask-position: center;
+  }
+  .pp-title-dot.is-cloud.is-online {
+    background: transparent;     /* beats the round rule's green fill */
+    animation: printer-name-dot-pulse 1.8s ease-in-out infinite;
+  }
+  .pp-title-dot.is-cloud.is-online::before { background: var(--success); }
+
   .pp-title-dot.is-online {
     background: var(--success);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);

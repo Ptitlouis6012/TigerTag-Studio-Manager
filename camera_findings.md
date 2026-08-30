@@ -4,7 +4,7 @@
 > Architecture identification for interoperability. No decryption, no pinning bypass, no key
 > extraction, no impersonation client. Nothing is re-implemented here — only identified.
 
-- **Device**: Bambu Lab X1C — SN `00M09A322200726`, LAN IP `192.168.20.154`
+- **Device**: Bambu Lab X1C — SN `00M00X000000000`, LAN IP `192.168.20.154`
 - **Account**: cloud OK, MQTT cloud `us.mqtt.bambulab.com:8883` (user `u_1504114800`)
 - **Printer `ipcam` telemetry (given)**: `agora_service:"disable"`, `brtc_service:"enable"`, `tutk_server:"disable"`
 - **Date**: 2026-06-24

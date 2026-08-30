@@ -3281,10 +3281,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ["adpBedMin",    bedMin,    "addProductErrMissingTemp"],
       ["adpBedMax",    bedMax,    "addProductErrMissingTemp"]
     ];
+    /* One is the floor, not zero. A 0 here is never a measurement — it is the
+       empty box saved as though it meant something, and it travels: onto the
+       chip, into the catalogue, into everything read back later. */
     for (const [fieldId, value, errKey] of required) {
-      if (!isFinite(value) || value < 0 || (fieldId === "adpWeight" && value < 1)) {
+      if (!isFinite(value) || value < 1) {
         try { $(fieldId)?.focus(); } catch (_) {}
         return showErr(t(errKey) || t("addProductErrCapacity"));
+      }
+    }
+    /* The drying pair is OPTIONAL — left empty it stays empty, which is how a
+       filament that needs no drying is expressed. But a value that IS given has
+       to be a real one. */
+    for (const [fieldId, value] of [["adpDryTemp", dryTemp], ["adpDryTime", dryTime]]) {
+      if (isFinite(value) && value < 1) {
+        try { $(fieldId)?.focus(); } catch (_) {}
+        return showErr(t("addProductErrMissingTemp") || t("addProductErrCapacity"));
       }
     }
     // Aspect 1 ≠ Aspect 2 — they share an id pool, but with the
@@ -3804,6 +3816,20 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (cleaned !== "" && isFinite(maxAttr)) {
         const v = parseInt(cleaned, 10);
         if (isFinite(v) && v > maxAttr) cleaned = String(maxAttr);
+      }
+      /* 3. The symmetric floor, read from the field's own `min` — a zero here is
+            never a measurement, it is an empty box saved as though it meant
+            something, and it travels onto the chip and into the catalogue.
+            Typing is not fought: with a floor of 1 the only string this can
+            catch is a lone "0", so reaching 50 by typing "5" then "0" still
+            works — "50" is already above the floor. A field given a HIGHER floor
+            one day would need this moved to `change`, or it would rewrite digits
+            mid-word. Empty stays empty: the two drying fields are optional, and
+            blank is how "no drying needed" is said. */
+      const minAttr = parseInt(el.getAttribute("min") || "", 10);
+      if (cleaned !== "" && isFinite(minAttr)) {
+        const v = parseInt(cleaned, 10);
+        if (isFinite(v) && v < minAttr) cleaned = String(minAttr);
       }
       if (cleaned !== raw) {
         el.value = cleaned;
@@ -21436,7 +21462,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           // Bambu Lab: same always-on MQTT pattern — camera skipped here,
           // started only when the sidecard opens.
           {
-            const bambuNow = all.filter(p => p.brand === 'bambulab' && (p.broker || p.ip));
+            /* A cloud printer has no IP to offer — it is reached through the
+               account's broker — so requiring one kept it permanently
+               disconnected. Same shape Anycubic uses just below. */
+            const bambuNow = all.filter(p => p.brand === 'bambulab' && (p.broker || p.ip || p.mode === 'cloud'));
             const bambuNowKeys = new Set(bambuNow.map(p => bambuKey(p)));
             for (const key of _bambuAutoKeys) {
               if (!bambuNowKeys.has(key)) { bambuDisconnect(key); _bambuAutoKeys.delete(key); }
@@ -21446,7 +21475,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
               const conn = bambuGetConn(key);
               // Connect when: no conn yet, OR IP changed.
               const ip = p.broker || p.ip || "";
-              if (!conn || conn.ip !== ip) {
+              /* A cloud printer is EXEMPT from the address check: it talks to the
+                 account's broker, not to an IP. It also LEARNS its address from
+                 its own telemetry, and the record only catches up once Firestore
+                 echoes — so between the two, every tick saw a mismatch, tore the
+                 session down and rebuilt it with empty data. The AMS vanished
+                 each time, because a delta push carries no filament and the full
+                 state it came from had just been thrown away. */
+              if (!conn || (conn.ip !== ip && p.mode !== "cloud")) {
                 bambuConnect(p, { skipCam: true });
                 _bambuAutoKeys.add(key);
               }
@@ -21947,7 +21983,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
-      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p);
+      if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
       if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p);
     } catch (e) { console.warn("[board-cam] kick failed for", _printerKey(p), e?.message || e); }
@@ -22523,7 +22559,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
-      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p, { skipCam: true });
+      if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
       if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p, { skipCam: true });
     });
@@ -22608,7 +22644,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           <div class="rp-rack-head printer-card-head">
             <div class="rp-rack-info">
               <div class="printer-card-name">
-                <span class="printer-card-name-dot${online ? " is-online" : ""}" aria-hidden="true"></span>
+                <span class="printer-card-name-dot${online ? " is-online" : ""}${p.mode === "cloud" ? " is-cloud" : ""}"${p.mode === "cloud" ? ` role="img" aria-label="${esc(t("printerCloudMode"))}"` : ' aria-hidden="true"'}></span>
                 <span class="printer-card-name-txt">${safeName}</span>
               </div>
             </div>
@@ -22884,7 +22920,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
-      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p, { skipCam: true });
+      if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
       if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p, { skipCam: true });
     });
@@ -23101,7 +23137,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
-      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p);
+      if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
       if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p);
     });
@@ -23408,12 +23444,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     wall.addEventListener("pointermove", e => {
       if (!rz) return;
+      /* Raised on the first MOVEMENT, exactly as the drag does, and for the same
+         reason: the release awaits a write, while the click that follows it
+         fires long before that round-trip resolves. Raised at the end it would
+         always be too late. Without it, resizing a camera ended by opening —
+         or closing — the machine's side panel over the wall being laid out. */
+      if (!rz.moved) { rz.moved = true; _camJustDragged = true; }
       const w = Math.round((rz.w0 + (e.clientX - rz.sx) / (_camZoom || 1)) / 8) * 8;
       rz.card.style.width = Math.max(CAM_W_MIN, Math.min(CAM_W_MAX, w)) + "px";
     });
     const endResize = async () => {
       if (!rz) return;
       const r = rz; rz = null;
+      /* Scheduled BEFORE the write is awaited: past this point the function
+         suspends, and a guard lowered after the round-trip would stay up for as
+         long as Firestore takes — blocking the next honest click on a card. */
+      if (r.moved) setTimeout(() => { _camJustDragged = false; }, 120);
       document.body.classList.remove("is-plan-grabbing");
       host.classList.remove("is-plan-moving");
       r.card.classList.remove("is-resizing");
@@ -25849,7 +25895,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     btn.dataset.conn = active ? "active" : "inactive";
     // Status dot before the title: green (pulsing) when online, grey otherwise.
     const dot = $("printerPanelDot");
-    if (dot) dot.classList.toggle("is-online", _isPrinterOnline(p));
+    if (dot) {
+      dot.classList.toggle("is-online", _isPrinterOnline(p));
+      /* On a cloud machine the dot BECOMES a cloud, keeping the same colour
+         code. One mark carrying two facts rather than two marks side by side:
+         how it is reached, and whether it answers. */
+      const isCloud = p?.mode === "cloud";
+      dot.classList.toggle("is-cloud", isCloud);
+      if (isCloud) { dot.setAttribute("role", "img"); dot.setAttribute("aria-label", t("printerCloudMode")); }
+      else { dot.removeAttribute("role"); dot.setAttribute("aria-hidden", "true"); }
+    }
   }
 
   $("printerConnBtn")?.addEventListener("click", () => {
@@ -25879,7 +25934,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "creality"   && p.ip)               { creDisconnect(creKey(p)); creConnect(p); }
-      if (p.brand === "bambulab"   && (p.broker || p.ip)) bambuConnect(p);
+      if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo")                           elegooConnect(p);
       if (p.brand === "anycubic"   && (p.ip || p.mode === "cloud")) acuConnect(p);
     }
@@ -25998,6 +26053,138 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // cloudPrinterId so re-provisioning upserts (refreshing the token) instead of
   // creating duplicates. The token/email are denormalised onto the doc so the
   // driver has everything it needs (mirrors how LAN docs carry their creds).
+  /* ── Bambu Lab cloud ────────────────────────────────────────────────────
+     The account session lives in ONE document, beside the machines rather than
+     inside them (docs/bambu_connect_cloud.md §6): a token is a secret, Firestore
+     hands out documents whole, and a secret stored on a printer's record would
+     be handed out with that record the day printers become friend-visible. The
+     machines' own documents carry nothing but what is safe to show. */
+  const _bblSecretsCol = (uid) => fbDb(uid).collection("users").doc(uid)
+    .collection("printers").doc("bambulab").collection("secrets");
+
+  _printerCtx.saveBambuCloudSession = async (session) => {
+    const uid = state.activeAccountId;
+    if (!uid) return { ok: false, error: "no-account" };
+    try {
+      await _bblSecretsCol(uid).doc("cloud_session").set({
+        email:        String(session.email || ""),
+        bambuUid:     String(session.uid || ""),
+        mqttUsername: `u_${session.uid || ""}`,
+        region:       session.region === "eu" ? "eu" : "us",
+        accessToken:  String(session.token || ""),
+        // Bambu's tokens last about three months; the expiry is stored so the app
+        // can warn before it lapses instead of failing silently one morning.
+        expiresAt:    session.expiresIn
+          ? Date.now() + Number(session.expiresIn) * 1000
+          : null,
+        updatedAt:    firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+      state.bblCloudSession = null;   // force the next read to see the new token
+      return { ok: true };
+    } catch (e) {
+      console.warn("[bambulab] saveBambuCloudSession failed:", e?.code, e?.message);
+      return { ok: false, error: e?.message || String(e) };
+    }
+  };
+
+  _printerCtx.getBambuCloudSession = async () => {
+    const uid = state.activeAccountId;
+    if (!uid) return null;
+    if (state.bblCloudSession) return state.bblCloudSession;
+    try {
+      const snap = await _bblSecretsCol(uid).doc("cloud_session").get();
+      if (!snap.exists) return null;
+      state.bblCloudSession = snap.data() || null;
+      return state.bblCloudSession;
+    } catch (e) {
+      console.warn("[bambulab] getBambuCloudSession failed:", e?.code, e?.message);
+      return null;
+    }
+  };
+
+  /* The LAN credentials a cloud printer hands us for free: the cloud's device
+     list carries the access code, and the machine's own telemetry carries its
+     address. Together with the serial — which IS the cloud's dev_id — that is
+     everything a printer added by hand on the local network has, so the camera
+     and the local transports work without asking the user for anything. */
+  _printerCtx.getBambuDeviceSecret = async (devId) => {
+    const uid = state.activeAccountId;
+    if (!uid || !devId) return null;
+    try {
+      const snap = await _bblSecretsCol(uid).doc(String(devId)).get();
+      return snap.exists ? (snap.data() || null) : null;
+    } catch (e) {
+      console.warn("[bambulab] getBambuDeviceSecret failed:", e?.code, e?.message);
+      return null;
+    }
+  };
+
+  _printerCtx.saveBambuAccessCode = async (printer, code) => {
+    const uid = state.activeAccountId;
+    if (!uid || !printer?.id || !code) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc("bambulab")
+        .collection("devices").doc(printer.id)
+        .update({ password: String(code) });
+    } catch (e) {
+      console.warn("[bambulab] saveBambuAccessCode failed:", e?.code, e?.message);
+    }
+  };
+
+  _printerCtx.saveBambuLanAddress = async (printer, ip) => {
+    const uid = state.activeAccountId;
+    if (!uid || !printer?.id || !ip) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc("bambulab")
+        .collection("devices").doc(printer.id)
+        .update({ broker: String(ip) });
+    } catch (e) {
+      console.warn("[bambulab] saveBambuLanAddress failed:", e?.code, e?.message);
+    }
+  };
+
+  _printerCtx.addBambuCloudPrinter = async (rec) => {
+    const uid = state.activeAccountId;
+    if (!uid) return { ok: false, error: "no-account" };
+    const devId = String(rec.devId || "");
+    if (!devId) return { ok: false, error: "missing-dev-id" };
+    try {
+      const ref = fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc("bambulab")
+        .collection("devices").doc("cloud_" + devId);
+      const existing = state.printers.find(p => p.brand === "bambulab" && p.id === ref.id);
+      await ref.set({
+        id:             ref.id,
+        brand:          "bambulab",
+        mode:           "cloud",
+        // The cloud's dev_id IS the printer's serial, and every command topic is
+        // built from it — so it is stored under the name the rest of the driver
+        // already reads, and cloud and LAN printers stay interchangeable.
+        serialNumber:   devId,
+        printerName:    String(rec.name || `Bambu ${devId}`),
+        printerModelId: String(rec.printerModelId || "0"),
+        modelCode:      String(rec.modelCode || ""),
+        /* The LAN access code, on the machine's own document — exactly where a
+           printer added by hand keeps it, and where the settings form reads it.
+           Isolating only the cloud ones bought no protection (the same field
+           exists on every LAN printer of six brands) and left the form showing an
+           empty required field. The ACCOUNT TOKEN is the one that stays apart:
+           it commands every machine, from anywhere, for three months. */
+        password:       String(rec.accessCode || ""),
+        isActive:       existing ? !!existing.isActive : false,
+        sortIndex:      existing && Number.isFinite(existing.sortIndex) ? existing.sortIndex : state.printers.length,
+        updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      return { ok: true, id: ref.id };
+    } catch (e) {
+      console.warn("[bambulab] addBambuCloudPrinter failed:", e?.code, e?.message);
+      return { ok: false, error: e?.message || String(e) };
+    }
+  };
+
   _printerCtx.addAnycubicCloudPrinter = async (rec) => {
     const uid = state.activeAccountId;
     if (!uid) return { ok: false, error: "no-account" };
@@ -26391,6 +26578,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Pills (next to the printer name on the title row): brand + model.
     // The online/offline status badge is rendered SEPARATELY on its
     // own row beneath the title — see #printerPanelStatus below.
+    /* A cloud machine is marked, on the card and here. The two do not behave the
+       same once you leave the house — a LAN printer simply becomes unreachable,
+       a cloud one keeps answering — so when one goes quiet, knowing which of the
+       two you are looking at changes what "offline" means. */
     const titlePillsHtml = `
       <span class="pp-brand-pill pp-brand-pill--sm" style="--brand-accent:${meta.accent}">${esc(meta.label)}</span>
       ${modelName && modelName !== "—" ? `<span class="pp-model-pill pp-model-pill--sm">${esc(modelName)}</span>` : ""}

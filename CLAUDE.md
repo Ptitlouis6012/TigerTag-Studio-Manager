@@ -384,7 +384,7 @@ Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a **self-contained a
 
 | Brand | PROTOCOL.md highlights | index.js status |
 |-------|------------------------|-----------------|
-| **Bambu Lab** | MQTTS 8883 TLS, AMS 16-slot, SSDP+TLS scan, JPEG TCP 6000 / RTSP 322 | ✅ implemented |
+| **Bambu Lab** | LAN: MQTTS 8883 TLS, AMS 16-slot, SSDP+TLS scan, JPEG TCP 6000 / RTSP 322. Cloud (§17): REST behind Cloudflare — needs Electron's `net` — + one account MQTT broker; same `push_status`, so the LAN parser is reused | ✅ implemented (LAN + cloud) |
 | **Creality** | WS 9999, heartbeat `"ok"`, CFS boxsInfo type 0/1, WebRTC port 8000 | ✅ implemented |
 | **Elegoo** | MQTT 1883, UDP spray port 52700, filament 4 slots canvas/tray | ✅ implemented |
 | **FlashForge** | HTTP poll 8898, TCP M-codes 8899, UDP multicast 225.0.0.9:19000 | ✅ implemented |

@@ -73,7 +73,7 @@ function parseArgs(argv) {
       const raw = args[++i];
       try {
         const obj = JSON.parse(raw);
-        for (const [k, v] of Object.entries(obj)) result.values[k] = String(v);
+        for (const [k, v] of Object.entries(obj)) result.values[k] = isPlural(v) ? v : String(v);
       } catch (e) {
         console.error("[i18n-add] --json payload is not valid JSON:", e.message);
         process.exit(1);
@@ -126,6 +126,29 @@ function jsonEscape(str) {
   return JSON.stringify(String(str));
 }
 
+// A plural value, the shape t() understands: { one, other }.
+function isPlural(v) {
+  return !!v && typeof v === "object" && !Array.isArray(v) && ("one" in v || "other" in v);
+}
+
+/* Serialise a VALUE. Plurals are emitted as a real multi-line object, matching
+   how the locale files already write them. Anything else that is not a string
+   is REFUSED rather than coerced: `String({one, other})` yields the literal text
+   "[object Object]", and a run that did exactly that wrote it into all nine
+   files at once, silently — `bulkHiddenWarn` shipped broken that way in v2.16.0
+   and stayed broken for nine releases, because nothing ever complained. */
+function jsonValue(value, indent = "  ") {
+  if (typeof value === "string") return JSON.stringify(value);
+  if (isPlural(value)) {
+    const inner = Object.entries(value)
+      .map(([k, v]) => `${indent}  ${JSON.stringify(k)}: ${JSON.stringify(String(v))}`)
+      .join(",\n");
+    return `{\n${inner}\n${indent}}`;
+  }
+  console.error(`[i18n-add] refusing a value that is neither a string nor a {one,other} plural: ${JSON.stringify(value)}`);
+  process.exit(1);
+}
+
 // ── Insert / update a key in a locale file ────────────────────────────
 //   text  : full file as a string (with \n line endings)
 //   key   : the key to add or update
@@ -139,7 +162,7 @@ function jsonEscape(str) {
 function upsertKey(text, key, value, anchor) {
   const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const indent     = "  ";              // every locale file uses 2-space
-  const newLine    = `${indent}${jsonEscape(key)}: ${jsonEscape(value)}`;
+  const newLine    = `${indent}${jsonEscape(key)}: ${jsonValue(value, indent)}`;
 
   // 1. Key already exists — update in place. Match the whole line
   //    (the value can contain commas, escaped quotes, etc.).
@@ -158,8 +181,21 @@ function upsertKey(text, key, value, anchor) {
     // re-engineer the regex above.
     const trimmed = lines[i].trimStart();
     if (trimmed.startsWith(`${keyToken}:`) || trimmed.startsWith(`${keyToken} :`)) {
-      const hadComma = lines[i].trimEnd().endsWith(",");
-      lines[i] = `${indent}${keyToken}: ${jsonEscape(value)}${hadComma ? "," : ""}`;
+      /* A plural already in the file spans SEVERAL lines. Replacing only the
+         first would leave its remaining lines orphaned and the file unparsable,
+         so the whole block is found and swapped — otherwise running the same
+         command twice would break the very file it just wrote. */
+      let last = i;
+      if (lines[i].trimEnd().endsWith("{")) {
+        while (last + 1 < lines.length) {
+          last++;
+          const t2 = lines[last].trimStart();
+          if (t2 === "}" || t2 === "},") break;
+        }
+      }
+      const hadComma = lines[last].trimEnd().endsWith(",");
+      lines.splice(i, last - i + 1,
+        `${indent}${keyToken}: ${jsonValue(value, indent)}${hadComma ? "," : ""}`);
       return lines.join("\n");
     }
   }
@@ -188,7 +224,7 @@ function upsertKey(text, key, value, anchor) {
         // comma; otherwise add one.
         const after = (lines[i + 1] ?? "").trimStart();
         const trailingComma = after.startsWith("}") ? "" : ",";
-        lines.splice(i + 1, 0, `${indent}${keyToken}: ${jsonEscape(value)}${trailingComma}`);
+        lines.splice(i + 1, 0, `${indent}${keyToken}: ${jsonValue(value, indent)}${trailingComma}`);
         return lines.join("\n");
       }
     }
@@ -215,7 +251,7 @@ function upsertKey(text, key, value, anchor) {
     }
     break;
   }
-  lines.splice(closeIdx, 0, `${indent}${keyToken}: ${jsonEscape(value)}`);
+  lines.splice(closeIdx, 0, `${indent}${keyToken}: ${jsonValue(value, indent)}`);
   return lines.join("\n");
 }
 

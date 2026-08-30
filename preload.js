@@ -25,6 +25,24 @@ contextBridge.exposeInMainWorld('bambulab', {
   // Fetch the current print's model preview via FTPS + .3mf (PROTOCOL.md §11).
   // opts = { ip, accessCode, fileHint, plateIdx } → { ok, dataUri } | { ok:false, error }
   fetchThumbnail: (opts) => ipcRenderer.invoke('bambulab:fetch-thumbnail', opts),
+
+  /* Cloud mode (docs/bambu_connect_cloud.md). Telemetry deliberately arrives on
+     the LAN `onMessage` above — the cloud broker sends the same payload — so a
+     cloud printer needs no parser of its own. */
+  cloud: {
+    sendCode:      (opts) => ipcRenderer.invoke('bambulab:cloud-send-code',      opts),
+    login:         (opts) => ipcRenderer.invoke('bambulab:cloud-login',          opts),
+    tfa:           (opts) => ipcRenderer.invoke('bambulab:cloud-tfa',            opts),
+    uid:           (opts) => ipcRenderer.invoke('bambulab:cloud-uid',            opts),
+    bind:          (opts) => ipcRenderer.invoke('bambulab:cloud-bind',           opts),
+    deviceVersion: (opts) => ipcRenderer.invoke('bambulab:cloud-device-version', opts),
+    connect:     (opts) => ipcRenderer.send('bambulab:cloud-connect',     opts),
+    subscribe:   (opts) => ipcRenderer.send('bambulab:cloud-subscribe',   opts),
+    unsubscribe: (opts) => ipcRenderer.send('bambulab:cloud-unsubscribe', opts),
+    publish:     (opts) => ipcRenderer.send('bambulab:cloud-publish',     opts),
+    disconnect:  ()     => ipcRenderer.send('bambulab:cloud-disconnect'),
+    onStatus:    (cb)   => ipcRenderer.on('bambulab:cloud-status', (_, status, region) => cb(status, region)),
+  },
 });
 
 contextBridge.exposeInMainWorld('elegoo', {
