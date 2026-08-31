@@ -94,8 +94,8 @@ Everything around TigerTag is open — the hardware, the firmware, the SDK, and 
 | Project | What it is | License |
 |---|---|---|
 | **[Tiger Studio Manager](https://github.com/TigerTag-Project/TigerTag-Studio-Manager)** | This app — desktop companion for filament management | MIT |
-| **[TigerTag SDK for JavaScript](https://github.com/TigerTag-Project/TigerTag-SDK-JS)** | Parse, verify, and encode TigerTag NFC chips — used internally by this app | MIT |
-| **[TigerTag SDK for Python](https://github.com/TigerTag-Project/TigerTag-SDK-Python)** | Parse, verify, and encode TigerTag NFC chips in Python — for scripts, tools, and automation | MIT |
+| **[TigerTag SDK for JavaScript](https://github.com/TigerTag-Project/TigerTag-SDK-JS)** | Parse, verify, and encode TigerTag NFC chips — used internally by this app | Apache-2.0 |
+| **[TigerTag SDK for Python](https://github.com/TigerTag-Project/TigerTag-SDK-Python)** | Parse, verify, and encode TigerTag NFC chips in Python — for scripts, tools, and automation | Apache-2.0 |
 | **[TigerScale V3](https://github.com/TigerTag-Project/Tiger-Scale-V3)** | ESP32-S3 firmware + hardware for the open-source filament scale — 3.5" touchscreen, dual NFC readers, battery | MIT |
 | **[TigerPOD](https://github.com/TigerTag-Project/TigerPOD)** | Open-source dual NFC reader/writer stand for spools — 3D-printable shell + two USB readers (free STL on MakerWorld: [Standard](https://makerworld.com/en/models/1289152-tigerpod-for-openspool-tigertag-rfid-filament#profileId-1318958) · [Mini](https://makerworld.com/en/models/3190348-tigerpod-mini-for-openspool-tigertag-rfid-filament#profileId-3609236)) | CC BY 4.0 |
 
