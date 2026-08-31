@@ -5,6 +5,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.26.1 — 2026-08-31
+
+### Fixed
+
+- **A cloud Bambu printer never showed the print's preview away from home.** There was exactly one way to fetch it — implicit FTPS to the printer's own LAN address, pulling `metadata/plate_N.png` out of the active `.3mf` — which works only on the printer's network. A machine added by signing in, whose whole point is reporting from anywhere, therefore had no preview anywhere else, indefinitely rather than as a start-up delay. Cloud printers now read the account's task list (`GET /v1/user-service/my/tasks`), where each entry carries `cover`: a plain HTTPS image on Bambu's CDN needing no auth of its own. They take that route and ONLY that one — FTPS to a machine on another network does not fail fast, it hangs to its timeout, once per retry window, for nothing. The endpoint and its payload shape were taken from the maintained Home Assistant integration rather than inferred; the first endpoint tried here, lifted from our own protocol notes, was the wrong one. `hits` holds the ACCOUNT's ~20 most recent tasks rather than this machine's current one, so it is filtered by `deviceId` and then narrowed by the job's own name — already known from telemetry — falling back to the most recently started, since taking the first match would eventually show a previous print — `main.js`, `preload.js`, `renderer/printers/bambulab/index.js`.
+- **A cloud printer keeps showing what it last made, and what it was called.** The preview and the job name now survive the print, on the board card and in the side panel, instead of the card reverting to a stock photo of the printer the moment the machine goes quiet. Both come from the cloud for a cloud machine — `cover` and `title` off the task list, which still hold them once telemetry has stopped naming anything. A LAN printer still loses its preview when it goes idle: the `.3mf` it was read from does not outlive the job, so keeping the image would eventually be a lie. The board card was gating on print state too and had to learn the same rule — the driver decides, the view trusts the field — `renderer/inventory.js`, `renderer/printers/bambulab/{index,cards}.js`.
+- **The cloud preview blinked out and back on every redraw.** The FTPS route always handed the renderer image BYTES, so the preview field held something instant and self-contained; the cloud route handed it a CDN URL instead, and every DOM rebuild re-requested it, leaving the frame blank for the length of the round-trip — the media-reload trap the surgical-update rules warn about, arriving through the data rather than through the markup. The image is fetched once in the main process and returned as a data-URI, cached by source URL (64 entries, 4 MB ceiling), so both routes deliver the same kind of value. The fetch decision compares the SOURCE URL, not the stored value, or the decoded image would never match and every pass would fetch again. If the decode fails for any reason the raw URL is used instead: the worst case is then the flicker this set out to remove, never a blank card — `main.js`, `preload.js`, `renderer/printers/bambulab/index.js`.
+
+---
+
 ## v2.26.0 — 2026-08-31
 
 ### Added

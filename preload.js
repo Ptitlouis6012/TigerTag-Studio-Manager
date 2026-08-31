@@ -36,6 +36,8 @@ contextBridge.exposeInMainWorld('bambulab', {
     uid:           (opts) => ipcRenderer.invoke('bambulab:cloud-uid',            opts),
     bind:          (opts) => ipcRenderer.invoke('bambulab:cloud-bind',           opts),
     deviceVersion: (opts) => ipcRenderer.invoke('bambulab:cloud-device-version', opts),
+    tasks:         (opts) => ipcRenderer.invoke('bambulab:cloud-tasks',          opts),
+    cover:         (opts) => ipcRenderer.invoke('bambulab:cloud-cover',          opts),
     connect:     (opts) => ipcRenderer.send('bambulab:cloud-connect',     opts),
     subscribe:   (opts) => ipcRenderer.send('bambulab:cloud-subscribe',   opts),
     unsubscribe: (opts) => ipcRenderer.send('bambulab:cloud-unsubscribe', opts),

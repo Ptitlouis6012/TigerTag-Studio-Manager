@@ -8702,5 +8702,60 @@
         }
       }
     ]
+  },
+  "2.26.1": {
+    "date": "2026-08-31",
+    "items": [
+      {
+        "icon": "image",
+        "title": {
+          "en": "See what's printing, wherever you are",
+          "fr": "Vois ce qui s'imprime, où que tu sois",
+          "de": "Sieh, was gedruckt wird — von überall",
+          "es": "Mira lo que se imprime, estés donde estés",
+          "it": "Guarda cosa si sta stampando, ovunque tu sia",
+          "zh": "人在哪儿,都看得见在打什么",
+          "pt": "Veja o que está imprimindo, esteja onde estiver",
+          "pt-pt": "Veja o que está a imprimir, esteja onde estiver",
+          "pl": "Zobacz, co się drukuje — gdziekolwiek jesteś"
+        },
+        "body": {
+          "en": "Bambu Lab printers added with your account were only showing the print's picture when you happened to be on the same network as them — which rather missed the point. Now it turns up from anywhere.",
+          "fr": "Les Bambu Lab ajoutées avec ton compte n'affichaient l'aperçu de l'impression que si tu te trouvais sur le même réseau qu'elles — ce qui ratait un peu l'idée. Il arrive maintenant de partout.",
+          "de": "Bambu-Lab-Drucker, die du mit deinem Konto hinzugefügt hast, zeigten das Bild des Drucks nur, wenn du zufällig im selben Netz warst — was den Sinn verfehlte. Jetzt kommt es von überall.",
+          "es": "Las Bambu Lab añadidas con tu cuenta solo mostraban la imagen de la impresión si estabas en la misma red que ellas, lo cual perdía bastante la gracia. Ahora aparece desde cualquier sitio.",
+          "it": "Le Bambu Lab aggiunte con il tuo account mostravano l'immagine della stampa solo se ti trovavi sulla loro stessa rete — il che mancava un po' il punto. Ora arriva da ovunque.",
+          "zh": "用账号添加的拓竹机器,只有当你恰好和它在同一个网络里才显示打印预览图——这就有点白添加了。现在从哪儿都看得到。",
+          "pt": "As Bambu Lab adicionadas com sua conta só mostravam a imagem da impressão se você estivesse na mesma rede que elas — o que meio que perdia a graça. Agora aparece de qualquer lugar.",
+          "pt-pt": "As Bambu Lab adicionadas com a sua conta só mostravam a imagem da impressão se estivesse na mesma rede que elas — o que perdia um pouco a piada. Agora aparece de qualquer sítio.",
+          "pl": "Drukarki Bambu Lab dodane przez konto pokazywały podgląd wydruku tylko wtedy, gdy akurat byłeś w tej samej sieci — co trochę mijało się z celem. Teraz pojawia się zewsząd."
+        }
+      },
+      {
+        "icon": "check",
+        "title": {
+          "en": "The last print stays on the card",
+          "fr": "La dernière impression reste sur la carte",
+          "de": "Der letzte Druck bleibt auf der Karte",
+          "es": "La última impresión se queda en la tarjeta",
+          "it": "L'ultima stampa resta sulla scheda",
+          "zh": "最后一次打印留在卡片上",
+          "pt": "A última impressão fica no card",
+          "pt-pt": "A última impressão fica no cartão",
+          "pl": "Ostatni wydruk zostaje na karcie"
+        },
+        "body": {
+          "en": "When a job ended, the picture and its name vanished and left a stock photo of the printer behind. Your machine now keeps showing what it last made — and stops flickering while it does.",
+          "fr": "Quand une impression se terminait, l'image et son nom disparaissaient au profit d'une photo générique de l'imprimante. Ta machine continue maintenant d'afficher ce qu'elle a fait en dernier — et arrête de clignoter au passage.",
+          "de": "War ein Druck fertig, verschwanden Bild und Name und hinterließen ein Standardfoto des Druckers. Deine Maschine zeigt jetzt weiter, was sie zuletzt gemacht hat — und hört dabei auf zu flackern.",
+          "es": "Cuando terminaba un trabajo, la imagen y su nombre desaparecían dejando una foto genérica de la impresora. Ahora tu máquina sigue mostrando lo último que hizo — y deja de parpadear de paso.",
+          "it": "A stampa finita, l'immagine e il suo nome sparivano lasciando una foto generica della stampante. Ora la tua macchina continua a mostrare l'ultima cosa che ha fatto — e smette pure di lampeggiare.",
+          "zh": "任务一结束,图片和名字就没了,只剩一张打印机的通用照片。现在机器会继续显示它最后做的东西——顺带也不再闪了。",
+          "pt": "Quando um trabalho terminava, a imagem e o nome sumiam e sobrava uma foto genérica da impressora. Agora sua máquina continua mostrando o que fez por último — e para de piscar de quebra.",
+          "pt-pt": "Quando um trabalho terminava, a imagem e o nome desapareciam e ficava uma foto genérica da impressora. Agora a sua máquina continua a mostrar o que fez por último — e deixa de piscar já agora.",
+          "pl": "Gdy zadanie się kończyło, obrazek i nazwa znikały, zostawiając zdjęcie drukarki z katalogu. Teraz maszyna dalej pokazuje, co zrobiła ostatnio — i przy okazji przestaje migotać."
+        }
+      }
+    ]
   }
 }

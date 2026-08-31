@@ -21635,8 +21635,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // is a live snapshot endpoint, so it stays active-only.)
     const isDone = _DONE_STATES.has(state);
     let thumbUrl = null;
-    if (isActive || isDone) {
-      if (p.brand === "snapmaker" || p.brand === "flashforge" || p.brand === "bambulab") thumbUrl = d.printPreviewUrl || null;
+    /* Bambu decides for itself, in the driver: a LAN printer's preview is dropped
+       when it goes quiet — the .3mf it was read from does not outlive the job —
+       while a cloud one keeps it, because the account's task list still holds
+       what the machine last made. So the field is trusted whatever the state.
+       Re-asking here would blank an idle cloud card that has a picture to show. */
+    if (p.brand === "bambulab") thumbUrl = d.printPreviewUrl || null;
+    else if (isActive || isDone) {
+      if (p.brand === "snapmaker" || p.brand === "flashforge") thumbUrl = d.printPreviewUrl || null;
       else if (p.brand === "anycubic") thumbUrl = d.printThumb || null;
       else if (p.brand === "elegoo")   thumbUrl = d.thumbnail || null;
       else if (p.brand === "creality") {

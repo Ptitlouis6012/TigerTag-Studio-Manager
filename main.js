@@ -3511,6 +3511,8 @@ let _ffmpegBin = null;
     // NOT /v1/user-service/my/preference — that one 404s with a NON-JSON body.
     preference: `${BBL_API}/v1/design-user-service/my/preference`,
     version:    `${BBL_API}/v1/iot-service/api/user/device/version`,
+    // The account's print history; each entry carries the plate image URL.
+    tasks:      `${BBL_API}/v1/user-service/my/tasks`,
   };
 
   /* The slicer's own network-agent headers: Bambu's edge treats a client that
@@ -3673,6 +3675,66 @@ let _ffmpegBin = null;
       printStatus:  d.print_status || '',
     }));
     return { ok: true, devices };
+  });
+
+  /* The account's recent print tasks. Each carries `cover` — a plain HTTPS URL
+     to the plate image on Bambu's CDN, needing no auth of its own — which is the
+     only way to show what is on the bed when you are not on the printer's
+     network: the local route is FTPS, and FTPS does not leave the house.
+
+     Endpoint and shape taken from the maintained Home Assistant integration
+     (pybambu), not guessed: `hits[]`, each with `deviceId`, `title`, `cover` and
+     `startTime`. The list is the ACCOUNT's, roughly 20 recent entries out of
+     hundreds, so the caller must pick its own machine's current one. */
+  ipcMain.handle('bambulab:cloud-tasks', async (_evt, { token } = {}) => {
+    if (!token) return { ok: false, error: 'missing-token' };
+    const r = await _bblFetch(BBL_URL.tasks, { token });
+    if (r.blocked) return { ok: false, error: 'cloudflare' };
+    if (!r.ok) return { ok: false, error: r.json?.message || `http-${r.status}` };
+    return { ok: true, hits: Array.isArray(r.json?.hits) ? r.json.hits : [] };
+  });
+
+  /* The plate image, brought back as a data-URI rather than a URL.
+     The FTPS route always returned bytes, so the renderer's preview field held
+     something instant and self-contained. Handing it a remote URL instead made
+     every DOM rebuild re-request the image from Bambu's CDN, and the picture
+     blinked out for as long as that took — the media-reload trap the surgical
+     update rules warn about. Fetched once per URL and kept, so both routes
+     deliver the same thing and the card can be redrawn as often as it likes. */
+  const _bblCoverCache = new Map();          // url → data URI
+  ipcMain.handle('bambulab:cloud-cover', async (_evt, { url } = {}) => {
+    if (!url || !/^https:\/\//i.test(url)) return { ok: false, error: 'bad-url' };
+    const hit = _bblCoverCache.get(url);
+    if (hit) return { ok: true, dataUri: hit };
+    return new Promise((resolve) => {
+      let req;
+      try { req = bblNet.request({ method: 'GET', url }); }
+      catch (err) { resolve({ ok: false, error: String(err?.message || err) }); return; }
+      req.on('response', (res) => {
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          res.resume(); resolve({ ok: false, error: `http-${res.statusCode}` }); return;
+        }
+        const type = String(res.headers['content-type'] || 'image/png').split(';')[0].trim();
+        const chunks = [];
+        let bytes = 0;
+        res.on('data', (c) => {
+          bytes += c.length;
+          /* A cover is a small render. Anything this large is not one, and it is
+             not worth holding in memory to find out. */
+          if (bytes > 4 * 1024 * 1024) { try { req.abort(); } catch (_) {} return; }
+          chunks.push(c);
+        });
+        res.on('end', () => {
+          if (!chunks.length) { resolve({ ok: false, error: 'empty' }); return; }
+          const dataUri = `data:${type};base64,${Buffer.concat(chunks).toString('base64')}`;
+          if (_bblCoverCache.size > 64) _bblCoverCache.clear();   // a board, not an album
+          _bblCoverCache.set(url, dataUri);
+          resolve({ ok: true, dataUri });
+        });
+      });
+      req.on('error', (err) => resolve({ ok: false, error: String(err?.message || err) }));
+      req.end();
+    });
   });
 
   ipcMain.handle('bambulab:cloud-device-version', async (_evt, { token, devId } = {}) => {

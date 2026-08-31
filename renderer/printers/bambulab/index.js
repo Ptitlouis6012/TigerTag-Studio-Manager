@@ -51,10 +51,14 @@ export function bambuUsesJpegCam(p) {
 
 export function bambuKey(p) { return `${p.brand}:${p.id}`; }
 
-/* Reached through Bambu's cloud instead of the local network. The record then
-   carries `cloudUid` / `cloudToken` / `cloudRegion` for the account's broker,
-   and `serialNumber` doubles as the cloud's `dev_id` — they are the same
-   string. See docs/bambu_connect_cloud.md. */
+/* Reached through Bambu's cloud instead of the local network. `serialNumber`
+   doubles as the cloud's `dev_id` — they are the same string.
+
+   The record carries NO credentials: the account token, uid and region live once
+   in `printers/bambulab/secrets/cloud_session`, read through
+   `ctx.getBambuCloudSession()`. Unlike Anycubic, which denormalises its token
+   onto every machine, nothing secret is written on a document meant to be
+   displayed. See docs/bambu_connect_cloud.md §6. */
 export function bambuIsCloud(p) { return p?.mode === "cloud"; }
 export function bambuGetConn(key) { return _bambuConns.get(key) ?? null; }
 
@@ -591,6 +595,64 @@ const _BBL_ACTIVE = new Set(["printing", "preparing", "busy", "paused"]);
 // having learned the first from its telemetry and been handed the second by the
 // cloud, so its preview works whenever it is on the same network as you. On success the
 // data-URI is stored on conn.data.printPreviewUrl and the UI is re-rendered.
+/* The plate image for a CLOUD printer, from the account's task list.
+   The local route is FTPS straight to the machine, which is unreachable the
+   moment you are not on its network — so a cloud printer, whose whole point is
+   reporting from anywhere, had no preview at all outside the house.
+
+   The list is the ACCOUNT's most recent tasks, not this machine's current one,
+   so it is filtered by device and then narrowed: the job's own name first, since
+   we already know it from telemetry, and the most recently started otherwise.
+   Taking the first match would eventually show a previous print. */
+function _bblFetchCloudCover(conn) {
+  if (!conn?.cloud || !conn.serial) return;
+  const now = Date.now();
+  if (conn._coverAt && now - conn._coverAt < 15000) return;   // the list is the whole account's
+  conn._coverAt = now;
+
+  (async () => {
+    const sess = await ctx.getBambuCloudSession?.();
+    if (!sess?.accessToken) return;
+    const res = await window.bambulab?.cloud?.tasks({ token: sess.accessToken });
+    if (!res?.ok || !res.hits?.length) return;
+
+    const mine = res.hits.filter(t => String(t?.deviceId || "") === String(conn.serial));
+    if (!mine.length) return;
+    const wanted = conn.data?.printFilename || "";
+    const byName = wanted && mine.find(t => String(t?.title || "") === wanted);
+    const latest = mine.slice().sort((a, b) =>
+      String(b?.startTime || "").localeCompare(String(a?.startTime || "")))[0];
+
+    const task = byName || latest;
+    if (!task || !_bambuConns.has(conn.key)) return;
+
+    /* The name comes from the cloud too. Telemetry names the job only while it
+       runs; the task list names it afterwards, which is exactly when the card
+       would otherwise have nothing to say. A running job's own name wins — it is
+       the more immediate truth. */
+    let changed = false;
+    /* Compared by SOURCE URL, not by what is stored: what is stored is the
+       decoded image, so comparing the two would re-fetch on every pass. */
+    if (task.cover && conn._coverUrl !== task.cover) {
+      /* Decoded bytes are preferred — they survive a redraw without blinking —
+         but the URL itself is a working image. Falling back to it means the
+         worst case is the flicker we set out to remove, never a blank card:
+         degrading to "works, imperfectly" beats degrading to nothing. */
+      let img = null;
+      try { img = await window.bambulab?.cloud?.cover({ url: task.cover }); } catch (_) {}
+      if (!_bambuConns.has(conn.key)) return;
+      conn._coverUrl = task.cover;
+      conn.data.printPreviewUrl = (img?.ok && img.dataUri) ? img.dataUri : task.cover;
+      changed = true;
+    }
+    const title = String(task.title || "").trim();
+    if (title && !_BBL_ACTIVE.has(conn.data.printState) && conn.data.printFilename !== title) {
+      conn.data.printFilename = title; changed = true;
+    }
+    if (changed) _bblNotify(conn);
+  })().catch(() => {});
+}
+
 function _bblFetchThumbnail(conn, rawFile, plateIdx) {
   if (!window.bambulab?.fetchThumbnail || !conn?.ip || !conn?.password || !rawFile) return;
   const key = `${rawFile}|${plateIdx ?? ""}`;
@@ -655,10 +717,19 @@ function _bblMerge(conn, msg) {
   // to idle (plate cleared) or the job failed/errored. The table + side card
   // read conn.data.printPreviewUrl.
   if (fn && (_BBL_ACTIVE.has(d.printState) || d.printState === "finished")) {
-    _bblFetchThumbnail(conn, fn, d.plateIdx);
+    if (!conn.cloud) _bblFetchThumbnail(conn, fn, d.plateIdx);
   } else if (d.printState === "idle" || d.printState === "failed" || d.printState === "error") {
-    if (d.printPreviewUrl) { d.printPreviewUrl = null; conn._thumbKey = null; }
+    /* A LAN printer loses its preview when it goes quiet: the .3mf it was read
+       from stays only until the next job, so keeping the image would eventually
+       be a lie. A CLOUD printer keeps it — the account's task list still holds
+       what it last made, so there is nothing to go stale, and an idle card that
+       shows its last print reads better than a stock photo. */
+    if (!conn.cloud && d.printPreviewUrl) { d.printPreviewUrl = null; conn._thumbKey = null; }
   }
+  /* Asked for whatever the machine is doing, precisely so an idle one still has
+     something to show. FTPS could not do this — it reads the job on the printer
+     — but the cloud remembers. */
+  if (conn.cloud) _bblFetchCloudCover(conn);
 
   /* A cloud printer tells us where it lives. The cloud handed over its access
      code and its serial when it was added; the address is the one thing missing,
