@@ -206,6 +206,25 @@ The working file is wiped so it stays clean and unambiguous: whatever is in `WOR
 
 `Read WORKLOG.md` at the start of a new session — it tells you exactly what has been done since the last commit, without relying on the conversation summary.
 
+**Then look at what is waiting on GitHub — without being asked.** Open issues and
+pull requests are work the project has already been handed. Nobody is notified by
+the repo, so an unread PR from a contributor sits for days, and a bug someone
+already reported gets re-discovered from scratch.
+
+```bash
+gh pr list --state open && gh issue list --state open
+```
+
+Run it ONCE at the start of a session and report what is there in one line each
+(`PR #24 open — Wiki button, 16 files` / `issue #23 — Canada + CAD, from a user`).
+Say when something is new since the last session.
+
+**Reporting is not acting.** Do not review, fix, merge or close anything on your
+own initiative — a PR is reviewed when the user asks for it, and merging is an
+order like any commit (the *never commit without explicit instruction* rule covers
+merges and closes too). The point is only that the user hears about them from you
+rather than the other way round.
+
 ---
 
 ## 🔍 Code reviews — run them regularly, keep every one
