@@ -8757,5 +8757,135 @@
         }
       }
     ]
+  },
+  "2.27.0": {
+    "date": "2026-09-12",
+    "items": [
+      {
+        "icon": "coins",
+        "title": {
+          "en": "Your tax rate, your rules",
+          "fr": "Ton taux de taxe, ta règle",
+          "de": "Dein Steuersatz, deine Regel",
+          "es": "Tu tasa, tus reglas",
+          "it": "La tua aliquota, le tue regole",
+          "zh": "税率，你说了算",
+          "pt": "Sua taxa, suas regras",
+          "pt-pt": "A tua taxa, as tuas regras",
+          "pl": "Twoja stawka, twoje zasady"
+        },
+        "body": {
+          "en": "Country not in the list? A reduced rate? An exemption? Type your own rate, currency and symbol, and every price follows.",
+          "fr": "Pays absent de la liste ? Taux réduit ? Exonération ? Saisis ton taux, ta devise et ton symbole, et tous les prix suivent.",
+          "de": "Land nicht dabei? Ermäßigter Satz? Befreiung? Trag deinen Satz, deine Währung und dein Symbol ein — alle Preise ziehen nach.",
+          "es": "¿Tu país no está? ¿Tasa reducida? ¿Exención? Escribe tu tasa, tu moneda y tu símbolo, y todos los precios se ajustan.",
+          "it": "Paese assente? Aliquota ridotta? Esenzione? Scrivi la tua aliquota, la valuta e il simbolo: tutti i prezzi si adeguano.",
+          "zh": "国家不在列表里？税率有优惠？免税？自己填税率、货币和符号，所有价格立刻跟上。",
+          "pt": "País fora da lista? Taxa reduzida? Isenção? Escreva sua taxa, moeda e símbolo — e todos os preços acompanham.",
+          "pt-pt": "País fora da lista? Taxa reduzida? Isenção? Escreve a tua taxa, moeda e símbolo — e todos os preços acompanham.",
+          "pl": "Kraju nie ma na liście? Obniżona stawka? Zwolnienie? Wpisz własną stawkę, walutę i symbol — ceny same się dostosują."
+        }
+      },
+      {
+        "icon": "globe",
+        "title": {
+          "en": "Canada, province by province",
+          "fr": "Le Canada, province par province",
+          "de": "Kanada, Provinz für Provinz",
+          "es": "Canadá, provincia por provincia",
+          "it": "Il Canada, provincia per provincia",
+          "zh": "加拿大，逐省支持",
+          "pt": "Canadá, província por província",
+          "pt-pt": "Canadá, província a província",
+          "pl": "Kanada, prowincja po prowincji"
+        },
+        "body": {
+          "en": "All 13 of them, each with the rate you actually pay there — in Canadian dollars, written CA$ so nobody mistakes them for the other ones.",
+          "fr": "Les 13, chacune avec le taux qu'on y paie vraiment — en dollars canadiens, notés CA$ pour qu'on ne les confonde pas avec les autres.",
+          "de": "Alle 13, jede mit dem Satz, den du dort wirklich zahlst — in kanadischen Dollar, als CA$ geschrieben, damit sie niemand verwechselt.",
+          "es": "Las 13, cada una con la tasa que de verdad se paga allí — en dólares canadienses, escritos CA$ para no confundirlos con los otros.",
+          "it": "Tutte e 13, ognuna con l'aliquota che si paga davvero — in dollari canadesi, scritti CA$ per non confonderli con gli altri.",
+          "zh": "全部 13 个，各自带上当地真正要付的税率——加元写作 CA$，不会和别的搞混。",
+          "pt": "Todas as 13, cada uma com a taxa que se paga de verdade — em dólares canadenses, escritos CA$ para ninguém confundir.",
+          "pt-pt": "Todas as 13, cada uma com a taxa que ali se paga mesmo — em dólares canadianos, escritos CA$ para ninguém confundir.",
+          "pl": "Wszystkie 13, każda ze stawką, którą naprawdę się tam płaci — w dolarach kanadyjskich, zapisanych CA$, żeby nikt ich nie pomylił."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "One scan, one spool",
+          "fr": "Un scan, une bobine",
+          "de": "Ein Scan, eine Spule",
+          "es": "Un escaneo, una bobina",
+          "it": "Una scansione, una bobina",
+          "zh": "扫一次，出一卷",
+          "pt": "Um scan, uma bobina",
+          "pt-pt": "Uma leitura, uma bobine",
+          "pl": "Jeden skan, jedna szpula"
+        },
+        "body": {
+          "en": "Scan a barcode and you get the spool you scanned — not it and eleven cousins whose code happens to start the same way.",
+          "fr": "Scanne un code-barres et tu obtiens la bobine scannée — pas elle et onze cousines dont le code commence pareil.",
+          "de": "Scan einen Barcode und du bekommst genau die Spule — nicht sie und elf Verwandte, deren Code zufällig gleich anfängt.",
+          "es": "Escanea un código y obtienes esa bobina — no esa y once primas cuyo código empieza igual.",
+          "it": "Scansiona un codice e ottieni quella bobina — non lei e undici cugine il cui codice inizia uguale.",
+          "zh": "扫一个条码就出那一卷——不会连带十一卷开头恰好相同的“亲戚”。",
+          "pt": "Escaneie um código e você recebe aquela bobina — não ela mais onze primas cujo código começa igual.",
+          "pt-pt": "Lê um código e recebes aquela bobine — não ela mais onze primas cujo código começa igual.",
+          "pl": "Zeskanuj kod i dostajesz tę szpulę — a nie ją i jedenaście kuzynek o podobnym początku kodu."
+        }
+      },
+      {
+        "icon": "list",
+        "title": {
+          "en": "Search is now Catalogue",
+          "fr": "Recherche devient Catalogue",
+          "de": "Aus Suche wird Katalog",
+          "es": "Buscar ahora es Catálogo",
+          "it": "Cerca diventa Catalogo",
+          "zh": "“搜索”改叫“产品库”",
+          "pt": "Buscar agora é Catálogo",
+          "pt-pt": "Pesquisar passa a Catálogo",
+          "pl": "Szukaj to teraz Katalog"
+        },
+        "body": {
+          "en": "Same view, honest name. It was never a search — it is the whole TigerTag+ catalogue, sitting right next to your own stock.",
+          "fr": "Même vue, nom honnête. Ça n'a jamais été une recherche : c'est tout le catalogue TigerTag+, juste à côté de ton stock.",
+          "de": "Gleiche Ansicht, ehrlicher Name. Es war nie eine Suche — es ist der ganze TigerTag+ Katalog, direkt neben deinem Bestand.",
+          "es": "La misma vista, con nombre honesto. Nunca fue una búsqueda: es todo el catálogo TigerTag+, justo al lado de tu stock.",
+          "it": "Stessa vista, nome onesto. Non è mai stata una ricerca: è tutto il catalogo TigerTag+, accanto alle tue bobine.",
+          "zh": "还是那个视图，名字终于对了。它从来不是搜索——它是整个 TigerTag+ 产品库，就挨着你的库存。",
+          "pt": "Mesma vista, nome honesto. Nunca foi uma busca: é o catálogo TigerTag+ inteiro, ao lado do seu estoque.",
+          "pt-pt": "Mesma vista, nome honesto. Nunca foi uma pesquisa: é o catálogo TigerTag+ inteiro, ao lado do teu stock.",
+          "pl": "Ten sam widok, uczciwa nazwa. To nigdy nie było wyszukiwanie — to cały katalog TigerTag+, tuż obok twojego stanu."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "Pictures that actually show up",
+          "fr": "Des images qui s'affichent vraiment",
+          "de": "Bilder, die wirklich auftauchen",
+          "es": "Imágenes que sí aparecen",
+          "it": "Immagini che compaiono davvero",
+          "zh": "图片终于都出来了",
+          "pt": "Imagens que aparecem mesmo",
+          "pt-pt": "Imagens que aparecem mesmo",
+          "pl": "Zdjęcia, które naprawdę się pokazują"
+        },
+        "body": {
+          "en": "A picture that missed its turn used to stay a flat colour until you restarted. Now it tries again — and the catalogue only fetches what it is about to show you.",
+          "fr": "Une image qui ratait son tour restait un aplat de couleur jusqu'au redémarrage. Maintenant elle réessaie — et le catalogue ne charge que ce qu'il s'apprête à te montrer.",
+          "de": "Ein Bild, das seine Chance verpasste, blieb bis zum Neustart eine Farbfläche. Jetzt versucht es es nochmal — und der Katalog lädt nur, was er dir gleich zeigt.",
+          "es": "Una imagen que perdía su turno se quedaba en un color plano hasta reiniciar. Ahora lo reintenta — y el catálogo solo carga lo que está a punto de enseñarte.",
+          "it": "Un'immagine che perdeva il turno restava un colore piatto fino al riavvio. Ora riprova — e il catalogo carica solo ciò che sta per mostrarti.",
+          "zh": "错过一次加载的图片，以前会一直是一块纯色，直到重启。现在它会再试一次——而且产品库只加载马上要给你看的那些。",
+          "pt": "Uma imagem que perdia a vez ficava como uma cor chapada até reiniciar. Agora ela tenta de novo — e o catálogo só carrega o que está prestes a te mostrar.",
+          "pt-pt": "Uma imagem que perdia a vez ficava uma cor lisa até reiniciares. Agora tenta outra vez — e o catálogo só carrega o que está prestes a mostrar-te.",
+          "pl": "Zdjęcie, które przegapiło swoją kolej, zostawało płaskim kolorem aż do restartu. Teraz próbuje ponownie — a katalog pobiera tylko to, co zaraz ci pokaże."
+        }
+      }
+    ]
   }
 }

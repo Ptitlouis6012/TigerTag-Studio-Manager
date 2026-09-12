@@ -241,11 +241,11 @@
               <button id="btnViewCam" data-i18n-aria="btnViewCam"><span class="icon icon-eye-on icon-13"></span></button>
             </div>
           </div>
-          <!-- Search — the official TigerTag+ catalogue, not the user's stock.
+          <!-- Catalogue — the official TigerTag+ one, not the user's stock.
                Same grid/table pair as the other segments. -->
           <span class="vtg-sep" id="vtgSepCatalog" aria-hidden="true"></span>
           <div class="vtg-group" id="vtgCatalog">
-            <span class="vtg-label"><span data-i18n="viewGroupSearch">Search</span></span>
+            <span class="vtg-label"><span data-i18n="viewGroupCatalog">Catalogue</span></span>
             <div class="view-toggle">
               <span class="view-toggle-ind" aria-hidden="true"></span>
               <button id="btnViewCatalogGrid" data-i18n-aria="btnViewGrid"><span class="icon icon-grid icon-13"></span></button>
@@ -2043,6 +2043,41 @@
             </span>
           </span>
           <select class="lang-select" id="vatCountrySelect"></select>
+        </div>
+
+        <!-- Custom rate — a panel of its own rather than three fields squeezed
+             into the row: each value needs a label AND an example, because "10"
+             says nothing until you are told it means ten percent. The rate alone
+             would not be enough either — whoever's country is missing from the
+             list needs its CURRENCY too, or every price keeps carrying a euro
+             sign. Shown only while "Custom" is the chosen country. -->
+        <div class="eac-vatc hidden" id="eacVatCustomPanel">
+          <div class="eac-vatc-title" data-i18n="vatCustomLabel">Custom rate settings</div>
+
+          <label class="eac-vatc-field">
+            <span class="eac-vatc-label" data-i18n="vatCustomRateLabel">Tax rate</span>
+            <span class="eac-vatc-inputwrap">
+              <input type="number" class="eac-vatc-inp" id="eacVatCustomRate"
+                     min="0" max="100" step="0.001" inputmode="decimal" placeholder="0" />
+              <span class="eac-vatc-suffix">%</span>
+            </span>
+            <span class="eac-vatc-hint" data-i18n="vatCustomRateHint">e.g. 10 for 10%</span>
+          </label>
+
+          <div class="eac-vatc-pair">
+            <label class="eac-vatc-field">
+              <span class="eac-vatc-label" data-i18n="vatCustomCurrencyLabel">Currency (code)</span>
+              <input type="text" class="eac-vatc-inp" id="eacVatCustomCurrency"
+                     maxlength="3" placeholder="EUR" />
+              <span class="eac-vatc-hint" data-i18n="vatCustomCurrencyHint">e.g. EUR, USD, CHF</span>
+            </label>
+            <label class="eac-vatc-field">
+              <span class="eac-vatc-label" data-i18n="vatCustomSymbolLabel">Symbol</span>
+              <input type="text" class="eac-vatc-inp" id="eacVatCustomSymbol"
+                     maxlength="4" placeholder="€" />
+              <span class="eac-vatc-hint" data-i18n="vatCustomSymbolHint">e.g. €, $, £</span>
+            </label>
+          </div>
         </div>
 
         <!-- HT vs TTC — drives both how prices are TYPED and how they are

@@ -125,7 +125,7 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Multi-select** — tick several spools (or printers) and delete them together, with a hold-to-confirm
 - **Guided chip update** — a step-by-step panel to re-write an existing chip: place it on the reader, UID-match check, verified write
 - **Export / import `.ttag` files** — back up a spool or a whole selection to a portable file, keep it, carry it on a USB stick or share it, then import it back anywhere. Works for TigerData, TigerTag and TigerTag+ alike; import through a validate → preview → accept flow and choose **Restore** (put everything back exactly as it was) or **Import** (fresh spools you own). Pull in several files at once by browsing, pasting a link, or dragging them onto the window
-- **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, Search and Storage alike
+- **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, the Catalogue and Storage alike
 
 ### 🖨 3D Printer integration
 Live integrations for 6 brands — real-time temperatures, filament per slot, active print job, camera. **Bambu Lab printers can be added by signing in with your Bambu account**: your email, the code they send back, and every machine on the account is offered with its picture — reachable from anywhere, not only from your own network.

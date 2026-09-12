@@ -705,6 +705,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     unsubFriendLists: null,
     selectedListId: null, // listId currently shown in the Lists view
     vatCountry: null,        // users/{uid}.vatCountry — ISO country code driving VAT rate + currency for HT/TTC price display
+    vatCustomRate: null,     // users/{uid}.vatCustomRate — the % used when vatCountry === "CUSTOM"
+    vatCustomCurrency: null, // users/{uid}.vatCustomCurrency — ISO 4217, printed on the reorder card + rolled up in telemetry
+    vatCustomSymbol: null,   // users/{uid}.vatCustomSymbol — the symbol shown beside every price
     priceInputMode: "TTC",   // users/{uid}.priceInputMode "HT"|"TTC" — how the user TYPES filament prices (stored value is always HT)
     unsubFriendRequests: null,
     friendView: null,        // { uid, displayName, avatarColor } — set when viewing a friend's inventory
@@ -4373,10 +4376,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const sel = $("vatCountrySelect");
     if (!sel) return;
     const list = _vatCountries();
+    // The Custom option stays a plain label: its three values are spelled out in
+    // the panel immediately below it, and the closed dropdown truncates at 62%
+    // of the row, so repeating them there would only get cut off.
     sel.innerHTML = list.map(c =>
       `<option value="${c.code}">${c.label} · ${c.rate}% · ${c.symbol}</option>`
-    ).join("");
+    ).join("") + `<option value="${VAT_CUSTOM}">${esc(t("vatCustomOption"))}</option>`;
     sel.value = _vatCountryCode();
+    _syncVatCustomRow();
     // The styled dropdown mirrors the <select>; repopulating it behind the
     // button would otherwise leave the old country showing on the button.
     sel._cselRefresh?.();
@@ -6676,11 +6683,43 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // EVERY search path (inventory filter, keystroke filter, storage-view unranked
   // list AND placed-puck dim) so the searched fields never drift apart. Covers
   // uid / material / brand / colour name / user note / series / sku / barcode.
+  // Long enough not to collide with a measure or a temperature, and carrying a
+  // digit: an EAN is 8/12/13 digits, a SKU reads like "PC1001045". Anything
+  // shorter ("1.75", "220", "1 kg") stays a word search. Shared by the inventory
+  // search below and the catalogue's, so a scan behaves the same in both.
+  const _catCodeish = tk => tk.length >= 6 && /\d/.test(tk);
+
+  // A scanned code IS the whole query and it means ONE spool. When the query
+  // looks like a code and something matches it exactly, only exact matches are
+  // returned — a barcode gun fires the digits and an Enter, and a scan landing
+  // on the right spool plus a dozen cousins that merely SHARE ITS PREFIX is a
+  // scan you have to read. Measured here: Rosa3D's range shares `590775313`, so
+  // the substring answer to that scan is 27 spools. When NOTHING matches exactly
+  // the ordinary search still runs, so a mistyped code is answered normally
+  // instead of being locked to an empty view. Same rule the catalogue applies.
+  let _exactQ = null, _exactRows = null, _exactHit = false;
+  function _searchHasExactCode(q) {
+    if (q === _exactQ && state.rows === _exactRows) return _exactHit;
+    _exactQ = q; _exactRows = state.rows;
+    _exactHit = _catCodeish(q) && !q.includes(" ")
+      && state.rows.some(r => _rowIsExactCode(r, q));
+    return _exactHit;
+  }
+  function _rowIsExactCode(r, q) {
+    return String(r.sku || "").toLowerCase() === q
+        || String(r.barcode || "").toLowerCase() === q
+        || String(r.uid || "").toLowerCase() === q;
+  }
+
   function _rowMatchesSearch(r, q) {
+    if (_searchHasExactCode(q)) return _rowIsExactCode(r, q);
     return [r.uid, r.material, r.brand, r.colorName, r.note, r.series, r.sku, r.barcode, ...(r.tags || [])]
       .some(v => String(v || "").toLowerCase().includes(q));
   }
 
+  // NOTE: unused — the live filter is applyInventoryFilter(), which shows/hides
+  // the already-rendered cards instead of rebuilding the list. Kept because the
+  // rack and unranked paths still read _rowMatchesSearch() the same way.
   function filteredRows() {
     let rows = state.rows.slice();
     rows = rows.filter(r => !r.deleted); // hard-deleted docs never appear in state.rows
@@ -7610,6 +7649,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     let changed = false;
     await Promise.all(urls.map(async url => {
       if (!state.imgCache.has(url)) {
+        // Deliberately the RAW url — so `large`, the endpoint's default. It is
+        // tempting to warm a smaller rung, but the cache holds ONE rendition per
+        // product and the detail panel reads it too: warming `medium` would save
+        // 23 kB once and then cost 33 kB from the network every time a product's
+        // panel is opened. Fetched once, ever, and free for every view
+        // afterwards is the lowest TOTAL egress, which is what the bill counts.
         const local = await window.electronAPI.imgGet(url).catch(() => null);
         state.imgCache.set(url, local); // null = lien mort sans cache
         if (local) changed = true;
@@ -7617,6 +7662,160 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }));
     if (changed) saveImgMap();
     return changed;
+  }
+
+  /* ── Product images: a queue, then two retries ─────────────────────────────
+     A card's photo is an OVERLAY on the colour placeholder, so a failed load
+     leaves a flat colour where a product should be. Two separate problems sat
+     here, and they needed one mechanism between them.
+
+     THE BURST. Opening the catalogue mounts ~166 cards at once. `loading="lazy"`
+     does not save us: Chromium's own margin is generous, and measured here 163
+     of those 166 images were fetched while 24 were on screen. Over HTTP/1.1 the
+     browser's six-connections-per-origin cap throttled this for free; the CDN
+     speaks HTTP/2, where every request becomes a concurrent stream on one
+     connection and that ceiling is gone. So the ceiling is put back here: an
+     IntersectionObserver decides WHEN an image is wanted, and a queue decides
+     HOW MANY may be in flight. A cap beats a fixed delay between requests — it
+     speeds up on a fast network and holds back on a slow one, with no number to
+     guess.
+
+     THE GIVE-UP. Each of the three sites that draw a photo used to hide or
+     remove it on the FIRST error, turning a momentary failure into a permanent
+     one for the rest of the session. And momentary is what these were: every
+     URL that failed loaded fine on a second request, in 223-636 ms. Two retries
+     backing off, then the placeholder. The URL is re-set byte-identical so the
+     CDN cache still answers.
+
+     `error` and `load` do not bubble — hence capture listeners, which is also
+     why one rule covers the inventory grid, the catalogue grid, the catalogue
+     table and the product lists instead of handlers free to drift apart. */
+  const IMG_MAX_INFLIGHT = 6;
+  const IMG_RETRY_MAX    = 2;
+  const IMG_RETRY_MS     = [400, 1400];
+  let _imgInflight = 0;
+  const _imgQueue = [];
+
+  function _imgPump() {
+    while (_imgInflight < IMG_MAX_INFLIGHT && _imgQueue.length) {
+      const img = _imgQueue.shift();
+      const url = img.dataset.imgSrc;
+      if (!img.isConnected || !url) continue;
+      _imgInflight++;
+      img.src = url;
+    }
+  }
+  function _imgDone(img) {
+    if (img.dataset.imgBusy) { delete img.dataset.imgBusy; _imgInflight = Math.max(0, _imgInflight - 1); }
+    _imgPump();
+  }
+  // Only ask for an image once it is near the viewport. 600 px of margin so a
+  // scroll finds it already there, instead of a grid that fills in behind you.
+  const _imgIO = ("IntersectionObserver" in window)
+    ? new IntersectionObserver(entries => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          _imgIO.unobserve(e.target);
+          e.target.dataset.imgBusy = "1";
+          _imgQueue.push(e.target);
+        }
+        _imgPump();
+      }, { rootMargin: "600px 0px" })
+    : null;
+
+  function _imgAttach(img) {
+    if (!img || img.dataset.imgSeen || !img.dataset.imgSrc) return;
+    img.dataset.imgSeen = "1";
+    if (_imgIO) _imgIO.observe(img);
+    else { img.dataset.imgBusy = "1"; _imgQueue.push(img); _imgPump(); }
+  }
+  // Picked up wherever they appear, rather than from a scan call at each render
+  // site: `_gridCardInnerHTML` alone is used by five of them, and a site that
+  // forgot to call would show no image at all — the one failure mode worth
+  // designing out.
+  function _imgScan(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll("img[data-img-src]:not([data-img-seen])").forEach(_imgAttach);
+  }
+  new MutationObserver(muts => {
+    for (const m of muts) {
+      for (const n of m.addedNodes) {
+        if (n.nodeType !== 1) continue;
+        if (n.matches?.("img[data-img-src]")) _imgAttach(n);
+        else _imgScan(n);
+      }
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  document.addEventListener("load", e => {
+    const img = e.target;
+    if (img instanceof HTMLImageElement && img.dataset.imgSrc) _imgDone(img);
+  }, true);
+
+  document.addEventListener("error", e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.dataset.imgSrc) return;
+    _imgDone(img);
+    const url = img.dataset.imgSrc;
+    const n   = (+img.dataset.imgTry || 0) + 1;
+    if (n > IMG_RETRY_MAX) {
+      // Out of tries: the colour placeholder underneath is the answer.
+      if (img.classList.contains("card-img--overlay")) img.style.display = "none";
+      else img.remove();
+      return;
+    }
+    img.dataset.imgTry = String(n);
+    img.removeAttribute("src");          // assigning the same src again is a no-op
+    setTimeout(() => {
+      if (!img.isConnected) return;
+      img.dataset.imgBusy = "1";
+      _imgQueue.push(img);
+      _imgPump();
+    }, IMG_RETRY_MS[n - 1]);
+  }, true);
+
+  /* ── Product image renditions ──────────────────────────────────────────────
+     The CDN serves SEVEN square renditions of every product photo behind the
+     same id, picked with `&size=` (the ladder and the byte counts are from the
+     backend's own SIZES map, measured on a real product):
+
+         icon 16px 429B · thumb 32px 663B · small 64px 1.4kB · compact 128px
+         3.4kB · medium 256px 9.7kB · large 512px 33kB · master 1024px 101kB
+
+     The endpoint defaults to `large`, and the app took the default EVERYWHERE —
+     including 28 px table chips: 33 kB to paint 56 device pixels, and the same
+     33 kB again for every row on screen.
+
+     `_cdnSizeFor` rounds UP to the first rendition that covers the slot at this
+     screen's pixel density: an oversized image is invisible, an undersized one
+     is visibly soft. A grid card measures 163 CSS px — 326 device px at 2x — so
+     it still legitimately asks for `large`; the saving is on the thumbnails,
+     which is where the waste always was.
+
+     Only cdn.tigertag.io/img links are rewritten. A user's own uploaded photo is
+     any URL at all (and resolvedImg may hand back a data: URI), so anything else
+     is returned untouched, as is a URL that already carries a size. */
+  const CDN_SIZES = [[16, "icon"], [32, "thumb"], [64, "small"], [128, "compact"],
+                     [256, "medium"], [512, "large"], [1024, "master"]];
+  function _cdnSizeFor(cssPx) {
+    const need = (cssPx || 0) * (window.devicePixelRatio || 1);
+    return (CDN_SIZES.find(([px]) => need <= px) || CDN_SIZES[CDN_SIZES.length - 1])[1];
+  }
+  const _CDN_IMG_RE = /^https?:\/\/cdn\.tigertag\.io\/img\b/i;
+  // `sizeOrPx` is a slot width in CSS px (the rung is derived from it and this
+  // screen's density) OR a rung name, for the two places that want a fixed one
+  // regardless of the display.
+  //
+  // The 302 to Firebase Storage is KEPT ON PURPOSE, and `&stream=1` (which the
+  // endpoint supports) is deliberately not used: streaming would move the image
+  // egress from Storage onto the function and bill CPU in proportion to the
+  // bytes served. The redirect is the cheap shape — a few hundred cached bytes
+  // of compute, with the heavy payload coming straight from Storage. The extra
+  // round-trip is the price of that, and it is the right price.
+  function cdnImg(url, sizeOrPx) {
+    if (!url || !_CDN_IMG_RE.test(url) || /[?&]size=/.test(url)) return url;
+    const size = (typeof sizeOrPx === "string") ? sizeOrPx : _cdnSizeFor(sizeOrPx);
+    return url + (url.includes("?") ? "&" : "?") + "size=" + size;
   }
 
   function resolvedImg(url) {
@@ -7661,7 +7860,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     return `<span class="tag-diy${extraClass ? " " + extraClass : ""}">TigerTag</span>`;
   }
   function thumbHTML(row, size = 28, { badges = true, backup = false } = {}) {
-    const src = row.imgUrl ? resolvedImg(row.imgUrl) : null;
+    const src = row.imgUrl ? cdnImg(resolvedImg(row.imgUrl), size) : null;
     // Group header thumbs pass badges:false — a group line represents many
     // spools, so per-spool overlays (twin "linked", TD, pending-chip) are
     // meaningless there.
@@ -7837,8 +8036,26 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   // { rate, currency, symbol } for the active (or given) country, with sane
   // fallbacks so callers never have to null-check.
+  // Sentinel country: rate, currency and symbol come from the user's own three
+  // fields instead of the table — the escape hatch for a country the list does
+  // not carry, a reduced rate, or an exemption. The values are clamped and
+  // shaped HERE rather than trusted from the document, because `currency` also
+  // travels to the telemetry roll-up, which expects an ISO 4217 code.
+  const VAT_CUSTOM = "CUSTOM";
+  function _vatCustomInfo() {
+    const r = Number(state.vatCustomRate);
+    return {
+      rate: Number.isFinite(r) ? Math.min(100, Math.max(0, r)) : 0,
+      currency: (state.vatCustomCurrency || "EUR").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3) || "EUR",
+      symbol: state.vatCustomSymbol || "€",
+    };
+  }
   function _vatInfo(code) {
-    const e = _vatEntryFor(code || _vatCountryCode());
+    const c = code || _vatCountryCode();
+    // Checked before _vatEntryFor(): it would not find "CUSTOM" in the table
+    // and would silently hand back France's 20% instead.
+    if (c === VAT_CUSTOM) return _vatCustomInfo();
+    const e = _vatEntryFor(c);
     return e ? { rate: Number(e.rate) || 0, currency: e.currency || "EUR", symbol: e.symbol || "€" }
              : { rate: 0, currency: "EUR", symbol: "€" };
   }
@@ -8878,11 +9095,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // is NOT an RFID chip) and drop the weight bar; `footerHTML` replaces the weight
   // slot (used to show the product price instead of a gram count).
   function _gridCardInnerHTML(r, opts = {}) {
-    const _resolvedCard = r.imgUrl ? resolvedImg(r.imgUrl) : null;
+    const _resolvedCard = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), 163) : null;
     // Colour-square base layer (logo watermark included), product image stacked
     // on top so a broken/slow image gracefully falls back to the colour square.
     const imgHtml = `<div class="card-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" />${
-      _resolvedCard ? `<img class="card-img--overlay" src="${esc(_resolvedCard)}" loading="lazy" onerror="this.style.display='none'" />` : ''
+      _resolvedCard ? `<img class="card-img--overlay" data-img-src="${esc(_resolvedCard)}" />` : ''
     }</div>`;
     const pct = opts.product ? null
       : (r.weightAvailable != null && r.capacity) ? Math.max(0,Math.min(100,Math.round(r.weightAvailable/r.capacity*100))) : null;
@@ -8948,17 +9165,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const logoImg = placeholder.querySelector(":scope > img:not(.card-img--overlay)");
       if (logoImg && logoImg.getAttribute("src") !== newLogo) logoImg.setAttribute("src", newLogo);
       let overlay = placeholder.querySelector(".card-img--overlay");
-      const _resolved = r.imgUrl ? resolvedImg(r.imgUrl) : null;
+      const _resolved = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), 163) : null;
       if (_resolved) {
         if (!overlay) {
           overlay = document.createElement("img");
           overlay.className = "card-img--overlay";
-          overlay.setAttribute("loading", "lazy");
-          overlay.setAttribute("onerror", "this.style.display='none'");
           placeholder.appendChild(overlay);
-          overlay.src = _resolved;
-        } else if (overlay.getAttribute("src") !== _resolved) {
-          overlay.src = _resolved;
+          overlay.dataset.imgSrc = _resolved;
+          _imgAttach(overlay);
+        } else if (overlay.dataset.imgSrc !== _resolved) {
+          // A different product in the same card: forget the old load entirely.
+          overlay.style.display = "";
+          delete overlay.dataset.imgTry;
+          delete overlay.dataset.imgSeen;
+          overlay.removeAttribute("src");
+          overlay.dataset.imgSrc = _resolved;
+          _imgAttach(overlay);
         }
       } else if (overlay) {
         overlay.remove();
@@ -12156,10 +12378,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       });
   }
 
-  // Long enough not to collide with a measure or a temperature, and carrying a
-  // digit: an EAN is 8/12/13 digits, a SKU reads like "PC1001045". Anything
-  // shorter ("1.75", "220", "1 kg") stays a word search.
-  const _catCodeish = tk => tk.length >= 6 && /\d/.test(tk);
+  // (`_catCodeish` is defined above the inventory search — it is shared by both.)
 
   // "1 kg" also answers to "1000 g" and "1000g".
   //
@@ -12847,10 +13066,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // arrives (the <img> removes itself on error).
   function _catThumbHTML(r, size = 50) {
     const bg  = colorBg(r);
-    const src = r.imgUrl ? resolvedImg(r.imgUrl) : null;
+    const src = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), size) : null;
     return `<span class="cv-thumb" style="width:${size}px;height:${size}px;background:${bg}">`
          + `<img class="cv-thumb-logo" src="${logoSrc(bg)}" alt="" />`
-         + (src ? `<img class="cv-thumb-img" src="${esc(src)}" loading="lazy" alt="" onerror="this.remove()" />` : "")
+         + (src ? `<img class="cv-thumb-img" data-img-src="${esc(src)}" alt="" />` : "")
          + `</span>`;
   }
 
@@ -13190,7 +13409,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // A small illustration (product photo, else colour swatch) for a product record.
   function _productThumbHTML(p) {
     const l = p.label || {};
-    const img = resolvedImg(l.imgUrl);
+    const img = cdnImg(resolvedImg(l.imgUrl), 64);
     return img
       ? `<img class="pv-thumb" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.style.background='${esc(l.colorHex || "var(--surface-2)")}'" />`
       : `<span class="pv-thumb pv-thumb--swatch" style="background:${esc(l.colorHex || "var(--surface-2)")}"></span>`;
@@ -15799,7 +16018,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _ttagPrevThumb(row) {
     // Scheme-check the image URL even for the preview — the record is from an
     // untrusted file, and a bad-scheme url_img must never reach an <img src>.
-    const img = resolvedImg(_ttagCleanUrl(row.imgUrl) || "");
+    const img = cdnImg(resolvedImg(_ttagCleanUrl(row.imgUrl) || ""), 48);
     if (img) return `<img class="ttag-prev-thumb" src="${esc(img)}" alt="" onerror="this.style.display='none'">`;
     const cols = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
     const bg = cols.length > 1
@@ -17992,7 +18211,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const eanVal  = eanAuto || link.ean || (r.barcode || "");
     // Prefer the real product photo (falls back to the flat colour swatch). On a
     // load error the <img> collapses to a coloured box (no src + swatch bg).
-    const img = resolvedImg(r.imgUrl || link.label?.imgUrl);
+    const img = cdnImg(resolvedImg(r.imgUrl || link.label?.imgUrl), 58);
     const headVisual = img
       ? `<img class="ro-thumb" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.classList.add('ro-thumb--broken');this.style.background='${swatch}'" />`
       : `<span class="ro-swatch" style="background:${swatch}"></span>`;
@@ -20420,8 +20639,47 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Persist the user's country choice — drives the VAT rate + currency used
   // for filament reorder prices. Stored on users/{uid}.vatCountry (a user-doc
   // field, alongside publicKey/isPublic — not a spool field).
+  // Show the custom panel only while CUSTOM is selected, and seed its fields
+  // from state — but never overwrite the one the user is currently typing in.
+  function _syncVatCustomRow() {
+    const on = _vatCountryCode() === VAT_CUSTOM;
+    $("eacVatCustomPanel")?.classList.toggle("hidden", !on);
+    if (!on) return;
+    const put = (id, v) => {
+      const el = $(id);
+      if (el && document.activeElement !== el) el.value = (v == null ? "" : v);
+    };
+    put("eacVatCustomRate", state.vatCustomRate);
+    put("eacVatCustomCurrency", state.vatCustomCurrency);
+    put("eacVatCustomSymbol", state.vatCustomSymbol);
+  }
+
+  // Persist the three custom fields. Shaped on the way in — the rate clamped to
+  // 0-100, the currency reduced to at most three letters — so a typo cannot
+  // reach the price arithmetic or the telemetry roll-up. Empty means "unset",
+  // which _vatCustomInfo() reads as 0% / EUR / €.
+  function saveAccountVatCustom() {
+    const raw = $("eacVatCustomRate")?.value;
+    const n = (raw === "" || raw == null) ? NaN : Number(raw);
+    state.vatCustomRate     = Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : null;
+    state.vatCustomCurrency = ($("eacVatCustomCurrency")?.value || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3) || null;
+    state.vatCustomSymbol   = ($("eacVatCustomSymbol")?.value || "").trim().slice(0, 4) || null;
+    const user = fbAuth().currentUser;
+    if (user) {
+      fbDb().collection("users").doc(user.uid).set({
+        vatCustomRate:     state.vatCustomRate,
+        vatCustomCurrency: state.vatCustomCurrency,
+        vatCustomSymbol:   state.vatCustomSymbol,
+      }, { merge: true })
+        .catch(err => console.warn("[Firestore] saveAccountVatCustom:", err.message));
+    }
+    // Only the prices need redrawing — the option label carries no values.
+    if (typeof refreshOpenDetailReorder === "function") refreshOpenDetailReorder(true);
+  }
+
   function saveAccountVatCountry(code) {
     state.vatCountry = code || null;
+    _syncVatCustomRow();
     const user = fbAuth().currentUser;
     if (user && code) {
       fbDb().collection("users").doc(user.uid)
@@ -27958,6 +28216,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function openPrinterBrandPicker() {
     const list = $("printerBrandPickerList");
     if (!list) return;
+    // Close the printer side-card stack first. The picker is laid out by
+    // _syncPrinterAddPanels(), which knows nothing of that stack (_syncPanels()
+    // owns it), so a picker opened over an existing printer's panel docks at the
+    // same right edge and lands BEHIND it — invisible, with no hint anything
+    // happened. Closing is the right answer rather than cascading: you are
+    // adding a NEW printer, so the machine on screen has stopped being the
+    // subject. The edit form goes too, or the same overlap just moves one layer
+    // down. closePrinterDetail() also tears the panel's camera down, which a
+    // card hidden behind another would otherwise keep streaming for nothing.
+    if ($("printerAddPanel")?.classList.contains("open")) closePrinterAddForm();
+    if ($("printerPanel")?.classList.contains("open"))    closePrinterDetail();
     // One card per brand — brand logo + label + connection hint. The connection
     // tutorial (for brands that have one) now lives in the per-brand choice card
     // (2nd side-card), not here — keeps this picker light.
@@ -29062,7 +29331,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // spools with or without an image.
   function slotPhotoInnerHTML(row) {
     const base = `<div class="rp-fill rp-fill--full" style="background:${colorBg(row)}"></div>`;
-    const src = row.imgUrl ? resolvedImg(row.imgUrl) : null;
+    const src = row.imgUrl ? cdnImg(resolvedImg(row.imgUrl), 128) : null;
     if (!src) return base;
     const fb = (row.imgUrl && src !== row.imgUrl)
       ? ` data-remote="${esc(row.imgUrl)}" onerror="if(this.dataset.remote){this.src=this.dataset.remote;this.removeAttribute('data-remote')}"`
@@ -34110,7 +34379,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         + (label.colorName ? " · " + label.colorName : "")).trim();
       _pushNotif({ type: "low_stock", icon: "package", action: "lowstock",
         title: name || t("notifLowStockTitle"), text: t("notifLowStockText", { n: stock, min }),
-        data: { key: p.key, img: resolvedImg(label.imgUrl) || "" } });
+        data: { key: p.key, img: cdnImg(resolvedImg(label.imgUrl), 36) || "" } });
     });
     if (changed) _saveLowStockActive(active);
   }
@@ -35048,6 +35317,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     state.isPublic       = !!c.isPublic;
     state.tier           = c.tier || "free";
     state.vatCountry     = c.vatCountry || null;
+    state.vatCustomRate     = (typeof c.vatCustomRate === "number") ? c.vatCustomRate : null;
+    state.vatCustomCurrency = c.vatCustomCurrency || null;
+    state.vatCustomSymbol   = c.vatCustomSymbol || null;
     state.priceInputMode = c.priceInputMode === "HT" ? "HT" : "TTC";
     state.wikiSeen       = !!c.wikiSeen;        // avoids a badge flash before syncUserDoc resolves
     state.discordSeen    = !!c.discordSeen;
@@ -35776,6 +36048,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       state.tier       = data.tier || "free";   // plan (server-set); gates product web-link attachment count
       state.socials    = _cleanSocials(data.socials);   // social-profile links (mirrored to userProfiles)
       state.vatCountry = data.vatCountry || null;    // ISO country code for VAT rate + currency (filament reorder)
+      // …or the sentinel "CUSTOM", in which case these three carry the rate.
+      state.vatCustomRate     = (typeof data.vatCustomRate === "number") ? data.vatCustomRate : null;
+      state.vatCustomCurrency = data.vatCustomCurrency || null;
+      state.vatCustomSymbol   = data.vatCustomSymbol || null;
       state.priceInputMode = data.priceInputMode === "HT" ? "HT" : "TTC"; // how the user types prices (stored value stays HT)
       // UI theme, beside its sibling Studio settings. Applied only when it
       // actually differs from what is already on screen: this doc arrives after
@@ -35822,6 +36098,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         isPublic:   !!data.isPublic,
         tier:       data.tier || "free",
         vatCountry: data.vatCountry || null,
+        vatCustomRate: (typeof data.vatCustomRate === "number") ? data.vatCustomRate : null,
+        vatCustomCurrency: data.vatCustomCurrency || null,
+        vatCustomSymbol: data.vatCustomSymbol || null,
         priceInputMode: data.priceInputMode === "HT" ? "HT" : "TTC",
         wikiSeen: !!data.wikiSeen,
         discordSeen: !!data.discordSeen, githubSeen: !!data.githubSeen, makerworldSeen: !!data.makerworldSeen,
@@ -36131,6 +36410,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("vatCountrySelect")?.addEventListener("change", () => {
     saveAccountVatCountry($("vatCountrySelect").value);
   });
+  // "change" rather than "input": these commit on blur or Enter, so a rate is
+  // written once when the user is done with it, not on every keystroke.
+  ["eacVatCustomRate", "eacVatCustomCurrency", "eacVatCustomSymbol"].forEach(id =>
+    $(id)?.addEventListener("change", saveAccountVatCustom));
   $("eacPriceMode")?.addEventListener("click", e => {
     const btn = e.target.closest(".eac-seg-btn[data-mode]");
     if (btn) saveAccountPriceMode(btn.dataset.mode);

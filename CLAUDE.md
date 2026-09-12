@@ -32,7 +32,15 @@ set the GitHub repo variable `TRUSTED_SIGNING_CERT_PROFILE` → update `.github/
 
 **This file is committed and PUBLIC.** Never write an absolute path into it — a
 `/Users/…` line publishes the account name and the folder layout to GitHub, and
-it is wrong on every other machine anyway. Refer to a sibling repo by **name**
+it is wrong on every other machine anyway.
+
+**Never write an account EMAIL ADDRESS into any file of any repo** — not in a
+doc, a comment, a commit message or a runbook, and least of all the shared admin
+account the Firebase / Vercel / GCP consoles are signed into. Name the account
+by its handle or its role ("the team Owner account") instead: that is what a
+reader needs to act, and it identifies nothing that can be phished or enumerated.
+This is not theoretical — one slipped into a PUBLIC repo's runbook and had to be
+removed afterwards, which does not remove it from the history. Refer to a sibling repo by **name**
 (`TigerTag_Firebase_Backend`) or relatively (`../TigerTag_Firebase_Backend`).
 
 Where the checkouts actually live, which clone is the live one and which are
@@ -435,6 +443,52 @@ Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a **self-contained a
 
 ## API base
 `https://cdn.tigertag.io` — endpoints: `/healthz/`, `/setSpoolWeightByRfid?ApiKey=&uid=&weight=`
+
+### Product images — ask for the size you are going to paint
+
+`/img?id=<productId>[&v=<n>][&size=<name>]` serves **seven square renditions** of
+every product photo. Source of truth: the `SIZES` map in the backend repo's
+`functions/index.js`.
+
+**The byte figures below are JPEG.** The proxy negotiates on the `Accept` header
+and serves **AVIF** to Chromium — measured, 25 requests out of 25 — so the real
+transfer is smaller. The ratios between rungs still hold; treat the absolute
+numbers as an upper bound.
+
+| size | px | bytes | typical use |
+|---|---|---|---|
+| `icon` | 16 | 429 B | |
+| `thumb` | 32 | 663 B | |
+| `small` | 64 | 1.4 kB | list / table chips (28 px) |
+| `compact` | 128 | 3.4 kB | catalogue + reorder thumbs (50-64 px) |
+| `medium` | 256 | 9.7 kB | |
+| `large` | 512 | 33 kB | **the default** — grid cards (163 px) |
+| `master` | 1024 | 101 kB | zoom / lightbox, **on demand only** |
+
+**The endpoint defaults to `large`, so omitting `size` costs 33 kB every time** —
+that is how 28 px table chips came to download 512 px images. In the renderer,
+`cdnImg(url, cssPx)` picks the first rendition that covers the slot at the
+screen's pixel density, rounding UP (oversized is invisible, undersized is
+visibly soft); `_cdnSizeFor` holds the ladder. It rewrites ONLY
+`cdn.tigertag.io/img` links — a user's uploaded photo is any URL at all, and
+`resolvedImg` may hand back a `data:` URI.
+
+Two properties worth knowing before optimising anything here:
+
+- **Every image is two requests.** `/img` answers **302** to Firebase Storage.
+  The redirect is `immutable, max-age=1y`, so it is a cold-start cost — but it
+  doubles the request count exactly when a list first paints.
+- **Chromium's HTTP cache already does the heavy lifting.** The images are
+  `immutable, max-age=1y`, so a second visit costs nothing — measured on a cold
+  reload of the catalogue: 25 images, 25 disk-cache hits, 0 bytes, the 302 not
+  even replayed. The app's OWN cache (`preCacheImages` → `img_cache/`) only
+  warms the INVENTORY; the difference is that ours is permanent and the
+  browser's evicts. Do not describe the catalogue as "uncached".
+- **The CDN speaks HTTP/2**, so the browser's six-connections-per-origin cap
+  does NOT throttle a burst; all requests become concurrent streams on one
+  connection. The renderer puts the ceiling back itself (IntersectionObserver +
+  a six-in-flight queue, see the *Product images* block in `inventory.js`).
+  An unknown `size` returns **400**, and `Accept: image/avif` is honoured.
 
 ---
 
