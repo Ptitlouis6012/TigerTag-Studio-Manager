@@ -91,6 +91,60 @@ jobs:
           echo "APPLE_API_KEY=$HOME/private_keys/AuthKey_${APPLE_API_KEY_ID}.p8" >> "$GITHUB_ENV"
 
       # ─────────────────────────────────────────────────────────────────
+      # macOS signing keychain — built HERE rather than by electron-builder.
+      #
+      # Its own path passes the certificate's IMPORT password to
+      # `security set-key-partition-list -k`, but that flag authenticates
+      # against the KEYCHAIN, not against the .p12. The two are different
+      # secrets, and macOS used not to check — the runner image that ships
+      # macOS 26 does, so signing began failing with
+      #   security: SecKeychainUnlock: The user name or passphrase you
+      #   entered is not correct
+      # on 2026-09-12, with nothing changed on our side: same certificate
+      # (valid to 2031), same secrets (untouched since May), same
+      # electron-builder (26.15.3). Only the image moved, 20260728 → 20260907.
+      #
+      # Upstream fixed it in PR #10101, but that sits in 27.0.0-alpha.8 and is
+      # in NO stable release — 26.15.7 and 26.16.1 both lack it. So we own the
+      # keychain instead of waiting: create it, import the cert, and authorise
+      # codesign with the keychain's OWN password. `CSC_KEYCHAIN` then tells
+      # electron-builder to use it and skip the broken path entirely.
+      #
+      # The keychain password is generated per run and never leaves the runner.
+      # Delete this step once the fix lands in a stable electron-builder and
+      # the dependency is bumped — not before.
+      # ─────────────────────────────────────────────────────────────────
+      - name: Prepare macOS signing keychain
+        if: matrix.os == 'macos-latest'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/tigertag-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 24)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+
+          echo "$MACOS_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+          # The keychain's OWN password — this is the line electron-builder gets wrong.
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" > /dev/null
+
+          # Put it in the search list so codesign can find the identity.
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+
+          echo "CSC_KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+          echo "Identities available for signing:"
+          security find-identity -v -p codesigning "$KEYCHAIN" | sed 's/[A-F0-9]\{40\}/<hash>/'
+
+      # ─────────────────────────────────────────────────────────────────
       # macOS / Linux — build & publish in one step (no post-build signing).
       # Windows is handled in the next 4 steps so we can SIGN the .exe with
       # Microsoft Trusted Signing (Azure) BEFORE publishing it to the Release.
@@ -102,8 +156,10 @@ jobs:
           # GitHub Releases publish (electron-builder reads GH_TOKEN automatically)
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # macOS code signing — electron-builder reads CSC_LINK (base64 .p12) + CSC_KEY_PASSWORD
-          CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
+          # macOS code signing — the identity lives in the keychain prepared above
+          # (CSC_KEYCHAIN, exported to GITHUB_ENV). CSC_LINK is deliberately NOT
+          # set: passing it makes electron-builder build its own keychain again
+          # and take the path this works around.
           CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
 
           # macOS notarization via App Store Connect API Key (preferred over Apple ID + password)
