@@ -34130,7 +34130,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // plain re-render or a removal. `_notifFirstSnap` tracks the per-source initial
   // load; the passive set are startup nudges that shouldn't ring every launch.
   const _notifFirstSnap = { friendReq: true, notifs: true };
-  const _PASSIVE_NOTIF_IDS = new Set(["avatar", "discord", "github", "makerworld"]);
+  const _PASSIVE_NOTIF_IDS = new Set(["avatar", "discord", "github", "makerworld", "wiki"]);
   function _notifChime() {
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
