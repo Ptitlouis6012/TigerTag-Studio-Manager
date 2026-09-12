@@ -37,7 +37,7 @@ Integrity is asserted out-of-band by **ECDSA over secp256r1** (P-256). Each
 
 ```json
 { "id": 1542820452, "version": "1.0", "name": "TigerTag",
-  "tag": "TIGER_TAG_MAKER_V1.0",
+  "tag": "TIGER_TAG_V1.0",
   "public_key": "-----BEGIN PUBLIC KEY-----\nMFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEwtX8JRYMoAXTbkU7EXJYKX7g4Mf0\nZ3WUuuGzlfyiEiS5UseXT6l1t1ZbMgzsg5IVA0TB7+/w6eyTlgnz/HXONw==\n-----END PUBLIC KEY-----" }
 ```
 
@@ -277,9 +277,9 @@ wins, in-process memoisation for the lifetime of the parser**.
 
 ## Crypto / signing
 
-- Each `id_version.json` row carries a PEM **secp256r1** public key. Two
-  versions ship with real keys (`TIGER_TAG_MAKER_V1.0`, `TIGER_TAG_INIT`); the
-  `TIGER_TAG_UNINITIALIZED` row has an empty key.
+- Each `id_version.json` row carries a PEM **secp256r1** public key. Three
+  versions ship with the same real key (`TIGER_TAG_V1.0`, `TIGER_TAG_INIT`,
+  `TIGER_TAG_PLUS_V1.0`); the `TIGER_TAG_UNINITIALIZED` row has an empty key.
 - `OFF_SIGNATURE = 80` is reserved for an ECDSA signature; `MIN_DATA_LENGTH =
   96` allows 16 bytes of signature payload (typical compact ECDSA-P256 needs
   64 bytes raw or up to ~72 bytes DER, so this 16-byte slot is *not* sufficient
