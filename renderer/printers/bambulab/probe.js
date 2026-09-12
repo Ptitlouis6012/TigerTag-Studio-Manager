@@ -23,20 +23,27 @@ export function getLastBblScanEnv() { return _bblScanLastEnv; }
 // Map the printer's DevModel code (or its serial prefix) onto the local
 // printer catalog id used by the add form (data/printers/bbl_printer_models.json).
 
+// Codes are taken from Bambu Studio's own `resources/printers/<CODE>.json`,
+// each of which carries the machine's `display_name` — the authoritative list,
+// rather than inferred from a serial seen in the wild.
 const BBL_CODE_TO_ID = {
   N1: '1',         // A1 Mini
   N2S: '2',        // A1
+  N9: '13',        // A2L
   C11: '4',        // P1P
   C12: '3',        // P1S
   C13: '6',        // X1E
+  N6: '12',        // X2D
   N7: '10',        // P2S
   O1S: '7',        // H2S
   O1D: '8',        // H2D
   O1E: '9',        // H2D Pro
   O1C: '11',       // H2C
+  O1C2: '11',      // H2C — second code for the same machine
   '00M': '5',      // X1C
   'BL-P001': '5',  // X1C — the code the cloud's device list reports
-  'BL-P002': '5',  // X1C (legacy code)
+  'BL-P002': '5',  // X1 (non-Carbon) — mapped to the X1C entry, the closest
+                   //   the catalog carries; the two connect identically
   '3DPRINTER-X1': '5',
   '3DPRINTER-X1-CARBON': '5',
 };
@@ -49,6 +56,9 @@ const BBL_SERIAL_PREFIX_TO_ID = {
   '00M': '5', // X1C
   '03W': '6', // C13  → X1E
   '22E': '10',// N7   → P2S
+  // No prefix known for N9 (A2L) or N6 (X2D): a serial prefix can only be read
+  // off a real machine, and neither has been seen here yet. Both resolve from
+  // their DevModel code above, which is the path discovery and the cloud use.
 };
 
 /**

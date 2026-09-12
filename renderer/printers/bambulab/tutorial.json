@@ -4,7 +4,7 @@
   "series": [
     {
       "id": "x1-h2-p2",
-      "label": "X1 / X1E / H2 / P2 Series",
+      "label": "X1 / X1E / X2 / H2 / P2 Series",
       "steps": [
         { "image": "x1/x_series_step1.jpg", "body": "tutoBambuX1Step1" },
         { "image": "x1/x_series_step2.jpg", "body": "tutoBambuX1Step2" },
@@ -31,7 +31,7 @@
     },
     {
       "id": "a1",
-      "label": "A1 Series",
+      "label": "A1 / A2 Series",
       "steps": [
         { "image": "a1/a_series_step1.png", "body": "tutoBambuA1Step1" },
         { "image": "a1/a_series_step2.png", "body": "tutoBambuA1Step2" },
@@ -47,11 +47,13 @@
   "models": [
     { "id": "a1-mini", "label": "A1 mini",    "image": "models/a1-mini.png", "series": "a1" },
     { "id": "a1",      "label": "A1",         "image": "models/a1.png",      "series": "a1" },
+    { "id": "a2l",     "label": "A2L",        "image": "models/a2l.png",     "series": "a1" },
     { "id": "p1p",     "label": "P1P",        "image": "models/p1p.png",     "series": "p1" },
     { "id": "p1s",     "label": "P1S",        "image": "models/p1s.png",     "series": "p1" },
     { "id": "p2s",     "label": "P2S",        "image": "models/p2s.png",     "series": "x1-h2-p2" },
     { "id": "x1c",     "label": "X1 Carbon",  "image": "models/x1c.png",     "series": "x1-h2-p2" },
     { "id": "x1e",     "label": "X1E",        "image": "models/x1e.png",     "series": "x1-h2-p2" },
+    { "id": "x2d",     "label": "X2D",        "image": "models/x2d.png",     "series": "x1-h2-p2" },
     { "id": "h2s",     "label": "H2S",        "image": "models/h2s.png",     "series": "x1-h2-p2" },
     { "id": "h2d",     "label": "H2D",        "image": "models/h2d.png",     "series": "x1-h2-p2" },
     { "id": "h2dpro",  "label": "H2D Pro",    "image": "models/h2dpro.png",  "series": "x1-h2-p2" },
