@@ -1,5 +1,6 @@
 {
   "_comment": "VAT standard rates per country — editable. `rate` is the standard VAT % applied to filament/resin; `currency` (ISO 4217) + `symbol` drive price display. Add or adjust entries freely; rates change over time.",
+  "_comment_canada": "Canada has no single national rate: GST is federal and each province adds HST, PST, RST or QST on top, so its entries are keyed per PROVINCE. That costs nothing: `code` is matched as an opaque string by _vatEntryFor(), never parsed or assumed two letters. `rate` is the COMBINED rate the buyer pays; `note` records what it is made of, for whoever updates it next. Verified against the CRA rate table (canada.ca), September 2026.",
   "default": "FR",
   "countries": [
     { "code": "FR", "label": "France",         "rate": 20,   "currency": "EUR", "symbol": "€" },
@@ -31,6 +32,19 @@
     { "code": "BG", "label": "Bulgaria",       "rate": 20,   "currency": "BGN", "symbol": "лв" },
     { "code": "GB", "label": "United Kingdom", "rate": 20,   "currency": "GBP", "symbol": "£" },
     { "code": "CH", "label": "Switzerland",    "rate": 8.1,  "currency": "CHF", "symbol": "CHF" },
-    { "code": "US", "label": "United States",  "rate": 0,    "currency": "USD", "symbol": "$" }
+    { "code": "US", "label": "United States",  "rate": 0,    "currency": "USD", "symbol": "$" },
+    { "code": "CA-AB", "label": "Canada (Alberta)",                 "rate": 5,       "currency": "CAD", "symbol": "CA$", "note": "GST 5%" },
+    { "code": "CA-BC", "label": "Canada (British Columbia)",        "rate": 12,      "currency": "CAD", "symbol": "CA$", "note": "GST 5% + PST 7%" },
+    { "code": "CA-MB", "label": "Canada (Manitoba)",                "rate": 12,      "currency": "CAD", "symbol": "CA$", "note": "GST 5% + RST 7%" },
+    { "code": "CA-NB", "label": "Canada (New Brunswick)",           "rate": 15,      "currency": "CAD", "symbol": "CA$", "note": "HST 15%" },
+    { "code": "CA-NL", "label": "Canada (Newfoundland & Labrador)", "rate": 15,      "currency": "CAD", "symbol": "CA$", "note": "HST 15%" },
+    { "code": "CA-NS", "label": "Canada (Nova Scotia)",             "rate": 14,      "currency": "CAD", "symbol": "CA$", "note": "HST 14% (9% provincial, since 2025-04-01)" },
+    { "code": "CA-NT", "label": "Canada (Northwest Territories)",   "rate": 5,       "currency": "CAD", "symbol": "CA$", "note": "GST 5%" },
+    { "code": "CA-NU", "label": "Canada (Nunavut)",                 "rate": 5,       "currency": "CAD", "symbol": "CA$", "note": "GST 5%" },
+    { "code": "CA-ON", "label": "Canada (Ontario)",                 "rate": 13,      "currency": "CAD", "symbol": "CA$", "note": "HST 13%" },
+    { "code": "CA-PE", "label": "Canada (Prince Edward Island)",    "rate": 15,      "currency": "CAD", "symbol": "CA$", "note": "HST 15%" },
+    { "code": "CA-QC", "label": "Canada (Quebec)",                  "rate": 14.975,  "currency": "CAD", "symbol": "CA$", "note": "GST 5% + QST 9.975% (QST is not compounded on the GST)" },
+    { "code": "CA-SK", "label": "Canada (Saskatchewan)",            "rate": 11,      "currency": "CAD", "symbol": "CA$", "note": "GST 5% + PST 6%" },
+    { "code": "CA-YT", "label": "Canada (Yukon)",                   "rate": 5,       "currency": "CAD", "symbol": "CA$", "note": "GST 5%" }
   ]
 }
