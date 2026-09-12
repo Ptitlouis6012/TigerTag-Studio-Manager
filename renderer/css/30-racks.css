@@ -727,13 +727,22 @@
      same spool whatever row it sits in, so it is drawn at the same size and the
      same opacity as the front row. Shrinking the back rows made them read as
      lesser, half-real slots, and made them smaller targets for no reason. */
-  .rp-persp .rp-plane[data-depth="1"] {
-    transform: translate(var(--zx), calc(-1 * var(--zy)));
-    z-index: 2;
-  }
-  .rp-persp .rp-plane[data-depth="2"] {
-    transform: translate(calc(var(--zx) * 2), calc(-2 * var(--zy)));
-    z-index: 1;
+  /* One rule for every plane, driven by the `--d` index the renderer writes.
+     Enumerating depths by hand meant a shelf deeper than the last rule listed
+     drew its far row flat on top of the others, with no offset and no shadow —
+     and silently, since nothing fails when a selector simply doesn't match. */
+  .rp-persp .rp-plane {
+    /* Declared here with its default so the value has a home in the stylesheet;
+       the renderer's inline `--plane` overrides it, inline winning over a rule. */
+    --plane: 0;
+    transform: translate(calc(var(--zx) * var(--plane)), calc(-1 * var(--zy) * var(--plane)));
+    /* Same ladder the enumerated rules used — front row 3, then 2, 1, 0 — because
+       the shelf ABOVE relies on it: at z-index 3 it must paint over the back row
+       of the shelf below (see the note above). A different scale would have
+       broken that quietly. `--plane` is the row's index; `--depth`, set on the
+       rack, is how many rows it has. Two different numbers, deliberately not
+       sharing a name. */
+    z-index: calc(3 - var(--plane));
   }
   .rp-persp .rp-plane { opacity: 1; }
   /* Leaning left: shrink towards the right edge instead, or the planes drift. */
@@ -741,9 +750,7 @@
   /* Cast shadow so a row reads as standing in FRONT of the one behind it. Only
      a drop shadow — the inset white ring the base slot uses lightened the tile
      and made a back row look washed out, as if it were see-through. */
-  .rp-persp .rp-plane[data-depth="0"] .rp-slot--filled,
-  .rp-persp .rp-plane[data-depth="1"] .rp-slot--filled,
-  .rp-persp .rp-plane[data-depth="2"] .rp-slot--filled {
+  .rp-persp .rp-plane .rp-slot--filled {
     box-shadow: -3px 4px 9px rgba(0,0,0,.28);
   }
   /* The colour tile of a back row covers its slot completely: no wash of the

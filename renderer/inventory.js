@@ -28569,7 +28569,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // A rack's depth is how many spools fit one behind the other on a shelf.
   // It is written only when it is more than 1, so a plain shelf keeps exactly
   // the document it has today and nothing needs migrating.
-  const RACK_DEPTH_MAX = 3;
+  const RACK_DEPTH_MAX = 4;
   function rackDepthOf(rack) {
     const d = rack && parseInt(rack.depth, 10);
     return Number.isInteger(d) ? Math.max(1, Math.min(RACK_DEPTH_MAX, d)) : 1;
@@ -31490,7 +31490,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           for (let d = rDepth - 1; d >= 0; d--) {
             const cells = [];
             for (let pos = 0; pos < r.position; pos++) cells.push(buildSlot(lv, pos, d));
-            planes.push(`<div class="rp-plane" data-depth="${d}"><div class="rp-row-slots" style="--slots:${r.position}">${cells.join("")}</div></div>`);
+            /* `--d` carries the plane's own index so the stylesheet can place
+               ANY depth with one rule, instead of enumerating them one by one —
+               which is how a fourth row would have arrived with no offset and no
+               shadow. */
+            planes.push(`<div class="rp-plane" data-depth="${d}" style="--plane:${d}"><div class="rp-row-slots" style="--slots:${r.position}">${cells.join("")}</div></div>`);
           }
           body = `<div class="rp-persp">${planes.join("")}</div>`;
         }
