@@ -8887,5 +8887,35 @@
         }
       }
     ]
+  },
+  "2.27.1": {
+    "date": "2026-09-13",
+    "items": [
+      {
+        "icon": "image",
+        "title": {
+          "en": "Catalogue pictures, back for good",
+          "fr": "Les images du catalogue, pour de bon",
+          "de": "Katalogbilder, endgültig zurück",
+          "es": "Las imágenes del catálogo, de vuelta",
+          "it": "Le immagini del catalogo, tornate",
+          "zh": "产品库图片，回来了",
+          "pt": "As imagens do catálogo, de volta",
+          "pt-pt": "As imagens do catálogo, de volta",
+          "pl": "Zdjęcia w katalogu, na dobre"
+        },
+        "body": {
+          "en": "Searching the catalogue used to leave every picture blank until you restarted. Search away — they stay.",
+          "fr": "Une recherche dans le catalogue laissait toutes les images vides jusqu'au redémarrage. Cherche tant que tu veux, elles restent.",
+          "de": "Eine Suche im Katalog ließ alle Bilder leer — bis zum Neustart. Such ruhig weiter, sie bleiben da.",
+          "es": "Buscar en el catálogo dejaba todas las imágenes en blanco hasta reiniciar. Busca cuanto quieras: se quedan.",
+          "it": "Una ricerca nel catalogo lasciava tutte le immagini vuote fino al riavvio. Cerca quanto vuoi, restano.",
+          "zh": "以前在产品库里一搜，所有图片就空着，直到重启。现在随便搜，它们都在。",
+          "pt": "Buscar no catálogo deixava todas as imagens em branco até reiniciar. Pode buscar à vontade: elas ficam.",
+          "pt-pt": "Pesquisar no catálogo deixava todas as imagens em branco até reiniciares. Pesquisa à vontade: ficam.",
+          "pl": "Wyszukiwanie w katalogu zostawiało wszystkie zdjęcia puste aż do restartu. Szukaj do woli — zostają."
+        }
+      }
+    ]
   }
 }

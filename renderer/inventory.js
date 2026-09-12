@@ -7693,20 +7693,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   const IMG_MAX_INFLIGHT = 6;
   const IMG_RETRY_MAX    = 2;
   const IMG_RETRY_MS     = [400, 1400];
-  let _imgInflight = 0;
+  // In flight as a SET, not a counter. A counter only comes back down when the
+  // element's load/error fires — and an element destroyed mid-flight never
+  // fires either. The catalogue search wipes and rebuilds its body on every
+  // keystroke, so six images torn down that way used to hold all six slots
+  // FOREVER: the queue jammed at the cap and not one picture loaded again for
+  // the rest of the session. Holding the elements lets the pump see they are
+  // gone and take the slots back.
+  const _imgInflight = new Set();
   const _imgQueue = [];
 
   function _imgPump() {
-    while (_imgInflight < IMG_MAX_INFLIGHT && _imgQueue.length) {
+    for (const img of _imgInflight) {
+      if (!img.isConnected) { _imgInflight.delete(img); delete img.dataset.imgBusy; }
+    }
+    while (_imgInflight.size < IMG_MAX_INFLIGHT && _imgQueue.length) {
       const img = _imgQueue.shift();
       const url = img.dataset.imgSrc;
       if (!img.isConnected || !url) continue;
-      _imgInflight++;
+      _imgInflight.add(img);
       img.src = url;
     }
   }
   function _imgDone(img) {
-    if (img.dataset.imgBusy) { delete img.dataset.imgBusy; _imgInflight = Math.max(0, _imgInflight - 1); }
+    if (img.dataset.imgBusy) { delete img.dataset.imgBusy; _imgInflight.delete(img); }
     _imgPump();
   }
   // Only ask for an image once it is near the viewport. 600 px of margin so a

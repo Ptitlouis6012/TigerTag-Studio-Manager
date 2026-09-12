@@ -5,6 +5,15 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.27.1 — 2026-09-13
+
+### Fixed
+
+- **Catalogue images stopped loading permanently after using the search box.** The product-image loader caps in-flight requests at six, and the counter was only decremented from the `load` / `error` handlers. An `<img>` destroyed mid-flight fires neither, and `_catViewSearch()` wipes and rebuilds `#catalogViewBody` on every keystroke — so six images torn down that way held all six slots for the lifetime of the session: `_imgPump()` found no free slot, the queue never drained, and no image loaded again until restart. In-flight images are now tracked in a `Set` instead of a counter, and `_imgPump()` reclaims the slots of any entry no longer `isConnected` before filling. Same shape of leak would have been possible from any list that rebuilds itself; holding the elements rather than counting them removes the class, not just the instance — `renderer/inventory.js`.
+- **The macOS release build could no longer sign itself.** electron-builder passes the certificate's IMPORT password to `security set-key-partition-list -k`, but that flag authenticates against the KEYCHAIN — a different secret. macOS did not previously verify it; the runner image carrying macOS 26 does, so the v2.27.0 build failed with `SecKeychainUnlock: The user name or passphrase you entered is not correct` with nothing changed on our side (same certificate, valid to 2031; same secrets, untouched since May; same electron-builder, 26.15.3 — only the image, 20260728 → 20260907). Fixed upstream in PR #10101, which is in `27.0.0-alpha.8` and in no stable release (26.15.7 and 26.16.1 both lack it). The workflow therefore builds the signing keychain itself — create, import, authorise `codesign` with the keychain's OWN generated password — and passes `CSC_KEYCHAIN` so electron-builder skips its own path; `CSC_LINK` is deliberately unset, since passing it makes electron-builder rebuild its keychain and take that path again. The step states its own removal condition — `.github/workflows/build.yml`.
+
+---
+
 ## v2.27.0 — 2026-09-12
 
 ### Added
