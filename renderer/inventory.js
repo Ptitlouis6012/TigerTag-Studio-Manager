@@ -13246,11 +13246,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      own timestamp so even an freshly-created source can't pair with the
      first clone. These aren't real programming times, but it's the only
      lever that keeps identical copies from being auto-twinned. */
+  // How many copies one Duplicate may mint. Deliberately low: every copy is a
+  // Firestore document, so a slipped keystroke is a slipped inventory — and a
+  // single write batch caps at 500 operations anyway, which this stays far
+  // under. The UI states the same number so it never offers what the write
+  // would silently clamp.
+  const DUP_MAX = 50;
+
   async function duplicateSpoolAsCloud(r, count = 1, opts = {}) {
     if (state.friendView) return 0;
     const user = fbAuth().currentUser;
     if (!user) return 0;
-    const n = Math.max(1, Math.min(50, parseInt(count, 10) || 1));
+    const n = Math.max(1, Math.min(DUP_MAX, parseInt(count, 10) || 1));
     const invRef = fbDb(user.uid).collection("users").doc(user.uid).collection("inventory");
     const batch  = fbDb(user.uid).batch();
     // Source timestamp in chip-epoch seconds. Normalise a legacy Unix-epoch
@@ -13294,7 +13301,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (state.friendView) return 0;
     const user = fbAuth().currentUser;
     if (!user || !rawObj) return 0;
-    const n = Math.max(1, Math.min(50, parseInt(count, 10) || 1));
+    const n = Math.max(1, Math.min(DUP_MAX, parseInt(count, 10) || 1));
     const invRef = fbDb(user.uid).collection("users").doc(user.uid).collection("inventory");
     const batch  = fbDb(user.uid).batch();
     const baseTs = nowChipTs();
@@ -16257,16 +16264,37 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       try { await markSpoolDeleted(r.spoolId); closeDetail(); }
       catch (e) { reportError("spool.delete", e); }
     });
-    // Duplicate — hold 1s; ± stepper picks N copies.
+    // Duplicate — hold 1s; the dropdown (or the free field behind "10+") picks N.
     let _dupCount = 1;
     const _dupSyncUI = () => {
-      const valEl = $("dupCount");
-      if (valEl) valEl.textContent = String(_dupCount);
       const lblEl = $("btnToolDuplicate")?.querySelector(".toolbox-row-label");
       if (lblEl) lblEl.textContent = _dupCount > 1 ? `${t("toolDuplicate")} ×${_dupCount}` : t("toolDuplicate");
     };
-    $("btnDupDec")?.addEventListener("click", e => { e.stopPropagation(); _dupCount = Math.max(1, _dupCount - 1); _dupSyncUI(); });
-    $("btnDupInc")?.addEventListener("click", e => { e.stopPropagation(); _dupCount = Math.min(50, _dupCount + 1); _dupSyncUI(); });
+    $("dupQtySel")?.addEventListener("click", e => e.stopPropagation());   // never trip the hold
+    $("dupQtySel")?.addEventListener("change", e => {
+      e.stopPropagation();
+      const sel = e.target, free = $("dupQtyFree");
+      if (sel.value === "more") {
+        // Hand the row over to the free field, pre-filled and selected so the
+        // first keystroke replaces it rather than appending to it.
+        sel.hidden = true; free.hidden = false;
+        free.value = String(_dupCount > 10 ? _dupCount : 10);
+        _dupCount = +free.value; _dupSyncUI();
+        free.focus(); free.select();
+      } else {
+        _dupCount = Math.max(1, Math.min(DUP_MAX, parseInt(sel.value, 10) || 1));
+        _dupSyncUI();
+      }
+    });
+    $("dupQtyFree")?.addEventListener("click", e => e.stopPropagation());
+    $("dupQtyFree")?.addEventListener("input", e => {
+      e.stopPropagation();
+      const raw = e.target.value;
+      if (raw === "") { _dupCount = 1; _dupSyncUI(); return; }   // mid-edit, don't fight it
+      const n = Math.max(1, Math.min(DUP_MAX, parseInt(raw, 10) || 1));
+      if (String(n) !== raw) e.target.value = String(n);         // correct AS YOU TYPE, like the add-product floors
+      _dupCount = n; _dupSyncUI();
+    });
     setupHoldToConfirm($("btnToolDuplicate"), 1000, async () => {
       try {
         const made = await duplicateSpoolAsCloud(r, _dupCount);
@@ -19444,11 +19472,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             info: t("toolDuplicateTip"),
             // Quantity stepper — pick how many copies to mint in one shot.
             // The main button label tracks the count ("Duplicate ×N").
+            // A dropdown rather than a ± stepper: receiving a box of 30
+            // identical spools meant thirty clicks. 1-9 covers the everyday
+            // case in one pick; "10+" swaps the control for a free field, so
+            // the long tail costs one keystroke instead of forty. There is no
+            // plain "10" — "10+" already opens on 10, so listing both would be
+            // two ways to say the same thing. The field is
+            // capped at 50 — the same ceiling duplicateSpoolAsCloud enforces,
+            // stated here too so the UI never promises what the write refuses.
             trailing: `
-              <div class="dup-stepper" title="${esc(t("toolDuplicateCount"))}">
-                <button type="button" class="dup-step-btn" id="btnDupDec" aria-label="−">−</button>
-                <span class="dup-step-val" id="dupCount">1</span>
-                <button type="button" class="dup-step-btn" id="btnDupInc" aria-label="+">+</button>
+              <div class="dup-qty">
+                <select class="dup-qty-sel" id="dupQtySel" aria-label="${esc(t("toolDuplicateCount"))}">
+                  ${[1,2,3,4,5,6,7,8,9].map(n => `<option value="${n}">${n}</option>`).join("")}
+                  <option value="more">10+</option>
+                </select>
+                <input type="number" class="dup-qty-free" id="dupQtyFree" hidden
+                       min="1" max="${DUP_MAX}" step="1" inputmode="numeric"
+                       aria-label="${esc(t("toolDuplicateCount"))}" />
               </div>`,
           });
         }

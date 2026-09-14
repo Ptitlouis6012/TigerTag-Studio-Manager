@@ -3345,28 +3345,33 @@
   #btnToolDuplicate.toolbox-row-main.is-confirming .toolbox-row-chev { background: var(--surface); }
   #btnToolDuplicate .hold-progress { background: color-mix(in srgb, var(--info) 28%, transparent); }
 
-  /* − N + stepper, sits to the right of the main button (same height). */
-  .dup-stepper {
+  /* Copy count — a dropdown, sits to the right of the main button (same
+     height). Picking "10+" swaps it for a free field: 1-10 is one pick for the
+     everyday case, and a box of 30 is one keystroke instead of thirty clicks.
+     Both are capped at DUP_MAX (50), the ceiling the write enforces anyway.
+     The input class is DOUBLED (0,2,0) to outrank the global
+     `input[type="number"]` rule (0,1,1), which forces 40px tall + width:100%. */
+  .dup-qty {
     flex-shrink: 0;
-    display: flex; align-items: center; gap: 2px;
+    display: flex; align-items: center;
     height: 40px; padding: 0 4px;
     background: var(--surface-2); border-radius: 10px;
   }
-  .dup-step-btn {
-    width: 26px; height: 32px;
-    display: flex; align-items: center; justify-content: center;
+  .dup-qty-sel,
+  .dup-qty-free.dup-qty-free {
+    height: 32px; width: auto; padding: 0 6px;
     background: transparent; border: 0; border-radius: 8px;
-    cursor: pointer; color: var(--muted);
-    font-family: inherit; font-size: 18px; line-height: 1; font-weight: 600;
-    transition: background .12s ease, color .12s ease;
+    color: var(--text); font-family: inherit;
+    font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums;
+    text-align: center; cursor: pointer;
   }
-  .dup-step-btn:hover  { background: color-mix(in srgb, var(--info) 12%, transparent); color: var(--text); }
-  .dup-step-btn:active { transform: scale(.94); }
-  .dup-step-val {
-    min-width: 22px; text-align: center;
-    font-size: 13px; font-weight: 600; color: var(--text);
-    font-variant-numeric: tabular-nums;
-  }
+  .dup-qty-sel { min-width: 52px; }
+  .dup-qty-free.dup-qty-free { width: 54px; cursor: text; }
+  .dup-qty-sel:hover { background: color-mix(in srgb, var(--info) 12%, transparent); }
+  .dup-qty-sel:focus-visible,
+  .dup-qty-free.dup-qty-free:focus { outline: none; background: var(--surface); }
+  /* The spinner would eat half of a 54px field for a value that is typed. */
+  .dup-qty-free::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 
   /* ── container picker — side card (tucks right of the spool detail) ── */
   .cp-list { scrollbar-width: none; }
