@@ -342,7 +342,7 @@
   "toolMeasureColor": "扫描颜色",
   "toolMeasureTd": "扫描 TD",
   "toolDuplicate": "复制",
-  "toolDuplicateTip": "为这份材料创建一个云端副本——一卷全新的数字料，没有芯片。",
+  "toolDuplicateTip": "把这份材料再添一卷，作为 TigerData——数字料卷，不需要芯片。",
   "toolDuplicateOk": "已复制 ×{{n}}",
   "toolDuplicateCount": "复制数量",
   "msgEditTip": "点击编辑备注",

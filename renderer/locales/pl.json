@@ -341,7 +341,7 @@
   "toolMeasureColor": "Skanuj kolor",
   "toolMeasureTd": "Skanuj TD",
   "toolDuplicate": "Duplikuj",
-  "toolDuplicateTip": "Tworzy kopię tego materiału w chmurze — nową cyfrową szpulę, bez chipa.",
+  "toolDuplicateTip": "Dodaje kolejną szpulę tego materiału jako TigerData — cyfrową, bez chipa.",
   "toolDuplicateOk": "Zduplikowano ×{{n}}",
   "toolDuplicateCount": "Liczba kopii",
   "msgEditTip": "Kliknij, aby edytować notatkę",

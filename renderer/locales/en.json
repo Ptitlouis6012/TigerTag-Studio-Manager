@@ -342,7 +342,7 @@
   "toolMeasureColor": "Scan colour",
   "toolMeasureTd": "Scan TD",
   "toolDuplicate": "Duplicate",
-  "toolDuplicateTip": "Makes a fresh cloud copy of this material — a new digital spool, no chip.",
+  "toolDuplicateTip": "Adds another of this material as a TigerData — a digital spool, no chip needed.",
   "toolDuplicateOk": "Duplicated ×{{n}}",
   "toolDuplicateCount": "Number of copies",
   "msgEditTip": "Click to edit the note",

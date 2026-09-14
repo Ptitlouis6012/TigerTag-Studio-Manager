@@ -342,7 +342,7 @@
   "toolMeasureColor": "Farbe scannen",
   "toolMeasureTd": "TD scannen",
   "toolDuplicate": "Duplizieren",
-  "toolDuplicateTip": "Erstellt eine frische Cloud-Kopie dieses Materials — eine neue digitale Spule, ohne Chip.",
+  "toolDuplicateTip": "Legt dieses Material noch einmal als TigerData an — eine digitale Spule, ganz ohne Chip.",
   "toolDuplicateOk": "Dupliziert ×{{n}}",
   "toolDuplicateCount": "Anzahl der Kopien",
   "msgEditTip": "Zum Bearbeiten der Notiz klicken",

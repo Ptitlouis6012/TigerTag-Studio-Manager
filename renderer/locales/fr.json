@@ -342,7 +342,7 @@
   "toolMeasureColor": "Scanner la couleur",
   "toolMeasureTd": "Scanner le TD",
   "toolDuplicate": "Dupliquer",
-  "toolDuplicateTip": "Crée une copie cloud de ce matériau — une nouvelle bobine numérique, sans puce.",
+  "toolDuplicateTip": "Ajoute une bobine de plus de ce matériau, en TigerData — une bobine numérique, sans puce.",
   "toolDuplicateOk": "Dupliqué ×{{n}}",
   "toolDuplicateCount": "Nombre de copies",
   "msgEditTip": "Cliquer pour modifier la note",
