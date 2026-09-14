@@ -283,18 +283,20 @@ set approach does NOT work.
     "modifyMaterial": {
       "id":         <number>,   // slot index within the box (0-based)
       "boxId":      <number>,   // physical box ID from boxsInfo.materialBoxs[n].boxId
-      "rfid":       "<string>", // material type code — use crealityID from id_material.json
-      "type":       "<string>", // material label e.g. "PLA"
+      "rfid":       "<string>", // crealityID from id_material.json — KEPT ONLY if vendor+type+name
+                                //   match a profile in the printer's library (see below), else reset to "0"
+      "type":       "<string>", // material FAMILY, not the label: material_type, plus "-" + filled_type
+                                //   when set — "PLA", "ABS-CF". "PLA High Speed" is NOT a valid type
       "vendor":     "<string>", // vendor name e.g. "Generic"
-      "name":       "<string>", // full display name — convention: "<vendor> <type>"
+      "name":       "<string>", // display name, e.g. "Generic PLA" — must match the library too
       "color":      "<string>", // "#0rrggbb" format
-      "minTemp":    <number>,   // minimum print temp (°C)
-      "maxTemp":    <number>,   // maximum print temp (°C)
-      "pressure":   <number>,   // pressure advance (float, e.g. 0.04)
-      "selected":   1,          // always 1
-      "percent":    100,        // always 100
-      "editStatus": 1,          // always 1
-      "state":      1           // always 1
+      "minTemp":    <float>,    // minimum print temp (°C) — MUST be written with a decimal point: 190.0
+      "maxTemp":    <float>,    // maximum print temp (°C) — MUST be written with a decimal point: 240.0
+      "pressure":   <float>,    // pressure advance, e.g. 0.04 (kept either way)
+      "selected":   1,
+      "percent":    100,
+      "editStatus": 1,
+      "state":      1
     }
   }
 }
@@ -303,6 +305,43 @@ set approach does NOT work.
 **Source of `rfid` / `minTemp` / `maxTemp` / `pressure`**: look up the material label
 in `data/id_material.json` using `metadata.crealityID` and `metadata.crealityPressureAdvance`.
 See §9 for the lookup function.
+
+> ⚠️ **`minTemp` and `maxTemp` must contain a decimal point in the JSON text. An integer is dropped
+> silently.** The firmware reads them by their text, not their value. Same frame on the same slot,
+> read back with `{"method":"get","params":{"boxsInfo":1}}`, measured on an Ender-3 V4 + CFS:
+>
+> | Sent | Read back |
+> |---|---|
+> | `"minTemp":215.0,"maxTemp":230.0` | `215` / `230` |
+> | `"minTemp":216,"maxTemp":231` | **`0` / `0`** |
+> | `"minTemp":217.0,"maxTemp":232.0` | `217` / `232` |
+>
+> The printer still answers without an error, so nothing reports the loss. **In JavaScript,
+> `JSON.stringify` cannot produce `190.0`** — `190` and `190.0` are the same `Number` — so the text
+> has to be written explicitly. Tiger Studio does it in `renderer/printers/creality/material-frame.js`
+> (`buildModifyMaterialFrame`): the float fields are swapped for placeholders, the object is
+> stringified, and the placeholders are replaced with decimal literals. Leave the integer fields
+> (`id`, `boxId`, `selected`, `percent`, `editStatus`, `state`) as integers. Dart has no such
+> problem: it serialises a `double` as `190.0`.
+>
+> **Other behaviour measured on the same model:**
+> - `pressure` is kept whether or not it carries a decimal point.
+> - `rfid` is kept **only** when `vendor` + `type` + `name` match a profile of the printer's own
+>   material library, returned by `{"method":"get","params":{"reqMaterials":1}}` (18 profiles on the
+>   Ender-3 V4). `00001` + `PLA` + `Generic` + `"Generic PLA"` is kept; `00001` + `PLA` + `R3D` +
+>   `"Generic PLA"` is reset to `"0"`.
+> - `type` is the material family, never the marketing label.
+> - On a slot with **no filament loaded**, `selected` / `editStatus` / `state` sent as `1` read back
+>   as `0` — the firmware does not simply take them from the frame. Observed on one empty slot only.
+>
+> **How Tiger Studio resolves the identity fields.** It keeps the library (`retMaterials`, requested
+> at connection) in `conn.data.materialLibrary`, and `resolveCrealityMaterial` looks, in order, for:
+> the profile whose `id` is the database's `crealityID` under the chosen brand; the brand's plain
+> `"<vendor> <family>"` profile; a profile with exactly that name and family under another brand (the
+> "Hyper" line is filed under `Creality`). A match is sent verbatim; otherwise `rfid` is sent as `"0"`
+> on purpose. Measured: *Creality + PLA High Speed* → `01001 · Creality · PLA · "Hyper PLA"`, read
+> back `01001`; the old composition (`type "PLA High Speed"`, `name "Creality PLA High Speed"`) read
+> back `rfid "0"`.
 
 ### 8.2 Other `set` commands (identified but not yet implemented)
 
@@ -319,7 +358,9 @@ See §9 for the lookup function.
 ## 9. Material DB lookup (Studio Manager pattern)
 
 Studio Manager's `data/id_material.json` contains 67 materials with Creality IDs.
-The correct runtime lookup (already in `renderer/printers/creality/index.js`):
+The correct runtime lookup (already in `renderer/printers/creality/index.js`). Note that it returns
+the temperatures as plain JavaScript numbers — they are integers, so they must go through
+`buildModifyMaterialFrame`, never straight into `JSON.stringify` (see §8.1):
 
 ```js
 const CRE_LABEL_ALIAS = {

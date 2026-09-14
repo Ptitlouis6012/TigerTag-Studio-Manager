@@ -329,8 +329,8 @@ Plusieurs params dans la même trame acceptés.
       "vendor":     "Generic",
       "name":       "Generic PLA",
       "color":      "#0ff5722",
-      "minTemp":    190,
-      "maxTemp":    230,
+      "minTemp":    190.0,
+      "maxTemp":    230.0,
       "pressure":   0.04,
       "selected":   1,
       "percent":    100,
@@ -345,17 +345,40 @@ Plusieurs params dans la même trame acceptés.
 |-------|------|-------|
 | `id` | int | Index slot dans la boîte (0-based) |
 | `boxId` | int | `0` = extrudeur externe, `1+` = module CFS |
-| `rfid` | string | ID Creality du matériau (`"00001"` = PLA). `"0"` si inconnu |
-| `type` | string | `"PLA"`, `"PETG"`, `"ABS"`, `"TPU"`… |
+| `rfid` | string | ID Creality du matériau (`"00001"` = PLA). `"0"` si inconnu. **Conservé seulement si `vendor` + `type` + `name` correspondent exactement à un profil de la bibliothèque de l'imprimante**, sinon remis à `"0"` — voir la note |
+| `type` | string | La **famille** de matériau, pas le libellé : `material_type`, suivi de `-` + `filled_type` s'il est renseigné (`"PLA"`, `"ABS-CF"`). `"PLA High Speed"` n'est pas un `type` valide |
 | `vendor` | string | `"Generic"`, `"Creality"`, `"Hyper"`… |
 | `name` | string | Nom affiché (ex: `"Generic PLA"`) |
 | `color` | string | Format `#0RRGGBB` — voir §10 |
-| `minTemp` / `maxTemp` | float | Températures buse (°C) |
+| `minTemp` / `maxTemp` | float | Températures buse (°C) — **toujours écrites avec un point décimal** (`190.0`) : un entier est ignoré, voir la note ci-dessous |
 | `pressure` | float | Pressure advance (typique : `0.04`) |
 | `selected` | int | `1` = sélectionné |
 | `percent` | int | % filament restant (0–100) |
 | `editStatus` | int | `1` = configuré manuellement |
 | `state` | int | `1` = actif |
+
+> ⚠️ **`minTemp` / `maxTemp` doivent être écrits avec un point décimal — un entier est ignoré en silence.**
+> Le firmware lit ces températures d'après le **texte** JSON, pas d'après leur valeur. Même trame `modifyMaterial`, même slot (1D), relue par `{"method":"get","params":{"boxsInfo":1}}`, sur Ender-3 V4 + CFS :
+>
+> | Envoyé | Relu |
+> |---|---|
+> | `"minTemp":215.0,"maxTemp":230.0` | `215` / `230` |
+> | `"minTemp":216,"maxTemp":231` | **`0` / `0`** |
+> | `"minTemp":217.0,"maxTemp":232.0` | `217` / `232` |
+> | `"minTemp":211.0,"maxTemp":236.0` *(trame construite par Tiger Studio)* | `211` / `236` |
+> | `"minTemp":212,"maxTemp":237` *(sérialisation d'avant le correctif)* | **`0` / `0`** |
+>
+> L'imprimante répond pourtant sans erreur : rien ne signale la perte. **En JavaScript, `JSON.stringify` ne peut pas produire `190.0`** — `190` et `190.0` sont le même `Number` — donc il faut écrire le texte explicitement. Tiger Studio le fait dans `renderer/printers/creality/material-frame.js` (`buildModifyMaterialFrame`). L'app mobile Flutter n'a jamais eu le problème, car Dart sérialise un `double` sous la forme `190.0`.
+>
+> **Autres comportements mesurés sur le même modèle :**
+> - **`pressure` est toujours conservé**, avec ou sans décimale.
+> - **`rfid` n'est conservé que si `vendor` + `type` + `name` correspondent exactement** à un profil de la bibliothèque renvoyée par `{"method":"get","params":{"reqMaterials":1}}` (18 profils sur Ender-3 V4). `00001` + `PLA` + `Generic` + `"Generic PLA"` est conservé ; `00001` + `PLA` + `R3D` + `"Generic PLA"` est remis à `"0"`.
+> - **`type` est la famille** (`material_type`, plus `-` + `filled_type` si renseigné — `ABS-CF`), jamais le libellé commercial (`"PLA High Speed"`, `"Hyper PLA"`).
+> - Sur un slot **sans filament chargé** (1D), `selected`, `editStatus` et `state` envoyés à `1` ont été relus à `0` : le firmware ne les reprend pas simplement de la trame. Observé sur un seul slot vide — ne pas généraliser à un slot chargé sans mesure.
+>
+> **Conséquence dans Tiger Studio** : `type`, `vendor`, `name` et `rfid` ne sont plus composés à partir du libellé choisi. La bibliothèque (`retMaterials`, demandée à la connexion) est conservée dans `conn.data.materialLibrary`, et `resolveCrealityMaterial` (`material-frame.js`) cherche dans l'ordre : le profil dont l'`id` est le `crealityID` de la base **et** dont la marque est celle choisie ; puis le profil `"<vendor> <famille>"` de cette marque ; puis un profil portant exactement ce nom et cette famille sous une autre marque (la gamme « Hyper » est rangée sous `Creality`). Le profil trouvé est repris **tel quel**. Sinon `rfid` part à `"0"`, volontairement.
+>
+> Mesuré sur 1D : *Creality + PLA High Speed* → `01001 · Creality · PLA · "Hyper PLA"` → **relu `01001`** ; *Hyper + PETG* → `06002 · Creality · PETG · "Hyper PETG"` → **relu `06002`** ; l'ancienne composition (`type "PLA High Speed"`, `name "Creality PLA High Speed"`) → **`rfid` relu `0`**. Sur les 23 combinaisons du sélecteur, le `rfid` est conservable dans 11 cas (4 avant) et `type` est une famille valide dans les 23 (18 avant).
 
 ### 6.2 Pause / reprise impression ✅
 

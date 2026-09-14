@@ -10,6 +10,7 @@ import { ctx } from '../context.js';
 import { registerBrand } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
 import { schemaWidget } from '../modal-helpers.js';
+import { buildModifyMaterialFrame, creParseMaterialLibrary, resolveCrealityMaterial } from './material-frame.js';
 
 // ── Private connection state ──────────────────────────────────────────────
 
@@ -156,6 +157,7 @@ export function creConnect(printer) {
       totalLayer:    0,
       // boxsInfo response — kept raw; parsed by renderCrealityLiveInner
       boxsInfoRaw:   null,  // full obj that contained key 'boxsInfo'
+      materialLibrary: null, // the printer's own material profiles (retMaterials) — see material-frame.js
       hostname:      null,
       webrtcSupport: 0,
       video:         0,
@@ -627,6 +629,12 @@ function creMergeStatus(conn, obj) {
   // module tree. We store the whole obj so the renderer can walk it.
   // (mirrors: if (obj.containsKey('boxsInfo')) _boxsInfoByPrinter[idx] = obj)
   if ("boxsInfo" in obj) d.boxsInfoRaw = obj;
+
+  // ── Material library (reply to reqMaterials) ─────────────────────────
+  // Requested at connection time and, until now, never read. It is the only
+  // source of the exact vendor / type / name triples the firmware accepts —
+  // an `rfid` sent with any other combination is reset to "0".
+  if ("retMaterials" in obj) d.materialLibrary = creParseMaterialLibrary(obj.retMaterials);
 
   // ── Temperatures ─────────────────────────────────────────────────────
   if ("nozzleTemp"       in obj) d.nozzleTemp   = asF(obj.nozzleTemp);
@@ -1372,9 +1380,12 @@ const CRE_LABEL_ALIAS = { "Hyper PLA": "PLA High Speed" };
 function creGetMaterialMeta(label) {
   const resolved = CRE_LABEL_ALIAS[label] ?? label;
   const mats = ctx.getState().db?.material ?? [];
-  const m = mats.find(m => m.label === resolved);
-  if (!m?.metadata?.crealityID) return { rfid: "0", minTemp: 190, maxTemp: 240, pressure: 0.04 };
+  const m = mats.find(m => m.label === resolved) ?? null;
+  // `record` travels with the numbers: the family sent as `type` is derived
+  // from it (material_type + filled_type), not from the label.
+  if (!m?.metadata?.crealityID) return { record: m, rfid: "0", minTemp: 190, maxTemp: 240, pressure: 0.04 };
   return {
+    record:   m,
     rfid:     String(m.metadata.crealityID),
     minTemp:  m.recommended?.nozzleTempMin ?? 190,
     maxTemp:  m.recommended?.nozzleTempMax ?? 240,
@@ -1583,28 +1594,35 @@ document.getElementById("creFilEditSave")?.addEventListener("click", async () =>
 
   // Creality color format: #0rrggbb (ARGB, alpha byte = 0)
   const colorHex = "#0" + colorPicker.replace("#", "").toLowerCase();
-  const name     = vendor + " " + type;
 
-  const cmd = JSON.stringify({
-    method: "set",
-    params: {
-      modifyMaterial: {
-        id:         slotIndex,
-        boxId:      boxId,
-        rfid:       meta.rfid,
-        type:       type,
-        vendor:     vendor,
-        name:       name,
-        color:      colorHex,
-        minTemp:    meta.minTemp,
-        maxTemp:    meta.maxTemp,
-        pressure:   meta.pressure,
-        selected:   1,
-        percent:    100,
-        editStatus: 1,
-        state:      1,
-      }
-    }
+  // `type` / `vendor` / `name` / `rfid` are NOT composed from the picker's
+  // label: the firmware wants the material FAMILY as `type`, and keeps `rfid`
+  // only for a vendor + type + name that exists in its own library. Sending
+  // "PLA High Speed" as type and "Generic PLA High Speed" as name, as this
+  // used to, matched nothing — so the rfid was always reset to "0".
+  const mat = resolveCrealityMaterial({
+    vendor, label: type, dbRecord: meta.record, library: conn?.data?.materialLibrary,
+  });
+
+  // Built by buildModifyMaterialFrame, NOT JSON.stringify: the firmware keeps
+  // minTemp / maxTemp only when they are written with a decimal point (215.0
+  // kept, 215 read back as 0), and JSON.stringify cannot write 190 as 190.0.
+  // See material-frame.js for the measurement.
+  const cmd = buildModifyMaterialFrame({
+    id:         slotIndex,
+    boxId:      boxId,
+    rfid:       mat.rfid,
+    type:       mat.type,
+    vendor:     mat.vendor,
+    name:       mat.name,
+    color:      colorHex,
+    minTemp:    meta.minTemp,
+    maxTemp:    meta.maxTemp,
+    pressure:   meta.pressure,
+    selected:   1,
+    percent:    100,
+    editStatus: 1,
+    state:      1,
   });
 
   const btn = document.getElementById("creFilEditSave");
