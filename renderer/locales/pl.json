@@ -983,7 +983,7 @@
   "clearSearch": "Wyczyść wyszukiwanie",
   "rackClearAll": "Opróżnij wszystko",
   "rackClearAllConfirm": "Opróżnić wszystkie szpule z \"{{name}}\"? Wrócą do \"Nieprzypisanych\" (regał pozostaje).",
-  "spoolMarkDeleted": "Usuń z inwentarza",
+  "spoolMarkDeleted": "Usuń",
   "spoolMarkDeletedTip": "Usuwa ten materiał z inwentarza na dobre. Chip zachowuje swoje dane — wymaż go lub odzyskaj, jeśli chcesz zacząć od nowa.",
   "uidMigrConfirmTitle": "Dostępna aktualizacja formatu inwentarza",
   "uidMigrConfirmMsg": "{{count}} szpul w Twoim inwentarzu używa starego formatu przechowywania. Aktualizacja konwertuje je do nowego formatu. Szacowany czas: około {{duration}} — proszę nie zamykać aplikacji w trakcie.",
@@ -1604,5 +1604,6 @@
     "one": "1 zaznaczony element jest ukryty przez bieżący filtr.",
     "other": "Ukrytych przez bieżący filtr zaznaczonych elementów: {{n}}."
   },
-  "printerCloudMode": "Osiągalna przez chmurę"
+  "printerCloudMode": "Osiągalna przez chmurę",
+  "holdToConfirmTip": "Przytrzymaj {{s}} s, aby potwierdzić"
 }

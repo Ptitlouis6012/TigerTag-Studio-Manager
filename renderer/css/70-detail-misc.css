@@ -558,13 +558,26 @@
   .bulk-btn:hover { border-color: var(--primary); }
   .bulk-btn .icon { background: currentColor; }
   .bulk-btn > *:not(.hold-progress) { position: relative; z-index: 1; }
-  .bulk-btn--danger { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
-  .bulk-btn--danger:hover { filter: brightness(1.06); border-color: var(--danger); }
-  .bulk-btn--danger .icon { background: var(--on-accent); }
+  /* Delete — ONE look for the one irreversible action, wherever it is offered:
+     the selection bar's Delete and the spool toolbox's Delete share these rules
+     rather than each carrying a copy, so they cannot drift apart. The toolbox
+     row needs the doubled class (0,2,0) to outrank `.toolbox-row--danger` and
+     `.toolbox-row:hover`, which sit further down this file. */
+  .bulk-btn--danger,
+  .toolbox-row.toolbox-row--delete { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
+  .bulk-btn--danger:hover,
+  .toolbox-row.toolbox-row--delete:hover { background: var(--danger); filter: brightness(1.06); border-color: var(--danger); }
+  .bulk-btn--danger .icon,
+  .toolbox-row.toolbox-row--delete .toolbox-row-icon { background: var(--on-accent); }
   /* The button is already red, so the default red `.hold-progress` fill would be
      invisible (red-on-red). Use an opaque dark sweep so the hold-to-confirm
      progress is clearly visible as the user holds. */
-  .bulk-btn--danger .hold-progress { background: rgba(0,0,0,.34); opacity: 1; }
+  .bulk-btn--danger .hold-progress,
+  .toolbox-row.toolbox-row--delete .hold-progress { background: rgba(0,0,0,.34); opacity: 1; }
+  /* Toolbox-only: the bar's button is already 600, and a toolbox row carries a
+     trailing ⓘ that has to read on red too. */
+  .toolbox-row.toolbox-row--delete { font-weight: 600; }
+  .toolbox-row.toolbox-row--delete .tool-info .icon { background: var(--on-accent); opacity: .8; }
   /* Square icon button — stretch to the Delete button's height, then aspect-ratio
      forces equal width so it's a perfect square (not a short rectangle). */
   .bulk-btn--icon { padding: 0; align-self: stretch; aspect-ratio: 1; justify-content: center; }

@@ -984,7 +984,7 @@
   "clearSearch": "Effacer la recherche",
   "rackClearAll": "Vider tout",
   "rackClearAllConfirm": "Vider toutes les bobines de « {{name}} » ? Elles retournent dans « Non rangées » (le rack reste).",
-  "spoolMarkDeleted": "Retirer de l'inventaire",
+  "spoolMarkDeleted": "Supprimer",
   "spoolMarkDeletedTip": "Retire ce matériau de ton inventaire, pour de bon. La puce garde ses données — efface-la ou recycle-la si tu veux repartir de zéro.",
   "uidMigrConfirmTitle": "Mise à jour du format d'inventaire disponible",
   "uidMigrConfirmMsg": "{{count}} bobines de votre inventaire utilisent l'ancien format de stockage. La mise à jour les convertit vers le nouveau format. Durée estimée : environ {{duration}} — veuillez ne pas fermer l'application pendant la mise à jour.",
@@ -1605,5 +1605,6 @@
     "one": "1 élément sélectionné est masqué par le filtre actuel.",
     "other": "{{n}} éléments sélectionnés sont masqués par le filtre actuel."
   },
-  "printerCloudMode": "Joignable par le cloud"
+  "printerCloudMode": "Joignable par le cloud",
+  "holdToConfirmTip": "Maintiens {{s}} s pour confirmer"
 }

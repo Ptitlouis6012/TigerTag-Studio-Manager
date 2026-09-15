@@ -984,7 +984,7 @@
   "clearSearch": "Limpar busca",
   "rackClearAll": "Esvaziar tudo",
   "rackClearAllConfirm": "Esvaziar todas as bobinas de \"{{name}}\"? Elas voltarão para \"Não atribuídas\" (a prateleira permanece).",
-  "spoolMarkDeleted": "Remover do inventário",
+  "spoolMarkDeleted": "Excluir",
   "spoolMarkDeletedTip": "Remove este material do teu inventário, de vez. O chip mantém os seus dados — apaga-o ou recicla-o se quiseres começar de novo.",
   "uidMigrConfirmTitle": "Atualização do formato de inventário disponível",
   "uidMigrConfirmMsg": "{{count}} bobinas no seu inventário usam o formato de armazenamento legado. A atualização as converte para o novo formato. Tempo estimado: cerca de {{duration}} — por favor, não feche o aplicativo durante a atualização.",
@@ -1605,5 +1605,6 @@
     "one": "1 item selecionado está oculto pelo filtro atual.",
     "other": "{{n}} itens selecionados estão ocultos pelo filtro atual."
   },
-  "printerCloudMode": "Acessível pela nuvem"
+  "printerCloudMode": "Acessível pela nuvem",
+  "holdToConfirmTip": "Segure {{s}} s para confirmar"
 }

@@ -984,7 +984,7 @@
   "clearSearch": "Cancella ricerca",
   "rackClearAll": "Svuota tutto",
   "rackClearAllConfirm": "Rimuovere tutte le bobine da \"{{name}}\"? Torneranno in \"Non assegnate\" (lo scaffale rimane).",
-  "spoolMarkDeleted": "Rimuovi dall'inventario",
+  "spoolMarkDeleted": "Elimina",
   "spoolMarkDeletedTip": "Rimuove questo materiale dal tuo inventario, per sempre. Il chip conserva i suoi dati — cancellalo o riciclalo se vuoi ripartire da zero.",
   "uidMigrConfirmTitle": "Aggiornamento del formato dell'inventario disponibile",
   "uidMigrConfirmMsg": "{{count}} bobine nel tuo inventario utilizzano il vecchio formato di archiviazione. L'aggiornamento le converte nel nuovo formato. Tempo stimato: circa {{duration}} — non chiudere l'app durante l'aggiornamento.",
@@ -1605,5 +1605,6 @@
     "one": "1 elemento selezionato è nascosto dal filtro attuale.",
     "other": "{{n}} elementi selezionati sono nascosti dal filtro attuale."
   },
-  "printerCloudMode": "Raggiunta tramite il cloud"
+  "printerCloudMode": "Raggiunta tramite il cloud",
+  "holdToConfirmTip": "Tieni premuto {{s}} s per confermare"
 }

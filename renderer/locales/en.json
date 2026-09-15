@@ -984,7 +984,7 @@
   "clearSearch": "Clear search",
   "rackClearAll": "Clear all",
   "rackClearAllConfirm": "Clear all spools from \"{{name}}\"? They will be returned to \"Unranked spools\" (the rack stays).",
-  "spoolMarkDeleted": "Remove from inventory",
+  "spoolMarkDeleted": "Delete",
   "spoolMarkDeletedTip": "Removes this material from your inventory for good. The chip keeps its data — erase or recycle it if you want to start fresh.",
   "uidMigrConfirmTitle": "Inventory format upgrade available",
   "uidMigrConfirmMsg": "{{count}} spools in your inventory use the legacy storage format. Upgrading converts them to the new format. Estimated time: about {{duration}} — please do not close the app while it's running.",
@@ -1605,5 +1605,6 @@
     "one": "1 selected item is hidden by the current filter.",
     "other": "{{n}} selected items are hidden by the current filter."
   },
-  "printerCloudMode": "Reached through the cloud"
+  "printerCloudMode": "Reached through the cloud",
+  "holdToConfirmTip": "Hold {{s}} s to confirm"
 }

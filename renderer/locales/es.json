@@ -984,7 +984,7 @@
   "clearSearch": "Borrar búsqueda",
   "rackClearAll": "Vaciar todo",
   "rackClearAllConfirm": "¿Vaciar todas las bobinas de \"{{name}}\"? Volverán a \"No asignadas\" (el estante permanece).",
-  "spoolMarkDeleted": "Quitar del inventario",
+  "spoolMarkDeleted": "Eliminar",
   "spoolMarkDeletedTip": "Quita este material de tu inventario para siempre. El chip conserva sus datos — bórralo o recíclalo si quieres empezar de cero.",
   "uidMigrConfirmTitle": "Actualización del formato de inventario disponible",
   "uidMigrConfirmMsg": "{{count}} bobinas de su inventario usan el formato de almacenamiento antiguo. La actualización las convierte al nuevo formato. Tiempo estimado: aproximadamente {{duration}} — por favor, no cierre la aplicación mientras se ejecuta.",
@@ -1605,5 +1605,6 @@
     "one": "1 elemento seleccionado está oculto por el filtro actual.",
     "other": "{{n}} elementos seleccionados están ocultos por el filtro actual."
   },
-  "printerCloudMode": "Accesible por la nube"
+  "printerCloudMode": "Accesible por la nube",
+  "holdToConfirmTip": "Mantén {{s}} s para confirmar"
 }

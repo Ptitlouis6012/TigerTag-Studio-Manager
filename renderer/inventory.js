@@ -858,8 +858,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   /* Press-and-hold "destructive action" pattern — replaces a confirm() popup.
      User must hold the button for `durationMs` ms; the inner .hold-progress
      fills left→right during the hold. Releasing early cancels & rolls back. */
-  function setupHoldToConfirm(btn, durationMs, onConfirm) {
+  function setupHoldToConfirm(btn, durationMs, onConfirm, { hint = false } = {}) {
     if (!btn) return;
+    // Opt-in hover bubble saying the button must be HELD. People click, see
+    // nothing happen, and give up long before the hold completes. Only the
+    // DURATION is stored: the sentence is written when the bubble shows, so it
+    // cannot announce a different hold than the one enforced here, and it
+    // follows a language change on a button wired once at startup.
+    if (hint) btn.dataset.holdMs = String(durationMs);
     const fill = btn.querySelector(".hold-progress");
     let timer = null;
     function start(e) {
@@ -3539,7 +3545,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   $("btnSelectMode")?.addEventListener("click", _toggleSelectMode);
   $("bulkExit")?.addEventListener("click", _exitSelectMode);
   $("bulkTags")?.addEventListener("click", _openBulkTags);
-  setupHoldToConfirm($("bulkDelete"), 1500, () => { _bulkCtx().del().catch(e => reportError("bulk.delete", e)); });
+  setupHoldToConfirm($("bulkDelete"), 1500, () => { _bulkCtx().del().catch(e => reportError("bulk.delete", e)); }, { hint: true });
   // Bulk ★ Favorite / ❤ Love (materials selection; also the only bulk actions in a friend view).
   $("bulkFavorite")?.addEventListener("click", () => _bulkApplyFlag("favorite").catch(e => reportError("bulk.favorite", e)));
   $("bulkLike")?.addEventListener("click", () => _bulkApplyFlag("liked").catch(e => reportError("bulk.like", e)));
@@ -10730,7 +10736,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const id = _listModalEditId;
     closeCreateListModal();
     if (id) { _deleteList(id); if (_isListsMode(state.viewMode)) renderListsView(); }
-  });
+  }, { hint: true });
   // ── Lists sidebar — drag-reorder lists + drop across visibility groups ──
   // Mirrors the cart's two-zone DnD, extended to THREE zones (private/friends/
   // public): reorder within a group, or drop into another group to change the
@@ -13514,7 +13520,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // "Stop tracking" is press-and-hold (1 s) — reset min to 0 → drops the line.
       if (!ro) host.querySelectorAll("[data-reorder-remove]").forEach(btn => {
         const h = btn.closest(".pv-order-line")?.dataset.hash;
-        if (h) setupHoldToConfirm(btn, 1000, () => { _writeProductField(h, { minStockSpools: 0, liked: false }); renderProductsView(); });
+        if (h) setupHoldToConfirm(btn, 1000, () => { _writeProductField(h, { minStockSpools: 0, liked: false }); renderProductsView(); }, { hint: true });
       });
       return;
     }
@@ -13794,7 +13800,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (state.friendView) return;
         const sel = _selectedList();
         if (sel) _removeFromList(sel.id, btn.dataset.listremove);
-      }));
+      }, { hint: true }));
     // Focus + wire the rename input once it's in the DOM (only when it isn't
     // already focused, so repeated snapshot re-renders don't steal the caret).
     if (renaming) {
@@ -16263,7 +16269,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     setupHoldToConfirm($("btnSpoolDelete"), 1500, async () => {
       try { await markSpoolDeleted(r.spoolId); closeDetail(); }
       catch (e) { reportError("spool.delete", e); }
-    });
+    }, { hint: true });
     // Duplicate — hold 1s; the dropdown (or the free field behind "10+") picks N.
     let _dupCount = 1;
     const _dupSyncUI = () => {
@@ -16380,7 +16386,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           await markSpoolDeleted(r.spoolId);
           closeDetail();
         } catch (e) { setLbl(t(keyFailed)); reportError(`spool.${errTag}`, e); }
-      });
+      }, { hint: true });
     };
     // Format = back to the TigerTag Init state. The chip WAS a TigerTag (this is a
     // spool's own toolbox), so in the mobile vocabulary that is a `reset`, not an
@@ -19706,6 +19712,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           icon: "icon-trash",
           label: t("spoolMarkDeleted"),
           variant: "danger",
+          // Solid red, like the selection bar's Delete: one irreversible action,
+          // one look, wherever it is offered. The two other danger rows (erase,
+          // recycle) keep the soft tint — they act on the chip, not the record.
+          extraClass: "toolbox-row--delete",
           holdConfirm: true,
           info: t("spoolMarkDeletedTip"),
           dataAttrs: `data-spool-id="${esc(r.spoolId)}"`,
@@ -21017,8 +21027,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     document.body.appendChild(tip);
     return tip;
   }
-  function _showToolInfoTip(el) {
-    const text = el.getAttribute("data-tip");
+  function _showToolInfoTip(el, text = el.getAttribute("data-tip")) {
     if (!text) return;
     const tip = _ensureToolInfoPop();
     tip.textContent = text;
@@ -21064,9 +21073,28 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // delegation, one selector — an explanation that only shows when asked beats
   // a paragraph of help text sitting under the control forever.
   const _DOC_TIP_SEL = ".flag-toggle[data-tip], .eac-info[data-tip]";
+  // "Hold N s to confirm", in the viewer's language and number format.
+  function _holdTipText(el) {
+    const s = new Intl.NumberFormat(state.lang || "en", { maximumFractionDigits: 1 })
+      .format((Number(el.dataset.holdMs) || 0) / 1000);
+    return t("holdToConfirmTip", { s });
+  }
   function _wireFlagTips() {
     if (_flagTipsWired) return;
     _flagTipsWired = true;
+    // Hold-to-confirm hint. A row can ALSO carry an ⓘ explaining what the action
+    // does; hovering that ⓘ must show its own bubble, not this one, so anything
+    // inside `.tool-info` is left to the ⓘ's handler.
+    document.addEventListener("mouseover", e => {
+      if (e.target.closest?.(".tool-info")) return;
+      const el = e.target.closest?.("[data-hold-ms]");
+      if (el) _showToolInfoTip(el, _holdTipText(el));
+    });
+    document.addEventListener("mouseout", e => {
+      if (e.target.closest?.(".tool-info")) return;
+      const el = e.target.closest?.("[data-hold-ms]");
+      if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip();
+    });
     document.addEventListener("mouseover", e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el) _showToolInfoTip(el); });
     document.addEventListener("mouseout",  e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
     // Keyboard parity: the ⓘ is focusable, so it must reveal on focus too.
@@ -25330,7 +25358,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const send = () => { try { brands.get(p.brand)?.controlJob?.(p, btn.dataset.pjob); }
                            catch (e) { console.warn("[board-job] failed:", e?.message || e); } };
       btn.addEventListener("pointerdown", e => { e.preventDefault(); e.stopPropagation(); });
-      if (btn.dataset.pjob === "stop") setupHoldToConfirm(btn, 1500, send);
+      if (btn.dataset.pjob === "stop") setupHoldToConfirm(btn, 1500, send, { hint: true });
       else btn.addEventListener("click", e => { e.preventDefault(); e.stopPropagation(); send(); });
     });
     host.querySelectorAll(".printer-card .rp-menu-item[data-paction], .slots-card .rp-menu-item[data-paction]").forEach(btn => {
@@ -25377,7 +25405,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         } catch (e) { console.warn("[printers] delete failed:", e?.code, e?.message); }
       };
       // Deleting is held, not clicked — the same 1.5 s a rack asks for.
-      if (btn.classList.contains("rp-menu-item--hold")) setupHoldToConfirm(btn, 1500, run);
+      if (btn.classList.contains("rp-menu-item--hold")) setupHoldToConfirm(btn, 1500, run, { hint: btn.classList.contains("rp-menu-item--danger") });
       else btn.addEventListener("click", e => { e.stopPropagation(); run(); });
     });
   }
@@ -28373,7 +28401,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const delBtn = $("printerAddDelete");
     if (delBtn) {
       delBtn.classList.toggle("hidden", !isEdit);
-      delBtn.title = t("printerEditDeleteHint") || "Hold 1.5s to delete this printer";
+      // No native title: the hold-to-confirm bubble explains the hold (setupHoldToConfirm hint).
     }
 
     // ── Widget context ───────────────────────────────────────────────────────
@@ -28678,7 +28706,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         err.hidden = false;
       }
     }
-  });
+  }, { hint: true });
 
   // Deep-clean an arbitrary JS value for a Firestore write. The scan's `discovery`
   // bundle stores RAW third-party responses (mDNS TXT, Moonraker /printer/info,
@@ -32115,7 +32143,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         setupHoldToConfirm(btn, 1200, () => {
           closeMenu();
           runAction();
-        });
+        }, { hint: btn.classList.contains("rp-menu-item--danger") });
       } else {
         btn.addEventListener("click", e => {
           e.stopPropagation();
@@ -33013,7 +33041,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     deleteRack(_editingRackId)
       .then(() => closeRackEditModal())
       .catch(e => { reportError("rack.delete", e); $("rackEditResult").textContent = "⚠ " + (e.message || t("networkError")); });
-  });
+  }, { hint: true });
   // Hold-to-confirm Clear all — same 1.5s press-and-hold pattern as Delete,
   // but uses the orange (primary) fill instead of red since the action is
   // reversible (spools just go back to Unranked, the rack stays).

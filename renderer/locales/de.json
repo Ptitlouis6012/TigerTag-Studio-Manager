@@ -984,7 +984,7 @@
   "clearSearch": "Suche löschen",
   "rackClearAll": "Alles leeren",
   "rackClearAllConfirm": "Alle Spulen aus \"{{name}}\" entfernen? Sie kehren zu \"Nicht zugewiesen\" zurück (das Regal bleibt).",
-  "spoolMarkDeleted": "Aus dem Inventar entfernen",
+  "spoolMarkDeleted": "Löschen",
   "spoolMarkDeletedTip": "Entfernt dieses Material endgültig aus deinem Inventar. Der Chip behält seine Daten — lösch oder recycle ihn, wenn du neu anfangen willst.",
   "uidMigrConfirmTitle": "Inventarformat-Aktualisierung verfügbar",
   "uidMigrConfirmMsg": "{{count}} Spulen in Ihrem Inventar verwenden das alte Speicherformat. Die Aktualisierung konvertiert sie ins neue Format. Geschätzte Dauer: ca. {{duration}} — bitte schließen Sie die App während der Aktualisierung nicht.",
@@ -1605,5 +1605,6 @@
     "one": "1 ausgewähltes Element ist durch den aktuellen Filter ausgeblendet.",
     "other": "{{n}} ausgewählte Elemente sind durch den aktuellen Filter ausgeblendet."
   },
-  "printerCloudMode": "Über die Cloud erreichbar"
+  "printerCloudMode": "Über die Cloud erreichbar",
+  "holdToConfirmTip": "{{s}} s gedrückt halten zum Bestätigen"
 }
