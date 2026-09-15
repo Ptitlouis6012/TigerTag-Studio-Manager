@@ -1673,17 +1673,17 @@
       <button class="panel-close cem-close" id="cemClose">✕</button>
     </div>
     <div class="cem-body">
-      <div class="cem-hint" id="cemSub" data-i18n="encPlaceChips">Hold the NFC tags in front of the readers</div>
+      <div class="cem-hint" id="cemSub">Hold the NFC tags in front of the readers</div>
       <div class="cem-chips" id="cemChips"></div>
       <div class="cem-progress" id="cemProgress"><span class="cem-progress-fill"></span></div>
       <div class="cem-overwrite hidden" id="cemOverwrite">
         <div class="cem-ow-warn"><span class="icon icon-info icon-13"></span><span data-i18n="encOverwriteWarn">A chip already contains data — it will be erased.</span></div>
         <label class="cem-ow-toggle"><input type="checkbox" id="cemOwToggle"><span data-i18n="encOverwriteAccept">I understand, overwrite</span></label>
       </div>
-      <div class="cem-status" id="cemStatus"></div>
     </div>
     <div class="cem-actions">
       <button class="btn primary" id="cemBurn" disabled data-i18n="encBurn">Burn</button>
+      <button class="btn primary cem-btn--danger hidden" id="cemReset" disabled><span class="hold-progress"></span><span class="cem-btn-label"></span></button>
     </div>
   </div>
 </div>

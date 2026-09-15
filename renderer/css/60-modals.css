@@ -4117,7 +4117,6 @@
   box-shadow: 0 0 0 2px rgba(255,255,255,.2), 0 0 7px color-mix(in srgb, var(--danger) 65%, transparent);
   transition: background .2s ease, box-shadow .2s ease;
 }
-.cem-chip-uid { position: absolute; bottom: 4px; left: 0; right: 0; font-size: 9px; color: var(--ink-60); font-family: ui-monospace, monospace; text-align: center; }
 
 /* ── per-state: LED colour + plate glow ── */
 .cem-chip--waiting .cem-chip-logo { animation: cemPulse 1.6s ease-in-out infinite; }
@@ -4155,7 +4154,6 @@
 
 /* ── global progress bar (sequence-wide) ── */
 .cem-progress { width: 100%; height: 6px; border-radius: 4px; background: var(--border); overflow: hidden; }
-.cem-progress.hidden { display: none; }
 .cem-progress-fill { display: block; height: 100%; width: 0%; border-radius: 4px; background: var(--info); transition: width .3s ease, background .2s ease; }
 .cem-progress--writing .cem-progress-fill { background-image: linear-gradient(90deg, var(--ink-04) 0%, var(--ink-40) 50%, var(--ink-04) 100%); background-size: 40% 100%; background-repeat: no-repeat; animation: cemSheen 1.1s linear infinite; }
 .cem-progress--done .cem-progress-fill { background-color: var(--success); }
@@ -4173,14 +4171,21 @@
 .cem-ow-warn .icon { background: var(--warning-hover); flex-shrink: 0; }
 .cem-ow-toggle { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--text); cursor: pointer; }
 .cem-ow-toggle input { width: 16px; height: 16px; accent-color: var(--warning-hover); cursor: pointer; }
-.cem-status { font-size: 13px; text-align: center; color: var(--muted); }
-.cem-status:empty { display: none; }
-.cem-status--fail { color: var(--danger); font-weight: 600; }
+.cem-hint--fail { color: var(--danger); font-weight: 600; }
 .cem-actions { display: flex; gap: 10px; padding: 14px 22px 20px; }
-.cem-actions.hidden { display: none; }
+/* Hidden but still taking its space — the action row makes way for the
+   progress bar during a write without resizing the window. */
+.cem-invisible { visibility: hidden; }
 .cem-actions .btn { flex: 1; height: 46px; font-size: 14px; font-weight: 600; }
 .cem-actions .btn.hidden { display: none; }
 .cem-actions .primary:disabled { background: var(--border); border-color: var(--border); color: var(--muted); box-shadow: none; opacity: 1; }
+/* Erase / Recycle — destructive, so the enabled button is red, not blue. */
+.cem-actions .btn.cem-btn--danger:not(:disabled) { background: var(--danger); border-color: var(--danger); color: var(--on-accent); }
+.cem-actions .btn.cem-btn--danger:not(:disabled):hover { filter: brightness(1.06); }
+.cem-actions .btn.cem-btn--danger { position: relative; overflow: hidden; }
+.cem-actions .btn.cem-btn--danger .cem-btn-label { position: relative; z-index: 1; }
+/* The default red sweep would vanish on a red button — dark sweep instead. */
+.cem-actions .btn.cem-btn--danger .hold-progress { background: rgba(0,0,0,.34); opacity: 1; }
 
 /* ─────────────────────────────────────────────────────────────────────────
    Printer connection tutorial — multi-step walkthrough modal

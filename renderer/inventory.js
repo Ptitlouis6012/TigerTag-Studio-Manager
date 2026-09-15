@@ -11720,10 +11720,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // (the "Please update RFID" flow). Shows the readers waiting for THIS spool's
   // chip(s), verifies the presented UID(s) match, and warns on a mismatch — never
   // a Cloud migration, just a verified surgical re-write + clearing needUpdateAt.
-  function openUpdateModal(r) {
+  // "format" (Erase the TigerTag / TigerTag+) and "recycle" (back to a plain NFC
+  // tag) reuse the same own-chip gating: the button stays disabled until every
+  // chip of this spool sits on a reader and no foreign chip is in the way.
+  function openUpdateModal(r, mode = "update") {
     if (!window.electronAPI || !r || r.isCloud) return;
     if (state.nfcReaders.size === 0) { openTigerPodModal(); return; }
-    _cemRow = r; _cemMode = "update"; _cemState = "confirm"; _cemAborted = false;
+    _cemRow = r; _cemMode = mode; _cemState = "confirm"; _cemAborted = false;
     _cemChip = new Map(); _cemBlank = new Map(); _cemTargets = [];
     $("cloudEncodeOverlay")?.classList.add("open");
     _cemRender();
@@ -11770,7 +11773,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const readers = [...state.nfcReaders];
     const present = _cemPresentTargets();
     const burning = _cemState === "burning";
-    const isUpdate = _cemMode === "update";
+    // Update / format / recycle all act on THIS spool's chips — same gating.
+    const isUpdate = _cemMode === "update" || _cemMode === "format" || _cemMode === "recycle";
+    const isReset  = _cemMode === "format" || _cemMode === "recycle";
     // Update mode: the chips that MUST be presented are this spool's own (uid + twin).
     const spoolUids = isUpdate
       ? [_cemRow?.uid, _cemRow?.twinUid].filter(Boolean).map(u => String(u).toUpperCase())
@@ -11781,7 +11786,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const titleEl = overlay.querySelector(".cem-title-migrate");
     if (titleEl) {
       const tier = _cemRow?.isPlus ? "TigerTag+" : "TigerTag";
-      titleEl.innerHTML = isUpdate
+      titleEl.innerHTML = _cemMode === "format"
+        ? esc(t("toolFormatRfid", { tier }))
+        : _cemMode === "recycle"
+        ? esc(t("toolEraseRfid"))
+        : isUpdate
         ? `<span class="cem-tag cem-tag--phys">${esc(tier)}</span><span class="cem-arrow icon icon-refresh icon-13"></span><span class="cem-tag cem-tag--phys">${esc(t("encUpdateTag"))}</span>`
         : `<span class="cem-tag cem-tag--cloud">TigerData</span><span class="cem-arrow icon icon-chevron-r icon-13"></span><span class="cem-tag cem-tag--phys">TigerTag</span>`;
     }
@@ -11803,11 +11812,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       }
       st = st || "waiting";
       const numBadge = (hasReader && showNums) ? `<span class="cem-chip-num">${i + 1}</span>` : "";
-      const dbgUid = (state.debugEnabled && card?.uid) ? `<div class="cem-chip-uid">${esc(card.uid)}</div>` : "";
       return `<div class="cem-chip cem-chip--${st}">
         ${numBadge}
         <div class="cem-chip-logo"></div>
-        ${dbgUid}
       </div>`;
     }).join("");
     const chipsEl = $("cemChips"); if (chipsEl) chipsEl.innerHTML = cards;
@@ -11825,15 +11832,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       : (!burning && readers.length >= 1 && present.length === readers.length && !sameUid
          && (!nonBlank || $("cemOwToggle")?.checked));
 
-    // Global progress bar — sequence-wide (NOT per chip). Shown while burning
-    // or after a failure; hidden in confirm/ready (chip colour conveys state).
+    // Global progress bar — sequence-wide (NOT per chip). Always on screen, so
+    // the window never resizes when a write starts: empty until chips are written.
     const total      = burning ? _cemTargets.length : (readers.length || 1);
     const done       = [..._cemChip.values()].filter(s => s === "ok").length;
     const anyFail    = [..._cemChip.values()].includes("fail");
     const anyWriting = [..._cemChip.values()].includes("writing");
     const progEl = $("cemProgress");
     if (progEl) {
-      progEl.classList.toggle("hidden", !(burning || _cemState === "failed"));
       progEl.classList.toggle("cem-progress--fail", anyFail);
       progEl.classList.toggle("cem-progress--done", total > 0 && done === total && !anyFail);
       progEl.classList.toggle("cem-progress--writing", anyWriting);
@@ -11841,33 +11847,42 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (fill) fill.style.width = total ? Math.round((done / total) * 100) + "%" : "0%";
     }
 
-    // The top hint ("Hold the RFID tags in front of the readers") is a fixed
-    // instruction set once from i18n — never toggled here.
-
     // Overwrite section — encode-only (in update mode the chip is meant to be
     // rewritten in place, no "erase warning").
     const owEl = $("cemOverwrite");
     if (owEl) owEl.classList.toggle("hidden", isUpdate || burning || !nonBlank);
-    // Status line — only for exceptional states (failure / same chip twice /
-    // no reader / wrong chip). Red for the error cases.
-    const stEl = $("cemStatus");
-    if (stEl) {
+    // The instruction line doubles as the message line: an exceptional state
+    // (failure / same chip twice / no reader / wrong chip) REPLACES "Hold the
+    // NFC tags in front of the readers" in place, so nothing is added below
+    // and the window keeps its size. Red for the error cases.
+    const hintEl = $("cemSub");
+    if (hintEl) {
       const isErr = _cemState === "failed" || sameUid || anyMismatch;
-      stEl.textContent =
+      hintEl.textContent =
         _cemState === "failed" ? t("encFailed")
         : anyMismatch          ? t("encMismatch")
         : sameUid              ? t("encSameUid")
         : readers.length === 0 ? t("encNoReader")
-        :                        "";
-      stEl.classList.toggle("cem-status--fail", isErr);
+        :                        t("encPlaceChips");
+      hintEl.classList.toggle("cem-hint--fail", isErr);
     }
     // Burn button (Cancel removed — close via the ✕ or the backdrop). The whole
     // actions row is hidden during the burn so there's no dead button.
-    const burnBtn = $("cemBurn");
+    // Erase / Recycle use their own red button: destructive, so it is HELD 1.5 s
+    // (setupHoldToConfirm), which a plain click button like Burn cannot become.
+    const burnBtn = $("cemBurn"), resetBtn = $("cemReset");
     if (burnBtn) {
       burnBtn.disabled = !gateReady;
       burnBtn.textContent = _cemState === "failed" ? t("encRetry") : (isUpdate ? t("encUpdate") : t("encBurn"));
-      burnBtn.closest(".cem-actions")?.classList.toggle("hidden", burning);
+      burnBtn.classList.toggle("hidden", isReset);
+      burnBtn.closest(".cem-actions")?.classList.toggle("cem-invisible", burning);
+    }
+    if (resetBtn) {
+      resetBtn.disabled = !gateReady;
+      resetBtn.classList.toggle("hidden", !isReset);
+      const lbl = resetBtn.querySelector(".cem-btn-label");
+      if (lbl) lbl.textContent = _cemState === "failed" ? t("encRetry")
+        : _cemMode === "recycle" ? t("encRecycle") : t("encErase");
     }
   }
 
@@ -11890,13 +11905,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     for (const name of [..._cemBlank.keys()]) {
       if (!state.nfcCardPresent.has(name)) _cemBlank.delete(name);
     }
-    if (_cemMode !== "update") _cemBlankCheck();   // blank-check is an encode-only concern
+    if (_cemMode === "encode") _cemBlankCheck();   // blank-check is an encode-only concern
     _cemRender();
   }
 
   async function _cemStartBurn() {
     if (_cemState === "burning" || !_cemRow) return;
-    if (_cemMode === "update") return _cemStartUpdate();
+    if (_cemMode !== "encode") return _cemStartUpdate();
     const r = _cemRow;
     const cloudDoc = state.inventory[r.spoolId];
     if (!cloudDoc) return;
@@ -11980,8 +11995,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     _cemTargets.forEach(t => _cemChip.set(t.readerName, "writing"));
     _cemRender();
 
+    const mode = _cemMode;
     let res;
-    try { res = await window.electronAPI.encodeCloudSpool({ cloudDoc, targets: _cemTargets }); }
+    try {
+      res = mode === "format"  ? await window.electronAPI.formatRfidTag({ targets: _cemTargets })
+          : mode === "recycle" ? await window.electronAPI.eraseRfidTag({ targets: _cemTargets })
+          :                      await window.electronAPI.encodeCloudSpool({ cloudDoc, targets: _cemTargets });
+    }
     catch (e) { res = { ok: false, results: [] }; }
 
     const byReader = new Map((res?.results || []).map(x => [x.readerName, x]));
@@ -11994,7 +12014,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     _cemRender();
 
-    if (allOk) {
+    if (allOk && mode !== "update") {
+      // Xano: one event per verified chip, envelope only (the chip no longer
+      // holds material data). Format = back to TigerTag Init → `reset`;
+      // recycle = out of the TigerTag format → `nfc_init` (mobile vocabulary).
+      _cemTargets.forEach(x => _sendTagAnalytics(mode === "format" ? "reset" : "nfc_init", x.uid));
+      _cemBeep(true);
+      await _cemDelay(500);   // let the full green bar register before closing
+      closeEncodeModal();
+      await markSpoolDeleted(r.spoolId);
+      closeDetail();
+    } else if (allOk) {
       await _clearNeedUpdate(r);
       _cemBeep(true);
       closeEncodeModal();
@@ -16363,39 +16393,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         else { setLbl(t("toolRepairFailed")); console.warn("[repair] failed:", res); }
       } catch (e) { setLbl(t("toolRepairFailed")); reportError("spool.repairPlus", e); }
     });
-    // Erase (Format) / Recycle — target this spool's present chip(s), then drop it.
-    const _wireChipReset = (btnId, apiCall, keyWriting, keyDone, keyFailed, errTag, xanoOp) => {
-      setupHoldToConfirm($(btnId), 1500, async () => {
-        const labelEl = $(btnId)?.querySelector(".toolbox-row-label");
-        const setLbl = (txt) => { if (labelEl) labelEl.textContent = txt; };
-        try {
-          const targets = [...state.nfcCardPresent.entries()]
-            .filter(([, c]) => c && [r.uid, r.twinUid].filter(Boolean)
-              .some(u => String(u).toUpperCase() === String(c.uid).toUpperCase()))
-            .map(([readerName, c]) => ({ readerName, uid: c.uid }));
-          if (!targets.length) { setLbl(t("toolRepairNoChip")); return; }
-          setLbl(t(keyWriting));
-          const res = await apiCall({ targets });
-          const written = (res?.results || []).filter(x => x.ok && x.verified !== false);
-          if (!res?.ok || !written.length) { setLbl(t(keyFailed)); console.warn(`[${errTag}] failed:`, res); return; }
-          // Xano: one event per chip actually written AND verified — a failed chip
-          // in a twin pair reports nothing. Envelope only (the chip no longer holds
-          // any material data to report), exactly like the mobile app's reset/init.
-          written.forEach(x => _sendTagAnalytics(xanoOp, x.uid));
-          setLbl(t(keyDone));
-          await markSpoolDeleted(r.spoolId);
-          closeDetail();
-        } catch (e) { setLbl(t(keyFailed)); reportError(`spool.${errTag}`, e); }
-      }, { hint: true });
-    };
-    // Format = back to the TigerTag Init state. The chip WAS a TigerTag (this is a
-    // spool's own toolbox), so in the mobile vocabulary that is a `reset`, not an
-    // `init` (which means "a foreign chip BECAME a TigerTag" — a flow Studio has no
-    // equivalent of).
-    _wireChipReset("btnFormatRfid", (o) => window.electronAPI.formatRfidTag(o), "toolFormatWriting", "toolFormatDone", "toolFormatFailed", "formatRfid", "reset");
-    // Erase = blanked back to a plain NFC tag, out of the TigerTag format entirely
-    // → the mobile app calls that `nfc_init`.
-    _wireChipReset("btnEraseRfid", (o) => window.electronAPI.eraseRfidTag(o), "toolEraseWriting", "toolEraseDone", "toolEraseFailed", "eraseRfid", "nfc_init");
+    // Erase (Format) / Recycle — open the guided chip modal: it shows whether this
+    // spool's chip(s) sit on the readers, gates the button on that, then runs the
+    // write with the same progress bar as a burn and drops the spool on success.
+    // Format = back to TigerTag Init; Recycle = blanked to a plain NFC tag.
+    $("btnFormatRfid")?.addEventListener("click", () => openUpdateModal(r, "format"));
+    $("btnEraseRfid")?.addEventListener("click", () => openUpdateModal(r, "recycle"));
     // Greyed "locked" rows → open the TigerPOD (Free STL) promo.
     document.querySelectorAll(".panel-section--toolbox .toolbox-row--pod-lock")
       .forEach(el => el.addEventListener("click", () => openTigerPodModal()));
@@ -18784,6 +18787,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Cloud → chip encode modal events (wired once)
   $("cemClose")?.addEventListener("click", closeEncodeModal);
   $("cemBurn")?.addEventListener("click", _cemStartBurn);
+  setupHoldToConfirm($("cemReset"), 1500, _cemStartBurn, { hint: true });
   $("cemOwToggle")?.addEventListener("change", _cemRender);
   // Close on backdrop click (= abort). Allowed at any time, including mid-burn:
   // closeEncodeModal sets _cemAborted so the sequence stops and nothing migrates.
@@ -19631,10 +19635,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         //    handlers (wired by id) never fire on a greyed row. Skipped in friend view.
         if (window.electronAPI && !state.friendView) {
           // This spool's own chip(s) (uid + twin) currently on a reader.
-          const _fmtTargets = [...state.nfcCardPresent.entries()]
-            .filter(([, c]) => c && [r.uid, r.twinUid].filter(Boolean)
-              .some(u => String(u).toUpperCase() === String(c.uid).toUpperCase()))
-            .map(([readerName, c]) => ({ readerName, uid: c.uid }));
           const _cardPresent    = state.nfcCardPresent.size > 0;
           const _hasBackup      = state.inventory?.[r.spoolId]?.rfidBackup === true;
           const _noReader       = state.nfcReaderCount === 0;
@@ -19679,19 +19679,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                 : _unusable({ id: "btnRepairPlusLocked", icon: "icon-nfc", label: t("toolRepairPlus"), variant: "primary", info: t("toolRepairPlusTip") }));
             }
 
-            // 5e. Erase the TigerTag / TigerTag+ (reinit). Functional when this
-            //     spool's own chip(s) are on a reader (both, for a twin pair).
+            // 5e. Erase the TigerTag / TigerTag+ (reinit). Usable as soon as a reader
+            //     is connected — the modal it opens waits for this spool's chip(s).
             if (window.electronAPI.formatRfidTag) {
-              tools.push(_allChipsPresent
-                ? { id: "btnFormatRfid", icon: "icon-broom", label: t(_fmtTargets.length === 2 ? "toolFormatRfid2" : "toolFormatRfid", { tier: r.isPlus ? "TigerTag+" : "TigerTag" }), variant: "danger", holdConfirm: true, info: t("toolFormatRfidTip"), dataAttrs: `data-spool-id="${esc(r.spoolId)}"` }
+              tools.push(!_noReader
+                ? { id: "btnFormatRfid", icon: "icon-broom", label: t(_spoolUids.length === 2 ? "toolFormatRfid2" : "toolFormatRfid", { tier: r.isPlus ? "TigerTag+" : "TigerTag" }), variant: "danger", info: t("toolFormatRfidTip"), dataAttrs: `data-spool-id="${esc(r.spoolId)}"` }
                 : _unusable({ id: "btnFormatRfidLocked", icon: "icon-broom", label: t("toolFormatRfid", { tier: r.isPlus ? "TigerTag+" : "TigerTag" }), variant: "danger", info: t("toolFormatRfidTip") }));
             }
 
-            // 5f. Recycle to NFC. Same present-chip gating as Erase (both chips
-            //     for a twin pair).
+            // 5f. Recycle to NFC. Same modal and gating as Erase.
             if (window.electronAPI.eraseRfidTag) {
-              tools.push(_allChipsPresent
-                ? { id: "btnEraseRfid", icon: "icon-recycle", label: t(_fmtTargets.length === 2 ? "toolEraseRfid2" : "toolEraseRfid"), variant: "danger", holdConfirm: true, info: t("toolEraseRfidTip"), dataAttrs: `data-spool-id="${esc(r.spoolId)}"` }
+              tools.push(!_noReader
+                ? { id: "btnEraseRfid", icon: "icon-recycle", label: t(_spoolUids.length === 2 ? "toolEraseRfid2" : "toolEraseRfid"), variant: "danger", info: t("toolEraseRfidTip"), dataAttrs: `data-spool-id="${esc(r.spoolId)}"` }
                 : _unusable({ id: "btnEraseRfidLocked", icon: "icon-recycle", label: t("toolEraseRfid"), variant: "danger", info: t("toolEraseRfidTip") }));
             }
           }

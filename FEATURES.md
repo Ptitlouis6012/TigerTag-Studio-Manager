@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.27.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.27.2**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -20,8 +20,8 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - TD1S color/TD sensor integration in the detail panel — scan color and TD separately or together (v1.3+; unified color+TD modal v1.8.0).
 - Spool toolbox (detail panel) — scan color, scan TD (with a hold-to-confirm "Clear TD" split button, v1.4.13), link/unlink twin, remove from rack, delete (v1.4.8).
   - Every toolbox action gained an ⓘ hover explainer (v1.10.29).
-  - **Duplicate ×N** — mint 1–50 copies of a TigerData/TigerTag spool in one write, hold-to-confirm (v1.8.3).
-  - **Erase / Recycle to NFC / Restore TigerTag+** — reinitialise, wipe, or restore a physical chip's backed-up signature (v1.10.29).
+  - **Duplicate ×N** — mint 1–50 copies of a TigerData/TigerTag spool in one write, hold-to-confirm (v1.8.3; quantity dropdown with a 10+ free field v2.27.2).
+  - **Erase / Recycle to NFC / Restore TigerTag+** — reinitialise, wipe, or restore a physical chip's backed-up signature (v1.10.29; erase and recycle through the guided chip window, which shows whether the right chips are on the readers and holds the action until they are, v2.27.2).
   - **Guided chip update** — step-by-step panel with per-reader UID-match check before the write proceeds (v2.0.0).
 - **Add-material source picker** — `+ Material` opens a side card offering the two sources rather than one of them: *From Catalogue* (jumps to the catalogue grid, yields a **TigerData+**) or *Manually* (the Add Product form, yields a **TigerData**), each row showing the tier pair its path leads to so the outcome — chipless now, and once burned to a chip — is named before you commit. Replaces the separate "From Catalogue" toolbar button, so adding a material has one entry point (v2.19.0).
 - Add Product side panel — Brand/Material picker bottom-sheets, mobile-style HSV color picker (preset grid + custom SV rectangle + hue slider), advanced Type/Diameter/Aspect/temps/TD/unit fields, integer clamping, live RFID-data debug preview (v1.4.11 → v1.4.12; reorganised with always-visible core fields + app-styled dropdowns v2.5.0).

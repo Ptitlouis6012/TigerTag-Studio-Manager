@@ -32,17 +32,17 @@ L8730-9004     Firestore explorer + language save + debug mode
 L8848-9300     Friends sidebar quick-list + friends list render
 L9144-9798     Racks + printers Firestore subscriptions (+ live friends/notifs)
 L9642-10887    Printers views — grid / table / cam wall + drag-drop
-L10731-13094   Printer detail side panel (renderPrinterDetail) + inline edit
-L12938-14163   Add-printer flow (brand picker, form, tutorials, submit)
-L14164-15052   Racks CRUD + slots + locking + auto-fill + masonry + tooltip
-L15053-16163   renderRackView + rack drag-drop + rack edit modal
-L16164-16665   Friend view + add-friend modal
-L16666-17393   Display-name setup + friend requests + blacklist
-L17394-17623   Public/private keys + user profile sync
-L17624-17888   Custom avatar upload + Discord-style cropper
-L17889-18316   syncUserDoc + session telemetry + language sync
-L18317-18332   Init bootstrap (loadLocales → loadLookups → runMigration → initAuth)
-L18333-18666   Electron RFID integration (readers, dual-scan, NFC processor, chip write)
+L10731-13126   Printer detail side panel (renderPrinterDetail) + inline edit
+L12970-14195   Add-printer flow (brand picker, form, tutorials, submit)
+L14196-15084   Racks CRUD + slots + locking + auto-fill + masonry + tooltip
+L15085-16195   renderRackView + rack drag-drop + rack edit modal
+L16196-16670   Friend view + add-friend modal
+L16671-17398   Display-name setup + friend requests + blacklist
+L17399-17628   Public/private keys + user profile sync
+L17629-17893   Custom avatar upload + Discord-style cropper
+L17894-18321   syncUserDoc + session telemetry + language sync
+L18322-18337   Init bootstrap (loadLocales → loadLookups → runMigration → initAuth)
+L18338-18671   Electron RFID integration (readers, dual-scan, NFC processor, chip write)
 ```
 
 ---
@@ -209,7 +209,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## RFID encode / burn modal — cem (L11438-11938)
+## RFID encode / burn modal — cem (L11438-11955)
 | L | What | Anchors |
 |---|---|---|
 | 5864-5953 | **`_burnRfid(r)`** — writes a chip from a row | `_burnRfid` |
@@ -218,7 +218,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## TigerTag+ catalogue (L11775-14242)
+## TigerTag+ catalogue (L11780-14274)
 | L | What | Anchors |
 |---|---|---|
 | 10900-10993 | Refresh API data for a spool | `_refreshApiData` |
@@ -231,16 +231,16 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 | 11346-11467 | **Create a TigerData+** from a product — canonical chip schema, `id_product` set, chipless nonce kept | `_catalogCreate` |
 | 11468-11504 | Catalogue modal open/close | `openCatalogModal`, `closeCatalogModal` |
 | 11647-11681 | **Search views** — the catalogue as a grid/table view segment (`catalogGrid` / `catalogTable`); own hits + selection, driven by the MAIN search bar | `renderCatalogView`, `_catViewHeadHTML` |
-| 11682-11760 | Filters at parity with the public catalogue page — Type · Brand · Material · Series (brand-scoped) · Sort, options carrying counts | `CAT_SORTS`, `_catViewFillFacets`, `_catViewSearch` |
-| 11694-11768 | Search-view card / row markup + chunked append (IntersectionObserver) | `_catViewCardHTML`, `_catViewRowHTML`, `_catViewRenderChunk` |
-| 11769-11809 | Search-view selection + action bar (select ≠ create) | `_catViewSelect`, `_catViewSyncBar` |
+| 11682-11763 | Filters at parity with the public catalogue page — Type · Brand · Material · Series (brand-scoped) · Sort, options carrying counts | `CAT_SORTS`, `_catViewFillFacets`, `_catViewSearch` |
+| 11694-11771 | Search-view card / row markup + chunked append (IntersectionObserver) | `_catViewCardHTML`, `_catViewRowHTML`, `_catViewRenderChunk` |
+| 11772-11817 | Search-view selection + action bar (select ≠ create) | `_catViewSelect`, `_catViewSyncBar` |
 | 11505-11660 | Duplicate spool as cloud doc | `duplicateSpoolAsCloud` |
 | ~9673-9853 | **Lists / wishlists — UI** — products view (favourites/order tab) + "Add to list" popover menu | `renderProductsView`, `renderListsView`, `_openAddToListMenu` |
 | ~10198 | Message inline edit | `startMessageInlineEdit` |
 
 ---
 
-## Spool detail panel (L6070-26630)
+## Spool detail panel (L6070-26631)
 | L | What | Anchors |
 |---|---|---|
 | 6499-6652 | Structural signature (patch vs rebuild), weight patch, saved check | `_detailStructuralSig`, `_patchDetailWeight` |
@@ -255,7 +255,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Panels / debug / auto-update (L19532-20756)
+## Panels / debug / auto-update (L19538-20757)
 | L | What | Anchors |
 |---|---|---|
 | 8193-8266 | Resizable panels (detail + debug) — drag handle, persisted width | `makePanelResizable`, `openDebug` |
@@ -267,7 +267,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Friends rendering (L20756-21364)
+## Friends rendering (L20757-21365)
 | L | What | Anchors |
 |---|---|---|
 | 8660-8744 | Sidebar friends quick-list + hover tooltip | `renderSidebarFriends`, `showSbFriendTip` |
@@ -276,7 +276,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Racks + printers subscriptions (L21364-21734)
+## Racks + printers subscriptions (L21365-21735)
 | L | What | Anchors |
 |---|---|---|
 | 8956-8998 | Racks subscription | `subscribeRacks`, `unsubscribeRacks` |
@@ -286,7 +286,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printers views (L21574-25838)
+## Printers views (L21575-25839)
 | L | What | Anchors |
 |---|---|---|
 | 9163-9332 | **Job status helpers** + surgical grid patches (job card, online badge, grid signature) | `_getPrinterJob`, `_patchGridJobs`, `_jobCardHtml`, `_isPrinterOnline`, `_patchGridStatus` |
@@ -294,112 +294,112 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 | 9503-9625 | **Table view** — sortable columns, row click → sidecard | `_renderPrinterTable` |
 | 9626-9888 | **Cam wall view** — patch mode, card sizes, detached cam window serializer | `_renderPrinterCam`, `_patchCamWall`, `_serializeCamerasForDetach` |
 | 9889-10086 | Printer + cam-wall drag-drop reordering (writes `sortIndex`) | `wirePrinterDnd`, `wireCamWallDnd`, `persistPrinterSortIndices` |
-| 22885-23010 | **The board's objects** — one `data-board-id` addresses a machine (`brand:id`), one of its units (`unit:…`) or its units as one widget (`units:…`); position/z read + saved through the same three functions | `_boardObj`, `boardPos`, `boardZ`, `boardSave`, `saveUnitPlanPos`, `savePrinterPlanPos` |
-| 23011-23100 | **Clusters** — several board objects bound together for good. The id lives on the members beside the coordinates it binds (`planCluster` / `unitsPlanCluster` / `units.{id}.planPrintersCluster`), so no new collection, no rules block, and deleting a machine takes its membership with it | `_newClusterId`, `_printerBoardIds`, `clusterOf`, `clusterMembers`, `saveBoardCluster` |
-| 23149-23310 | **Plan layout** — places every object at its own coordinates, adopts orphans, compacts z to 1..N, sizes the board, then draws one outline per cluster | `layoutPrintersPlan`, `seedPrinterPlan`, `_drawClusterHulls` |
-| 23340-23600 | **Selection + drag** — a `Set` of board ids; selecting any member of a cluster expands to the whole of it in `_syncPlanSelection`, so the drag carries clusters without knowing they exist | `_syncPlanSelection`, `_expandPlanSelToClusters`, `_clearPlanSelection`, `wirePrinterMarquee`, `wirePrinterPlanDrag` |
-| 23600-23710 | **The board's right-click menu** — group / ungroup the selection; the kebab menu's own component, dropped from the cursor | `openPlanContextMenu`, `closePlanContextMenu`, `wirePlanClusterMenu` |
+| 22886-23011 | **The board's objects** — one `data-board-id` addresses a machine (`brand:id`), one of its units (`unit:…`) or its units as one widget (`units:…`); position/z read + saved through the same three functions | `_boardObj`, `boardPos`, `boardZ`, `boardSave`, `saveUnitPlanPos`, `savePrinterPlanPos` |
+| 23012-23101 | **Clusters** — several board objects bound together for good. The id lives on the members beside the coordinates it binds (`planCluster` / `unitsPlanCluster` / `units.{id}.planPrintersCluster`), so no new collection, no rules block, and deleting a machine takes its membership with it | `_newClusterId`, `_printerBoardIds`, `clusterOf`, `clusterMembers`, `saveBoardCluster` |
+| 23150-23311 | **Plan layout** — places every object at its own coordinates, adopts orphans, compacts z to 1..N, sizes the board, then draws one outline per cluster | `layoutPrintersPlan`, `seedPrinterPlan`, `_drawClusterHulls` |
+| 23341-23601 | **Selection + drag** — a `Set` of board ids; selecting any member of a cluster expands to the whole of it in `_syncPlanSelection`, so the drag carries clusters without knowing they exist | `_syncPlanSelection`, `_expandPlanSelToClusters`, `_clearPlanSelection`, `wirePrinterMarquee`, `wirePrinterPlanDrag` |
+| 23601-23711 | **The board's right-click menu** — group / ungroup the selection; the kebab menu's own component, dropped from the cursor | `openPlanContextMenu`, `closePlanContextMenu`, `wirePlanClusterMenu` |
 
 ---
 
-## Printer detail side panel (L24194-28274)
+## Printer detail side panel (L24195-28275)
 | L | What | Anchors |
 |---|---|---|
 | 10087-10649 | Open/close lifecycle (connect/disconnect per brand), conn button, refresh | `openPrinterDetail`, `closePrinterDetail`, `refreshOpenPrinterDetail` |
 | 10650-10660 | **`renderCamBanner(p)`** — dispatch to per-brand `widget_camera.js` (never builds camera HTML inline) | `renderCamBanner` |
-| 10661-11747 | **`renderPrinterDetail()`** — hero + camera banner + status + per-brand live block + control cards + log | `renderPrinterDetail` |
-| 11748-11855 | Inline edit for printer name / IP / port (pencil, Enter/Escape) + field persist | `startInlineEdit`, `savePrinterField` |
+| 10661-11750 | **`renderPrinterDetail()`** — hero + camera banner + status + per-brand live block + control cards + log | `renderPrinterDetail` |
+| 11751-11862 | Inline edit for printer name / IP / port (pencil, Enter/Escape) + field persist | `startInlineEdit`, `savePrinterField` |
 
 ---
 
-## Add-printer flow (L26655-28665)
+## Add-printer flow (L26656-28666)
 Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.js` owns the shell.
 
 | L | What | Anchors |
 |---|---|---|
-| 11856-11944 | **Brand picker modal** — dispatches to per-brand add-flow | `openPrinterBrandPicker` |
-| 11945-12011 | Add/edit printer form | `openPrinterAddForm`, `closePrinterAddForm` |
-| 12012-12263 | Tutorial image bottom-sheet + **multi-step connection tutorial** | `openTutoSheet`, `openPrinterTutorial`, `_ptRenderStep` |
-| 12264-12391 | **`submitPrinterAdd()`** — ADD (auto-id) vs EDIT (preserve id/isActive/sortIndex) | `submitPrinterAdd` |
+| 11863-11961 | **Brand picker modal** — dispatches to per-brand add-flow | `openPrinterBrandPicker` |
+| 11962-12043 | Add/edit printer form | `openPrinterAddForm`, `closePrinterAddForm` |
+| 12044-12295 | Tutorial image bottom-sheet + **multi-step connection tutorial** | `openTutoSheet`, `openPrinterTutorial`, `_ptRenderStep` |
+| 12296-12423 | **`submitPrinterAdd()`** — ADD (auto-id) vs EDIT (preserve id/isActive/sortIndex) | `submitPrinterAdd` |
 
 ---
 
-## Racks CRUD + slots (L27448-31195)
+## Racks CRUD + slots (L27449-31196)
 | L | What | Anchors |
 |---|---|---|
-| 12392-12526 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
-| 12527-12663 | Empty-rack cascade, twin resolver, slot assign/unassign, slot fill HTML | `playEmptyRackCascade`, `assignSpoolToSlot`, `unassignSpool`, `findSpoolInSlot` |
-| 12664-12744 | **Slot locking** — right-click toggle, lock/unlock all, kebab menu positioning | `isSlotLocked`, `toggleSlotLock`, `positionRackMenu` |
-| 12745-12962 | **Auto-fill / auto-store / auto-unstore** + search dim + unranked helpers | `autoFillEmptySlots`, `maybeAutoStoreUnrankedSpools`, `applyRackSearchDim`, `getUnrackedSpools` |
-| 13004-13133 | **Skyline-packing masonry** layout + relayout scheduler + rack reorder | `layoutRacksMasonry`, `reorderRacks` |
-| 13134-13245 | **Rich hover tooltip** for filled slots (mini puck preview) | `buildRackTooltipHTML`, `wireRackTooltipDelegation` |
+| 12424-12558 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
+| 12559-12695 | Empty-rack cascade, twin resolver, slot assign/unassign, slot fill HTML | `playEmptyRackCascade`, `assignSpoolToSlot`, `unassignSpool`, `findSpoolInSlot` |
+| 12696-12776 | **Slot locking** — right-click toggle, lock/unlock all, kebab menu positioning | `isSlotLocked`, `toggleSlotLock`, `positionRackMenu` |
+| 12777-12994 | **Auto-fill / auto-store / auto-unstore** + search dim + unranked helpers | `autoFillEmptySlots`, `maybeAutoStoreUnrankedSpools`, `applyRackSearchDim`, `getUnrackedSpools` |
+| 13036-13165 | **Skyline-packing masonry** layout + relayout scheduler + rack reorder | `layoutRacksMasonry`, `reorderRacks` |
+| 13166-13277 | **Rich hover tooltip** for filled slots (mini puck preview) | `buildRackTooltipHTML`, `wireRackTooltipDelegation` |
 
 ---
 
-## Storage view render + DnD (L29782-32965)
+## Storage view render + DnD (L29783-32966)
 | L | What | Anchors |
 |---|---|---|
-| 13246-13885 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
-| 13886-14102 | Drag sources (slot puck / unranked row) + drop targets + **drop-to-void unassign** | `wireDragSources`, `wireDropTargets`, `clearOtherDropHighlights` |
-| 14103-14124 | Unrank cascade animation | `playUnrankAnimation` |
-| 14125-14328 | **Rack create/edit modal** — name, presets, rows×columns, delete confirm, field errors | `openRackEditModal`, `renderRackPresets`, `confirmDeleteRack` |
+| 13278-13917 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
+| 13918-14134 | Drag sources (slot puck / unranked row) + drop targets + **drop-to-void unassign** | `wireDragSources`, `wireDropTargets`, `clearOtherDropHighlights` |
+| 14135-14156 | Unrank cascade animation | `playUnrankAnimation` |
+| 14157-14360 | **Rack create/edit modal** — name, presets, rows×columns, delete confirm, field errors | `openRackEditModal`, `renderRackPresets`, `confirmDeleteRack` |
 
 ---
 
-## Friend view (L31491-33935)
+## Friend view (L31492-33936)
 | L | What | Anchors |
 |---|---|---|
-| 14329-14410 | Friend inventory open/close (one-shot read, no live updates) | `openFriendInventory`, `closeFriendInventory` |
-| 14411-14602 | **Friend banner** + switch to friend view (tears down ALL owner subscriptions first) / switch back | `renderFriendBanner`, `switchToFriendView`, `switchBackToOwnView`, `prewarmAuthToken` |
-| 14603-14657 | Friends section in dropdown + incoming request modal queue | `renderFriendsSection`, `showFriendRequestModal` |
-| 14658-14795 | **Add-friend modal** — split XXX-XXX field, live preview lookup | `openAddFriendModal`, `_adfChanged` |
+| 14361-14442 | Friend inventory open/close (one-shot read, no live updates) | `openFriendInventory`, `closeFriendInventory` |
+| 14443-14634 | **Friend banner** + switch to friend view (tears down ALL owner subscriptions first) / switch back | `renderFriendBanner`, `switchToFriendView`, `switchBackToOwnView`, `prewarmAuthToken` |
+| 14635-14689 | Friends section in dropdown + incoming request modal queue | `renderFriendsSection`, `showFriendRequestModal` |
+| 14690-14827 | **Add-friend modal** — split XXX-XXX field, live preview lookup | `openAddFriendModal`, `_adfChanged` |
 
 ---
 
-## Display name + friend requests (L32273-34985)
+## Display name + friend requests (L32274-34986)
 | L | What | Anchors |
 |---|---|---|
-| 14796-14839 | **Display-name setup modal** (first-login pseudo picker) | `openDisplayNameSetup` |
-| 14840-14931 | Friend requests subscription + badge + accept/refuse/block/remove (bidirectional batch writes) | `subscribeFriendRequests`, `acceptFriendRequest`, `removeFriend` |
-| 14932-14992 | Blacklist load / unblock / render | `loadBlacklist`, `renderBlacklist` |
+| 14828-14871 | **Display-name setup modal** (first-login pseudo picker) | `openDisplayNameSetup` |
+| 14872-14963 | Friend requests subscription + badge + accept/refuse/block/remove (bidirectional batch writes) | `subscribeFriendRequests`, `acceptFriendRequest`, `removeFriend` |
+| 14964-15024 | Blacklist load / unblock / render | `loadBlacklist`, `renderBlacklist` |
 
 ---
 
-## Keys + profile sync (L33130-35135)
+## Keys + profile sync (L33131-35136)
 | L | What | Anchors |
 |---|---|---|
-| 14993-15037 | **`claimPublicKey(uid, oldKey)`** atomic transaction (10 retries) + regenerate + send friend request | `claimPublicKey`, `sendFriendRequest` |
-| 15062-15112 | Key generators (`XXX-XXX`, 40-char hex) + `userProfiles/{uid}` sync | `generatePublicKey`, `generatePrivateKey`, `syncUserProfile` |
+| 15025-15069 | **`claimPublicKey(uid, oldKey)`** atomic transaction (10 retries) + regenerate + send friend request | `claimPublicKey`, `sendFriendRequest` |
+| 15094-15144 | Key generators (`XXX-XXX`, 40-char hex) + `userProfiles/{uid}` sync | `generatePublicKey`, `generatePrivateKey`, `syncUserProfile` |
 
 ---
 
-## Custom avatar (L33358-35335)
+## Custom avatar (L33359-35336)
 | L | What | Anchors |
 |---|---|---|
-| 15600-15774 | File pick, image decode, alpha detection, resize to blob, upload, remove | `uploadCustomAvatar`, `removeCustomAvatar` |
-| 15775-15960 | **Discord-style cropper** — crop / zoom / rotate + cropped upload | `openAvatarCropper`, `uploadCroppedAvatar` |
+| 15632-15806 | File pick, image decode, alpha detection, resize to blob, upload, remove | `uploadCustomAvatar`, `removeCustomAvatar` |
+| 15807-15992 | **Discord-style cropper** — crop / zoom / rotate + cropped upload | `openAvatarCropper`, `uploadCroppedAvatar` |
 
 ---
 
-## User doc sync + telemetry + bootstrap (L33673-36799)
+## User doc sync + telemetry + bootstrap (L33674-36800)
 | L | What | Anchors |
 |---|---|---|
-| 16253-16695 | **`syncUserDoc(uid)`** — displayName/roles/Debug/keys/isPublic + **client telemetry** (studio* fields + `telemetry/studio` aggregates, fire-and-forget) | `syncUserDoc`, `hydrateUserDocCache` |
+| 16285-16700 | **`syncUserDoc(uid)`** — displayName/roles/Debug/keys/isPublic + **client telemetry** (studio* fields + `telemetry/studio` aggregates, fire-and-forget) | `syncUserDoc`, `hydrateUserDocCache` |
 | ~18460-18540 | **RFID chip list + tag+ backup** — `users/{uid}/rfidList/{UID_HEX}` upsert (firstSeen once-stamped; tag+ signature backup write-once = TigerTag+ indicator). Dedup via inventory-doc `rfidListed`/`rfidBackup` booleans (no in-memory index). Census once per account on first inventory snapshot; backup on auto-scan | `censusRfidListFromInventory`, `recordRfidChipScan` |
-| 16696-16728 | Language sync from Firestore + `applyLang(lang)` | `syncLangFromFirestore`, `applyLang` |
-| 16729-16744 | **Init bootstrap** — loadLocales → applyTranslations → loadLookups → loadImgMap → runMigration → initAuth → signalFirstPaint | grep "loadLocales().then" |
+| 16701-16733 | Language sync from Firestore + `applyLang(lang)` | `syncLangFromFirestore`, `applyLang` |
+| 16734-16749 | **Init bootstrap** — loadLocales → applyTranslations → loadLookups → loadImgMap → runMigration → initAuth → signalFirstPaint | grep "loadLocales().then" |
 
 ---
 
-## Electron RFID integration (L34810-36994)
+## Electron RFID integration (L34811-36995)
 | L | What | Anchors |
 |---|---|---|
-| 29714-29801 | Reader indicator (topbar), reader connect/disconnect, card present/removed badge | `renderRfidReaderBadges` |
-| 29802-29833 | Dual-scan buffer (2 readers / 1.5 s) | `_flushRfidScans` |
-| 29834-29966 | **Main NFC scan processor** | `_processNfcScans` |
-| 29967-30076 | **Build and write one chip document** to Firestore (API fields only for TigerTag+) | `_writeChipDoc` |
-| 30077-30137 | Auto-update status stream | |
-| 30138-30139 | TD1S engine moved to `IoT/td1s/index.js` (closing comment) | |
+| 29715-29802 | Reader indicator (topbar), reader connect/disconnect, card present/removed badge | `renderRfidReaderBadges` |
+| 29803-29834 | Dual-scan buffer (2 readers / 1.5 s) | `_flushRfidScans` |
+| 29835-29967 | **Main NFC scan processor** | `_processNfcScans` |
+| 29968-30077 | **Build and write one chip document** to Firestore (API fields only for TigerTag+) | `_writeChipDoc` |
+| 30078-30138 | Auto-update status stream | |
+| 30139-30140 | TD1S engine moved to `IoT/td1s/index.js` (closing comment) | |
 
 ---
 
@@ -414,24 +414,24 @@ Most common navigation tasks → grep these anchors first:
 | Touch the weight slider / weight save | `doWeightUpdate` L8134, `_patchDetailWeight` L6562 |
 | Touch the Add Product panel | `openAddProductPanel` L2194, `saveAddProduct` L2380 |
 | Touch the RFID encode/burn modal | `openEncodeModal` L5954, `_cemStartBurn` L6099 |
-| Touch a modal | Twin link L7297, Container L7372, Rack edit L14763, Login L3529, Edit account L3264 |
-| Touch the storage view | `renderRackView` L13884 — biggest function in the file |
-| Touch rack drag-drop | `wireDragSources` L14524, `wireDropTargets` L14589, drop-to-void L14676 |
+| Touch a modal | Twin link L7297, Container L7372, Rack edit L14795, Login L3529, Edit account L3264 |
+| Touch the storage view | `renderRackView` L13916 — biggest function in the file |
+| Touch rack drag-drop | `wireDragSources` L14556, `wireDropTargets` L14621, drop-to-void L14708 |
 | Touch the printers grid / table / cam wall | `renderPrintersView` L9333, `_renderPrinterTable` L9503, `_renderPrinterCam` L9668 |
 | Touch the printer detail card | `renderPrinterDetail` L10661, `openPrinterDetail` L10087 |
 | Touch a printer brand integration (WS/MQTT/HTTP, live block, filament edit) | `printers/<brand>/index.js` — NOT in this file |
 | Touch the Anycubic MQTT layer (LAN + cloud) | `acuConnect` in `printers/anycubic/index.js` (+ `anycubic:*` IPC in main.js) |
 | Touch the Anycubic live block / ACE card | `renderAnycubicLiveInner`, `renderAcuFilamentCard` |
 | Touch a printer camera banner | `printers/<brand>/widget_camera.js`; dispatch at `renderCamBanner` L10650 |
-| Touch the Add-printer scan flow | `printers/<brand>/add-flow.js`; shell at `openPrinterBrandPicker` L11856 |
-| Touch the printer tutorials | `openPrinterTutorial` L12158 |
+| Touch the Add-printer scan flow | `printers/<brand>/add-flow.js`; shell at `openPrinterBrandPicker` L11863 |
+| Touch the printer tutorials | `openPrinterTutorial` L12190 |
 | Touch the TigerScale panel | `IoT/tigerscale/index.js`; init wiring at L3114 |
 | Touch the TD1S sensor / TD-Color edit modals | `IoT/td1s/index.js` + `edit-modals.js` |
-| Touch the Friends system | lists L8660, friend view L14967, requests L15478 |
-| Touch the custom avatar / cropper | `openAvatarCropper` L15935, `uploadCustomAvatar` L15859 |
+| Touch the Friends system | lists L8660, friend view L14999, requests L15510 |
+| Touch the custom avatar / cropper | `openAvatarCropper` L15967, `uploadCustomAvatar` L15891 |
 | Touch the auth flow | `handleSignedIn` L4439, `initAuth` L4572, login modal L3529 |
-| Touch the Firestore subscriptions | inventory L4330, racks L8956, printers L8999, friend reqs L15478 |
-| Touch the telemetry | `syncUserDoc` L16135 (studio* fields), `_recordUsage` L7247 |
+| Touch the Firestore subscriptions | inventory L4330, racks L8956, printers L8999, friend reqs L15510 |
+| Touch the telemetry | `syncUserDoc` L16167 (studio* fields), `_recordUsage` L7247 |
 | Touch the auto-update banner | L8344 |
 | Touch the diagnostic / report-problem modal | `reportError` L712, `openDiagnosticModal` L813 |
 

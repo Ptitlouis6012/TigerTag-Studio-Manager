@@ -8917,5 +8917,110 @@
         }
       }
     ]
+  },
+  "2.27.2": {
+    "date": "2026-09-15",
+    "items": [
+      {
+        "icon": "broom",
+        "title": {
+          "en": "Erasing a chip, eyes open",
+          "fr": "Effacer une puce, les yeux ouverts",
+          "de": "Chip löschen, mit offenen Augen",
+          "es": "Borrar un chip, con los ojos abiertos",
+          "it": "Cancellare un chip, a occhi aperti",
+          "zh": "擦除芯片，一目了然",
+          "pt": "Apagar um chip, de olhos abertos",
+          "pt-pt": "Apagar um chip, de olhos abertos",
+          "pl": "Czyszczenie chipa, z otwartymi oczami"
+        },
+        "body": {
+          "en": "Erase or recycle now opens the chip window: you see if the right chips are on the readers, the button waits until they are, and a bar shows the job getting done.",
+          "fr": "Effacer ou recycler ouvre maintenant la fenêtre des puces : tu vois si les bonnes sont sur les lecteurs, le bouton attend qu’elles y soient, et une barre suit le boulot.",
+          "de": "Löschen oder Recyceln öffnet jetzt das Chip-Fenster: Du siehst, ob die richtigen Chips auf den Lesern liegen, der Knopf wartet darauf, und ein Balken zeigt den Fortschritt.",
+          "es": "Borrar o reciclar abre ahora la ventana de chips: ves si los correctos están en los lectores, el botón espera a que lo estén y una barra sigue el trabajo.",
+          "it": "Cancellare o riciclare ora apre la finestra dei chip: vedi se quelli giusti sono sui lettori, il pulsante aspetta che ci siano e una barra segue il lavoro.",
+          "zh": "擦除或回收现在会打开芯片窗口：能看到正确的芯片是否放在读卡器上，按钮会等它们就位，进度条跟着走。",
+          "pt": "Apagar ou reciclar agora abre a janela dos chips: você vê se os certos estão nos leitores, o botão espera por eles e uma barra acompanha o trabalho.",
+          "pt-pt": "Apagar ou reciclar abre agora a janela dos chips: vês se os certos estão nos leitores, o botão espera por eles e uma barra acompanha o trabalho.",
+          "pl": "Czyszczenie lub recykling otwiera teraz okno chipów: widzisz, czy właściwe leżą na czytnikach, przycisk czeka, aż tam będą, a pasek pokazuje postęp."
+        }
+      },
+      {
+        "icon": "trash",
+        "title": {
+          "en": "Hold it, don’t click it",
+          "fr": "Maintiens, ne clique pas",
+          "de": "Halten, nicht klicken",
+          "es": "Mantén, no hagas clic",
+          "it": "Tieni premuto, non cliccare",
+          "zh": "按住，别点",
+          "pt": "Segure, não clique",
+          "pt-pt": "Mantém premido, não cliques",
+          "pl": "Przytrzymaj, nie klikaj"
+        },
+        "body": {
+          "en": "Red buttons that need a long press now say so when you hover them. And the spool’s Delete looks just like the other Delete.",
+          "fr": "Les boutons rouges qui demandent un appui long le disent au survol. Et le Supprimer de la bobine ressemble enfin à l’autre Supprimer.",
+          "de": "Rote Knöpfe, die gedrückt gehalten werden wollen, sagen es jetzt beim Drüberfahren. Und das Löschen der Spule sieht aus wie das andere Löschen.",
+          "es": "Los botones rojos que piden mantener pulsado ahora lo dicen al pasar el ratón. Y el Eliminar de la bobina se parece por fin al otro.",
+          "it": "I pulsanti rossi da tenere premuti ora lo dicono al passaggio del mouse. E l’Elimina della bobina è finalmente uguale all’altro.",
+          "zh": "需要长按的红色按钮，鼠标悬停时会提示你。线轴的“删除”也终于和另一个“删除”长得一样了。",
+          "pt": "Botões vermelhos que pedem para segurar agora avisam quando você passa o mouse. E o Excluir do carretel ficou igual ao outro.",
+          "pt-pt": "Os botões vermelhos que pedem para manter premido agora avisam quando passas o rato. E o Eliminar da bobina ficou igual ao outro.",
+          "pl": "Czerwone przyciski, które trzeba przytrzymać, mówią o tym po najechaniu. A Usuń szpuli wygląda wreszcie jak drugie Usuń."
+        }
+      },
+      {
+        "icon": "copy",
+        "title": {
+          "en": "Thirty spools, one click",
+          "fr": "Trente bobines, un clic",
+          "de": "Dreißig Spulen, ein Klick",
+          "es": "Treinta bobinas, un clic",
+          "it": "Trenta bobine, un clic",
+          "zh": "三十卷，一次点击",
+          "pt": "Trinta carretéis, um clique",
+          "pt-pt": "Trinta bobinas, um clique",
+          "pl": "Trzydzieści szpul, jedno kliknięcie"
+        },
+        "body": {
+          "en": "Pick how many copies you want from a list — or choose 10+ and type it. No more tapping + until your finger gives up.",
+          "fr": "Choisis le nombre de copies dans une liste — ou prends 10+ et tape-le. Fini de cliquer sur + jusqu’à la crampe.",
+          "de": "Wähl die Anzahl der Kopien aus einer Liste — oder nimm 10+ und tipp sie ein. Kein Plus-Geklicke bis zum Krampf mehr.",
+          "es": "Elige cuántas copias quieres en una lista — o elige 10+ y escríbelo. Se acabó pulsar + hasta que duela el dedo.",
+          "it": "Scegli quante copie vuoi da un elenco — oppure 10+ e scrivilo. Basta cliccare + fino al crampo.",
+          "zh": "从列表里选要复制几份，或者选 10+ 直接输入。不用再狂点 + 了。",
+          "pt": "Escolha quantas cópias quer numa lista — ou pegue 10+ e digite. Chega de clicar em + até cansar.",
+          "pt-pt": "Escolhe quantas cópias queres numa lista — ou escolhe 10+ e escreve. Acabou clicar em + até cansar.",
+          "pl": "Wybierz liczbę kopii z listy — albo 10+ i wpisz ją. Koniec klikania + do upadłego."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Creality remembers your temperatures",
+          "fr": "Creality retient tes températures",
+          "de": "Creality merkt sich deine Temperaturen",
+          "es": "Creality recuerda tus temperaturas",
+          "it": "Creality ricorda le tue temperature",
+          "zh": "Creality 记住你的温度了",
+          "pt": "A Creality lembra suas temperaturas",
+          "pt-pt": "A Creality lembra-se das tuas temperaturas",
+          "pl": "Creality pamięta twoje temperatury"
+        },
+        "body": {
+          "en": "Temperatures you set on a CFS slot now actually stick, and the slot keeps its material profile after you edit it.",
+          "fr": "Les températures réglées sur un emplacement CFS restent enfin, et l’emplacement garde son profil de matériau après modification.",
+          "de": "Temperaturen für einen CFS-Slot bleiben jetzt wirklich stehen, und der Slot behält sein Materialprofil nach dem Bearbeiten.",
+          "es": "Las temperaturas de una ranura CFS ahora se quedan de verdad, y la ranura conserva su perfil de material al editarla.",
+          "it": "Le temperature impostate su uno slot CFS ora restano davvero, e lo slot mantiene il suo profilo materiale dopo la modifica.",
+          "zh": "给 CFS 料槽设置的温度现在真的会保存，编辑后料槽也会保留材料配置。",
+          "pt": "As temperaturas definidas num slot CFS agora ficam de verdade, e o slot mantém o perfil do material depois de editado.",
+          "pt-pt": "As temperaturas definidas numa ranhura CFS ficam agora mesmo, e a ranhura mantém o perfil do material depois de editada.",
+          "pl": "Temperatury ustawione w slocie CFS naprawdę się zapisują, a slot zachowuje profil materiału po edycji."
+        }
+      }
+    ]
   }
 }

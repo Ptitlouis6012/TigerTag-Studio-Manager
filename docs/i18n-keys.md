@@ -52,9 +52,8 @@
 | `toolRepairNoChip` / `toolRepairNoBackup` | Restore guard messages (chip not on reader / no backup) |
 | `toolRepairWriting` / `toolRepairDone` / `toolRepairAlready` / `toolRepairFailed` | Restore progress/result states |
 | `toolFormatRfid` / `toolFormatRfid2` / `toolFormatRfidTip` | Toolbox "Erase the {{tier}}" action — 1 chip / 2 chips label (`{{tier}}` = TigerTag / TigerTag+) + ⓘ info bubble (writes the official TigerTag Init payload → reusable TigerTag) |
-| `toolFormatWriting` / `toolFormatDone` / `toolFormatFailed` | Reset progress/result states (no-chip reuses `toolRepairNoChip`) |
 | `toolEraseRfid` / `toolEraseRfid2` / `toolEraseRfidTip` | Toolbox "Recycle to NFC" action — 1 chip / 2 chips label + ⓘ info bubble (writes the SDK blank-NDEF payload → generic NFC tag) |
-| `toolEraseWriting` / `toolEraseDone` / `toolEraseFailed` | Erase progress/result states (no-chip reuses `toolRepairNoChip`) |
+| `encErase` / `encRecycle` | Chip modal hold button when erasing a TigerTag or recycling it to NFC (the title reuses `toolFormatRfid` / `toolEraseRfid`) |
 | `toolMeasureColorTip` / `toolMeasureTdTip` / `toolEditImgTip` / `twinLinkActionTip` / `toolRemoveFromRackTip` / `encodeCloudTip` / `burnRfidTip` / `toolRefreshApiTip` / `toolDuplicateTip` / `twinLinkUnlinkHint` | ⓘ info-bubble text for the remaining toolbox actions (one per button) |
 | `backupBadge` | "Signature backed up" tooltip on the shield-check badge |
 
