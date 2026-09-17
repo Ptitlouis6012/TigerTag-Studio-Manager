@@ -44,7 +44,7 @@ export function renderBambuJobCard(p, conn) {
   // Pause/Resume/Stop — only while a job is active (reuses the Anycubic /
   // Snapmaker .cre-action-btn styling); wired via data-bbl-print.
   const isPaused = state === "paused";
-  const actionBtns = isActive ? `
+  const actionBtns = (isActive && !_bblReadOnly(conn)) ? `
         <div class="cre-actions elg-job-actions">
           <button type="button" class="cre-action-btn cre-action-btn--pause"
                   data-bbl-print="${isPaused ? "resume" : "pause"}"
@@ -81,8 +81,17 @@ export function renderBambuJobCard(p, conn) {
 
 // ── Temperature card ──────────────────────────────────────────────────────
 
+/* A CLOUD connection is READ-ONLY. Measured on an X1C: of everything this
+   driver can publish through the account broker, only the light answers — the
+   setpoints, the jog, the homing, the fans and a slot's filament are all
+   ignored, silently, because a refused command is never reported back. A
+   control that does nothing is worse than no control, so the cloud cards show
+   the machine and offer only what it actually accepts. LAN is unaffected. */
+const _bblReadOnly = conn => conn?.cloud === true;
+
 export function renderBambuTempCard(conn, heatedChamber = false) {
   const d = conn.data;
+  const ro = _bblReadOnly(conn);
   const pills = [];
 
   // Nozzle(s) — click a pill to set its target. H2-series have TWO heads
@@ -102,8 +111,8 @@ export function renderBambuTempCard(conn, heatedChamber = false) {
     const active  = dual && n.id === d.activeNozzle;
     const nozAttr = dual ? ` data-bbl-nozzle="${n.id}"` : "";
     pills.push(`
-      <div class="snap-temp snap-temp--editable${heating ? " snap-temp--heating" : ""}${active ? " snap-temp--active" : ""}"
-           data-bbl-set-temp="nozzle"${nozAttr} data-bbl-temp-target="${Math.max(0, Math.round(Number(n.target) || 0))}" data-bbl-temp-max="300">
+      <div class="snap-temp${ro ? "" : " snap-temp--editable"}${heating ? " snap-temp--heating" : ""}${active ? " snap-temp--active" : ""}"
+           ${ro ? "" : `data-bbl-set-temp="nozzle"${nozAttr} data-bbl-temp-target="${Math.max(0, Math.round(Number(n.target) || 0))}" data-bbl-temp-max="300"`}>
         ${ctx.SNAP_ICON_NOZZLE}
         <span class="snap-temp-val">${ctx.esc(_bblFmtTempPair(n.current, n.target))}</span>
       </div>`);
@@ -114,8 +123,8 @@ export function renderBambuTempCard(conn, heatedChamber = false) {
     const heating = typeof d.bedTarget === "number" && d.bedTarget > 0
                  && typeof d.bedCurrent === "number" && d.bedCurrent < d.bedTarget - 1;
     pills.push(`
-      <div class="snap-temp snap-temp--bed snap-temp--editable${heating ? " snap-temp--heating" : ""}"
-           data-bbl-set-temp="bed" data-bbl-temp-target="${Math.max(0, Math.round(Number(d.bedTarget) || 0))}" data-bbl-temp-max="110">
+      <div class="snap-temp snap-temp--bed${ro ? "" : " snap-temp--editable"}${heating ? " snap-temp--heating" : ""}"
+           ${ro ? "" : `data-bbl-set-temp="bed" data-bbl-temp-target="${Math.max(0, Math.round(Number(d.bedTarget) || 0))}" data-bbl-temp-max="110"`}>
         ${ctx.SNAP_ICON_BED}
         <span class="snap-temp-val">${ctx.esc(_bblFmtTempPair(d.bedCurrent, d.bedTarget))}</span>
       </div>`);
@@ -125,7 +134,7 @@ export function renderBambuTempCard(conn, heatedChamber = false) {
   // editable → chamber-temperature setpoint. On a passive chamber (X1C) it's
   // read-only. Null on the A1 (no chamber at all).
   if (d.chamberCurrent != null) {
-    if (heatedChamber) {
+    if (heatedChamber && !ro) {
       const heating = typeof d.chamberTarget === "number" && d.chamberTarget > 0
                    && typeof d.chamberCurrent === "number" && d.chamberCurrent < d.chamberTarget - 1;
       pills.push(`
@@ -169,22 +178,23 @@ export function renderBambuFilamentCard(_p, conn) {
   const amsMods = [...(d.ams || [])].sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
 
   // ── slot renderer ──────────────────────────────────────────────────────
+  const ro = _bblReadOnly(conn);
   const makeSlot = (tag, t, amsId, trayId) => {
     const color  = t?.color ?? null;
     const fg     = color ? _bblTextColor(color) : "var(--text)";
     const active = t?.active ?? false;
     const isEmpty = !color && !t?.type;
     const label  = isEmpty ? "?" : (t?.type || "—");
-    const editAttrs = `data-bbl-fil-edit="1" data-ams-id="${amsId ?? 255}" data-tray-id="${trayId ?? 254}"`;
+    const editAttrs = ro ? "" : `data-bbl-fil-edit="1" data-ams-id="${amsId ?? 255}" data-tray-id="${trayId ?? 254}"`;
     return `
-      <div class="snap-fil snap-fil--editable${active ? " snap-fil--active" : ""}" ${editAttrs}>
+      <div class="snap-fil${ro ? "" : " snap-fil--editable"}${active ? " snap-fil--active" : ""}" ${editAttrs}>
         <div class="snap-fil-tag">${ctx.esc(tag)}</div>
         <div class="snap-fil-square${color ? "" : " snap-fil-square--empty"}"
              style="${color ? `background:${ctx.esc(color)};color:${ctx.esc(fg)};border-color:${ctx.esc(color)};` : ""}">
           <span class="snap-fil-main">${ctx.esc(label)}</span>
         </div>
         <div class="snap-fil-meta">
-          <span class="snap-fil-status icon icon-edit icon-13" aria-hidden="true"></span>
+          ${ro ? "" : `<span class="snap-fil-status icon icon-edit icon-13" aria-hidden="true"></span>`}
           ${active ? `<span class="snap-fil-status icon icon-play icon-13"></span>` : ""}
           ${t?.type ? `<div class="snap-fil-sub">${ctx.esc(t.type)}</div>` : ""}
         </div>
@@ -273,6 +283,7 @@ export function renderBambuFilamentCard(_p, conn) {
 export function renderBambuControlCard(_p, conn) {
   if (conn?.status !== "connected") return "";
   const d      = conn.data || {};
+  const ro     = _bblReadOnly(conn);
   const ledOn  = !!d.lightOn;
   const ledTip = ctx.esc(ledOn ? (ctx.t("creLedOnTip") || "Turn off light")
                                : (ctx.t("creLedOffTip") || "Turn on light"));
@@ -288,19 +299,25 @@ export function renderBambuControlCard(_p, conn) {
   // chamber temperature pill.
   const hasChamberFan = d.chamberCurrent != null;
   // One fan column (toggle 0↔100 % + −/+ 10 %). num = 1 (part) | 2 (auxiliary).
+  // Cloud: the fan still READS — the column keeps its icon and its percentage,
+  // and loses only the toggle and the −/+ steps.
   const fanCol = (label, pct, num) => `
           <div class="elg-fan-col">
             <div class="elg-fan-col-head">
-              <button type="button" class="elg-fan-icon-btn${pct > 0 ? " elg-fan-icon-btn--on" : ""}"
-                      data-bbl-fan-toggle="${num}" aria-label="${label}">
-                <span class="icon icon-fan icon-16" aria-hidden="true"></span>
-              </button>
+              ${ro
+                ? `<span class="elg-fan-icon-btn${pct > 0 ? " elg-fan-icon-btn--on" : ""} elg-fan-icon-btn--static">
+                     <span class="icon icon-fan icon-16" aria-hidden="true"></span>
+                   </span>`
+                : `<button type="button" class="elg-fan-icon-btn${pct > 0 ? " elg-fan-icon-btn--on" : ""}"
+                        data-bbl-fan-toggle="${num}" aria-label="${label}">
+                     <span class="icon icon-fan icon-16" aria-hidden="true"></span>
+                   </button>`}
               <span class="elg-fan-col-label">${label}</span>
             </div>
             <div class="elg-fan-col-controls">
-              <button type="button" class="elg-fan-step-btn" data-bbl-fan-step="${num}" data-dist="-10" aria-label="−">−</button>
+              ${ro ? "" : `<button type="button" class="elg-fan-step-btn" data-bbl-fan-step="${num}" data-dist="-10" aria-label="−">−</button>`}
               <span class="elg-fan-pct" data-bbl-fan-pct="${num}">${pct}%</span>
-              <button type="button" class="elg-fan-step-btn" data-bbl-fan-step="${num}" data-dist="10" aria-label="+">+</button>
+              ${ro ? "" : `<button type="button" class="elg-fan-step-btn" data-bbl-fan-step="${num}" data-dist="10" aria-label="+">+</button>`}
             </div>
           </div>`;
   const speedMode = [1, 2, 3, 4].includes(Number(d.speedMode)) ? Number(d.speedMode) : 2;
@@ -315,6 +332,7 @@ export function renderBambuControlCard(_p, conn) {
     <section class="snap-block elg-ctrl acu-ctrl">
       <div class="elg-jog-wrap">
 
+        ${ro ? "" : `
         <!-- LEFT — XYZ homing + disable motors -->
         <div class="acu-jog-side">
           <button type="button" class="cre-action-btn elg-ctrl-action"
@@ -350,13 +368,17 @@ export function renderBambuControlCard(_p, conn) {
           </button>
           <button class="elg-jog-z-btn" data-bbl-jog="z" data-bbl-dir="+" title="Z−">Z↓</button>
         </div>
+        `}
 
-        <!-- FAR RIGHT — light toggle + jog step + speed mode -->
-        <div class="acu-jog-extra">
+        <!-- FAR RIGHT — light toggle + jog step + speed mode. The light is the
+             one command a cloud connection accepts, so it is all that is left
+             there in cloud mode: no jog step to choose, no speed to set. -->
+        <div class="acu-jog-extra${ro ? " acu-jog-extra--alone" : ""}">
           <button type="button" class="cre-action-btn cre-action-btn--led elg-ctrl-action${ledOn ? " cre-action-btn--led-on" : ""}"
                   data-bbl-light="1" data-acu-tip="${ledTip}">
             <span class="icon icon-bulb icon-16" aria-hidden="true"></span>
           </button>
+          ${ro ? "" : `
           <div class="elg-ctrl-speed-row">
             <span class="elg-ctrl-speed-label" title="${ctx.esc(ctx.t("elgCtrlStep") || "Step")}"><span class="icon icon-step icon-14"></span></span>
             <select class="elg-ctrl-speed-select" id="bblCtrlStep">
@@ -368,7 +390,7 @@ export function renderBambuControlCard(_p, conn) {
             <select class="elg-ctrl-speed-select" data-bbl-speed="1">
               ${speedOpts.map(([v, lbl]) => `<option value="${v}"${v === speedMode ? " selected" : ""}>${ctx.esc(lbl)}</option>`).join("")}
             </select>
-          </div>
+          </div>`}
         </div>
 
       </div>

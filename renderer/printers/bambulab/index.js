@@ -1420,6 +1420,14 @@ export function bambuGetUnits(printer) {
    current/target pair, the heating state and the active-tool highlight, and a
    parallel version would drift from the panel the first time either changed.
    Read-only on the board — the setpoint editors are the panel's. */
+/* Cloud = look, don't touch. Measured on an X1C: of everything published
+   through the account broker only the light answers, and a refused command is
+   never reported back — so a control that cannot work must not be drawn. The
+   cards decide this themselves; the board asks through the registry. */
+export function bambuIsReadOnly(printer) {
+  return _bambuConns.get(bambuKey(printer))?.cloud === true;
+}
+
 export function bambuGetTempHtml(printer) {
   const conn = _bambuConns.get(bambuKey(printer));
   if (!conn || conn.status !== 'connected') return "";
@@ -1435,6 +1443,10 @@ registerBrand('bambulab', {
      panel is open — which is right there and wrong anywhere else: the board
      shows every machine at once, so a card has to say which one it means. */
   controlJob: (p, a) => { const c = bambuGetConn(bambuKey(p)); if (c) bambuPrintControl(c, a); },
+  /* A cloud connection accepts no command but the light, so the views that
+     offer job controls ask before drawing them. Optional on a brand: a driver
+     that never says so is treated as controllable, which every LAN one is. */
+  isReadOnly:           bambuIsReadOnly,
   getTempHtml:          bambuGetTempHtml,
   getUnits:             bambuGetUnits,
   getSlots:             bambuGetSlots,

@@ -193,3 +193,17 @@
   min-height: 320px;
   background: var(--surface);
 }
+
+/* ── Cloud connection = read-only ────────────────────────────────────────
+   Only the light answers over the account broker, so the control card keeps
+   the light and the fan READINGS and drops every command control. What is
+   left has to stand on its own: the light column no longer sits opposite a
+   jog pad, so it aligns left instead of being pushed to the right edge, and
+   the fan icon is a plain marker (no hover, no pointer) rather than a button
+   that looks pressable and does nothing. */
+.acu-ctrl .acu-jog-extra--alone { margin-left: 0; align-items: flex-start; }
+.elg-fan-icon-btn--static { cursor: default; }
+.elg-fan-icon-btn--static:hover { background: var(--surface-2); }
+.elg-fan-icon-btn--static:hover .icon { background-color: var(--muted); }
+.elg-fan-icon-btn--static.elg-fan-icon-btn--on:hover { background: color-mix(in srgb, var(--success) 10%, transparent); }
+.elg-fan-icon-btn--static.elg-fan-icon-btn--on:hover .icon { background-color: var(--success); }

@@ -9022,5 +9022,60 @@
         }
       }
     ]
+  },
+  "2.27.3": {
+    "date": "2026-09-18",
+    "items": [
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "Your AMS HT gets its own spot",
+          "fr": "Ton AMS HT retrouve sa place",
+          "de": "Dein AMS HT bekommt seinen Platz",
+          "es": "Tu AMS HT recupera su sitio",
+          "it": "Il tuo AMS HT ritrova il suo posto",
+          "zh": "你的 AMS HT 归位了",
+          "pt": "Seu AMS HT ganha seu lugar",
+          "pt-pt": "O teu AMS HT ganha o seu lugar",
+          "pl": "Twój AMS HT ma swoje miejsce"
+        },
+        "body": {
+          "en": "Editing the filament in an AMS HT used to land on another unit, and the window opened without the colour already loaded. Both sorted — and it shows one bay now, like the real thing.",
+          "fr": "Modifier le filament d’un AMS HT partait sur une autre unité, et la fenêtre s’ouvrait sans la couleur déjà chargée. Les deux sont réglés — et il affiche une seule baie, comme en vrai.",
+          "de": "Das Filament im AMS HT zu ändern landete auf einer anderen Einheit, und das Fenster öffnete ohne die geladene Farbe. Beides erledigt — und er zeigt jetzt ein Fach, wie in echt.",
+          "es": "Editar el filamento de un AMS HT acababa en otra unidad, y la ventana se abría sin el color ya cargado. Resuelto — y ahora muestra una sola bahía, como en la realidad.",
+          "it": "Modificare il filamento di un AMS HT finiva su un’altra unità, e la finestra si apriva senza il colore già caricato. Risolti entrambi — e ora mostra un solo alloggiamento, come nella realtà.",
+          "zh": "以前改 AMS HT 的耗材会改到别的单元上，窗口也不会带出已装的颜色。两个都修好了，而且现在只显示一个仓位，和实物一样。",
+          "pt": "Editar o filamento de um AMS HT ia parar noutra unidade, e a janela abria sem a cor já carregada. Ambos resolvidos — e agora mostra uma só baia, como na vida real.",
+          "pt-pt": "Editar o filamento de um AMS HT ia parar a outra unidade, e a janela abria sem a cor já carregada. Ambos resolvidos — e agora mostra uma só baia, como na realidade.",
+          "pl": "Zmiana filamentu w AMS HT trafiała do innej jednostki, a okno otwierało się bez wczytanego koloru. Oba naprawione — i pokazuje teraz jedno gniazdo, jak w rzeczywistości."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Bambu in the cloud: no dead buttons",
+          "fr": "Bambu en cloud : plus de boutons morts",
+          "de": "Bambu in der Cloud: keine toten Knöpfe",
+          "es": "Bambu en la nube: sin botones muertos",
+          "it": "Bambu nel cloud: niente pulsanti morti",
+          "zh": "云端 Bambu：不再有没用的按钮",
+          "pt": "Bambu na nuvem: sem botões mortos",
+          "pt-pt": "Bambu na nuvem: sem botões mortos",
+          "pl": "Bambu w chmurze: koniec z martwymi przyciskami"
+        },
+        "body": {
+          "en": "Through the cloud, a Bambu takes no orders but the light — so that’s all you get offered now. Connect it on your own network and every control comes back.",
+          "fr": "En cloud, une Bambu n’accepte que la lumière — donc c’est tout ce qu’on te propose désormais. Branche-la sur ton réseau et tous les contrôles reviennent.",
+          "de": "Über die Cloud nimmt eine Bambu nur das Licht an — also wird auch nur das angeboten. Im eigenen Netzwerk sind alle Regler wieder da.",
+          "es": "Por la nube, una Bambu solo acepta la luz — así que es lo único que se te ofrece. Conéctala a tu red y vuelven todos los controles.",
+          "it": "Via cloud una Bambu accetta solo la luce — quindi è l’unica cosa che ti viene proposta. Collegala alla tua rete e tornano tutti i comandi.",
+          "zh": "走云端时，Bambu 只接受开关灯的指令，所以现在也只给你这一个。接到自己的网络上，所有控制就都回来了。",
+          "pt": "Pela nuvem, uma Bambu só aceita a luz — então é só isso que aparece agora. Ligue na sua rede e todos os controles voltam.",
+          "pt-pt": "Pela nuvem, uma Bambu só aceita a luz — por isso é só isso que te aparece. Liga-a à tua rede e todos os controlos voltam.",
+          "pl": "Przez chmurę Bambu przyjmuje tylko światło — więc tylko to teraz dostajesz. Podłącz ją w swojej sieci, a wszystkie sterowania wracają."
+        }
+      }
+    ]
   }
 }

@@ -5,6 +5,20 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.27.3 — 2026-09-18
+
+### Changed
+
+- **A Bambu Lab printer reached through the CLOUD is presented as read-only.** Measured on an X1C: of everything the driver publishes through the account broker, only the light answers — setpoints, jog, homing, fans, a slot's filament and the job controls are all ignored, silently, because a refused command is never reported back and the cards only ever show what the machine says. A cloud connection now renders without them: the filament slots drop the pencil and `data-bbl-fil-edit`, the temperature pills lose `snap-temp--editable` and their `data-bbl-set-temp` (a heated chamber's pill renders as the passive one), and the control card keeps the light and the fan READINGS while dropping the jog pad, the three homing buttons, disable-motors, the jog step, the speed mode, and the fans' toggle and −/+ steps. Pause / resume / stop go too, in the panel's job card and on the board card — where the choice is not the driver's alone to make, the board being brand-agnostic: it asks the registry through a new OPTIONAL `isReadOnly(printer)` that only Bambu answers, so every other brand stays controllable by omission. Layout follows: `.acu-jog-extra--alone` aligns the light column left instead of pushing it to the right edge of a jog pad that is no longer there, and the fan icon becomes a static marker (`.elg-fan-icon-btn--static`) rather than a button that looks pressable. LAN is untouched — `renderer/printers/bambulab/{cards.js,index.js,bambulab.css}`, `renderer/inventory.js`.
+
+### Fixed
+
+- **Bambu Lab: an AMS HT's slot was written at the wrong address.** A machine reports each AMS by its OWN id and an AMS HT is id **128**, not the next number in the row — confirmed on a reporter's X1C (two AMS v1 + an AMS HT: `ams.ams[]` = `"0"`, `"1"`, `"128"`) and on ours (one AMS reported as id **1**, plus the HT as 128). The filament card passed each unit's POSITION as `data-ams-id`, so `ams_filament_setting` went to `ams_id: 2` on the first machine — a module that does not exist — and to the REAL AMS on the second, where the single AMS is id 1 and the HT sits at index 1. The row now carries `Number(mod.id)`. The edit sheet looked the module up by array index (`ams[128]` in a 3-entry list) and so opened on defaults instead of the loaded filament; it resolves by id now. `bambuGetSlots` emitted a fixed four bays per unit while `bambuGetUnits` beside it already derived the count from the tray list — both derive it. Verified through the app's own filament card: the HT slot carries `ams_id 128`, its sheet opens on the PETG `#2850E0` actually loaded, and applying `#1CB01C` came back green from the machine with the AMS untouched; slot restored and read back identical — `renderer/printers/bambulab/{cards.js,index.js}`.
+- **The Bambu filament sheet never pre-filled a slot's colour, on any model.** `_parseColor` already returns `"#RRGGBB"` and the sheet prefixed a second `#`, producing `"##2850E"` — an invalid colour that the OS picker silently reads as black and that paints no swatch. Whatever the slot held, the sheet showed grey and opened the picker on black, so applying without touching the colour wrote BLACK onto the slot. The hex is normalised (strip `#`, keep six hex digits, fall back to the default) — `renderer/printers/bambulab/index.js`.
+- `PROTOCOL.md` §8.3 records the id-128 rule, the `info: "2004"` marker that distinguishes an AMS HT from an AMS v1's `"1001"`, and the `ams_exist_bits` reading (`"13"` = bits 0, 1 and 4) — `renderer/printers/bambulab/PROTOCOL.md`.
+
+---
+
 ## v2.27.2 — 2026-09-15
 
 ### Changed

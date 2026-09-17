@@ -22967,7 +22967,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
          wrong card must not be enough to end one. Pause stays a plain click:
          it is reversible by the button next to it. */
       const job     = _getPrinterJob(p);
-      const jobBtns = job?.isActive ? `
+      /* A brand may answer that THIS connection takes no commands — a Bambu
+         reached through the cloud accepts none but its light — and then the
+         keys are not drawn at all: a button that cannot act is worse than no
+         button, since a refused command is never reported back. */
+      const jobRo   = brands.get(p.brand)?.isReadOnly?.(p) === true;
+      const jobBtns = (job?.isActive && !jobRo) ? `
                 <button class="rp-job-btn" data-pjob="${job.paused ? "resume" : "pause"}"
                         aria-label="${esc(t(job.paused ? "snapPrintResume" : "snapPrintPause"))}">
                   <span class="icon ${job.paused ? "icon-play" : "icon-pause"} icon-14"></span>
