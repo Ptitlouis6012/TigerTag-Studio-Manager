@@ -4,7 +4,7 @@
 // Parses every "## vX.Y.Z — DATE" section and turns its bullets into What's New
 // items (English baseline; the in-app modal falls back to EN when a locale is
 // missing). Versions that ALREADY exist in whatsnew.json are kept untouched, so
-// hand-localised entries (9 locales) are never overwritten. The output is
+// hand-localised entries (every locale) are never overwritten. The output is
 // ordered newest-first.
 //
 // Run: npm run whatsnew:import   (then optionally localise recent versions)
@@ -116,7 +116,7 @@ const semverDesc = (a, b) => {
 // / icon changes.
 const isLocalised = (entry) =>
   Array.isArray(entry?.items) && entry.items.some((it) =>
-    ["fr", "de", "es", "it", "zh", "pt", "pt-pt", "pl"].some(
+    ["fr", "de", "es", "it", "zh", "pt", "pt-pt", "pl", "ru"].some(
       (l) => (it.title && it.title[l]) || (it.body && it.body[l])));
 
 const merged = {};

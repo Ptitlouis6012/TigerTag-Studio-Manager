@@ -545,8 +545,14 @@
 .elg-ctrl-speed-label .icon { width: 20px; height: 20px; }
 .elg-ctrl-speed-select {
   flex: none;
-  width: 110px;   /* fixed width so a native <select> stays snug (flex:1 + max-width
-                     doesn't reliably cap a native select) — matches the Bambu Lab card */
+  /* Sized by its own widest option, floored at the Latin width and capped so a
+     long label cannot push the card: a fixed 110px clipped Russian's
+     "Сбалансированный" to "Сбалансирова…", and every locale is free to be
+     longer than English. flex:1 + max-width does not reliably cap a native
+     select, hence auto + min/max. */
+  width: auto;
+  min-width: 110px;
+  max-width: 165px;
   padding: 4px 6px;
   border-radius: 6px;
   border: 1px solid var(--border);

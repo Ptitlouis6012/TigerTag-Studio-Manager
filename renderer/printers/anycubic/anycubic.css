@@ -137,7 +137,7 @@
 }
 .acu-jog-extra .elg-ctrl-speed-row { flex-shrink: 0; }
 .acu-jog-extra .elg-ctrl-speed-label { min-width: 38px; }       /* align Step/Speed selects */
-.acu-jog-extra .elg-ctrl-speed-select { width: 96px; flex: none; }  /* fit "Standard" */
+.acu-jog-extra .elg-ctrl-speed-select { width: auto; min-width: 96px; max-width: 165px; flex: none; }  /* fits "Standard", grows for a longer locale */
 
 /* ── Filament feed (load / unload / stop) row in the edit sheet ──────────── */
 .acu-feed-row {

@@ -1155,7 +1155,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }, true);
 
   // ── What's New (per-version changelog explainer) ───────────────────────────
-  // Content lives in data/whatsnew.json (keyed by version, 9 locales inline,
+  // Content lives in data/whatsnew.json (keyed by version, every locale inline,
   // full history kept). Shown once after an update: when the running version
   // has an entry that hasn't been acknowledged. "Got it" marks it seen; "Later"
   // / ✕ / backdrop leave it unseen so it returns on the next launch.
