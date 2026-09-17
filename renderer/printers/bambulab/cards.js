@@ -202,12 +202,16 @@ export function renderBambuFilamentCard(_p, conn) {
   // Fixed count keeps every row at 5 flex children → columns stay aligned.
   const filSpacer = `<div class="snap-fil bbl-fil-spacer" aria-hidden="true"></div>`;
 
-  const makeAmsRow = (mod, rowLetter, modIdx) => {
+  // The module's OWN id is what `ams_filament_setting` addresses, never its
+  // position in the list: an AMS HT reports id 128, so the third unit of a
+  // 0 / 1 / 128 setup would otherwise be written to a nonexistent "ams_id 2".
+  const makeAmsRow = (mod, rowLetter) => {
+    const amsId = Number(mod?.id);
     const byId = new Map((mod?.tray || []).map(t => [parseInt(t.id, 10), t]));
     const cells = [];
     for (let i = 0; i < 4; i++) {
       const t = byId.get(i);
-      cells.push(t ? makeSlot(`${rowLetter}${i + 1}`, t, modIdx, i) : filSpacer);
+      cells.push(t ? makeSlot(`${rowLetter}${i + 1}`, t, amsId, i) : filSpacer);
     }
     return cells.join("");
   };
@@ -216,7 +220,7 @@ export function renderBambuFilamentCard(_p, conn) {
   {
     const row1 = [makeSlot("Ext.", d.externalTray ?? null, 255, 254)];
     if (amsMods.length > 0) {
-      row1.push(makeAmsRow(amsMods[0], "A", 0));
+      row1.push(makeAmsRow(amsMods[0], "A"));
     }
     rows.push(`<div class="cre-fil-row">${row1.join("")}</div>`);
   }
@@ -224,7 +228,7 @@ export function renderBambuFilamentCard(_p, conn) {
   // ── Rows 2+: extra AMS modules, Ext. column stays empty (spacer) ──────
   for (let mi = 1; mi < amsMods.length; mi++) {
     const rowLetter = String.fromCharCode(65 + mi);        // 'B', 'C', …
-    rows.push(`<div class="cre-fil-row">${extSpacer}${makeAmsRow(amsMods[mi], rowLetter, mi)}</div>`);
+    rows.push(`<div class="cre-fil-row">${extSpacer}${makeAmsRow(amsMods[mi], rowLetter)}</div>`);
   }
 
   if (!rows.length) return "";

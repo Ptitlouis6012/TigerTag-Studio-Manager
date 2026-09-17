@@ -529,6 +529,14 @@ Le type d'AMS est déterminé depuis le message `info` (commande `get_version`),
 | `n3s/0`… | **AMS HT** | **1 slot** |
 
 **AMS HT — comportement spécial** :
+- **`ams[].id` vaut `128` (0x80), pas la position dans le tableau.** Mesuré sur un
+  X1C portant deux AMS v1 + un AMS HT : `ams.ams[]` contient les id `"0"`, `"1"`,
+  `"128"` (l'AMS HT se reconnaît aussi à `info: "2004"`, contre `"1001"` pour un
+  AMS v1). C'est cet id qui doit être envoyé comme `ams_id` dans
+  `ams_filament_setting` (§5.4) — indexer le tableau par position écrit dans un
+  `ams_id: 2` qui n'existe pas. `ams_exist_bits` est un champ de bits hexadécimal
+  où l'AMS HT occupe un bit haut (`"13"` = bits 0, 1 et 4 pour ce même X1C).
+  Pour deux AMS HT, l'usage communautaire donne `128` puis `129` — non vérifié.
 - Un seul slot (id `0`) par unité AMS HT
 - `tray_now` ≥ `128` (0x80) → AMS HT actif, tray index = 0 (la formule standard `ams_index = tray_now >> 2` ne s'applique **pas**)
 - `ams[].humidity_raw` : humidité réelle en % (vs `humidity` qui est une note 1–5)

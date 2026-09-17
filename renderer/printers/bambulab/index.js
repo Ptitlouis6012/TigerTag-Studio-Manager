@@ -1187,14 +1187,16 @@ export async function openBambuFilamentEdit(printer, amsId, trayId) {
   if (amsId === 255) {
     existingTray = conn.data?.externalTray ?? null;
   } else {
-    const mod = conn.data?.ams?.[amsId];
+    // By id, not by array position — an AMS HT is id 128 in a 3-module list.
+    const mod = (conn.data?.ams || []).find(m => Number(m.id) === amsId);
     existingTray = mod?.tray?.find(t => parseInt(t.id, 10) === trayId) ?? null;
   }
 
-  const rawColor = existingTray?.color
-    ? '#' + String(existingTray.color).slice(0, 6)
-    : '#FF5722';
-  _bblSelColor = rawColor;
+  // `_parseColor` already returns "#RRGGBB", so prefixing another "#" made
+  // "##2850E" — an invalid colour that the picker silently turns into black and
+  // that paints no swatch at all. Strip whatever "#" is there, keep six hex.
+  const hex6 = String(existingTray?.color || '').replace(/^#/, '').slice(0, 6);
+  _bblSelColor = /^[0-9a-fA-F]{6}$/.test(hex6) ? '#' + hex6.toUpperCase() : '#FF5722';
 
   await _bblLoadMaterials();
 
@@ -1343,9 +1345,13 @@ export function bambuGetSlots(printer) {
   const out = [slot('ext', 'Ext.', d.externalTray ?? null)];
   const mods = [...(d.ams || [])].sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
   mods.forEach((m, mi) => {
-    // Always four bays per unit: a module reports only the trays it has seen,
-    // and a short list would renumber the ones after the gap.
-    for (let ti = 0; ti < 4; ti++) {
+    // Four bays per unit, ONE for an AMS HT — the same count `bambuGetUnits`
+    // derives from the module's own tray list, so the board and the units it
+    // draws cannot disagree. A module reports only the trays it has seen, so
+    // the loop indexes rather than maps: a short list would renumber the bays
+    // after a gap.
+    const bays = (m?.tray || []).length === 1 ? 1 : 4;
+    for (let ti = 0; ti < bays; ti++) {
       const t = (m?.tray || [])[ti] ?? null;
       out.push(slot(`ams${m?.id ?? mi}:${t?.id ?? ti}`, `${'ABCDEFGH'[mi] || mi + 1}${ti + 1}`, t));
     }
