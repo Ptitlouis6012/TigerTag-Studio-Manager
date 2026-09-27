@@ -12,6 +12,9 @@ import { renderFfgJobCard, renderFfgTempCard, renderFfgFilamentCard, renderFfgSt
 import { schemaWidget } from '../modal-helpers.js';
 import { ffgMuxStopAll } from './cam_mux.js';
 import { ffgModelIdFromMachineModel } from './probe.js';
+import {
+  c5fwIsCreator5, c5fwLatest, c5fwEnsureLatest, c5fwAssetFor, c5fwStatus, c5fwLabel, C5FW_INSTALL_URL,
+} from './creator5-fw.js';
 
 const $ = id => document.getElementById(id);
 
@@ -1318,11 +1321,54 @@ function ffgRenderInfoBody(info) {
   return stats + machine;
 }
 
+/* Creator 5 / 5 Pro only: the "Cloud + LAN" firmware FlashForge built with
+   TigerTag (creator5-fw.js). Says whether the machine runs the latest one,
+   hands over THIS model's file, and points at the USB walkthrough. The status
+   line needs the live firmware reading; without it the block still offers the
+   file, it just does not judge. */
+function ffgC5fwBlockHtml(printer, installed, rec) {
+  const t = ctx.t;
+  const asset = c5fwAssetFor(rec, printer);
+  if (!asset) return "";
+  const version = c5fwLabel(rec.tag);
+  const status  = c5fwStatus(installed, rec.tag);
+  const line = status === "current" ? t("ffgFwUpToDate")
+             : status === "update"  ? t("ffgFwUpdate", { version })
+             : t("ffgFwPitch");
+  return `
+    <div class="ffg-info-section ffg-fw">
+      <div class="ffg-info-section-title">${ctx.esc(t("ffgFwTitle"))}</div>
+      <div class="ffg-fw-status${status ? ` ffg-fw-status--${status}` : ""}">${ctx.esc(line)}</div>
+      <div class="ffg-fw-actions">
+        <button type="button" class="adf-btn adf-btn--primary ffg-fw-btn" data-ffg-fw-url="${ctx.esc(asset.url)}">
+          <span class="icon icon-download icon-13"></span>
+          <span>${ctx.esc(t("ffgFwDownload", { version }))}</span>
+        </button>
+        <button type="button" class="adf-btn adf-btn--secondary ffg-fw-btn" data-ffg-fw-url="${ctx.esc(C5FW_INSTALL_URL)}">
+          <span class="icon icon-info icon-13"></span>
+          <span>${ctx.esc(t("ffgFwHowTo"))}</span>
+        </button>
+      </div>
+      <div class="ffg-fw-note">${ctx.esc(t("ffgFwNoOta"))}</div>
+    </div>`;
+}
+
 export function openFlashforgeInfo(printer) {
   const conn = _ffgConns.get(ffgKey(printer));
   const body = $("ffgInfoBody");
-  if (body) body.innerHTML = ffgRenderInfoBody(conn?.data?.info);
+  const installed = conn?.data?.info?.firmware || "";
+  const isC5 = c5fwIsCreator5(printer);
+  if (body) body.innerHTML = ffgRenderInfoBody(conn?.data?.info)
+    + (isC5 ? ffgC5fwBlockHtml(printer, installed, c5fwLatest()) : "");
   $("ffgInfoOverlay")?.classList.add("open");
+  // Refresh against the live release list — only the firmware block is swapped.
+  if (isC5) c5fwEnsureLatest().then(rec => {
+    const blk = body?.querySelector(".ffg-fw");
+    if (!blk || !$("ffgInfoOverlay")?.classList.contains("open")) return;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = ffgC5fwBlockHtml(printer, installed, rec);
+    if (tmp.firstElementChild) blk.replaceWith(tmp.firstElementChild);
+  });
 }
 export function closeFlashforgeInfo() {
   $("ffgInfoOverlay")?.classList.remove("open");
@@ -1335,6 +1381,11 @@ $("ffgFilEditClose")?.addEventListener("click", closeFlashforgeFilamentEdit);
 $("ffgFilEditBackdrop")?.addEventListener("click", closeFlashforgeFilamentEdit);
 $("ffgInfoClose")?.addEventListener("click", closeFlashforgeInfo);
 $("ffgInfoOverlay")?.addEventListener("click", (e) => { if (e.target.id === "ffgInfoOverlay") closeFlashforgeInfo(); });
+// Creator 5 firmware block — delegated, the block is swapped on refresh.
+$("ffgInfoBody")?.addEventListener("click", (e) => {
+  const url = e.target.closest?.("[data-ffg-fw-url]")?.dataset.ffgFwUrl;
+  if (url) window.electronAPI?.openExternal(url);
+});
 $("ffgFileSheetClose")?.addEventListener("click", closeFlashforgeFiles);
 $("ffgFileSheetBackdrop")?.addEventListener("click", closeFlashforgeFiles);
 $("ffgFileSheetRefresh")?.addEventListener("click", () => {

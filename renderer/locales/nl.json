@@ -738,8 +738,9 @@
   "printerHelperElegooBullets": "Vind je IP-adres in de netwerkinstellingen van de printer. Het serienummer staat op het printerlabel of in het instellingenmenu.",
   "printerHelperFFGTitle": "Voordat je begint",
   "printerHelperFFGBullets": [
-    "Vind het IP-adres en serienummer bij Over → Netwerk.",
-    "Gebruik het wachtwoord dat je hebt ingesteld in FlashPrint of Orca-Flashforge."
+    "IP-adres en serienummer: tik op \"Basic Info\", rechtsonder op het hoofdscherm van de printer.",
+    "Printer ID: tandwielicoon → \"Network Mode\".",
+    "Gevonden met de scan? Dan heb je alleen de Printer ID nog nodig."
   ],
   "printerHelperSnapTitle": "Voordat je begint",
   "printerHelperSnapBullets": [
@@ -755,9 +756,10 @@
   "printerHintElegooIP": "Lokaal netwerk-IP.",
   "printerHintElegooSerial": "Serienummer van het Over-scherm van de printer.",
   "printerHintElegooMqtt": "Toegangscode uit de netwerkinstellingen van de printer (standaard: 123456).",
-  "printerHintFFGIP": "Lokaal netwerk-IP.",
-  "printerHintFFGSerial": "Serienummer van het Over-scherm van de printer.",
-  "printerHintFFGPassword": "Hetzelfde wachtwoord dat je in FlashPrint gebruikt.",
+  "printerHintFFGIP": "Op de printer: \"Basic Info\", rechtsonder op het hoofdscherm.",
+  "printerHintFFGSerial": "Zelfde pagina \"Basic Info\", bij \"Serial No.\".",
+  "printerHintFFGPassword": "Op de printer: tandwielicoon → \"Network Mode\".",
+  "printerLblFFGPrinterId": "Printer ID",
   "printerHintSnapIP": "Lokaal IP-adres getoond op het Snapmaker-netwerkscherm.",
   "snapAddByIpLabel": "IP-adres",
   "snapAddByIpButton": "Toevoegen via IP",
@@ -1612,10 +1614,16 @@
   },
   "printerCloudMode": "Bereikt via de cloud",
   "holdToConfirmTip": "Houd {{s}} s ingedrukt om te bevestigen",
-  "printerScanAddSelected": {
-    "one": "Deze printer toevoegen",
-    "other": "Deze {{n}} printers toevoegen"
-  },
+  "printerScanAdd": "Toevoegen",
   "printerScanFillMissing": "Elke aangevinkte printer heeft zijn eigen code nodig — vul de rode velden in.",
-  "printerScanAddFailed": "Die printers konden niet worden toegevoegd. Probeer het nog eens."
+  "printerScanAddFailed": "Die printers konden niet worden toegevoegd. Probeer het nog eens.",
+  "ffgFwTitle": "Cloud + LAN-firmware",
+  "ffgFwPitch": "De officiële FlashForge × TigerSystem-firmware: FlashForge Cloud en je netwerk, allebei tegelijk.",
+  "ffgFwUpToDate": "Up-to-date — Cloud en LAN staan allebei aan. Niks te doen.",
+  "ffgFwUpdate": "Versie {{version}} is uit. Download hem en installeer via een USB-stick.",
+  "ffgFwDownload": "{{version}} downloaden",
+  "ffgFwHowTo": "Zo installeer je hem",
+  "ffgFwNoOta": "Let op: sla de update over die je printer op zijn scherm aanbiedt — die zet de standaardfirmware terug en schakelt Cloud + LAN uit.",
+  "notifFfgFwTitle": "Er wacht nieuwe firmware op {{name}}",
+  "notifFfgFwText": "Cloud + LAN-firmware {{version}} — tik om het juiste bestand voor deze printer te halen."
 }

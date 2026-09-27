@@ -19,7 +19,7 @@ export const schema = {
     { fields: [
       { key: "serialNumber", labelKey: "printerLblSerial",   hintKey: "printerHintFFGSerial",
         placeholder: "FF-AD5X-XXXX", mono: true, required: true },
-      { key: "password",     labelKey: "printerLblPassword", hintKey: "printerHintFFGPassword",
+      { key: "password",     labelKey: "printerLblFFGPrinterId", hintKey: "printerHintFFGPassword",
         placeholder: "••••••••",     mono: true, required: true, secret: true }
     ]}
   ]

@@ -738,8 +738,9 @@
   "printerHelperElegooBullets": "IP nas configurações de rede. SN na etiqueta ou no menu Configurações.",
   "printerHelperFFGTitle": "Antes de começar",
   "printerHelperFFGBullets": [
-    "Encontre o IP e o número de série em Sobre → Rede.",
-    "Use a senha definida no FlashPrint ou Orca-Flashforge."
+    "Endereço IP e número de série: toque em \"Basic Info\", no canto inferior direito da tela principal da impressora.",
+    "Printer ID: ícone de engrenagem → \"Network Mode\".",
+    "Achou pelo escaneamento? Então só falta o Printer ID."
   ],
   "printerHelperSnapTitle": "Antes de começar",
   "printerHelperSnapBullets": [
@@ -755,9 +756,10 @@
   "printerHintElegooIP": "IP da rede local.",
   "printerHintElegooSerial": "Número de série na tela Sobre.",
   "printerHintElegooMqtt": "Código de acesso nas configurações de rede da impressora (padrão: 123456).",
-  "printerHintFFGIP": "IP da rede local.",
-  "printerHintFFGSerial": "Número de série na tela Sobre.",
-  "printerHintFFGPassword": "Mesma senha usada no FlashPrint.",
+  "printerHintFFGIP": "Na impressora: \"Basic Info\", no canto inferior direito da tela principal.",
+  "printerHintFFGSerial": "Mesma página \"Basic Info\", como \"Serial No.\".",
+  "printerHintFFGPassword": "Na impressora: ícone de engrenagem → \"Network Mode\".",
+  "printerLblFFGPrinterId": "Printer ID",
   "printerHintSnapIP": "IP local mostrado na tela de rede da Snapmaker.",
   "snapAddByIpLabel": "Endereço IP",
   "snapAddByIpButton": "Adicionar por IP",
@@ -1612,10 +1614,16 @@
   },
   "printerCloudMode": "Acessível pela nuvem",
   "holdToConfirmTip": "Segure {{s}} s para confirmar",
-  "printerScanAddSelected": {
-    "one": "Adicionar esta impressora",
-    "other": "Adicionar estas {{n}} impressoras"
-  },
+  "printerScanAdd": "Adicionar",
   "printerScanFillMissing": "Cada impressora marcada precisa do próprio código — preencha os campos em vermelho.",
-  "printerScanAddFailed": "Não deu para adicionar essas impressoras. Tente de novo."
+  "printerScanAddFailed": "Não deu para adicionar essas impressoras. Tente de novo.",
+  "ffgFwTitle": "Firmware Cloud + LAN",
+  "ffgFwPitch": "O firmware oficial FlashForge × TigerSystem: FlashForge Cloud e sua rede, os dois ao mesmo tempo.",
+  "ffgFwUpToDate": "Em dia — Cloud e LAN ligados. Nada a fazer.",
+  "ffgFwUpdate": "A versão {{version}} saiu. Baixe e instale pelo pendrive.",
+  "ffgFwDownload": "Baixar {{version}}",
+  "ffgFwHowTo": "Como instalar",
+  "ffgFwNoOta": "Atenção: pule a atualização que a impressora oferece na tela — ela volta ao firmware padrão e desliga o Cloud + LAN.",
+  "notifFfgFwTitle": "{{name}} tem um firmware novo esperando",
+  "notifFfgFwText": "Firmware Cloud + LAN {{version}} — toque para pegar o arquivo certo desta impressora."
 }

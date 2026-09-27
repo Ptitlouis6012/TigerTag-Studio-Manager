@@ -48,10 +48,10 @@ const PAXX_TTL_MS = 24 * 60 * 60 * 1000;
  * at this version instead of the very latest.
  */
 const PAXX_FALLBACK = {
-  tag: 'v1.4.1-paxx12-20',
-  binName: 'U1_extended_1.4.1-paxx12-20_upgrade.bin',
-  binUrl: 'https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware/releases/download/v1.4.1-paxx12-20/U1_extended_1.4.1-paxx12-20_upgrade.bin',
-  publishedAt: null,
+  tag: 'v1.6.0-paxx12-22',
+  binName: 'U1_extended_1.6.0-paxx12-22_upgrade.bin',
+  binUrl: 'https://github.com/paxx12-snapmaker-u1/SnapmakerU1-Extended-Firmware/releases/download/v1.6.0-paxx12-22/U1_extended_1.6.0-paxx12-22_upgrade.bin',
+  publishedAt: '2026-09-07T19:31:04Z',
   etag: null,
   fetchedAt: 0,
 };

@@ -4491,6 +4491,16 @@ let _ffmpegBin = null;
   });
 
   // Verify a token (and fetch the email) via userInfo. { ok, email } | { ok:false }.
+  /* Anycubic's shared cloud-MQTT TLS identity (CA + the client cert/key every
+     Anycubic slicer ships), for DEVICES that connect to the broker themselves —
+     a TigerSpool reads them off the printer's Firestore doc. Handed over as-is,
+     never logged. */
+  ipcMain.handle('anycubic:cloud-certs', async () => ({
+    caDerB64:      certs.CA_DER_B64,
+    clientCertPem: certs.CLIENT_CERT_PEM,
+    clientKeyPem:  certs.CLIENT_KEY_PEM,
+  }));
+
   ipcMain.handle('anycubic:cloud-verify', async (_evt, token) => {
     try {
       const r = await _cloudFetch(token, 'GET', '/user/profile/userInfo', null);

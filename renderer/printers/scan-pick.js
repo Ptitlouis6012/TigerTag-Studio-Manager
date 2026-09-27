@@ -68,7 +68,7 @@ export function createScanPicker({ ctx, brand, resultsId, prefillFor, onSingle, 
       b.hidden = n === 0;
       b.disabled = busy;
       const lbl = b.querySelector('.label');
-      if (lbl) lbl.textContent = ctx.t('printerScanAddSelected', { n });
+      if (lbl) lbl.textContent = ctx.t('printerScanAdd');
     }
     _syncFields();
   }

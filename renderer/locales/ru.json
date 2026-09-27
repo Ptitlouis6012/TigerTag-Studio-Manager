@@ -738,8 +738,9 @@
   "printerHelperElegooBullets": "Найдите IP в сетевых настройках принтера. Серийный номер — на этикетке принтера или в меню Настройки.",
   "printerHelperFFGTitle": "Прежде чем начать",
   "printerHelperFFGBullets": [
-    "Найдите IP и серийный номер в разделе О программе → Сеть.",
-    "Используйте пароль, заданный в FlashPrint или Orca-Flashforge."
+    "IP-адрес и серийный номер: нажми «Basic Info» внизу справа на главном экране принтера.",
+    "Printer ID: значок шестерёнки → «Network Mode».",
+    "Нашёлся через сканирование? Тогда нужен только Printer ID."
   ],
   "printerHelperSnapTitle": "Прежде чем начать",
   "printerHelperSnapBullets": [
@@ -755,9 +756,10 @@
   "printerHintElegooIP": "IP в локальной сети.",
   "printerHintElegooSerial": "Серийный номер с экрана «О программе» принтера.",
   "printerHintElegooMqtt": "Код доступа из сетевых настроек принтера (по умолчанию: 123456).",
-  "printerHintFFGIP": "IP в локальной сети.",
-  "printerHintFFGSerial": "Серийный номер с экрана «О программе» принтера.",
-  "printerHintFFGPassword": "Тот же пароль, что вы используете в FlashPrint.",
+  "printerHintFFGIP": "На принтере: «Basic Info», внизу справа на главном экране.",
+  "printerHintFFGSerial": "Та же страница «Basic Info», строка «Serial No.».",
+  "printerHintFFGPassword": "На принтере: значок шестерёнки → «Network Mode».",
+  "printerLblFFGPrinterId": "Printer ID",
   "printerHintSnapIP": "Локальный IP, показанный на экране сети Snapmaker.",
   "snapAddByIpLabel": "IP-адрес",
   "snapAddByIpButton": "Добавить по IP",
@@ -1612,10 +1614,16 @@
   },
   "printerCloudMode": "Доступ через облако",
   "holdToConfirmTip": "Удерживайте {{s}} с для подтверждения",
-  "printerScanAddSelected": {
-    "one": "Добавить этот принтер",
-    "other": "Добавить эти принтеры ({{n}})"
-  },
+  "printerScanAdd": "Добавить",
   "printerScanFillMissing": "Каждому отмеченному принтеру нужен свой код — заполни красные поля.",
-  "printerScanAddFailed": "Не получилось добавить эти принтеры. Попробуй ещё раз."
+  "printerScanAddFailed": "Не получилось добавить эти принтеры. Попробуй ещё раз.",
+  "ffgFwTitle": "Прошивка Cloud + LAN",
+  "ffgFwPitch": "Официальная прошивка FlashForge × TigerSystem: FlashForge Cloud и твоя сеть — одновременно.",
+  "ffgFwUpToDate": "Всё свежее — Cloud и LAN работают вместе. Делать ничего не нужно.",
+  "ffgFwUpdate": "Вышла версия {{version}}. Скачай и установи с флешки.",
+  "ffgFwDownload": "Скачать {{version}}",
+  "ffgFwHowTo": "Как установить",
+  "ffgFwNoOta": "Внимание: пропусти обновление, которое принтер предлагает на своём экране — оно вернёт стандартную прошивку и отключит Cloud + LAN.",
+  "notifFfgFwTitle": "Для {{name}} есть новая прошивка",
+  "notifFfgFwText": "Прошивка Cloud + LAN {{version}} — нажми, чтобы взять нужный файл для этого принтера."
 }

@@ -101,6 +101,9 @@ contextBridge.exposeInMainWorld('anycubic', {
     // Per-printer live status (current nozzle/bed temps) via REST `parameter`.
     printerInfo: (token, printerId) => ipcRenderer.invoke('anycubic:cloud-printer-info', { token, printerId }),
     verify:      (token)  => ipcRenderer.invoke('anycubic:cloud-verify', token),
+    // Shared cloud-MQTT TLS identity → { caDerB64, clientCertPem, clientKeyPem },
+    // copied onto cloud printer docs for devices (TigerSpool) that dial the broker.
+    certs:       ()       => ipcRenderer.invoke('anycubic:cloud-certs'),
     // Send an ACE order (1206 = getInfo, 1211 = setSlot). The report comes
     // back over cloud MQTT. opts = { token, orderId, printerId, data }.
     sendOrder:   (opts)   => ipcRenderer.invoke('anycubic:cloud-send-order', opts),

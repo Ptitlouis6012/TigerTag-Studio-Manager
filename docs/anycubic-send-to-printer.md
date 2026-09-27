@@ -74,7 +74,8 @@ account's cloud printers; pick the online one to add it.
 
 Printers are stored as Firestore docs under `users/{uid}/printers/anycubic/devices`.
 LAN docs carry `{ ip, acuModelId, deviceId, username, password }`; cloud docs carry
-`{ mode:"cloud", cloudPrinterId, machineType, key, cloudToken, cloudEmail }` (doc id
+`{ mode:"cloud", cloudPrinterId, machineType, key, cloudToken, cloudEmail }` plus the
+shared TLS identity (see *Cloud provisioning*) (doc id
 `cloud_<id>`, so re-provisioning upserts and refreshes the token). They sync across
 your devices like every other printer.
 
@@ -127,6 +128,21 @@ handles this:
   instead of failing silently.
 
 LAN printers are unaffected by any of this.
+
+### TLS identity on the doc — for devices that dial the broker themselves
+Cloud docs also carry `acuCloudCaDerB64`, `acuCloudClientCertPem` and
+`acuCloudClientKeyPem`, for devices (TigerSpool) that connect to the cloud MQTT broker
+(`mqtt-universe.anycubic.com:8883`) themselves, the way the app's main process does.
+They are Anycubic's **shared** TLS identity — the CA certificate (DER, base64 without
+whitespace) and the client certificate + key (PEM, newlines kept) — copied verbatim from
+`services/anycubicCloudCerts.js` through the `anycubic:cloud-certs` IPC. With them, the
+doc holds everything such a device needs: `key`, `machineType`, `cloudEmail`,
+`cloudToken`, and the TLS identity.
+
+- Written when a cloud printer is added, again on every token refresh, and once at
+  startup for any cloud doc that predates them (catch-up).
+- **Never** written on LAN docs, and neither these values nor `cloudToken` are ever
+  logged.
 
 > **Note — one cloud connection at a time.** The cloud MQTT broker enforces a fixed
 > client id per account, so the app and the slicer's Workbench can't both hold a cloud

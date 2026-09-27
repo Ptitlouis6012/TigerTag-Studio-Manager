@@ -738,8 +738,9 @@
   "printerHelperElegooBullets": "在网络设置中找到IP。序列号在打印机标签或设置菜单中。",
   "printerHelperFFGTitle": "开始之前",
   "printerHelperFFGBullets": [
-    "在 关于 → 网络 中查找 IP 和序列号。",
-    "使用您在 FlashPrint 或 Orca-Flashforge 中设置的密码。"
+    "IP 地址和序列号：点击打印机主界面右下角的「Basic Info」。",
+    "Printer ID：齿轮图标 →「Network Mode」。",
+    "通过扫描找到的？那只需要填 Printer ID。"
   ],
   "printerHelperSnapTitle": "开始之前",
   "printerHelperSnapBullets": [
@@ -755,9 +756,10 @@
   "printerHintElegooIP": "本地网络 IP。",
   "printerHintElegooSerial": "关于屏幕中的序列号。",
   "printerHintElegooMqtt": "可在打印机的网络设置中找到访问码（默认：123456）。",
-  "printerHintFFGIP": "本地网络 IP。",
-  "printerHintFFGSerial": "关于屏幕中的序列号。",
-  "printerHintFFGPassword": "与 FlashPrint 中使用的密码相同。",
+  "printerHintFFGIP": "在打印机上：主界面右下角的「Basic Info」。",
+  "printerHintFFGSerial": "同一个「Basic Info」页面，「Serial No.」一栏。",
+  "printerHintFFGPassword": "在打印机上：齿轮图标 →「Network Mode」。",
+  "printerLblFFGPrinterId": "Printer ID（打印机 ID）",
   "printerHintSnapIP": "Snapmaker 网络屏幕上显示的本地 IP。",
   "snapAddByIpLabel": "IP 地址",
   "snapAddByIpButton": "通过 IP 添加",
@@ -1612,10 +1614,16 @@
   },
   "printerCloudMode": "通过云端连接",
   "holdToConfirmTip": "按住 {{s}} 秒确认",
-  "printerScanAddSelected": {
-    "one": "添加这台打印机",
-    "other": "添加这 {{n}} 台打印机"
-  },
+  "printerScanAdd": "添加",
   "printerScanFillMissing": "每台勾选的打印机都需要自己的代码，请填好红框。",
-  "printerScanAddFailed": "这些打印机没能添加成功，再试一次吧。"
+  "printerScanAddFailed": "这些打印机没能添加成功，再试一次吧。",
+  "ffgFwTitle": "Cloud + LAN 固件",
+  "ffgFwPitch": "FlashForge × TigerSystem 官方固件：FlashForge 云和局域网同时开启。",
+  "ffgFwUpToDate": "已是最新：云和局域网都已开启，无需操作。",
+  "ffgFwUpdate": "{{version}} 版已发布。下载后用 U 盘安装。",
+  "ffgFwDownload": "下载 {{version}}",
+  "ffgFwHowTo": "如何安装",
+  "ffgFwNoOta": "注意：请跳过打印机屏幕上提示的更新——它会换回标准固件并关闭 Cloud + LAN。",
+  "notifFfgFwTitle": "{{name}} 有新固件可用",
+  "notifFfgFwText": "Cloud + LAN 固件 {{version}}——点击获取这台打印机对应的文件。"
 }

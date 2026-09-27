@@ -54,6 +54,7 @@ import {
   openFlashforgeFiles, closeFlashforgeFiles,
 } from './printers/flashforge/index.js';
 import { renderFfgCamBanner, renderFfgCamWallBanner, ffgRefreshCamBanner, ffgCamBaseUrl } from './printers/flashforge/widget_camera.js';
+import { c5fwIsCreator5, c5fwEnsureLatest, c5fwStatus, c5fwLabel } from './printers/flashforge/creator5-fw.js';
 import { ffgMuxStart, ffgMuxStop, ffgMuxStopAll, ffgMuxRestart, ffgMuxRegister, ffgMuxUnregister } from './printers/flashforge/cam_mux.js';
 import { renderSnapCamBanner } from './printers/snapmaker/widget_camera.js';
 import { openSnapAddFlow } from './printers/snapmaker/add-flow.js';
@@ -16992,7 +16993,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _rebuildDetailKeepVideo(opts) {
     const keepV = $("detailPanel")?.querySelector(".panel-video-player video") || null;
     const vState = keepV ? { node: keepV, time: keepV.currentTime, paused: keepV.paused } : null;
-    openDetail(state.selected, opts);
+    /* Keep the scroll too: every caller refreshes the spool ALREADY on screen
+       (a container change, a structural diff) — without it the card jumped
+       back to the top on each save made from further down. */
+    openDetail(state.selected, { preserveScroll: true, ...opts });
     if (!vState) return;
     const newV = $("detailPanel")?.querySelector(".panel-video-player video");
     if (newV && newV.getAttribute("src") === vState.node.getAttribute("src")) {
@@ -21950,6 +21954,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
             return String(a.printerName || "").localeCompare(String(b.printerName || ""));
           });
           state.printers = all;
+          // Anycubic cloud printers added before the TLS-identity fields existed.
+          _backfillAnycubicCloudCerts().catch(e => console.warn("[anycubic] cloud cert backfill:", e?.message));
           // The machines have just arrived — their units can now be recorded.
           syncAllPrinterUnits();
           scheduleStudioStateRecord();  // re-arm deferred telemetry (printer count changed)
@@ -26540,6 +26546,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // When a brand reaches "connected", auto-clear forced-offline so the
       // badge and panel return to their live state correctly.
       if (status === "connected" && key) _ppForcedOfflineKeys.delete(key);
+      // A FlashForge online has read its firmware version — a Creator 5 may be
+      // due the Cloud + LAN firmware. Slight delay: `/detail` lands after connect.
+      if (status === "connected" && String(key || "").startsWith("flashforge:")) {
+        setTimeout(() => { _maybeNotifyFfgFirmware().catch(() => {}); }, 4000);
+      }
       if (typeof refreshOpenPrinterDetail === "function") refreshOpenPrinterDetail();
       // In cam mode, a connection/disconnection must refresh the wall so new
       // feeds appear (or stale cards disappear) without the user leaving the view.
@@ -26762,10 +26773,50 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   };
 
+  /* The shared Anycubic cloud-MQTT TLS identity, as Firestore fields. Copied
+     onto every CLOUD printer doc (never a LAN one) so a device that dials
+     mqtt-universe.anycubic.com itself — a TigerSpool — finds everything on the
+     doc it already reads (key, machineType, cloudEmail, cloudToken). Fetched
+     once per session from the main process; values are never logged. */
+  let _acuCertFieldsP = null;
+  function _acuCloudCertFields() {
+    if (!_acuCertFieldsP) {
+      _acuCertFieldsP = Promise.resolve(window.anycubic?.cloud?.certs?.())
+        .then(c => (c && c.caDerB64 && c.clientCertPem && c.clientKeyPem) ? {
+          acuCloudCaDerB64:      String(c.caDerB64),
+          acuCloudClientCertPem: String(c.clientCertPem),
+          acuCloudClientKeyPem:  String(c.clientKeyPem),
+        } : null)
+        .catch(() => null);
+      _acuCertFieldsP.then(f => { if (!f) _acuCertFieldsP = null; });   // retry next time
+    }
+    return _acuCertFieldsP;
+  }
+  // Catch-up for cloud printers added before the fields existed. Runs on EVERY
+  // printers snapshot — the brands arrive one subcollection at a time, so the
+  // first snapshot may not hold the Anycubic docs yet — and tries each doc once
+  // per session (a failed write is not hammered on every later snapshot).
+  const _acuCertBackfillTried = new Set();
+  async function _backfillAnycubicCloudCerts() {
+    const uid = state.activeAccountId;
+    if (!uid) return;
+    const missing = (state.printers || []).filter(p => p.brand === "anycubic" && p.mode === "cloud"
+      && !_acuCertBackfillTried.has(p.id)
+      && !(p.acuCloudCaDerB64 && p.acuCloudClientCertPem && p.acuCloudClientKeyPem));
+    if (!missing.length) return;
+    const fields = await _acuCloudCertFields();
+    if (!fields) return;                                   // main process not ready — next snapshot retries
+    missing.forEach(p => _acuCertBackfillTried.add(p.id));
+    const devices = fbDb(uid).collection("users").doc(uid).collection("printers").doc("anycubic").collection("devices");
+    await Promise.all(missing.map(p => devices.doc(p.id).set(fields, { merge: true })
+      .catch(e => console.warn("[anycubic] cloud cert backfill failed:", e?.code)))); // code only — never the values
+  }
+
   _printerCtx.addAnycubicCloudPrinter = async (rec) => {
     const uid = state.activeAccountId;
     if (!uid) return { ok: false, error: "no-account" };
     try {
+      const certFields = (await _acuCloudCertFields()) || {};
       const ref = fbDb(uid).collection("users").doc(uid)
         .collection("printers").doc("anycubic")
         .collection("devices").doc("cloud_" + rec.cloudPrinterId);
@@ -26784,6 +26835,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         printerModelId: String(rec.printerModelId || "0"),
         isActive:       existing ? !!existing.isActive : false,
         sortIndex:      existing && Number.isFinite(existing.sortIndex) ? existing.sortIndex : state.printers.length,
+        ...certFields,  // acuCloudCaDerB64 / acuCloudClientCertPem / acuCloudClientKeyPem
         updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
       return { ok: true, id: ref.id };
@@ -26801,12 +26853,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!uid || !token) return { ok: false };
     try {
       const db = fbDb(uid);
+      const certFields = (await _acuCloudCertFields()) || {};
       const cloudDocs = (state.printers || []).filter(p => p.brand === "anycubic" && p.mode === "cloud");
       await Promise.all(cloudDocs.map(p => {
         p.cloudToken = token; if (email) p.cloudEmail = email; // keep state in sync now
         return db.collection("users").doc(uid).collection("printers").doc("anycubic")
           .collection("devices").doc(p.id)
-          .set({ cloudToken: token, ...(email ? { cloudEmail: email } : {}) }, { merge: true });
+          .set({ cloudToken: token, ...(email ? { cloudEmail: email } : {}), ...certFields }, { merge: true });
       }));
       return { ok: true, n: cloudDocs.length };
     } catch (e) {
@@ -34588,6 +34641,54 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (n?.tag) localStorage.setItem(PAXX_DISMISSED_LS_KEY, n.tag);
     _clearLocalNotif("paxx");
   }
+  // ── FlashForge Creator 5 "Cloud + LAN" firmware notice ────────────────────
+  // Same contract as the paxx notice above (card click / "Remind me later" =
+  // this session only, ✕ = this release never again), for the firmware
+  // FlashForge built with TigerTag (printers/flashforge/creator5-fw.js). The
+  // installed version comes from the LIVE connection (`/detail` →
+  // firmwareVersion), so it is checked when a FlashForge comes online rather
+  // than on the Firestore snapshot, where nothing has been read yet.
+  const FFGFW_DISMISSED_LS_KEY = "tigertag.ffgCreator5Fw.dismissedTag";
+  let _ffgFwSessionSnoozeTag = null;
+  async function _maybeNotifyFfgFirmware() {
+    const creators = (state.printers || []).filter(p => p.brand === "flashforge" && c5fwIsCreator5(p));
+    if (!creators.length) return;
+    const rec = await c5fwEnsureLatest();
+    if (!rec?.tag) return;
+    const outdated = creators.find(p =>
+      c5fwStatus(ffgGetConn(ffgKey(p))?.data?.info?.firmware, rec.tag) === "update");
+    if (!outdated) return;
+    if (localStorage.getItem(FFGFW_DISMISSED_LS_KEY) === rec.tag) return;
+    if (_ffgFwSessionSnoozeTag === rec.tag) return;
+    const pName = (outdated.printerName || "").trim() || PRINTER_BRAND_META.flashforge?.label || "FlashForge";
+    _setLocalNotif({
+      id: "ffgfw", icon: "download", action: "ffgfw", brand: "flashforge",
+      title: t("notifFfgFwTitle", { name: pName }),
+      text: t("notifFfgFwText", { version: c5fwLabel(rec.tag) }),
+      tag: rec.tag, printerId: outdated.id, printerName: pName,
+    });
+  }
+  function _ffgFwSnooze() {
+    const n = (state.localNotifications || []).find(x => x.id === "ffgfw");
+    if (n?.tag) _ffgFwSessionSnoozeTag = n.tag;
+    _clearLocalNotif("ffgfw");
+    return n;
+  }
+  // Card click → the machine's page and its Info window, where the firmware
+  // block hands over the right file and the USB walkthrough.
+  function _openFfgFwPrinter() {
+    const n = _ffgFwSnooze();
+    const printer = (state.printers || []).find(p => p.id === n?.printerId && p.brand === "flashforge");
+    if (!printer) return;
+    openPrinterDetail("flashforge", printer.id);
+    openFlashforgeInfo(printer);
+  }
+  function _dismissFfgFwNotif() {
+    const n = (state.localNotifications || []).find(x => x.id === "ffgfw");
+    if (n?.tag) localStorage.setItem(FFGFW_DISMISSED_LS_KEY, n.tag);
+    _clearLocalNotif("ffgfw");
+  }
+
 
   // Remove a local notification by id (e.g. the avatar nudge once a photo is set).
   function _clearLocalNotif(id) {
@@ -34760,7 +34861,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const localHtml = locals.map(n => {
       // Community nudges + avatar: the whole row IS the call-to-action (no button).
       const isCommunity = !!COMMUNITY[n.action];
-      const clickable = isCommunity || n.action === "avatar" || n.action === "paxx" || n.action === "lowstock";
+      const isFw = n.action === "paxx" || n.action === "ffgfw";   // firmware notices: later + ✕
+      const clickable = isCommunity || n.action === "avatar" || isFw || n.action === "lowstock";
       const brandIc = isCommunity ? ` notif-ic--${n.action}`         // branded square icon
         : (n.action === "lowstock" ? " notif-ic--lowstock" : "");    // amber alert icon
       // A notice originating from a printer speaks WITH its brand logo (the
@@ -34780,10 +34882,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="fp-friend-main">
           ${n.title ? `<div class="notif-title">${esc(n.title)}</div>` : ""}
           <div class="notif-text">${esc(n.text)}${n.version ? ` (v${esc(n.version)})` : ""}</div>
-          ${n.action === "paxx" ? `<button type="button" class="primary sm notif-later" title="${esc(t("notifRemindLater"))}"><span class="icon icon-bell icon-12"></span>${esc(t("notifRemindLater"))}</button>` : ""}
+          ${isFw ? `<button type="button" class="primary sm notif-later" title="${esc(t("notifRemindLater"))}"><span class="icon icon-bell icon-12"></span>${esc(t("notifRemindLater"))}</button>` : ""}
         </div>
         ${n.action === "restart" ? `<button class="primary sm notif-restart">${esc(t("btnRestartUpdate"))}</button>` : ""}
-        ${n.action === "paxx" ? `<button type="button" class="fp-friend-btn notif-dismiss notif-dismiss-paxx" title="${esc(t("cancelLabel"))}"><span class="icon icon-close icon-13"></span></button>` : ""}
+        ${isFw ? `<button type="button" class="fp-friend-btn notif-dismiss notif-dismiss-paxx" title="${esc(t("cancelLabel"))}"><span class="icon icon-close icon-13"></span></button>` : ""}
       </div>`;
     }).join("");
     const notifHtml = notifs.map(n => {
@@ -34834,17 +34936,19 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // "Remind me later" on the paxx notice — snooze without permanently
     // dismissing. stopPropagation so it doesn't also trigger the row's open.
     list.querySelectorAll(".notif-later").forEach(btn =>
-      btn.addEventListener("click", e => { e.stopPropagation(); _snoozePaxxNotif(); }));
+      btn.addEventListener("click", e => { e.stopPropagation();
+        if (btn.closest("[data-local-id]")?.dataset.localId === "ffgfw") _ffgFwSnooze(); else _snoozePaxxNotif(); }));
     // ✕ close on the paxx notice — the ONLY permanent block (this release never
     // notifies again). stopPropagation so it doesn't also trigger the row's open.
     list.querySelectorAll(".notif-dismiss-paxx").forEach(btn =>
-      btn.addEventListener("click", e => { e.stopPropagation(); _dismissPaxxNotif(); }));
+      btn.addEventListener("click", e => { e.stopPropagation(); if (btn.closest("[data-local-id]")?.dataset.localId === "ffgfw") _dismissFfgFwNotif(); else _dismissPaxxNotif(); }));
     list.querySelectorAll(".notif-item--clickable").forEach(row =>
       row.addEventListener("click", () => {
         closeNotifs();
         const a = row.dataset.localAction;
         if (a === "avatar") _changeMyAvatar();
         else if (a === "paxx") _openPaxxPrinter();
+        else if (a === "ffgfw") _openFfgFwPrinter();
         else if (a === "lowstock") _openLowStockProduct(row.dataset.localId);
         else if (COMMUNITY[a]) _openCommunityLink(a);
       }));

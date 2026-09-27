@@ -324,7 +324,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Racks CRUD + slots (L27594-31341)
+## Racks CRUD + slots (L27594-31560)
 | L | What | Anchors |
 |---|---|---|
 | 12429-12563 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
@@ -336,7 +336,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Storage view render + DnD (L29928-33111)
+## Storage view render + DnD (L29928-33300)
 | L | What | Anchors |
 |---|---|---|
 | 13283-13922 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
@@ -373,7 +373,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Custom avatar (L33504-35481)
+## Custom avatar (L33504-35700)
 | L | What | Anchors |
 |---|---|---|
 | 15637-15811 | File pick, image decode, alpha detection, resize to blob, upload, remove | `uploadCustomAvatar`, `removeCustomAvatar` |

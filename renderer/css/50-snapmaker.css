@@ -2089,6 +2089,20 @@
 .ffg-info-card { width: min(420px, 92vw); }
 .ffg-info-body { padding: 4px 18px 18px; max-height: 70vh; overflow-y: auto; }
 .ffg-info-section { margin-top: 14px; }
+/* Creator 5 / 5 Pro "Cloud + LAN" firmware block (flashforge/creator5-fw.js). */
+.ffg-fw-status {
+  font-size: 13px; line-height: 1.45; color: var(--text);
+  padding: 8px 10px; border-radius: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.ffg-fw-status--current { border-color: color-mix(in srgb, var(--success) 45%, var(--border)); }
+.ffg-fw-status--update  {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+}
+.ffg-fw-actions { display: flex; gap: 8px; margin-top: 10px; }
+.ffg-fw-actions .ffg-fw-btn { flex: 1 1 0; min-width: 0; justify-content: center; }
+.ffg-fw-note { margin-top: 8px; font-size: 11.5px; line-height: 1.4; color: var(--muted); }
 .ffg-info-section-title {
   font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
   color: var(--muted); margin-bottom: 6px;
