@@ -206,10 +206,6 @@
   "debugLabel": "Отладка",
   "debugSubtitle": " — последний запрос и ответ API",
   "debugNoReqs": "Запросов пока нет.",
-  "sectionColors": {
-    "one": "Цвет",
-    "other": "Цвета"
-  },
   "sectionPrint": "Настройки печати",
   "sectionWeight": "Вес",
   "sectionLinks": "Документы и ссылки",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "Как установить",
   "ffgFwNoOta": "Внимание: пропусти обновление, которое принтер предлагает на своём экране — оно вернёт стандартную прошивку и отключит Cloud + LAN.",
   "notifFfgFwTitle": "Для {{name}} есть новая прошивка",
-  "notifFfgFwText": "Прошивка Cloud + LAN {{version}} — нажми, чтобы взять нужный файл для этого принтера."
+  "notifFfgFwText": "Прошивка Cloud + LAN {{version}} — нажми, чтобы взять нужный файл для этого принтера.",
+  "sectionAspect": "Фактура",
+  "colorEditPill": "Сменить цвет"
 }

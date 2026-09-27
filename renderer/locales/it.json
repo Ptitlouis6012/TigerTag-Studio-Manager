@@ -206,10 +206,6 @@
   "debugLabel": "Debug",
   "debugSubtitle": " — ultima richiesta & risposta API",
   "debugNoReqs": "Nessuna richiesta ancora.",
-  "sectionColors": {
-    "one": "Colore",
-    "other": "Colori"
-  },
   "sectionPrint": "Impostazioni di stampa",
   "sectionWeight": "Peso",
   "sectionLinks": "Documenti & link",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "Come installarlo",
   "ffgFwNoOta": "Attenzione: salta l'aggiornamento che la stampante propone sul suo schermo — rimette il firmware standard e spegne Cloud + LAN.",
   "notifFfgFwTitle": "Per {{name}} c'è un nuovo firmware",
-  "notifFfgFwText": "Firmware Cloud + LAN {{version}}: tocca per avere il file giusto per questa stampante."
+  "notifFfgFwText": "Firmware Cloud + LAN {{version}}: tocca per avere il file giusto per questa stampante.",
+  "sectionAspect": "Finitura",
+  "colorEditPill": "Cambia colore"
 }

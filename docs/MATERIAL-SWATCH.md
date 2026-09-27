@@ -8,16 +8,18 @@
 
 ## The rule in one line
 
-**Everything is a camembert except a ramp, and every ramp is at 135°.**
-Bicolor is not a special case: two equal conic sectors put the boundary on the
-vertical axis, so the vertical split is a *consequence* of the pie, guaranteed
-on a round swatch, a square tile and a clipped fill bar alike.
+**Two hard colours split on the 135° diagonal, three or more make a camembert,
+smooth colours make a 135° ramp** (convention v1.1). Bicolor is the ramp's
+hard-edged twin: same axis, first colour top-left, a hard edge at 50 % — on a
+round swatch, a square tile, a clipped fill bar and the colour frame round a
+photo alike. (v1.0 split bicolor vertically; the frame round product photos
+showed why that read as two separate bars.)
 
 ## Where it lives in Studio
 
 | | `renderer/inventory.js` |
 |---|---|
-| The pie | `_pieSplit(colors)` |
+| The hard split (2 → diagonal, 3+ → pie) | `_pieSplit(colors)` |
 | The ramp angle | `RAMP_ANGLE` (`135deg`) |
 | The decision ladder | `colorBg(row)` |
 | Watermark variant | `isColorDark(bg)` → `logoSrc(bg)` |

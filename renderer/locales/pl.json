@@ -205,10 +205,6 @@
   "debugLabel": "Debugowanie",
   "debugSubtitle": "Eksplorator API i Firestore",
   "debugNoReqs": "Brak żądań",
-  "sectionColors": {
-    "one": "Kolor",
-    "other": "Kolory"
-  },
   "sectionPrint": "Ustawienia druku",
   "sectionWeight": "Waga",
   "sectionLinks": "Dokumenty",
@@ -1624,5 +1620,7 @@
   "ffgFwHowTo": "Jak zainstalować",
   "ffgFwNoOta": "Uwaga: pomiń aktualizację, którą drukarka proponuje na ekranie — przywraca standardowy firmware i wyłącza Cloud + LAN.",
   "notifFfgFwTitle": "Na {{name}} czeka nowy firmware",
-  "notifFfgFwText": "Firmware Cloud + LAN {{version}} — stuknij, by pobrać plik dla tej drukarki."
+  "notifFfgFwText": "Firmware Cloud + LAN {{version}} — stuknij, by pobrać plik dla tej drukarki.",
+  "sectionAspect": "Wykończenie",
+  "colorEditPill": "Zmień kolor"
 }

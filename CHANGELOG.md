@@ -5,6 +5,35 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.30.0 — 2026-09-28
+
+### Added
+
+- **FlashForge Creator 5 / 5 Pro — the official "Cloud + LAN" firmware, surfaced in the app.** FlashForge built it with TigerTag; it is distributed from the new public repo `TigerTag-Project/FlashForge-TigerTag-Creator5-Firmware-Lan-and-Cloud` (one GitHub Release per version, assets `Creator5-<v>.tgz` + `Creator5Pro-<v>.tgz`, installed over USB). Resolver `renderer/printers/flashforge/creator5-fw.js`: GitHub `releases/latest`, 24 h cache + ETag, build-time fallback, per-model asset pick, `X.Y.Z-A.B.C` version compare. On a Creator 5 the printer's Info window gains a firmware block (up to date / update available, "Download <version>" for THAT model, "How to install" → the repo's USB walkthrough, and a warning not to use the printer's own OTA update); a local notification (same later / ✕ contract as the Paxx one) fires when a connected Creator 5 runs an older version — `renderer/printers/flashforge/{creator5-fw.js,index.js}`, `renderer/inventory.js`, `renderer/css/50-snapmaker.css`.
+- **Grid cards: long names scroll on hover.** A name wider than its card starts scrolling the moment the card is hovered (out to its end, pause, back, loop — `cardNameMarquee`, driven by `--mq-dist` / `--mq-dur`), ellipsised again on leave; honours `prefers-reduced-motion` — `renderer/inventory.js`, `renderer/css/70-detail-misc.css`.
+- **Anycubic cloud printers carry the cloud-MQTT TLS identity (for TigerSpool).** Cloud docs (`users/{uid}/printers/anycubic/devices/cloud_<id>`) now also store `acuCloudCaDerB64`, `acuCloudClientCertPem`, `acuCloudClientKeyPem`, so a TigerSpool can dial `mqtt-universe.anycubic.com:8883` itself. Served by a new `anycubic:cloud-certs` IPC (`services/anycubicCloudCerts.js`); written on add, on every token refresh, and as a per-doc catch-up on each printers snapshot for older cloud docs. Never written to LAN docs, never logged — `main.js`, `preload.js`, `renderer/inventory.js`, `docs/anycubic-send-to-printer.md`.
+
+### Changed
+
+- **Spool photos framed in the spool's colour, everywhere.** Grid cards, product card, spool detail card, grouped spools, inventory / favorites lists, wishlist rows, the catalogue list and the product-info (reorder) header: the photo is inset (transparent border + `background-clip`, or `padding: 7%` on the wrap) over `--spool-bg: colorBg(row)`, so the colour shows round it with rounded photo corners — `renderer/inventory.js`, `renderer/css/70-detail-misc.css`.
+- **Material swatch convention v1.1: bicolor on the 135° diagonal.** Any two hard-edged colours now render `linear-gradient(135deg, c1 50%, c2 50%)` (first colour top-left) instead of a vertical split; 3+ colours stay a conic camembert. Amended first in TigerSystem-Docs (`material-swatch.md`, reference renderer, French translation); one change in `_pieSplit`, so every surface follows — `renderer/inventory.js`, `playground/material-swatch/index.html`, `docs/MATERIAL-SWATCH.md`.
+- **Colour dots removed where the frame now says it**: grid card names, grouped-spools names, the product-info header, and the big circle of the spool detail / product cards. The section is titled "Aspect" (was "Colour(s) & Aspect"); on a TigerData spool the colour editor the circle used to open is a "Change colour" chip (`aspect-chip--action`) beside the aspect chips. Table colour columns unchanged — `renderer/inventory.js`, `renderer/css/70-detail-misc.css`.
+- **Photos held back while results move.** `body.photos-held` (`visibility: hidden`, images keep loading) during a drag of the colour-filter window, and for 1 s after the last wheel notch on it or the last scroll of a results list (each restarts the timer — `_photoHold`, capture `scroll` listener) — `renderer/inventory.js`, `renderer/css/70-detail-misc.css`.
+- **Product card: one identity block** — brand · material, the name, then one chip row with aspects 1-2, info1-3 (refill / recycled / filled) and the capacity weight. The separate Aspect and Weight sections, the always-full fill bar, its scale and "1 kg total" are gone — `renderer/inventory.js`.
+- Spool detail card: the master-spool (container) section sits above the weight section — it sets the tare the weight is read against — `renderer/inventory.js`.
+- Master spool: the "change master spool" / "edit its weight" buttons on the spool card and the weight pencil in the container picker are always visible in grey, brightening on hover — `renderer/css/70-detail-misc.css`.
+- FlashForge add form (#29): the "Password" field is labelled **Printer ID** (the printer's own wording); hints point at "Basic Info" / gear → "Network Mode"; field key stays `password` — `renderer/printers/flashforge/settings.js`.
+- LAN scan: the multi-add button reads just "Add" (`printerScanAdd`, was `printerScanAddSelected` with a plural) — `renderer/printers/scan-pick.js`.
+- Snapmaker Paxx firmware: offline fallback bumped to `v1.6.0-paxx12-22` (#21) — `renderer/printers/snapmaker/paxx.js`.
+
+### Fixed
+
+- Grid cards and catalogue list: the inset photo stays invisible until loaded (`.img-loaded`, no fade so a cached rebuild doesn't blink) — its empty rounded, shadowed box showed as a ghost square — `renderer/inventory.js`, `renderer/css/70-detail-misc.css`.
+- Spool detail card: the ✓ of the image-URL bar now saves AND closes it (`closeCustomImgForm()`); it stayed open when the URL was unchanged — `renderer/inventory.js`.
+- Spool detail card: a rebuild (master-spool change or any edit) keeps the scroll position (`_rebuildDetailKeepVideo` → `preserveScroll: true`) instead of jumping to the top — `renderer/inventory.js`.
+
+---
+
 ## v2.29.0 — 2026-09-23
 
 ### Added

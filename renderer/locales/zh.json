@@ -206,10 +206,6 @@
   "debugLabel": "调试",
   "debugSubtitle": " — 最后一次 API 请求 & 响应",
   "debugNoReqs": "暂无请求。",
-  "sectionColors": {
-    "one": "颜色",
-    "other": "颜色"
-  },
   "sectionPrint": "打印设置",
   "sectionWeight": "重量",
   "sectionLinks": "文档 & 链接",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "如何安装",
   "ffgFwNoOta": "注意：请跳过打印机屏幕上提示的更新——它会换回标准固件并关闭 Cloud + LAN。",
   "notifFfgFwTitle": "{{name}} 有新固件可用",
-  "notifFfgFwText": "Cloud + LAN 固件 {{version}}——点击获取这台打印机对应的文件。"
+  "notifFfgFwText": "Cloud + LAN 固件 {{version}}——点击获取这台打印机对应的文件。",
+  "sectionAspect": "外观",
+  "colorEditPill": "更改颜色"
 }

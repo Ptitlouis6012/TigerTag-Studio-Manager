@@ -633,6 +633,17 @@
   .thumb-placeholder { width: 48px; height: 48px; border-radius: 8px; background: var(--surface-2); display: inline-flex; align-items: center; justify-content: center; }
   .thumb-placeholder img { width: 30px; height: 30px; opacity: .6; }
   .thumb-wrap { position: relative; display: inline-flex; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+  /* Every spool thumb (inventory / favorites lists, grouped spools…): the spool
+     colour frames the photo, photo corners rounded INSIDE the frame. thumbHTML
+     sets --spool-bg on the wrap; the photo gets a transparent border (border-box,
+     so the thumb keeps its size) and a radius — a replaced element's content is
+     clipped to its padding edge (outer radius minus border), so the photo
+     itself comes out rounded. background-clip stops .thumb's grey fill from
+     painting under the border and hiding the frame. */
+  .thumb-wrap:has(> img.thumb) { background: var(--spool-bg, var(--surface-2)); }
+  .thumb-wrap > img.thumb {
+    box-sizing: border-box; border: 4px solid transparent; border-radius: 10px; background-clip: padding-box;
+  }
   .thumb-color { display: inline-flex; align-items: flex-start; justify-content: flex-end; }
   .thumb-color img { width: 42%; margin: 8%; }
   /* Twin + backup as round badges stacked top-left of a thumbnail/illustration
@@ -1718,6 +1729,9 @@
      so override it here; the colour-square fallback gets 65 inline from size). */
   .gp-member-left { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; }
   .gp-member-thumb .thumb-wrap { border-radius: 8px; }
+  /* Grouped-spools thumbs are larger: a slightly thicker frame (the generic
+     thumb frame is defined with .thumb-wrap). */
+  .gp-member-thumb .thumb-wrap > img.thumb { border-width: 5px; }
   .gp-member .thumb { width: 65px; height: 65px; }
   .gp-member-info {
     flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px;
@@ -1746,12 +1760,45 @@
   }
   .spool-card .card-img-color-placeholder > img:first-child { width: 28%; margin: 8%; }
   /* Product photo overlay — sits on top of the colour square; hidden on error */
+  /* Inset, not full-bleed: the colour square behind shows round the photo as a
+     frame in the spool's own colour. Sized explicitly — an <img> is a replaced
+     element and would not stretch from `inset` alone. */
   .spool-card .card-img--overlay {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    object-fit: cover; display: block;
+    position: absolute; top: 7%; left: 7%; width: 86%; height: 86%;
+    object-fit: cover; display: block; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+    opacity: 0;   /* no fade: a grid rebuild re-loads from cache and would blink every card */
   }
+  /* Hidden until its bytes are in (the lazy loader adds .img-loaded on load):
+     otherwise the empty inset box — radius + shadow — showed as a ghost square
+     over the colour placeholder while the photo was on its way. */
+  .spool-card .card-img--overlay.img-loaded { opacity: 1; }
+  /* Photos held back (body.photos-held): while the colour-filter window is
+     dragged, and for 1 s after the last wheel notch on it or the last scroll
+     of a results list — the items show only their colour. `visibility`, not
+     `display`, so the images keep loading and are simply there when released. */
+  body.photos-held .spool-card .card-img--overlay,
+  body.photos-held .thumb-wrap > img.thumb,
+  body.photos-held .inv-catalog-view .cv-thumb-img,
+  body.photos-held img.pv-thumb { visibility: hidden; }
   .spool-card .card-body { padding: 10px 10px 8px; }
   .spool-card .card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Hovered card with a name too long to fit: it scrolls to its end and back
+     (wired in inventory.js — --mq-dist / --mq-dur are measured per card). */
+  .spool-card .card-name.is-marquee { text-overflow: clip; }
+  /* Starts moving the instant the card is hovered — no lead-in pause: out
+     (0-40 %), rest at the end (40-55 %), back (55-95 %), a short rest at the
+     start (95-100 %) before the next loop. */
+  .card-name-mq {
+    display: inline-block;
+    animation: cardNameMarquee var(--mq-dur, 4s) ease-in-out infinite;
+  }
+  @keyframes cardNameMarquee {
+    0%        { transform: translateX(0); }
+    40%, 55%  { transform: translateX(var(--mq-dist, 0)); }
+    95%, 100% { transform: translateX(0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .card-name-mq { animation: none; } }
   .spool-card .card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Products grid 2nd sub-line (Series / Aspect) — slightly stronger than the brand·material line. */
   .spool-card .card-sub--extra { margin-top: 1px; color: var(--text); font-weight: 600; }
@@ -2005,6 +2052,17 @@
   #panelBody { scrollbar-width: none; }
   #panelBody::-webkit-scrollbar { width: 0; height: 0; }
   .panel-img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surface-2); }
+  /* Product card: the photo is inset so the spool colour painted on the wrap
+     shows round it as a frame — same look as the grid cards. PADDING on the
+     wrap, not a margin on the photo: the photo's top margin collapsed through
+     the wrap, pushing the whole frame down and leaving the photo flush with its
+     top edge. Padding in % is taken from the width, so the frame stays square. */
+  #productCardPanel .panel-img-wrap:has(> .panel-img),
+  #detailPanel .panel-img-wrap:has(> .panel-img) { padding: 7%; }
+  #productCardPanel .panel-img-wrap > .panel-img,
+  #detailPanel .panel-img-wrap > .panel-img {
+    border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+  }
   .panel-img-placeholder { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg,var(--surface-2),#2a1a0e); display: flex; align-items: center; justify-content: center; }
   .panel-img-placeholder img { width: 40%; opacity: .5; }
   .panel-img-color-placeholder { width: 100%; aspect-ratio: 1; display: flex; align-items: flex-start; justify-content: flex-end; overflow: hidden; }
@@ -2304,6 +2362,19 @@
   .temp-chip .tc-value { font-size: 15px; font-weight: 600; margin-top: 2px; }
   .aspect-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
   .aspect-chip { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+  /* The colour editor, now a chip beside the aspects (the big colour circle
+     that used to open it is gone — the photo's frame shows the colour). */
+  /* Product card: aspects, refill/recycled/filled and the weight share one chip
+     row under the name (no separate Aspect / Weight sections). */
+  .pc-ident-chips { margin-top: 10px; }
+  .aspect-chip--weight { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+  .aspect-chip--weight .icon { background-color: var(--muted); }
+  .aspect-chip--action {
+    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600;
+    cursor: pointer; color: var(--primary); border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+    transition: background .12s;
+  }
+  .aspect-chip--action:hover { background: color-mix(in srgb, var(--primary) 12%, var(--surface-2)); }
 
   /* ── Tags / Balises (detail panel) ── */
   .panel-tags .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -2415,32 +2486,8 @@
     font-size: 13px; color: var(--text); outline: none;
   }
   .tag-input:focus { border-color: var(--primary); }
-  /* color circle + aspect tags side-by-side */
+  /* aspect / info chips row (the colour circle is gone — the photo frame shows it) */
   .color-aspect-row { display: flex; align-items: flex-start; gap: 12px; margin-top: 6px; }
-  .color-circles-col { flex-shrink: 0; }
-  /* Colour-edit trigger — the colour circle itself becomes a button (TigerCloud
-     spools only: they're 100 % digital, so the colour lives in Firestore and can
-     be re-edited freely; a burned TigerTag/TigerTag+ chip must not be changed
-     casually). A "+" fades in on hover; no button chrome at all. */
-  .color-edit-trigger {
-    position: relative; background: transparent !important;
-    border: none; outline: none; padding: 0; margin: 0;
-    cursor: pointer; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    -webkit-appearance: none; transform: none !important;
-  }
-  .color-edit-trigger .color-circle { margin-right: 0; }
-  .color-edit-trigger:hover  { background: transparent !important; }
-  .color-edit-trigger:active { background: transparent !important; transform: none !important; }
-  .color-edit-plus {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    color: #fff; font-size: 22px; font-weight: 300; line-height: 1;
-    text-shadow: 0 1px 5px rgba(0,0,0,.8);
-    opacity: 0; transition: opacity .15s;
-    pointer-events: none; user-select: none;
-  }
-  .color-edit-trigger:hover .color-edit-plus { opacity: 1; }
   .aspect-col { flex: 1; }
   .aspect-col .aspect-chips { margin-top: 0; }
   .links-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
@@ -3048,10 +3095,11 @@
     display: flex; align-items: center; justify-content: center;
     border: none; border-radius: 4px;
     background: transparent; color: var(--muted); cursor: pointer;
-    opacity: 0; transition: opacity .15s, color .15s, background .15s;
+    transition: color .15s, background .15s;
   }
-  .cc-cw-btn.cc-visible       { opacity: 1; }
-  .cc-cw-btn.cc-visible:hover { color: var(--primary); background: var(--primary-soft); }
+  /* Always visible (grey), brighten on hover — a control that only appears on
+     hover can't be found. */
+  .cc-cw-btn:hover { color: var(--text); background: var(--surface-2); }
   .cc-cw-edit-row {
     display: none; align-items: center; gap: 4px; margin-top: 2px;
   }
@@ -3077,11 +3125,10 @@
     display: flex; align-items: center; justify-content: center;
     border: none; border-radius: 8px;
     background: transparent; color: var(--muted); cursor: pointer;
-    opacity: 0; transition: opacity .15s, color .15s, background .15s;
+    transition: color .15s, background .15s;
     pointer-events: auto;
   }
-  .cc-edit.cc-visible       { opacity: 1; }
-  .cc-edit.cc-visible:hover { color: var(--primary); background: var(--primary-soft); }
+  .cc-edit:hover { color: var(--text); background: var(--surface-2); }
   /* change-container ghost trigger in weight section */
   .cp-trigger {
     font-size: 11px; color: var(--muted); gap: 4px;
@@ -3456,12 +3503,9 @@
     transition: background .12s, color .12s, opacity .12s;
   }
   .cp-cw-btn .icon { background-color: currentColor; }
-  .cp-cw-btn:hover { background: var(--border); color: var(--primary); }
-  /* The pencil stays discreet until the row is hovered — it must not compete
-     with the weight it edits. Kept visible while its own row is being edited. */
-  .cp-cw-pencil { opacity: 0; }
-  .cp-item:hover .cp-cw-pencil,
-  .cp-cw-pencil:focus-visible { opacity: 1; }
+  /* Always visible in grey, brightening on hover — same as the master-spool
+     card's own edit buttons. */
+  .cp-cw-btn:hover { background: var(--surface-2); color: var(--text); }
   .cp-cw-badge {
     font-size: 9.5px; font-weight: 700; letter-spacing: .04em;
     color: var(--primary); background: var(--primary-soft);
@@ -3599,6 +3643,15 @@
     width: 58px; height: 58px; border-radius: 13px; flex-shrink: 0;
     object-fit: cover; background: var(--surface-2);
     border: 1px solid var(--border);
+  }
+  /* The spool colour frames the photo, like everywhere else: a 5 px border,
+     painted with the colour as a border-box background (it can be a gradient —
+     bicolor, rainbow — so it can't be a border-color), the usual grey under the
+     photo itself, and the photo corners rounded inside (radius minus border). */
+  .ro-thumb:not(.ro-thumb--broken) {
+    border: 5px solid transparent;
+    background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
+                var(--spool-bg, var(--surface-2)) border-box;
   }
   .ro-thumb--broken { object-fit: initial; }
   /* Text column owns all width left of the chevron, so every line truncates
@@ -4336,6 +4389,11 @@
   .lv-qty-ro { font-size: 13px; font-weight: 700; color: var(--muted); }
   .lv-row-thumb { flex: 0 0 84px; }
   .lv-row-thumb .pv-thumb { width: 84px; height: 84px; border-radius: 10px; object-fit: cover; display: block; }
+  /* Wishlist rows: the item's colour frames its photo (inner corners rounded by
+     the radius minus the border). The colour swatch fallback stays plain. */
+  .lv-row-thumb img.pv-thumb {
+    box-sizing: border-box; border: 5px solid var(--spool-bg, var(--border)); border-radius: 12px;
+  }
   .lv-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .lv-row-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; }
   .lv-row-meta { font-size: 12px; color: var(--muted); }
@@ -4549,8 +4607,12 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
   position: absolute; top: 8%; right: 8%; width: 42%;
 }
 .inv-catalog-view .cv-thumb-img {
-  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block;
+  /* Inset 4 px: the thumb's own colour background frames the photo. */
+  position: absolute; top: 4px; left: 4px; width: calc(100% - 8px); height: calc(100% - 8px);
+  object-fit: cover; display: block; border-radius: 4px;
+  opacity: 0;   /* no empty inset box before the bytes arrive (no fade — rebuilds re-load from cache) */
 }
+.inv-catalog-view .cv-thumb-img.img-loaded { opacity: 1; }
 
 /* Product card — the shopping button. Plain while the product has no buy link
    (it then opens the Reorder card to create one); Shopify green once it has one,

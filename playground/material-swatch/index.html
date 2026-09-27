@@ -128,6 +128,7 @@ const LOGO_PATH         = "../../assets/svg/logos/logo_tigertag.svg";
 const LOGO_PATH_OUTLINE = "../../assets/svg/logos/logo_tigertag_contouring.svg";
 
 const _pieSplit = (colors) => {
+  if (colors.length === 2) return `linear-gradient(${RAMP_ANGLE}, ${colors[0]} 50%, ${colors[1]} 50%)`;
   const step = 360 / colors.length;
   const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
   return `conic-gradient(${stops.join(', ')})`;
@@ -237,10 +238,10 @@ const CASES = [
   { t: "White product — #FFFFFFFF", branch: "cls.length === 1",
     row: { colorList: ["FFFFFFFF"] } },
 
-  { t: "Bicolor — declared aspect, chip slots", branch: "isBicolor → _pieSplit (2 sectors)", isNew: true,
-    note: "Two equal sectors put the boundary on the vertical axis, so bicolor IS the guaranteed vertical split — on a circle, a square or a clipped strip. Shared with the Add-Product preview, which used to draw the same line mirrored.",
+  { t: "Bicolor — declared aspect, chip slots", branch: "isBicolor → _pieSplit (2 colours ⇒ diagonal)", isNew: true,
+    note: "Convention v1.1: two hard colours split on the 135° diagonal — first colour top-left, edge top-right → bottom-left through the centre, on a circle, a square, a clipped strip or a photo frame. Shared with the Add-Product preview.",
     row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#000000", aspect2: "Bicolor" } },
-  { t: "Two colours in the list, no declared type", branch: "cls.length >= 2 → _pieSplit", isNew: true,
+  { t: "Two colours in the list, no declared type", branch: "cls.length >= 2 → _pieSplit (2 ⇒ diagonal)", isNew: true,
     row: { colorList: ["e02424", "2463e0"] } },
 
   { t: "Tricolor — declared aspect, chip slots", branch: "isTricolor → _pieSplit (3 sectors)",

@@ -9203,5 +9203,155 @@
         }
       }
     ]
+  },
+  "2.30.0": {
+    "date": "2026-09-28",
+    "items": [
+      {
+        "icon": "download",
+        "title": {
+          "en": "Creator 5: the good firmware, one click away",
+          "fr": "Creator 5 : le bon firmware, à un clic",
+          "de": "Creator 5: die richtige Firmware, einen Klick entfernt",
+          "es": "Creator 5: el firmware bueno, a un clic",
+          "it": "Creator 5: il firmware giusto, a un clic",
+          "zh": "Creator 5：对的固件，一键即得",
+          "pt": "Creator 5: o firmware certo, a um clique",
+          "pt-pt": "Creator 5: o firmware certo, à distância de um clique",
+          "pl": "Creator 5: właściwy firmware, jedno kliknięcie",
+          "ru": "Creator 5: правильная прошивка в один клик",
+          "nl": "Creator 5: de goede firmware, één klik verderop"
+        },
+        "body": {
+          "en": "Own a FlashForge Creator 5 or 5 Pro? Its info window now tells you if you're on the official Cloud + LAN firmware, hands you the download for your exact model and shows how to install it by USB. We'll even ping you when a new one drops.",
+          "fr": "Tu as une FlashForge Creator 5 ou 5 Pro ? Sa fenêtre d'infos te dit si tu es sur le firmware officiel Cloud + LAN, te tend le téléchargement pour ton modèle exact et montre comment l'installer par clé USB. On te prévient même quand une nouvelle version sort.",
+          "de": "Du hast einen FlashForge Creator 5 oder 5 Pro? Sein Infofenster sagt dir, ob die offizielle Cloud + LAN-Firmware drauf ist, reicht dir den Download für genau dein Modell und zeigt die Installation per USB-Stick. Wir melden uns sogar, wenn eine neue Version erscheint.",
+          "es": "¿Tienes una FlashForge Creator 5 o 5 Pro? Su ventana de información te dice si llevas el firmware oficial Cloud + LAN, te da la descarga para tu modelo exacto y te enseña a instalarlo por USB. Incluso te avisamos cuando salga uno nuevo.",
+          "it": "Hai una FlashForge Creator 5 o 5 Pro? La sua finestra info ti dice se hai il firmware ufficiale Cloud + LAN, ti passa il download per il tuo modello esatto e ti mostra come installarlo via USB. Ti avvisiamo pure quando ne esce uno nuovo.",
+          "zh": "你有 FlashForge Creator 5 或 5 Pro 吗？它的信息窗口会告诉你是否装着官方 Cloud + LAN 固件，直接给你对应型号的下载，并教你用 U 盘安装。有新版本时我们还会提醒你。",
+          "pt": "Tem uma FlashForge Creator 5 ou 5 Pro? A janela de informações diz se você está no firmware oficial Cloud + LAN, entrega o download do seu modelo exato e mostra como instalar por USB. A gente ainda avisa quando sair um novo.",
+          "pt-pt": "Tem uma FlashForge Creator 5 ou 5 Pro? A janela de informações diz-lhe se está no firmware oficial Cloud + LAN, dá-lhe a transferência para o seu modelo exato e mostra como instalar por USB. Ainda avisamos quando sair um novo.",
+          "pl": "Masz FlashForge Creator 5 lub 5 Pro? Jego okno informacji powie ci, czy masz oficjalny firmware Cloud + LAN, poda plik dla twojego modelu i pokaże, jak wgrać go z pendrive'a. Damy znać, gdy wyjdzie nowy.",
+          "ru": "У тебя FlashForge Creator 5 или 5 Pro? Окно с информацией подскажет, стоит ли официальная прошивка Cloud + LAN, даст скачать её именно для твоей модели и покажет, как поставить с флешки. А когда выйдет новая — мы напомним.",
+          "nl": "Heb je een FlashForge Creator 5 of 5 Pro? Het infovenster vertelt je of de officiële Cloud + LAN-firmware erop staat, geeft je de download voor precies jouw model en laat zien hoe je hem via USB installeert. We seinen je zelfs in als er een nieuwe uit is."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "Every photo wears its own colour",
+          "fr": "Chaque photo porte sa couleur",
+          "de": "Jedes Foto trägt seine Farbe",
+          "es": "Cada foto luce su color",
+          "it": "Ogni foto veste il suo colore",
+          "zh": "每张照片都穿上自己的颜色",
+          "pt": "Cada foto veste a sua cor",
+          "pt-pt": "Cada foto veste a sua cor",
+          "pl": "Każde zdjęcie w swoim kolorze",
+          "ru": "Каждое фото — в своём цвете",
+          "nl": "Elke foto in zijn eigen kleur"
+        },
+        "body": {
+          "en": "Spool photos now sit in a frame of the spool's colour — grid, lists, wishlist, catalogue, details. Spot the red one at a glance, no more hunting for a tiny dot.",
+          "fr": "Les photos de bobines sont maintenant encadrées de la couleur de la bobine — grille, listes, wishlist, catalogue, fiches. Tu repères la rouge d'un coup d'œil, fini de chercher un minuscule point.",
+          "de": "Spulenfotos sitzen jetzt in einem Rahmen in der Farbe der Spule — Raster, Listen, Wunschliste, Katalog, Details. Die rote findest du auf einen Blick, keine Suche mehr nach einem winzigen Punkt.",
+          "es": "Las fotos de bobinas ahora van enmarcadas con el color de la bobina — cuadrícula, listas, wishlist, catálogo, detalles. Encuentras la roja de un vistazo, sin buscar un puntito.",
+          "it": "Le foto delle bobine ora hanno una cornice del colore della bobina — griglia, liste, wishlist, catalogo, dettagli. Trovi quella rossa al volo, basta cercare un puntino.",
+          "zh": "线材照片现在都套上了线材本身颜色的边框——网格、列表、心愿单、目录、详情都一样。红色那卷一眼就能找到，不用再找小圆点了。",
+          "pt": "As fotos dos carretéis agora ficam numa moldura da cor do carretel — grade, listas, lista de desejos, catálogo, detalhes. Você acha o vermelho de relance, sem caçar um pontinho.",
+          "pt-pt": "As fotos das bobinas ficam agora numa moldura da cor da bobina — grelha, listas, lista de desejos, catálogo, detalhes. Encontra a vermelha num relance, sem procurar um pontinho.",
+          "pl": "Zdjęcia szpul mają teraz ramkę w kolorze szpuli — siatka, listy, lista życzeń, katalog, szczegóły. Czerwoną widać od razu, koniec szukania maleńkiej kropki.",
+          "ru": "Фото катушек теперь в рамке цвета самой катушки — сетка, списки, вишлист, каталог, карточки. Красную видно с первого взгляда, больше не надо искать крошечную точку.",
+          "nl": "Spoelfoto's zitten nu in een lijst in de kleur van de spoel — raster, lijsten, verlanglijst, catalogus, details. De rode vind je in één oogopslag, geen gezoek naar een piepklein stipje meer."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Two colours, one diagonal",
+          "fr": "Deux couleurs, une diagonale",
+          "de": "Zwei Farben, eine Diagonale",
+          "es": "Dos colores, una diagonal",
+          "it": "Due colori, una diagonale",
+          "zh": "双色，斜着来",
+          "pt": "Duas cores, uma diagonal",
+          "pt-pt": "Duas cores, uma diagonal",
+          "pl": "Dwa kolory, jedna przekątna",
+          "ru": "Два цвета, одна диагональ",
+          "nl": "Twee kleuren, één diagonaal"
+        },
+        "body": {
+          "en": "Two-colour spools are now split corner to corner. Same look in every corner of the app — it just reads better.",
+          "fr": "Les bobines bicolores sont maintenant coupées en diagonale, d'un coin à l'autre. Même rendu partout dans l'app — c'est juste plus lisible.",
+          "de": "Zweifarbige Spulen sind jetzt diagonal geteilt, von Ecke zu Ecke. Überall in der App gleich — liest sich einfach besser.",
+          "es": "Las bobinas bicolor ahora se parten en diagonal, de esquina a esquina. Igual en toda la app — simplemente se lee mejor.",
+          "it": "Le bobine bicolore ora sono divise in diagonale, da angolo ad angolo. Uguale in tutta l'app — si legge semplicemente meglio.",
+          "zh": "双色线材现在按对角线一分为二。整个应用里都一样——就是更好认。",
+          "pt": "Carretéis de duas cores agora são divididos na diagonal, de canto a canto. Igual no app inteiro — só fica mais legível.",
+          "pt-pt": "As bobinas bicolores são agora divididas na diagonal, de canto a canto. Igual em toda a app — simplesmente lê-se melhor.",
+          "pl": "Dwukolorowe szpule są teraz dzielone po przekątnej, od rogu do rogu. Tak samo w całej aplikacji — po prostu czytelniej.",
+          "ru": "Двухцветные катушки теперь делятся по диагонали, из угла в угол. Одинаково во всём приложении — просто читается лучше.",
+          "nl": "Tweekleurige spoelen worden nu diagonaal gesplitst, van hoek tot hoek. Overal in de app hetzelfde — leest gewoon beter."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Scroll in peace",
+          "fr": "Défile tranquille",
+          "de": "Scroll in Ruhe",
+          "es": "Desliza tranquilo",
+          "it": "Scorri in pace",
+          "zh": "安心滚动",
+          "pt": "Role em paz",
+          "pt-pt": "Deslize em paz",
+          "pl": "Przewijaj w spokoju",
+          "ru": "Листай спокойно",
+          "nl": "Scroll in alle rust"
+        },
+        "body": {
+          "en": "While you scroll or slide the colour filter, photos wait politely backstage and load in the background — then show up ready. No more flickery slideshow.",
+          "fr": "Pendant que tu défiles ou que tu bouges le filtre couleur, les photos attendent sagement en coulisse et se chargent en douce — puis arrivent prêtes. Fini le diaporama qui clignote.",
+          "de": "Während du scrollst oder den Farbfilter verschiebst, warten die Fotos brav hinter der Bühne und laden im Hintergrund — und erscheinen dann fertig. Schluss mit der flackernden Diashow.",
+          "es": "Mientras deslizas o mueves el filtro de color, las fotos esperan educadamente entre bastidores y cargan en segundo plano — y aparecen listas. Adiós al pase de diapositivas parpadeante.",
+          "it": "Mentre scorri o sposti il filtro colore, le foto aspettano educatamente dietro le quinte e si caricano in sottofondo — poi arrivano pronte. Addio slideshow lampeggiante.",
+          "zh": "滚动或拖动颜色筛选时，照片会乖乖在后台等待并悄悄加载——然后直接就绪登场。告别一闪一闪的幻灯片。",
+          "pt": "Enquanto você rola ou mexe no filtro de cor, as fotos esperam educadamente nos bastidores e carregam em segundo plano — e aparecem prontas. Chega de slideshow piscando.",
+          "pt-pt": "Enquanto desliza ou mexe no filtro de cor, as fotos esperam educadamente nos bastidores e carregam em segundo plano — e aparecem prontas. Acabou o diaporama a piscar.",
+          "pl": "Kiedy przewijasz albo przesuwasz filtr koloru, zdjęcia grzecznie czekają za kulisami i ładują się w tle — a potem wchodzą gotowe. Koniec z migającym pokazem slajdów.",
+          "ru": "Пока ты листаешь или двигаешь цветовой фильтр, фото вежливо ждут за кулисами и грузятся в фоне — а потом появляются уже готовыми. Никакого мигающего слайд-шоу.",
+          "nl": "Terwijl je scrolt of het kleurfilter verschuift, wachten de foto's netjes achter de schermen en laden ze op de achtergrond — en verschijnen ze kant-en-klaar. Geen flikkerende diashow meer."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Long names, full story",
+          "fr": "Noms longs, histoire complète",
+          "de": "Lange Namen, ganze Geschichte",
+          "es": "Nombres largos, historia completa",
+          "it": "Nomi lunghi, storia completa",
+          "zh": "长名字，完整呈现",
+          "pt": "Nomes longos, história completa",
+          "pt-pt": "Nomes longos, história completa",
+          "pl": "Długie nazwy, cała historia",
+          "ru": "Длинные имена — целиком",
+          "nl": "Lange namen, het hele verhaal"
+        },
+        "body": {
+          "en": "A spool name too long for its card? Hover it and the name rolls into view, end included. Your \"Silk Rainbow Dual-Color Extra Shiny\" finally gets its moment.",
+          "fr": "Un nom de bobine trop long pour sa carte ? Survole-la et le nom défile jusqu'au bout. Ta « Silk Rainbow Dual-Color Extra Shiny » a enfin son moment de gloire.",
+          "de": "Ein Spulenname zu lang für seine Karte? Fahr mit der Maus drüber und der Name rollt bis zum Ende durch. Deine „Silk Rainbow Dual-Color Extra Shiny“ bekommt endlich ihren Auftritt.",
+          "es": "¿Un nombre de bobina demasiado largo para su tarjeta? Pasa el ratón y el nombre se desliza hasta el final. Tu «Silk Rainbow Dual-Color Extra Shiny» por fin tiene su momento.",
+          "it": "Un nome di bobina troppo lungo per la sua scheda? Passaci sopra e il nome scorre fino in fondo. La tua «Silk Rainbow Dual-Color Extra Shiny» ha finalmente il suo momento.",
+          "zh": "线材名字太长，卡片放不下？鼠标移上去，名字就会滚动到底。你的“Silk Rainbow Dual-Color Extra Shiny”终于能完整亮相了。",
+          "pt": "Nome de carretel longo demais para o cartão? Passe o mouse e o nome desliza até o fim. Seu \"Silk Rainbow Dual-Color Extra Shiny\" finalmente tem seu momento.",
+          "pt-pt": "Nome de bobina demasiado longo para o cartão? Passe o rato por cima e o nome desliza até ao fim. A sua \"Silk Rainbow Dual-Color Extra Shiny\" tem finalmente o seu momento.",
+          "pl": "Nazwa szpuli za długa na kartę? Najedź na nią, a nazwa przewinie się do końca. Twój „Silk Rainbow Dual-Color Extra Shiny” wreszcie ma swoje pięć minut.",
+          "ru": "Название катушки не влезает в карточку? Наведи курсор — и оно прокрутится до конца. Твой «Silk Rainbow Dual-Color Extra Shiny» наконец-то в центре внимания.",
+          "nl": "Spoelnaam te lang voor zijn kaart? Ga er met de muis overheen en de naam rolt tot het einde door. Jouw \"Silk Rainbow Dual-Color Extra Shiny\" krijgt eindelijk zijn moment."
+        }
+      }
+    ]
   }
 }

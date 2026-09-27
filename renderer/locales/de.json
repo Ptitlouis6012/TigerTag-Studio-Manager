@@ -206,10 +206,6 @@
   "debugLabel": "Debug",
   "debugSubtitle": " — letzte API-Anfrage & -Antwort",
   "debugNoReqs": "Noch keine Anfragen.",
-  "sectionColors": {
-    "one": "Farbe",
-    "other": "Farben"
-  },
   "sectionPrint": "Druckeinstellungen",
   "sectionWeight": "Gewicht",
   "sectionLinks": "Dokumente & Links",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "So installierst du sie",
   "ffgFwNoOta": "Achtung: Überspring das Update, das dein Drucker auf seinem Bildschirm anbietet — es spielt die Standard-Firmware auf und schaltet Cloud + LAN ab.",
   "notifFfgFwTitle": "Für {{name}} wartet eine neue Firmware",
-  "notifFfgFwText": "Cloud-+-LAN-Firmware {{version}} — tippen, um die richtige Datei für diesen Drucker zu holen."
+  "notifFfgFwText": "Cloud-+-LAN-Firmware {{version}} — tippen, um die richtige Datei für diesen Drucker zu holen.",
+  "sectionAspect": "Oberfläche",
+  "colorEditPill": "Farbe ändern"
 }

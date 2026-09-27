@@ -197,7 +197,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Inventory render (L6846-11443)
+## Inventory render (L6846-11700)
 | L | What | Anchors |
 |---|---|---|
 | 5043-5257 | **`renderInventory()`** — welcome card, rack-view priority, table/grid dispatch | `renderInventory` |
@@ -218,7 +218,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## TigerTag+ catalogue (L11785-14279)
+## TigerTag+ catalogue (L11785-14500)
 | L | What | Anchors |
 |---|---|---|
 | 10905-10998 | Refresh API data for a spool | `_refreshApiData` |

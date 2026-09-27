@@ -206,10 +206,6 @@
   "debugLabel": "Debug",
   "debugSubtitle": " — laatste API-verzoek & -antwoord",
   "debugNoReqs": "Nog geen verzoeken.",
-  "sectionColors": {
-    "one": "Kleur",
-    "other": "Kleuren"
-  },
   "sectionPrint": "Printinstellingen",
   "sectionWeight": "Gewicht",
   "sectionLinks": "Documenten & links",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "Zo installeer je hem",
   "ffgFwNoOta": "Let op: sla de update over die je printer op zijn scherm aanbiedt — die zet de standaardfirmware terug en schakelt Cloud + LAN uit.",
   "notifFfgFwTitle": "Er wacht nieuwe firmware op {{name}}",
-  "notifFfgFwText": "Cloud + LAN-firmware {{version}} — tik om het juiste bestand voor deze printer te halen."
+  "notifFfgFwText": "Cloud + LAN-firmware {{version}} — tik om het juiste bestand voor deze printer te halen.",
+  "sectionAspect": "Afwerking",
+  "colorEditPill": "Kleur wijzigen"
 }

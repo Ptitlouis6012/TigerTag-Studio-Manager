@@ -206,10 +206,6 @@
   "debugLabel": "Debug",
   "debugSubtitle": " — last API request & response",
   "debugNoReqs": "No requests yet.",
-  "sectionColors": {
-    "one": "Color",
-    "other": "Colors"
-  },
   "sectionPrint": "Print settings",
   "sectionWeight": "Weight",
   "sectionLinks": "Documents & links",
@@ -1625,5 +1621,7 @@
   "ffgFwHowTo": "How to install",
   "ffgFwNoOta": "Heads-up: skip the update your printer offers on its own screen — it swaps this firmware for the standard one and turns Cloud + LAN off.",
   "notifFfgFwTitle": "{{name}} has a new firmware waiting",
-  "notifFfgFwText": "Cloud + LAN firmware {{version}} — tap to get the right file for this printer."
+  "notifFfgFwText": "Cloud + LAN firmware {{version}} — tap to get the right file for this printer.",
+  "sectionAspect": "Aspect",
+  "colorEditPill": "Change colour"
 }

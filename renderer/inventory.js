@@ -7524,14 +7524,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Hub, on the chip guide and in the Add-Product preview. Do not open-code a
   // gradient anywhere else.
 
-  // N COLOURS, HARD EDGES = a pie (conic) of N equal sectors, first colour
-  // starting at 12 o'clock and sweeping clockwise. Bicolor (2 sectors) and
-  // tricolor (3 sectors) are the ratified cases; an undeclared list of N is
-  // the same picture with N slices. The Add-Product preview shares this helper —
-  // it used to open-code a 50/50 linear split, which drew the same vertical line
-  // MIRRORED (slot 1 left instead of right), so a bicolor spool swapped sides
-  // between the preview and Save.
+  // HARD-EDGED COLOURS (convention v1.1, TigerSystem-Docs material-swatch.md):
+  //  • exactly TWO → a DIAGONAL split on the 135° axis (RAMP_ANGLE), first colour
+  //    top-left, hard edge at 50 % — the ramp's hard-edged twin. A vertical split
+  //    read as two separate objects, worst of all in the colour frame round a
+  //    photo, where only a left bar and a right bar showed;
+  //  • THREE or more → a pie (conic) of N equal sectors, first colour at
+  //    12 o'clock, clockwise.
+  // One helper for every hard split (catalogue list AND chip aspect). The
+  // Add-Product preview shares it — it used to open-code its own split and drew
+  // the bicolor MIRRORED, so a spool swapped sides between the preview and Save.
   const _pieSplit = (colors) => {
+    if (colors.length === 2) return `linear-gradient(${RAMP_ANGLE}, ${colors[0]} 50%, ${colors[1]} 50%)`;
     const step = 360 / colors.length;
     const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
     return `conic-gradient(${stops.join(', ')})`;
@@ -7584,7 +7588,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     } else if (isBicolor) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
       const [c1 = '#cccccc', c2 = '#ffffff'] = colors;
-      return _pieSplit([c1, c2]);   // 2 sectors ⇒ a vertical split, by construction
+      return _pieSplit([c1, c2]);   // 2 colours ⇒ the 135° diagonal split
     } else {
       return row.colorHex || '#1c2030';
     }
@@ -7771,7 +7775,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   document.addEventListener("load", e => {
     const img = e.target;
-    if (img instanceof HTMLImageElement && img.dataset.imgSrc) _imgDone(img);
+    if (!(img instanceof HTMLImageElement) || !img.dataset.imgSrc) return;
+    // Revealed only once decoded (CSS fades `.img-loaded` in): an inset photo
+    // with a radius + shadow drew an empty rounded square over the colour
+    // until the bytes arrived.
+    img.classList.add("img-loaded");
+    _imgDone(img);
   }, true);
 
   document.addEventListener("error", e => {
@@ -7903,7 +7912,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ? `<img class="thumb" src="${esc(src)}" width="${size}" height="${size}" loading="lazy"${fb} />`
       : `<span class="thumb-color" style="width:${size}px;height:${size}px;background:${colorBg(row)}"><img src="${logoSrc(colorBg(row))}" /></span>`;
     const shopBadge = badges ? _productBadgesHTML(row, { compact: true }) : "";
-    return `<span class="thumb-wrap">${inner}${overlay}${tdBadge}${chipBadge}${shopBadge}</span>`;
+    // --spool-bg: the spool colour, painted round the photo as a frame (CSS).
+    return `<span class="thumb-wrap" style="--spool-bg:${colorBg(row)}">${inner}${overlay}${tdBadge}${chipBadge}${shopBadge}</span>`;
   }
 
   // Fill-bar colour by remaining-filament percentage — kept iso with the
@@ -9125,7 +9135,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }</div>`;
     const pct = opts.product ? null
       : (r.weightAvailable != null && r.capacity) ? Math.max(0,Math.min(100,Math.round(r.weightAvailable/r.capacity*100))) : null;
-    const swatch = colorCircleHTML(r);
+    const swatch = "";   // the photo's colour frame says it — no dot before the name
     const badge   = opts.product ? "" : tierBadgeHTML(r, "", { backup: false }); // shield lives in the top-right cluster here
     const tdBadge = (!opts.product && r.td != null) ? `<span class="card-td-badge">TD ${r.td}</span>` : "";
     const chipDot = (!opts.product && r.needUpdateAt) ? `<span class="chip-badge card-chip-badge" title="${t("chipPendingHint")}"><span class="icon icon-refresh icon-11"></span></span>` : "";
@@ -9223,7 +9233,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // .card-body: rebuild — text-only, no `<img>` here so no flash
     const body = card.querySelector(".card-body");
     if (body) {
-      const swatch = colorCircleHTML(r);
+      const swatch = "";   // same as the full card build: the colour frame replaces the dot
       const pct = (r.weightAvailable != null && r.capacity) ? Math.max(0,Math.min(100,Math.round(r.weightAvailable/r.capacity*100))) : null;
       const badge = tierBadgeHTML(r, "", { backup: false }); // shield lives in the top-right cluster here
       const nameText = v(r.colorName) !== "-" ? r.colorName : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.material;
@@ -9273,6 +9283,43 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     card.innerHTML = _groupGridCardInnerHTML(g);
     card._sig = _groupGridSig(g);
   }
+
+  /* A card name too long for its card scrolls into view while the card is
+     hovered: out to its end, a pause, back — and again, for as long as the
+     pointer stays. Off hover the name is ellipsised as before (the text is only
+     wrapped in a moving span during the hover: an inline-block child would
+     lose the ellipsis). Delegated on the document, so rebuilt / patched cards
+     need no wiring. */
+  (function wireCardNameMarquee() {
+    const SPEED = 45;   // px per second
+    const start = card => {
+      const el = card.querySelector(".card-name");
+      if (!el || el.querySelector(":scope > .card-name-mq")) return;
+      const over = el.scrollWidth - el.clientWidth;
+      if (over < 2) return;                                   // fits — nothing to scroll
+      el.innerHTML = `<span class="card-name-mq">${el.innerHTML}</span>`;
+      el.style.setProperty("--mq-dist", `-${over}px`);
+      // Each travel (out, back) is 40 % of the loop, so the loop is 2.5× one
+      // travel at SPEED — floored so a short overflow doesn't flicker past.
+      el.style.setProperty("--mq-dur", `${Math.max(2, (over / SPEED) * 2.5).toFixed(2)}s`);
+      el.classList.add("is-marquee");
+    };
+    const stop = card => {
+      const el = card.querySelector(".card-name.is-marquee");
+      const mq = el?.querySelector(":scope > .card-name-mq");
+      if (!el || !mq) return;
+      el.innerHTML = mq.innerHTML;
+      el.classList.remove("is-marquee");
+    };
+    document.addEventListener("mouseover", e => {
+      const card = e.target.closest?.(".spool-card");
+      if (card && !card.contains(e.relatedTarget)) start(card);
+    });
+    document.addEventListener("mouseout", e => {
+      const card = e.target.closest?.(".spool-card");
+      if (card && !card.contains(e.relatedTarget)) stop(card);
+    });
+  })();
 
   function renderGrid(rows) {
     const grid = $("invGrid");
@@ -9339,7 +9386,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         ${tierBadgeHTML(r, "", { backup: !stackBackup })}
       </div>
       <div class="gp-member-info">
-        <div class="gp-member-name">${colorCircleHTML(r, 13)}${esc(name)}</div>
+        <div class="gp-member-name">${esc(name)}</div>
         <div class="gp-member-sub">${esc(materialWithAspect(r))} · ${esc(v(r.brand))}</div>
         <div class="gp-member-weight">${wTxt}</div>
         ${bar}
@@ -13470,7 +13517,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const l = p.label || {};
     const img = cdnImg(resolvedImg(l.imgUrl), 64);
     return img
-      ? `<img class="pv-thumb" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.style.background='${esc(l.colorHex || "var(--surface-2)")}'" />`
+      ? `<img class="pv-thumb" style="--spool-bg:${esc(l.colorHex || "var(--surface-2)")}" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.style.background='${esc(l.colorHex || "var(--surface-2)")}'" />`
       : `<span class="pv-thumb pv-thumb--swatch" style="background:${esc(l.colorHex || "var(--surface-2)")}"></span>`;
   }
 
@@ -16533,6 +16580,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         // Mirror onto the twin so both chips of one physical spool show the same
         // custom picture (was the most visible "reset data" on a twin's card).
         await _updateSpoolTwinned(r, update);
+        // Validate = done: close the bar now. It used to wait for the snapshot's
+        // panel rebuild to vanish, which never came when the URL was unchanged.
+        closeCustomImgForm();
+        $("customImgInput")?.blur();
         // onSnapshot re-renders the panel automatically.
         // If this material is also a PRODUCT (favorite / reorder), keep its
         // snapshot image in sync — the Favorites grid/table read `label.imgUrl`
@@ -16782,19 +16833,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
     if ($("btnChangeContainerCard")) {
       $("btnChangeContainerCard").addEventListener("click", () => openContainerPicker(r));
-      // JS hover — shows both edit-container and edit-weight buttons on hover
-      const ccSec = document.querySelector(".cc-section");
-      const ccBtn = $("btnChangeContainerCard");
-      if (ccSec && ccBtn) {
-        ccSec.addEventListener("mouseenter", () => {
-          ccBtn.classList.add("cc-visible");
-          if ($("btnEditCw")) $("btnEditCw").classList.add("cc-visible");
-        });
-        ccSec.addEventListener("mouseleave", () => {
-          ccBtn.classList.remove("cc-visible");
-          if ($("btnEditCw")) $("btnEditCw").classList.remove("cc-visible");
-        });
-      }
+      // (Both edit buttons are always visible now — no hover reveal to wire.)
     }
 
     // Inline container weight edit
@@ -17735,7 +17774,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       <button type="button" class="flag-toggle flag-toggle--wish${liked ? " active" : ""}" data-pc-flag="liked" aria-pressed="${liked}" data-tip="${esc(t("productLikeTip"))}" aria-label="${esc(t("productLike"))}"><span class="icon icon-cart-plus icon-16"></span></button>
       <button type="button" class="flag-toggle flag-toggle--like${fav ? " active" : ""}" data-pc-flag="favorite" aria-pressed="${fav}" data-tip="${esc(t("productFavoriteTip"))}" aria-label="${esc(t("productFavorite"))}"><span class="icon icon-star${fav ? "-fill" : ""} icon-16"></span></button>`;
     // COULEURS & ASPECT — identical markup to buildPanelHTML.
-    const colorsHtml = colorCircleHTML(r, 56);
     // Aspects, then the Refill / Recycled / Filled badges — same chips, wording
     // and i18n keys as the material side-card, which reads them from
     // `info1`/`info2`/`info3` via normalizeRow (isRefill/isRecycled/isFilled).
@@ -17745,28 +17783,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         r.isRecycled ? t("badgeRecycled") : null,
         r.isFilled   ? t("badgeFilled")   : null,
       ].filter(Boolean));
-    const badgeHtml = aspectChips.length
-      ? `<div class="aspect-chips">${aspectChips.map(a => `<span class="aspect-chip">${esc(a)}</span>`).join("")}</div>` : "";
+    const badgeHtml = aspectChips.map(a => `<span class="aspect-chip">${esc(a)}</span>`).join("");
     // POIDS — a product identity has no per-spool weight, so the spool is shown
     // FULL. Its CAPACITY is real though, and must not be invented: the seed
     // carries it (`measure_gr`/`measure` → `r.capacity`), and a catalogue preview
     // also has the raw "500 g" / "2 kg" string on its item. Hardcoding 1000 here
     // made every 500 g / 750 g / 2 kg product read as 1 kg.
     const cap = Number(r.capacity) || _catMeasureToGrams(p.catalogItem?.measure) || 1000;
-    const curW = cap, pctFill = 100;
-    const capTxt = cap >= 1000 ? (cap / 1000).toFixed(cap % 1000 === 0 ? 0 : 1) + ' kg' : cap + ' g';
-    const weightHtml = `
-      <div class="panel-section">
-        <div class="panel-label">${esc(t("sectionWeight"))}</div>
-        <div class="weight-bar-wrap">
-          <div class="wb-labels">
-            <div class="wb-val-group"><div class="wb-val">${curW}<span>g</span></div></div>
-            <div class="wb-cap">${capTxt} total</div>
-          </div>
-          <div class="wb-track wb-track--ro"><div class="wb-fill" style="width:${pctFill}%;background:${fillBarColor(pctFill)}"></div></div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px"><span>0 g</span><span>${cap} g</span></div>
-        </div>
-      </div>`;
+    const curW = cap;
+    // Shown as a chip in the identity block (with the aspects and the refill /
+    // recycled / filled data): a product's weight is its capacity — nothing is
+    // being used up, so no fill bar and no section of its own.
+    const weightChip = `<span class="aspect-chip aspect-chip--weight"><span class="icon icon-scale icon-12"></span>${curW} g</span>`;
     // PARAMÈTRES D'IMPRESSION — from the chip's own temps when present, else the
     // material DB's recommended values (same source + markup as buildPanelHTML).
     const temps = r.temps || {};
@@ -17902,20 +17930,16 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     body.innerHTML = `
       ${imgSection}
       <div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>
-      <div class="panel-section panel-identity">
+      <!-- One block for everything that says WHAT the product is: brand ·
+           material, name, then aspects 1-2, the refill / recycled / filled
+           data (info1-3) and the weight, as one row of chips. -->
+      <div class="panel-section panel-identity pc-identity">
         <div class="pi-ident-text">
           ${row1Parts.length ? `<div class="pi-row1">${row1Parts.join(" · ")}</div>` : ""}
           ${name2 ? `<div class="pi-row2 pi-row2--name">${esc(name2)}</div>` : ""}
+          <div class="aspect-chips pc-ident-chips">${badgeHtml}${weightChip}</div>
         </div>
       </div>
-      <div class="panel-section">
-        <div class="panel-label">${esc(t("sectionColors", { n: r.colorList.length }))} &amp; Aspect</div>
-        <div class="color-aspect-row">
-          <div class="color-circles-col"><div class="color-circles-display">${colorsHtml}</div></div>
-          <div class="aspect-col">${badgeHtml}</div>
-        </div>
-      </div>
-      ${weightHtml}
       ${printHtml}
       ${videoHtml}
       ${linksHtml}
@@ -18269,7 +18293,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // load error the <img> collapses to a coloured box (no src + swatch bg).
     const img = cdnImg(resolvedImg(r.imgUrl || link.label?.imgUrl), 58);
     const headVisual = img
-      ? `<img class="ro-thumb" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.classList.add('ro-thumb--broken');this.style.background='${swatch}'" />`
+      ? `<img class="ro-thumb" style="--spool-bg:${colorBg(r)}" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.classList.add('ro-thumb--broken');this.style.background='${swatch}'" />`
       : `<span class="ro-swatch" style="background:${swatch}"></span>`;
     _subscribeImportedProfile(link.importedFrom?.uid || null);   // live pseudo/avatar, friend or not
     const fromHTML = _importedFromHTML(link);
@@ -18279,7 +18303,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="ro-head-txt">
           <div class="ro-head-brand">${esc(r.brand || "—")}</div>
           <div class="ro-head-mat">${esc(materialWithAspect(r))}</div>
-          ${colourName ? `<div class="ro-head-color">${colorCircleHTML(r, 12)}<span class="ro-head-color-txt">${esc(colourName)}</span></div>` : ""}
+          ${colourName ? `<div class="ro-head-color"><span class="ro-head-color-txt">${esc(colourName)}</span></div>` : ""}
         </div>
         <span class="ro-head-go"><span class="icon icon-chevron-r icon-13"></span></span>
       </button>
@@ -18951,13 +18975,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ? `this.closest('.panel-img-wrap').classList.add('img-broken');this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`
       : `this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`;
     if (_resolvedPanel) {
-      imgSection = `<div class="panel-img-wrap">${overlays}<img class="panel-img" src="${esc(_resolvedPanel)}" onerror="${esc(onerrorScript)}" />${customImgBar}</div>`;
+      imgSection = `<div class="panel-img-wrap" style="background:${colorBg(r)}">${overlays}<img class="panel-img" src="${esc(_resolvedPanel)}" onerror="${esc(onerrorScript)}" />${customImgBar}</div>`;
     } else {
       imgSection = `<div class="panel-img-wrap">${overlays}<div class="panel-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" class="panel-img-logo" /></div>${customImgBar}</div>`;
     }
 
     // colors — same circle design as table rows
-    const colorsHtml = colorCircleHTML(r, 56);
 
     // print settings — renamed local var to avoid shadowing t()
     const temps = r.temps;
@@ -19443,24 +19466,25 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ${chipBannerHtml}
       ${identityHtml}
       <div class="panel-section">
-        <div class="panel-label">${t("sectionColors", {n: r.colorList.length})} &amp; Aspect</div>
+        <div class="panel-label">${esc(t("sectionAspect"))}</div>
         <div class="color-aspect-row">
-          <div class="color-circles-col">
-            ${(r.isCloud && !state.friendView)
-              ? `<button class="color-edit-trigger" id="btnEditColor" aria-label="${esc(t("colorEditTitle"))}">${colorsHtml || '<span style="color:var(--muted);font-size:13px">—</span>'}<span class="color-edit-plus" aria-hidden="true">+</span></button>`
-              : `<div class="color-circles-display">${colorsHtml || '<span style="color:var(--muted);font-size:13px">—</span>'}</div>`}
-          </div>
           <div class="aspect-col">
             ${aspectHtml}
             ${badgeHtml}
+            ${(r.isCloud && !state.friendView)
+              /* The big colour circle was the only way into the colour editor.
+                 The photo's frame now shows the colour, so the editor gets a
+                 pill of its own, styled like the aspect chips beside it. */
+              ? `<button class="aspect-chip aspect-chip--action" id="btnEditColor" type="button" aria-label="${esc(t("colorEditTitle"))}"><span class="icon icon-palette icon-12"></span>${esc(t("colorEditPill"))}</button>`
+              : ""}
           </div>
         </div>
       </div>
+      ${containerHtml}
       ${weightHtml}
       ${state.friendView ? "" : '<div id="usbScaleDock" class="usbscale-dock"></div>'}
       ${storageHtml}
       ${tagsHtml}
-      ${containerHtml}
       ${tempHtml}
       ${videoHtml}
       ${linksHtml}
@@ -30358,6 +30382,36 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      hold survives switching views, which is the point: you pick a colour and it
      keeps meaning the same thing wherever you look for it. */
   let _hueBarsWired = false;
+  /* Photos are held back (body.photos-held → hidden in CSS, still loading)
+     while the results are moving under the eye, so they appear loaded instead
+     of popping in one by one: during a drag of the colour window, and for 1 s
+     after the last wheel notch on it or the last scroll of a results list (each
+     new notch / scroll restarts the second). One state, so no source can bring
+     the photos back while another is still going. */
+  let _hueDragActive = false, _photoHoldT = 0;
+  function _hueHoldSync() {
+    document.body.classList.toggle("photos-held", _hueDragActive || !!_photoHoldT);
+  }
+  function _photoHold() {
+    clearTimeout(_photoHoldT);
+    _photoHoldT = setTimeout(() => { _photoHoldT = 0; _hueHoldSync(); }, 1000);
+    _hueHoldSync();
+  }
+  // Scrolling a results list (grid, table, catalogue…) — not a side panel.
+  // `scroll` doesn't bubble, hence the capture listener; whether a scroller
+  // holds results is asked once per element.
+  const _photoScrollers = new WeakMap();
+  document.addEventListener("scroll", e => {
+    const el = e.target === document ? document.scrollingElement : e.target;
+    if (!(el instanceof Element)) return;
+    let holds = _photoScrollers.get(el);
+    if (holds === undefined) {
+      holds = !el.closest(".detail-panel, .modal-overlay")
+        && !!el.querySelector(".spool-card, .thumb-wrap, .cv-thumb, .pv-thumb");
+      _photoScrollers.set(el, holds);
+    }
+    if (holds) _photoHold();
+  }, { capture: true, passive: true });
   function initHueBars() {
     if (_hueBarsWired) return;
     const _hueBar = $("rvHueBar"), _lumBar = $("rvLumBar");
@@ -30504,6 +30558,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
              down left it as it was and it took a pixel of movement to catch up
              — the grab looked like it had not registered. */
           bar.style.cursor = drag.mode === "move" ? "grabbing" : "ew-resize";
+          /* While the window is being dragged the results re-render on every
+             move, and each photo flickered in as it loaded. Hide the photos
+             (CSS keys on this class — `visibility`, so they keep loading
+             unseen) and show only the colours; they come back on release. */
+          _hueDragActive = true; _hueHoldSync();
           apply();
           e.preventDefault();
         });
@@ -30545,6 +30604,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           bar.classList.add("rv-hue-bar--eased");
           clearTimeout(bar._easeT);
           bar._easeT = setTimeout(() => bar.classList.remove("rv-hue-bar--eased"), 260);
+          _photoHold();   // photos hidden until 1 s after the last notch
           apply(); hover(e.clientX);
         }, { passive: false });
         bar.addEventListener("pointermove", e => {
@@ -30557,7 +30617,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         });
         // Released: the hand opens again, or goes back to the crosshair — decided
         // by where the pointer actually is, not by what it was doing.
-        const end = e => { drag = null; if (e && e.clientX != null) hover(e.clientX); };
+        const end = e => {
+          drag = null;
+          _hueDragActive = false; _hueHoldSync();   // photos back (unless a wheel second is still running)
+          if (e && e.clientX != null) hover(e.clientX);
+        };
         bar.addEventListener("pointerup", end);
         bar.addEventListener("pointercancel", end);
         /* Double-click INSIDE the bubble puts that bar back to sleep. Dropping a
