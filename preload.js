@@ -11,6 +11,18 @@ contextBridge.exposeInMainWorld('td1s', {
   release: () => ipcRenderer.send('td1s:release'),
 });
 
+// Local MCP server (AI assistants, read-only). The renderer registers the tool
+// list, answers `mcp:call` with `mcp:result`, and drives the Settings card.
+contextBridge.exposeInMainWorld('mcpBridge', {
+  registerTools: (tools) => ipcRenderer.send('mcp:register-tools', tools),
+  onCall:        (cb) => ipcRenderer.on('mcp:call', (_, req) => cb(req)),
+  reply:         (msg) => ipcRenderer.send('mcp:result', msg),
+  getConfig:     () => ipcRenderer.invoke('mcp:get-config'),
+  setEnabled:    (on) => ipcRenderer.invoke('mcp:set-enabled', on),
+  newToken:      () => ipcRenderer.invoke('mcp:new-token'),
+  install:       (target) => ipcRenderer.invoke('mcp:install', target),
+});
+
 contextBridge.exposeInMainWorld('bambulab', {
   connect:    (opts) => ipcRenderer.send('bambulab:connect',    opts),
   disconnect: (key)  => ipcRenderer.send('bambulab:disconnect', key),

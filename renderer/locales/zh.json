@@ -1621,5 +1621,20 @@
   "notifFfgFwTitle": "{{name}} 有新固件可用",
   "notifFfgFwText": "Cloud + LAN 固件 {{version}}——点击获取这台打印机对应的文件。",
   "sectionAspect": "外观",
-  "colorEditPill": "更改颜色"
+  "colorEditPill": "更改颜色",
+  "stgMcpTitle": "AI 助手",
+  "stgMcpToggle": "让 AI 助手读取你的库存",
+  "stgMcpToggleSub": "Claude 等助手可以查看你的线材、货架和打印机。只看不碰——且仅限这台电脑。",
+  "stgMcpHelp": "一键接入你的助手，然后直接问：“我还剩多少黑色 PLA？”",
+  "stgMcpCopyCode": "复制 Claude Code 命令",
+  "stgMcpNewKey": "新的访问密钥",
+  "stgMcpOn": "已就绪——助手从 {{url}} 进来",
+  "stgMcpError": "门打不开：{{error}}",
+  "stgMcpCopied": "已复制——粘贴到你的助手里",
+  "stgMcpNewKeyDone": "新密钥已生成——旧的再也打不开任何东西。请把 Studio 重新添加到你的助手。",
+  "stgMcpAddClaude": "添加到 Claude Desktop",
+  "stgMcpAddCursor": "添加到 Cursor",
+  "stgMcpAddVscode": "添加到 VS Code",
+  "stgMcpAddOpened": "交给 {{app}} 了——在那边确认安装即可。",
+  "stgMcpAddFailed": "{{app}} 没有响应——这台电脑上装了吗？"
 }

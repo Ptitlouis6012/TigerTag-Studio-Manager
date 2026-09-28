@@ -540,6 +540,37 @@
       </div>
     </section>
 
+    <!-- ── AI assistants (local MCP server, read-only) ─────────── -->
+    <section class="stg-card" id="stgMcpCard">
+      <header class="stg-card-head">
+        <span class="icon icon-sparkle icon-14"></span>
+        <span class="stg-card-title" data-i18n="stgMcpTitle">AI assistants</span>
+      </header>
+      <div class="stg-card-body">
+        <label class="stg-row stg-row--toggle">
+          <span class="stg-row-text">
+            <span class="stg-row-title" data-i18n="stgMcpToggle">Let an AI assistant read your inventory</span>
+            <span class="stg-row-sub" data-i18n="stgMcpToggleSub">Read-only, on this computer only.</span>
+          </span>
+          <span class="eac-toggle">
+            <input type="checkbox" id="stgMcpToggle" role="switch" />
+            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+          </span>
+        </label>
+        <div id="stgMcpOnBlock" hidden>
+          <p class="stg-row-help" data-i18n="stgMcpHelp">Paste the setup into your assistant, then just ask.</p>
+          <div class="stg-row-actions stg-row-actions--col">
+            <button class="ghost sm" id="btnMcpAddClaude" data-mcp-target="claude-desktop" data-mcp-app="Claude Desktop"><span class="icon icon-plus icon-13"></span><span data-i18n="stgMcpAddClaude">Add to Claude Desktop</span></button>
+            <button class="ghost sm" id="btnMcpAddCursor" data-mcp-target="cursor" data-mcp-app="Cursor"><span class="icon icon-plus icon-13"></span><span data-i18n="stgMcpAddCursor">Add to Cursor</span></button>
+            <button class="ghost sm" id="btnMcpAddVscode" data-mcp-target="vscode" data-mcp-app="VS Code"><span class="icon icon-plus icon-13"></span><span data-i18n="stgMcpAddVscode">Add to VS Code</span></button>
+            <button class="ghost sm" id="btnMcpCopyCode"><span class="icon icon-copy icon-13"></span><span data-i18n="stgMcpCopyCode">Copy Claude Code command</span></button>
+            <button class="ghost sm" id="btnMcpNewKey"><span class="icon icon-refresh icon-13"></span><span data-i18n="stgMcpNewKey">New access key</span></button>
+          </div>
+        </div>
+        <div class="stg-status" id="stgMcpStatus" hidden></div>
+      </div>
+    </section>
+
     <!-- ── Data (collapsible, closed by default) ───────────────── -->
     <section class="stg-card stg-card--collapsible" data-collapsed="true">
       <button class="stg-card-head stg-card-head--btn" type="button" aria-expanded="false">

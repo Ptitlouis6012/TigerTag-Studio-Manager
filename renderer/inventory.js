@@ -3960,6 +3960,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // The catalogue cache may have been loaded (or aged) since the last open —
     // the Tools line reports how old it is, so refresh it on the way in.
     _catalogLoadCacheIfNeeded();
+    _mcpSettingsRefresh?.();
     _catalogResyncState();
     _layoutSettingsStack();
   }
@@ -37484,3 +37485,522 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   // ── TD1S sensor engine (onSensorData/onStatus/onLog/onClear + panel + modals)
   //    moved to renderer/IoT/td1s/index.js — wired via initTD1S(ctx) above.   
+
+  // ── Local MCP server — the tools (read-only) ─────────────────────────────
+  // main.js serves the Model Context Protocol on 127.0.0.1 (services/mcpServer.js)
+  // so an AI assistant can READ this account's Studio data. The tools run HERE,
+  // where the inventory already is: main relays `tools/call` as `mcp:call`, we
+  // answer `mcp:result`. Every tool is a query — none writes anything.
+  // Brand / material / colour filters are free-text SEARCH typed by a person
+  // (or a model), matched against the displayed labels on purpose; no logic
+  // here branches on a protocol value.
+  const MCP_TOOLS = [
+    {
+      name: "search_inventory",
+      title: "Search the filament inventory",
+      description: "Find spools in the user's inventory. Every filter is optional and they combine (AND). "
+        + "Text filters are case-insensitive substrings. Weights are in grams.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          query:           { type: "string",  description: "Free text matched against name, colour name, brand, material, aspect and note" },
+          brand:           { type: "string",  description: "Brand, e.g. \"Bambu Lab\"" },
+          material:        { type: "string",  description: "Material, e.g. \"PLA\", \"PETG\"" },
+          max_remaining_g: { type: "number",  description: "Only spools with at most this many grams left" },
+          min_remaining_g: { type: "number",  description: "Only spools with at least this many grams left" },
+          stored:          { type: "boolean", description: "true = only spools placed in a storage rack, false = only unstored ones" },
+          limit:           { type: "integer", description: "Max spools returned (default 50, max 200)" },
+        },
+      },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "get_spool",
+      title: "Get one spool",
+      description: "Everything Studio knows about one spool: identity, colours, remaining weight, print and drying temperatures, storage location, twin chip.",
+      inputSchema: { type: "object", properties: { spool_id: { type: "string", description: "The spool id returned by search_inventory" } }, required: ["spool_id"] },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "inventory_summary",
+      title: "Inventory summary",
+      description: "Totals: spool count, remaining kilograms, breakdown by material and by brand, spools running low, spools not stored.",
+      inputSchema: { type: "object", properties: { low_stock_g: { type: "number", description: "A spool is low below this many grams (default 200)" } } },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "list_racks",
+      title: "List storage racks",
+      description: "The user's storage racks with their size and how many spools each holds.",
+      inputSchema: { type: "object", properties: {} },
+      annotations: { readOnlyHint: true },
+    },
+    {
+      name: "list_printers",
+      title: "List 3D printers",
+      description: "The user's 3D printers known to Studio, with brand, model and whether Studio currently sees them online.",
+      inputSchema: { type: "object", properties: {} },
+      annotations: { readOnlyHint: true },
+    },
+  ];
+
+  function _mcpRows() {
+    if (!state.activeAccountId) throw new Error("Nobody is signed in to Tiger Studio Manager.");
+    if (state.friendView) throw new Error("Studio is showing a friend's inventory — switch back to your own to query it.");
+    if (state.invLoading) throw new Error("The inventory is still loading — try again in a moment.");
+    // One entry per physical spool: a twin pair is two docs, one spool — the
+    // same dedup the header stats use, so the counts match what the user sees.
+    return deduplicateTwins((state.rows || []).slice()).filter(r => !r.deleted);
+  }
+  const _mcpHex = c => {
+    const s = String(c || "").trim().replace(/^#/, "");
+    const h = s.length === 8 ? s.slice(0, 6) : s;
+    return /^[0-9a-fA-F]{6}$/.test(h) ? `#${h.toUpperCase()}` : null;
+  };
+  function _mcpName(r) {
+    return v(r.colorName) !== "-" ? r.colorName
+      : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.material;
+  }
+  function _mcpLocation(r) {
+    if (!r.rackId) return null;
+    const rack = (state.racks || []).find(k => k.id === r.rackId);
+    return { rack: rack?.name || r.rackId, level: r.rackLevel, position: r.rackPos, depth: r.rackDepth || 0 };
+  }
+  function _mcpSpool(r) {
+    const colors = (r.colorList && r.colorList.length ? r.colorList : [r.colorHex, r.colorHex2, r.colorHex3])
+      .map(_mcpHex).filter(Boolean);
+    const cap = r.capacity || null;
+    return {
+      id: r.spoolId,
+      name: _mcpName(r),
+      brand: v(r.brand) !== "-" ? r.brand : null,
+      material: v(r.material) !== "-" ? r.material : null,
+      aspects: [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None"),
+      colors,
+      remaining_g: r.weightAvailable ?? null,
+      capacity_g: cap,
+      remaining_pct: (r.weightAvailable != null && cap) ? Math.round(r.weightAvailable / cap * 100) : null,
+      tier: r.protocol || null,
+      location: _mcpLocation(r),
+    };
+  }
+  function _mcpHaystack(r) {
+    return [_mcpName(r), r.colorName, r.brand, r.material, r.aspect1, r.aspect2, r.note]
+      .filter(Boolean).join(" ").toLowerCase();
+  }
+  const _mcpHas = (field, needle) => String(field || "").toLowerCase().includes(String(needle).toLowerCase());
+
+  const MCP_HANDLERS = {
+    search_inventory(a) {
+      const rows = _mcpFilterRows(_mcpRows(), a);
+      const limit = Math.max(1, Math.min(200, Number(a.limit) || 50));
+      return { total_matches: rows.length, returned: Math.min(limit, rows.length), spools: rows.slice(0, limit).map(_mcpSpool) };
+    },
+    get_spool(a) {
+      const r = _mcpRows().find(x => x.spoolId === String(a.spool_id));
+      if (!r) throw new Error(`No spool with id ${a.spool_id}.`);
+      const tp = r.temps || {};
+      const num = x => (Number.isFinite(Number(x)) && Number(x) > 0 ? Number(x) : null);
+      // The spool's own temperatures when it carries them; else the material's
+      // recommended values from the reference DB — the same fallback as the
+      // spool card, flagged so the assistant knows which one it got.
+      const own = !!(tp.nozzleMin || tp.nozzleMax || tp.bedMin || tp.bedMax || tp.dryTemp || tp.dryTime);
+      const rec = !own ? (r.materialData?.recommended || null) : null;
+      return {
+        ..._mcpSpool(r),
+        color_name: v(r.colorName) !== "-" ? r.colorName : null,
+        diameter: r.diameter || null,
+        product_type: r.productType || null,
+        note: r.note || null,
+        td: r.td ?? null,
+        temperatures_source: own ? "spool" : (rec ? "material_recommendation" : null),
+        nozzle_temp_c: { min: num(own ? tp.nozzleMin : rec?.nozzleTempMin), max: num(own ? tp.nozzleMax : rec?.nozzleTempMax) },
+        bed_temp_c:    { min: num(own ? tp.bedMin : rec?.bedTempMin),       max: num(own ? tp.bedMax : rec?.bedTempMax) },
+        drying:        { temp_c: num(own ? tp.dryTemp : rec?.dryTemp),      hours: num(own ? tp.dryTime : rec?.dryTime) },
+        twin_spool_id: r.twinUid || null,
+        updated_at: r.lastUpdate ? new Date(r.lastUpdate).toISOString() : null,
+      };
+    },
+    inventory_summary(a) {
+      const rows = _mcpRows();
+      const low = Number.isFinite(Number(a.low_stock_g)) ? Number(a.low_stock_g) : 200;
+      const kg = g => Math.round(g / 10) / 100;
+      const group = key => {
+        const m = new Map();
+        rows.forEach(r => {
+          const k = (v(r[key]) !== "-" ? r[key] : "Unknown");
+          const e = m.get(k) || { spools: 0, grams: 0 };
+          e.spools++; e.grams += Number(r.weightAvailable) || 0;
+          m.set(k, e);
+        });
+        return [...m.entries()].sort((x, y) => y[1].grams - x[1].grams)
+          .map(([name, e]) => ({ name, spools: e.spools, remaining_kg: kg(e.grams) }));
+      };
+      const lowRows = rows.filter(r => r.weightAvailable != null && r.weightAvailable < low)
+        .sort((x, y) => x.weightAvailable - y.weightAvailable);
+      return {
+        spools: rows.length,
+        remaining_kg: kg(rows.reduce((s, r) => s + (Number(r.weightAvailable) || 0), 0)),
+        by_material: group("material"),
+        by_brand: group("brand").slice(0, 20),
+        low_stock_threshold_g: low,
+        low_stock: lowRows.slice(0, 50).map(r => ({ id: r.spoolId, name: _mcpName(r), brand: r.brand, material: r.material, remaining_g: r.weightAvailable })),
+        not_stored: rows.filter(r => !r.rackId).length,
+      };
+    },
+    list_racks() {
+      const rows = _mcpRows();
+      return {
+        racks: (state.racks || []).map(k => ({
+          id: k.id, name: k.name || null, levels: k.level ?? null, positions_per_level: k.position ?? null,
+          spools_stored: rows.filter(r => r.rackId === k.id).length,
+        })),
+      };
+    },
+    list_printers() {
+      _mcpRows();   // same signed-in / own-account guard
+      return {
+        printers: (state.printers || []).map(p => ({
+          id: p.id, brand: p.brand, name: p.printerName || null,
+          model: p.printerModelId ? printerModelName(p.brand, p.printerModelId) : null,
+          online: (() => { try { return _isPrinterOnline(p); } catch (_) { return null; } })(),
+        })),
+      };
+    },
+  };
+
+  // ── MCP — whole-account read access + the data notice ─────────────────────
+  // Raw Firestore is unreadable to a model (`data2: 190`, `id_brand: 26145`), so
+  // every document returned is DECODED next to its raw fields (ids resolved to
+  // their reference-DB labels BY ID, temps named, colours as hex), and
+  // `data_guide` is the notice explaining every field and collection.
+  // Scope: the signed-in account's own tree + what an accepted friend shares
+  // (inventory, racks, products, lists) + public profiles — and the Firestore
+  // rules still apply on top. Credentials never leave: `secrets` / `apiKeys`
+  // subtrees are refused and any field that looks like a credential is masked.
+  // Credentials (printer access / check codes, cloud logins, tokens, keys, certs)
+  // and the identity the app never displays (Google real name, e-mail).
+  const MCP_SECRET_FIELD = /password|passwd|token|secret|privatekey|accesscode|checkcode|apikey|credential|pem$|cert|^key$|^keys$|username|e?mail$|^googlename$|^firstname$|^lastname$/i;
+  const MCP_FRIEND_READABLE = new Set(["inventory", "racks", "products", "lists"]);
+  const MCP_ID_PRODUCT_NONE = 4294967295;
+
+  function _mcpPlain(v, depth = 0) {
+    if (v == null || depth > 12) return v ?? null;
+    if (typeof v !== "object") return v;
+    if (typeof v.toDate === "function") { try { return v.toDate().toISOString(); } catch (_) { return null; } }
+    if (typeof v.path === "string" && typeof v.id === "string" && v.firestore) return { ref: v.path };
+    if (typeof v.latitude === "number" && typeof v.longitude === "number") return { lat: v.latitude, lng: v.longitude };
+    if (typeof v.toBase64 === "function") return { bytes_base64: v.toBase64() };
+    if (Array.isArray(v)) return v.map(x => _mcpPlain(x, depth + 1));
+    const out = {};
+    for (const [k, x] of Object.entries(v)) out[k] = MCP_SECRET_FIELD.test(k) ? "[redacted]" : _mcpPlain(x, depth + 1);
+    return out;
+  }
+  const _mcpRgb = (r, g, b) => [r, g, b].every(n => Number.isFinite(n)) && (r || g || b || r === 0)
+    ? "#" + [r, g, b].map(n => Math.max(0, Math.min(255, n)).toString(16).padStart(2, "0")).join("").toUpperCase() : null;
+  // Human reading of a spool / chip-shaped document — every label resolved by ID.
+  function _mcpDecodeSpool(d) {
+    const pos = n => (Number.isFinite(Number(n)) && Number(n) > 0 ? Number(n) : null);
+    const mat = d.id_material != null ? materialFull(d.id_material) : null;
+    const unit = d.id_unit != null ? dbFind("unit", d.id_unit) : null;
+    const ver = d.id_tigertag != null ? versionName(d.id_tigertag) : null;
+    const realProduct = d.id_product != null && Number(d.id_product) !== MCP_ID_PRODUCT_NONE && Number(d.id_product) !== 0;
+    return {
+      brand: d.id_brand != null ? (brandName(d.id_brand) !== "-" ? brandName(d.id_brand) : null) : null,
+      material: mat ? mat.label : null,
+      aspect1: d.id_aspect1 != null ? aspectLabel(d.id_aspect1) : null,
+      aspect2: d.id_aspect2 != null ? aspectLabel(d.id_aspect2) : null,
+      product_type: d.id_type != null ? typeName(d.id_type) : null,
+      chip_version: ver || (d.id_tigertag == null ? "none (chipless TigerData)" : `unknown id ${d.id_tigertag}`),
+      catalogue_product_id: realProduct ? Number(d.id_product) : null,
+      colors: [_mcpRgb(d.color_r, d.color_g, d.color_b), _mcpRgb(d.color_r2, d.color_g2, d.color_b2), _mcpRgb(d.color_r3, d.color_g3, d.color_b3)]
+        .filter((c, i) => c && (i === 0 || c !== "#000000")),
+      // data1-data7 mean different things per product type (docs/TTAG-FIELDS.md).
+      ..._mcpDecodeDataSlots(d, pos),
+      capacity: d.measure != null ? `${d.measure} ${unit ? unit.label : ""}`.trim() : null,
+      capacity_g: pos(d.measure_gr),
+      remaining_g: d.weight_available ?? null,
+      container_weight_g: d.container_weight ?? null,
+      refill: !!d.info1, recycled: !!d.info2, filled: !!d.info3,
+    };
+  }
+  // The seven chip data slots, read per product type — keyed on the id_type ID.
+  // A missing id_type is a legacy filament doc (the only type before others existed).
+  const MCP_TYPE_ID = { FILAMENT: 142, ACCESSORIES: 116, SPARE_PART: 41, RESIN: 173 };
+  function _mcpDecodeDataSlots(d, pos) {
+    const type = d.id_type == null ? MCP_TYPE_ID.FILAMENT : Number(d.id_type);
+    if (type === MCP_TYPE_ID.FILAMENT) return {
+      diameter: d.data1 != null ? diamLabel(d.data1) : null,
+      nozzle_temp_c: { min: pos(d.data2), max: pos(d.data3) },
+      drying: { temp_c: pos(d.data4), hours: pos(d.data5) },
+      bed_temp_c: { min: pos(d.data6), max: pos(d.data7) },
+    };
+    if (type === MCP_TYPE_ID.RESIN) return {
+      mixing_time_min: pos(d.data1),
+      work_temp_c: { min: pos(d.data2), max: pos(d.data3) },
+      curing: { temp_c: pos(d.data4), minutes: pos(d.data5) },
+      washing: { temp_c: pos(d.data6), minutes: pos(d.data7) },
+    };
+    return { data_slots: "unused for this product type" };   // accessories, spare parts
+  }
+  function _mcpDocOut(snap) {
+    const data = snap.data() || {};
+    const out = { path: snap.ref.path, id: snap.id, data: _mcpPlain(data) };
+    if (data.id_material != null || data.id_brand != null) {
+      try { out.decoded = _mcpDecodeSpool(data); } catch (_) {}
+    }
+    return out;
+  }
+  function _mcpMe() {
+    if (!state.activeAccountId) throw new Error("Nobody is signed in to Tiger Studio Manager.");
+    return state.activeAccountId;
+  }
+  // Is this path inside what the assistant may read? Throws with the reason.
+  function _mcpCheckPath(path) {
+    const seg = String(path || "").replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+    if (!seg.length) throw new Error("Give a Firestore path, e.g. users/<uid>/inventory.");
+    if (seg.includes("secrets") || seg.includes("apiKeys")) throw new Error("Credentials are never shared with an assistant.");
+    const me = _mcpMe();
+    if (seg[0] === "userProfiles") return seg;
+    if (seg[0] !== "users" || !seg[1]) throw new Error("Only users/<uid>/… and userProfiles/… are readable.");
+    if (seg[1] === me) return seg;
+    const friend = (state.friends || []).some(f => f.uid === seg[1]);
+    if (!friend) throw new Error("That account is neither yours nor an accepted friend's.");
+    if (seg.length < 3 || !MCP_FRIEND_READABLE.has(seg[2])) {
+      throw new Error(`A friend shares only: ${[...MCP_FRIEND_READABLE].join(", ")}.`);
+    }
+    return seg;
+  }
+  function _mcpFriend(who) {
+    const w = String(who || "").trim().toLowerCase();
+    const f = (state.friends || []).find(x => x.uid === who || String(x.displayName || "").toLowerCase() === w)
+      || (state.friends || []).find(x => String(x.displayName || "").toLowerCase().includes(w));
+    if (!f) throw new Error(`No accepted friend matches "${who}". Call list_friends.`);
+    return f;
+  }
+  // Shared spool filtering (own inventory and a friend's).
+  function _mcpFilterRows(rows, a) {
+    if (a.query)    rows = rows.filter(r => _mcpHaystack(r).includes(String(a.query).toLowerCase()));
+    if (a.brand)    rows = rows.filter(r => _mcpHas(r.brand, a.brand));
+    if (a.material) rows = rows.filter(r => _mcpHas(r.material, a.material));
+    if (a.max_remaining_g != null) rows = rows.filter(r => r.weightAvailable != null && r.weightAvailable <= a.max_remaining_g);
+    if (a.min_remaining_g != null) rows = rows.filter(r => r.weightAvailable != null && r.weightAvailable >= a.min_remaining_g);
+    if (a.stored === true)  rows = rows.filter(r => !!r.rackId);
+    if (a.stored === false) rows = rows.filter(r => !r.rackId);
+    return rows;
+  }
+
+  const MCP_DATA_GUIDE = {
+    what_this_is: "TigerTag is an RFID/NFC system for 3D-printing filament spools; Tiger Studio Manager is its desktop app. Each user has an inventory of spools in Firestore. Prefer the high-level tools (search_inventory, get_spool, inventory_summary, friend_inventory, list_wishlists, data_history, list_devices); use firestore_get / firestore_query for anything else. Every returned document carries `data` (raw) and, for spool-shaped docs, `decoded` (human-readable) — trust `decoded` for meaning.",
+    spool_tiers: {
+      "TigerTag": "a physical RFID chip programmed by the user (id_tigertag 1542820452)",
+      "TigerTag+": "a physical chip tied to a real catalogue product (id_tigertag 3155151767, id_product = catalogue id)",
+      "TigerTag Init": "a blank, initialised chip ready to be written (id_tigertag 1816240865)",
+      "TigerData": "a chipless, cloud-only spool (doc id starts with TigerData_ or CLOUD_; no id_tigertag)",
+      "TigerData+": "a chipless spool tied to a real catalogue product (TigerData_ id + real id_product)",
+    },
+    spool_document_fields: {
+      "doc id": "hex RFID UID of the chip (e.g. 1D33DBDA0D1080), or TigerData_<digits> for a chipless spool",
+      id_brand: "brand id → reference table id_brand (decoded.brand)",
+      id_material: "material id → id_material (decoded.material)",
+      "id_aspect1 / id_aspect2": "finish / colour-pattern ids → id_aspect (e.g. 104 Basic, 252 Bicolor, 24 Tricolor, 145 Rainbow, 255 None)",
+      id_type: "product type → id_type (142 Filament, 116 Accessories, 41 Spare Part, 173 Resin)",
+      id_unit: "unit of `measure` → id_measure_unit (21 = g)",
+      id_tigertag: "chip version → id_version (see spool_tiers); absent on chipless spools",
+      id_product: "catalogue product id; 4294967295 = none",
+      "color_r/g/b/a": "colour 1 (0-255); color_r2.. / color_r3.. = colours 2 and 3 of a bi/tri-colour",
+      online_color_list: "catalogue colour list (hex RRGGBB or RRGGBBAA); online_color_type: mono | multi | gradient | conic_gradient",
+      "data1-data7": "seven chip slots whose meaning DEPENDS ON id_type — see data_slots_by_product_type; `decoded` already applies the right one",
+      "(0 in a data slot)": "not set — for filament the app then shows the material's recommended values",
+      measure: "nominal capacity in `id_unit`",
+      measure_gr: "nominal capacity in grams",
+      weight_available: "filament left, grams (net, without the spool)",
+      container_id: "empty-spool model id (data/container_spool/spools_filament.json); container_weight = its empty weight, grams",
+      "info1 / info2 / info3": "material flags set from the catalogue: info1 = refill (sold without a spool), info2 = recycled material, info3 = filled (material loaded with an additive, e.g. carbon or glass fibre — the \"-CF\" / \"-GF\" family); true or absent. Not written on the chip",
+      TD: "transmission distance (translucency), from a TD1S sensor",
+      message: "user note (also the colour name on DIY spools); color_name = colour name",
+      twin_tag_uid: "the other chip on the same physical spool — a twin pair is ONE spool",
+      rack: "storage location { id → racks/{id}, level (shelf, 0 = top), position (slot), depth (0 = front row) }",
+      timestamp: "chip write time, seconds since 2000-01-01 UTC",
+      "updatedAt / last_update": "last change (server timestamp / legacy ms)",
+      deleted: "true = in the bin (ignore)",
+      tags: "user labels",
+    },
+    data_slots_by_product_type: {
+      "Filament (id_type 142)": { data1: "diameter id → id_diameter (56 = 1.75 mm)", data2: "nozzle temp MIN °C", data3: "nozzle temp MAX °C", data4: "drying temp °C", data5: "drying time, hours", data6: "bed temp MIN °C", data7: "bed temp MAX °C" },
+      "Resin (id_type 173)": { data1: "mixing time, minutes", data2: "work temp MIN °C", data3: "work temp MAX °C", data4: "curing temp °C", data5: "curing time, minutes", data6: "washing temp °C", data7: "washing time, minutes" },
+      "Accessories (id_type 116), Spare Part (id_type 41)": "data1-data7 unused",
+      "(no id_type)": "legacy filament document",
+    },
+    collections: {
+      "users/{uid}": "account document (display name, public key, preferences…)",
+      "users/{uid}/inventory/{spoolId}": "spools — see spool_document_fields",
+      "users/{uid}/racks/{rackId}": "storage racks: name, level = number of shelves, position = slots per shelf",
+      "users/{uid}/products/{keyHash}": "per-product info shared by identical spools: buy link, price (buyPriceHt = tax-free), min stock, favourite / liked, note",
+      "users/{uid}/lists/{listId}": "wishlists / shopping lists and their items",
+      "users/{uid}/printers/{brand}/devices/{id}": "3D printers (brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic); credentials live in a secrets subtree that is never shared",
+      "users/{uid}/scales/{mac}": "TigerScale devices (heartbeats)",
+      "users/{uid}/rfidList/{UID}": "every physical chip ever used (first/last seen, TigerTag+ backup present)",
+      "users/{uid}/friends/{friendUid}": "accepted friends; friendRequests / blacklist likewise",
+      "users/{uid}/notifications/{id}": "notification centre",
+      "users/{uid}/stats/current": "server-computed rollup (stock value, counts)",
+      "users/{uid}/dataHistory/{id}": "time series, ≤ 1 point / 15 min: at, trigger, valueHt (stock value tax-free), currency, spool counts…",
+      "users/{uid}/prefs/app": "app preferences (language…)",
+      "users/{uid}/containerOverrides/{id}": "the user's own empty-spool weight corrections",
+      "userProfiles/{uid}": "public profile of any user (display name, avatar)",
+    },
+    friends: "An accepted friend shares inventory, racks, products and lists — nothing else. Use list_friends, then friend_inventory / list_wishlists with the friend's name or uid.",
+    units: "weights in grams, temperatures in °C, prices tax-free unless stated (taxMode tells how the user displays them)",
+  };
+
+  MCP_TOOLS.push(
+    { name: "data_guide", title: "Data notice", description: "READ THIS FIRST before reading raw Firestore documents: what every TigerTag field and collection means (data1-data7, id_* fields, tiers, units).", inputSchema: { type: "object", properties: {} }, annotations: { readOnlyHint: true } },
+    { name: "account_overview", title: "Account overview", description: "The signed-in account: profile, preferences, server stats, counts per collection, friends, and the uid to build Firestore paths with.", inputSchema: { type: "object", properties: {} }, annotations: { readOnlyHint: true } },
+    { name: "list_friends", title: "List friends", description: "Accepted friends (uid + display name) — their inventory, racks, products and lists are readable.", inputSchema: { type: "object", properties: {} }, annotations: { readOnlyHint: true } },
+    { name: "friend_inventory", title: "Search a friend's inventory", description: "A friend's spools (same filters as search_inventory). `friend` = display name or uid.",
+      inputSchema: { type: "object", properties: { friend: { type: "string" }, query: { type: "string" }, brand: { type: "string" }, material: { type: "string" }, max_remaining_g: { type: "number" }, min_remaining_g: { type: "number" }, limit: { type: "integer" } }, required: ["friend"] },
+      annotations: { readOnlyHint: true } },
+    { name: "list_wishlists", title: "Wishlists", description: "Wishlists / shopping lists with their items — your own, or a friend's (`friend` = name or uid).", inputSchema: { type: "object", properties: { friend: { type: "string" } } }, annotations: { readOnlyHint: true } },
+    { name: "data_history", title: "Data history", description: "The account's history points (stock value, counts…) newest first.", inputSchema: { type: "object", properties: { limit: { type: "integer", description: "default 100, max 500" }, since_days: { type: "number" } } }, annotations: { readOnlyHint: true } },
+    { name: "list_devices", title: "Devices", description: "TigerScale scales and 3D printer documents (credentials masked).", inputSchema: { type: "object", properties: {} }, annotations: { readOnlyHint: true } },
+    { name: "firestore_get", title: "Read a Firestore document", description: "Read one document by path, e.g. users/<uid>/stats/current. Spool-shaped docs come back decoded. Call data_guide to understand the fields.", inputSchema: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, annotations: { readOnlyHint: true } },
+    { name: "firestore_query", title: "Query a Firestore collection", description: "List documents of a collection path, e.g. users/<uid>/notifications. Optional where filters, order and limit (≤ 200).",
+      inputSchema: { type: "object", properties: {
+        path: { type: "string" }, limit: { type: "integer" },
+        order_by: { type: "string" }, direction: { type: "string", enum: ["asc", "desc"] },
+        where: { type: "array", items: { type: "object", properties: { field: { type: "string" }, op: { type: "string", enum: ["==", "!=", "<", "<=", ">", ">=", "array-contains", "in"] }, value: {} }, required: ["field", "op", "value"] } },
+      }, required: ["path"] }, annotations: { readOnlyHint: true } },
+  );
+
+  Object.assign(MCP_HANDLERS, {
+    data_guide() { return MCP_DATA_GUIDE; },
+    async account_overview() {
+      const me = _mcpMe(), db = fbDb(me), u = db.collection("users").doc(me);
+      const [userSnap, prefs, stats] = await Promise.all([
+        u.get(), u.collection("prefs").doc("app").get().catch(() => null), u.collection("stats").doc("current").get().catch(() => null),
+      ]);
+      return {
+        uid: me,
+        account: _mcpPlain(userSnap.data() || {}),
+        preferences: prefs?.exists ? _mcpPlain(prefs.data()) : null,
+        stats: stats?.exists ? _mcpPlain(stats.data()) : null,
+        loaded_in_app: {
+          spools: deduplicateTwins((state.rows || []).slice()).filter(r => !r.deleted).length,
+          racks: (state.racks || []).length, printers: (state.printers || []).length,
+          friends: (state.friends || []).length,
+        },
+        hint: "Call data_guide for field meanings; build paths as users/" + me + "/<collection>.",
+      };
+    },
+    list_friends() {
+      _mcpMe();
+      return { friends: (state.friends || []).map(f => ({ uid: f.uid, name: f.displayName || null, since: _mcpPlain(f.addedAt) })) };
+    },
+    async friend_inventory(a) {
+      const f = _mcpFriend(a.friend);
+      const snap = await fbDb(_mcpMe()).collection("users").doc(f.uid).collection("inventory").get();
+      let rows = [];
+      snap.forEach(doc => { try { rows.push(normalizeRow(doc.id, doc.data())); } catch (_) {} });
+      rows = _mcpFilterRows(deduplicateTwins(rows).filter(r => !r.deleted), a);
+      const limit = Math.max(1, Math.min(200, Number(a.limit) || 50));
+      return { friend: f.displayName || f.uid, total_matches: rows.length, returned: Math.min(limit, rows.length),
+        spools: rows.slice(0, limit).map(r => { const o = _mcpSpool(r); o.location = r.rackId ? { rack_id: r.rackId, level: r.rackLevel, position: r.rackPos } : null; return o; }) };
+    },
+    async list_wishlists(a) {
+      const me = _mcpMe();
+      const owner = a.friend ? _mcpFriend(a.friend) : null;
+      const snap = await fbDb(me).collection("users").doc(owner ? owner.uid : me).collection("lists").get();
+      return { owner: owner ? (owner.displayName || owner.uid) : "you", lists: snap.docs.map(_mcpDocOut) };
+    },
+    async data_history(a) {
+      const me = _mcpMe();
+      const limit = Math.max(1, Math.min(500, Number(a.limit) || 100));
+      let q = fbDb(me).collection("users").doc(me).collection("dataHistory").orderBy("at", "desc");
+      if (a.since_days) q = q.where("at", ">=", new Date(Date.now() - Number(a.since_days) * 86400000));
+      const snap = await q.limit(limit).get();
+      return { points: snap.docs.map(d => ({ id: d.id, ..._mcpPlain(d.data()) })) };
+    },
+    async list_devices() {
+      const me = _mcpMe(), u = fbDb(me).collection("users").doc(me);
+      const scales = await u.collection("scales").get().catch(() => null);
+      const brands = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic"];
+      const printers = [];
+      await Promise.all(brands.map(async b => {
+        const s = await u.collection("printers").doc(b).collection("devices").get().catch(() => null);
+        s?.forEach(d => printers.push({ brand: b, ..._mcpDocOut(d) }));
+      }));
+      return { scales: scales ? scales.docs.map(_mcpDocOut) : [], printers };
+    },
+    async firestore_get(a) {
+      const seg = _mcpCheckPath(a.path);
+      if (seg.length % 2 !== 0) throw new Error("That is a collection path — use firestore_query.");
+      const snap = await fbDb(_mcpMe()).doc(seg.join("/")).get();
+      if (!snap.exists) throw new Error(`No document at ${seg.join("/")}.`);
+      return _mcpDocOut(snap);
+    },
+    async firestore_query(a) {
+      const seg = _mcpCheckPath(a.path);
+      if (seg.length % 2 !== 1) throw new Error("That is a document path — use firestore_get.");
+      let q = fbDb(_mcpMe()).collection(seg.join("/"));
+      for (const w of (Array.isArray(a.where) ? a.where : [])) q = q.where(w.field, w.op, w.value);
+      if (a.order_by) q = q.orderBy(a.order_by, a.direction === "asc" ? "asc" : "desc");
+      const limit = Math.max(1, Math.min(200, Number(a.limit) || 50));
+      const snap = await q.limit(limit).get();
+      return { path: seg.join("/"), returned: snap.size, documents: snap.docs.map(_mcpDocOut) };
+    },
+  });
+
+  if (window.mcpBridge) {
+    window.mcpBridge.registerTools(MCP_TOOLS);
+    window.mcpBridge.onCall(async ({ id, name, args }) => {
+      try {
+        const fn = MCP_HANDLERS[name];
+        if (!fn) throw new Error(`Unknown tool: ${name}`);
+        window.mcpBridge.reply({ id, ok: true, result: await fn(args || {}) });
+      } catch (e) {
+        window.mcpBridge.reply({ id, ok: false, error: String(e?.message || e) });
+      }
+    });
+  }
+
+  // ── Settings › AI assistants — turn the MCP server on/off, hand out the setup.
+  let _mcpSettingsRefresh = null;   // openSettings() re-reads the server state
+  (function wireMcpSettings() {
+    const api = window.mcpBridge;
+    const tog = $("stgMcpToggle");
+    if (!api || !tog) { $("stgMcpCard")?.setAttribute("hidden", ""); return; }
+    let cfg = null;
+    const status = (kind, text) => {
+      const el = $("stgMcpStatus");
+      if (!el) return;
+      el.hidden = !text; el.dataset.kind = kind || ""; el.textContent = text || "";
+    };
+    const paint = () => {
+      tog.checked = !!cfg?.enabled;
+      $("stgMcpOnBlock").hidden = !cfg?.enabled;
+      if (!cfg?.enabled) return status("", "");
+      if (cfg.running) status("ok", t("stgMcpOn", { url: cfg.url }));
+      else status("err", t("stgMcpError", { error: cfg.error || "—" }));
+    };
+    const refresh = async () => { try { cfg = await api.getConfig(); paint(); } catch (_) {} };
+    const copy = async (text, doneKey) => {
+      try { await navigator.clipboard.writeText(text); status("ok", t(doneKey)); setTimeout(paint, 2500); }
+      catch (_) {}
+    };
+    tog.addEventListener("change", async () => { cfg = await api.setEnabled(tog.checked); paint(); });
+    // One click into an AI client: Claude Desktop gets a .mcpb bundle (its own
+    // install dialog), Cursor / VS Code an install link — see `mcp:install`.
+    document.querySelectorAll("#stgMcpCard [data-mcp-target]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const app = btn.dataset.mcpApp;
+        const res = await api.install(btn.dataset.mcpTarget);
+        status(res?.ok ? "ok" : "warn", t(res?.ok ? "stgMcpAddOpened" : "stgMcpAddFailed", { app }));
+        setTimeout(paint, 5000);
+      });
+    });
+    $("btnMcpCopyCode")?.addEventListener("click", () => copy(
+      `claude mcp add --transport http tiger-studio ${cfg.url} --header "Authorization: Bearer ${cfg.token}"`, "stgMcpCopied"));
+    $("btnMcpNewKey")?.addEventListener("click", async () => { cfg = await api.newToken(); paint(); status("warn", t("stgMcpNewKeyDone")); setTimeout(paint, 4000); });
+    _mcpSettingsRefresh = refresh;
+    refresh();
+  })();

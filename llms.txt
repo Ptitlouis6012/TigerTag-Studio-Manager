@@ -53,6 +53,13 @@ state = {
 }
 ```
 
+## AI assistants (local MCP server)
+
+Studio can serve the Model Context Protocol on 127.0.0.1 so Claude Desktop / Claude Code /
+Cursor / VS Code READ the signed-in account (inventory, friends' shared stock, wishlists,
+racks, printers, devices, history). Read-only, credentials masked, documents returned
+decoded. Reference: docs/MCP.md.
+
 ## Firestore data model
 
 ```
@@ -79,6 +86,8 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
                                attachments[] (web links, tier-capped 1/2/5)
   /lists/{listId}          → user-made lists of product identities (itemKeys[]), shareable
   /racks/{rackId}          → rack layout docs
+  /stats/current           → server-written rollup (stock value, counts) — client read-only
+  /dataHistory/{autoId}    → server-written time series (≤ 1 point / 15 min) — client read-only
   /printers/{brand}/devices/{id}
                            → one doc per known printer of that brand (connection + identity).
                              THREE independent plans place things by hand, each with its own

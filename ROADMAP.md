@@ -125,6 +125,19 @@ Grouped by domain. Versions in parentheses are the release that landed the featu
 
 ## 🚧 Next up — concrete work
 
+### AI assistants — MCP writes, then an in-app agent
+
+The read-only local MCP server shipped (`docs/MCP.md`): Claude Desktop / Claude Code
+can query inventory, racks and printers. Next, in order:
+
+0. **Hosted TigerTag connector** — a remote MCP server on the backend (e.g. `https://mcp.tigersystem.io`) with OAuth sign-in on the TigerTag account, reading Firestore directly: the only way to reach **ChatGPT** and Claude web / mobile, which call tools from their own cloud; works without Studio running (live printer state stays Studio-only).
+1. **Writes behind a confirmation** — set a spool's weight, place / move a spool in a
+   rack. Each call raises an in-app prompt the user accepts; nothing is written silently.
+2. **In-app agent** sharing the same tool registry: a local model via `node-llama-cpp`
+   (Qwen2.5 3B GGUF, ~2 GB, downloaded on demand — never in the installer), an
+   Ollama install when detected, or the user's own API key. Below ~3B parameters tool
+   calling is unreliable, so the local option is for privacy, not quality.
+
 ### One board for machines, AMS and racks
 
 The printer view becomes the storage plan — same grid, same zoom, same panning,

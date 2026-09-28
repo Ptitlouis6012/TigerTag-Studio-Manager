@@ -244,3 +244,6 @@
 | `notifPaxxText {{version}}` | Paxx release notice body — click opens the .bin download |
 
 > ⚠️ This table is a snapshot and can drift as keys are added. The authoritative key set is the locale files themselves; `npm run i18n:check` is the source of truth for "do all 11 locales agree". When you add keys via `npm run i18n:add`, append them to the relevant section here too.
+
+### AI assistants (local MCP server)
+`stgMcpTitle`, `stgMcpToggle`, `stgMcpToggleSub`, `stgMcpHelp`, `stgMcpAddClaude`, `stgMcpAddCursor`, `stgMcpAddVscode`, `stgMcpAddOpened` (`{{app}}`), `stgMcpAddFailed` (`{{app}}`), `stgMcpCopyCode`, `stgMcpNewKey`, `stgMcpOn` (`{{url}}`), `stgMcpError` (`{{error}}`), `stgMcpCopied`, `stgMcpNewKeyDone`

@@ -1,0 +1,155 @@
+'use strict';
+/**
+ * Local MCP server — lets an AI assistant (Claude Desktop, Claude Code, any
+ * MCP client) READ the signed-in user's Studio data: inventory, storage,
+ * printers. Read-only by construction: every tool it serves is a query.
+ *
+ * Transport: MCP "Streamable HTTP", JSON responses only (no SSE stream — no
+ * tool here needs server-initiated messages). One endpoint, POST /mcp.
+ *
+ * Exposure: bound to 127.0.0.1 only, and every request must carry
+ *   • `Authorization: Bearer <token>` — the token shown in Settings;
+ *   • a Host header naming this loopback server (blocks DNS rebinding);
+ *   • no browser Origin (a web page cannot reach it with fetch).
+ *
+ * The tools themselves live in the RENDERER, where the inventory is; this
+ * module only speaks the protocol and relays `tools/call` through the two
+ * callbacks main.js hands it.
+ */
+const http = require('http');
+
+const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05'];
+const MAX_BODY = 1024 * 1024;
+
+function createMcpServer({ serverVersion, listTools, callTool, log = () => {} }) {
+  let server = null;
+  let current = { port: null, token: null };
+  let lastError = null;
+
+  const rpcResult = (id, result) => ({ jsonrpc: '2.0', id, result });
+  const rpcError  = (id, code, message) => ({ jsonrpc: '2.0', id: id ?? null, error: { code, message } });
+
+  async function handleMessage(msg) {
+    if (!msg || msg.jsonrpc !== '2.0' || typeof msg.method !== 'string') {
+      return rpcError(msg?.id, -32600, 'Invalid Request');
+    }
+    const isNotification = msg.id === undefined || msg.id === null;
+    const p = msg.params || {};
+    switch (msg.method) {
+      case 'initialize': {
+        const asked = p.protocolVersion;
+        return rpcResult(msg.id, {
+          protocolVersion: PROTOCOL_VERSIONS.includes(asked) ? asked : PROTOCOL_VERSIONS[0],
+          capabilities: { tools: { listChanged: false } },
+          serverInfo: { name: 'tiger-studio-manager', title: 'Tiger Studio Manager', version: serverVersion },
+          instructions:
+            'Read-only access to the TigerTag account open in Tiger Studio Manager: filament spools, '
+            + 'storage racks, 3D printers, scales, wishlists, friends and their shared inventories, data history. '
+            + 'Call data_guide FIRST whenever you read raw documents — TigerTag fields are coded (data1-data7, '
+            + 'id_brand, id_material…) and it explains every one. Prefer the high-level tools (search_inventory, '
+            + 'get_spool, inventory_summary, friend_inventory, list_wishlists, data_history, list_devices); '
+            + 'firestore_get / firestore_query reach any other document. Weights in grams, temperatures in °C.',
+        });
+      }
+      case 'ping':
+        return isNotification ? null : rpcResult(msg.id, {});
+      case 'tools/list':
+        return rpcResult(msg.id, { tools: listTools() });
+      case 'tools/call': {
+        const name = p.name;
+        if (!listTools().some(t => t.name === name)) return rpcError(msg.id, -32602, `Unknown tool: ${name}`);
+        try {
+          const out = await callTool(name, p.arguments || {});
+          return rpcResult(msg.id, {
+            content: [{ type: 'text', text: JSON.stringify(out, null, 2) }],
+            structuredContent: out && typeof out === 'object' && !Array.isArray(out) ? out : { result: out },
+            isError: false,
+          });
+        } catch (e) {
+          // A tool failure is a RESULT the model can read, not a protocol error.
+          return rpcResult(msg.id, { content: [{ type: 'text', text: String(e?.message || e) }], isError: true });
+        }
+      }
+      default:
+        if (isNotification) return null;   // notifications/initialized, cancelled, …
+        return rpcError(msg.id, -32601, `Method not found: ${msg.method}`);
+    }
+  }
+
+  function reject(res, status, message) {
+    res.writeHead(status, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(rpcError(null, -32000, message)));
+  }
+
+  function onRequest(req, res) {
+    const url = (req.url || '').split('?')[0];
+    if (url !== '/mcp') return reject(res, 404, 'Not found — the endpoint is /mcp');
+
+    const host = String(req.headers.host || '').toLowerCase();
+    if (host !== `127.0.0.1:${current.port}` && host !== `localhost:${current.port}`) {
+      return reject(res, 403, 'Forbidden host');
+    }
+    if (req.headers.origin) return reject(res, 403, 'Browser origins are not allowed');
+    if (req.headers.authorization !== `Bearer ${current.token}`) {
+      return reject(res, 401, 'Missing or wrong token — copy it from Tiger Studio Manager › Settings');
+    }
+    if (req.method !== 'POST') {
+      res.writeHead(405, { Allow: 'POST' });
+      return res.end();
+    }
+
+    let size = 0;
+    const chunks = [];
+    req.on('data', (c) => {
+      size += c.length;
+      if (size > MAX_BODY) { reject(res, 413, 'Request too large'); req.destroy(); return; }
+      chunks.push(c);
+    });
+    req.on('end', async () => {
+      if (res.writableEnded) return;
+      let body;
+      try { body = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+      catch { return reject(res, 400, 'Parse error'); }
+      const batch = Array.isArray(body);
+      const replies = (await Promise.all((batch ? body : [body]).map(handleMessage))).filter(Boolean);
+      if (!replies.length) { res.writeHead(202); return res.end(); }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(batch ? replies : replies[0]));
+    });
+  }
+
+  function stop() {
+    return new Promise((resolve) => {
+      if (!server) return resolve();
+      const s = server; server = null;
+      s.close(() => resolve());
+    });
+  }
+
+  async function start({ port, token }) {
+    await stop();
+    current = { port, token };
+    lastError = null;
+    return new Promise((resolve) => {
+      const s = http.createServer(onRequest);
+      s.once('error', (e) => {
+        lastError = e.code === 'EADDRINUSE' ? `Port ${port} is already in use` : e.message;
+        log(`[mcp] start failed: ${lastError}`);
+        resolve(false);
+      });
+      s.listen(port, '127.0.0.1', () => {
+        server = s;
+        log(`[mcp] listening on http://127.0.0.1:${port}/mcp`);
+        resolve(true);
+      });
+    });
+  }
+
+  return {
+    start,
+    stop,
+    status: () => ({ running: !!server, port: current.port, error: lastError }),
+  };
+}
+
+module.exports = { createMcpServer };

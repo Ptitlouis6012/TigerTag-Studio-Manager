@@ -1692,6 +1692,192 @@ function initTD1S() {
   td1sConnect();
 }
 
+// ── Local MCP server (AI assistants, read-only) ───────────────────────────
+// services/mcpServer.js speaks the protocol; the tools run in the renderer,
+// where the inventory lives. Prefs in <userData>/mcp.json: { enabled, port,
+// token }. Off by default — the user turns it on in Settings.
+const MCP_DEFAULT_PORT = 5795;
+const _mcpPrefsPath  = () => path.join(app.getPath('userData'), 'mcp.json');
+const _mcpBridgePath = () => path.join(app.getPath('userData'), 'mcp', 'tiger-mcp-bridge.js');
+let _mcp = null;
+let _mcpTools = [];                       // tool definitions registered by the renderer
+const _mcpPending = new Map();            // call id → { resolve, reject, timer }
+
+function _mcpReadPrefs() {
+  let p = {};
+  try { p = JSON.parse(fs.readFileSync(_mcpPrefsPath(), 'utf8')); } catch (_) {}
+  const prefs = {
+    enabled: p.enabled === true,
+    port: Number.isInteger(p.port) ? p.port : MCP_DEFAULT_PORT,
+    token: typeof p.token === 'string' && p.token.length >= 32 ? p.token : crypto.randomBytes(24).toString('hex'),
+  };
+  if (prefs.token !== p.token) _mcpWritePrefs(prefs);
+  return prefs;
+}
+function _mcpWritePrefs(prefs) {
+  try { fs.writeFileSync(_mcpPrefsPath(), JSON.stringify(prefs, null, 2), { mode: 0o600 }); }
+  catch (e) { console.warn('[mcp] failed to write prefs:', e.message); }
+}
+function _mcpCallRenderer(name, args) {
+  return new Promise((resolve, reject) => {
+    if (!mainWindow || mainWindow.isDestroyed()) return reject(new Error('Tiger Studio Manager has no open window.'));
+    const id = crypto.randomUUID();
+    const timer = setTimeout(() => { _mcpPending.delete(id); reject(new Error('Studio did not answer in time.')); }, 15000);
+    _mcpPending.set(id, { resolve, reject, timer });
+    mainWindow.webContents.send('mcp:call', { id, name, args });
+  });
+}
+ipcMain.on('mcp:register-tools', (_evt, tools) => { if (Array.isArray(tools)) _mcpTools = tools; });
+ipcMain.on('mcp:result', (_evt, { id, ok, result, error } = {}) => {
+  const p = _mcpPending.get(id);
+  if (!p) return;
+  _mcpPending.delete(id); clearTimeout(p.timer);
+  ok ? p.resolve(result) : p.reject(new Error(error || 'Tool failed'));
+});
+function _mcpConfig() {
+  const prefs = _mcpReadPrefs();
+  const st = _mcp ? _mcp.status() : { running: false, error: null };
+  return {
+    enabled: prefs.enabled, port: prefs.port, token: prefs.token,
+    url: `http://127.0.0.1:${prefs.port}/mcp`,
+    running: st.running, error: st.error,
+    // What a stdio client (Claude Desktop) needs: Studio's own binary in Node mode.
+    execPath: process.execPath, bridgePath: _mcpBridgePath(),
+  };
+}
+async function _mcpApply() {
+  const prefs = _mcpReadPrefs();
+  if (!_mcp) {
+    const { createMcpServer } = require('./services/mcpServer');
+    _mcp = createMcpServer({
+      serverVersion: app.getVersion(),
+      listTools: () => _mcpTools,
+      callTool: _mcpCallRenderer,
+      log: (m) => console.log(m),
+    });
+  }
+  if (!prefs.enabled) { await _mcp.stop(); return; }
+  // The stdio bridge must run OUTSIDE the app bundle — copy it next to the prefs.
+  try {
+    fs.mkdirSync(path.dirname(_mcpBridgePath()), { recursive: true });
+    fs.copyFileSync(path.join(__dirname, 'services', 'mcpStdioBridge.js'), _mcpBridgePath());
+  } catch (e) { console.warn('[mcp] bridge copy failed:', e.message); }
+  await _mcp.start({ port: prefs.port, token: prefs.token });
+}
+function initMcp() { if (_mcpReadPrefs().enabled) _mcpApply(); }
+ipcMain.handle('mcp:get-config', () => _mcpConfig());
+ipcMain.handle('mcp:set-enabled', async (_evt, enabled) => {
+  _mcpWritePrefs({ ..._mcpReadPrefs(), enabled: !!enabled });
+  await _mcpApply();
+  return _mcpConfig();
+});
+// ── One-click install into an AI client ──────────────────────────────────
+// Claude Desktop installs a `.mcpb` bundle (a zip: manifest.json + server/),
+// which it runs with its own Node — so the bundle carries the stdio bridge with
+// this install's URL + token baked in. Cursor and VS Code take an install link
+// holding the HTTP config. A new token means reinstalling (Settings says so).
+const _crcTable = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t;
+})();
+function _crc32(buf) { let c = 0xFFFFFFFF; for (const b of buf) c = _crcTable[(c ^ b) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+// Minimal zip writer (deflate, no dependency) — enough for a handful of files.
+function _zip(files) {
+  const zlib = require('zlib');
+  const locals = [], centrals = [];
+  let offset = 0;
+  for (const { name, data } of files) {
+    const nameBuf = Buffer.from(name, 'utf8');
+    const comp = zlib.deflateRawSync(data);
+    const crc = _crc32(data);
+    const lh = Buffer.alloc(30);
+    lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(0x0800, 6); lh.writeUInt16LE(8, 8);
+    lh.writeUInt32LE(crc, 14); lh.writeUInt32LE(comp.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(nameBuf.length, 26);
+    locals.push(lh, nameBuf, comp);
+    const ch = Buffer.alloc(46);
+    ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0x0800, 8); ch.writeUInt16LE(8, 10);
+    ch.writeUInt32LE(crc, 16); ch.writeUInt32LE(comp.length, 20); ch.writeUInt32LE(data.length, 24); ch.writeUInt16LE(nameBuf.length, 28);
+    ch.writeUInt32LE(offset, 42);
+    centrals.push(ch, nameBuf);
+    offset += lh.length + nameBuf.length + comp.length;
+  }
+  const cd = Buffer.concat(centrals);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeUInt16LE(files.length, 10);
+  end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...locals, cd, end]);
+}
+function _mcpBuildBundle(cfg) {
+  const { nativeImage } = require('electron');
+  const manifest = {
+    manifest_version: '0.3',
+    name: 'tiger-studio-manager',
+    display_name: 'Tiger Studio Manager',
+    version: app.getVersion(),
+    description: 'Ask about your TigerTag filament inventory, storage racks and 3D printers — read-only.',
+    long_description: 'Reads the inventory open in Tiger Studio Manager on this computer: spools, remaining weight, colours, storage location, racks and printers. Read-only. Tiger Studio Manager must be running with AI assistants turned on in Settings.',
+    author: { name: 'TigerTag Project', url: 'https://tigersystem.io' },
+    homepage: 'https://tigersystem.io',
+    icon: 'icon.png',
+    server: {
+      type: 'node',
+      entry_point: 'server/index.js',
+      mcp_config: {
+        command: 'node',
+        args: ['${__dirname}/server/index.js'],
+        env: { TIGER_MCP_URL: cfg.url, TIGER_MCP_TOKEN: cfg.token },
+      },
+    },
+    tools: _mcpTools.map(t => ({ name: t.name, description: t.description })),
+    keywords: ['tigertag', '3d printing', 'filament', 'inventory'],
+    license: 'Proprietary',
+  };
+  const files = [
+    { name: 'manifest.json', data: Buffer.from(JSON.stringify(manifest, null, 2)) },
+    { name: 'server/index.js', data: fs.readFileSync(path.join(__dirname, 'services', 'mcpStdioBridge.js')) },
+  ];
+  try {
+    const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'img', 'icon.png'));
+    if (!icon.isEmpty()) files.push({ name: 'icon.png', data: icon.resize({ width: 256, quality: 'best' }).toPNG() });
+  } catch (_) {}
+  const out = path.join(app.getPath('userData'), 'mcp', 'Tiger Studio Manager.mcpb');
+  fs.mkdirSync(path.dirname(out), { recursive: true });
+  fs.writeFileSync(out, _zip(files));
+  return out;
+}
+ipcMain.handle('mcp:install', async (_evt, target) => {
+  const cfg = _mcpConfig();
+  if (!cfg.enabled || !cfg.running) return { ok: false, error: 'not-running' };
+  const headers = { Authorization: `Bearer ${cfg.token}` };
+  try {
+    if (target === 'claude-desktop') {
+      const file = _mcpBuildBundle(cfg);
+      const err = await shell.openPath(file);   // Claude Desktop owns .mcpb → its install dialog
+      if (err) { shell.showItemInFolder(file); return { ok: false, error: err, file }; }
+      return { ok: true };
+    }
+    if (target === 'cursor') {
+      const conf = Buffer.from(JSON.stringify({ url: cfg.url, headers })).toString('base64');
+      await shell.openExternal(`cursor://anysphere.cursor-deeplink/mcp/install?name=tiger-studio&config=${encodeURIComponent(conf)}`);
+      return { ok: true };
+    }
+    if (target === 'vscode') {
+      const conf = { name: 'tiger-studio', type: 'http', url: cfg.url, headers };
+      await shell.openExternal(`vscode:mcp/install?${encodeURIComponent(JSON.stringify(conf))}`);
+      return { ok: true };
+    }
+    return { ok: false, error: 'unknown-target' };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+ipcMain.handle('mcp:new-token', async () => {
+  _mcpWritePrefs({ ..._mcpReadPrefs(), token: crypto.randomBytes(24).toString('hex') });
+  await _mcpApply();
+  return _mcpConfig();
+});
+
 // ── Auto-updater preference ─────────────────────────────────────────────
 // Persisted in <userData>/auto-update.json so it survives across launches
 // and is read at startup BEFORE the renderer has had a chance to send its
@@ -4748,6 +4934,7 @@ app.whenReady().then(async () => {
   await db.initTigerTagDB();
 
   createWindow();
+  initMcp();   // local read-only MCP server — only if the user turned it on
   initNFC();   // spawns isolated utility process — never blocks the main V8 thread
   initTD1S();
   initUsbScale();

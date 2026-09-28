@@ -1621,5 +1621,20 @@
   "notifFfgFwTitle": "Для {{name}} есть новая прошивка",
   "notifFfgFwText": "Прошивка Cloud + LAN {{version}} — нажми, чтобы взять нужный файл для этого принтера.",
   "sectionAspect": "Фактура",
-  "colorEditPill": "Сменить цвет"
+  "colorEditPill": "Сменить цвет",
+  "stgMcpTitle": "ИИ-ассистенты",
+  "stgMcpToggle": "Разрешить ИИ-ассистенту читать инвентарь",
+  "stgMcpToggleSub": "Claude и компания смогут смотреть твои катушки, стеллажи и принтеры. Смотреть, но не трогать — и только на этом компьютере.",
+  "stgMcpHelp": "Один клик — и ассистент подключён. Потом просто спроси: «сколько у меня осталось чёрного PLA?»",
+  "stgMcpCopyCode": "Скопировать команду Claude Code",
+  "stgMcpNewKey": "Новый ключ доступа",
+  "stgMcpOn": "Готово — ассистенты стучатся на {{url}}",
+  "stgMcpError": "Не удалось открыть дверь: {{error}}",
+  "stgMcpCopied": "Скопировано — вставь в ассистента",
+  "stgMcpNewKeyDone": "Новый ключ создан — старый больше ничего не открывает. Добавь Studio в ассистентов заново.",
+  "stgMcpAddClaude": "Добавить в Claude Desktop",
+  "stgMcpAddCursor": "Добавить в Cursor",
+  "stgMcpAddVscode": "Добавить в VS Code",
+  "stgMcpAddOpened": "Дальше в {{app}} — просто подтверди установку.",
+  "stgMcpAddFailed": "{{app}} не отвечает — он установлен на этом компьютере?"
 }

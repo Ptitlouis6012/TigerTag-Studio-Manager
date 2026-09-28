@@ -355,6 +355,16 @@ Renderer functions are module-scoped (not on `window`): reach a view by clicking
 its real controls, then `shot` the element and read the PNG. Screenshots go to the
 scratchpad, never into the repo. Source: `scripts/devdrive.mjs`.
 
+## 🤖 AI assistants — the local MCP server
+
+Studio serves the Model Context Protocol so Claude Desktop / Claude Code / Cursor / VS Code
+can READ the account (inventory, friends' shared stock, wishlists, racks, printers,
+devices, history). **`docs/MCP.md` is the reference — read it before touching any `mcp`
+code.** Non-negotiables: tools are **read-only**; **no credential ever leaves**
+(`secrets` / `apiKeys` refused, `MCP_SECRET_FIELD` masks the rest); return **decoded,
+named values**, never raw ids; keep the notice (`MCP_DATA_GUIDE`) true whenever a
+Firestore field or collection changes.
+
 ## Stack
 Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js`. Renderer: `renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js`. Preload bridge: `preload.js`.
 

@@ -62,7 +62,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 |---|---|---|
 | 1138-1379 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
 
-## Auto-updater + migration gate (L1636-1687)
+## Auto-updater + migration gate (L1826-1877)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -74,73 +74,79 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | L | What | IPC |
 |---|---|---|
 | 1554-1702 | Google OAuth loopback sign-in (`auth:google-loopback`); `shell:open-external` | — |
-| 1703-1749 | Detached camera-wall `BrowserWindow` (`cam:open-detached`); `update:check-now` | — |
+| 1893-1939 | Detached camera-wall `BrowserWindow` (`cam:open-detached`); `update:check-now` | — |
 
-## Printer discovery probes (L2172-2556)
-
-| L | What | Anchors / IPC |
-|---|---|---|
-| 1750-1869 | FlashForge — HTTP POST bridge (`ffg:http-post`), UDP multicast (`ffg:multicast-discover`) | — |
-| 1870-1971 | FlashForge — UDP identity probe port 19000 (`ffg:udp-probe`, returns model+serial credential-free), TCP M115 probe (`ffg:tcp-probe`) | `_ffgParseUdpIdentity` |
-| 1972-2003 | Creality — TCP 9999 open-check (`cre:tcp-probe`) | — |
-| 2004-2252 | Bambu Lab — SSDP multicast (`bambu:ssdp-discover`) + TLS cert sniff (`bambu:tls-probe`) + print thumbnail via FTPS | `_parseBambuSsdp` |
-| 2253-2370 | Elegoo — UDP discovery/probe (`elegoo:udp-discover` / `elegoo:udp-probe`) | `_parseElegooReply` |
-| 2371-2420 | Snapmaker — HTTP GET bridge (`snap:http-get`) | — |
-| 2421-2471 | Creality — Moonraker HTTP IPC port 7125, live controls (`cre:http`) | — |
-
-## Infra IPC — image cache, subnets, mDNS, app info, DB (L2473-2628)
+## Local MCP server — prefs, renderer relay, IPC (L1694-1880)
 
 | L | What | IPC |
 |---|---|---|
-| 2473-2527 | Image disk cache (`img:get`) | — |
-| 2528-2618 | LAN /24 subnet list (`net:get-local-subnets`), mDNS Snapmaker browse (`mdns:browse-snapmaker`) | — |
-| 2618-2628 | App/platform info for diagnostics (`app:info`, `app:renderer-path`); TigerTag DB lookups (`db:*`) | — |
+| 1694-1880 | Read-only MCP server for AI assistants: `<userData>/mcp.json` prefs (enabled / port 5795 / token), stdio bridge copied to `<userData>/mcp/`, `tools/call` relayed to the renderer, started by `initMcp()` at boot. Protocol: `services/mcpServer.js` | `mcp:get-config`, `mcp:set-enabled`, `mcp:new-token`, `mcp:register-tools`, `mcp:call` / `mcp:result` |
 
-## Elegoo MQTT bridge + timelapse + ffmpeg (L2629-2765)
+## Printer discovery probes (L2362-2746)
+
+| L | What | Anchors / IPC |
+|---|---|---|
+| 1940-2059 | FlashForge — HTTP POST bridge (`ffg:http-post`), UDP multicast (`ffg:multicast-discover`) | — |
+| 2060-2161 | FlashForge — UDP identity probe port 19000 (`ffg:udp-probe`, returns model+serial credential-free), TCP M115 probe (`ffg:tcp-probe`) | `_ffgParseUdpIdentity` |
+| 2162-2193 | Creality — TCP 9999 open-check (`cre:tcp-probe`) | — |
+| 2194-2442 | Bambu Lab — SSDP multicast (`bambu:ssdp-discover`) + TLS cert sniff (`bambu:tls-probe`) + print thumbnail via FTPS | `_parseBambuSsdp` |
+| 2443-2560 | Elegoo — UDP discovery/probe (`elegoo:udp-discover` / `elegoo:udp-probe`) | `_parseElegooReply` |
+| 2561-2610 | Snapmaker — HTTP GET bridge (`snap:http-get`) | — |
+| 2611-2661 | Creality — Moonraker HTTP IPC port 7125, live controls (`cre:http`) | — |
+
+## Infra IPC — image cache, subnets, mDNS, app info, DB (L2663-2818)
 
 | L | What | IPC |
 |---|---|---|
-| 3057-3086 | Timelapse video download (`timelapse:download`) | — |
-| 3087-3159 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
-| 3160-3214 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
+| 2663-2717 | Image disk cache (`img:get`) | — |
+| 2718-2808 | LAN /24 subnet list (`net:get-local-subnets`), mDNS Snapmaker browse (`mdns:browse-snapmaker`) | — |
+| 2808-2818 | App/platform info for diagnostics (`app:info`, `app:renderer-path`); TigerTag DB lookups (`db:*`) | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3215-3483)
+## Elegoo MQTT bridge + timelapse + ffmpeg (L2819-2955)
+
+| L | What | IPC |
+|---|---|---|
+| 3247-3276 | Timelapse video download (`timelapse:download`) | — |
+| 3277-3349 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
+| 3350-3404 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
+
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3405-3673)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 3215-3275 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
-| 3276-3365 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
-| 3366-3483 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
+| 3405-3465 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
+| 3466-3555 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
+| 3556-3673 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
 
-## Bambu Lab cloud — REST + shared cloud MQTT (L3484-3801)
-
-| L | What | Anchors / IPC |
-|---|---|---|
-| 3484-3576 | Tolerant REST helper over ELECTRON's `net` — Chromium's stack on purpose, because the login sits behind Cloudflare, which reads the TLS fingerprint | `_bblFetch`, `_bblHeaders` |
-| 3577-3700 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
-| 3701-3801 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
-
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3802-4133)
+## Bambu Lab cloud — REST + shared cloud MQTT (L3674-3991)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 3020-3106 | MQTTS 9883 control bus, TLS 1.2 (`anycubic:connect` / `disconnect` / `publish`) | — |
-| 3107-3212 | FLV camera via ffmpeg, port 18088 (`anycubic:cam-start` / `cam-stop`) — URL-aware (`/flv` or `/live/<token>`) | — |
-| 3213-3235 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
-| 3236-3343 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
+| 3674-3766 | Tolerant REST helper over ELECTRON's `net` — Chromium's stack on purpose, because the login sits behind Cloudflare, which reads the TLS fingerprint | `_bblFetch`, `_bblHeaders` |
+| 3767-3890 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
+| 3891-3991 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
 
-## Anycubic cloud — REST + cloud MQTT (L4134-4599)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L3992-4323)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 3344-3416 | Signed REST helpers (`Xx-Signature` md5, `XX-Token`) | `_cloudHeaders`, `_cloudFetch` |
-| 3417-3528 | Web login (`anycubic:cloud-web-login`) + CDP token grab (`anycubic:cloud-cdp-token`) from a bridge-mode slicer | `_cdpEvaluate` |
-| 3529-3667 | REST: `cloud-get-printers`, `cloud-printer-info` (temps + thumbnail + latest project), `cloud-verify`, `cloud-send-order`, `cloud-camera-open` (order 1001 → Agora "shengwang" creds) | — |
-| 3668-3704 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
-| 3705-3809 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
+| 3210-3296 | MQTTS 9883 control bus, TLS 1.2 (`anycubic:connect` / `disconnect` / `publish`) | — |
+| 3297-3402 | FLV camera via ffmpeg, port 18088 (`anycubic:cam-start` / `cam-stop`) — URL-aware (`/flv` or `/live/<token>`) | — |
+| 3403-3425 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
+| 3426-3533 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## App lifecycle (L4600-4665)
+## Anycubic cloud — REST + cloud MQTT (L4324-4789)
+
+| L | What | Anchors / IPC |
+|---|---|---|
+| 3534-3606 | Signed REST helpers (`Xx-Signature` md5, `XX-Token`) | `_cloudHeaders`, `_cloudFetch` |
+| 3607-3718 | Web login (`anycubic:cloud-web-login`) + CDP token grab (`anycubic:cloud-cdp-token`) from a bridge-mode slicer | `_cdpEvaluate` |
+| 3719-3857 | REST: `cloud-get-printers`, `cloud-printer-info` (temps + thumbnail + latest project), `cloud-verify`, `cloud-send-order`, `cloud-camera-open` (order 1001 → Agora "shengwang" creds) | — |
+| 3858-3894 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
+| 3895-3999 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
+
+## App lifecycle (L4790-4855)
 
 | L | What |
 |---|---|
-| 4600-4665 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |
+| 4790-4855 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |

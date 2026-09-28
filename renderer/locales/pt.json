@@ -1621,5 +1621,20 @@
   "notifFfgFwTitle": "{{name}} tem um firmware novo esperando",
   "notifFfgFwText": "Firmware Cloud + LAN {{version}} — toque para pegar o arquivo certo desta impressora.",
   "sectionAspect": "Acabamento",
-  "colorEditPill": "Mudar cor"
+  "colorEditPill": "Mudar cor",
+  "stgMcpTitle": "Assistentes de IA",
+  "stgMcpToggle": "Deixar um assistente de IA ler seu inventário",
+  "stgMcpToggleSub": "Claude e cia. podem consultar seus carretéis, prateleiras e impressoras. Só olhar, nunca mexer — e só neste computador.",
+  "stgMcpHelp": "Um clique para ligar no seu assistente, e é só perguntar: “quanto PLA preto ainda tenho?”",
+  "stgMcpCopyCode": "Copiar comando do Claude Code",
+  "stgMcpNewKey": "Nova chave de acesso",
+  "stgMcpOn": "Pronto — os assistentes batem em {{url}}",
+  "stgMcpError": "Não deu para abrir a porta: {{error}}",
+  "stgMcpCopied": "Copiado — cole no seu assistente",
+  "stgMcpNewKeyDone": "Nova chave criada — a antiga não abre mais nada. Adicione o Studio de novo aos seus assistentes.",
+  "stgMcpAddClaude": "Adicionar ao Claude Desktop",
+  "stgMcpAddCursor": "Adicionar ao Cursor",
+  "stgMcpAddVscode": "Adicionar ao VS Code",
+  "stgMcpAddOpened": "Agora é no {{app}} — só confirme a instalação lá.",
+  "stgMcpAddFailed": "O {{app}} não atendeu — ele está instalado neste computador?"
 }

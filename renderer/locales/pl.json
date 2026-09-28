@@ -1620,5 +1620,20 @@
   "notifFfgFwTitle": "Na {{name}} czeka nowy firmware",
   "notifFfgFwText": "Firmware Cloud + LAN {{version}} — stuknij, by pobrać plik dla tej drukarki.",
   "sectionAspect": "Wykończenie",
-  "colorEditPill": "Zmień kolor"
+  "colorEditPill": "Zmień kolor",
+  "stgMcpTitle": "Asystenci AI",
+  "stgMcpToggle": "Pozwól asystentowi AI czytać twój inwentarz",
+  "stgMcpToggleSub": "Claude i spółka mogą zajrzeć do twoich szpul, półek i drukarek. Patrzeć, nigdy nie ruszać — i tylko na tym komputerze.",
+  "stgMcpHelp": "Jedno kliknięcie, by podłączyć asystenta, a potem po prostu zapytaj: „ile czarnego PLA mi zostało?”",
+  "stgMcpCopyCode": "Kopiuj polecenie Claude Code",
+  "stgMcpNewKey": "Nowy klucz dostępu",
+  "stgMcpOn": "Gotowe — asystenci pukają pod {{url}}",
+  "stgMcpError": "Nie udało się otworzyć drzwi: {{error}}",
+  "stgMcpCopied": "Skopiowano — wklej to do asystenta",
+  "stgMcpNewKeyDone": "Nowy klucz gotowy — stary już nic nie otwiera. Dodaj Studio do asystentów jeszcze raz.",
+  "stgMcpAddClaude": "Dodaj do Claude Desktop",
+  "stgMcpAddCursor": "Dodaj do Cursor",
+  "stgMcpAddVscode": "Dodaj do VS Code",
+  "stgMcpAddOpened": "Teraz {{app}} — potwierdź tam instalację.",
+  "stgMcpAddFailed": "{{app}} nie odbiera — czy jest zainstalowany na tym komputerze?"
 }
