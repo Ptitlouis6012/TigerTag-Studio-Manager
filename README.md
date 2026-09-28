@@ -208,7 +208,7 @@ The TD1S auto-opens a live viewer when plugged in. In the spool detail panel, sc
 
 #### TigerScale
 
-<p align="center"><img src="assets/img/TigerScale_Photo.png" width="480" alt="TigerScale ESP32 filament scale" /></p>
+<p align="center"><img src="assets/img/TigerScale_V3.png" width="480" alt="TigerScale V3 — colour touchscreen, dual PN532 NFC readers" /></p>
 
 The [TigerScale](https://github.com/TigerTag-Project/Tiger-Scale-V3) is an open-source ESP32 filament scale — now in its **V3** generation (ESP32-S3, 3.5" touchscreen, dual PN532 readers, battery). Tiger Studio Manager connects to it over WebSocket and shows a live card per scale:
 - **56 px live weight display** with container / filament split
