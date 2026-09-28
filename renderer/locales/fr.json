@@ -1622,18 +1622,15 @@
   "sectionAspect": "Aspect",
   "colorEditPill": "Changer la couleur",
   "stgMcpTitle": "Assistants IA",
-  "stgMcpToggle": "Laisser un assistant IA lire ton inventaire",
-  "stgMcpToggleSub": "Claude & cie peuvent consulter tes bobines, étagères et imprimantes. Regarder, jamais toucher — et seulement sur cet ordi.",
-  "stgMcpHelp": "Un clic pour le brancher sur ton assistant, puis demande-lui simplement : « il me reste combien de PLA noir ? »",
-  "stgMcpCopyCode": "Copier la commande Claude Code",
-  "stgMcpNewKey": "Nouvelle clé d’accès",
-  "stgMcpOn": "Prêt — les assistants frappent à {{url}}",
+  "stgMcpToggleSub": "Claude, Cursor ou VS Code peuvent consulter tes bobines, étagères, imprimantes, listes et le stock partagé par tes amis — il suffit de leur demander. Ils regardent, ne touchent à rien, et seulement sur cet ordi quand Studio est ouvert.",
+  "stgMcpNewKey": "Renouveler la clé",
   "stgMcpError": "Impossible d’ouvrir la porte : {{error}}",
-  "stgMcpCopied": "Copié — colle-le dans ton assistant",
   "stgMcpNewKeyDone": "Nouvelle clé créée — l’ancienne n’ouvre plus rien. Rajoute Studio à tes assistants.",
   "stgMcpAddClaude": "Ajouter à Claude Desktop",
   "stgMcpAddCursor": "Ajouter à Cursor",
   "stgMcpAddVscode": "Ajouter à VS Code",
   "stgMcpAddOpened": "À toi de jouer dans {{app}} — confirme juste l’installation.",
-  "stgMcpAddFailed": "{{app}} n’a pas décroché — il est bien installé sur cet ordi ?"
+  "stgMcpAddFailed": "{{app}} n’a pas décroché — il est bien installé sur cet ordi ?",
+  "eacMcpRow": "Laisser une IA lire mon inventaire",
+  "stgMcpNewKeyTip": "Renouvelle la clé et déconnecte tes assistants."
 }

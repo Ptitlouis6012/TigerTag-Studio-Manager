@@ -1807,6 +1807,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   /* ── connected state ── */
   function setConnected(displayName, email) {
     state.displayName = displayName; // raw value — empty if not yet chosen by user
+    _mcpSyncAccount(state.activeAccountId);   // MCP follows the signed-in profile's choice
     const shown = _shortName(displayName, email);
     // One-time migration: older builds of onAuthStateChanged
     // overwrote acc.photoURL with Firebase Auth's `user.photoURL`
@@ -1872,6 +1873,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   function setDisconnected() {
     state.displayName = null; state.keyValid = null;
+    _mcpSyncAccount(null);                    // nobody signed in → MCP server off
     state.photoURL = null;  // clear custom avatar → sign-in placeholder shows
     // Single source-of-truth paint of the EMPTY state: passing `null`
     // resolves to data-av-mode="empty" → the "+" glyph, neutral gradient,
@@ -3960,7 +3962,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // The catalogue cache may have been loaded (or aged) since the last open —
     // the Tools line reports how old it is, so refresh it on the way in.
     _catalogLoadCacheIfNeeded();
-    _mcpSettingsRefresh?.();
     _catalogResyncState();
     _layoutSettingsStack();
   }
@@ -4266,6 +4267,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   let _editingAccount = null;
   function openEditAccountModal(acc) {
     _editingAccount = acc || activeAccount(); if (!_editingAccount) return;
+    // AI-assistant access is the SIGNED-IN account's choice (the server serves
+    // that account) — only offered on its own profile.
+    const mcpGroup = $("eacMcpGroup");
+    if (mcpGroup) mcpGroup.hidden = !window.mcpBridge || _editingAccount.id !== state.activeAccountId;
+    _mcpSettingsRefresh?.();
     // Atomic paint via the centralised pipeline — gradient,
     // .av-initials text and the photo overlay all in one shot. No
     // textContent on #eacAvatar itself (that would wipe the hover
@@ -21353,7 +21359,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _holdTipText(el) {
     const s = new Intl.NumberFormat(state.lang || "en", { maximumFractionDigits: 1 })
       .format((Number(el.dataset.holdMs) || 0) / 1000);
-    return t("holdToConfirmTip", { s });
+    const hold = t("holdToConfirmTip", { s });
+    // Optional lead sentence saying WHAT the button does (data-hold-tip = i18n key).
+    return el.dataset.holdTip ? `${t(el.dataset.holdTip)} ${hold}` : hold;
   }
   function _wireFlagTips() {
     if (_flagTipsWired) return;
@@ -37951,44 +37959,51 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
   }
 
-  // ── Settings › AI assistants — turn the MCP server on/off, hand out the setup.
-  let _mcpSettingsRefresh = null;   // openSettings() re-reads the server state
-  (function wireMcpSettings() {
+  // ── My profile › AI assistants — the MCP server is a PER-PROFILE choice: the
+  // account signed in is told to main (mcp:set-account), which runs the server
+  // only if THAT account opted in. Toggle + ⓘ bubble; once on, one click adds
+  // Studio to Claude Desktop (.mcpb), Cursor or VS Code (install links).
+  let _mcpSettingsRefresh = null;   // re-reads the server state (profile opened, account switched)
+  function _mcpSyncAccount(uid) {
     const api = window.mcpBridge;
-    const tog = $("stgMcpToggle");
-    if (!api || !tog) { $("stgMcpCard")?.setAttribute("hidden", ""); return; }
-    let cfg = null;
-    const status = (kind, text) => {
-      const el = $("stgMcpStatus");
-      if (!el) return;
-      el.hidden = !text; el.dataset.kind = kind || ""; el.textContent = text || "";
-    };
+    if (!api) return;
+    api.setAccount(uid || null).then(() => _mcpSettingsRefresh?.()).catch(() => {});
+  }
+  (function wireMcpProfile() {
+    const api = window.mcpBridge;
+    const tog = $("eacMcpToggle");
+    if (!api || !tog) { $("eacMcpGroup")?.setAttribute("hidden", ""); return; }
+    let cfg = null, flashT = null;
+    const statusEl = $("eacMcpStatus");
+    const setStatus = (kind, text) => { if (statusEl) { statusEl.dataset.kind = kind || ""; statusEl.textContent = text || ""; } };
     const paint = () => {
-      tog.checked = !!cfg?.enabled;
-      $("stgMcpOnBlock").hidden = !cfg?.enabled;
-      if (!cfg?.enabled) return status("", "");
-      if (cfg.running) status("ok", t("stgMcpOn", { url: cfg.url }));
-      else status("err", t("stgMcpError", { error: cfg.error || "—" }));
+      const on = !!cfg?.enabled;
+      tog.checked = on;
+      // Always shown, greyed and inert while off — you see what turning it on unlocks.
+      const block = $("eacMcpOn");
+      block.classList.toggle("is-off", !on);
+      block.querySelectorAll("button").forEach(b => { b.disabled = !on; });
+      if (!on) return setStatus("", "");
+      // Running is the normal case — no message. Only a failure says something.
+      if (cfg.running) setStatus("", "");
+      else setStatus("err", t("stgMcpError", { error: cfg.error || "—" }));
     };
+    // A transient message, then back to the steady state.
+    const flash = (kind, text, ms = 4000) => { setStatus(kind, text); clearTimeout(flashT); flashT = setTimeout(paint, ms); };
     const refresh = async () => { try { cfg = await api.getConfig(); paint(); } catch (_) {} };
-    const copy = async (text, doneKey) => {
-      try { await navigator.clipboard.writeText(text); status("ok", t(doneKey)); setTimeout(paint, 2500); }
-      catch (_) {}
-    };
     tog.addEventListener("change", async () => { cfg = await api.setEnabled(tog.checked); paint(); });
-    // One click into an AI client: Claude Desktop gets a .mcpb bundle (its own
-    // install dialog), Cursor / VS Code an install link — see `mcp:install`.
-    document.querySelectorAll("#stgMcpCard [data-mcp-target]").forEach(btn => {
+    document.querySelectorAll("#eacMcpGroup [data-mcp-target]").forEach(btn => {
       btn.addEventListener("click", async () => {
         const app = btn.dataset.mcpApp;
         const res = await api.install(btn.dataset.mcpTarget);
-        status(res?.ok ? "ok" : "warn", t(res?.ok ? "stgMcpAddOpened" : "stgMcpAddFailed", { app }));
-        setTimeout(paint, 5000);
+        flash(res?.ok ? "ok" : "warn", t(res?.ok ? "stgMcpAddOpened" : "stgMcpAddFailed", { app }), 5000);
       });
     });
-    $("btnMcpCopyCode")?.addEventListener("click", () => copy(
-      `claude mcp add --transport http tiger-studio ${cfg.url} --header "Authorization: Bearer ${cfg.token}"`, "stgMcpCopied"));
-    $("btnMcpNewKey")?.addEventListener("click", async () => { cfg = await api.newToken(); paint(); status("warn", t("stgMcpNewKeyDone")); setTimeout(paint, 4000); });
+    // Renewing breaks every assistant already set up — held 1.5 s, like the
+    // other hard-to-undo actions, with a bubble saying what it does and how.
+    setupHoldToConfirm($("btnMcpNewKey"), 1500, async () => {
+      cfg = await api.newToken(); flash("warn", t("stgMcpNewKeyDone"), 6000);
+    }, { hint: true });
     _mcpSettingsRefresh = refresh;
     refresh();
   })();

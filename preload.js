@@ -21,6 +21,7 @@ contextBridge.exposeInMainWorld('mcpBridge', {
   setEnabled:    (on) => ipcRenderer.invoke('mcp:set-enabled', on),
   newToken:      () => ipcRenderer.invoke('mcp:new-token'),
   install:       (target) => ipcRenderer.invoke('mcp:install', target),
+  setAccount:    (uid) => ipcRenderer.invoke('mcp:set-account', uid),
 });
 
 contextBridge.exposeInMainWorld('bambulab', {

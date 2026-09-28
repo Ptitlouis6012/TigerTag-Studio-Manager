@@ -56,11 +56,11 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 717-1137 | IPC: `rfid:read-now` / `rfid:write-now` / `rfid:repair` (restore from backup) / `rfid:format` (reinitialize via `TigerTag.asInit`) / `rfid:encode-cloud` / `rfid:burn-one` / `rfid:refresh-api` / `rfid:lookup-product`; surgical page diff before write | `_pagesFromBytes`, `_pagesToWrite` |
 | 1281-1333 | IPC `catalog:fetch-all` — pages the WHOLE product catalogue (`product/get/all`, `per_page` 1000, follows `nextPage`) so the renderer can cache and search it offline | `XANO_PRODUCT_ALL_URL` |
 
-## TD1S color sensor (L1353-1353)
+## TD1S color sensor (L1505-1746)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 1138-1379 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
+| 1505-1746 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
 
 ## Auto-updater + migration gate (L1826-1877)
 
@@ -80,7 +80,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 
 | L | What | IPC |
 |---|---|---|
-| 1694-1880 | Read-only MCP server for AI assistants: `<userData>/mcp.json` prefs (enabled / port 5795 / token), stdio bridge copied to `<userData>/mcp/`, `tools/call` relayed to the renderer, started by `initMcp()` at boot. Protocol: `services/mcpServer.js` | `mcp:get-config`, `mcp:set-enabled`, `mcp:new-token`, `mcp:register-tools`, `mcp:call` / `mcp:result` |
+| 1694-1880 | Read-only MCP server for AI assistants: `<userData>/mcp.json` prefs (enabledFor [uid] / port 5795 / token; server follows the signed-in account via `mcp:set-account`), stdio bridge copied to `<userData>/mcp/`, `tools/call` relayed to the renderer, started by `initMcp()` at boot. Protocol: `services/mcpServer.js` | `mcp:get-config`, `mcp:set-account`, `mcp:set-enabled`, `mcp:new-token`, `mcp:register-tools`, `mcp:call` / `mcp:result` |
 
 ## Printer discovery probes (L2362-2746)
 

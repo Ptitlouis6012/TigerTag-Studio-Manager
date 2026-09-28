@@ -1622,18 +1622,15 @@
   "sectionAspect": "Aspect",
   "colorEditPill": "Change colour",
   "stgMcpTitle": "AI assistants",
-  "stgMcpToggle": "Let an AI assistant read your inventory",
-  "stgMcpToggleSub": "Claude & co. can look up your spools, racks and printers. Look, never touch — and only on this computer.",
-  "stgMcpHelp": "One click to plug it into your assistant, then just ask: “how much black PLA do I have left?”",
-  "stgMcpCopyCode": "Copy Claude Code command",
-  "stgMcpNewKey": "New access key",
-  "stgMcpOn": "Ready — assistants knock at {{url}}",
+  "stgMcpToggleSub": "Claude, Cursor or VS Code can look up your spools, racks, printers, wishlists and your friends’ shared stock — just ask them. They look, never touch, and only on this computer while Studio is open.",
+  "stgMcpNewKey": "Renew the key",
   "stgMcpError": "Couldn’t open the door: {{error}}",
-  "stgMcpCopied": "Copied — paste it into your assistant",
   "stgMcpNewKeyDone": "New key made — the old one no longer opens anything. Add Studio to your assistants again.",
   "stgMcpAddClaude": "Add to Claude Desktop",
   "stgMcpAddCursor": "Add to Cursor",
   "stgMcpAddVscode": "Add to VS Code",
   "stgMcpAddOpened": "Over to {{app}} — just confirm the install there.",
-  "stgMcpAddFailed": "{{app}} didn’t pick up — is it installed on this computer?"
+  "stgMcpAddFailed": "{{app}} didn’t pick up — is it installed on this computer?",
+  "eacMcpRow": "Let an AI read my inventory",
+  "stgMcpNewKeyTip": "Renews the key and disconnects your assistants."
 }

@@ -1250,6 +1250,53 @@
   #editAccountModalOverlay .eac-info:hover .icon,
   #editAccountModalOverlay .eac-info:focus-visible .icon { background: var(--primary); }
 
+  /* AI assistants (MCP) — once the toggle is on: one tile per app, its real
+     logo in its brand colour, one click to add Studio to it. Status + the two
+     secondary actions sit small underneath. */
+  #editAccountModalOverlay .eac-mcp { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  /* Off: everything stays in place, greyed and inert (logos lose their colour). */
+  #editAccountModalOverlay .eac-mcp.is-off { opacity: .45; }
+  #editAccountModalOverlay .eac-mcp.is-off button { cursor: default; pointer-events: none; }
+  #editAccountModalOverlay .eac-mcp.is-off .eac-mcp-logo { filter: grayscale(1); }
+  #editAccountModalOverlay .eac-mcp-status:empty { display: none; }
+  #editAccountModalOverlay .eac-mcp-apps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  #editAccountModalOverlay .eac-mcp-app {
+    height: auto; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 7px; padding: 12px 6px 10px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    transition: border-color .15s, transform .1s, background .15s;
+  }
+  #editAccountModalOverlay .eac-mcp-app:hover { border-color: var(--primary); background: var(--surface); transform: translateY(-1px); }
+  #editAccountModalOverlay .eac-mcp-app:active { transform: translateY(0); }
+  .eac-mcp-logo {
+    height: 26px; aspect-ratio: 1 / 1;   /* all three SVGs are viewBox 0 0 24 24 */
+    -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+  }
+  .eac-mcp-logo--claude { background-color: #D97757; -webkit-mask-image: url('../../assets/svg/brands/claude.svg'); }
+  .eac-mcp-logo--cursor { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/brands/cursor.svg'); }
+  .eac-mcp-logo--vscode { background-color: #007ACC; -webkit-mask-image: url('../../assets/svg/brands/vscode.svg'); }
+  #editAccountModalOverlay .eac-mcp-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+  }
+  #editAccountModalOverlay .eac-mcp-status { font-size: 11.5px; color: var(--muted); min-width: 0; }
+  #editAccountModalOverlay .eac-mcp-status[data-kind="ok"]   { color: var(--success); }
+  #editAccountModalOverlay .eac-mcp-status[data-kind="warn"] { color: rgb(217, 119, 6); }
+  #editAccountModalOverlay .eac-mcp-status[data-kind="err"]  { color: var(--danger); }
+  /* Renew the access key — a real (secondary) button: it invalidates every
+     assistant already set up, so it should read as an action, not a footnote. */
+  #editAccountModalOverlay .eac-mcp-key {
+    position: relative; overflow: hidden;   /* hosts the hold-to-confirm sweep */
+    height: auto; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+    padding: 6px 11px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface-2);
+    font-size: 12px; font-weight: 600; color: var(--text);
+    transition: border-color .15s, background .15s;
+  }
+  #editAccountModalOverlay .eac-mcp-key .icon { background: var(--muted); transition: background .15s; }
+  #editAccountModalOverlay .eac-mcp-key:hover { border-color: var(--primary); background: var(--surface); }
+  #editAccountModalOverlay .eac-mcp-key:hover .icon { background: var(--primary); }
+
   /* The name field spans the section under its own caption — a text input needs
      room to show what you typed, which a right-hand column cannot give it. */
   #editAccountModalOverlay .eac-name-row { gap: 6px; }

@@ -1622,18 +1622,15 @@
   "sectionAspect": "Oberfläche",
   "colorEditPill": "Farbe ändern",
   "stgMcpTitle": "KI-Assistenten",
-  "stgMcpToggle": "Einen KI-Assistenten dein Inventar lesen lassen",
-  "stgMcpToggleSub": "Claude & Co. können deine Spulen, Regale und Drucker nachschlagen. Nur gucken, nie anfassen — und nur auf diesem Rechner.",
-  "stgMcpHelp": "Ein Klick, um es mit deinem Assistenten zu verbinden — dann frag einfach: „Wie viel schwarzes PLA hab ich noch?“",
-  "stgMcpCopyCode": "Claude-Code-Befehl kopieren",
-  "stgMcpNewKey": "Neuer Zugangsschlüssel",
-  "stgMcpOn": "Bereit — Assistenten klopfen bei {{url}} an",
+  "stgMcpToggleSub": "Claude, Cursor oder VS Code können deine Spulen, Regale, Drucker, Wunschlisten und den geteilten Bestand deiner Freunde nachschlagen — frag sie einfach. Sie schauen nur, fassen nichts an, und nur auf diesem Rechner, solange Studio offen ist.",
+  "stgMcpNewKey": "Schlüssel erneuern",
   "stgMcpError": "Tür ließ sich nicht öffnen: {{error}}",
-  "stgMcpCopied": "Kopiert — füg es in deinen Assistenten ein",
   "stgMcpNewKeyDone": "Neuer Schlüssel erstellt — der alte öffnet nichts mehr. Füg Studio deinen Assistenten neu hinzu.",
   "stgMcpAddClaude": "Zu Claude Desktop hinzufügen",
   "stgMcpAddCursor": "Zu Cursor hinzufügen",
   "stgMcpAddVscode": "Zu VS Code hinzufügen",
   "stgMcpAddOpened": "Weiter in {{app}} — bestätig dort einfach die Installation.",
-  "stgMcpAddFailed": "{{app}} geht nicht ran — ist es auf diesem Rechner installiert?"
+  "stgMcpAddFailed": "{{app}} geht nicht ran — ist es auf diesem Rechner installiert?",
+  "eacMcpRow": "Eine KI mein Inventar lesen lassen",
+  "stgMcpNewKeyTip": "Erneuert den Schlüssel und trennt deine Assistenten."
 }

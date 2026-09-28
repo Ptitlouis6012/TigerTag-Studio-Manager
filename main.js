@@ -379,7 +379,12 @@ function revealMainWindow() {
   try { if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close(); } catch (_) {}
   splashWindow = null;
   if (mainWindow && !mainWindow.isDestroyed()) {
+    // Come back the way the user left it: maximized / full screen are applied
+    // here, at reveal, because doing it on the hidden window would show it early.
+    const st = mainWindow._restoreState || {};
+    if (st.maximized) mainWindow.maximize();
     mainWindow.show();
+    if (st.fullScreen) mainWindow.setFullScreen(true);
     mainWindow.focus();
   }
 }
@@ -454,6 +459,48 @@ function isSafeExternalUrl(u) {
 }
 
 
+// ── Main window size / position memory ─────────────────────────────────────
+// <userData>/window-state.json = { x, y, width, height, maximized, fullScreen }.
+// Saved whenever the window moves or resizes (debounced) and on close; restored
+// at creation — but only if those bounds still land on a connected display
+// (a monitor unplugged since last time would otherwise open the app off-screen).
+const _winStatePath = () => path.join(app.getPath('userData'), 'window-state.json');
+// First launch (nothing saved yet): open maximized — the app wants the room.
+const WIN_DEFAULT = { width: 1280, height: 820, maximized: true };
+function _readWindowState() {
+  let st = null;
+  try { st = JSON.parse(fs.readFileSync(_winStatePath(), 'utf8')); } catch (_) { return { ...WIN_DEFAULT }; }
+  const ok = n => Number.isFinite(n);
+  if (!st || !ok(st.width) || !ok(st.height)) return { ...WIN_DEFAULT };
+  const out = { width: Math.max(900, st.width), height: Math.max(600, st.height),
+                maximized: !!st.maximized, fullScreen: !!st.fullScreen };
+  if (ok(st.x) && ok(st.y)) {
+    const { screen } = require('electron');
+    // Visible if at least 100×50 px of the title-bar region overlaps a display.
+    const onScreen = screen.getAllDisplays().some(({ workArea: d }) =>
+      st.x + st.width - 100 > d.x && st.x + 100 < d.x + d.width &&
+      st.y + 50 > d.y && st.y < d.y + d.height - 50);
+    if (onScreen) { out.x = st.x; out.y = st.y; }
+  }
+  return out;
+}
+let _winStateTimer = null;
+function _saveWindowState(win) {
+  if (!win || win.isDestroyed()) return;
+  try {
+    // getNormalBounds() = the size to come back to when un-maximized.
+    const b = (win.isMaximized() || win.isFullScreen()) ? win.getNormalBounds() : win.getBounds();
+    fs.writeFileSync(_winStatePath(), JSON.stringify({
+      ...b, maximized: win.isMaximized(), fullScreen: win.isFullScreen(),
+    }));
+  } catch (e) { console.warn('[window] state save failed:', e.message); }
+}
+function _trackWindowState(win) {
+  const later = () => { clearTimeout(_winStateTimer); _winStateTimer = setTimeout(() => _saveWindowState(win), 400); };
+  ['resize', 'move', 'maximize', 'unmaximize', 'enter-full-screen', 'leave-full-screen'].forEach(ev => win.on(ev, later));
+  win.on('close', () => { clearTimeout(_winStateTimer); _saveWindowState(win); });
+}
+
 // ── Create main window
 function createWindow() {
   // Reset the reveal latch so a window recreated from `activate` (macOS
@@ -461,9 +508,11 @@ function createWindow() {
   // runs its own splash→reveal cycle. Without this the new window stays
   // hidden forever — `revealMainWindow` short-circuits on the stale flag.
   _mainRevealed = false;
+  const winState = _readWindowState();
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 820,
+    width: winState.width,
+    height: winState.height,
+    ...(winState.x != null ? { x: winState.x, y: winState.y } : {}),
     minWidth: 900,
     minHeight: 600,
     title: 'Tiger Studio Manager',
@@ -480,6 +529,9 @@ function createWindow() {
       webviewTag: true,    // required for <webview> Creality camera (cross-origin JS injection)
     },
   });
+
+  mainWindow._restoreState = winState;   // applied at reveal (maximize would show it early)
+  _trackWindowState(mainWindow);
 
   // macOS: red-button close hides the window instead of destroying it, so the
   // renderer (auth session, inventory, live cameras) survives and a dock-click
@@ -1694,20 +1746,23 @@ function initTD1S() {
 
 // ── Local MCP server (AI assistants, read-only) ───────────────────────────
 // services/mcpServer.js speaks the protocol; the tools run in the renderer,
-// where the inventory lives. Prefs in <userData>/mcp.json: { enabled, port,
-// token }. Off by default — the user turns it on in Settings.
+// where the inventory lives. Prefs in <userData>/mcp.json: { enabledFor: [uid],
+// port, token }. PER ACCOUNT, off by default — each profile turns it on from
+// "My profile"; the server runs only while the signed-in account opted in, so
+// switching to an account that did not never exposes its data.
 const MCP_DEFAULT_PORT = 5795;
 const _mcpPrefsPath  = () => path.join(app.getPath('userData'), 'mcp.json');
 const _mcpBridgePath = () => path.join(app.getPath('userData'), 'mcp', 'tiger-mcp-bridge.js');
 let _mcp = null;
 let _mcpTools = [];                       // tool definitions registered by the renderer
+let _mcpActiveUid = null;                 // account signed in in the renderer (mcp:set-account)
 const _mcpPending = new Map();            // call id → { resolve, reject, timer }
 
 function _mcpReadPrefs() {
   let p = {};
   try { p = JSON.parse(fs.readFileSync(_mcpPrefsPath(), 'utf8')); } catch (_) {}
   const prefs = {
-    enabled: p.enabled === true,
+    enabledFor: Array.isArray(p.enabledFor) ? p.enabledFor.filter(x => typeof x === 'string') : [],
     port: Number.isInteger(p.port) ? p.port : MCP_DEFAULT_PORT,
     token: typeof p.token === 'string' && p.token.length >= 32 ? p.token : crypto.randomBytes(24).toString('hex'),
   };
@@ -1738,7 +1793,8 @@ function _mcpConfig() {
   const prefs = _mcpReadPrefs();
   const st = _mcp ? _mcp.status() : { running: false, error: null };
   return {
-    enabled: prefs.enabled, port: prefs.port, token: prefs.token,
+    enabled: !!_mcpActiveUid && prefs.enabledFor.includes(_mcpActiveUid),
+    port: prefs.port, token: prefs.token,
     url: `http://127.0.0.1:${prefs.port}/mcp`,
     running: st.running, error: st.error,
     // What a stdio client (Claude Desktop) needs: Studio's own binary in Node mode.
@@ -1756,7 +1812,7 @@ async function _mcpApply() {
       log: (m) => console.log(m),
     });
   }
-  if (!prefs.enabled) { await _mcp.stop(); return; }
+  if (!_mcpActiveUid || !prefs.enabledFor.includes(_mcpActiveUid)) { await _mcp.stop(); return; }
   // The stdio bridge must run OUTSIDE the app bundle — copy it next to the prefs.
   try {
     fs.mkdirSync(path.dirname(_mcpBridgePath()), { recursive: true });
@@ -1764,10 +1820,21 @@ async function _mcpApply() {
   } catch (e) { console.warn('[mcp] bridge copy failed:', e.message); }
   await _mcp.start({ port: prefs.port, token: prefs.token });
 }
-function initMcp() { if (_mcpReadPrefs().enabled) _mcpApply(); }
+// Nothing to start at boot: the server waits for the renderer to say which
+// account is signed in (mcp:set-account), then follows that account's choice.
+function initMcp() {}
+ipcMain.handle('mcp:set-account', async (_evt, uid) => {
+  _mcpActiveUid = typeof uid === 'string' && uid ? uid : null;
+  await _mcpApply();
+  return _mcpConfig();
+});
 ipcMain.handle('mcp:get-config', () => _mcpConfig());
 ipcMain.handle('mcp:set-enabled', async (_evt, enabled) => {
-  _mcpWritePrefs({ ..._mcpReadPrefs(), enabled: !!enabled });
+  if (!_mcpActiveUid) return _mcpConfig();
+  const prefs = _mcpReadPrefs();
+  const set = new Set(prefs.enabledFor);
+  enabled ? set.add(_mcpActiveUid) : set.delete(_mcpActiveUid);
+  _mcpWritePrefs({ ...prefs, enabledFor: [...set] });
   await _mcpApply();
   return _mcpConfig();
 });

@@ -32,16 +32,26 @@ cloud*; they cannot reach `127.0.0.1`. Serving them needs a hosted connector (se
 
 ## 2. For the user — turning it on
 
-Settings → **AI assistants** → *Let an AI assistant read your inventory* (off by default).
-Then one click:
+**My profile** (account menu → *My profile*) → **AI assistants** → *Let an AI read my
+inventory*. It is a **per-profile** choice, off by default: the server serves the account
+that is signed in, so it runs only while THAT account has opted in — switching to a
+profile that has not turns it off, and signing out stops it. The ⓘ next to the toggle
+explains what an assistant can see. Three tiles with each app's logo sit underneath —
+greyed and inert until the toggle is on:
 
-| Button | What happens |
+| Tile / link | What happens |
 |---|---|
-| **Add to Claude Desktop** | Studio builds a `.mcpb` bundle and opens it → Claude Desktop shows its extension install dialog |
-| **Add to Cursor** | opens Cursor's MCP install link |
-| **Add to VS Code** | opens VS Code's MCP install link |
-| **Copy Claude Code command** | `claude mcp add --transport http tiger-studio <url> --header "Authorization: Bearer <token>"` |
-| **New access key** | rotates the token — every assistant must be added again |
+| **Claude** | Studio builds a `.mcpb` bundle and opens it → Claude Desktop shows its extension install dialog |
+| **Cursor** | opens Cursor's MCP install link |
+| **VS Code** | opens VS Code's MCP install link |
+| **Renew the key** (hold 1.5 s) | rotates the token — every assistant must be added again |
+
+The block only appears on the signed-in account's own profile.
+
+**Claude Code** (developer tool) has no one-click install and is not offered in the UI:
+run `claude mcp add --transport http tiger-studio http://127.0.0.1:5795/mcp --header "Authorization: Bearer <token>"`
+with the token from `<userData>/mcp.json`. Logos: Simple Icons SVGs in
+`assets/svg/brands/` (`claude.svg`, `cursor.svg`, `vscode.svg`), tinted in CSS.
 
 Studio must be running (and signed in) for an assistant to get answers.
 
@@ -74,7 +84,9 @@ AI client ──HTTP POST /mcp──▶ main process: services/mcpServer.js (pro
 the already-loaded inventory are. Reads go through the same Firestore Security Rules as
 the rest of the app — the server never holds credentials of its own.
 
-Prefs: `<userData>/mcp.json` = `{ enabled, port (5795), token }`, file mode 600.
+Prefs: `<userData>/mcp.json` = `{ enabledFor: [uid…], port (5795), token }`, file mode 600.
+The renderer reports the signed-in account (`mcp:set-account`, from `setConnected` /
+`setDisconnected`); main starts the server only if that uid is in `enabledFor`.
 Bundle + bridge copies: `<userData>/mcp/`.
 
 ---
@@ -91,7 +103,7 @@ Bundle + bridge copies: `<userData>/mcp/`.
 | **Scope** | the account's own `users/{uid}/…`, an accepted friend's `inventory` / `racks` / `products` / `lists`, and `userProfiles/…` — anything else is refused (`_mcpCheckPath`); Firestore rules apply on top |
 | **No credentials, ever** | `secrets` and `apiKeys` subtrees refused; fields matching `MCP_SECRET_FIELD` masked as `"[redacted]"` — passwords, access / check codes, tokens, keys, certs, cloud logins |
 | **Identity privacy** | e-mail and the Google real name (`googleName`, `firstName`, `lastName`) are masked — the app never displays them either |
-| **Off by default** | the user turns it on; turning it off stops the listener |
+| **Off by default, per profile** | each account opts in from *My profile*; the server runs only while the signed-in account has — another profile's data is never exposed by someone else's choice |
 
 Why masking matters: an assistant's conversation may be stored by its vendor. Anything
 returned by a tool should be assumed to leave the machine.
