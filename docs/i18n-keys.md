@@ -148,7 +148,7 @@
 | `statActiveMini` `statPlusMini` `statDiyMini` `statTotalMini` | Collapsed sidebar labels |
 
 ### Table headers
-`thUid` `thType` `thMaterial` `thBrand` `thColor` `thName` `thWeight` `thCapacity` `thUpdated`
+`thUid` `thType` `thMaterial` `thBrand` `thName` `thWeight` `thCapacity` `thUpdated`
 
 ### Debug panel
 | Key | Purpose |

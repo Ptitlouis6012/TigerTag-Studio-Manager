@@ -665,7 +665,6 @@
   .card-badges-tl--sm .card-tl-badge { width: 15px; height: 15px; border-width: 1px; }
 
   td.thumb-cell { padding: 4px 6px; width: 58px; }
-  td.color-cell { width: 36px; text-align: center; padding-right: 4px; }
 
   /* ── identical-spool grouping (Table) ───────────────────────────────────── */
   /* Group header row — the "folder". Raised background + bold; clicking it
@@ -1257,7 +1256,15 @@
   .pv-order-line:hover { border-color: transparent; background: var(--surface-2); }
   .pv-order-line:last-child:hover { border-bottom-color: transparent; }
   .pv-thumb { width: 48px; height: 48px; border-radius: 9px; flex-shrink: 0; object-fit: cover; border: 1px solid var(--border); }
-  .pv-thumb--swatch { display: block; }
+  .pv-thumb--swatch { display: block; background: var(--spool-bg, var(--surface-2)); }
+  /* Product photos (cart, favorites / order lists, wishlists): framed in the
+     product's colour like the grid cards. A transparent border shows the
+     `--spool-bg` background painted under it (gradients included — a border
+     colour could only be flat); the photo covers the inside. */
+  img.pv-thumb {
+    box-sizing: border-box; border: 4px solid transparent;
+    background: var(--spool-bg, var(--surface-2)) border-box;
+  }
   .pv-line-main { flex: 1; min-width: 0; }
   /* Whole identity on one line (Brand · Series · Colour name). */
   .pv-line-title { font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1487,7 +1494,6 @@
   /* Illustration + colour swatch match the inventory table exactly (thumb 50px in
      a tight cell, 28px swatch centred in its own column, colour name to its right). */
   .pv-table td.thumb-cell { padding: 4px 6px; width: 58px; }
-  .pv-table td.color-cell { padding: 4px; width: 36px; text-align: center; }
   .pv-td-brand { font-weight: 700; color: var(--text); white-space: nowrap; }
   .pv-td-name { color: var(--muted); white-space: nowrap; }
   .pv-td-colorname { color: var(--text); white-space: nowrap; }
@@ -1779,8 +1785,11 @@
      `display`, so the images keep loading and are simply there when released. */
   body.photos-held .spool-card .card-img--overlay,
   body.photos-held .thumb-wrap > img.thumb,
-  body.photos-held .inv-catalog-view .cv-thumb-img,
-  body.photos-held img.pv-thumb { visibility: hidden; }
+  body.photos-held .inv-catalog-view .cv-thumb-img { visibility: hidden; }
+  /* A product thumb carries its colour ON the <img> (frame = its background),
+     so hiding the element would blank the whole tile. Push only the photo out
+     of the box instead: the tile stays a full colour swatch, like the grid. */
+  body.photos-held img.pv-thumb { object-position: -10000px 0; }
   .spool-card .card-body { padding: 10px 10px 8px; }
   .spool-card .card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Hovered card with a name too long to fit: it scrolls to its end and back
@@ -3667,7 +3676,6 @@
   }
   /* Colour line: swatch dot (handles bi/tricolor/rainbow) + name, truncating. */
   .ro-head-color { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; }
-  .ro-head-color .color-circle { flex-shrink: 0; margin-right: 0; }
   .ro-head-color-txt {
     font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
@@ -4391,9 +4399,7 @@
   .lv-row-thumb .pv-thumb { width: 84px; height: 84px; border-radius: 10px; object-fit: cover; display: block; }
   /* Wishlist rows: the item's colour frames its photo (inner corners rounded by
      the radius minus the border). The colour swatch fallback stays plain. */
-  .lv-row-thumb img.pv-thumb {
-    box-sizing: border-box; border: 5px solid var(--spool-bg, var(--border)); border-radius: 12px;
-  }
+  .lv-row-thumb img.pv-thumb { border-width: 5px; border-radius: 12px; }
   .lv-row-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
   .lv-row-title { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.35; }
   .lv-row-meta { font-size: 12px; color: var(--muted); }
@@ -4580,7 +4586,6 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
    Nothing about the sizing is restated here — that is the whole point. */
 /* Colour dot sits inline before the name, like the inventory card's. */
 .inv-catalog-view .card-name { display: flex; align-items: center; gap: 6px; }
-.inv-catalog-view .card-name .color-circle { margin-right: 0; flex: 0 0 auto; }
 
 /* Sentinel — invisible; its only job is to tell the observer to append more. */
 .inv-catalog-view .cv-sentinel { height: 1px; grid-column: 1 / -1; }

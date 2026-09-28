@@ -7618,16 +7618,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
-  function colorCircleHTML(row, size = 15) {
-    const bg = colorBg(row);
-    const borderColor = isColorDark(bg) ? 'rgba(255,255,255,0.25)' : 'rgba(0,0,0,0.2)';
-    // The colour/gradient lives on an ABSOLUTE child, clipped by the round parent
-    // via overflow:hidden. Doing it this way (rather than a background on the
-    // round element itself) is the only reliable way to clip a conic-gradient to
-    // a circle — a gradient set directly on the element bleeds into its square
-    // box on Chromium, which made bicolor/tricolor swatches look broken.
-    return `<span class="color-circle" style="width:${size}px;height:${size}px;border-color:${borderColor}"><span class="color-circle-fill" style="background:${bg}"></span></span>`;
-  }
+
 
   // Returns true if the first color found in a CSS background string is dark.
   // The alternatives are ordered LONGEST FIRST on purpose: with `{6}` tried
@@ -9797,7 +9788,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   }
   // Build the inner HTML of a table row from a row. Single-source for create + update.
   function _tableRowInnerHTML(r) {
-    const swatch = colorCircleHTML(r, 28);
     let wCell = "-";
     if (r.weightAvailable != null) {
       wCell = `${r.weightAvailable} g`;
@@ -9809,7 +9799,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       <td>${tierBadgeHTML(r)}</td>
       <td>${esc(materialWithAspect(r))}</td>
       <td>${esc(v(r.brand))}</td>
-      <td class="color-cell">${swatch}</td>
       <td>${esc(v(r.colorName) !== "-" ? r.colorName : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.colorName)}</td>
       <td style="font-variant-numeric:tabular-nums">${wCell}</td>
       <td style="font-variant-numeric:tabular-nums">${v(r.capacity)}${r.capacity!=null?" g":""}</td>
@@ -9857,7 +9846,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   function _groupHeaderInnerHTML(g) {
     const rep = g.rep;
-    const swatch = colorCircleHTML(rep, 28);
     const name = v(rep.colorName) !== "-"
       ? rep.colorName
       : [rep.aspect1, rep.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || rep.material;
@@ -9873,7 +9861,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       <td>${tierBadgeHTML(rep)}</td>
       <td>${esc(materialWithAspect(rep))}</td>
       <td>${esc(v(rep.brand))}</td>
-      <td class="color-cell">${swatch}</td>
       <td><span class="group-name">${esc(name)}</span></td>
       <td style="font-variant-numeric:tabular-nums">${_groupWeightCell(g)}</td>
       <td style="font-variant-numeric:tabular-nums">${g.totalCap ? g.totalCap + " g" : "-"}</td>
@@ -13158,7 +13145,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // always-on selection column every other list view has — so it inherits the
   // shared table CSS (zebra, hover, sticky head, `.sel-check` pastille) instead
   // of restating any of it.
-  const CAT_TABLE_COLS = 9;   // sel · thumb · type · material · brand · series · colour · name · capacity
+  const CAT_TABLE_COLS = 8;   // sel · thumb · type · material · brand · series · name · capacity (the photo frame carries the colour)
   function _catViewTableHTML() {
     return `
       <div class="table-wrap cv-table-wrap">
@@ -13171,7 +13158,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
               <th>${esc(t("thMaterial"))}</th>
               <th>${esc(t("thBrand"))}</th>
               <th>${esc(t("thSeries"))}</th>
-              <th>${esc(t("thColor"))}</th>
               <th>${esc(t("thName"))}</th>
               <th>${esc(t("thCapacity"))}</th>
             </tr>
@@ -13234,8 +13220,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   // One `<tr>` shaped exactly like an inventory row: the always-on `.sel-cell`
   // pastille, the 50 px `.thumb-cell` thumbnail, the tier badge, then the
-  // identity columns and the `.color-cell` circle — all drawn by the same
-  // helpers (`thumbHTML`, `tierBadgeHTML`, `colorCircleHTML`) the other tables
+  // identity columns — all drawn by the same helpers (`thumbHTML`,
+  // `tierBadgeHTML`) the other tables
   // use, so nothing about the look is re-implemented here.
   // Thumbnail for a catalogue row — the filament COLOUR is the base layer and
   // the product photo sits on top, the same stacking the inventory grid card
@@ -13264,7 +13250,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         ${cell(it.material)}
         ${cell(it.brand)}
         ${cell(it._series)}
-        <td class="color-cell">${colorCircleHTML(r, 28)}</td>
         ${cell(it._name)}
         <td style="font-variant-numeric:tabular-nums">${esc(String(it.measure || "-"))}</td>
       </tr>`;
@@ -13596,9 +13581,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _productThumbHTML(p) {
     const l = p.label || {};
     const img = cdnImg(resolvedImg(l.imgUrl), 64);
+    // The product's real swatch (bi / tri-colour included) when its material
+    // snapshot is there — the same colorBg() as every other spool surface —
+    // else the label's single colour.
+    let bg = l.colorHex || "var(--surface-2)";
+    if (p.cloudSeed) { try { bg = colorBg(normalizeRow("PRODUCT_" + (p.id || ""), p.cloudSeed)); } catch (_) {} }
     return img
-      ? `<img class="pv-thumb" style="--spool-bg:${esc(l.colorHex || "var(--surface-2)")}" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.style.background='${esc(l.colorHex || "var(--surface-2)")}'" />`
-      : `<span class="pv-thumb pv-thumb--swatch" style="background:${esc(l.colorHex || "var(--surface-2)")}"></span>`;
+      ? `<img class="pv-thumb" style="--spool-bg:${esc(bg)}" src="${esc(img)}" alt="" onerror="this.removeAttribute('src');this.classList.add('pv-thumb--swatch')" />`
+      : `<span class="pv-thumb pv-thumb--swatch" style="--spool-bg:${esc(bg)}"></span>`;
   }
 
   // Apply the shared search bar + right-side selectors (Brand / Material / Tag /
@@ -14502,7 +14492,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           <td class="thumb-cell">${thumbHTML(r, 50, { badges: false })}</td>
           <td class="pv-td-brand">${esc(brand)}</td>
           <td class="pv-td-name">${esc(mat)}</td>
-          <td class="color-cell">${colorCircleHTML(r, 28)}</td>
           <td class="pv-td-colorname">${esc(color)}</td>
           <td class="pv-td-stock${low ? " pv-td-stock--low" : ""}">${inStock}</td>
           ${ro ? "" : `<td class="pv-td-min"><span class="pv-min-view"><span class="pv-min-edit icon icon-edit icon-12" data-min-edit role="button" tabindex="0" title="${esc(t("reorderEditMin"))}"></span><span class="pv-min-val">${min == null ? "—" : min}</span></span></td>`}
@@ -14517,7 +14506,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <th></th>
         <th class="${_sortCls("brand")}" data-fsort="brand">${esc(t("thBrand"))}</th>
         <th class="${_sortCls("material")}" data-fsort="material">${esc(t("thMaterial"))}</th>
-        <th>${esc(t("thColor"))}</th>
         <th class="${_sortCls("color")}" data-fsort="color">${esc(t("thName"))}</th>
         <th class="${_sortCls("stock")}" data-fsort="stock">${esc(t("reorderStockSection"))}</th>
         ${ro ? "" : `<th class="pv-th-min ${_sortCls("min")}" data-fsort="min">${esc(t("thMinQty"))}</th>`}
