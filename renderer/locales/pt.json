@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Abrir seletor do sistema",
   "addProductColorApplyBtn": "Aplicar",
   "addProductSelectColor": "Escolher cor",
-  "addProductDualLink": "Duplo NFC",
   "addProductNozzleTemp": "Bico",
   "addProductDrying": "Secagem",
   "addProductBedTemp": "Mesa",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Carregando o catálogo…",
   "catalogSyncError": "Não deu para acessar o catálogo. Tente daqui a pouco.",
   "catalogCount": "{{n}} de {{total}} produtos",
-  "catalogCreateOk": "Adicionado — {{name}}. Nada para digitar.",
   "catalogCreateError": "Esse não entrou. Tente de novo.",
   "catalogAdd": "Adicionar ao meu inventário",
   "bulkHiddenWarn": {

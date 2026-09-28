@@ -5,6 +5,31 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.31.0 — 2026-09-28
+
+### Added
+
+- **Create → chip in one gesture.** After adding a material — manually (Create) or from the catalogue (+ on the product card) — the panel that created it closes and the new spool's own card opens from the inventory (`_openCreatedSpool` → `openDetail`). When an NFC reader (TigerPOD / ACR122U) is plugged in, the guided burn window opens on top for that spool (`openEncodeModal`): a manual entry becomes a TigerTag, a catalogue one a TigerTag+. No reader → just the card; closing the burn window leaves the TigerData / TigerData+ in place; after a successful burn the card switches to the new chip spool (`_openSpoolWhenReady`, it used to close). Replaces the catalogue's stay-open behaviour (grouped-spools deck + inline "added" line) — `renderer/inventory.js`.
+- **Add Product: the colour preview is a real grid card.** `_gridCardInnerHTML` fed the very doc the form will save (`_adpDraftDoc`, extracted from the RFID Data block, read as a chipless TigerData row): colour square with the TigerTag logo, name, material · brand, weight and TigerData badge, live as the form is filled and while dragging the custom colour picker. The old round swatch's mode-by-mode gradient code is gone — the card goes through `colorBg`. The view behind the colour picker is no longer blurred or dimmed (brand / material pickers keep their dim, without blur); the global `button { height: 40px }` is overridden on the preview wrapper — `renderer/inventory.{html,js}`, `renderer/css/60-modals.css`.
+- **Dev-drive test harness (internal).** `npm run start:drive` starts the dev app with Chromium's DevTools protocol on 127.0.0.1:9339 (opt-in env `TIGER_DEVDRIVE`, never in a packaged build); `npm run drive -- <eval|click|type|wait|shot|logs|reload>` drives the renderer (JS eval, click / type by selector, window or element screenshot, console + uncaught errors). The local renderer server now sends `Cache-Control: no-cache` on app files so a reload always runs the edited code. Plus `playground/swatch-blend/index.html` to tune the bicolor blend width — `main.js`, `scripts/devdrive.mjs`, `package.json`.
+
+### Changed
+
+- **Material swatch convention v1.2.** Bicolor and any other two or three hard colours (chip aspect or catalogue list) are a **soft split** on the 135° axis — each colour solid, a 20 % blended seam (`SPLIT_BLEND`), first colour top-left — instead of a hard diagonal / 3-sector camembert; four or more colours stay a camembert. A **Tricolor** aspect (chip slots, or a 3+ colour list on a Tricolor product) is the smooth conic sweep (`_conicSweep`, the catalogue's `conic_gradient` look) unless aspect 1 or 2 is Rainbow (135° ramp). A tricolor with no third slot is a 2-colour soft split (no longer repeats slot 1). Swatches, photo frames and the Add-Product preview all follow — `renderer/inventory.js`, `playground/material-swatch/index.html`, `docs/MATERIAL-SWATCH.md`.
+- Storage (rack view, picture mode): slot photos are inset so the spool's colour frames them, like the grid cards (they were full-bleed) — `renderer/css/30-racks.css`.
+
+### Fixed
+
+- **Burning a TigerData+ gave a spool shown as a plain TigerTag.** The chip was written as TigerTag+ (the SDK derives it from the real `id_product`), but the doc migrated to the chip UID carried no `id_tigertag` (a chipless doc has none). `_cemMigrate` now stamps the burned version (`CHIP_VERSION_ID`: TigerTag+ 3155151767 when `id_product` is real, else TigerTag 1542820452); the burn's `write` analytics event reports it instead of `IdTigerTag: 0`; the burn window title reads "TigerData+ → TigerTag+" for such a spool. Chip docs already missing `id_tigertag` are repaired by the spool-mirror pass on the next open (only a MISSING value is ever filled, `protocol` in the same write) — `renderer/inventory.js`.
+- **Burn window overwrite warning was inverted** — it showed (and locked Burn) on blank chips and stayed silent on chips carrying a TigerTag. Fixed; a chip counts as free to burn when erased (all 0x00 / 0xFF — incl. "Recycle to NFC"), holding an empty NDEF message (`03 00 FE`), or a TigerTag Init (page 4 = `0x6C41A2E1`) — `_chipIsWritableBlank` — `renderer/inventory.js`.
+- Material swatch: Bicolor / Tricolor / Rainbow are recognised by aspect ID (252 / 24 / 145 — `ASPECT_ID`), no longer by matching label text; rows carry `aspect1Id` / `aspect2Id` (spools, and catalogue items from `RFID_Data`) — `renderer/inventory.js`.
+
+### Removed
+
+- Add Product: the "Dual NFC" switch — it only toggled its own look, nothing read it on save. i18n: `addProductDualLink`, `catalogCreateOk` removed (11 locales).
+
+---
+
 ## v2.30.0 — 2026-09-28
 
 ### Added

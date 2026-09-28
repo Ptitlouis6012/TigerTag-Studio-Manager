@@ -9353,5 +9353,126 @@
         }
       }
     ]
+  },
+  "2.31.0": {
+    "date": "2026-09-28",
+    "items": [
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "Create it, chip it",
+          "fr": "Tu crées, tu puces",
+          "de": "Anlegen, chippen, fertig",
+          "es": "Lo creas, lo chipeas",
+          "it": "Crei, chippi",
+          "zh": "创建即写芯片",
+          "pt": "Criou, gravou o chip",
+          "pt-pt": "Cria, grava o chip",
+          "pl": "Tworzysz, czipujesz",
+          "ru": "Создал — и сразу на чип",
+          "nl": "Aanmaken, chippen, klaar"
+        },
+        "body": {
+          "en": "Got a TigerPOD plugged in? Create a material and the app goes straight on to writing its chip — a TigerTag by hand, a TigerTag+ from the catalogue. One gesture, zero hunting for the spool afterwards.",
+          "fr": "Un TigerPOD branché ? Crée un matériau et l'app enchaîne direct sur l'écriture de sa puce — un TigerTag à la main, un TigerTag+ depuis le catalogue. Un seul geste, zéro chasse à la bobine après coup.",
+          "de": "TigerPOD angeschlossen? Leg ein Material an und die App schreibt direkt seinen Chip — ein TigerTag von Hand, ein TigerTag+ aus dem Katalog. Ein Handgriff, keine Spulensuche hinterher.",
+          "es": "¿TigerPOD enchufado? Crea un material y la app pasa directa a escribir su chip — un TigerTag a mano, un TigerTag+ desde el catálogo. Un gesto, cero búsqueda de bobina después.",
+          "it": "TigerPOD collegato? Crea un materiale e l'app passa subito a scriverne il chip — un TigerTag a mano, un TigerTag+ dal catalogo. Un gesto, zero caccia alla bobina dopo.",
+          "zh": "插着 TigerPOD？创建材料后，应用会直接写入它的芯片——手动创建是 TigerTag，从目录添加是 TigerTag+。一步到位，不用再回头找线材。",
+          "pt": "TigerPOD conectado? Crie um material e o app já parte para gravar o chip — um TigerTag à mão, um TigerTag+ pelo catálogo. Um gesto só, zero caça ao carretel depois.",
+          "pt-pt": "TigerPOD ligado? Crie um material e a app passa logo a gravar o chip — um TigerTag à mão, um TigerTag+ a partir do catálogo. Um só gesto, zero caça à bobina depois.",
+          "pl": "Masz podłączony TigerPOD? Utwórz materiał, a aplikacja od razu zapisze jego chip — TigerTag ręcznie, TigerTag+ z katalogu. Jeden ruch, zero szukania szpuli potem.",
+          "ru": "TigerPOD подключён? Создай материал — и приложение сразу запишет его чип: TigerTag вручную, TigerTag+ из каталога. Один жест, никаких поисков катушки потом.",
+          "nl": "TigerPOD aangesloten? Maak een materiaal aan en de app schrijft meteen de chip — een TigerTag met de hand, een TigerTag+ uit de catalogus. Eén handeling, geen spoel meer zoeken."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "See it before it exists",
+          "fr": "Tu la vois avant qu'elle existe",
+          "de": "Du siehst sie, bevor es sie gibt",
+          "es": "La ves antes de que exista",
+          "it": "La vedi prima che esista",
+          "zh": "未创建先预览",
+          "pt": "Você vê antes de existir",
+          "pt-pt": "Vê-a antes de existir",
+          "pl": "Widzisz ją, zanim powstanie",
+          "ru": "Видишь её ещё до создания",
+          "nl": "Je ziet 'm voordat hij bestaat"
+        },
+        "body": {
+          "en": "Adding a material by hand? The preview is now the exact card it'll have in your inventory — colour, name, weight and all — updating as you type.",
+          "fr": "Tu ajoutes un matériau à la main ? L'aperçu est maintenant la carte exacte qu'il aura dans ton inventaire — couleur, nom, poids et tout le reste — et elle suit ce que tu tapes.",
+          "de": "Material von Hand anlegen? Die Vorschau ist jetzt genau die Karte, die es im Inventar haben wird — Farbe, Name, Gewicht, alles — und sie folgt jedem Tastendruck.",
+          "es": "¿Añades un material a mano? La vista previa es ahora la tarjeta exacta que tendrá en tu inventario — color, nombre, peso y todo — y se actualiza mientras escribes.",
+          "it": "Aggiungi un materiale a mano? L'anteprima ora è esattamente la scheda che avrà nel tuo inventario — colore, nome, peso e tutto — e si aggiorna mentre scrivi.",
+          "zh": "手动添加材料？预览现在就是它在库存里的那张卡片——颜色、名称、重量一应俱全——随你输入实时更新。",
+          "pt": "Adicionando um material à mão? A prévia agora é exatamente o cartão que ele terá no inventário — cor, nome, peso e tudo — e acompanha o que você digita.",
+          "pt-pt": "Está a adicionar um material à mão? A pré-visualização é agora o cartão exato que terá no inventário — cor, nome, peso e tudo — e acompanha o que escreve.",
+          "pl": "Dodajesz materiał ręcznie? Podgląd to teraz dokładnie ta karta, którą będzie miał w inwentarzu — kolor, nazwa, waga i cała reszta — aktualizowana na bieżąco.",
+          "ru": "Добавляешь материал вручную? Превью теперь — ровно та карточка, что будет в инвентаре: цвет, название, вес и всё остальное, прямо по мере ввода.",
+          "nl": "Voeg je een materiaal met de hand toe? De preview is nu precies de kaart die het in je inventaris krijgt — kleur, naam, gewicht en alles — live terwijl je typt."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Two-tone and three-tone, looking sharp",
+          "fr": "Bicolores et tricolores, bien nets",
+          "de": "Zwei- und dreifarbig, gestochen scharf",
+          "es": "Bicolores y tricolores, bien nítidos",
+          "it": "Bicolore e tricolore, belle nitide",
+          "zh": "双色三色，一目了然",
+          "pt": "Bicolores e tricolores, bem nítidos",
+          "pt-pt": "Bicolores e tricolores, bem nítidos",
+          "pl": "Dwu- i trójkolorowe, w punkt",
+          "ru": "Двух- и трёхцветные — чётко",
+          "nl": "Twee- en driekleurig, haarscherp"
+        },
+        "body": {
+          "en": "Two-colour spools keep both colours bold with a soft blend in between, and tricolour ones spin into a smooth colour wheel. Easier to tell apart at a glance.",
+          "fr": "Les bobines bicolores gardent leurs deux couleurs franches avec un léger fondu entre elles, et les tricolores tournent en une roue de couleurs douce. Plus faciles à repérer d'un coup d'œil.",
+          "de": "Zweifarbige Spulen behalten beide Farben kräftig mit sanftem Übergang, dreifarbige drehen sich zu einem weichen Farbrad. Auf einen Blick leichter zu unterscheiden.",
+          "es": "Las bobinas bicolor mantienen sus dos colores intensos con un suave fundido entre ellos, y las tricolor giran en una rueda de color suave. Más fáciles de distinguir de un vistazo.",
+          "it": "Le bobine bicolore mantengono i due colori pieni con una leggera sfumatura in mezzo, e le tricolore girano in una morbida ruota dei colori. Più facili da riconoscere al volo.",
+          "zh": "双色线材两种颜色都保持鲜明，中间柔和过渡；三色线材则变成一个顺滑的色轮。一眼就能分清。",
+          "pt": "Carretéis de duas cores mantêm as duas cores firmes com uma leve transição entre elas, e os de três cores giram numa roda de cor suave. Mais fáceis de distinguir de relance.",
+          "pt-pt": "As bobinas bicolores mantêm as duas cores firmes com uma leve transição entre elas, e as tricolores giram numa roda de cor suave. Mais fáceis de distinguir num relance.",
+          "pl": "Dwukolorowe szpule trzymają oba kolory wyraźne z delikatnym przejściem, a trójkolorowe kręcą się w płynne koło barw. Łatwiej je odróżnić na pierwszy rzut oka.",
+          "ru": "Двухцветные катушки держат оба цвета яркими с мягким переходом, а трёхцветные закручиваются в плавное цветовое колесо. Различать с первого взгляда проще.",
+          "nl": "Tweekleurige spoelen houden beide kleuren fel met een zachte overgang, driekleurige draaien in een vloeiend kleurenwiel. In één oogopslag uit elkaar te houden."
+        }
+      },
+      {
+        "icon": "rack-grid",
+        "title": {
+          "en": "Your shelves, now with frames",
+          "fr": "Tes étagères, maintenant encadrées",
+          "de": "Deine Regale, jetzt mit Rahmen",
+          "es": "Tus estanterías, ahora con marco",
+          "it": "I tuoi scaffali, ora con cornice",
+          "zh": "货架照片也加了颜色边框",
+          "pt": "Suas prateleiras, agora com moldura",
+          "pt-pt": "As tuas prateleiras, agora com moldura",
+          "pl": "Twoje półki, teraz w ramkach",
+          "ru": "Твои полки — теперь в рамках",
+          "nl": "Je schappen, nu met lijstjes"
+        },
+        "body": {
+          "en": "In the storage view's picture mode, every spool photo now wears a frame in its own colour, just like in the grid. Find the red one on the shelf without squinting.",
+          "fr": "En mode photos de la vue rangement, chaque photo de bobine porte maintenant un cadre de sa couleur, comme dans la grille. Tu trouves la rouge sur l'étagère sans plisser les yeux.",
+          "de": "Im Bildmodus der Lageransicht trägt jedes Spulenfoto jetzt einen Rahmen in seiner Farbe, genau wie im Raster. Die rote im Regal findest du ohne Blinzeln.",
+          "es": "En el modo fotos de la vista de almacenamiento, cada foto de bobina lleva ahora un marco de su color, igual que en la cuadrícula. Encuentras la roja en la estantería sin entornar los ojos.",
+          "it": "Nella modalità foto della vista magazzino, ogni foto di bobina ora ha una cornice del suo colore, come nella griglia. Trovi quella rossa sullo scaffale senza strizzare gli occhi.",
+          "zh": "在收纳视图的照片模式下，每张线材照片现在都有自己颜色的边框，和网格里一样。不用眯眼就能在货架上找到红色那卷。",
+          "pt": "No modo fotos da vista de armazenamento, cada foto de carretel agora tem uma moldura da sua cor, como na grade. Você acha o vermelho na prateleira sem apertar os olhos.",
+          "pt-pt": "No modo fotos da vista de arrumação, cada foto de bobina tem agora uma moldura da sua cor, como na grelha. Encontra a vermelha na prateleira sem franzir os olhos.",
+          "pl": "W trybie zdjęć widoku magazynu każde zdjęcie szpuli ma teraz ramkę w swoim kolorze, jak w siatce. Czerwoną na półce znajdziesz bez mrużenia oczu.",
+          "ru": "В режиме фото на складе у каждой катушки теперь рамка её цвета, как в сетке. Красную на полке найдёшь, не щурясь.",
+          "nl": "In de fotomodus van de opslagweergave heeft elke spoelfoto nu een lijst in zijn eigen kleur, net als in het raster. De rode op de plank vind je zonder te turen."
+        }
+      }
+    ]
   }
 }

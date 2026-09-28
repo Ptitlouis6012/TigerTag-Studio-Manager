@@ -234,7 +234,10 @@ function startRendererServer(rendererDir) {
     try {
       const data = fs.readFileSync(filePath);
       const ext  = path.extname(filePath).toLowerCase();
-      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
+      // `no-cache` = revalidate every load. The files come off the local disk, so
+      // it costs nothing — and without it a reload (Cmd+R) could run a stale ES
+      // module from Chromium's cache after an edit, hiding the change.
+      res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-cache' });
       res.end(data);
     } catch {
       res.writeHead(404); res.end('Not found');

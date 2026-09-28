@@ -3162,13 +3162,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       advTog.setAttribute("aria-checked", "false");
       advBody.hidden = true;
     }
-    // Dual Link toggle — off by default. Reset every open so the
-    // panel never opens with a stale-positive switch.
-    const dualTog = $("adpDualLinkToggle");
-    if (dualTog) {
-      dualTog.dataset.on = "false";
-      dualTog.setAttribute("aria-checked", "false");
-    }
 
     const errEl = $("adpError");
     if (errEl) { errEl.hidden = true; errEl.textContent = ""; }
@@ -3455,6 +3448,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       bumpStudioCounters({ cloudAddedTotal: 1 });
       closeAddProductPanel();
       try { toast(t("addProductOk"), "success"); } catch (_) {}
+      _openCreatedSpool(cloudId);
     } catch (e) {
       console.warn("[addProduct] save failed:", e?.code, e?.message);
       showErr(`${t("addProductErrSave")} ${e?.message || ""}`.trim());
@@ -3916,17 +3910,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     else if (v > 100)         e.target.value = "100";
     else                      e.target.value = String(v);
     _adpRefreshRfidPreview();
-  });
-
-  // Dual Link toggle — tracked locally on the panel for now (the wire
-  // schema doesn't yet have a dedicated field, but mirroring the
-  // mobile UI keeps the visual parity). Read via dataset on save.
-  $("adpDualLinkToggle")?.addEventListener("click", () => {
-    const tog = $("adpDualLinkToggle");
-    if (!tog) return;
-    const next = tog.dataset.on !== "true";
-    tog.dataset.on = next ? "true" : "false";
-    tog.setAttribute("aria-checked", next ? "true" : "false");
   });
 
   // Inline ✕ on the colour-name field — visibility synced with the
@@ -11774,6 +11757,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      all-or-nothing Firestore migration. Modal closes only on success or
      explicit abort. See ROADMAP "Cloud → chip encode" for the full spec.   */
   const _CEM_EPOCH_MS = Date.UTC(2000, 0, 1);
+  // id_tigertag values from id_version.json — the chip version a burn produces.
+  // The SDK picks it from id_product (a real catalogue id → TigerTag+, the
+  // maker id → TigerTag); the migrated doc must say the same.
+  const CHIP_VERSION_ID = { TIGERTAG: 1542820452, TIGERTAG_PLUS: 3155151767 };
+  const _burnedChipVersion = doc => _hasRealProductId(doc?.id_product)
+    ? CHIP_VERSION_ID.TIGERTAG_PLUS : CHIP_VERSION_ID.TIGERTAG;
   let _cemRow      = null;                 // spool row being encoded
   let _cemMode     = "encode";             // "encode" (Cloud→chip) | "update" (re-write existing chip)
   let _cemState    = "confirm";            // confirm | burning | failed
@@ -11798,6 +11787,31 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       o.start(); o.stop(ac.currentTime + 0.24);
       o.onended = () => { try { ac.close(); } catch (_) {} };
     } catch (_) {}
+  }
+
+  // Right after a chipless creation (manual TigerData or catalogue TigerData+):
+  // the panel that created it has closed, so open the new spool's own card from
+  // the inventory — and when a reader (TigerPOD / ACR122U) is plugged in, go on
+  // to the guided burn: create → chip in one gesture, the manual entry becoming
+  // a TigerTag and the catalogue one a TigerTag+. Closing the burn window leaves
+  // the TigerData in place. Waits for the inventory snapshot to carry the doc
+  // (the card and the burn both read state.inventory; a local write normally
+  // lands within a frame).
+  // Open a spool's card as soon as the inventory snapshot carries it (a local
+  // write normally lands within a frame); close the card if it never does.
+  async function _openSpoolWhenReady(spoolId) {
+    const t0 = Date.now();
+    while (!state.rows.some(x => x.spoolId === spoolId) && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
+    if (state.rows.some(x => x.spoolId === spoolId)) openDetail(spoolId); else closeDetail();
+  }
+
+  async function _openCreatedSpool(cloudId) {
+    const t0 = Date.now();
+    while (!state.inventory[cloudId] && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
+    const row = state.rows.find(x => x.spoolId === cloudId);
+    if (!row) return;
+    openDetail(cloudId);
+    if (window.electronAPI && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
 
   function openEncodeModal(r) {
@@ -11845,16 +11859,30 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       .map(n => ({ readerName: n, uid: state.nfcCardPresent.get(n)?.uid || null }));
   }
 
+  // Is this chip free to burn without losing anything? `hex` = the user pages
+  // from page 4. Three shapes carry nothing worth keeping:
+  //   • erased — every byte 0x00 / 0xFF: a factory blank, or "Recycle to NFC",
+  //     whose blank NDEF (SDK `TigerTag.erase`) is a zeroed user region;
+  //   • an EMPTY NDEF message — TLV 03 00 then the FE terminator (a tag formatted
+  //     for phones but holding no record);
+  //   • a TigerTag Init chip — page 4 carries id_tigertag = TIGER_TAG_INIT
+  //     (0x6C41A2E1, id_version.json), what "Erase the TigerTag" leaves.
+  // Anything else (a TigerTag, a TigerTag+, an NDEF record…) is real data.
+  const ID_TIGERTAG_INIT_HEX = "6c41a2e1";
+  function _chipIsWritableBlank(hex) {
+    hex = String(hex || "").toLowerCase();
+    if (!hex || /^[0f]*$/.test(hex)) return true;
+    if (/^0300fe0*$/.test(hex)) return true;
+    return hex.startsWith(ID_TIGERTAG_INIT_HEX);
+  }
+
   async function _cemBlankCheck() {
     if (!window.electronAPI?.readRfidNow) return;
     for (const { readerName } of _cemPresentTargets()) {
       if (_cemBlank.has(readerName)) continue;
       try {
         const res = await window.electronAPI.readRfidNow(readerName);
-        // Non-blank when the user pages aren't all 0x00 / 0xFF.
-        const hex = (res?.rawPagesHex || "").toLowerCase();
-        const blank = !hex || /^[0f]*$/.test(hex);
-        _cemBlank.set(readerName, blank);
+        _cemBlank.set(readerName, _chipIsWritableBlank(res?.rawPagesHex));
       } catch (_) { _cemBlank.set(readerName, undefined); }
     }
     if (_cemState === "confirm") _cemRender();
@@ -11885,7 +11913,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         ? esc(t("toolEraseRfid"))
         : isUpdate
         ? `<span class="cem-tag cem-tag--phys">${esc(tier)}</span><span class="cem-arrow icon icon-refresh icon-13"></span><span class="cem-tag cem-tag--phys">${esc(t("encUpdateTag"))}</span>`
-        : `<span class="cem-tag cem-tag--cloud">TigerData</span><span class="cem-arrow icon icon-chevron-r icon-13"></span><span class="cem-tag cem-tag--phys">TigerTag</span>`;
+        : `<span class="cem-tag cem-tag--cloud">${_cemRow?.isCloudPlus ? "TigerData+" : "TigerData"}</span><span class="cem-arrow icon icon-chevron-r icon-13"></span><span class="cem-tag cem-tag--phys">${_cemRow?.isCloudPlus ? "TigerTag+" : "TigerTag"}</span>`;
     }
 
     // Chip cards — one per connected reader. State is conveyed entirely by
@@ -11913,7 +11941,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const chipsEl = $("cemChips"); if (chipsEl) chipsEl.innerHTML = cards;
 
     // Gate.
-    const nonBlank = present.some(p => _cemBlank.get(p.readerName) === true);
+    // _cemBlank holds true for a BLANK chip — warn when one is NOT (it was inverted).
+    const nonBlank = present.some(p => _cemBlank.get(p.readerName) === false);
     const sameUid  = present.length === 2 && present[0].uid && present[0].uid === present[1].uid;
     // Update mode: enable only when ALL of this spool's chips are present AND no
     // foreign (mismatch) chip is on any reader.
@@ -12045,8 +12074,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // fires once per batch instead, which under-reports multi-chip writes.)
       // cloudDoc is the Firestore raw shape (data1…data7) — _xanoChipFields reads
       // both shapes. Bed temps are part of the write payload, hence withBed.
+      // A chipless doc has no id_tigertag — report the version just burned
+      // (same rule as _cemMigrate), not 0 = "RFID Empty".
       _sendTagAnalytics("write", res.uid || tgt.uid,
-        _xanoChipFields(cloudDoc, { withBed: true }));
+        _xanoChipFields({ ...cloudDoc, id_tigertag: _burnedChipVersion(cloudDoc) }, { withBed: true }));
       burned.push({ readerName: tgt.readerName, uid: res.uid || tgt.uid });
       if (i < _cemTargets.length - 1) await _cemDelay(100);   // 100 ms inter-chip gap
     }
@@ -12064,7 +12095,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       await _cemMigrate(r, cloudDoc, burned, timestamp);
       _cemBeep(true);
       closeEncodeModal();
-      closeDetail();
+      // The TigerData card just lost its doc — swap it for the new chip spool's
+      // card (same spool, now a TigerTag / TigerTag+) instead of closing it.
+      _openSpoolWhenReady(burned[0].uid);
     } catch (e) {
       console.error("[encodeModal] migration failed:", e);
       _cemState = "failed"; _cemRender(); _cemBeep(false);
@@ -12148,6 +12181,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // equal makes the rescan take the "same chip" branch (preserveDbWeight) and
     // leaves the user's container + weight intact. Override after the spread so
     // it wins over any stale cloudDoc.timestamp.
+    // The chipless doc has NO id_tigertag (it names a chip version, and there
+    // was no chip). Stamp the version just burned — a TigerData+ (real
+    // id_product) becomes a TigerTag+, a TigerData a TigerTag. Without it the
+    // new doc read as a plain TigerTag whatever was written on the chip.
+    baseFields.id_tigertag = _burnedChipVersion(cloudDoc);
     batch.set(invRef.doc(c1.uid), {
       ...baseFields, uid: c1.uid, twin_tag_uid: c2 ? c2.uid : null,
       timestamp: timestamp ?? baseFields.timestamp ?? 0,
@@ -12955,11 +12993,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // the two tiers can be told apart. The `TigerCloud` analytics bucket key
       // (derived server-side from the id prefix) is deliberately untouched.
       bumpStudioCounters({ cloudPlusAddedTotal: 1 });
-      // Show it: the grouped-spools deck for this filament, once the snapshot lands.
-      try { _revealAddedSpool(_spoolGroupKey(normalizeRow(cloudId, data))); } catch (_) {}
-      // The modal stays open: adding several spools in a row is the common case
-      // (you rarely buy just one), and the inline result confirms each one.
-      toast(res$, "ok", t("catalogCreateOk", { name: api.title || api.name || "" }));
+      // The product card has done its job: close it and open the new spool's
+      // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
+      closeProductCard();
+      _openCreatedSpool(cloudId);
     } catch (e) {
       console.error("[catalog] create failed:", e);
       toast(res$, "bad", t("catalogCreateError"));
@@ -36196,9 +36233,21 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // rewrites drifted fields, so every account cleans itself the next time
     // Studio opens, with no server-side pass and no migration to schedule.
     const _strayTigertag = r => r.isCloud && raw[r.spoolId]?.id_tigertag !== undefined;
+    // The reverse hole: a REAL chip whose doc has no `id_tigertag`. Until
+    // v2.30.1 burning a TigerData(+) migrated the chipless doc — which has no
+    // version — to the chip UID without stamping one, so a TigerData+ burned as
+    // a TigerTag+ read as a plain TigerTag. Restore it with the rule the SDK
+    // used to write the chip (real id_product → TigerTag+, else TigerTag).
+    // Only ever FILLS a missing value — an existing id_tigertag is never touched.
+    const _missingTigertag = r => !r.isCloud && raw[r.spoolId] && raw[r.spoolId].id_tigertag == null;
+    const _burnedVersion = r => _burnedChipVersion(raw[r.spoolId]);
     const want = r => {
       const w = { productKey: _productKeyHash(r), protocol: r.protocol || "unknown" };
       if (_strayTigertag(r)) w.id_tigertag = FV.delete();
+      if (_missingTigertag(r)) {
+        w.id_tigertag = _burnedVersion(r);
+        w.protocol = versionName(w.id_tigertag) || "unknown";   // same write, no second pass
+      }
       return w;
     };
     const stale = (state.rows || []).filter(r => {
@@ -36206,7 +36255,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const cur = raw[r.spoolId] || {};
       return cur.productKey !== _productKeyHash(r)
           || cur.protocol !== (r.protocol || "unknown")
-          || _strayTigertag(r);
+          || _strayTigertag(r)
+          || _missingTigertag(r);
     });
     if (!stale.length) return;
     try {
@@ -36224,7 +36274,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         stale.slice(i, i + 400).forEach(r => batch.update(col.doc(r.spoolId), want(r)));
         await batch.commit();
       }
-      console.log(`[spoolMirrors] reconciled ${stale.length} spool(s) (productKey / protocol / stray id_tigertag)`);
+      console.log(`[spoolMirrors] reconciled ${stale.length} spool(s) (productKey / protocol / stray or missing id_tigertag)`);
     } catch (e) {
       console.warn("[spoolMirrors] sync failed:", e?.code, e?.message);
     }

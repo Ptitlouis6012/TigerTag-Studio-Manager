@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Systeem-kleurkiezer openen",
   "addProductColorApplyBtn": "Toepassen",
   "addProductSelectColor": "Kleur selecteren",
-  "addProductDualLink": "Dubbele NFC",
   "addProductNozzleTemp": "Nozzletemp.",
   "addProductDrying": "Drogen",
   "addProductBedTemp": "Bedtemp.",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Catalogus ophalen…",
   "catalogSyncError": "Kon de catalogus niet bereiken. Probeer het zo nog eens.",
   "catalogCount": "{{n}} van {{total}} producten",
-  "catalogCreateOk": "Toegevoegd — {{name}}. Niets meer te typen.",
   "catalogCreateError": "Dat product is niet gelukt. Probeer het nog eens.",
   "catalogAdd": "Aan mijn inventaris toevoegen",
   "bulkHiddenWarn": {

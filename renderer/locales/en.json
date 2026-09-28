@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Open system colour picker",
   "addProductColorApplyBtn": "Apply",
   "addProductSelectColor": "Select Color",
-  "addProductDualLink": "Dual NFC",
   "addProductNozzleTemp": "Nozzle Temp.",
   "addProductDrying": "Drying",
   "addProductBedTemp": "Bed Temp.",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Fetching the catalogue…",
   "catalogSyncError": "Could not reach the catalogue. Try again in a moment.",
   "catalogCount": "{{n}} of {{total}} products",
-  "catalogCreateOk": "Added — {{name}}. Nothing left to type.",
   "catalogCreateError": "That one did not make it. Give it another go.",
   "catalogAdd": "Add to my inventory",
   "bulkHiddenWarn": {

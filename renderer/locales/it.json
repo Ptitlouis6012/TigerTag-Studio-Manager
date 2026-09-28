@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Apri selettore di sistema",
   "addProductColorApplyBtn": "Applica",
   "addProductSelectColor": "Scegli colore",
-  "addProductDualLink": "Doppio NFC",
   "addProductNozzleTemp": "Ugello",
   "addProductDrying": "Essiccazione",
   "addProductBedTemp": "Piano",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Caricamento del catalogo…",
   "catalogSyncError": "Catalogo irraggiungibile. Riprova tra un attimo.",
   "catalogCount": "{{n}} di {{total}} prodotti",
-  "catalogCreateOk": "Aggiunta — {{name}}. Niente da digitare.",
   "catalogCreateError": "Questa non è passata. Riprova.",
   "catalogAdd": "Aggiungi al mio inventario",
   "bulkHiddenWarn": {

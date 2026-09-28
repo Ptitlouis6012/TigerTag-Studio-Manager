@@ -336,7 +336,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Storage view render + DnD (L29928-33300)
+## Storage view render + DnD (L29928-33600)
 | L | What | Anchors |
 |---|---|---|
 | 13283-13922 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
@@ -356,7 +356,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Display name + friend requests (L32419-35131)
+## Display name + friend requests (L32419-35400)
 | L | What | Anchors |
 |---|---|---|
 | 14833-14876 | **Display-name setup modal** (first-login pseudo picker) | `openDisplayNameSetup` |
@@ -391,7 +391,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Electron RFID integration (L34956-37140)
+## Electron RFID integration (L34956-37500)
 | L | What | Anchors |
 |---|---|---|
 | 29860-29947 | Reader indicator (topbar), reader connect/disconnect, card present/removed badge | `renderRfidReaderBadges` |

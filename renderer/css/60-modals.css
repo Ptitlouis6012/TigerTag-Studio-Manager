@@ -2476,8 +2476,8 @@
   }
 
 
-  /* Color row — mobile layout: circle + 2 stacks. The colour column
-     adds a "Select Color" label above and a Dual Link toggle below. */
+  /* Color row — the preview card column ("Select Color" label above it)
+     beside the identity stack. */
   .adp-color-col {
     display: flex;
     flex-direction: column;
@@ -2486,13 +2486,6 @@
     flex-shrink: 0;
   }
   .adp-label--centered { text-align: center; }
-  .adp-dual-link {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding-top: 4px;
-  }
 
   /* Pill toggle — same visual as the mobile cupertino-style switch. */
   .adp-toggle {

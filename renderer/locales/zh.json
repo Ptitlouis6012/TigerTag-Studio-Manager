@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "打开系统拾色器",
   "addProductColorApplyBtn": "应用",
   "addProductSelectColor": "选择颜色",
-  "addProductDualLink": "双 NFC",
   "addProductNozzleTemp": "喷嘴",
   "addProductDrying": "干燥",
   "addProductBedTemp": "热床",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "正在获取目录…",
   "catalogSyncError": "连不上目录，稍后再试。",
   "catalogCount": "{{total}} 个产品中的 {{n}} 个",
-  "catalogCreateOk": "已添加 — {{name}}，一个字都不用填。",
   "catalogCreateError": "这卷没成功，再试一次。",
   "catalogAdd": "加入我的库存",
   "bulkHiddenWarn": {

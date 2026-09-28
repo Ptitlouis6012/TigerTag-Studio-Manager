@@ -141,7 +141,6 @@
   "addProductColorOsPickerBtn": "Otwórz systemowy próbnik kolorów",
   "addProductColorApplyBtn": "Zastosuj",
   "addProductSelectColor": "Wybierz kolor",
-  "addProductDualLink": "Podwójny NFC",
   "addProductNozzleTemp": "Dysza",
   "addProductDrying": "Suszenie",
   "addProductBedTemp": "Stół",
@@ -1600,7 +1599,6 @@
   "catalogSyncing": "Pobieranie katalogu…",
   "catalogSyncError": "Nie udało się połączyć z katalogiem. Spróbuj za chwilę.",
   "catalogCount": "{{n}} z {{total}} produktów",
-  "catalogCreateOk": "Dodano — {{name}}. Nic do wpisywania.",
   "catalogCreateError": "Ta nie przeszła. Spróbuj jeszcze raz.",
   "catalogAdd": "Dodaj do mojego magazynu",
   "bulkHiddenWarn": {

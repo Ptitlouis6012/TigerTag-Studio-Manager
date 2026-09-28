@@ -651,10 +651,14 @@
   /* Photo view — a full solid colour tile (no weight bar) with the material
      illustration layered on top when present. */
   .rp-fill--full { top: 0; height: 100%; }
+  /* Inset, not full-bleed — the full colour tile behind shows round the photo
+     as a frame in the spool's own colour, as on the grid cards. */
   .rp-slot .rp-photo {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
+    position: absolute; top: 7%; left: 7%;
+    width: 86%; height: 86%;
     object-fit: cover; display: block;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
   }
   /* Picture view: filled tiles get a solid frame + slight elevation so even a
      WHITE material reads as an occupied tile — empty slots keep their flat dashed

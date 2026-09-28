@@ -135,7 +135,7 @@ async function main() {
         break;
       }
       case 'reload': {
-        await cdp.send('Page.reload');
+        await cdp.send('Page.reload', { ignoreCache: true });   // else ES modules come back from cache
         console.log('reloaded');
         break;
       }

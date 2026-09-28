@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Открыть системную палитру",
   "addProductColorApplyBtn": "Применить",
   "addProductSelectColor": "Выбрать цвет",
-  "addProductDualLink": "Двойной NFC",
   "addProductNozzleTemp": "Темп. сопла",
   "addProductDrying": "Сушка",
   "addProductBedTemp": "Темп. стола",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Загрузка каталога…",
   "catalogSyncError": "Не удалось связаться с каталогом. Попробуйте ещё раз через мгновение.",
   "catalogCount": "{{n}} из {{total}} товаров",
-  "catalogCreateOk": "Добавлено — {{name}}. Больше ничего вводить не нужно.",
   "catalogCreateError": "Не получилось добавить этот товар. Попробуйте ещё раз.",
   "catalogAdd": "Добавить в мой инвентарь",
   "bulkHiddenWarn": {

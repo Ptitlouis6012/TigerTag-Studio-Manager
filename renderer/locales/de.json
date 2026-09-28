@@ -142,7 +142,6 @@
   "addProductColorOsPickerBtn": "Systemfarbwahl öffnen",
   "addProductColorApplyBtn": "Übernehmen",
   "addProductSelectColor": "Farbe wählen",
-  "addProductDualLink": "Dual-NFC",
   "addProductNozzleTemp": "Düse",
   "addProductDrying": "Trocknen",
   "addProductBedTemp": "Bett",
@@ -1601,7 +1600,6 @@
   "catalogSyncing": "Katalog wird geladen…",
   "catalogSyncError": "Katalog nicht erreichbar. Gleich nochmal versuchen.",
   "catalogCount": "{{n}} von {{total}} Produkten",
-  "catalogCreateOk": "Hinzugefügt — {{name}}. Nichts zu tippen.",
   "catalogCreateError": "Die hat es nicht geschafft. Versuch es nochmal.",
   "catalogAdd": "Zu meinem Bestand",
   "bulkHiddenWarn": {
