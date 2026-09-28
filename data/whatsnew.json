@@ -1,4 +1,154 @@
 {
+  "2.32.0": {
+    "date": "2026-09-29",
+    "items": [
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Your AI knows your shelf",
+          "fr": "Ton IA connaît ton étagère",
+          "de": "Deine KI kennt dein Regal",
+          "es": "Tu IA conoce tu estantería",
+          "it": "La tua IA conosce il tuo scaffale",
+          "zh": "你的 AI 认识你的料架",
+          "pt": "Sua IA conhece sua prateleira",
+          "pt-pt": "A tua IA conhece a tua prateleira",
+          "pl": "Twoje AI zna twoją półkę",
+          "ru": "Твой ИИ знает твою полку",
+          "nl": "Je AI kent je plank"
+        },
+        "body": {
+          "en": "Hook up Claude, Cursor or VS Code in one click from My profile and just ask: \"what PLA am I running low on?\". It can look at your spools, racks, printers and your friends' shared stock — look, never touch.",
+          "fr": "Branche Claude, Cursor ou VS Code en un clic depuis Mon profil et demande-lui simplement : « il me reste quoi en PLA ? ». Il voit tes bobines, tes racks, tes imprimantes et le stock partagé de tes potes — il regarde, il ne touche à rien.",
+          "de": "Verbinde Claude, Cursor oder VS Code mit einem Klick unter Mein Profil und frag einfach: „Wovon hab ich kaum noch PLA?“. Er sieht Spulen, Regale, Drucker und den geteilten Bestand deiner Freunde — schauen ja, anfassen nie.",
+          "es": "Conecta Claude, Cursor o VS Code en un clic desde Mi perfil y pregunta sin más: «¿qué PLA se me está acabando?». Ve tus bobinas, racks, impresoras y el stock compartido de tus amigos — mira, nunca toca.",
+          "it": "Collega Claude, Cursor o VS Code con un clic da Il mio profilo e chiedi e basta: «che PLA sto finendo?». Vede bobine, rack, stampanti e lo stock condiviso dei tuoi amici — guarda, non tocca mai.",
+          "zh": "在「我的资料」里一键连接 Claude、Cursor 或 VS Code，然后直接问：“我哪种 PLA 快用完了？”它能看到你的线材、料架、打印机和好友共享的库存——只看，从不动手。",
+          "pt": "Conecte Claude, Cursor ou VS Code com um clique em Meu perfil e é só perguntar: \"qual PLA está acabando?\". Ele vê seus carretéis, racks, impressoras e o estoque compartilhado dos amigos — olha, nunca mexe.",
+          "pt-pt": "Liga o Claude, o Cursor ou o VS Code com um clique em O meu perfil e pergunta só: \"que PLA está a acabar?\". Ele vê as tuas bobinas, racks, impressoras e o stock partilhado dos amigos — olha, nunca mexe.",
+          "pl": "Podłącz Claude, Cursor lub VS Code jednym kliknięciem w Mój profil i po prostu zapytaj: „jakiego PLA mi brakuje?”. Widzi szpule, regały, drukarki i udostępniony zapas znajomych — patrzy, niczego nie rusza.",
+          "ru": "Подключи Claude, Cursor или VS Code в один клик в «Мой профиль» и просто спроси: «какой PLA у меня заканчивается?». Он видит катушки, стеллажи, принтеры и общий запас друзей — смотрит, но ничего не трогает.",
+          "nl": "Koppel Claude, Cursor of VS Code met één klik in Mijn profiel en vraag gewoon: \"welke PLA raakt op?\". Hij ziet je spoelen, rekken, printers en de gedeelde voorraad van je vrienden — kijken mag, aankomen nooit."
+        }
+      },
+      {
+        "icon": "bolt",
+        "title": {
+          "en": "Windows wakes up on time",
+          "fr": "Windows se réveille à l'heure",
+          "de": "Windows wacht pünktlich auf",
+          "es": "Windows se despierta a su hora",
+          "it": "Windows si sveglia puntuale",
+          "zh": "Windows 准时醒来",
+          "pt": "Windows acorda na hora",
+          "pt-pt": "O Windows acorda a horas",
+          "pl": "Windows budzi się na czas",
+          "ru": "Windows просыпается вовремя",
+          "nl": "Windows wordt op tijd wakker"
+        },
+        "body": {
+          "en": "On some PCs the app used to stare at you from a black window before waking up. Not anymore — it opens straight away, and updates install like they should.",
+          "fr": "Sur certains PC, l'app te fixait depuis une fenêtre noire avant de daigner se réveiller. C'est fini — elle s'ouvre direct, et les mises à jour s'installent comme il faut.",
+          "de": "Auf manchen PCs starrte dich die App erst aus einem schwarzen Fenster an, bevor sie aufwachte. Vorbei — sie öffnet sofort, und Updates installieren sich, wie sie sollen.",
+          "es": "En algunos PC la app te miraba desde una ventana negra antes de dignarse a despertar. Se acabó: abre al instante y las actualizaciones se instalan como deben.",
+          "it": "Su alcuni PC l'app ti fissava da una finestra nera prima di degnarsi di svegliarsi. Finito — si apre subito, e gli aggiornamenti si installano come si deve.",
+          "zh": "在部分电脑上，应用会先用黑窗口盯着你半天才醒。现在不会了——一点就开，更新也能正常安装。",
+          "pt": "Em alguns PCs o app ficava te encarando numa janela preta antes de acordar. Acabou — abre na hora, e as atualizações instalam direitinho.",
+          "pt-pt": "Nalguns PCs a app ficava a olhar para ti numa janela preta antes de acordar. Acabou — abre logo, e as atualizações instalam-se como deve ser.",
+          "pl": "Na niektórych PC aplikacja gapiła się na ciebie z czarnego okna, zanim raczyła się obudzić. Koniec — otwiera się od razu, a aktualizacje instalują się jak należy.",
+          "ru": "На некоторых ПК приложение сначала пялилось на тебя из чёрного окна. Больше нет — открывается сразу, а обновления ставятся как положено.",
+          "nl": "Op sommige pc's staarde de app je eerst aan vanuit een zwart venster. Niet meer — hij opent meteen, en updates installeren zoals het hoort."
+        }
+      },
+      {
+        "icon": "grid",
+        "title": {
+          "en": "Right where you left it",
+          "fr": "Pile où tu l'as laissée",
+          "de": "Genau da, wo du sie gelassen hast",
+          "es": "Justo donde la dejaste",
+          "it": "Proprio dove l'avevi lasciata",
+          "zh": "就在你离开的地方",
+          "pt": "Exatamente onde você deixou",
+          "pt-pt": "Exatamente onde a deixaste",
+          "pl": "Dokładnie tam, gdzie je zostawiłeś",
+          "ru": "Ровно там, где ты его оставил",
+          "nl": "Precies waar je hem liet"
+        },
+        "body": {
+          "en": "The window comes back at the size and spot you left it, and opens full-size the very first time. No more dragging corners every morning.",
+          "fr": "La fenêtre revient à la taille et à l'endroit où tu l'as laissée, et s'ouvre en grand la toute première fois. Fini de tirer les coins chaque matin.",
+          "de": "Das Fenster kommt in der Größe und an der Stelle zurück, wo du es gelassen hast — und startet beim ersten Mal gleich groß. Kein morgendliches Ecken-Ziehen mehr.",
+          "es": "La ventana vuelve con el tamaño y en el sitio donde la dejaste, y la primera vez se abre a lo grande. Se acabó estirar esquinas cada mañana.",
+          "it": "La finestra torna della misura e nel punto in cui l'avevi lasciata, e la prima volta si apre a tutto schermo. Basta tirare angoli ogni mattina.",
+          "zh": "窗口会以你上次的大小和位置回来，第一次打开就是全尺寸。再也不用每天早上拖边角了。",
+          "pt": "A janela volta no tamanho e no lugar onde você deixou, e abre grandona logo na primeira vez. Chega de puxar cantinho toda manhã.",
+          "pt-pt": "A janela volta com o tamanho e no sítio onde a deixaste, e abre em grande logo da primeira vez. Acabou puxar cantos todas as manhãs.",
+          "pl": "Okno wraca w rozmiarze i miejscu, w którym je zostawiłeś, a za pierwszym razem otwiera się na cały ekran. Koniec z ciąganiem rogów co rano.",
+          "ru": "Окно возвращается того же размера и на то же место, а в самый первый раз открывается во весь экран. Больше никаких утренних растягиваний.",
+          "nl": "Het venster komt terug op de grootte en plek waar je het liet, en opent de allereerste keer meteen groot. Geen hoeken meer trekken elke ochtend."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "New printers find their seat",
+          "fr": "Les nouvelles imprimantes trouvent leur place",
+          "de": "Neue Drucker finden ihren Platz",
+          "es": "Las impresoras nuevas encuentran su sitio",
+          "it": "Le nuove stampanti trovano posto",
+          "zh": "新打印机自己找座位",
+          "pt": "Impressoras novas acham seu lugar",
+          "pt-pt": "As impressoras novas encontram o seu lugar",
+          "pl": "Nowe drukarki znajdują swoje miejsce",
+          "ru": "Новые принтеры находят своё место",
+          "nl": "Nieuwe printers vinden hun plek"
+        },
+        "body": {
+          "en": "Add a printer and it lands in the first free spot on your board, widgets neatly underneath — no more hiding at the bottom or sitting on its neighbours.",
+          "fr": "Ajoute une imprimante et elle se pose à la première place libre de ton plan, ses widgets bien rangés dessous — fini de se planquer tout en bas ou de s'asseoir sur les voisines.",
+          "de": "Füg einen Drucker hinzu und er landet auf dem ersten freien Platz deiner Übersicht, Widgets ordentlich darunter — kein Verstecken ganz unten, kein Draufsitzen auf den Nachbarn.",
+          "es": "Añade una impresora y aterriza en el primer hueco libre de tu tablero, con sus widgets bien colocados debajo — nada de esconderse abajo del todo ni sentarse encima de las vecinas.",
+          "it": "Aggiungi una stampante e atterra nel primo posto libero della tua bacheca, widget in ordine sotto — niente più nascondigli in fondo o sedute sulle vicine.",
+          "zh": "添加打印机后，它会落在面板上第一个空位，小组件整齐排在下面——不再躲到最底下，也不再压在邻居身上。",
+          "pt": "Adicione uma impressora e ela pousa no primeiro espaço livre do seu painel, widgets arrumadinhos embaixo — nada de se esconder lá no fundo ou sentar em cima das vizinhas.",
+          "pt-pt": "Adiciona uma impressora e ela pousa no primeiro lugar livre do teu painel, widgets arrumados por baixo — nada de se esconder lá em baixo ou de se sentar em cima das vizinhas.",
+          "pl": "Dodaj drukarkę, a wyląduje na pierwszym wolnym miejscu tablicy, widżety grzecznie pod nią — koniec chowania się na samym dole i siadania na sąsiadkach.",
+          "ru": "Добавь принтер — и он встанет на первое свободное место на доске, виджеты аккуратно под ним. Больше не прячется в самом низу и не садится на соседей.",
+          "nl": "Voeg een printer toe en hij landt op de eerste vrije plek van je bord, widgets netjes eronder — niet meer verstoppen onderaan of op de buren zitten."
+        }
+      },
+      {
+        "icon": "cart",
+        "title": {
+          "en": "Colour frames everywhere",
+          "fr": "Des cadres couleur partout",
+          "de": "Farbrahmen überall",
+          "es": "Marcos de color por todas partes",
+          "it": "Cornici colorate ovunque",
+          "zh": "到处都是颜色边框",
+          "pt": "Molduras coloridas por toda parte",
+          "pt-pt": "Molduras de cor por todo o lado",
+          "pl": "Kolorowe ramki wszędzie",
+          "ru": "Цветные рамки повсюду",
+          "nl": "Overal kleurkaders"
+        },
+        "body": {
+          "en": "Your cart, lists and wishlists now frame each photo in the product's own colour — two-tones included — just like the grid. One glance, you know which spool it is.",
+          "fr": "Ton panier, tes listes et tes envies encadrent maintenant chaque photo de la couleur du produit — bicolores compris — comme dans la grille. Un coup d'œil, tu sais quelle bobine c'est.",
+          "de": "Warenkorb, Listen und Wunschlisten rahmen jedes Foto jetzt in der Farbe des Produkts — Zweifarbige inklusive — genau wie das Raster. Ein Blick, und du weißt, welche Spule es ist.",
+          "es": "Tu carrito, tus listas y tus deseos enmarcan ahora cada foto con el color del producto — bicolores incluidos — igual que la cuadrícula. Un vistazo y sabes qué bobina es.",
+          "it": "Carrello, liste e desideri ora incorniciano ogni foto col colore del prodotto — bicolori compresi — proprio come la griglia. Un'occhiata e sai che bobina è.",
+          "zh": "购物车、清单和心愿单现在会用产品本身的颜色给每张照片加框——双色也算——和网格一样。看一眼就知道是哪卷。",
+          "pt": "Carrinho, listas e desejos agora emolduram cada foto na cor do produto — bicolores inclusive — igualzinho à grade. Bateu o olho, sabe qual carretel é.",
+          "pt-pt": "O carrinho, as listas e os desejos emolduram agora cada foto na cor do produto — bicolores incluídos — tal como a grelha. Um olhar e sabes qual é a bobina.",
+          "pl": "Koszyk, listy i listy życzeń oprawiają teraz każde zdjęcie w kolor produktu — dwukolorowe też — tak jak siatka. Jedno spojrzenie i wiesz, która to szpula.",
+          "ru": "Корзина, списки и вишлисты теперь обрамляют каждое фото цветом самого товара — двухцветные тоже — как в сетке. Один взгляд — и ясно, что за катушка.",
+          "nl": "Je winkelwagen, lijsten en verlanglijsten omlijsten elke foto nu in de kleur van het product — tweekleurig inbegrepen — net als het raster. Eén blik en je weet welke spoel het is."
+        }
+      }
+    ]
+  },
   "1.10.18": {
     "date": "2026-06-22",
     "items": [

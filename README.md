@@ -229,6 +229,11 @@ The mobile app handles chip programming, NFC scanning on the go, and catalogue b
 
 A QR code to download the mobile app is always accessible in the sidebar.
 
+### 🤖 AI assistants
+- Ask **Claude, Cursor or VS Code** about your stock — "what PLA am I low on?", "what does my friend have in black PETG?"
+- One-click install per app, turned on per profile in *My profile*
+- **Read-only** and local: the assistant can look, never change; passwords and keys are never shared
+
 ### 🌗 Dark & Light
 - **Dark by default**, Light one click away in *Edit profile → Theme*
 - Your choice follows your account onto every machine you sign in from

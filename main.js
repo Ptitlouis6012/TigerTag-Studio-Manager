@@ -59,6 +59,7 @@ const log = require('electron-log');
 log.transports.file.maxSize = 5 * 1024 * 1024; // 5 MB max, auto-rotated
 log.transports.file.format  = '[{y}-{m}-{d} {h}:{i}:{s}] [{level}] {text}';
 Object.assign(console, log.functions); // console.log/warn/error → log file
+autoUpdater.logger = log;               // download / install steps land in main.log too
 log.info(`Tiger Studio Manager starting — v${require('./package.json').version}`);
 const db = require('./services/tigertagDbService');
 
@@ -1741,7 +1742,11 @@ function initTD1S() {
   // and are replayed when the renderer is ready
   td1sLog('info', `TD1S bridge ready — Electron ${process.versions.electron}`);
   td1sLog('info', `Target: VID=0x${TD1S_VID.toUpperCase()} PID=0x${TD1S_PID.toUpperCase()} @ ${TD1S_BAUD} baud`);
-  td1sConnect();
+  /* No serial scan at launch. On some Windows machines enumerating the serial
+     ports takes 10 s to minutes (a slow virtual-COM / Bluetooth driver), and the
+     launch waited on it: a black window flagged "not responding", every time,
+     for users who do not even own a TD1S. The scan now runs only when a panel
+     that reads the sensor opens (`td1s:need`). */
 }
 
 // ── Local MCP server (AI assistants, read-only) ───────────────────────────
@@ -2007,7 +2012,9 @@ function initUpdater() {
     console.log('[updater] auto-update disabled by user preference — skipping startup check');
     return;
   }
-  autoUpdater.checkForUpdatesAndNotify();
+  // A check that times out (GitHub unreachable, a proxy) must not surface as an
+  // unhandled rejection; the 'error' event already informs the renderer.
+  autoUpdater.checkForUpdatesAndNotify().catch(err => log.warn('[updater] check failed:', err?.message || err));
 }
 
 // IPC: renderer asks to install downloaded update
@@ -2058,7 +2065,18 @@ app.on('before-quit', (event) => {
 
 ipcMain.on('install-update', () => {
   _isQuitting = true;   // let the macOS close handler actually close the window (not hide it)
+  log.info('[updater] install requested — quitting to run the installer');
   autoUpdater.quitAndInstall();
+  /* The installer waits for this process to be gone. A quit that stalls — a
+     renderer that never finishes unloading (the window turns black and Windows
+     flags it "not responding"), a native handle that will not close — leaves it
+     waiting forever and the update never lands. The installer is already
+     spawned at this point, so a hard exit loses nothing. */
+  setTimeout(() => {
+    log.warn('[updater] quit did not complete in 6 s — forcing exit so the installer can run');
+    for (const w of BrowserWindow.getAllWindows()) { try { w.destroy(); } catch (_) {} }
+    app.exit(0);
+  }, 6000).unref?.();
 });
 
 // IPC: renderer flips the auto-update preference (persisted to disk)
@@ -3625,6 +3643,13 @@ let _ffmpegBin = null;
   // Frames are parsed (SOI=FF D8 … EOI=FF D9) and sent via the same
   // 'bambulab:cam-frame' IPC channel as the JPEG TCP camera above.
   const _bambuRtspProcs = new Map(); // key → ChildProcess
+  // A child is not killed with its parent on Windows: a live ffmpeg.exe outlives
+  // the app, keeps its file under app.asar.unpacked locked, and the updater's
+  // installer then cannot replace it. Stop every stream before quitting.
+  app.on('will-quit', () => {
+    for (const p of _bambuRtspProcs.values()) { p._stopped = true; try { p.kill(); } catch (_) {} }
+    _bambuRtspProcs.clear();
+  });
 
   ipcMain.on('bambulab:cam-start-rtsp', (event, { key, ip, password }) => {
     // Kill any existing process for this key (mark as intentionally stopped)
@@ -4258,6 +4283,11 @@ let _ffmpegBin = null;
   // (SOI=FF D8 … EOI=FF D9) and sent via 'anycubic:cam-frame'.
   const { spawn: _acuSpawn } = require('child_process');
   const _acuCamProcs = new Map(); // key → ChildProcess
+  // Same reason as the Bambu RTSP camera: never leave ffmpeg.exe behind.
+  app.on('will-quit', () => {
+    for (const p of _acuCamProcs.values()) { p._stopped = true; try { p.kill(); } catch (_) {} }
+    _acuCamProcs.clear();
+  });
 
   ipcMain.on('anycubic:cam-start', (event, { key, ip, url }) => {
     const prev = _acuCamProcs.get(key);

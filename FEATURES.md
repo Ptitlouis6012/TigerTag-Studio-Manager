@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.31.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.32.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -255,6 +255,7 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - **Portable Windows build** — runs with no installation and keeps accounts, cache and logs beside the .exe rather than in `%APPDATA%`, so nothing is left behind on a shared machine (v2.18.0).
 - Dark native window chrome (`nativeTheme.themeSource = 'dark'`) and shadow-less window edges (v1.4.13).
 - Launch splash screen shown instantly while the app assembles from cache (v1.8.24).
+- **Window state memory** — the window reopens at its last size, position and maximized / full-screen state (only on a display still connected); first launch opens maximized (v2.32.0).
 
 ## Appearance & theming
 
@@ -271,6 +272,10 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - Plural inflection (`{one, other}`) applied consistently to every duration key (v1.4.9).
 - `npm run i18n:add` — single command that writes a new/updated key across all 11 locale files at once (v1.4.9).
 - `npm run i18n:check` + a pre-commit hook blocking any commit that lets the 11 locale files drift apart (v1.4.9).
+
+## AI assistants (MCP)
+
+- **Local read-only MCP server** — Claude, Cursor and VS Code can read the account (inventory, racks, printers, devices, wishlists, friends' shared stock, data history) through 14 tools with decoded values and a built-in field notice; per-profile opt-in in *My profile*, one-click install per app, hold-to-renew key, credentials never exposed (v2.32.0).
 
 ## Dev tooling
 

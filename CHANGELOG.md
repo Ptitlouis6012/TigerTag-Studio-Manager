@@ -5,6 +5,32 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.32.0 — 2026-09-29
+
+### Added
+
+- **Local MCP server for AI assistants (read-only).** Turned on per profile in *My profile › AI assistants* (off by default; the server runs only while the signed-in account opted in, and stops on sign-out or on a switch to a profile that did not). One-click install tiles: **Claude** (Studio builds a `.mcpb` bundle — MCPB manifest 0.3, URL + token baked in — and opens it into Claude Desktop's install dialog), **Cursor** and **VS Code** (their MCP install links); *Renew the key* is a 1.5 s hold-to-confirm (`data-hold-tip` hover bubble, green tick on success); tiles stay visible but greyed while off. 14 tools: `data_guide` (the notice — data1-data7 per product type, info1-3 flags, id_* tables, tiers, collections, `untrusted_text`), `account_overview`, `search_inventory`, `get_spool`, `inventory_summary`, `list_racks`, `list_printers`, `list_friends`, `friend_inventory`, `list_wishlists`, `data_history`, `list_devices`, raw `firestore_get` / `firestore_query` (own tree, what friends share, public profiles — `_mcpCheckPath`). Documents are returned decoded next to their raw fields (labels resolved by ID; counts per physical spool, twins de-duplicated). Security: Streamable HTTP on 127.0.0.1:5795 only, bearer token compared with `timingSafeEqual`, exact Host check (DNS rebinding), browser Origins refused, JSON-RPC batch capped at 20, `secrets` / `apiKeys` refused, credentials + e-mail + Google real name masked (`MCP_SECRET_FIELD`), friend-authored text labelled (`authored_by`), `.mcpb` written `0600` in a `0700` folder. Reference `docs/MCP.md`; security review `docs/reviews/2026-09-29-mcp-security.md` — `services/mcpServer.js`, `services/mcpStdioBridge.js`, `main.js`, `preload.js`, `renderer/inventory.{js,html}`.
+- **Window state memory.** The main window reopens with its last size, position, maximized / full-screen state (`<userData>/window-state.json`, saved debounced on move / resize and on close; restored only if it lands on a connected display). First launch opens maximized — `main.js`.
+
+### Changed
+
+- Product photos in the cart, the favorites / order lists and wishlist rows are framed in the product's real swatch (`colorBg` of its material snapshot, gradients included) like grid cards; a failed photo falls back to the swatch, and held tiles (scroll, colour filter) stay a colour swatch — `_productThumbHTML`, `70-detail-misc.css`.
+- Printer board (grid view): zoom clamped to 50–100 % (`PRINTER_ZOOM_MIN/MAX`, `_clampPrinterZoom`; stored values brought back in range on load).
+
+### Fixed
+
+- **Windows: black "not responding" window at launch on some machines (10 s to minutes).** The TD1S serial-port scan (`SerialPort.list()`) ran at launch and the renderer server / window waited on it; slow virtual-COM / Bluetooth drivers made it hang. The scan now runs only when a TD1S panel requests it (`td1s:need`).
+- **Windows: an update that downloaded but never installed.** Camera `ffmpeg.exe` children (Bambu RTSP, Anycubic FLV) are killed on `will-quit` (a surviving one kept its file under `app.asar.unpacked` locked against the NSIS installer); `install-update` force-destroys the windows and `app.exit(0)` if the quit has not completed 6 s after `quitAndInstall()`; `autoUpdater.logger = log`, and a timed-out update check is logged instead of raising an unhandled rejection — `main.js`.
+- Printer board: a newly added printer takes the first free spot in reading order big enough for its card and widget column (`planFreeSlot`), machines are placed before their widgets, unplaced objects no longer count as obstacles at (0, 0) (`planFreeSpot`), and `_planSettleColumns` pushes down what a grown widget covers, cascading down the column.
+- Grid cards: the identical-spools count badge is a 22 px circle for one digit and a pill from two, number centred (`text-box: trim-both cap alphabetic` on an inner block, proportional figures).
+- The TD badge on grid cards / thumbnails was unreadable in light mode; fixed dark frosted pill with white text.
+
+### Removed
+
+- The "Colour" column of the inventory, catalogue and favorites tables (the photo frame carries the colour), with `colorCircleHTML` and its table CSS. i18n: `thColor` removed (11 locales).
+
+---
+
 ## v2.31.0 — 2026-09-28
 
 ### Added
