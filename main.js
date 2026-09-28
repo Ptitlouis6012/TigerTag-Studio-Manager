@@ -797,8 +797,15 @@ function _scaleDisconnected() {
   if (!_scalePollTimer) _scalePollTimer = setInterval(_tryOpenScale, 5000);
 }
 
-function _tryOpenScale() {
-  if (_scaleDev) return;
+/* The HID enumeration MUST be the async one. `HID.devices()` is synchronous and
+   ran every 5 s on the main thread; on some Windows machines (slow HID / Bluetooth
+   drivers) one call takes seconds, so the whole app froze — every click, even a
+   window resize, waited minutes. `devicesAsync()` enumerates on a worker thread,
+   and `_scaleScanning` keeps a slow scan from stacking up behind the next tick. */
+let _scaleScanning = false;
+let _scaleSlowPoll = false;   // polling slowed after a slow HID enumeration
+async function _tryOpenScale() {
+  if (_scaleDev || _scaleScanning) return;
   let HID;
   try { HID = require('node-hid'); } catch (e) {
     console.warn('[Scale] node-hid unavailable:', e.message);
@@ -806,11 +813,28 @@ function _tryOpenScale() {
     return;
   }
   let info;
+  _scaleScanning = true;
+  const t0 = Date.now();
   try {
-    info = HID.devices().find(d =>
+    info = (await HID.devicesAsync()).find(d =>
       d.vendorId === SCALE_VENDOR_DYMO && (d.usagePage === undefined || d.usagePage === 0x8d));
   } catch (_) { return; }
-  if (!info) return;
+  finally {
+    _scaleScanning = false;
+    const ms = Date.now() - t0;
+    /* A machine whose HID enumeration takes seconds would spend its whole life
+       enumerating at a 5 s cadence (one user measured 10 s per scan). Back off
+       to once a minute there — plugging a scale in is rare, and still seen. */
+    if (ms > 2000) {
+      console.warn(`[Scale] USB scan took ${ms} ms — polling slowed to 60 s`);
+      if (_scalePollTimer && !_scaleSlowPoll) {
+        clearInterval(_scalePollTimer);
+        _scalePollTimer = setInterval(_tryOpenScale, 60000);
+        _scaleSlowPoll = true;
+      }
+    }
+  }
+  if (!info || _scaleDev) return;
   try {
     _scaleDev = new HID.HID(info.path);
   } catch (e) {
@@ -2289,7 +2313,12 @@ ipcMain.handle('auth:google-loopback', async () => {
     // a client_secret, so we don't need to ship anything truly secret in
     // the binary — the verifier is regenerated per flow and never leaves
     // this process.
-    const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
+    /* Electron's `net.fetch` (Chromium's network stack), not Node's `fetch`:
+       it honours the system proxy, the OS certificate store and the same DNS as
+       the browser that just reached Google's consent page. Node's undici
+       ignores all three, so behind a proxy / HTTPS-inspecting antivirus the
+       exchange died with a bare "fetch failed" and the user could not sign in. */
+    const tokenResp = await require('electron').net.fetch('https://oauth2.googleapis.com/token', {
       method:  'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body:    new URLSearchParams({
@@ -2318,7 +2347,8 @@ ipcMain.handle('auth:google-loopback', async () => {
       accessToken: tokens.access_token || null,
     };
   } catch (e) {
-    console.error('[auth.google-loopback] failed:', e?.message || String(e));
+    // `fetch failed` alone says nothing — the real reason (DNS, TLS, proxy, timeout) is in `cause`.
+    console.error('[auth.google-loopback] failed:', e?.message || String(e), e?.cause ? `— ${e.cause.code || ''} ${e.cause.message || e.cause}` : '');
     return { ok: false, error: e?.message || String(e) };
   } finally {
     server.close();

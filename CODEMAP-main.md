@@ -62,12 +62,12 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 |---|---|---|
 | 1505-1746 | Serial-port watcher, TD/color line parse, state replayed to renderer on reload; IPC `td1s:need` / `td1s:release` | `initTD1S` |
 
-## Auto-updater + migration gate (L1826-1877)
+## Auto-updater + migration gate (L1977-2115)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 1380-1402 | Auto-update on/off preference (on disk) | `readAutoUpdatePref`, `writeAutoUpdatePref` |
-| 1403-1553 | Updater event wiring; IPC: `migration:set-in-flight`, `install-update`, `update:set-auto` | `wireUpdaterEvents`, `initUpdater` |
+| 1977-1999 | Auto-update on/off preference (on disk) | `readAutoUpdatePref`, `writeAutoUpdatePref` |
+| 2000-2115 | Updater event wiring; IPC: `migration:set-in-flight`, `install-update`, `update:set-auto` | `wireUpdaterEvents`, `initUpdater` |
 
 ## Google auth loopback, shell, detached cam window (L1554-1749)
 
@@ -82,17 +82,17 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 |---|---|---|
 | 1694-1880 | Read-only MCP server for AI assistants: `<userData>/mcp.json` prefs (enabledFor [uid] / port 5795 / token; server follows the signed-in account via `mcp:set-account`), stdio bridge copied to `<userData>/mcp/`, `tools/call` relayed to the renderer, started by `initMcp()` at boot. Protocol: `services/mcpServer.js` | `mcp:get-config`, `mcp:set-account`, `mcp:set-enabled`, `mcp:new-token`, `mcp:register-tools`, `mcp:call` / `mcp:result` |
 
-## Printer discovery probes (L2362-2746)
+## Printer discovery probes (L2395-3130)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 1940-2059 | FlashForge — HTTP POST bridge (`ffg:http-post`), UDP multicast (`ffg:multicast-discover`) | — |
-| 2060-2161 | FlashForge — UDP identity probe port 19000 (`ffg:udp-probe`, returns model+serial credential-free), TCP M115 probe (`ffg:tcp-probe`) | `_ffgParseUdpIdentity` |
-| 2162-2193 | Creality — TCP 9999 open-check (`cre:tcp-probe`) | — |
-| 2194-2442 | Bambu Lab — SSDP multicast (`bambu:ssdp-discover`) + TLS cert sniff (`bambu:tls-probe`) + print thumbnail via FTPS | `_parseBambuSsdp` |
-| 2443-2560 | Elegoo — UDP discovery/probe (`elegoo:udp-discover` / `elegoo:udp-probe`) | `_parseElegooReply` |
-| 2561-2610 | Snapmaker — HTTP GET bridge (`snap:http-get`) | — |
-| 2611-2661 | Creality — Moonraker HTTP IPC port 7125, live controls (`cre:http`) | — |
+| 2395-2531 | FlashForge — HTTP POST bridge (`ffg:http-post`), UDP multicast (`ffg:multicast-discover`) | — |
+| 2532-2615 | FlashForge — UDP identity probe port 19000 (`ffg:udp-probe`, returns model+serial credential-free), TCP M115 probe (`ffg:tcp-probe`) | `_ffgParseUdpIdentity` |
+| 2616-2700 | Creality — TCP 9999 open-check (`cre:tcp-probe`) | — |
+| 2701-2900 | Bambu Lab — SSDP multicast (`bambu:ssdp-discover`) + TLS cert sniff (`bambu:tls-probe`) + print thumbnail via FTPS | `_parseBambuSsdp` |
+| 2901-3015 | Elegoo — UDP discovery/probe (`elegoo:udp-discover` / `elegoo:udp-probe`) | `_parseElegooReply` |
+| 3016-3065 | Snapmaker — HTTP GET bridge (`snap:http-get`) | — |
+| 3066-3130 | Creality — Moonraker HTTP IPC port 7125, live controls (`cre:http`) | — |
 
 ## Infra IPC — image cache, subnets, mDNS, app info, DB (L2663-2818)
 
@@ -126,7 +126,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3767-3890 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
 | 3891-3991 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L3992-4323)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L4211-4547)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -135,7 +135,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3403-3425 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3426-3533 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L4324-4789)
+## Anycubic cloud — REST + cloud MQTT (L4548-5023)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -145,8 +145,8 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3858-3894 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
 | 3895-3999 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
 
-## App lifecycle (L4790-4855)
+## App lifecycle (L5024-5089)
 
 | L | What |
 |---|---|
-| 4790-4855 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |
+| 5024-5089 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |

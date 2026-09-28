@@ -5,6 +5,15 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.32.1 — 2026-09-29
+
+### Fixed
+
+- **Windows: the app froze on some machines — a 10 s black window at launch, then one to two minutes per click, even to resize the window.** The USB-scale detection called `HID.devices()` (synchronous, main thread) at launch and every 5 s; on slow HID / Bluetooth drivers each enumeration took ~10 s, so the main thread was almost never free. It now uses `HID.devicesAsync()` (worker thread) behind an in-flight guard (`_scaleScanning`), and a scan slower than 2 s is logged and slows polling to 60 s (`_scaleSlowPoll`). A user log on v2.32.0 showed the launch freeze persisting after the TD1S scan removal — this enumeration, which runs right after `initTD1S()`, was the cause — `main.js`.
+- **Google sign-in failing with a bare "fetch failed" on some machines.** The OAuth token exchange (`auth:google-loopback`) now uses Electron's `net.fetch` (Chromium stack: system proxy, OS certificate store, same DNS as the browser) instead of Node's `fetch` (undici ignores all three); the failure log now includes `e.cause` — `main.js`.
+
+---
+
 ## v2.32.0 — 2026-09-29
 
 ### Added

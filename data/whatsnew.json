@@ -1,4 +1,67 @@
 {
+  "2.32.1": {
+    "date": "2026-09-29",
+    "items": [
+      {
+        "icon": "bolt",
+        "title": {
+          "en": "Snappy again on Windows",
+          "fr": "Windows retrouve la pêche",
+          "de": "Windows ist wieder flott",
+          "es": "Windows vuelve a ir fino",
+          "it": "Windows torna scattante",
+          "zh": "Windows 又变快了",
+          "pt": "Windows voltou a voar",
+          "pt-pt": "O Windows voltou a voar",
+          "pl": "Windows znów śmiga",
+          "ru": "Windows снова шустрый",
+          "nl": "Windows is weer vlot"
+        },
+        "body": {
+          "en": "On some PCs every click took an eternity. The app was busy looking for a USB scale nobody had plugged in — it now does that quietly in the background, and your clicks answer right away.",
+          "fr": "Sur certains PC, chaque clic prenait une éternité. L'app passait son temps à chercher une balance USB que personne n'avait branchée — elle le fait maintenant discrètement en coulisses, et tes clics répondent tout de suite.",
+          "de": "Auf manchen PCs dauerte jeder Klick eine Ewigkeit. Die App suchte ständig nach einer USB-Waage, die niemand angeschlossen hatte — jetzt macht sie das leise im Hintergrund, und deine Klicks reagieren sofort.",
+          "es": "En algunos PC cada clic tardaba una eternidad. La app se pasaba el rato buscando una báscula USB que nadie había enchufado — ahora lo hace discretamente en segundo plano y tus clics responden al momento.",
+          "it": "Su alcuni PC ogni clic durava un'eternità. L'app passava il tempo a cercare una bilancia USB che nessuno aveva collegato — ora lo fa in silenzio dietro le quinte, e i tuoi clic rispondono subito.",
+          "zh": "在部分电脑上，每次点击都要等很久。应用一直在找一台根本没插上的 USB 秤——现在它会在后台悄悄找，你的点击立刻有反应。",
+          "pt": "Em alguns PCs cada clique levava uma eternidade. O app vivia procurando uma balança USB que ninguém tinha plugado — agora faz isso quietinho nos bastidores, e seus cliques respondem na hora.",
+          "pt-pt": "Nalguns PCs cada clique demorava uma eternidade. A app passava a vida à procura de uma balança USB que ninguém tinha ligado — agora fá-lo discretamente nos bastidores, e os teus cliques respondem logo.",
+          "pl": "Na niektórych PC każde kliknięcie trwało wieczność. Aplikacja ciągle szukała wagi USB, której nikt nie podłączył — teraz robi to po cichu w tle, a twoje kliknięcia działają od razu.",
+          "ru": "На некоторых ПК каждый клик длился вечность. Приложение всё искало USB-весы, которые никто не подключал, — теперь делает это тихо в фоне, и клики срабатывают сразу.",
+          "nl": "Op sommige pc's duurde elke klik een eeuwigheid. De app zocht de hele tijd naar een USB-weegschaal die niemand had aangesloten — nu doet hij dat stilletjes op de achtergrond en reageren je klikken meteen."
+        }
+      },
+      {
+        "icon": "user",
+        "title": {
+          "en": "Google lets you in",
+          "fr": "Google t'ouvre la porte",
+          "de": "Google lässt dich rein",
+          "es": "Google te abre la puerta",
+          "it": "Google ti apre la porta",
+          "zh": "Google 放你进门了",
+          "pt": "O Google abre a porta",
+          "pt-pt": "O Google abre-te a porta",
+          "pl": "Google cię wpuszcza",
+          "ru": "Google тебя впускает",
+          "nl": "Google laat je binnen"
+        },
+        "body": {
+          "en": "Signing in with Google could stall on a \"fetch failed\" on some computers. It now goes through the same road as your browser, so if Google opens in your browser, it opens in the app too.",
+          "fr": "La connexion avec Google pouvait caler sur un « fetch failed » sur certains ordis. Elle passe maintenant par le même chemin que ton navigateur : si Google s'ouvre dans ton navigateur, il s'ouvre dans l'app aussi.",
+          "de": "Die Anmeldung mit Google konnte auf manchen Rechnern an einem „fetch failed“ hängen bleiben. Jetzt nimmt sie denselben Weg wie dein Browser — wenn Google dort aufgeht, klappt's auch in der App.",
+          "es": "El inicio de sesión con Google podía atascarse en un «fetch failed» en algunos ordenadores. Ahora va por el mismo camino que tu navegador: si Google abre ahí, abre también en la app.",
+          "it": "L'accesso con Google poteva bloccarsi su un «fetch failed» su alcuni computer. Ora passa dalla stessa strada del tuo browser: se Google si apre lì, si apre anche nell'app.",
+          "zh": "在部分电脑上，用 Google 登录可能卡在 “fetch failed”。现在它走和浏览器同一条路：浏览器里能打开 Google，应用里也能。",
+          "pt": "O login com Google podia travar num \"fetch failed\" em alguns computadores. Agora ele vai pelo mesmo caminho do seu navegador: se o Google abre lá, abre no app também.",
+          "pt-pt": "O início de sessão com o Google podia encravar num \"fetch failed\" nalguns computadores. Agora vai pelo mesmo caminho do teu navegador: se o Google abre lá, abre na app também.",
+          "pl": "Logowanie przez Google mogło utknąć na „fetch failed” na niektórych komputerach. Teraz idzie tą samą drogą co przeglądarka: jeśli Google działa tam, zadziała też w aplikacji.",
+          "ru": "Вход через Google мог застрять на «fetch failed» на некоторых компьютерах. Теперь он идёт тем же путём, что и браузер: открывается Google там — откроется и в приложении.",
+          "nl": "Inloggen met Google kon op sommige computers vastlopen op \"fetch failed\". Nu neemt het dezelfde weg als je browser: opent Google daar, dan ook in de app."
+        }
+      }
+    ]
+  },
   "2.32.0": {
     "date": "2026-09-29",
     "items": [
