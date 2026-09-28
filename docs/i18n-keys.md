@@ -246,4 +246,4 @@
 > ⚠️ This table is a snapshot and can drift as keys are added. The authoritative key set is the locale files themselves; `npm run i18n:check` is the source of truth for "do all 11 locales agree". When you add keys via `npm run i18n:add`, append them to the relevant section here too.
 
 ### AI assistants (local MCP server)
-`stgMcpTitle`, `stgMcpToggleSub` (ⓘ bubble), `eacMcpRow`, `stgMcpAddClaude`, `stgMcpAddCursor`, `stgMcpAddVscode` (aria labels), `stgMcpAddOpened` (`{{app}}`), `stgMcpAddFailed` (`{{app}}`), `stgMcpNewKey`, `stgMcpNewKeyTip`, `stgMcpError` (`{{error}}`), `stgMcpNewKeyDone`
+`stgMcpTitle`, `stgMcpToggleSub` (ⓘ bubble), `eacMcpRow`, `stgMcpAddClaude`, `stgMcpAddCursor`, `stgMcpAddVscode` (aria labels), `stgMcpAddOpened` (`{{app}}`), `stgMcpAddFailed` (`{{app}}`), `stgMcpNewKey`, `stgMcpNewKeyTip`, `stgMcpError` (`{{error}}`)

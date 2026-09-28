@@ -1625,7 +1625,6 @@
   "stgMcpToggleSub": "Claude, Cursor ou VS Code peuvent consulter tes bobines, étagères, imprimantes, listes et le stock partagé par tes amis — il suffit de leur demander. Ils regardent, ne touchent à rien, et seulement sur cet ordi quand Studio est ouvert.",
   "stgMcpNewKey": "Renouveler la clé",
   "stgMcpError": "Impossible d’ouvrir la porte : {{error}}",
-  "stgMcpNewKeyDone": "Nouvelle clé créée — l’ancienne n’ouvre plus rien. Rajoute Studio à tes assistants.",
   "stgMcpAddClaude": "Ajouter à Claude Desktop",
   "stgMcpAddCursor": "Ajouter à Cursor",
   "stgMcpAddVscode": "Ajouter à VS Code",

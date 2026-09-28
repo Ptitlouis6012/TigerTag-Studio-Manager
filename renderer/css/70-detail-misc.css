@@ -1638,13 +1638,24 @@
   .spool-card.group-card { position: relative; }
   .group-card-count {
     position: absolute; top: 6px; right: 6px; z-index: 4;
-    min-width: 20px; height: 20px; padding: 0 6px;
+    /* A perfect circle for one digit, a pill from two: border-box so the
+       ring is inside the 22 px, and a min-width equal to the height means a
+       single digit never makes it wider than tall (it was 23×20 — an oval). */
+    box-sizing: border-box; min-width: 22px; height: 22px; padding: 0 5px;
     display: inline-flex; align-items: center; justify-content: center;
     background: var(--primary); color: var(--on-accent);
+    /* Proportional figures: tabular ones pad a narrow "1" with blank space and
+       pushed the ink ~1 px off centre; a badge shows one number, not a column. */
     font-size: 11px; font-weight: 700; line-height: 1;
-    border-radius: 10px; border: 2px solid var(--surface);
+    border-radius: 11px; border: 2px solid var(--surface);
     box-shadow: 0 1px 4px rgba(0,0,0,.3); pointer-events: none;
   }
+  /* The number sits in its own box, trimmed to the figures' height (cap-height
+     to baseline): a font keeps more room above its figures than below, so a
+     centred LINE left the digit 0.6 px low. `text-box` only acts on a block
+     container — the flex badge itself is not one, its child is — so the flex
+     then centres exactly the ink. Font-independent (macOS / Windows alike). */
+  .group-card-count-n { display: block; text-box: trim-both cap alphabetic; }
   /* Group panel — a small grid of the member spool cards. Sits BEHIND the
      detail card (z 100 < 101) so the filament detail pushes it left. Doubled
      selector to outrank the later `.detail-panel { z-index: 101 }` base rule. */
@@ -3021,16 +3032,23 @@
     border-radius: 99px; letter-spacing: .03em;
     backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
   }
+  /* TD badge — sits on a PHOTO, whose colours the theme knows nothing about,
+     so its colours are fixed rather than themed: a dark frosted pill with white
+     text and a hairline ring reads on black, white and busy photos alike. (The
+     themed ink went dark-on-dark in light mode and vanished.) */
   .card-td-badge {
     position: absolute; bottom: 6px; left: 6px; z-index: 2;
-    background: var(--scrim); color: var(--ink-85);
+    background: rgba(0, 0, 0, .52); color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .22);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, .35);
     font-size: 10px; font-weight: 700; padding: 2px 8px;
     border-radius: 99px; letter-spacing: .03em; pointer-events: none;
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px) saturate(1.2); -webkit-backdrop-filter: blur(6px) saturate(1.2);
   }
   .thumb-td-badge {
     position: absolute; bottom: 2px; left: 2px; z-index: 2;
-    background: var(--scrim); color: var(--ink-85);
+    background: rgba(0, 0, 0, .55); color: #fff;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, .2);
     font-size: 7px; font-weight: 700; padding: 1px 4px;
     border-radius: 99px; letter-spacing: .02em; pointer-events: none;
     line-height: 1.4;

@@ -1625,7 +1625,6 @@
   "stgMcpToggleSub": "Claude, Cursor of VS Code kunnen je spoelen, schappen, printers, lijstjes en de gedeelde voorraad van je vrienden bekijken — vraag het ze gewoon. Ze kijken, raken niets aan, en alleen op deze computer terwijl Studio open is.",
   "stgMcpNewKey": "Sleutel vernieuwen",
   "stgMcpError": "De deur ging niet open: {{error}}",
-  "stgMcpNewKeyDone": "Nieuwe sleutel gemaakt — de oude opent niets meer. Voeg Studio opnieuw toe aan je assistenten.",
   "stgMcpAddClaude": "Toevoegen aan Claude Desktop",
   "stgMcpAddCursor": "Toevoegen aan Cursor",
   "stgMcpAddVscode": "Toevoegen aan VS Code",

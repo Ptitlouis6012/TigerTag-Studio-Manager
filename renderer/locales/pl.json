@@ -1624,7 +1624,6 @@
   "stgMcpToggleSub": "Claude, Cursor lub VS Code mogą przeglądać twoje szpule, półki, drukarki, listy i stan udostępniony przez znajomych — wystarczy zapytać. Patrzą, niczego nie ruszają, i tylko na tym komputerze, gdy Studio jest otwarte.",
   "stgMcpNewKey": "Odnów klucz",
   "stgMcpError": "Nie udało się otworzyć drzwi: {{error}}",
-  "stgMcpNewKeyDone": "Nowy klucz gotowy — stary już nic nie otwiera. Dodaj Studio do asystentów jeszcze raz.",
   "stgMcpAddClaude": "Dodaj do Claude Desktop",
   "stgMcpAddCursor": "Dodaj do Cursor",
   "stgMcpAddVscode": "Dodaj do VS Code",

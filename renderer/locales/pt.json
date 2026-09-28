@@ -1625,7 +1625,6 @@
   "stgMcpToggleSub": "Claude, Cursor ou VS Code podem consultar seus carretéis, prateleiras, impressoras, listas e o estoque compartilhado dos amigos — é só pedir. Eles olham, não mexem em nada, e só neste computador com o Studio aberto.",
   "stgMcpNewKey": "Renovar a chave",
   "stgMcpError": "Não deu para abrir a porta: {{error}}",
-  "stgMcpNewKeyDone": "Nova chave criada — a antiga não abre mais nada. Adicione o Studio de novo aos seus assistentes.",
   "stgMcpAddClaude": "Adicionar ao Claude Desktop",
   "stgMcpAddCursor": "Adicionar ao Cursor",
   "stgMcpAddVscode": "Adicionar ao VS Code",

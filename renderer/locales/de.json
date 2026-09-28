@@ -1625,7 +1625,6 @@
   "stgMcpToggleSub": "Claude, Cursor oder VS Code können deine Spulen, Regale, Drucker, Wunschlisten und den geteilten Bestand deiner Freunde nachschlagen — frag sie einfach. Sie schauen nur, fassen nichts an, und nur auf diesem Rechner, solange Studio offen ist.",
   "stgMcpNewKey": "Schlüssel erneuern",
   "stgMcpError": "Tür ließ sich nicht öffnen: {{error}}",
-  "stgMcpNewKeyDone": "Neuer Schlüssel erstellt — der alte öffnet nichts mehr. Füg Studio deinen Assistenten neu hinzu.",
   "stgMcpAddClaude": "Zu Claude Desktop hinzufügen",
   "stgMcpAddCursor": "Zu Cursor hinzufügen",
   "stgMcpAddVscode": "Zu VS Code hinzufügen",

@@ -1296,6 +1296,13 @@
   #editAccountModalOverlay .eac-mcp-key .icon { background: var(--muted); transition: background .15s; }
   #editAccountModalOverlay .eac-mcp-key:hover { border-color: var(--primary); background: var(--surface); }
   #editAccountModalOverlay .eac-mcp-key:hover .icon { background: var(--primary); }
+  /* Renewed: the key becomes a green tick and the button pops (same pop as the
+     name's save button), then it settles back on its own. */
+  #editAccountModalOverlay .eac-mcp-key.is-done {
+    border-color: var(--success); background: color-mix(in srgb, var(--success) 12%, var(--surface));
+    animation: eacSavePop .45s cubic-bezier(.34, 1.56, .64, 1);
+  }
+  #editAccountModalOverlay .eac-mcp-key.is-done .icon { background: var(--success); }
 
   /* The name field spans the section under its own caption — a text input needs
      room to show what you typed, which a right-hand column cannot give it. */

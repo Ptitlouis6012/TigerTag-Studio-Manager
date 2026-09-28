@@ -9285,7 +9285,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // weight — matches the table header + the panel dashboard. Keep the rep's
     // identity (image / colour / name / material / brand). The deck effect is CSS.
     const repTotal = { ...g.rep, weightAvailable: g.totalAvail, capacity: g.totalCap };
-    return `<span class="group-card-count" title="${countTitle}">${g.count}</span>` + _gridCardInnerHTML(repTotal);
+    return `<span class="group-card-count" title="${countTitle}"><span class="group-card-count-n">${g.count}</span></span>` + _gridCardInnerHTML(repTotal);
   }
   function _createGroupGridCard(g) {
     const card = document.createElement("div");
@@ -23364,7 +23364,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <div class="rv-plan-zoom" role="group" aria-label="${esc(t("rackPlanZoom"))}">
           <button type="button" id="pvZoomOut" aria-label="${esc(t("rackPlanZoomOut"))}">−</button>
           <input class="val" id="pvZoomVal" type="number" inputmode="numeric"
-                 min="${PLAN_ZOOM_MIN}" max="${PLAN_ZOOM_MAX}" step="${PLAN_ZOOM_STEP}"
+                 min="${PRINTER_ZOOM_MIN}" max="${PRINTER_ZOOM_MAX}" step="${PLAN_ZOOM_STEP}"
                  value="${Math.round(_printerZoom * 100)}" aria-label="${esc(t("rackPlanZoom"))}"><span class="pct">%</span>
           <button type="button" id="pvZoomIn" aria-label="${esc(t("rackPlanZoomIn"))}">+</button>
         </div>
@@ -25094,6 +25094,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       right  = Math.max(right,  pos.x + el.offsetWidth);
     });
     let ox = 0;
+    /* MACHINES FIRST, then what belongs to them. A widget is stacked under its
+       machine's card, so the card must already be where it is going; taken in
+       page order, a widget could be placed before its brand-new card and stack
+       under a card that was not yet anywhere — the pile in the top-left corner. */
+    const _isMachine = el => { const o = _boardObj(el.dataset.boardId || ""); return !(o && o.unit); };
+    orphans.sort((a, b) => (_isMachine(b) ? 1 : 0) - (_isMachine(a) ? 1 : 0));
+    // How wide a row is: the board as arranged so far, or what is on screen if wider.
+    const _zoom = parseFloat((getComputedStyle(container).transform.match(/matrix\(([^,]+)/) || [])[1]) || 1;
+    const _rowWidth = Math.max(right, (container.parentElement?.clientWidth || container.clientWidth) / _zoom);
     orphans.forEach(el => {
       /* A unit that has never been placed goes beside its machine — under the
          card, then to the right of whichever of its siblings is already there,
@@ -25136,6 +25145,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           ? planFreeSpot(container, { x: anchor.x, y: anchor.y }, el.offsetWidth, el.offsetHeight, id)
           : planStackUnder(container, owner, new Set(p_ ? _printerBoardIds(p_) : []),
                            el.offsetWidth, el.offsetHeight, id));
+      } else if (_own && _own.p) {
+        /* A new MACHINE: room for the card plus the widgets still waiting to
+           stack under it, at the first free place in reading order. */
+        const mine = new Set(_printerBoardIds(_own.p));
+        const pending = orphans.filter(o => o !== el && mine.has(o.dataset.boardId) && o.style.left === "");
+        const w = Math.max(el.offsetWidth, ...pending.map(o => o.offsetWidth));
+        const h = el.offsetHeight + pending.reduce((sum, o) => sum + o.offsetHeight + 4, 0);
+        ({ x, y } = planFreeSlot(container, w, h, _rowWidth, new Set([id])));
       } else {
         ({ x, y } = planFreeSpot(container, { x: ox, y: bottom + PLAN_CELL },
                                  el.offsetWidth, el.offsetHeight, id));
@@ -25187,6 +25204,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       right  = Math.max(right,  x + el.offsetWidth);
       bottom = Math.max(bottom, y + el.offsetHeight);
     });
+    _planSettleColumns(container);
     /* Compact the stacking to 1..N: a machine can never climb above the drag
        layer or the guides, however many times it has been moved. */
     Array.from(container.children)
@@ -25294,7 +25312,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      the scale added. Without it the whole board slides toward the corner and
      every machine appears to move. */
   function applyPrinterZoom(pc, anchor) {
-    const next = _clampZoom(pc) / 100;
+    const next = _clampPrinterZoom(pc) / 100;
     const field = document.getElementById("pvZoomVal");
     if (next === _printerZoom) { if (field) field.value = Math.round(_printerZoom * 100); return; }
     const sc = document.querySelector("#invPrinterView .printers-scroll");
@@ -31043,9 +31061,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // The printer board keeps its own zoom: the two plans hold different things at
   // different scales, and a single value would fight itself between the views.
   const PRINTER_ZOOM_KEY = "tigertag.printer.planZoom";
+  // The board is held between 50 % and 100 %: below half a card's name, temps
+  // and slots stop being readable, and above life size a machine outgrows the
+  // screen — neither shows the fleet.
+  const PRINTER_ZOOM_MIN = 50, PRINTER_ZOOM_MAX = 100;
+  const _clampPrinterZoom = pc => Math.max(PRINTER_ZOOM_MIN, Math.min(PRINTER_ZOOM_MAX, Math.round(pc)));
   const _loadPrinterZoom = () => {
     const v = parseFloat(localStorage.getItem(PRINTER_ZOOM_KEY));
-    return Number.isFinite(v) ? _clampZoom(v * 100) / 100 : 1;
+    return Number.isFinite(v) ? _clampPrinterZoom(v * 100) / 100 : 1;
   };
   let _printerZoom = _loadPrinterZoom();
   /* True while the board is being panned with the wheel button. A wheel that is
@@ -31404,7 +31427,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      ones after them and a batch cannot land on itself. */
   function planFreeSpot(container, want, w, h, exceptId) {
     const boxes = Array.from(container.children)
-      .filter(el => el.dataset.boardId && el.dataset.boardId !== exceptId)
+      /* Only what is actually PLACED: an object still waiting for its spot has
+         no left/top yet, and reading it as sitting at (0, 0) made the top-left
+         corner look taken — or, worse, look free to two newcomers at once. */
+      .filter(el => el.dataset.boardId && el.dataset.boardId !== exceptId && el.style.left !== "")
       .map(el => ({ x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0,
                     w: el.offsetWidth, h: el.offsetHeight }));
     const gap = 12;
@@ -31443,6 +31469,92 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      overlapping as allowed and merely draws it in red.
 
      Nothing here dodges SIDEWAYS either, for the same reason. */
+  /* Where a NEW MACHINE goes: the first free place in reading order — along
+     the top row, then the next one down — big enough for the card AND the
+     column of widgets that will stack under it (`h` is that whole footprint).
+     Before this, a new machine went to the left edge BELOW everything, so every
+     addition queued further down one column, out of sight, and a machine added
+     next to a tall one could land in its widgets. Rows are as wide as the board
+     already is (or the visible board, if wider), so a gap in the top row is
+     used before a new row is opened. */
+  /* A machine's own things never sit on each other. A widget is stacked under
+     its card at the height it had THEN — and some grow afterwards: the units box
+     gains a row when the CFS / AMS data arrives, the job box when a print starts.
+     Grown, it covered the next widget down. So after every layout, within ONE
+     machine, anything that now overlaps the thing above it in its column is
+     pushed down just clear of it (and remembered). Only downward, only that
+     machine's own objects, never one in the user's hand — another printer's
+     card is not ours to move, and an arrangement the user made is left alone
+     unless it has become a pile. */
+  function _planSettleColumns(container) {
+    const PAD = 4;
+    const all = Array.from(container.children)
+      .filter(el => el.dataset.boardId && el.style.left !== "" && el.offsetWidth)
+      .map(el => ({ el, id: el.dataset.boardId, x: parseFloat(el.style.left) || 0,
+                    y: parseFloat(el.style.top) || 0, w: el.offsetWidth, h: el.offsetHeight }));
+    const byId = new Map(all.map(b => [b.id, b]));
+    const moved = new Set();
+    const overlaps = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h + PAD && a.y + a.h + PAD > b.y;
+    // Push `b` just below `a`, then carry on down: whatever `b` now lands on —
+    // whoever's it is — goes down with it, so the fix never makes a new pile.
+    const push = (a, b, depth = 0) => {
+      if (depth > 60 || _boardHeld.has(b.id)) return;
+      const want = Math.round(a.y + a.h + PAD);
+      if (want <= b.y) return;
+      b.y = want; moved.add(b.id);
+      for (const c of all) {
+        if (c === b || c === a || c.y < b.y - b.h) continue;
+        if (c.y >= a.y && overlaps(b, c) && c.y >= b.y - PAD) push(b, c, depth + 1);
+      }
+    };
+    for (const p of state.printers || []) {
+      const own = _printerBoardIds(p).map(id => byId.get(id)).filter(Boolean).sort((u, v) => u.y - v.y);
+      for (let i = 1; i < own.length; i++) {
+        for (let k = 0; k < i; k++) {
+          const a = own[k], b = own[i];
+          if (a.y <= b.y && overlaps(a, b) && a.y + a.h + PAD > b.y) push(a, b);
+        }
+      }
+    }
+    /* A WIDGET resting on another machine's things is always a pile, never a
+       choice — widgets travel with their own machine, nobody parks one on a
+       neighbour. (Two CARDS overlapping may be deliberate and are left alone.) */
+    const isWidget = b => { const o = _boardObj(b.id); return !!(o && o.unit); };
+    const ownerOf = b => { const o = _boardObj(b.id); return o && o.p ? _printerKey(o.p) : b.id; };
+    const sorted = all.slice().sort((u, v) => u.y - v.y);
+    for (const a of sorted) {
+      if (!isWidget(a)) continue;
+      for (const b of sorted) {
+        if (b === a || ownerOf(b) === ownerOf(a) || b.y < a.y) continue;
+        if (overlaps(a, b) && a.y + a.h + PAD > b.y) push(a, b);
+      }
+    }
+    for (const id of moved) {
+      const b = byId.get(id);
+      b.el.style.top = b.y + "px";
+      boardSave(b.id, b.x, b.y, boardZ(b.id) || nextBoardZ());
+    }
+  }
+  function planFreeSlot(container, w, h, rowWidth, exceptIds) {
+    const PAD = 12;
+    const boxes = Array.from(container.children)
+      .filter(el => el.dataset.boardId && !exceptIds.has(el.dataset.boardId) && el.style.left !== "")
+      .map(el => ({ x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0,
+                    w: el.offsetWidth, h: el.offsetHeight }));
+    const hit = b => boxes.find(o =>
+      b.x < o.x + o.w + PAD && b.x + b.w + PAD > o.x && b.y < o.y + o.h + PAD && b.y + b.h + PAD > o.y);
+    const maxX = Math.max(0, rowWidth - w);
+    const bottom = boxes.reduce((m, o) => Math.max(m, o.y + o.h), 0);
+    for (let y = 0; y <= bottom + PAD; y += PLAN_CELL) {
+      for (let x = 0; x <= maxX; ) {
+        const o = hit({ x, y, w, h });
+        if (!o) return { x, y };
+        // Jump past the obstacle instead of crawling across it cell by cell.
+        x = Math.ceil((o.x + o.w + PAD) / PLAN_CELL) * PLAN_CELL;
+      }
+    }
+    return { x: 0, y: Math.ceil((bottom + PAD) / PLAN_CELL) * PLAN_CELL };
+  }
   function planStackUnder(container, owner, ownIds, w, h, exceptId) {
     const boxes = Array.from(container.children)
       .filter(el => el.dataset.boardId && el.dataset.boardId !== exceptId
@@ -38001,8 +38113,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     // Renewing breaks every assistant already set up — held 1.5 s, like the
     // other hard-to-undo actions, with a bubble saying what it does and how.
-    setupHoldToConfirm($("btnMcpNewKey"), 1500, async () => {
-      cfg = await api.newToken(); flash("warn", t("stgMcpNewKeyDone"), 6000);
+    // Done = the button itself answers: the key turns into a green tick for a
+    // moment and pops, then settles back. No sentence appears and nothing moves.
+    const keyBtn = $("btnMcpNewKey");
+    let keyDoneT = null;
+    setupHoldToConfirm(keyBtn, 1500, async () => {
+      cfg = await api.newToken();
+      const ico = keyBtn.querySelector(".icon");
+      keyBtn.classList.remove("is-done"); void keyBtn.offsetWidth;   // replay the pop on a second renewal
+      keyBtn.classList.add("is-done");
+      ico?.classList.replace("icon-key", "icon-check");
+      clearTimeout(keyDoneT);
+      keyDoneT = setTimeout(() => { keyBtn.classList.remove("is-done"); ico?.classList.replace("icon-check", "icon-key"); }, 1800);
     }, { hint: true });
     _mcpSettingsRefresh = refresh;
     refresh();

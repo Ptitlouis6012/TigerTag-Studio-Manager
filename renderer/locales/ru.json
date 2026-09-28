@@ -1625,7 +1625,6 @@
   "stgMcpToggleSub": "Claude, Cursor или VS Code смогут смотреть твои катушки, стеллажи, принтеры, списки и общий запас друзей — просто спроси. Они только смотрят, ничего не трогают, и только на этом компьютере, пока Studio открыт.",
   "stgMcpNewKey": "Обновить ключ",
   "stgMcpError": "Не удалось открыть дверь: {{error}}",
-  "stgMcpNewKeyDone": "Новый ключ создан — старый больше ничего не открывает. Добавь Studio в ассистентов заново.",
   "stgMcpAddClaude": "Добавить в Claude Desktop",
   "stgMcpAddCursor": "Добавить в Cursor",
   "stgMcpAddVscode": "Добавить в VS Code",
