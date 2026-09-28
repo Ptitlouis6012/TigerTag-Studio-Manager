@@ -37816,7 +37816,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       measure_gr: "nominal capacity in grams",
       weight_available: "filament left, grams (net, without the spool)",
       container_id: "empty-spool model id (data/container_spool/spools_filament.json); container_weight = its empty weight, grams",
-      "info1 / info2 / info3": "material flags set from the catalogue: info1 = refill (sold without a spool), info2 = recycled material, info3 = filled (material loaded with an additive, e.g. carbon or glass fibre — the \"-CF\" / \"-GF\" family); true or absent. Not written on the chip",
+      "info1 / info2 / info3": "material flags set from the catalogue: info1 = refill (sold without a spool), info2 = recycled material, info3 = filled (the material carries a filler besides the polymer — anything: stone, wood, carbon or glass fibre, metal…); true or absent. Not written on the chip",
       TD: "transmission distance (translucency), from a TD1S sensor",
       message: "user note (also the colour name on DIY spools); color_name = colour name",
       twin_tag_uid: "the other chip on the same physical spool — a twin pair is ONE spool",

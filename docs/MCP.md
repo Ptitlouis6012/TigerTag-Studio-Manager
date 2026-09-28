@@ -154,7 +154,7 @@ ID) and the notice follow the type:
 | `data6` / `data7` | bed temp min / max °C | washing °C / min | unused |
 
 `info1` / `info2` / `info3` are material **flags** set from the catalogue — refill (no
-spool), recycled, filled (additive, e.g. CF / GF) — and are not written on the chip.
+spool), recycled, filled (a filler besides the polymer — stone, wood, carbon / glass fibre, metal…) — and are not written on the chip.
 *Open point:* `docs/TTAG-FIELDS.md` still calls them "free-text slots"; the code and the
 data use them as booleans. The notice follows the data until the contract is ratified.
 
