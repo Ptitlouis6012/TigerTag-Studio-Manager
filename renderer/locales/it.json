@@ -1622,7 +1622,7 @@
   "sectionAspect": "Finitura",
   "colorEditPill": "Cambia colore",
   "stgMcpTitle": "Assistenti IA",
-  "stgMcpToggleSub": "Claude, Cursor o VS Code possono consultare bobine, scaffali, stampanti, liste e lo stock condiviso dei tuoi amici — basta chiederglielo. Guardano, non toccano nulla, e solo su questo computer con Studio aperto.",
+  "stgMcpToggleSub": "Claude, Cursor o VS Code possono consultare bobine, scaffali, stampanti, liste e lo stock condiviso dei tuoi amici — basta chiedere. Guardano, non toccano nulla. Il collegamento gira su questo computer con Studio aperto, ma ciò che legge il tuo assistente viene inviato all’azienda che lo gestisce, come tutto ciò che gli chiedi.",
   "stgMcpNewKey": "Rinnova la chiave",
   "stgMcpError": "Impossibile aprire la porta: {{error}}",
   "stgMcpAddClaude": "Aggiungi a Claude Desktop",

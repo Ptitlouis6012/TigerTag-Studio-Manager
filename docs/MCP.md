@@ -97,7 +97,9 @@ Bundle + bridge copies: `<userData>/mcp/`.
 |---|---|
 | **Read-only** | every tool is a query; `annotations.readOnlyHint: true` on each |
 | **Loopback only** | listens on `127.0.0.1` — never another interface |
-| **Token** | `Authorization: Bearer <48 hex>` required, else **401**; rotatable |
+| **Token** | `Authorization: Bearer <48 hex>` required, else **401** — compared in constant time (`crypto.timingSafeEqual`); rotatable (hold 1.5 s) |
+| **Batch cap** | a JSON-RPC batch holds 1–20 messages, else **400** — each `tools/call` is relayed to the app |
+| **Files** | `mcp.json` `0600`; the `.mcpb` carries the token, so `<userData>/mcp/` is `0700` and the bundle `0600` |
 | **No DNS rebinding** | `Host` must be `127.0.0.1:<port>` / `localhost:<port>`, else **403** |
 | **No browser** | any `Origin` header → **403** (a web page cannot call it) |
 | **Scope** | the account's own `users/{uid}/…`, an accepted friend's `inventory` / `racks` / `products` / `lists`, and `userProfiles/…` — anything else is refused (`_mcpCheckPath`); Firestore rules apply on top |
@@ -105,8 +107,22 @@ Bundle + bridge copies: `<userData>/mcp/`.
 | **Identity privacy** | e-mail and the Google real name (`googleName`, `firstName`, `lastName`) are masked — the app never displays them either |
 | **Off by default, per profile** | each account opts in from *My profile*; the server runs only while the signed-in account has — another profile's data is never exposed by someone else's choice |
 
-Why masking matters: an assistant's conversation may be stored by its vendor. Anything
-returned by a tool should be assumed to leave the machine.
+Why masking matters: **the server is local, the data is not** — every tool result becomes part
+of the assistant's conversation and is sent to its vendor (Anthropic, Cursor, Microsoft…),
+friends' shared stock included. The ⓘ bubble in *My profile* says so; never word it as
+"stays on this computer".
+
+**Untrusted text.** Names, notes, messages and list text are user data — a friend's included —
+and may carry instructions aimed at the model. The server `instructions` and the notice
+(`untrusted_text`) tell the model to report such text, never follow it, and friend results carry
+`authored_by: "friend"`. This is labelling, not a guarantee: an assistant that also has outbound
+tools (web, e-mail) is the user's choice.
+
+**Where the token also lives.** Claude Desktop keeps the extension's `env`, and Cursor / VS Code
+keep the `Authorization` header, in their own config files in clear — standard for MCP
+clients. *Renew the key* revokes every copy at once.
+
+Security review: `docs/reviews/2026-09-29-mcp-security.md`.
 
 ---
 

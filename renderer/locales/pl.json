@@ -1621,7 +1621,7 @@
   "sectionAspect": "Wykończenie",
   "colorEditPill": "Zmień kolor",
   "stgMcpTitle": "Asystenci AI",
-  "stgMcpToggleSub": "Claude, Cursor lub VS Code mogą przeglądać twoje szpule, półki, drukarki, listy i stan udostępniony przez znajomych — wystarczy zapytać. Patrzą, niczego nie ruszają, i tylko na tym komputerze, gdy Studio jest otwarte.",
+  "stgMcpToggleSub": "Claude, Cursor lub VS Code mogą przeglądać twoje szpule, półki, drukarki, listy i stan udostępniony przez znajomych — wystarczy zapytać. Tylko patrzą, niczego nie ruszają. Połączenie działa na tym komputerze, gdy Studio jest otwarte, ale to, co czyta asystent, trafia do firmy, która go obsługuje — jak wszystko, o co go pytasz.",
   "stgMcpNewKey": "Odnów klucz",
   "stgMcpError": "Nie udało się otworzyć drzwi: {{error}}",
   "stgMcpAddClaude": "Dodaj do Claude Desktop",

@@ -1622,7 +1622,7 @@
   "sectionAspect": "外观",
   "colorEditPill": "更改颜色",
   "stgMcpTitle": "AI 助手",
-  "stgMcpToggleSub": "Claude、Cursor 或 VS Code 可以查看你的线材、货架、打印机、心愿单以及好友共享的库存——直接问它们就行。它们只看不碰，且仅限这台电脑、Studio 打开时。",
+  "stgMcpToggleSub": "Claude、Cursor 或 VS Code 可以查看你的线材、货架、打印机、心愿单以及好友共享的库存——直接问它们就行。它们只看不碰。连接只在这台电脑上、Studio 打开时运行，但助手读取的内容会发送给提供该助手的公司，就像你问它的其他问题一样。",
   "stgMcpNewKey": "更新密钥",
   "stgMcpError": "门打不开：{{error}}",
   "stgMcpAddClaude": "添加到 Claude Desktop",

@@ -1752,7 +1752,6 @@ function initTD1S() {
 // switching to an account that did not never exposes its data.
 const MCP_DEFAULT_PORT = 5795;
 const _mcpPrefsPath  = () => path.join(app.getPath('userData'), 'mcp.json');
-const _mcpBridgePath = () => path.join(app.getPath('userData'), 'mcp', 'tiger-mcp-bridge.js');
 let _mcp = null;
 let _mcpTools = [];                       // tool definitions registered by the renderer
 let _mcpActiveUid = null;                 // account signed in in the renderer (mcp:set-account)
@@ -1797,8 +1796,6 @@ function _mcpConfig() {
     port: prefs.port, token: prefs.token,
     url: `http://127.0.0.1:${prefs.port}/mcp`,
     running: st.running, error: st.error,
-    // What a stdio client (Claude Desktop) needs: Studio's own binary in Node mode.
-    execPath: process.execPath, bridgePath: _mcpBridgePath(),
   };
 }
 async function _mcpApply() {
@@ -1813,11 +1810,6 @@ async function _mcpApply() {
     });
   }
   if (!_mcpActiveUid || !prefs.enabledFor.includes(_mcpActiveUid)) { await _mcp.stop(); return; }
-  // The stdio bridge must run OUTSIDE the app bundle — copy it next to the prefs.
-  try {
-    fs.mkdirSync(path.dirname(_mcpBridgePath()), { recursive: true });
-    fs.copyFileSync(path.join(__dirname, 'services', 'mcpStdioBridge.js'), _mcpBridgePath());
-  } catch (e) { console.warn('[mcp] bridge copy failed:', e.message); }
   await _mcp.start({ port: prefs.port, token: prefs.token });
 }
 // Nothing to start at boot: the server waits for the renderer to say which
@@ -1908,9 +1900,17 @@ function _mcpBuildBundle(cfg) {
     const icon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'img', 'icon.png'));
     if (!icon.isEmpty()) files.push({ name: 'icon.png', data: icon.resize({ width: 256, quality: 'best' }).toPNG() });
   } catch (_) {}
+  // The bundle carries the token: private to this user (a default 0755 / 0644
+  // left it readable by every other account on a shared Linux machine).
+  // chmod as well — `mode` only applies when the file / folder is created.
   const out = path.join(app.getPath('userData'), 'mcp', 'Tiger Studio Manager.mcpb');
-  fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, _zip(files));
+  const dir = path.dirname(out);
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  try { fs.chmodSync(dir, 0o700); } catch (_) {}
+  fs.writeFileSync(out, _zip(files), { mode: 0o600 });
+  try { fs.chmodSync(out, 0o600); } catch (_) {}
+  // The loose bridge copy the retired "copy setup" button used — gone with it.
+  try { fs.rmSync(path.join(dir, 'tiger-mcp-bridge.js'), { force: true }); } catch (_) {}
   return out;
 }
 ipcMain.handle('mcp:install', async (_evt, target) => {

@@ -1622,7 +1622,7 @@
   "sectionAspect": "Afwerking",
   "colorEditPill": "Kleur wijzigen",
   "stgMcpTitle": "AI-assistenten",
-  "stgMcpToggleSub": "Claude, Cursor of VS Code kunnen je spoelen, schappen, printers, lijstjes en de gedeelde voorraad van je vrienden bekijken — vraag het ze gewoon. Ze kijken, raken niets aan, en alleen op deze computer terwijl Studio open is.",
+  "stgMcpToggleSub": "Claude, Cursor of VS Code kunnen je spoelen, schappen, printers, lijstjes en de gedeelde voorraad van je vrienden bekijken — vraag het ze gewoon. Ze kijken alleen, raken niets aan. De koppeling draait op deze computer terwijl Studio open is, maar wat je assistent leest gaat naar het bedrijf erachter, net als alles wat je hem vraagt.",
   "stgMcpNewKey": "Sleutel vernieuwen",
   "stgMcpError": "De deur ging niet open: {{error}}",
   "stgMcpAddClaude": "Toevoegen aan Claude Desktop",

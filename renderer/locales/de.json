@@ -1622,7 +1622,7 @@
   "sectionAspect": "Oberfläche",
   "colorEditPill": "Farbe ändern",
   "stgMcpTitle": "KI-Assistenten",
-  "stgMcpToggleSub": "Claude, Cursor oder VS Code können deine Spulen, Regale, Drucker, Wunschlisten und den geteilten Bestand deiner Freunde nachschlagen — frag sie einfach. Sie schauen nur, fassen nichts an, und nur auf diesem Rechner, solange Studio offen ist.",
+  "stgMcpToggleSub": "Claude, Cursor oder VS Code können deine Spulen, Regale, Drucker, Wunschlisten und den geteilten Bestand deiner Freunde nachschlagen — frag sie einfach. Sie schauen nur, fassen nichts an. Die Verbindung läuft auf diesem Rechner, solange Studio offen ist — aber was dein Assistent liest, geht an das Unternehmen dahinter, wie alles, was du ihn fragst.",
   "stgMcpNewKey": "Schlüssel erneuern",
   "stgMcpError": "Tür ließ sich nicht öffnen: {{error}}",
   "stgMcpAddClaude": "Zu Claude Desktop hinzufügen",

@@ -1622,7 +1622,7 @@
   "sectionAspect": "Acabamento",
   "colorEditPill": "Mudar cor",
   "stgMcpTitle": "Assistentes de IA",
-  "stgMcpToggleSub": "Claude, Cursor ou VS Code podem consultar seus carretéis, prateleiras, impressoras, listas e o estoque compartilhado dos amigos — é só pedir. Eles olham, não mexem em nada, e só neste computador com o Studio aberto.",
+  "stgMcpToggleSub": "Claude, Cursor ou VS Code podem consultar seus carretéis, prateleiras, impressoras, listas e o estoque compartilhado dos amigos — é só pedir. Eles só olham, não mexem em nada. A conexão roda neste computador com o Studio aberto, mas o que o assistente lê é enviado à empresa por trás dele, como tudo o que você pergunta.",
   "stgMcpNewKey": "Renovar a chave",
   "stgMcpError": "Não deu para abrir a porta: {{error}}",
   "stgMcpAddClaude": "Adicionar ao Claude Desktop",

@@ -1622,7 +1622,7 @@
   "sectionAspect": "Aspect",
   "colorEditPill": "Change colour",
   "stgMcpTitle": "AI assistants",
-  "stgMcpToggleSub": "Claude, Cursor or VS Code can look up your spools, racks, printers, wishlists and your friends’ shared stock — just ask them. They look, never touch, and only on this computer while Studio is open.",
+  "stgMcpToggleSub": "Claude, Cursor or VS Code can look up your spools, racks, printers, wishlists and your friends’ shared stock — just ask them. They only look, never touch. The link runs on this computer while Studio is open, but what your assistant reads is sent to the company behind it, like anything else you ask it.",
   "stgMcpNewKey": "Renew the key",
   "stgMcpError": "Couldn’t open the door: {{error}}",
   "stgMcpAddClaude": "Add to Claude Desktop",

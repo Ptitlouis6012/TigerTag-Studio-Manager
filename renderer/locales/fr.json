@@ -1622,7 +1622,7 @@
   "sectionAspect": "Aspect",
   "colorEditPill": "Changer la couleur",
   "stgMcpTitle": "Assistants IA",
-  "stgMcpToggleSub": "Claude, Cursor ou VS Code peuvent consulter tes bobines, étagères, imprimantes, listes et le stock partagé par tes amis — il suffit de leur demander. Ils regardent, ne touchent à rien, et seulement sur cet ordi quand Studio est ouvert.",
+  "stgMcpToggleSub": "Claude, Cursor ou VS Code peuvent consulter tes bobines, étagères, imprimantes, listes et le stock partagé par tes amis — il suffit de leur demander. Ils regardent, ne touchent à rien. Le lien tourne sur cet ordi quand Studio est ouvert, mais ce que lit ton assistant part chez l’entreprise qui le fait tourner, comme tout ce que tu lui demandes.",
   "stgMcpNewKey": "Renouveler la clé",
   "stgMcpError": "Impossible d’ouvrir la porte : {{error}}",
   "stgMcpAddClaude": "Ajouter à Claude Desktop",
