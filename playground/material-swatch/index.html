@@ -128,18 +128,31 @@ const LOGO_PATH         = "../../assets/svg/logos/logo_tigertag.svg";
 const LOGO_PATH_OUTLINE = "../../assets/svg/logos/logo_tigertag_contouring.svg";
 
 const _pieSplit = (colors) => {
-  if (colors.length === 2) return `linear-gradient(${RAMP_ANGLE}, ${colors[0]} 50%, ${colors[1]} 50%)`;
+  if (colors.length <= 3) {
+    // Each colour holds solid; only a band of SPLIT_BLEND % around each
+    // boundary blends — a full ramp washed the colours out.
+    const seg = 100 / colors.length, h = SPLIT_BLEND / 2;
+    const stops = colors.map((c, i) => `${c} ${+Math.max(0, i * seg + (i ? h : 0)).toFixed(2)}% ${+Math.min(100, (i + 1) * seg - (i < colors.length - 1 ? h : 0)).toFixed(2)}%`);
+    return `linear-gradient(${RAMP_ANGLE}, ${stops.join(', ')})`;
+  }
   const step = 360 / colors.length;
   const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
   return `conic-gradient(${stops.join(', ')})`;
 };
 const RAMP_ANGLE = '135deg';
+// Width (in % of the diagonal) of the blend between two colours of a bicolor /
+// tricolor — 0 = hard edge, 100/N = a full ramp. One knob for every surface.
+const SPLIT_BLEND = 20;
+// Smooth sweep round the centre — declared `conic_gradient`, and a Tricolor aspect (unless Rainbow).
+const _conicSweep = (colors) => `conic-gradient(from 0deg, ${colors.join(', ')}, ${colors[0]})`;
 
 function colorBg(row) {
-  const aspects = [row.aspect1, row.aspect2].map(a => (a || '').toLowerCase());
-  const isRainbow  = aspects.some(a => a.includes('rainbow') || a.includes('multicolor'));
-  const isTricolor = aspects.some(a => a.includes('tricolor') || a.includes('tri color') || a.includes('tricolore'));
-  const isBicolor  = aspects.some(a => a.includes('bicolor')  || a.includes('bi color')  || a.includes('bicolore'));
+  // Keyed on aspect IDs (24 Tricolor, 145 Rainbow, 252 Bicolor), never on labels.
+  const ASPECT_ID = { TRICOLOR: 24, RAINBOW: 145, BICOLOR: 252 };
+  const aspectIds = [row.aspect1Id, row.aspect2Id].map(Number);
+  const isRainbow  = aspectIds.includes(ASPECT_ID.RAINBOW);
+  const isTricolor = aspectIds.includes(ASPECT_ID.TRICOLOR);
+  const isBicolor  = aspectIds.includes(ASPECT_ID.BICOLOR);
   const normalizeColor = c => {
     const s = (c || '').trim().replace(/^#/, '');
     const hex6 = s.length === 8 ? s.slice(0, 6) : s;
@@ -148,9 +161,11 @@ function colorBg(row) {
   const cls = (row.colorList || []).map(normalizeColor).filter(Boolean);
   const colorType = row.colorType || '';
   if (cls.length >= 2 && colorType === 'conic_gradient') {
-    return `conic-gradient(from 0deg, ${cls.join(', ')}, ${cls[0]})`;
+    return _conicSweep(cls);
   } else if (cls.length >= 2 && colorType === 'gradient') {
     return `linear-gradient(${RAMP_ANGLE}, ${cls.join(', ')})`;
+  } else if (cls.length >= 3 && isTricolor && !isRainbow) {
+    return _conicSweep(cls);
   } else if (cls.length >= 2) {
     return _pieSplit(cls);
   } else if (cls.length === 1) {
@@ -169,7 +184,7 @@ function colorBg(row) {
   } else if (isTricolor) {
     const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
     const [c1 = '#cccccc', c2 = '#888888', c3] = colors;
-    return _pieSplit([c1, c2, c3 || c1]);
+    return c3 ? _conicSweep([c1, c2, c3]) : _pieSplit([c1, c2]);
   } else if (isBicolor) {
     const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
     const [c1 = '#cccccc', c2 = '#ffffff'] = colors;
@@ -238,21 +253,21 @@ const CASES = [
   { t: "White product — #FFFFFFFF", branch: "cls.length === 1",
     row: { colorList: ["FFFFFFFF"] } },
 
-  { t: "Bicolor — declared aspect, chip slots", branch: "isBicolor → _pieSplit (2 colours ⇒ diagonal)", isNew: true,
-    note: "Convention v1.1: two hard colours split on the 135° diagonal — first colour top-left, edge top-right → bottom-left through the centre, on a circle, a square, a clipped strip or a photo frame. Shared with the Add-Product preview.",
-    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#000000", aspect2: "Bicolor" } },
-  { t: "Two colours in the list, no declared type", branch: "cls.length >= 2 → _pieSplit (2 ⇒ diagonal)", isNew: true,
+  { t: "Bicolor — declared aspect, chip slots", branch: "isBicolor → _pieSplit (2 colours ⇒ 135° ramp)", isNew: true,
+    note: "Convention v1.2: a bicolor is a smooth 135° ramp — first colour top-left, blending to the second bottom-right, on a circle, a square, a clipped strip or a photo frame. Shared with the Add-Product preview.",
+    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#000000", aspect2Id: 252 } },
+  { t: "Two colours in the list, no declared type", branch: "cls.length >= 2 → _pieSplit (2 ⇒ 135° ramp)", isNew: true,
     row: { colorList: ["e02424", "2463e0"] } },
 
-  { t: "Tricolor — declared aspect, chip slots", branch: "isTricolor → _pieSplit (3 sectors)",
-    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#22a06b", aspect2: "Tricolor" } },
-  { t: "Three colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit",
+  { t: "Tricolor — declared aspect, chip slots", branch: "isTricolor → _conicSweep (unless Rainbow)", isNew: true,
+    row: { colorHex: "#e02424", colorHex2: "#2463e0", colorHex3: "#22a06b", aspect2Id: 24 } },
+  { t: "Three colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit (3 ⇒ 135° ramp)", isNew: true,
     row: { colorList: ["e02424", "2463e0", "22a06b"], colorType: "multi" } },
-  { t: "Four colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit",
+  { t: "Four colours in the list (multi)", branch: "cls.length >= 2 → _pieSplit (4+ ⇒ camembert)",
     row: { colorList: ["e02424", "f0a020", "2463e0", "22a06b"], colorType: "multi" } },
 
   { t: "Declared type: gradient", branch: "colorType === 'gradient' → ramp 135°", isNew: true,
-    note: "A catalogue instruction, not a bicolor — keeps its smooth ramp even on two colours. Was 90°, now on the shared 135° diagonal like every other ramp.",
+    note: "A catalogue instruction — a smooth ramp at any colour count, including four or more. Was 90°, now on the shared 135° diagonal like every other ramp.",
     row: { colorList: ["e02424", "f0a020", "2463e0"], colorType: "gradient" } },
   { t: "Declared type: gradient, TWO colours", branch: "colorType === 'gradient' → ramp 135°", isNew: true,
     note: "Deliberately NOT the vertical split: the catalogue asked for a ramp.",
@@ -262,14 +277,14 @@ const CASES = [
     row: { colorList: ["e02424", "f0a020", "22a06b", "2463e0"], colorType: "conic_gradient" } },
 
   { t: "Rainbow — aspect, no colours at all", branch: "isRainbow → 6-stop default",
-    row: { aspect1: "Rainbow" } },
+    row: { aspect1Id: 145 } },
   { t: "Rainbow — aspect + chip slots", branch: "isRainbow → ramp over the slots",
-    row: { colorHex: "#e02424", colorHex2: "#f0a020", colorHex3: "#2463e0", aspect1: "Rainbow" } },
+    row: { colorHex: "#e02424", colorHex2: "#f0a020", colorHex3: "#2463e0", aspect1Id: 145 } },
   { t: "Rainbow + Bicolor", branch: "isRainbow && isBicolor → smooth 2 stops",
     note: "Rainbow says 'no hard edge', so this stays a ramp — untouched by the bicolor change.",
-    row: { aspect1: "Rainbow", aspect2: "Bicolor" } },
+    row: { aspect1Id: 145, aspect2Id: 252 } },
   { t: "Rainbow + Tricolor", branch: "isRainbow && isTricolor → smooth 3 stops",
-    row: { aspect1: "Rainbow", aspect2: "Tricolor" } },
+    row: { aspect1Id: 145, aspect2Id: 24 } },
 
   { t: "No colour at all", branch: "last resort → #1c2030",
     row: {} },

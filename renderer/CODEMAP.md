@@ -209,7 +209,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## RFID encode / burn modal — cem (L11443-11960)
+## RFID encode / burn modal — cem (L11443-12200)
 | L | What | Anchors |
 |---|---|---|
 | 5869-5958 | **`_burnRfid(r)`** — writes a chip from a row | `_burnRfid` |
@@ -302,7 +302,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printer detail side panel (L24340-28420)
+## Printer detail side panel (L24340-28700)
 | L | What | Anchors |
 |---|---|---|
 | 10092-10654 | Open/close lifecycle (connect/disconnect per brand), conn button, refresh | `openPrinterDetail`, `closePrinterDetail`, `refreshOpenPrinterDetail` |

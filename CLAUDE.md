@@ -316,9 +316,9 @@ the authority; a code change follows a founder-ratified contract, not the revers
 
 ## 🎨 The material swatch — one convention, owned by another repo
 
-**Everything is a camembert except a ramp, and every ramp is at 135°.** Bicolor
-is not a special case: two equal conic sectors put the boundary on the vertical
-axis, so its vertical split is a consequence of the pie. It is the *material*
+**A Tricolor aspect is a smooth conic sweep (`_conicSweep`, unless it is also Rainbow); other two or three colours make a 135° soft split (solid colours, 20 % blended seam — `SPLIT_BLEND`), four or more make a camembert, and
+every ramp is at 135°** (convention v1.2 — bicolor and tricolor blend, first
+colour top-left; a hard edge read as separate bars in the frame round a photo). It is the *material*
 swatch, not the spool swatch — the same rule serves filament, accessories,
 spare parts and resin alike; nothing in it reads `id_type`.
 
@@ -335,6 +335,25 @@ a bicolor mirrored relative to the inventory. Check any change against
 live pickers). Details + the known gaps: `docs/MATERIAL-SWATCH.md`.
 
 ---
+
+## 🧪 Verify UI changes yourself — dev-drive
+
+Don't ask the founder to check a renderer change: drive the dev app.
+
+```bash
+npm run start:drive          # dev app + DevTools protocol on 127.0.0.1:9339 (never in a packaged build)
+npm run drive -- wait  "#invGrid .spool-card" 15000
+npm run drive -- eval  "document.title"            # any JS in the renderer (awaits promises)
+npm run drive -- click "#adpColorCountRow [data-mode='tri']"
+npm run drive -- type  "#adpColorName" "Sunset"
+npm run drive -- shot  <scratchpad>/x.png ".adp-color-section"   # window, or one element
+npm run drive -- logs  5                            # console + uncaught errors for 5 s
+npm run drive -- reload
+```
+
+Renderer functions are module-scoped (not on `window`): reach a view by clicking
+its real controls, then `shot` the element and read the PNG. Screenshots go to the
+scratchpad, never into the repo. Source: `scripts/devdrive.mjs`.
 
 ## Stack
 Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js`. Renderer: `renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js`. Preload bridge: `preload.js`.
@@ -731,6 +750,7 @@ The full per-category key list (App/status, Settings, Account, Login, Credential
 - **i18n**: always add all **11** translations (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl) in the same edit batch. **Use `npm run i18n:add` — do NOT hand-edit the locale JSON files.** See the *Adding new keys* section above for syntax.
 - **Commits**: no `Co-Authored-By` line. **Never commit without explicit user instruction** — make the change, then stop and wait for the order to commit.
 - **Naming — clear human semantics first**: every name you introduce (Firestore collection/field, function, variable, CSS class, IPC channel, config key) must read plainly to a human and say what it *is*, so the meaning is obvious without chasing the code. Prefer a self-describing name over a clever/encoded one — e.g. a collection `rfidList` over `rfidChips`, a boolean `rfidListed`/`rfidBackup` over a multi-state `rfidChip: 1|2`. **Avoid encoding several states into one cryptic value** (magic numbers, packed flags): split into separate, well-named booleans/fields. **Don't store what you can derive** — drop redundant fields when an existing one already implies the answer (e.g. no `startState`/type field when the presence of a `backup` already means "TigerTag+"). When a name turns out unclear, rename it (and its doc/schema) rather than letting it stand. Clear semantics now prevent compounding complexity later.
+- **Conditions key on protocol IDs — NEVER on label strings (critical).** Whenever code decides something from a value of the protocol's reference tables (`assets/db/tigertag/id_*.json` — `id_aspect`, `id_brand`, `id_material`, `id_type`, `id_diameter`, `id_measure_unit`, `id_version` …), the condition compares the **numeric ID**, never its label turned into a string (`label.toLowerCase().includes('bicolor')` is a bug). **A label is display text, not data**: it is translated, it can be renamed or corrected in the reference DB, and the same spool reads differently per locale — **an ID never changes.** So: carry the ID on the row next to the label (`aspect1Id` / `aspect2Id` pattern), name the IDs you branch on in a constant map (`ASPECT_ID = { TRICOLOR: 24, RAINBOW: 145, BICOLOR: 252 }`), and use labels for rendering only. Applies to filters, sorting keys, rendering branches, imports, validators, playgrounds and doc examples alike. Reference: `colorBg()` in `renderer/inventory.js`.
 - **JS**: all logic lives in `inventory.js`. Do not inline JS in `inventory.html`.
 - **CSS**: split across `renderer/css/00-base.css … 70-detail-misc.css` (loaded in numeric order). Add new rules in the section file that matches the feature — e.g. Snapmaker tweaks go in `50-snapmaker.css`, modal tweaks in `60-modals.css`. Asset URLs use `url('../../assets/svg/icons/…')` (two `..` because we're in `renderer/css/`). Scoped IDs (`#editAccountModalOverlay`, `#addAccountModalOverlay`, etc.) still apply where needed.
 - **displayName**: always read from Firestore `users/{uid}.displayName` (pseudo). Never use Firebase Auth `user.displayName` for UI display — it contains the Google real name.

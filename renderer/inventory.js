@@ -1665,6 +1665,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       colorType: data.online_color_type || null,
       aspect1: aspectLabel(data.id_aspect1),
       aspect2: aspectLabel(data.id_aspect2),
+      // The IDs are what logic keys on (colorBg) — a label is display text and can change.
+      aspect1Id: data.id_aspect1 ?? null,
+      aspect2Id: data.id_aspect2 ?? null,
       diameter: diamLabel(data.data1),
       tagType: versionName(data.id_tigertag),
       // Protocol / version shown in the filter bar and detail panel.
@@ -2281,7 +2284,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // (preset re-render + RFID preview refresh + hidden hex input)
     // still runs only on OK click via `_adpSyncColor`.
     const panelCircle = $("adpColorSquare");
-    if (panelCircle) panelCircle.style.background = hex;
+    if (panelCircle) {
+      // Paint the dragged colour into the active slot for this one render,
+      // then put the committed value back — OK is still what commits it.
+      const committed = _adpColorSlots[_adpActiveSlot];
+      _adpColorSlots[_adpActiveSlot] = hex;
+      _adpRefreshCardPreview();
+      _adpColorSlots[_adpActiveSlot] = committed;
+    }
 
     if (!opts || !opts.skipHexInput) {
       const inp = $("adpCcHex");
@@ -2610,29 +2620,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Map a colour mode → the aspect2 id to auto-write (null = leave as-is).
   const _ADP_MODE_TO_ASPECT2 = { dual: 252, tri: 24, rainbow: 145, mono: 0 };
 
-  // Update the circle preview to show a solid colour (mono), half-split
-  // (dual) or three-way conic gradient (tri / rainbow).
-  // Every branch must render what `colorBg()` will render once the spool is
-  // saved — this is a preview, so "not what I saw" is a bug. Dual and tri go
-  // through the shared `_pieSplit` for exactly that reason, and rainbow through
-  // the shared `RAMP_ANGLE`. See docs/COLOR-RENDERING.md.
+  // Repaint the preview card. It must render what the grid will render once
+  // the spool is saved — this is a preview, so "not what I saw" is a bug —
+  // which is why it goes through colorBg() and _gridCardInnerHTML() rather
+  // than drawing its own gradient.
   function _adpUpdateCircle() {
-    const sq = $("adpColorSquare");
-    if (!sq) return;
-    const n = _adpSlotCount();
-    if (n === 1) {
-      sq.style.background = _adpColorSlots[0];
-    } else if (n === 2) {
-      sq.style.background = _pieSplit(_adpColorSlots.slice(0, 2));
-    } else if (_adpColorMode === "rainbow") {
-      // Smooth diagonal ramp — mirrors colorBg()'s rainbow branch (RAMP_ANGLE).
-      sq.style.background =
-        `linear-gradient(${RAMP_ANGLE}, ${_adpColorSlots[0]}, ${_adpColorSlots[1]}, ${_adpColorSlots[2]})`;
-    } else {
-      // Tri — three equal conic sectors (see _pieSplit).
-      sq.style.background = _pieSplit(_adpColorSlots.slice(0, 3));
-    }
+    // The preview is a real grid card painted through colorBg() — the same
+    // code as the inventory grid, so every mode (mono / dual / tri / rainbow)
+    // shows exactly what Save will produce. Aspect 2 follows the mode
+    // (_adpSetColorMode), which is what colorBg keys on.
+    _adpRefreshCardPreview();
   }
+
 
   // Render (or hide) the row of coloured slot indicator squares.
   function _adpRenderSlotRow() {
@@ -2808,6 +2807,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // `"brand": "Generic"`. Mirrors the per-field layout the mobile app
   // shows under its "RFID Data" expandable card.
   function _adpRefreshRfidPreview() {
+    // The card preview is always live; the JSON block only in debug mode.
+    _adpRefreshCardPreview();
     const pre = $("adpRfidPreview");
     if (!pre) return;
     // The whole block is gated to debug mode (`state.debugEnabled` flips
@@ -2816,6 +2817,29 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // the pre's innerHTML in that state, so it's pure waste.
     const section = $("adpRfidSection");
     if (section && section.hasAttribute("hidden")) return;
+    // The `highlight()` helper returns HTML — caller injects via
+    // innerHTML. The container has `class="json"` and lives inside a
+    // `<details class="debug">`, both styled by 70-detail-misc.css —
+    // dark JSON theme, syntax-coloured spans, chevron summary.
+    pre.innerHTML = highlight(_adpDraftDoc());
+  }
+
+  // The preview shown top-left of the form IS a grid card — the same
+  // `_gridCardInnerHTML` the inventory grid renders, fed the very doc the
+  // form will save (read as a chipless TigerData row) — so what you see is
+  // what lands in the grid. Only the card is rebuilt (small, no media).
+  function _adpRefreshCardPreview() {
+    const host = $("adpCardPreview");
+    if (!host) return;
+    try {
+      const row = normalizeRow("TigerData_preview", _adpDraftDoc());
+      host.innerHTML = _gridCardInnerHTML(row);
+    } catch (_) { /* reference DB not loaded yet — keep the last paint */ }
+  }
+
+  // The doc the form will save, field for field (the RFID Data block and the
+  // card preview both read it). Mirrors saveAddProduct's write block.
+  function _adpDraftDoc() {
     const get = id => $(id)?.value;
     // Decimal-aware parsers — see the same helpers in saveAddProduct.
     const intOrNull = v => {
@@ -2907,11 +2931,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const { r: r3, g: g3, b: b3 } = _adpHexToRgb(_adpColorSlots[2]);
       obj.color_r3 = r3; obj.color_g3 = g3; obj.color_b3 = b3;
     }
-    // The `highlight()` helper returns HTML — caller injects via
-    // innerHTML. The container has `class="json"` and lives inside a
-    // `<details class="debug">`, both styled by 70-detail-misc.css —
-    // dark JSON theme, syntax-coloured spans, chevron summary.
-    pre.innerHTML = highlight(obj);
+    return obj;
   }
 
   // Stash the cloud id at open time so it stays stable while the user
@@ -7524,18 +7544,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Hub, on the chip guide and in the Add-Product preview. Do not open-code a
   // gradient anywhere else.
 
-  // HARD-EDGED COLOURS (convention v1.1, TigerSystem-Docs material-swatch.md):
-  //  • exactly TWO → a DIAGONAL split on the 135° axis (RAMP_ANGLE), first colour
-  //    top-left, hard edge at 50 % — the ramp's hard-edged twin. A vertical split
-  //    read as two separate objects, worst of all in the colour frame round a
-  //    photo, where only a left bar and a right bar showed;
-  //  • THREE or more → a pie (conic) of N equal sectors, first colour at
+  // HARD-EDGED COLOURS (convention v1.2, TigerSystem-Docs material-swatch.md):
+  //  • TWO or THREE (bicolor, tricolor) → a smooth 135° RAMP (RAMP_ANGLE), first
+  //    colour top-left — a hard split read as separate objects (worst in the
+  //    colour frame round a photo, where only disjoint bars showed), a ramp
+  //    reads as one multi-tone material on any box shape;
+  //  • FOUR or more → a pie (conic) of N equal sectors, first colour at
   //    12 o'clock, clockwise.
-  // One helper for every hard split (catalogue list AND chip aspect). The
+  // One helper for every hard list (catalogue list AND chip aspect). The
   // Add-Product preview shares it — it used to open-code its own split and drew
   // the bicolor MIRRORED, so a spool swapped sides between the preview and Save.
   const _pieSplit = (colors) => {
-    if (colors.length === 2) return `linear-gradient(${RAMP_ANGLE}, ${colors[0]} 50%, ${colors[1]} 50%)`;
+    if (colors.length <= 3) {
+      // Each colour holds solid; only a band of SPLIT_BLEND % around each
+      // boundary blends — a full ramp washed the colours out.
+      const seg = 100 / colors.length, h = SPLIT_BLEND / 2;
+      const stops = colors.map((c, i) => `${c} ${+Math.max(0, i * seg + (i ? h : 0)).toFixed(2)}% ${+Math.min(100, (i + 1) * seg - (i < colors.length - 1 ? h : 0)).toFixed(2)}%`);
+      return `linear-gradient(${RAMP_ANGLE}, ${stops.join(', ')})`;
+    }
     const step = 360 / colors.length;
     const stops = colors.map((c, i) => `${c} ${i * step}deg ${(i + 1) * step}deg`);
     return `conic-gradient(${stops.join(', ')})`;
@@ -7548,12 +7574,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // mis-rendered bicolor. One constant so a ramp is a ramp everywhere,
   // including the Add-Product preview.
   const RAMP_ANGLE = '135deg';
+  // Width (in % of the diagonal) of the blend between two colours of a bicolor /
+  // tricolor — 0 = hard edge, 100/N = a full ramp. One knob for every surface.
+  const SPLIT_BLEND = 20;
+  // A smooth sweep round the centre, closing on its first colour — the
+  // catalogue's declared `conic_gradient`, and the default look of a Tricolor
+  // aspect (unless aspect 1 or 2 is Rainbow, which stays a 135° ramp).
+  const _conicSweep = (colors) => `conic-gradient(from 0deg, ${colors.join(', ')}, ${colors[0]})`;
+
+  // id_aspect values the swatch convention reacts to (assets/db/tigertag/id_aspect.json).
+  const ASPECT_ID = { TRICOLOR: 24, RAINBOW: 145, BICOLOR: 252 };
 
   function colorBg(row) {
-    const aspects = [row.aspect1, row.aspect2].map(a => (a || '').toLowerCase());
-    const isRainbow  = aspects.some(a => a.includes('rainbow') || a.includes('multicolor'));
-    const isTricolor = aspects.some(a => a.includes('tricolor') || a.includes('tri color') || a.includes('tricolore'));
-    const isBicolor  = aspects.some(a => a.includes('bicolor')  || a.includes('bi color')  || a.includes('bicolore'));
+    // Keyed on the aspect IDs, never on their labels — a label is display text
+    // (translated, renamed in the reference DB), an ID is the contract.
+    const aspectIds = [row.aspect1Id, row.aspect2Id].map(Number);
+    const isRainbow  = aspectIds.includes(ASPECT_ID.RAINBOW);
+    const isTricolor = aspectIds.includes(ASPECT_ID.TRICOLOR);
+    const isBicolor  = aspectIds.includes(ASPECT_ID.BICOLOR);
     // Normalize each entry: strip optional # and 2-char alpha (only for 8-digit RRGGBBAA), add # for CSS
     const normalizeColor = c => {
       const s = (c || '').trim().replace(/^#/, '');
@@ -7563,9 +7601,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const cls = (row.colorList || []).map(normalizeColor).filter(Boolean);
     const colorType = row.colorType || '';
     if (cls.length >= 2 && colorType === 'conic_gradient') {
-      return `conic-gradient(from 0deg, ${cls.join(', ')}, ${cls[0]})`;
+      return _conicSweep(cls);
     } else if (cls.length >= 2 && colorType === 'gradient') {
       return `linear-gradient(${RAMP_ANGLE}, ${cls.join(', ')})`;
+    } else if (cls.length >= 3 && isTricolor && !isRainbow) {
+      return _conicSweep(cls);   // Tricolor aspect ⇒ the conic sweep
     } else if (cls.length >= 2) {
       return _pieSplit(cls);
     } else if (cls.length === 1) {
@@ -7584,11 +7624,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     } else if (isTricolor) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
       const [c1 = '#cccccc', c2 = '#888888', c3] = colors;
-      return _pieSplit([c1, c2, c3 || c1]);
+      return c3 ? _conicSweep([c1, c2, c3]) : _pieSplit([c1, c2]);   // conic sweep (slot 3 missing ⇒ soft split)
     } else if (isBicolor) {
       const colors = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
       const [c1 = '#cccccc', c2 = '#ffffff'] = colors;
-      return _pieSplit([c1, c2]);   // 2 colours ⇒ the 135° diagonal split
+      return _pieSplit([c1, c2]);   // 2 colours ⇒ the 135° soft split
     } else {
       return row.colorHex || '#1c2030';
     }
@@ -12711,6 +12751,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       // branch drops colorHex straight into a style attribute — sanitise it.
       colorHex: it?.color ? _catCssColor(it.color) : null,
       aspect1: null, aspect2: null,
+      aspect1Id: it?.RFID_Data?.id_aspect1 ?? null,
+      aspect2Id: it?.RFID_Data?.id_aspect2 ?? null,
     };
   }
 

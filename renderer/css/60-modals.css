@@ -2465,6 +2465,9 @@
     scrollbar-width: none;           /* Firefox — hide the scrollbar (still scrolls) */
   }
   .adp-panel .panel-body.adp-body::-webkit-scrollbar { width: 0; height: 0; }   /* Chromium */
+  /* The body scrolls — its sections must keep their natural height, not be
+     squeezed by the column flex (the preview card overflowed its section). */
+  .adp-panel .panel-body.adp-body > * { flex-shrink: 0; }
   .adp-panel .panel-header {
     padding: 14px var(--adp-side-padding);
   }
@@ -2661,33 +2664,26 @@
     flex-direction: column;
     gap: 8px;
   }
-  /* Round colour swatch with a thick white ring — replaces the
-     previous rounded-square. The white border reads on the dark
-     canvas as the colour's "frame", drawing the eye to the swatch.
-     Sized to match the mobile creator screen (was 64px, now 128 —
-     2× upscale). The box-shadow doubles too so the lift / drop
-     stays in proportion. */
+  /* The colour preview IS a grid card (`.spool-card` + _gridCardInnerHTML),
+     so what you pick is what the grid will show. The button is only the
+     click target round it: no chrome of its own, the card brings its
+     rounded corners, border and body. Width = a grid card's (163 px) scaled
+     down to sit beside the three identity selects. */
   .adp-color-circle {
-    /* Slightly smaller than 128 — feels more proportional to the
-       three identity selects on its right at this panel width. */
-    width: 104px; height: 104px;
-    border-radius: 50%;
-    /* Thinner ring so the colour reads as the focus, not the border. */
-    border: 2px solid var(--on-dark);
-    background: var(--primary);
-    cursor: pointer;
-    padding: 0;
-    flex-shrink: 0;
-    box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset,
-                0 6px 22px rgba(0,0,0,.38);
-    transition: transform .1s, box-shadow .15s;
+    width: 140px;
+    /* The global `button { height: 40px; display: inline-flex }` would clip
+       the card to 40 px and let it spill over its neighbours. */
+    height: auto; display: block;
+    padding: 0; border: none; background: none;
+    cursor: pointer; flex-shrink: 0; text-align: left;
+    transition: transform .1s;
   }
-  .adp-color-circle:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 0 0 1px rgba(255,255,255,.20) inset,
-                0 10px 30px rgba(0,0,0,.48);
-  }
+  .adp-color-circle:hover { transform: translateY(-1px); }
   .adp-color-circle:active { transform: translateY(0); }
+  .adp-color-circle .adp-card-preview { pointer-events: none; cursor: inherit; }
+  .adp-color-circle:hover .adp-card-preview { box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+  /* A preview is never selected / tickable. */
+  .adp-card-preview .sel-check { display: none; }
   /* Colour-name row — full width below the colour/identity row.
      The 28-byte counter sits to the right of the input, vertically
      centred on the input itself (so it reads as part of the field). */
@@ -3024,7 +3020,12 @@
        it's already on top of the panel-overlay's .3 — stacking the
        two at full opacity is too dark. */
     background: rgba(0,0,0,.25);
+    /* No blur: the colour preview behind must stay sharp while it is edited. */
+    backdrop-filter: none; -webkit-backdrop-filter: none;
   }
+  /* The colour sheets don't dim either — the live preview is what you judge. */
+  #adpColorBackdrop,
+  #adpColorCustomBackdrop { background: transparent; }
 
   /* Trigger buttons — visually iso to .adp-select but click opens a
      bottom sheet instead of the OS native dropdown. The hidden

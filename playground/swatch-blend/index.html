@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Blend Tuner</title>
+<style>
+:root{--bg:#14161c;--card:#1d2029;--text:#e8eaf0;--muted:#8a90a0;--line:#2c303b}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 system-ui,sans-serif}
+header{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+h1{font-size:16px;margin:0}
+input[type=range]{width:260px}
+.val{font:600 20px ui-monospace,monospace;min-width:60px}
+.presets button{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 9px;cursor:pointer}
+.presets button.on{border-color:#4d8bff;color:#8fb4ff}
+main{padding:20px;display:grid;gap:18px}
+.case{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.case h2{font-size:14px;margin:0 0 4px}
+.css{font:11px ui-monospace,monospace;color:var(--muted);word-break:break-all;margin-bottom:12px}
+.row{display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap}
+.sv{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.dot{width:15px;height:15px;border-radius:50%}
+.circ{width:56px;height:56px;border-radius:50%}
+.sq{width:90px;height:90px;border-radius:10px}
+.card{width:163px;height:163px;border-radius:12px;position:relative;overflow:hidden}
+.card .ph,.big .ph{position:absolute;inset:7%;border-radius:9px;background:#f2f2f2 center/70% no-repeat;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.big{width:260px;height:260px;border-radius:14px;position:relative}
+.logo{position:absolute;inset:30%;border-radius:50%;border:3px solid rgba(255,255,255,.55);box-shadow:inset 0 0 0 12px rgba(255,255,255,.18)}
+.bar{width:220px;height:14px;border-radius:7px;overflow:hidden;background:#2a2e38}
+.bar i{display:block;height:100%;width:60%}
+</style></head><body>
+<header>
+  <h1>Intensité du dégradé — bicolore</h1>
+  <label>Bande de fondu <input id="r" type="range" min="0" max="50" step="1" value="20"></label>
+  <span class="val" id="v">20 %</span>
+  <span class="presets" id="p"></span>
+</header>
+<main id="m"></main>
+<script>
+const RAMP='135deg';
+const SPOOL="data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#3a3d45"/><circle cx="50" cy="50" r="30" fill="#777"/><circle cx="50" cy="50" r="12" fill="#ddd"/></svg>');
+const cases=[
+ ['Bicolore rouge / bleu',['#e02424','#2463e0']],
+ ['Bicolore noir / blanc',['#111111','#f4f4f4']],
+ ['Bicolore or / argent (proches)',['#d4a017','#b8bcc4']],
+ ['Bicolore rouge / bleu en conique (à comparer)',['#e02424','#2463e0'],'conic'],
+ ['Bicolore noir / blanc en conique (à comparer)',['#111111','#f4f4f4'],'conic'],
+ ['Aspect Tricolor rouge / jaune / bleu → conique par défaut',['#e02424','#f0c020','#2463e0'],'conic'],
+ ['Aspect Tricolor vert / violet / orange → conique par défaut',['#22a06b','#7b3fe4','#ff7a00'],'conic'],
+ ['Aspect Tricolor + Rainbow → dégradé 135°',['#ff4d4d','#ffd93d','#4da3ff'],'ramp'],
+ ['3 couleurs sans aspect Tricolor',['#e02424','#f0c020','#2463e0']],
+ ['4 couleurs (reste en camembert)',['#e02424','#f0a020','#2463e0','#22a06b']],
+ ['Dégradé conique qui tourne (catalogue conic_gradient)',['#e02424','#f0a020','#22a06b','#2463e0'],'conic'],
+ ['Dégradé déclaré (catalogue gradient)',['#e02424','#f0a020','#2463e0'],'ramp'],
+ ['Rainbow',['#ff0000','#ff8800','#ffff00','#00cc00','#0000ff','#8b00ff'],'ramp'],
+];
+function paintBg(colors,blend,kind){
+  if(kind==='conic') return `conic-gradient(from 0deg, ${colors.join(', ')}, ${colors[0]})`;
+  if(kind==='ramp') return `linear-gradient(${RAMP}, ${colors.join(', ')})`;
+  return split(colors,blend);
+}
+function split(colors,blend){
+  if(colors.length<=3){
+    const seg=100/colors.length,h=blend/2;
+    const st=colors.map((c,i)=>`${c} ${+Math.max(0,i*seg+(i?h:0)).toFixed(2)}% ${+Math.min(100,(i+1)*seg-(i<colors.length-1?h:0)).toFixed(2)}%`);
+    return `linear-gradient(${RAMP}, ${st.join(', ')})`;
+  }
+  const s=360/colors.length;
+  return `conic-gradient(${colors.map((c,i)=>`${c} ${i*s}deg ${(i+1)*s}deg`).join(', ')})`;
+}
+const m=document.getElementById('m');
+m.innerHTML=cases.map(([t,,k],i)=>`<section class="case"><h2>${t}${k?' <small style="color:var(--muted);font-weight:400">— non concerné par le curseur</small>':''}</h2><div class="css" id="c${i}"></div><div class="row">
+ <div class="sv"><div class="dot" data-i="${i}"></div>pastille tableau</div>
+ <div class="sv"><div class="circ" data-i="${i}"></div>cercle</div>
+ <div class="sv"><div class="sq" data-i="${i}"></div>tuile</div>
+ <div class="sv"><div class="card" data-i="${i}"><div class="ph" style="background-image:url('${SPOOL}')"></div></div>carte grille — avec image</div>
+ <div class="sv"><div class="card" data-i="${i}"><div class="logo"></div></div>carte grille — sans image</div>
+ <div class="sv"><div class="big" data-i="${i}"><div class="ph" style="background-image:url('${SPOOL}')"></div></div>fiche détail — avec image</div>
+ <div class="sv"><div class="big" data-i="${i}"><div class="logo"></div></div>fiche détail — sans image</div>
+ <div class="sv"><div class="bar"><i data-i="${i}"></i></div>barre de remplissage</div>
+</div></section>`).join('');
+const r=document.getElementById('r'),v=document.getElementById('v'),p=document.getElementById('p');
+const PRE=[0,10,20,30,40,50];
+p.innerHTML=PRE.map(x=>`<button data-x="${x}">${x===0?'net':x===50?'plein':x}</button>`).join(' ');
+p.onclick=e=>{if(e.target.dataset.x!=null){r.value=e.target.dataset.x;paint();}};
+function paint(){
+  const b=+r.value;v.textContent=b+' %';
+  p.querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.x===b));
+  cases.forEach(([,c,k],i)=>{const bg=paintBg(c,b,k);document.getElementById('c'+i).textContent=bg;
+    document.querySelectorAll(`[data-i="${i}"]`).forEach(el=>el.style.background=bg);});
+}
+r.oninput=paint;paint();
+</script></body></html>

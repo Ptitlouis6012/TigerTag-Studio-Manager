@@ -8,18 +8,18 @@
 
 ## The rule in one line
 
-**Two hard colours split on the 135° diagonal, three or more make a camembert,
-smooth colours make a 135° ramp** (convention v1.1). Bicolor is the ramp's
-hard-edged twin: same axis, first colour top-left, a hard edge at 50 % — on a
-round swatch, a square tile, a clipped fill bar and the colour frame round a
-photo alike. (v1.0 split bicolor vertically; the frame round product photos
-showed why that read as two separate bars.)
+**A Tricolor aspect is a smooth conic sweep (`_conicSweep`, unless it is also Rainbow); other two or three colours make a 135° soft split (solid colours, 20 % blended seam — `SPLIT_BLEND`), four or more make a camembert, smooth
+colours make a 135° ramp** (convention v1.2). Bicolor and tricolor blend along
+the one axis of the system, first colour top-left — on a round swatch, a square
+tile, a clipped fill bar and the colour frame round a photo alike. (v1.0 split
+bicolor vertically, v1.1 on a hard diagonal with tricolor as a camembert; on the
+colour frame round product photos a hard edge still read as separate bars.)
 
 ## Where it lives in Studio
 
 | | `renderer/inventory.js` |
 |---|---|
-| The hard split (2 → diagonal, 3+ → pie) | `_pieSplit(colors)` |
+| The colour-list split (2-3 → ramp, 4+ → pie) | `_pieSplit(colors)` |
 | The ramp angle | `RAMP_ANGLE` (`135deg`) |
 | The decision ladder | `colorBg(row)` |
 | Watermark variant | `isColorDark(bg)` → `logoSrc(bg)` |

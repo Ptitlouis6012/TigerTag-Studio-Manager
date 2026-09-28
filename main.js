@@ -91,6 +91,13 @@ app.setName('Tiger Studio Manager');
 // 1024 MB is the right level for this workload.
 // Must run BEFORE app.whenReady().
 app.commandLine.appendSwitch('force-gpu-mem-available-mb', '1024');
+// Dev-drive (test harness): `npm run start:drive` opens Chromium's DevTools
+// protocol on 127.0.0.1 so scripts/devdrive.mjs can drive the renderer.
+// Opt-in AND dev-only: a packaged build never opens the port.
+if (!app.isPackaged && process.env.TIGER_DEVDRIVE) {
+  app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
+  app.commandLine.appendSwitch('remote-debugging-port', process.env.TIGER_DEVDRIVE_PORT || '9339');
+}
 
 // ── Single-instance lock ────────────────────────────────────────────────────
 // Prevent multiple Electron processes from sharing the same userData directory

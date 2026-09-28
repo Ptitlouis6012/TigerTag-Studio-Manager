@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.30.0",
+  "version": "2.30.1",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -8,6 +8,8 @@
   },
   "scripts": {
     "start": "electron .",
+    "start:drive": "TIGER_DEVDRIVE=1 electron .",
+    "drive": "node scripts/devdrive.mjs",
     "postinstall": "electron-rebuild && node scripts/copy-agora-sdk.mjs",
     "build:win": "node scripts/gen-oauth-config.mjs && electron-builder --win --publish always",
     "build:win:nopublish": "node scripts/gen-oauth-config.mjs && electron-builder --win --publish never",
