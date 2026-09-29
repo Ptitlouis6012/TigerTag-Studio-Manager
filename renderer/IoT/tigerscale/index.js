@@ -239,7 +239,7 @@ export function renderScalesPanel() {
     body.innerHTML = `
       <div class="scales-empty-card">
         <div class="scales-empty-stage">
-          <img class="scales-empty-img" src="../assets/img/TigerScale_Photo.png" alt="TigerScale" />
+          <img class="scales-empty-img" src="../assets/img/TigerScale_V3.png" alt="TigerScale" />
           <span class="scales-empty-badge">V3</span>
         </div>
         <div class="scales-empty-title" data-i18n="scaleEmptyTitle">${esc(t("scaleEmptyTitle"))}</div>
@@ -319,7 +319,7 @@ function _buildScaleCardHtml(s) {
   return `<div class="scale-entry" data-scale-mac="${esc(s.mac)}">
     <div class="scale-card${online ? " is-online" : ""}">
       <div class="scale-card-head">
-        <img class="scale-card-photo" src="../assets/img/TigerScale_Photo.png" alt="" draggable="false" />
+        <img class="scale-card-photo" src="../assets/img/TigerScale_V3.png" alt="" draggable="false" />
         <div class="scale-card-id">
           <div class="scale-card-name-row">
             <span class="scale-card-name">${esc(dispName)}</span>
