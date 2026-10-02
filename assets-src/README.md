@@ -53,6 +53,8 @@ starts from the master here rather than from an already-compressed file.
 | `img/Hero-TigerSystem-ecosystem.png` | 2000×1414, 1.6 MB | `assets/img/Hero-TigerSystem-ecosystem.png` — 1200×848, 151 KB |
 | `img/hero_tigerpod_rainbow_7.png` | 1672×941, 1.4 MB | — not loaded by the app (shop / Hub / social / press) |
 | `img/hero-TigerPOD-MirrorEffect-Rainbow-9.png` | 1672×941, 1.4 MB | — not loaded by the app (shop / Hub / social / press) |
+| `img/TigerScale_V3.png` | 1254², 1.4 MB | `assets/img/TigerScale_V3.png` — 512², 78 KB (scale card 56 px, empty state 216 px, README 480 px) |
+| `img/TigerScale_Photo.png` | 960², 930 KB | — no longer loaded by the app (the pre-V3 prototype photo, replaced by `TigerScale_V3.png`) |
 
 ### Missing masters
 
