@@ -101,6 +101,8 @@ users/
         deleted             boolean
         deleted_at          number?
         twin_tag_uid        string?  — linked twin chip's UID (the OTHER RFID chip on the same physical spool). NOTE: the field is `twin_tag_uid`, not `twin_uid`
+        tag_index           number   — which chip of the object this is, from 1 (chip byte +39 high nibble, protocol v2.2). 0 = unknown (chip written before v2.2, or chipless doc). Written on scan (from the chip) and on a guided burn.
+        tag_count           number   — how many chips the object carries (byte +39 low nibble): 1 = single, 2 = twin. 0 = unknown. A `tag_count` of 2 with no `twin_tag_uid` = the other chip has not been scanned yet.
         message             string?  — user note (also the colour name for DIY/Cloud)
         tags                string[]? — user-defined free-form labels (Shopify-style). Studio metadata only, never written to the physical chip. Normalised (trimmed, ≤32 chars, case-insensitive dedup, ≤20/spool). Mirrored onto the twin spool so both chips of one physical spool share the same tags. Owner-write, no rule change needed (inventory has no field whitelist). Cross-app field — mobile ignores it until it implements tags
         rfidListed          boolean? — true once this UID has been recorded in rfidList/ (dedup marker; absent = not yet). Set by Studio's chip census / scan path. See rfidList/ below

@@ -1740,6 +1740,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       deleted: data.deleted === true,
       productType: typeName(data.id_type),
       chipTimestamp: data.timestamp || null,
+      // Chip i of n (offset 39, protocol v2.2) — null when unknown (pre-v2.2
+      // chip, chipless doc). A count of 2 means a twin, even before both halves
+      // have been scanned.
+      tagIndex: (!isCloud && +data.tag_index > 0) ? +data.tag_index : null,
+      tagCount: (!isCloud && +data.tag_count > 0) ? +data.tag_count : null,
       needUpdateAt: isCloud ? null : (data.needUpdateAt || null),
       raw: data,
     };
@@ -6547,6 +6552,22 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      batch. Pairs already linked are left untouched (idempotent, breaks the
      snapshot→write→snapshot loop on the second pass). */
   const _twinAutoLinkAttempted = new Set();   // session memo: "uidA|uidB" sorted
+  // Tag index / count (offset 39, protocol v2.2) can RULE OUT a twin pairing that
+  // timestamps alone would allow: a chip that says it is the only one (count 1),
+  // two chips claiming different counts, or the same rank twice. Unknown values
+  // (0 / null — every pre-v2.2 chip) never block, so legacy pairing is unchanged.
+  // Takes { tagIndex, tagCount } — a normalized row, or _tagInfoOf(raw chip data).
+  function _tagInfoAllowsTwin(a, b) {
+    if (a.tagCount === 1 || b.tagCount === 1) return false;
+    if (a.tagCount && b.tagCount && a.tagCount !== b.tagCount) return false;
+    if (a.tagIndex && b.tagIndex && a.tagIndex === b.tagIndex) return false;
+    return true;
+  }
+  function _tagInfoOf(tagData) {
+    const v = Number(tagData?.tag_info) || 0;
+    return { tagIndex: (v >> 4) & 0x0F || null, tagCount: v & 0x0F || null };
+  }
+
   async function autoLinkTwinsByTimestamp(rows) {
     // Hard guards
     if (state.friendView) return;                // never write to a friend's docs
@@ -6585,6 +6606,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         // mis-link the reconciler otherwise has to keep undoing). Same id_tigertag +
         // close timestamps is not enough; the product identity must match too.
         if (_spoolGroupKey(a) !== _spoolGroupKey(b)) continue;
+        if (!_tagInfoAllowsTwin(a, b)) continue;
         // Memoization key — sorted UID pair, never re-attempt this session
         const memoKey = [a.uid, b.uid].sort().join("|");
         if (_twinAutoLinkAttempted.has(memoKey)) continue;
@@ -8395,7 +8417,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
    * flashed a second, TigerData+ badge before settling. The tier is derived from
    * this field; copy it and the spool lies about what it is.
    */
-  const CHIP_ONLY_FIELDS = ["id_tigertag"];
+  // Facts about ONE physical chip — never copied onto a clone or a chipless doc.
+  // tag_index / tag_count (chip i of n) would otherwise make a duplicate claim
+  // to be half of a twin and ask for a partner chip that does not exist.
+  const CHIP_ONLY_FIELDS = ["id_tigertag", "tag_index", "tag_count"];
 
   function _sanitizeCloudSeed(raw) {
     if (!raw || typeof raw !== "object") return null;
@@ -12043,8 +12068,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     _cemTargets.forEach(t => _cemChip.set(t.readerName, "waiting"));
     _cemRender();
 
-    // One fixed chip-epoch timestamp for the whole sequence → identical bytes
-    // on every chip → they pair as twins.
+    // One fixed chip-epoch timestamp for the whole sequence → the chips pair as
+    // twins on it. Each chip also gets its tag index / count (offset 39): chip
+    // i+1 of n — 0x11 single, 0x12 / 0x22 twin — so a scan knows a partner exists.
     const timestamp = Math.max(0, Math.floor((Date.now() - _CEM_EPOCH_MS) / 1000));
     const burned = [];   // { readerName, uid } verified-ok chips
 
@@ -12057,7 +12083,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       _cemChip.set(tgt.readerName, "writing"); _cemRender();
       let res;
       try {
-        res = await window.electronAPI.burnOneChip({ cloudDoc, timestamp, readerName: tgt.readerName });
+        res = await window.electronAPI.burnOneChip({ cloudDoc, timestamp, readerName: tgt.readerName,
+          tagCount: _cemTargets.length, tagIndex: i + 1 });
       } catch (e) { res = { ok: false, error: String(e) }; }
       const okv = !_cemAborted && res && res.ok && res.verified && state.nfcCardPresent.has(tgt.readerName);
       _cemChip.set(tgt.readerName, okv ? "ok" : "fail");
@@ -12180,14 +12207,18 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // id_product) becomes a TigerTag+, a TigerData a TigerTag. Without it the
     // new doc read as a plain TigerTag whatever was written on the chip.
     baseFields.id_tigertag = _burnedChipVersion(cloudDoc);
+    // Tag index / count — what was just burned at offset 39 (chip 1 of n, …).
+    const tagCount = burned.length;
     batch.set(invRef.doc(c1.uid), {
       ...baseFields, uid: c1.uid, twin_tag_uid: c2 ? c2.uid : null,
+      tag_index: 1, tag_count: tagCount,
       timestamp: timestamp ?? baseFields.timestamp ?? 0,
       last_update: now, updatedAt: FV.serverTimestamp(),
     });
     if (c2) {
       batch.set(invRef.doc(c2.uid), {
         ...baseFields, uid: c2.uid, twin_tag_uid: c1.uid,
+        tag_index: 2, tag_count: tagCount,
         timestamp: timestamp ?? baseFields.timestamp ?? 0,
         last_update: now, updatedAt: FV.serverTimestamp(),
       });
@@ -13021,6 +13052,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   let _catViewShown      = 0;
   let _catViewSelectedId = null;
   let _catViewObserver   = null;
+  // What the body currently shows — the result list, the view mode, the language
+  // and the index it came from. Any render that lands on the same list (a ★/❤
+  // toggle, a price edit, any product snapshot) patches the card badges instead
+  // of rebuilding every card: a rebuild re-inserted 60 photos twice per click
+  // and dropped the chunks scrolled into view.
+  let _catViewRenderedSig   = "";
+  let _catViewRenderedIndex = null;
 
   function renderCatalogView() {
     if (!$("invCatalogView")) return;
@@ -13122,8 +13160,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (_catViewSelectedId && !_catViewHits.some(x => String(x.id) === _catViewSelectedId)) {
       _catViewSelectedId = null;
     }
-    _catViewShown = 0;
     const body = $("catalogViewBody");
+    const sig = [state.viewMode, state.lang, _catViewHits.map(x => x.id).join(",")].join("|");
+    if (body && sig === _catViewRenderedSig && _catalogIndex === _catViewRenderedIndex && body.childElementCount) {
+      _catViewPatchBadges(body);
+      _catViewPaintSelection();
+      _catViewSyncStatus();
+      return;
+    }
+    _catViewRenderedSig = sig;
+    _catViewRenderedIndex = _catalogIndex;
+    _catViewShown = 0;
     if (body) {
       const grid = state.viewMode === "catalogGrid";
       // The grid REUSES `.inv-grid` — same track size and gap as the inventory
@@ -13201,7 +13248,24 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     });
     return `
       <div class="spool-card cv-card${sel}" role="button" tabindex="0" data-id="${esc(String(it.id))}"
-           aria-pressed="${sel ? "true" : "false"}">${inner}</div>`;
+           data-pb="${_productBadgeSig(r)}" aria-pressed="${sel ? "true" : "false"}">${inner}</div>`;
+  }
+  // Repaint ONLY the ❤/★ badge cluster of the cards whose product status moved
+  // (`data-pb` holds what each card was drawn with) — the photo stays put.
+  function _catViewPatchBadges(body) {
+    const byId = new Map(_catViewHits.map(it => [String(it.id), it]));
+    body.querySelectorAll(".cv-card[data-id]").forEach(card => {
+      const it = byId.get(card.dataset.id);
+      if (!it) return;
+      const r = _catViewAsRow(it);
+      const pb = _productBadgeSig(r);
+      if (pb === (card.dataset.pb || "")) return;
+      card.dataset.pb = pb;
+      const wrap = card.querySelector(".card-img-wrap");
+      wrap?.querySelector(".prod-badges")?.remove();
+      const html = _productBadgesHTML(r);
+      if (wrap && html) wrap.insertAdjacentHTML("beforeend", html);
+    });
   }
 
   // A catalogue item dressed as the row shape the card builder reads. Everything
@@ -15180,6 +15244,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       r.needUpdateAt ? 1 : 0,
       r.hasTwinPair ? 1 : 0,
       r.twinUid || "",
+      `${r.tagIndex ?? ""}/${r.tagCount ?? ""}`,
       r.rfidBackup ? 1 : 0,
       r.isPlus ? 1 : 0,
       r.isCloud ? 1 : 0,
@@ -15813,6 +15878,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       if (d[w] != null) { const n = Number(d[w]); d[w] = isFinite(n) && n >= 0 ? n : 0; }
     }
     if (d.TD != null) { const n = Number(d.TD); d.TD = isFinite(n) && n > 0 ? Math.max(0.1, Math.min(100, n)) : null; }
+    // tag_index / tag_count — chip i of n (byte +39, protocol v2.2). Optional (0 =
+    // unknown, every pre-v2.2 chip). One nibble each; a chipless record has no chip
+    // to describe, so it never carries them — dropped rather than refused.
+    for (const k of ["tag_index", "tag_count"]) {
+      if (d[k] == null) continue;
+      const n = Number(d[k]);
+      if (_isChiplessId(_ttagRecordId(d)) || !Number.isInteger(n) || n < 0 || n > 15) delete d[k];
+      else d[k] = n;
+    }
     return d;
   }
 
@@ -15868,6 +15942,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
    */
   const TTAG_ON_CHIP_FIELDS = [
     "id_type", "id_brand", "id_material", "id_tigertag", "id_product", "timestamp",
+    "tag_index", "tag_count",
     "id_aspect1", "id_aspect2", "id_diameter", "id_unit", "measure",
     "color_r", "color_g", "color_b", "color_a",
     "color_r2", "color_g2", "color_b2", "color_r3", "color_g3", "color_b3", "color_name",
@@ -18001,6 +18076,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // in the same place. Collapses to nothing while empty (CSS `:has(:empty)`).
     const catalogAddHTML = state.friendView ? ""
       : `<div class="panel-section pc-cat-add"><div class="pc-cat-msg" id="productCardCatMsg"></div></div>`;
+    // The card re-renders on every product snapshot (a ★ click alone lands three
+    // renders). Keep the photo node when it would be redrawn identically, so it
+    // doesn't blank and reload each time — only the rest of the body is rebuilt.
+    const keepImg = body._pcImgSection === imgSection ? body.querySelector(".panel-img-wrap") : null;
+    body._pcImgSection = imgSection;
     body.innerHTML = `
       ${imgSection}
       <div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>
@@ -18036,6 +18116,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           <pre class="json" id="pcRawJsonPre" style="margin-top:10px;max-height:400px">${highlight(r.raw || {})}</pre>
         </details>
       </div>` : ""}`;
+    if (keepImg) body.querySelector(".panel-img-wrap")?.replaceWith(keepImg);
     // Copy-JSON — same affordance as the material card's raw section. Wired here
     // because the body is rebuilt on every render.
     body.querySelector("#btnCopyPcRaw")?.addEventListener("click", e => {
@@ -19260,6 +19341,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       ...(_fShareUrl ? [[t("reorderBuyLink"), _fShareHost, null, _normalizeBuyUrl(_fShareUrl)]] : []),
       [t("detContainer"),     r.containerId],
       [t("detTwin"),          r.twinUid],
+      // "Chip 1 of 2" — offset 39 (protocol v2.2). Unknown on pre-v2.2 chips → no row.
+      [t("detTagIndex"),      r.tagCount ? t("detTagIndexVal", { i: r.tagIndex ?? "?", n: r.tagCount }) : null],
       [t("detUpdated"),       fmtTs(r.lastUpdate), "detUpdatedVal"],
       ...(!r.isPlus && fmtChipTs(r.chipTimestamp) ? [[t("detManufactured"), fmtChipTs(r.chipTimestamp)]] : []),
     ].filter(([,val]) => val && val !== "-");
@@ -19504,6 +19587,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
           <span class="chip-update-text">${t("chipPendingHint")}</span>
           <span class="chip-encode-btn chip-encode-warning">${t("btnChipDone")}</span>
+        </div>`;
+    } else if (r.tagCount >= 2 && !r.hasTwinPair && !state.friendView) {
+      // The chip says it is one of n (offset 39, protocol v2.2), but its partner
+      // has never been scanned — ask for it. Scanning it pairs the two on their
+      // shared timestamp (autoLinkTwinsByTimestamp), and this banner goes away.
+      chipBannerHtml = `
+        <div class="chip-update-banner twin-missing-banner" id="twinMissingBanner">
+          <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
+          <span class="chip-update-text">${esc(t("twinMissingHint", { i: r.tagIndex ?? "?", n: r.tagCount }))}</span>
         </div>`;
     } else if (!r.isPlus && !state.friendView && window.electronAPI?.lookupProduct) {
       // Regular TigerTag (Maker) — offer upgrade to TigerTag+
@@ -37287,7 +37379,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       let twinMap = null;
       if (validScans.length === 2) {
         const [td1, td2] = validScans;
-        if (Math.abs((td1.timestamp || 0) - (td2.timestamp || 0)) <= 2) {
+        if (Math.abs((td1.timestamp || 0) - (td2.timestamp || 0)) <= 2
+            && _tagInfoAllowsTwin(_tagInfoOf(td1), _tagInfoOf(td2))) {
           twinMap = { [td1.uid]: td2.uid, [td2.uid]: td1.uid };
           console.log('[RFID] Twin tags detected:', td1.uid, '↔', td2.uid);
         }
@@ -37436,6 +37529,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         measure_gr:       tagData.measure_gr   ?? 0,
         td_raw:           tagData.td_raw       ?? 0,
         timestamp:        tagData.timestamp    ?? 0,
+        // Offset 39 (protocol v2.2), unpacked: which chip of the object this is
+        // (from 1) and how many chips the object carries. 0 / 0 = unknown — every
+        // chip written before v2.2.
+        tag_index:        ((tagData.tag_info ?? 0) >> 4) & 0x0F,
+        tag_count:        (tagData.tag_info ?? 0) & 0x0F,
         last_update:      Date.now(),
         updatedAt:        firebase.firestore.FieldValue.serverTimestamp(),
       };
@@ -37928,6 +38026,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       TD: "transmission distance (translucency), from a TD1S sensor",
       message: "user note (also the colour name on DIY spools); color_name = colour name",
       twin_tag_uid: "the other chip on the same physical spool — a twin pair is ONE spool",
+      "tag_index / tag_count": "chip i of n on the same object (protocol v2.2) — tag_count 2 = twin even if the other chip was never scanned; 0 = unknown (older chip)",
       rack: "storage location { id → racks/{id}, level (shelf, 0 = top), position (slot), depth (0 = front row) }",
       timestamp: "chip write time, seconds since 2000-01-01 UTC",
       "updatedAt / last_update": "last change (server timestamp / legacy ms)",

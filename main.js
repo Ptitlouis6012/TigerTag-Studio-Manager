@@ -402,6 +402,11 @@ function normalizeUid(raw) {
 }
 
 // ── TigerTag JS SDK ───────────────────────────────────────────────────────────
+// The SDK (≥1.2.0) can lazily build a TigerTagDB that checks api.tigertag.io once
+// a day and writes to the OS cache folder. Studio has its own reference-data
+// service (services/tigertagDbService.js) and only uses the SDK to encode/decode
+// bytes — so it runs strictly offline: no hidden network call, no stray cache.
+process.env.TIGERTAG_OFFLINE = '1';
 const { TigerTag } = require('tigertag');
 
 // IPC payload — toRawDict() first, then rawApi() if TigerTag+.
@@ -923,7 +928,7 @@ ipcMain.handle('rfid:write-now', async (_evt, opts) => {
   // ── 1. Build the 80-byte payload from cloud doc ─────────────────────────────
   let newBytes;
   try {
-    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc));
+    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch(_tagInfoPatch(cloudDoc));
     if (patch && Object.keys(patch).length > 0) tag.patchFromRawDict(patch);
     newBytes = tag.toBytes(); // 80 bytes covering pages 0x04-0x17
   } catch (e) {
@@ -951,7 +956,7 @@ ipcMain.handle('rfid:write-now', async (_evt, opts) => {
     } else {
       // rawPagesHex now starts at page 0x04 — first 80 bytes are pages 0x04-0x17 (toBytes() range)
       const oldUserBytes = Buffer.from(readResult.rawPagesHex, 'hex').slice(0, 80);
-      pages = _pagesToWrite(_keepChipTimestamp(newBytes, oldUserBytes), oldUserBytes);
+      pages = _pagesToWrite(_keepChipIdentity(newBytes, oldUserBytes), oldUserBytes);
     }
   } else {
     pages = _pagesToWrite(newBytes, null); // full write — all 20 pages
@@ -1129,7 +1134,8 @@ ipcMain.handle('rfid:erase', async (_evt, { targets } = {}) => {
 // }
 //
 // The payload is built ONCE (toBytes() called once) so that both chips receive
-// identical bytes — same timestamp guaranteed.
+// the same data and timestamp; each chip keeps its own tag index/count byte
+// (offset 39) through `_keepChipIdentity`.
 //
 // Returns { ok, results: [{ readerName, uid, ok, pagesWritten?, error? }] }
 ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
@@ -1138,8 +1144,8 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
     return { ok: false, error: 'No target readers provided' };
 
   // ── Build payload ONCE — same bytes → same timestamp for all chips ──────────
-  // Twins must share identical bytes to pair, so the timestamp is stamped once
-  // here (not per chip). Used both as the write source and the diff reference.
+  // Twins pair on the timestamp, so it is stamped once here (not per chip).
+  // Used both as the write source and the diff reference.
   let newBytes;
   try {
     // KEEP the doc's timestamp. Both callers of this handler update a chip that
@@ -1149,10 +1155,11 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
     // saw "timestamp changed" — the test for a chip reprogrammed ELSEWHERE — and
     // deleted the document to start clean, taking the user's weight, masterspool
     // and rack with it. This is only the best value to START from: whenever the
-    // chip can be read, `_keepChipTimestamp` overlays the chip's own before the
-    // diff, so the creation date is never rewritten even by a drifted document.
+    // chip can be read, `_keepChipIdentity` overlays the chip's own before the
+    // diff, so the creation date and the tag index/count are never rewritten
+    // even by a drifted document.
     const _keepTs = Number(cloudDoc?.timestamp) > 0 ? Number(cloudDoc.timestamp) : _nowChipTs();
-    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: _keepTs });
+    let tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: _keepTs, ..._tagInfoPatch(cloudDoc) });
     // The displayed colour lives in `online_color_list` (hex) and is what the
     // user edits — the doc's baked color_r/g/b can lag behind it. So when a
     // colour list is present, it is the source of truth: patch the chip colour
@@ -1220,7 +1227,7 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
     const rd = await _readChip(readerName);
     if (rd.ok && rd.rawPagesHex) {
       const oldUserBytes = Buffer.from(rd.rawPagesHex, 'hex').slice(0, 80);
-      pages = _pagesToWrite(_keepChipTimestamp(newBytes, oldUserBytes), oldUserBytes);
+      pages = _pagesToWrite(_keepChipIdentity(newBytes, oldUserBytes), oldUserBytes);
     } else {
       console.warn(`[NFC] encode-cloud: ${readerName} surgical read failed, full write:`, rd.error);
       pages = _pagesToWrite(newBytes, null);
@@ -1250,10 +1257,12 @@ ipcMain.handle('rfid:encode-cloud', async (_evt, { cloudDoc, targets }) => {
 // ── Burn ONE chip with read-back verification ─────────────────────────────────
 // Drives the guided dual-chip encode modal: the renderer orchestrates the
 // sequence (one call per chip, 100 ms gap, presence re-check) and passes a
-// SINGLE fixed `timestamp` (chip-epoch seconds) so both chips get identical
-// bytes → they pair as twins. Returns { ok, verified, uid, pagesWritten,
+// SINGLE fixed `timestamp` (chip-epoch seconds) — the twin pairing key — plus
+// `tagCount` (chips in the sequence) and `tagIndex` (this chip's rank, from 1),
+// stamped at offset 39 (0x11 single, 0x12 / 0x22 twin). Twins therefore differ
+// in that one byte: they pair on the timestamp, never on identical bytes. Returns { ok, verified, uid, pagesWritten,
 // mismatchPages, error }. Success for the caller = ok && verified.
-ipcMain.handle('rfid:burn-one', async (_evt, { cloudDoc, timestamp, readerName }) => {
+ipcMain.handle('rfid:burn-one', async (_evt, { cloudDoc, timestamp, readerName, tagCount, tagIndex }) => {
   if (!_nfcChild)                     return { ok: false, error: 'NFC process not running' };
   if (!readerName || !_nfcReaders.has(readerName))
     return { ok: false, error: 'Reader not connected' };
@@ -1263,7 +1272,8 @@ ipcMain.handle('rfid:burn-one', async (_evt, { cloudDoc, timestamp, readerName }
   let pages;
   try {
     const ts  = Number.isFinite(timestamp) ? (timestamp >>> 0) : _nowChipTs();
-    const tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: ts });
+    const info = _tagInfoPatch({ tag_count: tagCount, tag_index: tagIndex });
+    const tag = TigerTag.fromCloudDoc(_docForChip(cloudDoc)).patch({ timestamp: ts, ...info });
     pages = _pagesToWrite(tag.toBytes(false), null); // full write — blank chip
   } catch (e) {
     return { ok: false, error: `SDK build failed: ${e.message}` };
@@ -1502,11 +1512,28 @@ ipcMain.handle('catalog:fetch-all', async () => {
 // half. Rewriting it therefore destroys the pairing. Overlaying the chip's value
 // before the surgical diff makes that page identical by construction, so it can
 // never end up among the pages written — whatever the document happens to hold.
-function _keepChipTimestamp(newUserBytes, oldUserBytes) {
-  if (!oldUserBytes || oldUserBytes.length < 36) return newUserBytes;
+//
+// Same rule for the TAG INFO byte (offset 39, protocol v2.2): high nibble = which
+// chip of the object this is (from 1), low nibble = how many chips the object
+// carries (0x12 / 0x22 = twin 1 of 2 / 2 of 2, 0x11 = single, 0x00 = unknown).
+// It is written once at burn time; a document rebuilt through fromCloudDoc does
+// not carry it reliably, so the chip's own byte always wins. Not covered by the
+// TigerTag+ signature, so keeping it never invalidates a signed chip.
+function _keepChipIdentity(newUserBytes, oldUserBytes) {
+  if (!oldUserBytes || oldUserBytes.length < 40) return newUserBytes;
   const out = Buffer.from(newUserBytes);
-  oldUserBytes.copy(out, 32, 32, 36);
+  oldUserBytes.copy(out, 32, 32, 36);   // creation timestamp = twin pairing key
+  out[39] = oldUserBytes[39];           // tag index / tag count
   return out;
+}
+
+// Tag index / count recorded on the Firestore doc (`tag_index` / `tag_count`),
+// as a SDK patch — used when the chip itself cannot be read before a full write.
+// Anything outside a nibble is ignored (the SDK would throw a RangeError).
+function _tagInfoPatch(doc) {
+  const nib = v => (Number.isInteger(+v) && +v >= 0 && +v <= 15) ? +v : 0;
+  const tagCount = nib(doc?.tag_count), tagIndex = nib(doc?.tag_index);
+  return { tagCount, tagIndex };
 }
 
 // Helper — split 80-byte user-data buffer into page descriptors.

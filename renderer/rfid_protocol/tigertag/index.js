@@ -93,7 +93,7 @@ function _renderResult(data, readerName) {
 
   const { brand, material, colorHex, colorAlpha, diameter, weight, unit,
           nozzleMin, nozzleMax, dryTemp, dryTime, bedMin, bedMax,
-          date, tdMm, version, productId, aspect1, aspect2 } = tigerTag;
+          date, tdMm, version, productId, aspect1, aspect2, tagIndex, tagCount } = tigerTag;
   const aspects = [aspect1, aspect2].filter(Boolean).join(', ');
   const field   = (label, val) =>
     `<div class="rfid-field">
@@ -121,6 +121,7 @@ function _renderResult(data, readerName) {
       ${field('Bed',        `${bedMin}–${bedMax} °C`)}
       ${field('Drying',     `${dryTemp} °C / ${dryTime} h`)}
       ${tdMm > 0 ? field('TD', `${tdMm.toFixed(1)} mm`) : ''}
+      ${tagCount > 0 ? field('Tag', `${tagIndex || '?'} of ${tagCount}`) : ''}
       ${field('Mfg. date',  date)}
       ${field('Product ID', productId)}
     </div>

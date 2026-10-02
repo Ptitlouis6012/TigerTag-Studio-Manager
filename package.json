@@ -45,7 +45,7 @@
     "node-hid": "^3.4.0",
     "qrcode-generator": "^2.0.4",
     "serialport": "^13.0.0",
-    "tigertag": "^1.0.6",
+    "tigertag": "^1.2.0",
     "yauzl": "^3.4.0"
   },
   "devDependencies": {

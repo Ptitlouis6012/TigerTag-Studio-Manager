@@ -34,6 +34,7 @@ const OFF = {
   BED_MIN:    30,
   BED_MAX:    31,
   TIMESTAMP:  32,
+  TAG_INFO:   39,   // v2.2: high nibble = tag index (from 1), low = tag count; 0 = unknown
   TD:         44,   // transmission-distance, uint16 BE, /10 = mm
 };
 
@@ -113,6 +114,7 @@ function parseTigerTag(buf, dbBasePath) {
   const bedMax    = ud[OFF.BED_MAX];
   const tsRaw     = ud.readUInt32BE(OFF.TIMESTAMP);
   const tdMm      = ud.length > OFF.TD + 1 ? ud.readUInt16BE(OFF.TD) / 10.0 : 0;
+  const tagInfo   = ud.length > OFF.TAG_INFO ? ud[OFF.TAG_INFO] : 0;
 
   const date = tsRaw === 0
     ? '—'
@@ -152,6 +154,8 @@ function parseTigerTag(buf, dbBasePath) {
     bedMax,
     date,
     tdMm,
+    tagIndex:    (tagInfo >> 4) & 0x0F,   // 0 = unknown
+    tagCount:    tagInfo & 0x0F,          // 0 = unknown, 1 = single, 2 = twin
   };
 }
 

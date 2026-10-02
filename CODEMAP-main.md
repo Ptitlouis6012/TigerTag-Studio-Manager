@@ -47,7 +47,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 311-335 | UID hex→decimal + TigerTag SDK payload builder | `normalizeUid`, `_sdkPayload` |
 | 336-442 | `BrowserWindow` creation, preload wiring, CSP, devtools | `createWindow` |
 
-## NFC / RFID reader + chip write (L563-1374)
+## NFC / RFID reader + chip write (L563-1560)
 
 | L | What | Anchors / IPC |
 |---|---|---|

@@ -239,7 +239,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Burn ONE chip with read-back verification (drives the guided encode modal).
   // The caller picks a single chip-epoch `timestamp` and reuses it for both
-  // chips so they pair as twins. opts = { cloudDoc, timestamp, readerName }
+  // chips so they pair as twins, plus `tagCount` / `tagIndex` (rank from 1).
+  // opts = { cloudDoc, timestamp, readerName, tagCount, tagIndex }
   // Returns { ok, verified, uid, pagesWritten, mismatchPages, error }
   burnOneChip: (opts) =>
     ipcRenderer.invoke('rfid:burn-one', opts),
