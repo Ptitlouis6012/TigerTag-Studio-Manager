@@ -928,6 +928,39 @@ function createCameraView(parentWindow, ip) {
 }
 ```
 
+### 11.4 Stock firmware (no Paxx) — refreshed stills, no stream
+
+The WebRTC page above exists only on the Paxx extended firmware. On the **stock
+firmware** (verified on a U1 running 2.0.0) nginx still proxies `/webcam/`, but
+nothing runs behind it (**502**), and `server.webcams.list` returns `[]`.
+
+The camera is still reachable, through the printer's own service (unisrv):
+
+1. **Wake it** over the Moonraker WebSocket (port 7125):
+   ```json
+   {"jsonrpc":"2.0","id":9011,"method":"camera.start_monitor","params":{"domain":"lan","interval":0}}
+   ```
+   → `{"result":{"state":"success","url":"/files/camera/monitor.jpg"}}`
+2. **Read the frame**: `GET http://<IP>:7125/server/files/camera/monitor.jpg`
+   — 1920×1080 JPEG, ~100 KB, refreshed about once a second.
+3. **Re-send the wake every ~10 s.** Without it the camera goes idle after a few
+   seconds and the JPEG stops changing.
+
+No SSH, no file installed, nothing else written on the printer — the same call
+the Snapmaker app and SimplyPrint use. It is ~1 fps, not video.
+
+`"domain":"lan"` does NOT require the printer's LAN-only mode: confirmed on a U1
+left in its normal (cloud) mode — control over the IP and this camera both work.
+
+**Detection used by Studio** (`camMode` in `index.js`): `server.webcams.list`
+non-empty (or an error) → WebRTC player; empty → stills. A `camera.start_monitor`
+error → no camera block. The still loop (`widget_camera.js`) runs only while a
+feed is on screen and stops 12 s after the last one leaves, so the wake-ups stop
+and the camera returns to idle on its own.
+
+The `camera` file root also holds the print timelapses (`<job>_<time>.mp4` +
+`.jpg` cover), readable at `/server/files/camera/<name>`.
+
 ---
 
 ## 12. Commandes de contrôle

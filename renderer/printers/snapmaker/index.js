@@ -175,6 +175,14 @@ export function snapConnect(printer) {
       // null = unknown (no sensor found), true = loaded, false = not loaded.
       filamentLoaded: [null, null, null, null],
     },
+    // Which camera this firmware offers (see snapWakeStockCamera):
+    //   null     — not known yet (asked on every socket open)
+    //   "webrtc" — Moonraker declares a webcam (Paxx extended firmware): the
+    //              live WebRTC player page at /webcam/webrtc
+    //   "still"  — stock firmware: no stream, but `camera.start_monitor` makes
+    //              unisrv refresh /server/files/camera/monitor.jpg (~1 fps)
+    //   "none"   — neither answered: no camera block at all
+    camMode: null,
     _filSensorNames: null, // sorted filament_switch_sensor names discovered via objects.list
     _ctrlStep: 10,         // jog step size in mm, persisted per-conn
   };
@@ -250,6 +258,10 @@ function snapOpenSocket(conn) {
     // Discover all available Klipper objects so we can find filament sensors.
     // Response handled below (id === 9001).
     sendLogged({ jsonrpc: "2.0", id: 9001, method: "printer.objects.list", params: {} });
+    // Which camera does this firmware offer? Paxx registers its stream as a
+    // Moonraker webcam; the stock firmware registers none (verified on a U1 on
+    // stock 2.0.0). Response handled below (id === 9010).
+    sendLogged({ jsonrpc: "2.0", id: 9010, method: "server.webcams.list", params: {} });
 
     // Still "connecting" at this point — the badge/grid only flip to online
     // when the first real frame arrives in the message handler below.
@@ -309,6 +321,19 @@ function snapOpenSocket(conn) {
         // Immediate snapshot of sensor state only (lighter query)
         sendLogged({ jsonrpc: "2.0", id: 9003, method: "printer.objects.query",     params: { objects: sensorObjs } });
       }
+    }
+
+    // ── Camera mode (see `camMode` on the conn) ───────────────────────────
+    // An error on the webcams query keeps the historical WebRTC player, so a
+    // firmware that does not know the method behaves exactly as before.
+    if (obj.id === 9010) {
+      const mode = (obj.error || (obj.result?.webcams?.length ?? 0) > 0) ? "webrtc" : "still";
+      if (conn.camMode !== mode) { conn.camMode = mode; snapNotifyChange(conn, /*statusChanged*/ true); }
+    }
+    // The stock wake call failed → this firmware has no monitor either.
+    if (obj.id === 9011 && obj.error && conn.camMode === "still") {
+      conn.camMode = "none";
+      snapNotifyChange(conn, /*statusChanged*/ true);
     }
 
     let status = null;
@@ -653,6 +678,22 @@ export function snapColorToRgbaHex(hex) {
 // parseable on the Klipper side (no embedded spaces, no quotes).
 export function snapSanitiseGcodeArg(s) {
   return String(s || "").trim().replace(/\s+/g, "-").replace(/["'`]/g, "");
+}
+
+// Stock-firmware camera wake-up. The U1's own service (unisrv) only refreshes
+// /server/files/camera/monitor.jpg while someone asks for it, and lets the
+// camera go idle after a few seconds otherwise — the same call the Snapmaker app
+// and SimplyPrint send. Re-sent every ~10 s by the camera widget while a feed is
+// on screen; nothing else is written on the printer. Not logged: a frame every
+// 10 s would drown the request log.
+export function snapWakeStockCamera(conn) {
+  if (!conn?.ws || conn.ws.readyState !== WebSocket.OPEN) return false;
+  conn.ws.send(JSON.stringify({
+    jsonrpc: "2.0", id: 9011,
+    method: "camera.start_monitor",
+    params: { domain: "lan", interval: 0 },
+  }));
+  return true;
 }
 
 // Send a single g-code line via the printer's existing WebSocket.

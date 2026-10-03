@@ -27133,27 +27133,31 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // WebRTC session continues uninterrupted across panel re-renders / opens.
     const _snapCamConn  = (p.brand === "snapmaker") ? snapGetConn(snapKey(p)) : null;
     const _snapCamIp    = (_snapCamConn?.status === "connected" && _snapCamConn?.ip) || null;
+    // IP + camera mode (WebRTC on Paxx, refreshed stills on stock firmware, see
+    // printers/snapmaker/widget_camera.js): the mode is learnt just after the
+    // socket opens, so it has to be able to rebuild the feed on its own.
+    const _snapCamSig   = _snapCamIp ? `${_snapCamIp}|${_snapCamConn?.camMode || ""}` : null;
     const _persistEl    = $("ppPersistentCam");
     if (_persistEl) {
       if (p.brand === "snapmaker") {
-        const _prevIp = _persistEl.dataset.snapIp || "";
-        if (_snapCamIp && _snapCamIp !== _prevIp) {
-          // New connection or IP changed — build a fresh iframe.
-          _persistEl.dataset.snapIp = _snapCamIp;
+        const _prevSig = _persistEl.dataset.snapCamSig || "";
+        if (_snapCamSig && _snapCamSig !== _prevSig) {
+          // New connection, IP or camera mode — build a fresh feed.
+          _persistEl.dataset.snapCamSig = _snapCamSig;
           _persistEl.innerHTML = renderSnapCamBanner(p);
-        } else if (!_snapCamIp && _prevIp) {
+        } else if (!_snapCamSig && _prevSig) {
           // Went offline — clear the camera.
-          delete _persistEl.dataset.snapIp;
+          delete _persistEl.dataset.snapCamSig;
           _persistEl.innerHTML = "";
         }
-        // Same IP → leave #ppPersistentCam entirely alone (WebRTC keeps running).
+        // Same IP + mode → leave #ppPersistentCam entirely alone (the feed keeps running).
       } else {
         // Different brand — clear any residual Snapmaker camera.
         _persistEl.innerHTML = "";
-        delete _persistEl.dataset.snapIp;
+        delete _persistEl.dataset.snapCamSig;
       }
     }
-    const _snapCamVisible = p.brand === "snapmaker" && !!_snapCamIp;
+    const _snapCamVisible = p.brand === "snapmaker" && !!_snapCamIp && _snapCamConn?.camMode !== "none";
 
     // Camera banner (non-Snapmaker brands) — delegated to per-brand widget_camera.js.
     // Snapmaker is handled above via #ppPersistentCam, so it returns "" here.

@@ -592,6 +592,10 @@
     border-radius: 0;
   }
 
+  /* Snapmaker on stock firmware — refreshed 1080p stills in an <img> sharing
+     the iframe's box (.snap-camera-frame); cover so the 16:9 frame fills it. */
+  .snap-camera-still { object-fit: cover; }
+
   /* FlashForge — raw MJPEG stream served as <img>.
      object-fit:cover fills the 16:9 box and crops the stream edges if
      the camera aspect ratio differs. Self-contained: no dependency on

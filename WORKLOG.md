@@ -14,12 +14,13 @@
   - Verified on real chips (TigerPOD, 2 readers): factory 0x12 + single 0x11 of the same product → stored 1/2 and 1/1, NOT paired, missing-twin banner on the 1/2; weight write 1000→950→1000 g touched only page 0x17, byte +39 and timestamp unchanged
 
 ## Changed
+- Snapmaker U1 camera now works on the stock firmware, not only on Paxx: when Moonraker declares no webcam, Studio wakes the printer's own monitor (`camera.start_monitor` every 10 s over the existing Moonraker socket) and shows its 1080p JPEG refreshed ~1 fps (Blob URLs, swapped only once downloaded); Paxx keeps the WebRTC player; the loop runs only while a feed is on screen (12 s grace) — `renderer/printers/snapmaker/widget_camera.js`, `renderer/printers/snapmaker/index.js`, `renderer/inventory.js`, `renderer/css/50-snapmaker.css`, `renderer/printers/snapmaker/PROTOCOL.md`
 - TigerScale photo is now the V3 hardware render (README, scale card, empty state) — contributed in PR #34; shipped copy trimmed + resized to 512² and palettised (1.38 MB → 78 KB), full-res master archived (committed c933d61) — `assets/img/TigerScale_V3.png`, `assets-src/img/TigerScale_V3.png`, `assets-src/README.md`, `renderer/IoT/tigerscale/index.js`, `README.md`
 
 ## Fixed
+- Printer side card: the whole card scrolls as one (camera included) with no visible scrollbar — the body had become a second scroller (generic `.panel-body` overflow), so the Snapmaker camera, kept outside it to survive re-renders, stayed pinned at the top — `renderer/css/40-printers.css`
 - Deleting products (bulk "Delete" in Favorites) was always refused with "permission denied" since the tier-gated attachments rule (v2.12.0): the `products` rule read `request.resource.data` in a single `allow write`, which errors on a delete — split into `allow create, update` (attachment cap kept) + `allow delete: if isOwner()` — backend `firestore.rules` (deployed + committed 4aa71b8)
 - Security: `js-yaml` 4.3.1 → 4.3.2 (CVE-2026-84375 / GHSA-2883-xcg3-v3hh, YAML merge-key DoS), transitive via `electron-updater` (parses `latest*.yml`) — `package-lock.json` (already committed in 22b3f3c; internal, not for release note / What's New)
-
 - Toggling ★/❤ on a catalogue product no longer flickers the catalogue grid: a render that lands on the same result list patches the cards' product badges instead of rebuilding every card (which re-inserted the photos 2-3× per click and dropped the chunks scrolled into view); the product card keeps its photo node across re-renders — `renderer/inventory.js` (other views still to audit)
 
 ## Removed
