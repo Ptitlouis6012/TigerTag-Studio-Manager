@@ -613,6 +613,18 @@
   #bulkLike .icon     { background-color: var(--buy); }   /* 🛒 cart green, on & off */
   #bulkFavorite.active { background: color-mix(in srgb, var(--favorite) 16%, transparent); border-color: var(--favorite); }
   #bulkLike.active     { background: color-mix(in srgb, var(--buy) 14%, transparent); border-color: var(--buy); }
+  /* Catalogue selection: ★ / 🛒 / list only — the catalogue is not ours to tag or delete. */
+  .bulk-bar.is-catalog #bulkFavorite,
+  .bulk-bar.is-catalog #bulkLike { display: inline-flex; }
+  .bulk-bar.is-catalog #bulkTags,
+  .bulk-bar.is-catalog #bulkDelete { display: none; }
+  #bulkList { display: none; }
+  .bulk-bar.is-materials #bulkList,
+  .bulk-bar.is-products #bulkList,
+  .bulk-bar.is-catalog #bulkList { display: inline-flex; }
+  .bulk-bar.is-pricing #bulkList { display: none; }
+  .bulk-sel-count { display: none; font-size: 13px; font-weight: 700; color: var(--text); padding: 0 4px; font-variant-numeric: tabular-nums; }
+  .bulk-bar.is-catalog .bulk-sel-count { display: inline-flex; }
   /* Friend view: keep ONLY the ★/❤ import actions — no write-to-friend actions. */
   .bulk-bar.is-friendview #bulkTags,
   .bulk-bar.is-friendview #bulkPrice,
@@ -3079,10 +3091,11 @@
 
   /* ── inline video player ── */
   .panel-video-section { border-bottom: 1px solid var(--border); }
-  /* direct video (MP4/WebM) — always visible, full width */
+  /* inline player — a file plays at once; YouTube / Drive swap their poster for an iframe */
   .panel-video-player { width: 100%; aspect-ratio: 16/9; background: #000; display: block; }
-  .panel-video-player video { width: 100%; height: 100%; border: none; display: block; }
-  /* YouTube thumbnail → click opens browser */
+  .panel-video-player video,
+  .panel-video-player iframe { width: 100%; height: 100%; border: none; display: block; }
+  /* YouTube / Google Drive poster → click loads the player in place */
   .panel-yt-thumb {
     position: relative; display: block; width: 100%; aspect-ratio: 16/9;
     height: auto !important; border: none; padding: 0; cursor: pointer; overflow: hidden;

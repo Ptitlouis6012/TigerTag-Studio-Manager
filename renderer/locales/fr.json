@@ -1373,6 +1373,11 @@
   "rackViewPhoto": "Vue photo",
   "bulkSelectMode": "Sélectionner",
   "bulkDelete": "Supprimer",
+  "catBulkTooMany": "Doucement — {{n}} à la fois maximum. Affine un peu la recherche.",
+  "bulkSelectedCount": {
+    "one": "{{n}} choisi",
+    "other": "{{n}} choisis"
+  },
   "bulkTags": "Balises",
   "bulkFavorite": "Favori",
   "bulkLike": "À commander",

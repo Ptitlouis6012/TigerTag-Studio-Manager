@@ -146,7 +146,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Settings / Friends / Account modals (L3828-4639)
+## Settings / Friends / Account modals (L3828-4838)
 
 | L | What | Anchors |
 |---|---|---|
@@ -159,7 +159,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Login + accounts persistence (L4712-4990)
+## Login + accounts persistence (L4712-5189)
 
 | L | What | Anchors |
 |---|---|---|
@@ -169,7 +169,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Data migrations (L5059-5564)
+## Data migrations (L5059-5763)
 
 | L | What | Anchors |
 |---|---|---|
@@ -218,7 +218,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## TigerTag+ catalogue (L11785-14500)
+## TigerTag+ catalogue (L11785-14792)
 | L | What | Anchors |
 |---|---|---|
 | 10905-10998 | Refresh API data for a spool | `_refreshApiData` |
@@ -232,10 +232,11 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 | 11473-11509 | Catalogue modal open/close | `openCatalogModal`, `closeCatalogModal` |
 | 11652-11686 | **Search views** — the catalogue as a grid/table view segment (`catalogGrid` / `catalogTable`); own hits + selection, driven by the MAIN search bar | `renderCatalogView`, `_catViewHeadHTML` |
 | 11687-11768 | Filters at parity with the public catalogue page — Type · Brand · Material · Series (brand-scoped) · Sort, options carrying counts | `CAT_SORTS`, `_catViewFillFacets`, `_catViewSearch` |
+| ~13510-13600 | **Catalogue multi-select** — `state.selectedCatalog` + the shared bulk bar (catalogue context in _bulkCtx: ★ / 🛒 / Add to a list, no delete); ids resolved to product rows through the product-card detail cache, 6 at a time, capped at `CAT_BULK_MAX` | `_catBulkClick`, `_catResolveRow`, `_catResolveRows`, `_catSelectedRows` |
 | 11699-11776 | Search-view card / row markup + chunked append (IntersectionObserver) | `_catViewCardHTML`, `_catViewRowHTML`, `_catViewRenderChunk` |
 | 11777-11822 | Search-view selection + action bar (select ≠ create) | `_catViewSelect`, `_catViewSyncBar` |
 | 11510-11665 | Duplicate spool as cloud doc | `duplicateSpoolAsCloud` |
-| ~9673-9853 | **Lists / wishlists — UI** — products view (favourites/order tab) + "Add to list" popover menu | `renderProductsView`, `renderListsView`, `_openAddToListMenu` |
+| ~9673-9853 | **Lists / wishlists — UI** — products view (favourites/order tab) + "Add to list" popover menu (one product or a bulk selection, written in one arrayUnion by _addManyToList) | `renderProductsView`, `renderListsView`, `_openAddToListMenu` |
 | ~10198 | Message inline edit | `startMessageInlineEdit` |
 
 ---
@@ -248,7 +249,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 | 7302-7364 | **Twin-link picker modal** | `openTwinLinkPicker` |
 | 7365-7376 | TigerPOD modal | `openTigerPodModal` |
 | 7377-7432 | **Container picker modal** (46 containers from `data/container_spool/spools_filament.json`) | `openContainerPicker`, `doContainerUpdate` |
-| 7433-7473 | Video URL parser (YouTube/Vimeo embeds) | `parseVideoUrl` |
+| ~19090-19160 | **Video player — the ONE builder** for the spool detail + product card: `parseVideoUrl` (file / YouTube / Google Drive / external), `_productVideosHTML` (chip video + playable attachments, deduped) → `_videoSectionHTML` (inline `<video>`, or poster → in-place iframe on click) | `parseVideoUrl`, `_isPlayableVideo`, `_productVideosHTML`, `_videoSectionHTML` |
 | ~8130 | **Tags / Balises** — free-form labels, entity-agnostic Shopify-style editor (chips + inline dropdown + "Add tags" modal) driven by a `ctx` (`getTags`/`writeTags`/`allTags`/`readOnly`/`ids`). Two providers: `_spoolTagCtx` (spools, twin-mirrored write) and `_printerTagCtx` (printers, savePrinterField). Spool editor in buildPanelHTML+openDetail; printer editor in renderPrinterDetail (`#ppTag*`, tags-only echo patches chips in place via a structural-signature guard) | `_normalizeTag`, `_allTags`, `_allPrinterTags`, `_writeSpoolTags`, `_writePrinterTags`, `_ctxAddTag`, `_ctxRemoveTag`, `_wireTagEditor`, `openTagsModal` |
 | 7474-8138 | **`buildPanelHTML(r)`** — header, colours, print settings, weight slider w/ debounce, storage row, tags, links, container, toolbox, raw JSON | `buildPanelHTML` |
 | 8139-8197 | **Weight update** (direct / raw-scale modes, twin propagation) | `doWeightUpdate` |
@@ -267,7 +268,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Friends rendering (L21078-21806)
+## Friends rendering (L21078-22103)
 | L | What | Anchors |
 |---|---|---|
 | 8665-8749 | Sidebar friends quick-list + hover tooltip | `renderSidebarFriends`, `showSbFriendTip` |
@@ -276,7 +277,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Racks + printers subscriptions (L21807-22097)
+## Racks + printers subscriptions (L21807-22452)
 | L | What | Anchors |
 |---|---|---|
 | 8961-9003 | Racks subscription | `subscribeRacks`, `unsubscribeRacks` |
@@ -286,7 +287,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printers views (L22098-25984)
+## Printers views (L22098-26179)
 | L | What | Anchors |
 |---|---|---|
 | 9168-9337 | **Job status helpers** + surgical grid patches (job card, online badge, grid signature) | `_getPrinterJob`, `_patchGridJobs`, `_jobCardHtml`, `_isPrinterOnline`, `_patchGridStatus` |
@@ -302,7 +303,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printer detail side panel (L24340-28700)
+## Printer detail side panel (L24340-28968)
 | L | What | Anchors |
 |---|---|---|
 | 10092-10654 | Open/close lifecycle (connect/disconnect per brand), conn button, refresh | `openPrinterDetail`, `closePrinterDetail`, `refreshOpenPrinterDetail` |
@@ -312,7 +313,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Add-printer flow (L26801-29150)
+## Add-printer flow (L26801-29446)
 Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.js` owns the shell.
 
 | L | What | Anchors |
@@ -324,7 +325,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Racks CRUD + slots (L27594-31900)
+## Racks CRUD + slots (L27594-32091)
 | L | What | Anchors |
 |---|---|---|
 | 12429-12563 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
@@ -336,7 +337,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Storage view render + DnD (L29928-33600)
+## Storage view render + DnD (L29928-33870)
 | L | What | Anchors |
 |---|---|---|
 | 13283-13922 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
@@ -346,7 +347,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Friend view (L31637-34400)
+## Friend view (L31637-34598)
 | L | What | Anchors |
 |---|---|---|
 | 14366-14447 | Friend inventory open/close (one-shot read, no live updates) | `openFriendInventory`, `closeFriendInventory` |
@@ -356,7 +357,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Display name + friend requests (L32419-35400)
+## Display name + friend requests (L32419-35702)
 | L | What | Anchors |
 |---|---|---|
 | 14833-14876 | **Display-name setup modal** (first-login pseudo picker) | `openDisplayNameSetup` |
@@ -365,7 +366,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Keys + profile sync (L33276-35600)
+## Keys + profile sync (L33276-35822)
 | L | What | Anchors |
 |---|---|---|
 | 15030-15074 | **`claimPublicKey(uid, oldKey)`** atomic transaction (10 retries) + regenerate + send friend request | `claimPublicKey`, `sendFriendRequest` |
@@ -373,7 +374,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Custom avatar (L33504-36000)
+## Custom avatar (L33504-36263)
 | L | What | Anchors |
 |---|---|---|
 | 15637-15811 | File pick, image decode, alpha detection, resize to blob, upload, remove | `uploadCustomAvatar`, `removeCustomAvatar` |
@@ -391,7 +392,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Electron RFID integration (L34956-37500)
+## Electron RFID integration (L34956-37715)
 | L | What | Anchors |
 |---|---|---|
 | 29860-29947 | Reader indicator (topbar), reader connect/disconnect, card present/removed badge | `renderRfidReaderBadges` |

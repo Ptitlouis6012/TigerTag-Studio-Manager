@@ -1373,6 +1373,11 @@
   "rackViewPhoto": "Вид фото",
   "bulkSelectMode": "Выбрать",
   "bulkDelete": "Удалить",
+  "catBulkTooMany": "Полегче — не больше {{n}} за раз. Сузь немного поиск.",
+  "bulkSelectedCount": {
+    "one": "Выбрано: {{n}}",
+    "other": "Выбрано: {{n}}"
+  },
   "bulkTags": "Теги",
   "bulkFavorite": "Избранное",
   "bulkLike": "К заказу",

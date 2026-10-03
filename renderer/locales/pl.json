@@ -1372,6 +1372,11 @@
   "rackViewPhoto": "Widok zdjęć",
   "bulkSelectMode": "Zaznacz",
   "bulkDelete": "Usuń",
+  "catBulkTooMany": "Spokojnie — maksymalnie {{n}} naraz. Zawęź trochę wyszukiwanie.",
+  "bulkSelectedCount": {
+    "one": "{{n}} wybrany",
+    "other": "{{n}} wybranych"
+  },
   "bulkTags": "Tagi",
   "bulkFavorite": "Ulubione",
   "bulkLike": "Do zamówienia",

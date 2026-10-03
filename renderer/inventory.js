@@ -715,6 +715,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     bulkSelect: false,       // true = multi-select mode active (checkboxes, no detail on click)
     selectedSpools: new Set(), // spoolIds selected for bulk actions (materials views)
     selectedPrinters: new Set(), // "brand:id" keys selected for bulk actions (printer views) — separate from materials
+    selectedCatalog: new Set(),  // catalogue product ids selected for bulk ★ / 🛒 / list (Search views)
     selectedProducts: new Set(), // product keyHashes selected for bulk actions (Products table view) — separate again
     td1sConnected: false,
     scanMode: false,        // true = "+ Scan" active, auto-add on unknown chip
@@ -3571,6 +3572,21 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Bulk ★ Favorite / ❤ Love (materials selection; also the only bulk actions in a friend view).
   $("bulkFavorite")?.addEventListener("click", () => _bulkApplyFlag("favorite").catch(e => reportError("bulk.favorite", e)));
   $("bulkLike")?.addEventListener("click", () => _bulkApplyFlag("liked").catch(e => reportError("bulk.like", e)));
+  // Bulk "Add to a list" — the same popup as one product's, fed the whole selection.
+  $("bulkList")?.addEventListener("click", async e => {
+    const btn = e.currentTarget, ctx = _bulkCtx();
+    if (ctx.printers) return;
+    let items;
+    if (ctx.products) items = [...ctx.set].map(h => ({ keyHash: h, row: null }));
+    else {
+      setLoading(btn, true);
+      try {
+        const rows = ctx.catalog ? await _catSelectedRows() : _selectedProductRows();
+        items = (rows || []).map(r => ({ keyHash: _productKeyHash(r), row: r }));
+      } finally { setLoading(btn, false); }
+    }
+    if (items?.length) _openAddToListMenu(btn, items);
+  });
   // Bulk price (Products context only): one price applied to every selected product.
   $("bulkPrice")?.addEventListener("click", _bulkEnterPriceMode);
   $("bulkPriceCancel")?.addEventListener("click", _bulkExitPriceMode);
@@ -8216,7 +8232,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _attachKind(url) {
     const u = String(url || "").toLowerCase();
     if (/\.pdf($|[?#])/.test(u)) return "pdf";
-    if (/youtube\.com|youtu\.be|vimeo\.com|\.mp4($|[?#])|\.webm($|[?#])/.test(u)) return "video";
+    if (_isPlayableVideo(url) || /vimeo\.com/.test(u)) return "video";
     if (/\.(png|jpe?g|gif|webp|svg)($|[?#])/.test(u)) return "image";
     return "link";
   }
@@ -8949,8 +8965,23 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // its keyHash to the list. `row` is a spool row (Material card) or null when the
   // product already exists (Product card passes its own keyHash).
   async function _addToList(listId, keyHash, row) {
+    return _addManyToList(listId, [{ keyHash, row }]);
+  }
+  // Several products in one write (bulk "Add to a list"): each product identity
+  // is ensured first, then the list takes every key in one arrayUnion.
+  async function _addManyToList(listId, items) {
     const uid = state.activeAccountId;
-    if (!uid || !listId || !keyHash) return;
+    items = (items || []).filter(x => x?.keyHash);
+    if (!uid || !listId || !items.length) return;
+    for (const { keyHash, row } of items) await _ensureListProduct(keyHash, row);
+    try {
+      await fbDb(uid).collection("users").doc(uid).collection("lists").doc(listId).update({
+        itemKeys: firebase.firestore.FieldValue.arrayUnion(...items.map(x => x.keyHash)),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+    } catch (e) { console.warn("[lists] add failed:", e?.message); }
+  }
+  async function _ensureListProduct(keyHash, row) {
     // Ensure the product identity exists in MY account so the list item resolves
     // even without a spool. In friend-view this IMPORTS the friend's product:
     // carry their shared price / buy link / SKU-EAN and stamp provenance (once),
@@ -8965,21 +8996,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       }
       try { await _writeProduct(row, patch); } catch (_) {}
     }
-    try {
-      await fbDb(uid).collection("users").doc(uid).collection("lists").doc(listId).update({
-        itemKeys: firebase.firestore.FieldValue.arrayUnion(keyHash),
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-    } catch (e) { console.warn("[lists] add failed:", e?.message); }
   }
   async function _removeFromList(listId, keyHash) {
     // Writes to my own lists collection → allowed in friend-view (the popup can
     // untick a list I'd already added the friend's item to).
+    // `keyHash` may be an array (bulk untick).
     const uid = state.activeAccountId;
-    if (!uid || !listId || !keyHash) return;
+    const keys = (Array.isArray(keyHash) ? keyHash : [keyHash]).filter(Boolean);
+    if (!uid || !listId || !keys.length) return;
     try {
       await fbDb(uid).collection("users").doc(uid).collection("lists").doc(listId).update({
-        itemKeys: firebase.firestore.FieldValue.arrayRemove(keyHash),
+        itemKeys: firebase.firestore.FieldValue.arrayRemove(...keys),
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       });
     } catch (e) { console.warn("[lists] remove failed:", e?.message); }
@@ -10033,6 +10060,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // (printers' live camera thumbnails; products' always-on table checkboxes).
     // Materials ungroup.
     if (_isPrinterMode(state.viewMode) || _isProductsMode(state.viewMode)) { _updateBulkBar(); return; }
+    // Catalogue: picking several replaces looking at one — drop the open card.
+    if (_isCatalogMode(state.viewMode)) { if (_catViewSelectedId) closeProductCard(); _updateBulkBar(); return; }
     renderInventory();              // rebuild ungrouped so every spool is selectable
     _repaintSelection();            // diffed rows were kept — paint any pre-selected ones
     _updateBulkBar();
@@ -10053,7 +10082,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
     // Materials regroup on exit; printers / products have no grouping (skip the
     // re-render so live camera thumbnails / freshly-typed rows aren't rebuilt).
-    if (!_isPrinterMode(state.viewMode) && !_isProductsMode(state.viewMode)) renderInventory();
+    if (!_isPrinterMode(state.viewMode) && !_isProductsMode(state.viewMode) && !_isCatalogMode(state.viewMode)) renderInventory();
   }
   function _toggleSelectMode() { state.bulkSelect ? _exitSelectMode() : _enterSelectMode(); }
 
@@ -10197,6 +10226,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       visibleKeys: () => Array.from(document.querySelectorAll("#invProductsView .pv-trow[data-hash]:not(.hidden)")).map(el => el.dataset.hash),
       paint: (hash, on) => document.querySelectorAll(`#invProductsView .pv-trow[data-hash="${CSS.escape(hash)}"]`).forEach(el => el.classList.toggle("row-selected", on)),
     };
+    // Search views: the selection is catalogue product ids. No delete — the
+    // catalogue is not ours to delete from; only ★ / 🛒 / list apply.
+    if (_isCatalogMode(state.viewMode)) return {
+      printers: false, catalog: true, set: state.selectedCatalog, del: null,
+      visibleKeys: () => _catViewHits.map(it => String(it.id)),
+      paint: (id, on) => $("catalogViewBody")?.querySelectorAll(`[data-id="${CSS.escape(id)}"]`)
+        .forEach(el => el.classList.toggle("row-selected", on)),
+    };
     return {
       printers: false, set: state.selectedSpools, del: _bulkDeleteSelected,
       visibleKeys: _visibleSpoolIds,
@@ -10213,6 +10250,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     state.selectedProducts.forEach(h =>
       document.querySelectorAll(`#invProductsView .pv-trow[data-hash="${CSS.escape(h)}"]`).forEach(el => el.classList.remove("row-selected")));
     state.selectedProducts.clear();
+    state.selectedCatalog.forEach(id =>
+      $("catalogViewBody")?.querySelectorAll(`[data-id="${CSS.escape(id)}"]`).forEach(el => el.classList.remove("row-selected")));
+    state.selectedCatalog.clear();
     _lastSelectedId = null; _lastSelectedPrinter = null; _lastSelectedProduct = null;
     document.querySelectorAll(".group-all-selected").forEach(el => el.classList.remove("group-all-selected"));
     _updateBulkBar();
@@ -10243,11 +10283,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // product-level field; for spools it writes to their product identity). Printers
     // have no price.
     bar.classList.toggle("is-products", !!ctx.products);
-    bar.classList.toggle("is-materials", !ctx.products && !ctx.printers);
+    bar.classList.toggle("is-materials", !ctx.products && !ctx.printers && !ctx.catalog);
+    bar.classList.toggle("is-catalog", !!ctx.catalog);
+    const sc = $("bulkSelCount"); if (sc) sc.textContent = ctx.catalog && n ? t("bulkSelectedCount", { n }) : "";
     // Friend view: only ★/❤ (import) actions on the FRIEND's materials — tags /
     // price / delete hidden. Doesn't apply to the viewer's OWN favorites table
     // (products context), which stays fully editable even while in a friend view.
-    bar.classList.toggle("is-friendview", !!state.friendView && !ctx.products);
+    bar.classList.toggle("is-friendview", !!state.friendView && !ctx.products && !ctx.catalog);
     if (!show || ctx.printers) bar.classList.remove("is-pricing");   // never leave the price editor stranded
     _syncSelAllHeader();
     _syncBulkFlagButtons();   // reflect the selection's aggregate ★/❤ state on the toggles
@@ -10444,12 +10486,12 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (prevMode && _seg(prevMode) !== _seg(mode)) _clearSearchFilters();
     // Selection is per-context (materials vs printers) — crossing contexts clears
     // it (never linked). Switching within a context (table↔grid) keeps it.
-    const _ctxOf = m => (m === "table" || m === "grid") ? "mat" : _isPrinterMode(m) ? "prn" : m === "favesTable" ? "prod" : "other";
+    const _ctxOf = m => (m === "table" || m === "grid") ? "mat" : _isPrinterMode(m) ? "prn" : m === "favesTable" ? "prod" : _isCatalogMode(m) ? "cat" : "other";
     if (state.bulkSelect && _ctxOf(prevMode) !== _ctxOf(mode)) _exitSelectMode();
     // The header "Select" toggle shows where selection is button-triggered: the
     // GRID views (materials + printers). Both TABLES have an always-on checkbox
     // column (so the button is redundant there); rack / cam have no list.
-    document.body.classList.toggle("sel-btn-view", mode === "grid" || mode === "printer");
+    document.body.classList.toggle("sel-btn-view", mode === "grid" || mode === "printer" || mode === "catalogGrid");
     // Friend view forces "grid" transiently — `persist:false` keeps the owner's
     // saved preference (restored on switching back to their own account).
     if (opts.persist !== false) localStorage.setItem("tigertag.view", mode);
@@ -10813,7 +10855,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const id = await _createList(name, { occasion, visibility, message });
     closeCreateListModal();
     if (id) {
-      if (pending) await _addToList(id, pending.keyHash, pending.row);
+      if (pending) await _addManyToList(id, pending.items);
       state.selectedListId = id; _listRenamePending = null;
       if (_isListsMode(state.viewMode)) renderListsView();
     }
@@ -11276,7 +11318,11 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Delegated on the stable container — cards/rows are rebuilt on every query.
   $("catalogViewBody")?.addEventListener("click", e => {
     const el = e.target.closest?.(".cv-card, .cv-row");
-    if (el?.dataset.id) _catViewSelect(el.dataset.id);
+    if (!el?.dataset.id) return;
+    // The tick (card corner / table column) or select mode → multi-select;
+    // otherwise a click previews that one product, as before.
+    if (state.bulkSelect || e.target.closest(".sel-check, .sel-cell")) { _catBulkClick(el.dataset.id, e.shiftKey); return; }
+    _catViewSelect(el.dataset.id);
   });
   // Grid cards are role="button" divs (see _catViewCardHTML), so they need the
   // activation keys a real button would have given for free.
@@ -11831,6 +11877,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (!row) return;
     openDetail(cloudId);
     if (window.electronAPI && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
+  }
+
+  // Burn offer only — no card change (the caller decides what to reveal).
+  async function _offerBurnForCreated(cloudId) {
+    if (!window.electronAPI || !(state.nfcReaderCount > 0)) return;
+    const t0 = Date.now();
+    while (!state.rows.some(x => x.spoolId === cloudId) && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
+    const row = state.rows.find(x => x.spoolId === cloudId);
+    if (row?.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
 
   function openEncodeModal(r) {
@@ -13234,7 +13289,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // click handler. The table rows stay real buttons — their content is a single
   // short line, so the clamp never bites there.
   function _catViewCardHTML(it) {
-    const sel = String(it.id) === String(_catViewSelectedId) ? " selected" : "";
+    const sel = state.bulkSelect
+      ? (state.selectedCatalog.has(String(it.id)) ? " row-selected" : "")
+      : (String(it.id) === String(_catViewSelectedId) ? " selected" : "");
     const r = _catViewAsRow(it);
     // Body built by the app's OWN card builder — same slots, same classes, same
     // wording rules as the inventory grid (name line with the colour circle,
@@ -13310,7 +13367,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   function _catViewRowHTML(it) {
     const r = _catViewAsRow(it);
-    const sel = String(it.id) === String(_catViewSelectedId) ? " row-selected" : "";
+    const sel = (state.bulkSelect ? state.selectedCatalog.has(String(it.id)) : String(it.id) === String(_catViewSelectedId))
+      ? " row-selected" : "";
     const cell = v => `<td title="${esc(String(v || ""))}">${esc(String(v || "-"))}</td>`;
     return `
       <tr class="cv-row${sel}" data-id="${esc(String(it.id))}" aria-selected="${sel ? "true" : "false"}">
@@ -13417,6 +13475,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // both the picker and the "the card was closed" path need it, and only one of
   // them may touch the Product card — otherwise the two would call each other.
   function _catViewPaintSelection() {
+    if (state.bulkSelect) {
+      $("catalogViewBody")?.querySelectorAll(".cv-card, .cv-row").forEach(el => {
+        el.classList.remove("selected");
+        el.classList.toggle("row-selected", state.selectedCatalog.has(el.dataset.id));
+      });
+      return;
+    }
     $("catalogViewBody")?.querySelectorAll(".cv-card, .cv-row").forEach(el => {
       const on = el.dataset.id === _catViewSelectedId;
       // Cards are `.spool-card`s, so they take that card's own `.selected` look
@@ -13450,6 +13515,85 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   }
 
+
+  /* ── Catalogue multi-select ────────────────────────────────────────────────
+     Same shared bulk bar as the other lists, with ★ Favorite, 🛒 To order and
+     Add to a list. A catalogue item has no product row until its detail is
+     fetched (the LIST endpoint lacks colours, temps…, and the product identity
+     — hence its keyHash — comes from them), so each selected id is resolved
+     once through the same cache the product card uses. Resolution starts as
+     soon as an item is ticked, which also lets the ★/🛒 buttons show whether
+     the whole selection already carries the flag. */
+  const CAT_BULK_MAX = 200;              // one action, at most this many products
+  const _catBulkRows = new Map();        // catalogue id → product row (resolved)
+  const _catBulkPending = new Map();     // catalogue id → in-flight Promise<row|null>
+  function _catResolveRow(id) {
+    id = String(id);
+    if (_catBulkRows.has(id)) return Promise.resolve(_catBulkRows.get(id));
+    if (_catBulkPending.has(id)) return _catBulkPending.get(id);
+    const job = (async () => {
+      let api = _catDetailCache.get(id);
+      if (!api) {
+        const res = await window.electronAPI?.lookupProduct?.(Number(id));
+        if (!res?.ok || !res.api) return null;
+        api = res.api; _catDetailCache.set(id, api);
+      }
+      let row = null;
+      try { row = normalizeRow("PRODUCT_" + id, _catalogDocFromApi(api, id, _adpCloudId())); } catch (_) {}
+      if (row) _catBulkRows.set(id, row);
+      return row;
+    })().catch(() => null).finally(() => _catBulkPending.delete(id));
+    _catBulkPending.set(id, job);
+    return job;
+  }
+  // Resolve a list of ids, six at a time (the API sits behind one main-process client).
+  async function _catResolveRows(ids) {
+    const out = new Array(ids.length);
+    let i = 0;
+    const worker = async () => { while (i < ids.length) { const k = i++; out[k] = await _catResolveRow(ids[k]); } };
+    await Promise.all(Array.from({ length: Math.min(6, ids.length) }, worker));
+    return out.filter(Boolean);
+  }
+  let _catPrefetchTimer = null;
+  function _catBulkPrefetch() {
+    clearTimeout(_catPrefetchTimer);
+    _catPrefetchTimer = setTimeout(() => {
+      const ids = [...state.selectedCatalog];
+      if (!ids.length || ids.length > CAT_BULK_MAX) return;
+      _catResolveRows(ids).then(() => { if (state.bulkSelect) _syncBulkFlagButtons(); });
+    }, 150);
+  }
+  // The resolved rows of the current selection — null when it is over the cap.
+  async function _catSelectedRows() {
+    const ids = [...state.selectedCatalog];
+    if (ids.length > CAT_BULK_MAX) { _flashMessage(t("catBulkTooMany", { n: CAT_BULK_MAX })); return null; }
+    return _catResolveRows(ids);
+  }
+  let _lastCatBulkId = null;
+  function _catBulkClick(id, shift) {
+    id = String(id);
+    if (!state.bulkSelect) _enterSelectMode();
+    const set = state.selectedCatalog;
+    const ctx = _bulkCtx();
+    if (shift && _lastCatBulkId && _lastCatBulkId !== id) {
+      const ids = ctx.visibleKeys();
+      const a = ids.indexOf(_lastCatBulkId), b = ids.indexOf(id);
+      if (a !== -1 && b !== -1) {
+        const on = !set.has(id);
+        for (let k = Math.min(a, b); k <= Math.max(a, b); k++) {
+          if (on) set.add(ids[k]); else set.delete(ids[k]);
+          ctx.paint(ids[k], on);
+        }
+      }
+    } else {
+      const on = !set.has(id);
+      if (on) set.add(id); else set.delete(id);
+      ctx.paint(id, on);
+    }
+    _lastCatBulkId = id;
+    _afterSelectionChange();
+    _catBulkPrefetch();
+  }
 
   /* ── Duplicate a spool as fresh TigerCloud entries ──────────────────
      Clones the spool into `count` new docs, each with its own Cloud UID.
@@ -13515,6 +13659,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       batch.set(invRef.doc(newId), data);
     }
     await batch.commit();
+    if (Array.isArray(opts.ids)) opts.ids.push(...usedIds);   // caller wants the new doc ids
     bumpStudioCounters({ cloudAddedTotal: n });
     return n;
   }
@@ -13547,6 +13692,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       batch.set(invRef.doc(newId), data);
     }
     await batch.commit();
+    if (Array.isArray(opts.ids)) opts.ids.push(...usedIds);   // caller wants the new doc ids
     bumpStudioCounters({ cloudAddedTotal: n });
     return n;
   }
@@ -13556,9 +13702,15 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   async function _createCloudFromProduct(r) {
     // A "+ Material" is a NEW filament entered as new → full spool (100%), never
     // the remaining weight of the source it copied its identity from.
-    if (r?.raw) return duplicateSpoolAsCloud(r, 1, { full: true });
-    const seed = _getProduct(r)?.cloudSeed;
-    return seed ? _mintCloudsFromRaw(seed, 1, { full: true }) : 0;
+    const ids = [];
+    const seed = r?.raw ? null : _getProduct(r)?.cloudSeed;
+    const made = r?.raw ? await duplicateSpoolAsCloud(r, 1, { full: true, ids })
+               : seed   ? await _mintCloudsFromRaw(seed, 1, { full: true, ids }) : 0;
+    // Same create → chip gesture as the manual and catalogue paths: with a
+    // reader plugged in, go straight on to the guided burn. Not awaited — the
+    // caller's own reveal (group card, toast) runs while the doc lands.
+    if (made && ids[0]) _offerBurnForCreated(ids[0]);
+    return made;
   }
 
   /* ── Products view (order recommendation + liked/favorite) ──────────────
@@ -14054,9 +14206,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   let _atlPendingAdd = null;
   function _renderAddToListMenu() {
     if (!_atlPop || !_atlState) return;
-    const { keyHash } = _atlState;
+    const { items } = _atlState;
     const rows = _ownListsArray().map(l => {
-      const inIt = (l.itemKeys || []).includes(keyHash);
+      // Several products (bulk): ticked only when the list already holds them all.
+      const inIt = items.every(x => (l.itemKeys || []).includes(x.keyHash));
       const n = (l.itemKeys || []).length;
       return `<button type="button" class="atl-row${inIt ? " is-in" : ""}" data-atl="${esc(l.id)}">
         <span class="atl-check">${inIt ? `<span class="icon icon-check icon-13"></span>` : ""}</span>
@@ -14064,7 +14217,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         <span class="atl-n">${n}</span></button>`;
     }).join("");
     _atlPop.innerHTML = `
-      <div class="atl-head">${esc(t("listAddTo"))}</div>
+      <div class="atl-head">${esc(t("listAddTo"))}${items.length > 1 ? ` · ${items.length}` : ""}</div>
       ${rows ? `<div class="atl-rows">${rows}</div>` : ""}
       <button type="button" class="atl-new" data-atlnew><span class="icon icon-plus icon-13"></span>${esc(t("listCreate"))}</button>`;
   }
@@ -14091,25 +14244,28 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _openAddToListMenu(anchorEl, keyHash, row) {
     // Works in friend-view too: the popup lists MY own lists (see _renderAddToListMenu),
     // and picking one imports the friend's product into my account + adds it there.
-    if (!keyHash || !anchorEl) return;
+    // `keyHash` may also be an array of { keyHash, row } — the bulk bar's selection.
+    const items = Array.isArray(keyHash) ? keyHash.filter(x => x?.keyHash)
+                : keyHash ? [{ keyHash, row: row || null }] : [];
+    if (!items.length || !anchorEl) return;
     _closeAddToListMenu();
-    _atlState = { keyHash, row: row || null, anchorEl };
+    _atlState = { items, anchorEl };
     const pop = document.createElement("div");
     pop.className = "atl-pop";
     pop.addEventListener("click", async e => {
       const pick = e.target.closest("[data-atl]");
       if (pick) {
-        const id = pick.dataset.atl, kh = _atlState.keyHash, src = _atlState.row;
-        if (_ownListHas(id, kh)) await _removeFromList(id, kh);
-        else await _addToList(id, kh, src);
+        const id = pick.dataset.atl, its = _atlState.items;
+        if (its.every(x => _ownListHas(id, x.keyHash))) await _removeFromList(id, its.map(x => x.keyHash));
+        else await _addManyToList(id, its.filter(x => !_ownListHas(id, x.keyHash)));
         return;   // subscribeLists → _refreshAddToListMenu repaints the ✓
       }
       if (e.target.closest("[data-atlnew]")) {
         // Open the create-list modal; the new list gets THIS item once created.
-        const kh = _atlState.keyHash, row = _atlState.row;
+        const items = _atlState.items;
         _closeAddToListMenu();
         openCreateListModal();
-        _atlPendingAdd = { keyHash: kh, row };   // set AFTER open (which resets it)
+        _atlPendingAdd = { items };   // set AFTER open (which resets it)
       }
     });
     document.body.appendChild(pop);
@@ -15161,9 +15317,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // flips in place and can be toggled again.
   async function _bulkApplyFlag(field) {   // field: "favorite" | "liked"
     const ctx = _bulkCtx();
-    if (ctx.printers || ctx.products) return;   // materials only
-    const targets = _selectedProductRows();
-    if (!targets.length) return;
+    if (ctx.printers || ctx.products) return;   // materials + catalogue
+    const targets = ctx.catalog ? await _catSelectedRows() : _selectedProductRows();
+    if (!targets?.length) return;
     const allOn = targets.every(row => !!(_getProduct(row) || {})[field]);
     const next = !allOn;
     for (const row of targets) {
@@ -15187,7 +15343,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const materials = !ctx.products && !ctx.printers;
     let favAll = false, likeAll = false;
     if (materials && ctx.set.size) {
-      const products = _selectedProductRows().map(row => _getProduct(row) || {});
+      // Catalogue: an item not resolved yet counts as "not flagged".
+      const rows = ctx.catalog ? [...ctx.set].map(id => _catBulkRows.get(id) || null) : _selectedProductRows();
+      const products = rows.map(row => (row && _getProduct(row)) || {});
       favAll  = products.length > 0 && products.every(p => !!p.favorite);
       likeAll = products.length > 0 && products.every(p => !!p.liked);
     }
@@ -16772,13 +16930,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         pre.innerHTML = highlight(raw);
       });
     });
-    // video button — YouTube thumbnail opens in browser
-    const panelVideoBtn = $("panelVideoBtn");
-    if (panelVideoBtn) {
-      panelVideoBtn.addEventListener("click", () => {
-        window.open(panelVideoBtn.dataset.url);
-      });
-    }
 
     // Non-modal side card: don't dim/block the list behind it — clicking another
     // spool re-runs openDetail() and switches in place (highlight follows
@@ -17974,21 +18125,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // cloudSeed's LinkXXX fields. r.links only exists when built from a seed.
     const links = r.links || {};
     const videoInfo = parseVideoUrl(links.youtube);
-    let videoHtml = "";
-    if (videoInfo) {
-      if (videoInfo.type === "youtube") {
-        const thumb = `https://img.youtube.com/vi/${esc(videoInfo.id)}/hqdefault.jpg`;
-        videoHtml = `
-      <div class="panel-video-section">
-        <button class="panel-yt-thumb" data-url="${esc(links.youtube)}">
-          <img src="${thumb}" alt="YouTube" loading="lazy" onerror="this.style.display='none'" />
-          <div class="pvt-play"><span class="icon icon-play icon-22" style="background-color:#fff;margin-left:3px"></span></div>
-        </button>
-      </div>`;
-      } else if (videoInfo.type === "direct") {
-        videoHtml = `<div class="panel-video-section"><div class="panel-video-player"><video src="${esc(videoInfo.src)}" controls></video></div></div>`;
-      }
-    }
+    const videoHtml = _productVideosHTML(links.youtube, p);
     const _SVG_PDF = `<span class="icon icon-pdf icon-13" style="width:11px"></span>`;
     const linkDefs = [
       { key: "msds",  label: "MSDS" },
@@ -18319,7 +18456,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // product card). Empty string when the product has no attachments. Opens external
   // via the same target=_blank path as the chip's built-in links.
   function _attachReadOnlyHTML(prod) {
-    const atts = _attachmentsOf(prod);
+    // Playable videos are drawn as players by _productVideosHTML, not listed here.
+    const atts = _attachmentsOf(prod).filter(a => !_isPlayableVideo(a.url));
     if (!atts.length) return "";
     const rows = atts.map(a =>
       `<a class="link-btn" href="${safeHref(a.url)}" target="_blank" rel="noopener"><span class="icon icon-${_ATTACH_ICON[a.kind] || "link"} icon-13"></span>${esc(a.label || _buyHost(a.url))}</a>`
@@ -18944,11 +19082,70 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   function parseVideoUrl(url) {
     if (!url) return null;
-    const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&?/]+)/);
+    const yt = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{6,})/);
     if (yt) return { type: "youtube", id: yt[1] };
-    if (/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return { type: "direct", src: url };
+    const gd = url.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]{10,})/);
+    if (gd) return { type: "drive", id: gd[1] };
+    if (/\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(url)) return { type: "direct", src: url };
     return { type: "external", src: url };
   }
+
+  // The video block shared by the spool detail and the product card. A file
+  // plays inline at once; YouTube and Google Drive show a poster first and only
+  // load their player when asked (an iframe per card open would cost a page
+  // load each). The renderer is served from http://localhost, which is what
+  // lets the YouTube embed play — from file:// it refused (error 153).
+  // `_videoEmbedOn` remembers a player the user started, so a card re-render
+  // brings back the player rather than the poster.
+  const _videoEmbedOn = new Set();
+  function _videoEmbedSrc(v, autoplay) {
+    if (v.type === "youtube") return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?rel=0&playsinline=1${autoplay ? "&autoplay=1" : ""}`;
+    if (v.type === "drive")   return `https://drive.google.com/file/d/${encodeURIComponent(v.id)}/preview`;
+    return "";
+  }
+  function _videoPlayerIframeHTML(v) {
+    return `<div class="panel-video-player"><iframe src="${esc(_videoEmbedSrc(v, true))}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`;
+  }
+  function _videoSectionHTML(url) {
+    const v = parseVideoUrl(url);
+    if (!v || v.type === "external") return "";
+    if (v.type === "direct") {
+      return `<div class="panel-video-section"><div class="panel-video-player"><video src="${esc(v.src)}" controls preload="metadata"></video></div></div>`;
+    }
+    if (_videoEmbedOn.has(url)) return `<div class="panel-video-section">${_videoPlayerIframeHTML(v)}</div>`;
+    const poster = v.type === "youtube"
+      ? `https://img.youtube.com/vi/${encodeURIComponent(v.id)}/hqdefault.jpg`
+      : `https://drive.google.com/thumbnail?id=${encodeURIComponent(v.id)}&sz=w640`;
+    return `
+      <div class="panel-video-section">
+        <button type="button" class="panel-yt-thumb" data-video-url="${esc(url)}" aria-label="${esc(t("linkYt"))}">
+          <img src="${poster}" alt="" loading="lazy" onerror="this.style.display='none'" />
+          <div class="pvt-play"><span class="icon icon-play icon-22" style="background-color:#fff;margin-left:3px"></span></div>
+        </button>
+      </div>`;
+  }
+  // Something the in-card player can play (file, YouTube, Google Drive).
+  function _isPlayableVideo(url) {
+    const v = parseVideoUrl(url);
+    return !!v && v.type !== "external";
+  }
+  // EVERY video of a product, in one place: the chip's own video link first, then
+  // the playable web-link attachments (deduped). The spool detail and the product
+  // card both draw their videos through this — never open-code a player elsewhere.
+  function _productVideosHTML(chipUrl, prod) {
+    const urls = [chipUrl, ..._attachmentsOf(prod).map(a => a.url)]
+      .filter((u, i, all) => u && _isPlayableVideo(u) && all.indexOf(u) === i);
+    return urls.map(_videoSectionHTML).join("");
+  }
+  // Poster → player, in place (delegated: both cards rebuild their body).
+  document.addEventListener("click", e => {
+    const btn = e.target.closest(".panel-yt-thumb[data-video-url]");
+    if (!btn) return;
+    const url = btn.dataset.videoUrl, v = parseVideoUrl(url);
+    if (!v || !_videoEmbedSrc(v)) return;
+    _videoEmbedOn.add(url);
+    btn.outerHTML = _videoPlayerIframeHTML(v);
+  });
   $("panelOverlay").addEventListener("click", closeDetail);
   $("detailCloseTab")?.addEventListener("click", closeDetail); // » close tab (non-modal card)
   document.addEventListener("keydown", e => {
@@ -19018,8 +19215,6 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // a second press on the button that opened it closes it again, same as the ⓘ on the
     // spool detail and grouped-spools cards.
     if (info) { const p = _productCardData; if (p) { const row = _listRowFor(p); if (row) _toggleReorderPanel(row); } return; }
-    const yt = e.target.closest(".panel-yt-thumb[data-url]");
-    if (yt) { window.electronAPI?.openExternal(yt.dataset.url); return; }
     // "Added from …" block → jump to that friend's inventory (when they're a friend).
     const from = e.target.closest(".ro-from--link[data-ro-friend]");
     if (from) {
@@ -19182,31 +19377,9 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     ].filter(Boolean);
     const infoHtml2 = infoBadges.length ? `<div class="aspect-chips" style="margin-top:8px">${infoBadges.map(b=>`<span class="aspect-chip">${b}</span>`).join("")}</div>` : "";
 
-    // video player (YouTube thumbnail→browser OR direct MP4 inline)
+    // Video — inline player (file, YouTube, Google Drive); anything else is a link below.
     const videoInfo = parseVideoUrl(r.links.youtube);
-    let videoHtml = "";
-    if (videoInfo) {
-      if (videoInfo.type === "youtube") {
-        // YouTube: embed bloqué (err 153) → miniature cliquable, s'ouvre dans le navigateur
-        const thumb = `https://img.youtube.com/vi/${esc(videoInfo.id)}/hqdefault.jpg`;
-        videoHtml = `
-      <div class="panel-video-section">
-        <button class="panel-yt-thumb" id="panelVideoBtn" data-url="${esc(r.links.youtube)}">
-          <img src="${thumb}" alt="YouTube" loading="lazy" onerror="this.style.display='none'" />
-          <div class="pvt-play"><span class="icon icon-play icon-22" style="background-color:#fff;margin-left:3px"></span></div>
-        </button>
-      </div>`;
-      } else if (videoInfo.type === "direct") {
-        // MP4/WebM direct → lecteur inline immédiat, pleine largeur
-        videoHtml = `
-      <div class="panel-video-section">
-        <div class="panel-video-player">
-          <video src="${esc(videoInfo.src)}" controls></video>
-        </div>
-      </div>`;
-      }
-      // type "external" → link-btn géré dans linkDefs ci-dessous
-    }
+    const videoHtml = _productVideosHTML(r.links.youtube, _displayProduct(r));
 
     // doc links (MSDS, TDS, RoHS, REACH, food — video handled separately above)
     const SVG_PDF = `<span class="icon icon-pdf icon-13" style="width:11px"></span>`;

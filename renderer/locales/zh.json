@@ -1373,6 +1373,11 @@
   "rackViewPhoto": "图片视图",
   "bulkSelectMode": "选择",
   "bulkDelete": "删除",
+  "catBulkTooMany": "慢一点 — 一次最多 {{n}} 个。缩小一下搜索范围吧。",
+  "bulkSelectedCount": {
+    "one": "已选 {{n}} 个",
+    "other": "已选 {{n}} 个"
+  },
   "bulkTags": "标签",
   "bulkFavorite": "收藏",
   "bulkLike": "待订购",

@@ -1373,6 +1373,11 @@
   "rackViewPhoto": "Photo view",
   "bulkSelectMode": "Select",
   "bulkDelete": "Delete",
+  "catBulkTooMany": "Easy there — {{n}} at a time max. Narrow the search a bit.",
+  "bulkSelectedCount": {
+    "one": "{{n}} picked",
+    "other": "{{n}} picked"
+  },
   "bulkTags": "Tags",
   "bulkFavorite": "Favorite",
   "bulkLike": "To order",

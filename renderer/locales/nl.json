@@ -1373,6 +1373,11 @@
   "rackViewPhoto": "Fotoweergave",
   "bulkSelectMode": "Selecteren",
   "bulkDelete": "Verwijderen",
+  "catBulkTooMany": "Rustig aan — maximaal {{n}} tegelijk. Verfijn de zoekopdracht wat.",
+  "bulkSelectedCount": {
+    "one": "{{n}} gekozen",
+    "other": "{{n}} gekozen"
+  },
   "bulkTags": "Tags",
   "bulkFavorite": "Favoriet",
   "bulkLike": "Te bestellen",

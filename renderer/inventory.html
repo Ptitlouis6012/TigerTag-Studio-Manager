@@ -433,6 +433,8 @@
       <!-- Floating bulk-action bar — appears in multi-select mode once ≥1 spool
            is selected. Delete is a press-and-hold (hard delete, irreversible). -->
       <div id="bulkBar" class="bulk-bar hidden">
+        <!-- Catalogue only: no Delete button carries the count there, so say it. -->
+        <span id="bulkSelCount" class="bulk-sel-count"></span>
         <!-- ★ Favorite / ❤ Love (materials selection): same icon+text buttons as the
              others, but TOGGLES — filled icon + tinted when the whole selection
              already carries the flag, outline otherwise; a click adds OR removes it
@@ -445,6 +447,11 @@
         <button id="bulkFavorite" class="bulk-btn bulk-flag bulk-flag--like" type="button" aria-pressed="false">
           <span class="icon icon-star icon-13"></span>
           <span data-i18n="bulkFavorite">Favorite</span>
+        </button>
+        <!-- Add the selection to a list (materials, favorites table, catalogue). -->
+        <button id="bulkList" class="bulk-btn" type="button">
+          <span class="icon icon-list-check icon-13"></span>
+          <span data-i18n="listAddTo">Add to a list</span>
         </button>
         <button id="bulkTags" class="bulk-btn" type="button">
           <span class="icon icon-edit icon-13"></span>
