@@ -1,4 +1,4 @@
-# Worklog — v2.32.2 (in progress)
+# Worklog — v2.33.0 (released 2026-10-03)
 
 ## Added
 - Tag index / tag count (TigerTag protocol v2.2, chip byte +39: high nibble = chip i, low nibble = n chips) — `main.js`, `preload.js`, `renderer/inventory.js`, `renderer/rfid_protocol/tigertag/parser.js`, `renderer/rfid_protocol/tigertag/index.js`, `package.json`, `package-lock.json`

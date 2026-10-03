@@ -9687,5 +9687,126 @@
         }
       }
     ]
+  },
+  "2.33.0": {
+    "date": "2026-10-03",
+    "items": [
+      {
+        "icon": "link",
+        "title": {
+          "en": "Twin chips, reunited",
+          "fr": "Puces jumelles, enfin réunies",
+          "de": "Zwillingschips, wiedervereint",
+          "es": "Chips gemelos, reunidos",
+          "it": "Chip gemelli, finalmente insieme",
+          "zh": "双胞胎芯片，终于团聚",
+          "pt": "Chips gêmeos, reunidos",
+          "pt-pt": "Chips gémeos, reunidos",
+          "pl": "Bliźniacze chipy znów razem",
+          "ru": "Чипы-близнецы снова вместе",
+          "nl": "Tweelingchips, herenigd"
+        },
+        "body": {
+          "en": "A spool with two chips now knows it. Scan one, and if its other half is missing, the card nudges you to pop it on the reader.",
+          "fr": "Une bobine à deux puces le sait désormais. Scanne-en une : si sa moitié manque à l'appel, la fiche te demande gentiment de la poser sur le lecteur.",
+          "de": "Eine Spule mit zwei Chips weiß das jetzt. Scanne einen – fehlt die andere Hälfte, erinnert dich die Karte daran, sie auf den Leser zu legen.",
+          "es": "Una bobina con dos chips ahora lo sabe. Escanea uno y, si falta su otra mitad, la ficha te pide que la pongas en el lector.",
+          "it": "Una bobina con due chip ora lo sa. Scansionane uno e, se manca l'altra metà, la scheda ti chiede di appoggiarla sul lettore.",
+          "zh": "带两枚芯片的料卷现在心里有数了。扫一枚，如果另一半不在，卡片会提醒你把它放到读卡器上。",
+          "pt": "Um carretel com dois chips agora sabe disso. Escaneie um e, se a outra metade estiver faltando, o card pede para você colocá-la no leitor.",
+          "pt-pt": "Uma bobina com dois chips agora sabe disso. Lê um e, se a outra metade faltar, a ficha pede-te para a pores no leitor.",
+          "pl": "Szpula z dwoma chipami już o tym wie. Zeskanuj jeden, a jeśli brakuje drugiej połówki, karta poprosi, żebyś położył ją na czytniku.",
+          "ru": "Катушка с двумя чипами теперь об этом знает. Отсканируйте один — если второй половинки нет, карточка попросит положить её на считыватель.",
+          "nl": "Een spoel met twee chips weet dat nu. Scan er één, en als de andere helft ontbreekt, vraagt de kaart je die op de lezer te leggen."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Snapmaker U1: the camera, no mod required",
+          "fr": "Snapmaker U1 : la caméra, sans bidouille",
+          "de": "Snapmaker U1: Kamera ohne Mod",
+          "es": "Snapmaker U1: la cámara, sin trucos",
+          "it": "Snapmaker U1: la fotocamera, senza mod",
+          "zh": "Snapmaker U1：无需改机也能看摄像头",
+          "pt": "Snapmaker U1: a câmera, sem gambiarra",
+          "pt-pt": "Snapmaker U1: a câmara, sem truques",
+          "pl": "Snapmaker U1: kamera bez modyfikacji",
+          "ru": "Snapmaker U1: камера без прошивок-модов",
+          "nl": "Snapmaker U1: camera zonder mod"
+        },
+        "body": {
+          "en": "Original firmware? The U1 camera shows up anyway — about one picture a second, enough to keep an eye on your print. Paxx owners keep their smooth live video.",
+          "fr": "Firmware d'origine ? La caméra de la U1 s'affiche quand même — environ une image par seconde, assez pour garder un œil sur ton impression. Avec Paxx, le direct fluide ne change pas.",
+          "de": "Original-Firmware? Die U1-Kamera erscheint trotzdem – etwa ein Bild pro Sekunde, genug, um deinen Druck im Blick zu behalten. Mit Paxx bleibt das flüssige Livebild.",
+          "es": "¿Firmware original? La cámara de la U1 aparece igualmente: una imagen por segundo, suficiente para vigilar tu impresión. Con Paxx, el vídeo fluido sigue igual.",
+          "it": "Firmware originale? La fotocamera della U1 compare comunque: circa un'immagine al secondo, abbastanza per tenere d'occhio la stampa. Con Paxx il live fluido resta com'è.",
+          "zh": "原厂固件？U1 的摄像头照样能看——大约每秒一张图，盯着打印足够了。用 Paxx 的朋友依旧享受流畅直播。",
+          "pt": "Firmware original? A câmera da U1 aparece mesmo assim — cerca de uma imagem por segundo, o bastante para ficar de olho na impressão. Com Paxx, o vídeo fluido continua igual.",
+          "pt-pt": "Firmware de origem? A câmara da U1 aparece na mesma — cerca de uma imagem por segundo, o suficiente para vigiar a impressão. Com Paxx, o vídeo fluido fica igual.",
+          "pl": "Oryginalny firmware? Kamera U1 i tak się pokaże — mniej więcej jedno zdjęcie na sekundę, wystarczy, by mieć wydruk na oku. Z Paxx płynny podgląd zostaje bez zmian.",
+          "ru": "Родная прошивка? Камера U1 всё равно покажется — примерно кадр в секунду, этого хватит, чтобы приглядывать за печатью. С Paxx плавное видео остаётся как было.",
+          "nl": "Originele firmware? De U1-camera verschijnt toch — ongeveer één beeld per seconde, genoeg om je print in de gaten te houden. Met Paxx blijft het vloeiende livebeeld gewoon."
+        }
+      },
+      {
+        "icon": "trash",
+        "title": {
+          "en": "Favourites you can actually let go of",
+          "fr": "Des favoris qu'on peut vraiment lâcher",
+          "de": "Favoriten, die man wirklich loswird",
+          "es": "Favoritos que por fin se dejan borrar",
+          "it": "Preferiti che finalmente se ne vanno",
+          "zh": "收藏终于能删掉了",
+          "pt": "Favoritos que finalmente saem",
+          "pt-pt": "Favoritos que finalmente saem",
+          "pl": "Ulubione, które wreszcie odchodzą",
+          "ru": "Избранное, с которым можно расстаться",
+          "nl": "Favorieten die je echt kwijt kunt"
+        },
+        "body": {
+          "en": "Deleting favourites in bulk used to politely refuse. Now they leave when asked.",
+          "fr": "Supprimer des favoris en lot refusait poliment. Désormais, ils partent quand on le leur demande.",
+          "de": "Favoriten gesammelt löschen hat sich bisher höflich geweigert. Jetzt gehen sie, wenn man sie darum bittet.",
+          "es": "Borrar favoritos en bloque se negaba educadamente. Ahora se van cuando se lo pides.",
+          "it": "Eliminare i preferiti in blocco rifiutava gentilmente. Ora se ne vanno quando glielo chiedi.",
+          "zh": "批量删除收藏以前总是礼貌地拒绝。现在你一开口，它们就乖乖离开。",
+          "pt": "Excluir favoritos em lote recusava educadamente. Agora eles vão embora quando você pede.",
+          "pt-pt": "Apagar favoritos em lote recusava educadamente. Agora vão-se embora quando lhes pedes.",
+          "pl": "Masowe usuwanie ulubionych grzecznie odmawiało. Teraz znikają, kiedy o to poprosisz.",
+          "ru": "Массовое удаление избранного вежливо отказывалось работать. Теперь оно уходит, когда просят.",
+          "nl": "Favorieten in één keer verwijderen weigerde beleefd. Nu vertrekken ze als je het vraagt."
+        }
+      },
+      {
+        "icon": "star",
+        "title": {
+          "en": "A calmer catalogue",
+          "fr": "Un catalogue plus zen",
+          "de": "Ein ruhigerer Katalog",
+          "es": "Un catálogo más tranquilo",
+          "it": "Un catalogo più tranquillo",
+          "zh": "更安静的目录",
+          "pt": "Um catálogo mais tranquilo",
+          "pt-pt": "Um catálogo mais calmo",
+          "pl": "Spokojniejszy katalog",
+          "ru": "Каталог поспокойнее",
+          "nl": "Een rustigere catalogus"
+        },
+        "body": {
+          "en": "Starring a product in the catalogue no longer makes the whole grid blink twice. Just the star lights up.",
+          "fr": "Mettre un produit en favori dans le catalogue ne fait plus clignoter toute la grille deux fois. Seule l'étoile s'allume.",
+          "de": "Ein Produkt im Katalog zu favorisieren lässt nicht mehr das ganze Raster zweimal blinken. Nur der Stern leuchtet auf.",
+          "es": "Marcar un producto como favorito en el catálogo ya no hace parpadear toda la cuadrícula dos veces. Solo se enciende la estrella.",
+          "it": "Aggiungere un prodotto ai preferiti nel catalogo non fa più lampeggiare tutta la griglia due volte. Si accende solo la stella.",
+          "zh": "在目录里收藏商品，整个网格不会再闪两下了。只有那颗星星会亮。",
+          "pt": "Favoritar um produto no catálogo não faz mais a grade inteira piscar duas vezes. Só a estrela acende.",
+          "pt-pt": "Marcar um produto como favorito no catálogo já não faz a grelha inteira piscar duas vezes. Só a estrela acende.",
+          "pl": "Dodanie produktu do ulubionych w katalogu nie sprawia już, że cała siatka mruga dwa razy. Zapala się tylko gwiazdka.",
+          "ru": "Добавление товара в избранное больше не заставляет всю сетку мигать дважды. Загорается только звёздочка.",
+          "nl": "Een product als favoriet markeren laat niet meer het hele raster twee keer knipperen. Alleen het sterretje licht op."
+        }
+      }
+    ]
   }
 }

@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.32.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.33.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -75,7 +75,8 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
                                studioLastSeen }
   /inventory/{spoolId}     → { uid, id_brand, id_material, color_name, online_color_list,
                                weight_available, container_weight, container_id, capacity,
-                               updatedAt, deleted, twin_uid }
+                               updatedAt, deleted, twin_tag_uid,
+                               tag_index, tag_count }   ← chip i of n (byte +39, protocol v2.2; 0 = unknown)
   /telemetry/studio        → { sessionsCount, versionsUsed[], platformsUsed[], lastSeen,
                                td1sUsed, rfidReadersMax }
   /friends/{friendUid}     → { displayName, addedAt, key }

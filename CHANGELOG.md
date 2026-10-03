@@ -5,6 +5,38 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.33.0 — 2026-10-03
+
+### Added
+
+- **Tag index / tag count (TigerTag protocol v2.2).** Chip byte +39 (page 0x0D, byte 3 — formerly padding) carries *chip i of n*: high nibble = index from 1, low nibble = count (`0x11` single, `0x12` / `0x22` twin, `0x00` unknown = every pre-v2.2 chip). Not covered by the TigerTag+ ECDSA signature (UID + pages 4-5), so it never invalidates a signed chip.
+  - SDK `tigertag` 1.1.0 → ^1.2.0, forced offline in the main process (`process.env.TIGERTAG_OFFLINE = '1'` before the require): Studio only encodes/decodes bytes and has its own reference-data service, so no daily `api.tigertag.io` check and no OS-cache writes from the SDK's `TigerTagDB`.
+  - **Burn**: the guided encode (`_cemStartBurn`) passes `tagCount` = chips in the sequence and `tagIndex` = rank (1..n) to `rfid:burn-one`, which patches them with the shared timestamp; `_cemMigrate` records `tag_index` / `tag_count` on the new docs.
+  - **Re-writes keep the chip's byte**: `_keepChipTimestamp` → `_keepChipIdentity` overlays the chip's own bytes 32-35 (timestamp) **and 39** before the surgical page diff in `rfid:write-now` and `rfid:encode-cloud` — fromCloudDoc does not carry `tag_info`, so a factory twin used to lose its `0x12`/`0x22` on the first weight or colour sync. Without a readable chip, a full write falls back to the doc's `tag_index` / `tag_count` (`_tagInfoPatch`, nibble-clamped).
+  - **Read / storage**: `_writeChipDoc` unpacks the SDK's `tag_info` into `tag_index` / `tag_count` on `users/{uid}/inventory/{UID}` on every scan (0 / 0 = unknown); `normalizeRow` exposes `tagIndex` / `tagCount` (null on chipless docs). No rules change (inventory is owner-write, no field whitelist).
+  - **Pairing**: `_tagInfoAllowsTwin` rules out a twin the byte contradicts — a chip marked single, mismatched counts, the same rank twice — in both the 2-reader scan and `autoLinkTwinsByTimestamp` (two factory singles of one product burned within 2 s were otherwise paired); unknown values never block.
+  - **UI**: spool card Details row *Chip i of n*; a *twin still missing* banner (`#twinMissingBanner`) when `tag_count` ≥ 2 and the partner was never scanned (it pairs on the shared timestamp once scanned); RFID tester shows *Tag i of n* (`parser.js` decodes offset 39).
+  - **`.ttag`**: exported with the verbatim doc; `_ttagSanitizeRecord` keeps them when 0-15 and drops them on a chipless record or an out-of-range value; listed as on-chip optional fields in `docs/TTAG-FIELDS.md` and `playground/ttag-fields-editor`; added to `TTAG_ON_CHIP_FIELDS`. `CHIP_ONLY_FIELDS` now includes them, so a duplicated (chipless) spool never inherits *chip 1 of 2*.
+  - Docs: `docs/firestore-schema.md`, MCP data guide, backend `README.md`. Verified on real chips (TigerPOD, 2 readers): burn single `0x11`, twin `0x12`/`0x22` with one timestamp, only pages 0x0C/0x0D changed, identity + signature pages intact; weight sync 1000→950→1000 g wrote only page 0x17 and kept byte +39 + timestamp.
+- **Snapmaker U1 camera on the stock firmware.** On connect Studio asks `server.webcams.list` (`camMode` on the conn): a declared webcam (Paxx) or an error keeps the WebRTC player (`/webcam/webrtc`); none (stock — nginx `/webcam/` answers 502) switches to refreshed stills: `camera.start_monitor` `{domain:"lan", interval:0}` every 10 s over the existing Moonraker socket (`snapWakeStockCamera`), and `/server/files/camera/monitor.jpg` (1920×1080, ~100 KB) fetched `no-store` into Blob URLs at ~1 fps, swapped only once downloaded, previous URL revoked. One loop per printer feeds every surface (side card, camera wall, printer card); it stops 12 s after the last feed leaves the screen, so the wake-ups stop and the camera idles. A `camera.start_monitor` error hides the camera block. Works outside the printer's LAN-only mode. Documented in `PROTOCOL.md` §11.4 — `printers/snapmaker/widget_camera.js`, `printers/snapmaker/index.js`, `inventory.js` (`#ppPersistentCam` rebuilt on IP **or** mode change, `snapCamSig`).
+
+### Changed
+
+- TigerScale photo is the V3 hardware render (README, scale card, empty state) — contributed in PR #34; the shipped copy is trimmed, resized to 512² and palettised (1.38 MB → 78 KB), full-res master archived in `assets-src/`.
+
+### Fixed
+
+- **Deleting favorites (bulk Delete) always failed with "permission denied"** since v2.12.0: the `products` rule read `request.resource.data` (attachment cap) in a single `allow write`, which errors on a delete. Split into `allow create, update` (cap kept) + `allow delete: if isOwner()` — backend `firestore.rules`, deployed server-side (effective for every version).
+- **Catalogue grid flickered twice on a ★/❤ toggle.** The optimistic render + the product snapshot(s) each rebuilt every card (60 photos re-inserted, chunks scrolled into view dropped). `_catViewSearch` now skips the rebuild when the result list, view mode, language and index are unchanged (`_catViewRenderedSig` / `_catViewRenderedIndex`) and patches only the cards whose product badge moved (`data-pb`, `_catViewPatchBadges`); the product card keeps its photo node across re-renders.
+- **Printer side card**: the body had become a second scroller (generic `.panel-body` overflow), so the Snapmaker camera — kept outside it to survive re-renders — stayed pinned while the rest scrolled. `.pp-scroll` is now the only scroller (camera + body, scrollbar hidden) — `40-printers.css`.
+- Security: `js-yaml` 4.3.1 → 4.3.2 (CVE-2026-84375 / GHSA-2883-xcg3-v3hh, YAML merge-key DoS), transitive via `electron-updater`.
+
+### i18n
+
+- Added `detTagIndex`, `detTagIndexVal`, `twinMissingHint` (11 locales).
+
+---
+
 ## v2.32.1 — 2026-09-29
 
 ### Fixed

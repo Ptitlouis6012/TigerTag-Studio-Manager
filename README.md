@@ -120,7 +120,7 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Spools that keep themselves current** *(new in 2.16.0)* — when a brand corrects a temperature, a diameter or a colour name, the spools you own follow along on their own. Only a TigerTag+ can ever ask you for anything, and only when the change concerns something written on the chip itself
 - **Photos framed in the spool's colour** *(new in 2.30.0)* — every spool photo sits in a frame of its own colour, in the grid, the lists, the catalogue and the details, so you spot the red one at a glance
 - Custom product image for DIY & Cloud spools
-- Manufacturing date, twin-tag detection and manual repair
+- Manufacturing date, twin-tag detection and manual repair — chips written as a twin say so ("chip 1 of 2"), and the app asks for the second chip when only one has been scanned
 - Spool toolbox — scan color (TD1S), scan TD, link twin, remove from rack, delete
 - **One action row on every card** — the product card, the spool detail and the stack of identical spools all offer the same buttons, including a shopping button that opens the shop when the filament has a buy link (and takes you to where you'd add one when it hasn't)
 - **Multi-select** — tick several spools (or printers) and delete them together, with a hold-to-confirm
@@ -144,6 +144,8 @@ Every brand at a glance:
 | **Snapmaker** | Moonraker WebSocket 7125 | ✅ Live |
 
 Each brand supports: filament edit per slot, printer discovery (mDNS + port-scan + Add by IP), camera widget. When a scan finds several machines, **tick the ones you want and add them all in one go**. A **FlashForge Creator 5 / 5 Pro** tells you whether it runs the official Cloud + LAN firmware and hands you the latest version for your model *(new in 2.30.0)*.
+
+The **Snapmaker U1** shows its camera even on the original Snapmaker firmware (about one picture a second, enough to watch a print); with the Paxx extended firmware it is smooth live video *(new in 2.33.0)*.
 
 The **printers table** shows, per printer: a live **print preview** (the model on the bed), the current job, and an **"Ends at"** column with the wall-clock finish time — plus per-printer **tags** and a search bar with **Brand / State / Tags** filters to manage a whole fleet.
 

@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.32.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.33.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -214,6 +214,7 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - True fullscreen for a single camera via the Fullscreen API — fills the screen rather than the app window, and never recreates the card, so the live stream survives (v1.7.2 as a window-filling card, real fullscreen v2.25.0).
 - Shared MJPEG multiplexer (`cam_manager.js`) — one upstream connection serves every consumer (sidecard + cam wall) simultaneously, respecting single-client firmware limits (v1.7.2; FlashForge-specific precursor v1.7.1).
 - Creality single shared `RTCPeerConnection` across every surface that shows its camera (v1.8.2).
+- **Snapmaker U1 camera on the stock firmware** — no Paxx needed: the printer's own monitor is woken over Moonraker and shown as 1080p stills at ~1 fps on every surface (side card, camera wall, cards); Paxx keeps its WebRTC live video (v2.33.0).
 
 ## Sensors & devices
 
@@ -232,6 +233,7 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - Physical-chip backup — TigerTag+ signature saved on first read, enabling later restore; "Backed up" badge (v1.10.28, badge v1.10.29).
 - Product ID surfaced from the chip with a link to the product catalogue page (v1.10.29).
 - Terminology unification: all user-facing "RFID" strings renamed to "NFC" (v2.5.0).
+- **Tag index / tag count** (TigerTag protocol v2.2) — every chip says which one of its object it is ("chip 1 of 2"): written by the guided encode (single `0x11`, twin `0x12`/`0x22`), kept intact through weight and colour syncs, stored on each spool on scan, shown on the spool card, carried in `.ttag`; a twin whose partner was never scanned gets a "scan the other chip" banner, and two chips that say they are singles are never paired as a twin (v2.33.0).
 
 ## "What's New" & release UX
 
