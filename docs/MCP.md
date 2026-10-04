@@ -26,7 +26,8 @@ Studio is an **HTTP server on this computer**, and ships a tiny **stdio bridge**
 clients that only launch subprocesses.
 
 **Local means local.** ChatGPT, and Claude on the web or mobile, call tools *from their own
-cloud*; they cannot reach `127.0.0.1`. Serving them needs a hosted connector (see §9).
+cloud*; they cannot reach `127.0.0.1`. They use the **hosted connector** instead —
+`https://mcp.tigersystem.io/mcp`, shipped 2026-10-05 (see §9).
 
 ---
 
@@ -240,9 +241,15 @@ curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOK" \
 
 ## 9. Roadmap (see `ROADMAP.md`)
 
-1. **Hosted TigerTag connector** — a remote MCP server on the backend with OAuth sign-in on
-   the TigerTag account, reading Firestore directly: the only way to reach **ChatGPT** and
-   Claude web / mobile; works without Studio running (live printer state stays Studio-only).
+1. ~~**Hosted TigerTag connector**~~ — **shipped 2026-10-05** at `https://mcp.tigersystem.io/mcp`,
+   served by the Tiger Hub (repo TigerTag-Hub, `docs/MCP-HOSTED.md`). OAuth 2.1 sign-in on the
+   TigerTag account, reads Firestore **as the user** (their ID token, so the rules apply),
+   same 14 tools / schemas / outputs as this server — **the two must change together**
+   (Hub `lib/mcp/schemas.ts` + `lib/mcp/guide.ts` mirror `MCP_TOOLS` + `MCP_DATA_GUIDE`).
+   Works without Studio running; live printer state stays Studio-only. Users see and revoke
+   connected assistants on tigersystem.io → account → Data. Open alignment: the hosted
+   server returns the user's own printer credentials unmasked (founder decision
+   2026-10-04) — this server still masks them.
 2. **Writes behind a confirmation** — set a weight, place a spool: each call raises an
    in-app prompt; nothing is written silently. Mark such tools `readOnlyHint: false`,
    `destructiveHint` where relevant.
