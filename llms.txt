@@ -261,7 +261,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), filament edit per 
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1544 keys × 11 locales as of v2.31.0
+1577 keys × 11 locales as of v2.33.1
 
 ## CSS conventions
 

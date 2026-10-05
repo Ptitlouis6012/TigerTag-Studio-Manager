@@ -952,6 +952,29 @@
   "scaleStatusOnline": "在线",
   "scaleStatusOffline": "离线",
   "scaleStatusStandby": "待机",
+  "tigerspoolPrinterUnknown": "未知：TigerSpool 离线，或其固件尚不报告打印机状态",
+  "tigerspoolPrinterDown": "此 TigerSpool 目前无法连接该打印机",
+  "tigerspoolPrinterUp": "此 TigerSpool 检测到该打印机在线",
+  "tigerspoolRemove": "长按将此 TigerSpool 从账户中移除（请先关机，否则它会重新登录）",
+  "tigerspoolHealthNone": "还没有 TigerSpool — 点击了解",
+  "tigerspoolPrintersTitle": {
+    "one": "已启用的打印机（{{n}}）",
+    "other": "已启用的打印机（{{n}}）"
+  },
+  "tigerspoolPrinterMissing": "该打印机已不在 Tiger Studio 中",
+  "tigerspoolNoPrinters": "这个盒子上还没有启用打印机 — 在它的屏幕上选择。",
+  "tigerspoolPitch": "放在打印机旁边的小盒子。在屏幕上选一个料槽，把料盘贴上去 — 耗材信息就进入那个料槽。无需重新输入。",
+  "tigerspoolPointBrands": "支持 Bambu Lab、Creality、Elegoo、FlashForge、Snapmaker 和 Anycubic — 列表中最多 24 台打印机。",
+  "tigerspoolPointAccount": "它直接读取你 Tiger Studio 账户里的打印机：无需重复设置。",
+  "tigerspoolPointOpen": "开源：一块 ESP32-S3、一个 NFC 读卡器和一个 3D 打印外壳。",
+  "tigerspoolBuildTitle": "自己动手做一个",
+  "tigerspoolBuildText": "常见零件、一个打印外壳，固件在浏览器里一键安装。连上你的 Wi-Fi 并关联账户后，它会自动出现在这里。",
+  "tigerspoolGuideBtn": "如何制作",
+  "tigerspoolInstallBtn": "在浏览器中安装",
+  "tigerspoolPrinters": {
+    "one": "{{n}} 台打印机",
+    "other": "{{n}} 台打印机"
+  },
   "scaleChipPower": "电源",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "电池",
@@ -1652,5 +1675,6 @@
   "eacMcpGrantUsed": "最近使用：{{ago}}",
   "eacMcpGrantUnnamed": "一位神秘助手",
   "eacMcpGrantCut": "切断访问",
-  "eacMcpGrantCutTip": "这个助手将不再读取你的账户。之后随时可以重新连接。"
+  "eacMcpGrantCutTip": "这个助手将不再读取你的账户。之后随时可以重新连接。",
+  "printerRefound": "{{name}} 搬到了 {{ip}} — 已找到并重新连接。"
 }

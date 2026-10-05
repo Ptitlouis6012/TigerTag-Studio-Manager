@@ -952,6 +952,29 @@
   "scaleStatusOnline": "online",
   "scaleStatusOffline": "offline",
   "scaleStatusStandby": "standby",
+  "tigerspoolPrinterUnknown": "Unknown: the TigerSpool is offline, or its firmware does not report printer status yet",
+  "tigerspoolPrinterDown": "This TigerSpool cannot reach this printer right now",
+  "tigerspoolPrinterUp": "This TigerSpool sees this printer online",
+  "tigerspoolRemove": "Hold to remove this TigerSpool from your account (switch it off first, or it signs back in)",
+  "tigerspoolHealthNone": "No TigerSpool yet — click to discover it",
+  "tigerspoolPrintersTitle": {
+    "one": "Active printer ({{n}})",
+    "other": "Active printers ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Printer no longer in Tiger Studio",
+  "tigerspoolNoPrinters": "No printer active on this box yet — pick them on its screen.",
+  "tigerspoolPitch": "A small box beside your printers. Pick a slot on its screen, hold a spool against it — the filament lands in that slot. Nothing to retype.",
+  "tigerspoolPointBrands": "Works with Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker and Anycubic — up to 24 printers in its list.",
+  "tigerspoolPointAccount": "It reads your printers from your Tiger Studio account: nothing to set up twice.",
+  "tigerspoolPointOpen": "Open source: an ESP32-S3, an NFC reader and a 3D-printed case.",
+  "tigerspoolBuildTitle": "Build yours",
+  "tigerspoolBuildText": "Common parts, a printed case, and the firmware installs from your browser in one click. Once it's on your Wi-Fi and linked to your account, it shows up right here on its own.",
+  "tigerspoolGuideBtn": "How to build it",
+  "tigerspoolInstallBtn": "Install from your browser",
+  "tigerspoolPrinters": {
+    "one": "{{n}} printer",
+    "other": "{{n}} printers"
+  },
   "scaleChipPower": "Power",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Battery",
@@ -1652,5 +1675,6 @@
   "eacMcpGrantUsed": "last used {{ago}}",
   "eacMcpGrantUnnamed": "A mystery assistant",
   "eacMcpGrantCut": "Cut access",
-  "eacMcpGrantCutTip": "This assistant stops reading your account. You can always connect it again."
+  "eacMcpGrantCutTip": "This assistant stops reading your account. You can always connect it again.",
+  "printerRefound": "{{name}} moved to {{ip}} — tracked it down and reconnected."
 }

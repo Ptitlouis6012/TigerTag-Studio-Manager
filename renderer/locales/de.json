@@ -952,6 +952,29 @@
   "scaleStatusOnline": "Verbunden",
   "scaleStatusOffline": "Getrennt",
   "scaleStatusStandby": "Bereitschaft",
+  "tigerspoolPrinterUnknown": "Unbekannt: Der TigerSpool ist offline oder seine Firmware meldet den Druckerstatus noch nicht",
+  "tigerspoolPrinterDown": "Dieser TigerSpool erreicht diesen Drucker gerade nicht",
+  "tigerspoolPrinterUp": "Dieser TigerSpool sieht diesen Drucker online",
+  "tigerspoolRemove": "Gedrückt halten, um diesen TigerSpool aus deinem Konto zu entfernen (vorher ausschalten, sonst meldet er sich wieder an)",
+  "tigerspoolHealthNone": "Noch kein TigerSpool — klicken zum Entdecken",
+  "tigerspoolPrintersTitle": {
+    "one": "Aktiver Drucker ({{n}})",
+    "other": "Aktive Drucker ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Drucker nicht mehr in Tiger Studio",
+  "tigerspoolNoPrinters": "Noch kein Drucker auf dieser Box aktiv — wähle sie auf ihrem Display aus.",
+  "tigerspoolPitch": "Eine kleine Box neben deinen Druckern. Wähle einen Slot auf ihrem Display, halte eine Spule dagegen — das Filament landet in diesem Slot. Nichts abzutippen.",
+  "tigerspoolPointBrands": "Funktioniert mit Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker und Anycubic — bis zu 24 Drucker in der Liste.",
+  "tigerspoolPointAccount": "Es übernimmt deine Drucker aus deinem Tiger-Studio-Konto: nichts doppelt einzurichten.",
+  "tigerspoolPointOpen": "Open Source: ein ESP32-S3, ein NFC-Leser und ein 3D-gedrucktes Gehäuse.",
+  "tigerspoolBuildTitle": "Bau dir deinen",
+  "tigerspoolBuildText": "Gängige Teile, ein gedrucktes Gehäuse, und die Firmware installiert sich mit einem Klick aus dem Browser. Sobald es in deinem WLAN und mit deinem Konto verbunden ist, erscheint es hier von selbst.",
+  "tigerspoolGuideBtn": "So baust du es",
+  "tigerspoolInstallBtn": "Im Browser installieren",
+  "tigerspoolPrinters": {
+    "one": "{{n}} Drucker",
+    "other": "{{n}} Drucker"
+  },
   "scaleChipPower": "Strom",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Akku",
@@ -1652,5 +1675,6 @@
   "eacMcpGrantUsed": "zuletzt genutzt {{ago}}",
   "eacMcpGrantUnnamed": "Ein mysteriöser Assistent",
   "eacMcpGrantCut": "Zugang kappen",
-  "eacMcpGrantCutTip": "Dieser Assistent liest dein Konto nicht mehr. Du kannst ihn jederzeit neu verbinden."
+  "eacMcpGrantCutTip": "Dieser Assistent liest dein Konto nicht mehr. Du kannst ihn jederzeit neu verbinden.",
+  "printerRefound": "{{name}} ist nach {{ip}} umgezogen — aufgespürt und neu verbunden."
 }

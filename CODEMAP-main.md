@@ -99,7 +99,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | L | What | IPC |
 |---|---|---|
 | 2663-2717 | Image disk cache (`img:get`) | — |
-| 2718-2808 | LAN /24 subnet list (`net:get-local-subnets`), mDNS Snapmaker browse (`mdns:browse-snapmaker`) | — |
+| 2718-2808 | LAN /24 subnet list (`net:get-local-subnets`), MAC behind a LAN IP from the OS ARP cache, directly attached subnets only (`net:arp-mac`), mDNS Snapmaker browse (`mdns:browse-snapmaker`) | — |
 | 2808-2818 | App/platform info for diagnostics (`app:info`, `app:renderer-path`); TigerTag DB lookups (`db:*`) | — |
 
 ## Elegoo MQTT bridge + timelapse + ffmpeg (L2819-2955)
@@ -118,7 +118,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 3466-3555 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
 | 3556-3673 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
 
-## Bambu Lab cloud — REST + shared cloud MQTT (L3674-4281)
+## Bambu Lab cloud — REST + shared cloud MQTT (L3674-4220)
 
 | L | What | Anchors / IPC |
 |---|---|---|

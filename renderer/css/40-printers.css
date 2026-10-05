@@ -586,7 +586,7 @@
     overflow: hidden; margin-bottom: 6px;
   }
   .printer-card-job-bar span {
-    display: block; height: 100%; background: var(--primary);
+    display: block; height: 100%; background: var(--info);
     border-radius: 2px; transition: width .4s;
   }
   .printer-card-job-info {
@@ -2877,7 +2877,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pt-td--eta { font-weight: 600; }
 .pt-job-bar { height: 4px; background: var(--border); border-radius: 2px;
               overflow: hidden; margin-bottom: 4px; }
-.pt-job-bar span { display: block; height: 100%; background: var(--primary);
+.pt-job-bar span { display: block; height: 100%; background: var(--info);
                    border-radius: 2px; transition: width .4s; }
 .pt-job-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .pt-job-pct   { font-size: 11px; color: var(--muted); }
@@ -3071,7 +3071,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
     height: 5px; border-radius: 999px; overflow: hidden;
     background: var(--surface-3); flex: none;
   }
-  .job-card-bar > span { display: block; height: 100%; background: var(--primary); border-radius: 999px; }
+  .job-card-bar > span { display: block; height: 100%; background: var(--info); border-radius: 999px; }
   .job-card-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .job-card-time { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
   .job-card-val  { font-size: 12px; font-weight: 600; color: var(--text); white-space: nowrap; }
@@ -3311,3 +3311,15 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
      held card is lifted to the front deliberately, and the guides have to clear
      THAT — a guide hidden behind the thing it is guiding explains nothing. */
   .cam-wall--plan .rp-plan-guides { z-index: 9500; }
+
+/* ── Print progress fill — one colour rule for every job bar ────────────────
+   (table, printer cards, board, dashboard widget, each brand's side card).
+   Blue while printing; green at 100 % when done; red when the job failed and
+   grey when it was cancelled — both frozen at the % the bar had while it was
+   still blue (renderer/printers/job-bar.js). One flat colour, no gradient. */
+.job-fill { transition: width .4s, background-color .3s; }
+.job-fill.job-fill--run,
+.job-fill.job-fill--idle { background: var(--info); }
+.job-fill.job-fill--done { background: var(--success); }
+.job-fill.job-fill--fail { background: var(--danger); }
+.job-fill.job-fill--stop { background: var(--muted); }

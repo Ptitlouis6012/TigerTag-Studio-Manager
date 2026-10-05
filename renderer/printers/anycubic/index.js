@@ -28,6 +28,7 @@
  * Self-registers into the brands registry at module evaluation time.
  */
 import { ctx } from '../context.js';
+import { ensurePrinterIdentity } from '../identity.js';
 import { registerBrand } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
 import { renderAcuFilamentCard, renderAcuJobCard, renderAcuTempCard, renderAcuControlCard } from './cards.js';
@@ -1071,6 +1072,8 @@ if (typeof window !== "undefined" && window.anycubic) {
       conn.status = status;
       conn.brokerUp = false;
       if (String(status).startsWith("error:")) conn.lastError = String(status).slice(6);
+      // Still down in a while → maybe a new DHCP lease (LAN only — this is the LAN handler).
+      if (status !== "connecting" && conn.mode !== "cloud") ctx.requestPrinterRefind?.("anycubic", key, { afterStillDown: true });
     }
     const isOnline = conn.status === "connected";
     _acuNotify(conn, /*statusChanged*/ wasOnline !== isOnline);
@@ -1087,6 +1090,7 @@ if (typeof window !== "undefined" && window.anycubic) {
       conn.lastError = null;
       _acuNotify(conn, /*statusChanged*/ true);
       _acuRefreshOnlineUI(key);
+      ensurePrinterIdentity("anycubic", key, conn.ip);   // so a re-find can match it after an IP change
     }
     _acuMerge(conn, data);
   });

@@ -77,6 +77,14 @@ export const ctx = {
   // A cloud printer's LAN access code, and its address once telemetry reveals it.
   getBambuDeviceSecret:  async (_devId) => null,
   saveBambuLanAddress:   async (_printer, _ip) => {},
+  // Write one field on a printer doc (users/{uid}/printers/{brand}/devices/{id}).
+  // Used by identity.js to store a printer's stable LAN identifier.
+  savePrinterField:      async (_brand, _id, _field, _value) => {},
+  // Re-find after an IP change (printers/refind.js) + what it needs back.
+  requestPrinterRefind:  (_brand, _key, _opts) => {},
+  isPrinterOnline:       (_printer) => false,
+  reconnectPrinter:      (_printer) => {},
+  onPrinterRefound:      (_printer, _oldIp, _newIp) => {},
   saveBambuAccessCode:   async (_printer, _code) => {},
   // Persist a printer's resolved model id (printerModelId) to Firestore.
   // Used by brand drivers to auto-correct the model after the first

@@ -1,0 +1,139 @@
+/**
+ * renderer/IoT/tigerspool/tigerspool.css
+ *
+ * TigerSpool header glyph, right of the TigerScale one. The container carries
+ * `.scale-health`, so the hover popover (.scale-health-pop, .shp-*) and the
+ * battery badge (.scale-health-batt) come from tigerscale.css unchanged — the
+ * header's device hovers read as one family. Only the glyph is defined here.
+ *
+ * Colours per box: green active · blue standby (screen off) · red offline.
+ * Grey and faded while the account has no TigerSpool — still clickable.
+ */
+.tsp-glyphs { display: inline-flex; align-items: center; gap: 2px; }
+.tsp-glyph  { position: relative; display: inline-flex; align-items: center; }
+.tsp-icon {
+  display: inline-block;
+  /* The artwork is 229 × 221: a 44 px box with 34 px of ink, like its neighbours. */
+  height: 44px; aspect-ratio: 229.45 / 220.92;
+  background-color: var(--neutral);
+  -webkit-mask-image: url('../../../assets/svg/icons/icon_tigerspool_3d.svg');
+  -webkit-mask-size: auto 34px; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+  transition: background-color .3s, filter .3s;
+}
+.tsp-glyph.tsp-active .tsp-icon {
+  background-color: var(--success);
+  filter: drop-shadow(0 0 5px var(--success));
+}
+.tsp-glyph.tsp-standby .tsp-icon {
+  background-color: var(--info);
+  filter: drop-shadow(0 0 5px var(--info));
+}
+.tsp-glyph.tsp-offline .tsp-icon { background-color: var(--danger); }
+
+/* Live ping — only inside an active glyph (JS adds it only then). */
+.tsp-live {
+  position: absolute; top: 2px; right: 0;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--success); pointer-events: none;
+  box-shadow: 0 0 0 2px var(--surface);
+}
+.tsp-live::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--success); opacity: 0;
+  animation: scale-live-ping 1.4s ease-out infinite;   /* keyframes: tigerscale.css */
+}
+@media (prefers-reduced-motion: reduce) {
+  .tsp-live::before { animation: none; }
+}
+
+
+/* No box yet: the same grey, faded glyph as an empty TigerScale. It stays
+   clickable — it is how the product gets discovered. */
+.tsp-health { cursor: pointer; }
+.tsp-glyph.tsp-none .tsp-icon { opacity: .38; }
+
+/* ── Side card — one entry per box, then the printers it is in front of ── */
+/* One card per box — identity, chips AND its printers together — with air
+   between the cards and the panel's edges. */
+.tsp-panel #tigerspoolPanelBody { padding: 14px 16px 20px; display: flex; flex-direction: column; gap: 14px; }
+.tsp-entry { display: flex; flex-direction: column; gap: 8px; }
+/* Wider than the 300 px default: a box's card carries a name, a status pill, a
+   remove button and up to 24 printer rows. */
+.detail-panel.tsp-panel { width: 400px; }
+/* TigerSpool_card.png holds the whole box and its whole spool; contain, never
+   cover, so nothing of either is cut. */
+.scale-card-photo.tsp-card-photo { width: 84px; height: 84px; object-fit: contain; padding: 4px; }
+/* Online dot in front of each machine — as seen by the BOX (printers_online). */
+.tsp-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--neutral); }
+.tsp-dot--up      { background: var(--success); box-shadow: 0 0 5px color-mix(in srgb, var(--success) 60%, transparent); }
+.tsp-dot--down    { background: var(--neutral); }
+.tsp-dot--unknown { background: transparent; border: 1.5px solid var(--neutral); box-sizing: border-box; }
+/* Inside the box's card: a hairline, then the list — no second card. */
+.tsp-printers {
+  border-top: 1px solid var(--border); margin-top: 2px; padding-top: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.tsp-printers-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); padding: 2px 4px 4px;
+}
+.tsp-printers-empty { font-size: 12px; color: var(--muted); padding: 4px; }
+.tsp-printer {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 6px 8px; border-radius: 10px; border: 1px solid transparent;
+  background: var(--surface); color: var(--text); text-align: left;
+  font: inherit; cursor: pointer; transition: border-color .15s, background-color .15s;
+}
+.tsp-printer:hover { border-color: var(--primary); }
+.tsp-printer.is-missing { cursor: default; opacity: .6; }
+.tsp-printer.is-missing:hover { border-color: transparent; }
+.tsp-printer-img {
+  width: 40px; height: 40px; flex-shrink: 0; object-fit: contain;
+  border-radius: 8px; user-select: none; -webkit-user-drag: none;
+}
+.tsp-printer-img--none { display: inline-block; background: var(--surface-2); }
+.tsp-printer-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.tsp-printer-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsp-printer-sub  { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tsp-printer-go   { color: var(--muted); font-size: 18px; line-height: 1; }
+
+/* ── Discovery modal — photo left, the pitch and the way to build one right ── */
+.modal-card.tsp-discover-card { width: 680px; padding: 22px 24px 24px; }
+.tsp-discover-body { display: flex; gap: 22px; align-items: center; margin-top: 8px; }
+.tsp-discover-photo {
+  width: 220px; flex-shrink: 0; height: auto;
+  user-select: none; -webkit-user-drag: none;
+}
+.tsp-discover-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.tsp-discover-lead { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.45; color: var(--text); }
+.tsp-discover-points { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--text); }
+.tsp-discover-build {
+  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+}
+.tsp-discover-build-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+.tsp-discover-build p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+.tsp-discover-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.tsp-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 40px; padding: 0 16px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer;
+}
+.tsp-btn:hover { border-color: var(--primary); }
+.tsp-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tsp-btn--primary:hover { filter: brightness(1.06); }
+@media (max-width: 720px) {
+  .tsp-discover-body { flex-direction: column; }
+  .tsp-discover-photo { width: 160px; }
+}
+
+/* "TigerSpool-9918" is longer than a scale's name and shares its row with the
+   status pill and the remove button: let the pill drop under the name rather
+   than cut the name to "TigerSpo…". */
+.tsp-entry .scale-card-name-row { flex-wrap: wrap; row-gap: 4px; }
+.tsp-entry .scale-card-name { flex: none; overflow: visible; text-overflow: clip; white-space: nowrap; }
+
+/* Raw JSON (debug), inside the box's card: room for the floating copy button
+   above the first line of the document. */
+.tsp-entry .scale-debug { margin-top: 2px; }
+.tsp-raw-wrap .scale-debug-pre { padding-top: 36px; }

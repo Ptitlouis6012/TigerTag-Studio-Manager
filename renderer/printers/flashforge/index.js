@@ -274,6 +274,7 @@ function ffgScheduleReconnect(conn) {
   if (!_ffgConns.has(conn.key)) return; // disposed
   if (conn.intervalId) { clearInterval(conn.intervalId); conn.intervalId = null; }
   conn.retry = Math.min(conn.retry + 1, 5);
+  if (conn.retry >= 3) ctx.requestPrinterRefind?.("flashforge", conn.key);   // moved to another IP? (rate-limited there)
   const delay = Math.min(2000 * (1 << (conn.retry - 1)), 30000);
   conn.retryTimer = setTimeout(() => {
     conn.retryTimer = null;

@@ -9,6 +9,7 @@
  * module scope so inventory.js can populate it after import resolution.
  */
 import { ctx } from '../context.js';
+import { jobBar, jobBarFill } from '../job-bar.js';
 
 // ── Local helpers ─────────────────────────────────────────────────────────
 
@@ -65,9 +66,12 @@ export function renderElegooJobCard(p, conn) {
   // Just-finished: keep showing the print's thumbnail until it goes to standby.
   const isDone   = ['complete', 'completed'].includes(jobState);
   // Force 0 % during prep/heating or bed leveling — printProgress can still hold stale data.
-  const pct = (jobState === 'heating' || jobState === 'preparing' || (d.bedMeshDetect && !(d.printLayerCur > 0)))
+  const rawPct = (jobState === 'heating' || jobState === 'preparing' || (d.bedMeshDetect && !(d.printLayerCur > 0)))
     ? 0
     : Math.round((d.printProgress || 0) * 100);
+  // Blue while running, green at 100 % when done, red frozen at its last % on a failure.
+  const bar = jobBar(conn, jobState, rawPct);
+  const pct = bar.pct;
   const leafName = isActive && d.printFilename
     ? String(d.printFilename).split('/').pop()
     : '';
@@ -111,7 +115,7 @@ export function renderElegooJobCard(p, conn) {
           <span class="snap-job-pct">${pct}%</span>
           <span class="snap-job-time">${ctx.SNAP_ICON_CLOCK} <span>${ctx.esc(timeText)}</span></span>
         </div>
-        <div class="snap-job-bar"><span style="width:${pct}%"></span></div>
+        <div class="snap-job-bar">${jobBarFill(bar)}</div>
         <div class="snap-job-foot">
           <span class="snap-job-state snap-job-state--${ctx.esc(jobState)}">${ctx.esc(stateLabel)}</span>
           ${layerText ? `<span class="snap-job-layers">${ctx.esc(layerText)}</span>` : ''}

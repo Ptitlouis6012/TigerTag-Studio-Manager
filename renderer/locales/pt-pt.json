@@ -952,6 +952,29 @@
   "scaleStatusOnline": "Ligada",
   "scaleStatusOffline": "Desligada",
   "scaleStatusStandby": "em espera",
+  "tigerspoolPrinterUnknown": "Desconhecido: o TigerSpool está offline ou o firmware ainda não indica o estado das impressoras",
+  "tigerspoolPrinterDown": "Este TigerSpool não alcança esta impressora neste momento",
+  "tigerspoolPrinterUp": "Este TigerSpool vê esta impressora online",
+  "tigerspoolRemove": "Mantenha premido para remover este TigerSpool da sua conta (desligue-o antes, senão volta a ligar-se)",
+  "tigerspoolHealthNone": "Ainda sem TigerSpool — clique para conhecer",
+  "tigerspoolPrintersTitle": {
+    "one": "Impressora ativa ({{n}})",
+    "other": "Impressoras ativas ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Impressora que já não está no Tiger Studio",
+  "tigerspoolNoPrinters": "Ainda nenhuma impressora ativa nesta caixa — escolha-as no ecrã dela.",
+  "tigerspoolPitch": "Uma caixinha ao lado das suas impressoras. Escolha uma ranhura no ecrã, encoste uma bobina — o filamento vai para essa ranhura. Nada para voltar a escrever.",
+  "tigerspoolPointBrands": "Funciona com Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker e Anycubic — até 24 impressoras na lista.",
+  "tigerspoolPointAccount": "Vai buscar as suas impressoras à sua conta Tiger Studio: nada para configurar duas vezes.",
+  "tigerspoolPointOpen": "Código aberto: um ESP32-S3, um leitor NFC e uma caixa impressa em 3D.",
+  "tigerspoolBuildTitle": "Construa o seu",
+  "tigerspoolBuildText": "Peças comuns, uma caixa impressa, e o firmware instala-se a partir do navegador com um clique. Assim que estiver no seu Wi-Fi e ligado à sua conta, aparece aqui sozinho.",
+  "tigerspoolGuideBtn": "Como construir",
+  "tigerspoolInstallBtn": "Instalar a partir do navegador",
+  "tigerspoolPrinters": {
+    "one": "{{n}} impressora",
+    "other": "{{n}} impressoras"
+  },
   "scaleChipPower": "Energia",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Bateria",
@@ -1652,5 +1675,6 @@
   "eacMcpGrantUsed": "último uso {{ago}}",
   "eacMcpGrantUnnamed": "Um assistente misterioso",
   "eacMcpGrantCut": "Cortar acesso",
-  "eacMcpGrantCutTip": "Este assistente deixa de ler a tua conta. Podes sempre voltar a ligá-lo."
+  "eacMcpGrantCutTip": "Este assistente deixa de ler a tua conta. Podes sempre voltar a ligá-lo.",
+  "printerRefound": "{{name}} mudou-se para {{ip}} — encontrada e religada."
 }

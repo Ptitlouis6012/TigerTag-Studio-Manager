@@ -325,6 +325,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // the renderer can scan them for Snapmaker / Moonraker printers. Falls
   // back to common defaults in the renderer if this returns nothing.
   getLocalSubnets: () => ipcRenderer.invoke('net:get-local-subnets'),
+  // MAC behind a LAN IP (OS neighbour cache) — null off the local subnet.
+  arpMac: (ip) => ipcRenderer.invoke('net:arp-mac', ip),
 
   // ── mDNS — browse `_snapmaker._tcp.local.` for instant Snapmaker
   // discovery. Returns { ok, candidates: [{ name, host, port, fqdn,
