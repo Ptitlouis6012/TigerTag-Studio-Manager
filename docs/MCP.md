@@ -247,9 +247,7 @@ curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOK" \
    same 14 tools / schemas / outputs as this server — **the two must change together**
    (Hub `lib/mcp/schemas.ts` + `lib/mcp/guide.ts` mirror `MCP_TOOLS` + `MCP_DATA_GUIDE`).
    Works without Studio running; live printer state stays Studio-only. Users see and revoke
-   connected assistants on tigersystem.io → account → Data. Open alignment: the hosted
-   server returns the user's own printer credentials unmasked (founder decision
-   2026-10-04) — this server still masks them.
+   connected assistants on tigersystem.io → account → Data.
 2. **Writes behind a confirmation** — set a weight, place a spool: each call raises an
    in-app prompt; nothing is written silently. Mark such tools `readOnlyHint: false`,
    `destructiveHint` where relevant.
