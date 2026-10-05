@@ -5,6 +5,36 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.34.0 — 2026-10-05
+
+### Added
+
+- **TigerSpool in Studio.** Header presence right of the TigerScale: one glyph per box (capped at 2) — green active · blue screen off · red offline, battery badge when a cell is fitted — with a hover list of every TigerSpool (status, printers served, or how long ago it went quiet). Live from `users/{uid}/tigerspools`, same online windows as the TigerScale (90 s active / 11 min screen off); grey and faded with no box.
+  - **Side card** (click): one card per box — status, Wi-Fi, power, firmware, address, chips — and the printers active on it, matched to the account's printers by document id, each with a reachability dot from the box's own `printers_online` (TigerSpool firmware > 1.70.0; hollow grey "unknown" when the box is offline or older); a row opens that printer. Hold-to-confirm remove deletes `users/{uid}/tigerspools/{mac}` (a box still on signs back in on its next beat). Card photo `assets/img/TigerSpool_card.png`; panel 400 px.
+  - **Launch card** (click with no box): the two desktop stands (spool left / right, `assets/img/TigerSpool_{left,right}.webp`) floating in a glow under a "New · open source" tag, the promise (the best RFID reader for 3D printers — reads the spool's chip and fills the printer slot like a native reader, every brand), three badges, an animated chip → TigerSpool → printer-slot strip, and three equal tiles: Print it (MakerWorld, one button per stand), Discover it (wiki, FR edition in French), Hack it (GitHub). Animations off under `prefers-reduced-motion`.
+  - `renderer/IoT/tigerspool/` (new: `index.js`, `panel.js`, `tigerspool.css`), `assets/svg/icons/icon_tigerspool_3d.svg`.
+- **Printers follow a new IP on their own.** When a LAN printer gives up reconnecting (Creality/Elegoo after their 3 attempts, FlashForge/Snapmaker from the 3rd retry, Bambu/Anycubic still down 20 s after an MQTT drop), its brand's LAN scan runs silently and matches the printer on its stable identity (serial / `sn` / MAC from the scan or the ARP cache; Creality hostname only when unique). On exactly one match at another address the IP is saved, the printer reconnected, and a toast says so. Never for cloud printers or one switched offline on purpose; one scan per brand at a time; never takes an IP another printer of the brand uses; fruitless searches back off 5 min → 1 h — `renderer/printers/refind.js` (new), every brand's `index.js`, `context.js`, `inventory.js` (`reconnectPrinter`, `onPrinterRefound`).
+  - Groundwork: printers remember who they are — the first connect in a session saves `serialNumber` (Creality hello `deviceSn` / Snapmaker product info) or `macAddress` (Anycubic `/info` usn) on the printer doc even when added by IP, plus `macAddress` from the OS ARP cache (new `net:arp-mac` IPC, directly attached subnets only); Creality falls back to its per-unit `hostName` — `renderer/printers/identity.js` (new), `savePrinterField`, `main.js`, `preload.js`.
+  - Creality / Snapmaker WebSocket connects time out after 8 s instead of the OS's ~75 s on a dead address, so retries and the re-find start promptly.
+- **Catalogue multi-select.** Tick products in the table column, or via Select in the grid (shift-click for a range), then ★ Favorite / 🛒 To order / Add to a list the whole selection from the shared bulk bar ("N picked" count; no tags / delete there). Product details fetched once through the product-card cache, six at a time, prefetched as you tick; one action capped at 200 products — `state.selectedCatalog`, `_bulkCtx` catalogue context, `_catResolveRow(s)`, `_catBulkClick`.
+- **Bulk "Add to a list"** in the bulk bar for materials, the Favorites table and the catalogue; the list popup takes several products at once (ticked when the list already holds them all; one `arrayUnion` / `arrayRemove` write) — `_addManyToList`, `_openAddToListMenu`.
+- **Online AI-assistant connector in *My profile › AI assistants*.** A "From the web and your phone" sub-block for the Tiger Hub's hosted MCP server (`https://mcp.tigersystem.io/mcp`, OAuth 2.1, same 14 read-only tools): address + Copy, "How to connect" (wiki guide), one line on local vs online, and the **connected online assistants** list (name, connected date, last used) with a 1.5 s hold-to-cut button. Independent of the local toggle. List / revoke call `GET` / `DELETE https://tigersystem.io/api/account/mcp-grants` with the account's Firebase ID token through a new main-process IPC `mcp:hosted-grants` (fixed URL, two verbs — the Hub route sends no CORS headers, so a renderer fetch dies on the preflight); 204 or 404 removes the row; errors are one quiet line — `wireMcpHosted`, `mcpBridge.hostedGrants`, `docs/MCP.md` §2.
+
+### Changed
+
+- **Print progress bars** are one flat colour that follows the job: blue while printing, green at 100 % when finished, red on failure and grey when cancelled — frozen at the last printing % instead of dropping to empty. Same rule in the printers table, printer cards, the board, the dashboard widget and all six brands' side cards — `renderer/printers/job-bar.js` (new), `_getPrinterJob` → `job.bar`, `_jobBarPct`, `_setJobFillTone`.
+- **Product videos play inside the card** (spool detail + product card, incl. the catalogue): YouTube (watch / youtu.be / shorts / embed / live) and Google Drive links show a poster that turns into an in-app player on click; MP4 keeps playing inline. Playable videos added as web-link attachments get the same player (deduped against the chip's own video). One entry point `_productVideosHTML` → `_videoSectionHTML`; attachment icon uses `_isPlayableVideo`.
+
+### Fixed
+
+- "+ Material" from a product (product card, Reorder card, grouped-spools card, spool detail) now offers the guided chip burn when a reader (TigerPOD / ACR122U) is plugged in, like the manual and catalogue add paths — `_createCloudFromProduct`, `_offerBurnForCreated`.
+
+### i18n
+
+- Added `bulkSelectedCount`, `catBulkTooMany`, `printerRefound`, the `tigerspool*` set (header, side card, launch card) and the `eacMcpWeb*` / `eacMcpGrant*` set (online connector) — 11 locales.
+
+---
+
 ## v2.33.0 — 2026-10-03
 
 ### Added

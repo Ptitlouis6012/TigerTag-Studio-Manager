@@ -9808,5 +9808,184 @@
         }
       }
     ]
+  },
+  "2.34.0": {
+    "date": "2026-10-05",
+    "items": [
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "TigerSpool has landed",
+          "fr": "TigerSpool débarque",
+          "de": "TigerSpool ist da",
+          "es": "Llega TigerSpool",
+          "it": "Arriva TigerSpool",
+          "zh": "TigerSpool 来了",
+          "pt": "Chegou o TigerSpool",
+          "pt-pt": "Chegou o TigerSpool",
+          "pl": "TigerSpool wjeżdża",
+          "ru": "TigerSpool на подходе",
+          "nl": "TigerSpool is er"
+        },
+        "body": {
+          "en": "The RFID reader every 3D printer was waiting for: rest a spool against it and your printer's slot fills itself. Got one? Watch it live from the header. Not yet? Click it — the files, the guide and the code are right there.",
+          "fr": "Le lecteur RFID que toutes les imprimantes 3D attendaient : pose une bobine contre lui et le slot de ton imprimante se remplit tout seul. Tu en as un ? Suis-le en direct depuis l'en-tête. Pas encore ? Clique dessus — les fichiers, le guide et le code t'attendent.",
+          "de": "Der RFID-Leser, auf den jeder 3D-Drucker gewartet hat: Spule dranhalten, und der Slot deines Druckers füllt sich von selbst. Schon einen? Verfolg ihn live oben in der Leiste. Noch nicht? Klick drauf — Dateien, Anleitung und Code warten.",
+          "es": "El lector RFID que todas las impresoras 3D esperaban: apoya una bobina y la ranura de tu impresora se rellena sola. ¿Ya tienes uno? Síguelo en directo desde arriba. ¿Aún no? Haz clic — archivos, guía y código te esperan.",
+          "it": "Il lettore RFID che ogni stampante 3D aspettava: appoggia una bobina e lo slot della stampante si compila da solo. Ce l'hai già? Seguilo in diretta dall'intestazione. Non ancora? Cliccalo — file, guida e codice ti aspettano.",
+          "zh": "所有 3D 打印机都在等的 RFID 读取器：把料盘靠上去，打印机槽位自动填好。已经有了？在顶部实时查看它。还没有？点一下——文件、指南和代码都在那儿。",
+          "pt": "O leitor RFID que toda impressora 3D esperava: encoste um carretel e o slot da impressora se preenche sozinho. Já tem um? Acompanhe ao vivo pelo topo. Ainda não? Clique nele — arquivos, guia e código te esperam.",
+          "pt-pt": "O leitor RFID que todas as impressoras 3D esperavam: encosta uma bobina e a ranhura da impressora preenche-se sozinha. Já tens um? Acompanha-o em direto no topo. Ainda não? Clica nele — ficheiros, guia e código à tua espera.",
+          "pl": "Czytnik RFID, na który czekała każda drukarka 3D: przyłóż szpulę, a slot drukarki uzupełni się sam. Masz już? Śledź go na żywo u góry. Jeszcze nie? Kliknij — pliki, poradnik i kod czekają.",
+          "ru": "RFID-считыватель, которого ждал каждый 3D-принтер: приложи катушку — и слот принтера заполнится сам. Уже есть? Следи за ним вживую в шапке. Ещё нет? Нажми — файлы, гайд и код ждут.",
+          "nl": "De RFID-lezer waar elke 3D-printer op wachtte: leg er een spoel tegen en het slot van je printer vult zich vanzelf. Heb je er al een? Volg hem live bovenin. Nog niet? Klik erop — bestanden, gids en code liggen klaar."
+        }
+      },
+      {
+        "icon": "wifi",
+        "title": {
+          "en": "Your printers moved? We found them",
+          "fr": "Tes imprimantes ont déménagé ? On les a retrouvées",
+          "de": "Drucker umgezogen? Wir haben sie gefunden",
+          "es": "¿Tus impresoras se mudaron? Las encontramos",
+          "it": "Stampanti traslocate? Le abbiamo ritrovate",
+          "zh": "打印机搬家了？我们找到了",
+          "pt": "Suas impressoras se mudaram? Achamos",
+          "pt-pt": "As impressoras mudaram de casa? Encontrámo-las",
+          "pl": "Drukarki się przeprowadziły? Znaleźliśmy je",
+          "ru": "Принтеры переехали? Мы их нашли",
+          "nl": "Printers verhuisd? We vonden ze terug"
+        },
+        "body": {
+          "en": "When your router hands a printer a new address, the app goes looking for it, reconnects and tells you. No more typing IPs on a Monday morning.",
+          "fr": "Quand ta box donne une nouvelle adresse à une imprimante, l'app part la chercher, la reconnecte et te prévient. Fini de retaper des IP le lundi matin.",
+          "de": "Wenn dein Router einem Drucker eine neue Adresse gibt, sucht die App ihn, verbindet ihn neu und sagt dir Bescheid. Schluss mit IP-Tippen am Montagmorgen.",
+          "es": "Cuando tu router le da otra dirección a una impresora, la app la busca, la reconecta y te avisa. Se acabó teclear IPs un lunes por la mañana.",
+          "it": "Quando il router dà un nuovo indirizzo a una stampante, l'app la cerca, la ricollega e ti avvisa. Basta digitare IP il lunedì mattina.",
+          "zh": "路由器给打印机换了新地址？应用会去找它、重新连接并通知你。周一早上不用再手敲 IP 了。",
+          "pt": "Quando o roteador dá um novo endereço a uma impressora, o app vai atrás dela, reconecta e te avisa. Chega de digitar IP na segunda de manhã.",
+          "pt-pt": "Quando o router dá um novo endereço a uma impressora, a app vai procurá-la, volta a ligá-la e avisa-te. Acabou escrever IPs à segunda de manhã.",
+          "pl": "Gdy router da drukarce nowy adres, aplikacja ją odnajdzie, połączy ponownie i da ci znać. Koniec z wpisywaniem IP w poniedziałek rano.",
+          "ru": "Когда роутер выдаёт принтеру новый адрес, приложение само его находит, переподключает и сообщает тебе. Больше никаких IP в понедельник утром.",
+          "nl": "Geeft je router een printer een nieuw adres, dan zoekt de app hem op, verbindt opnieuw en laat het je weten. Geen IP's meer intikken op maandagochtend."
+        }
+      },
+      {
+        "icon": "list-check",
+        "title": {
+          "en": "Shopping in bulk",
+          "fr": "Les courses en gros",
+          "de": "Großeinkauf",
+          "es": "Compras al por mayor",
+          "it": "Spesa all'ingrosso",
+          "zh": "批量采购",
+          "pt": "Compras no atacado",
+          "pt-pt": "Compras por atacado",
+          "pl": "Zakupy hurtem",
+          "ru": "Оптом дешевле",
+          "nl": "Boodschappen in bulk"
+        },
+        "body": {
+          "en": "In the catalogue, tick as many products as you like, then favourite them, add them to your order or drop them into a list — all at once.",
+          "fr": "Dans le catalogue, coche autant de produits que tu veux, puis mets-les en favoris, dans ta commande ou dans une liste — d'un seul coup.",
+          "de": "Im Katalog so viele Produkte anhaken, wie du willst — dann alle auf einmal favorisieren, bestellen oder in eine Liste packen.",
+          "es": "En el catálogo, marca todos los productos que quieras y luego añádelos a favoritos, al pedido o a una lista — de una vez.",
+          "it": "Nel catalogo spunta quanti prodotti vuoi, poi mettili nei preferiti, nell'ordine o in una lista — tutto in un colpo.",
+          "zh": "在目录里想勾多少就勾多少，然后一次性收藏、加入订购或放进清单。",
+          "pt": "No catálogo, marque quantos produtos quiser e depois favorite, adicione ao pedido ou a uma lista — tudo de uma vez.",
+          "pt-pt": "No catálogo, marca os produtos que quiseres e depois põe-nos nos favoritos, na encomenda ou numa lista — tudo de uma vez.",
+          "pl": "W katalogu zaznacz ile chcesz produktów, a potem dodaj je do ulubionych, zamówienia albo listy — za jednym zamachem.",
+          "ru": "В каталоге отметь сколько угодно товаров — и разом добавь их в избранное, в заказ или в список.",
+          "nl": "Vink in de catalogus zoveel producten aan als je wilt en zet ze in één keer bij je favorieten, je bestelling of in een lijst."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Your AI assistant, from anywhere",
+          "fr": "Ton assistant IA, de partout",
+          "de": "Dein KI-Assistent, überall",
+          "es": "Tu asistente IA, desde cualquier sitio",
+          "it": "Il tuo assistente IA, ovunque",
+          "zh": "你的 AI 助手，随时随地",
+          "pt": "Seu assistente de IA, de qualquer lugar",
+          "pt-pt": "O teu assistente de IA, em qualquer lado",
+          "pl": "Twój asystent AI, z każdego miejsca",
+          "ru": "Твой ИИ-ассистент — откуда угодно",
+          "nl": "Je AI-assistent, overal"
+        },
+        "body": {
+          "en": "Claude.ai, ChatGPT and their phone apps can now read your stock without the app running — just one address to paste. My profile shows who's connected, and cuts anyone off in a second.",
+          "fr": "Claude.ai, ChatGPT et leurs applis mobiles peuvent maintenant lire ton stock sans que l'app tourne — une seule adresse à coller. Mon profil montre qui est branché, et coupe n'importe qui en une seconde.",
+          "de": "Claude.ai, ChatGPT und ihre Handy-Apps lesen deinen Bestand jetzt auch ohne laufende App — nur eine Adresse einfügen. Mein Profil zeigt, wer verbunden ist, und kappt jeden in einer Sekunde.",
+          "es": "Claude.ai, ChatGPT y sus apps móviles ya pueden leer tu stock sin la app abierta — solo una dirección que pegar. Mi perfil muestra quién está conectado y corta a cualquiera en un segundo.",
+          "it": "Claude.ai, ChatGPT e le loro app per telefono ora leggono il tuo stock anche ad app chiusa — basta incollare un indirizzo. Il mio profilo mostra chi è collegato e taglia chiunque in un secondo.",
+          "zh": "Claude.ai、ChatGPT 及其手机 App 现在无需打开本应用就能读取你的库存——只要粘贴一个地址。“我的资料”里能看到谁已连接，一秒就能断开。",
+          "pt": "Claude.ai, ChatGPT e os apps de celular deles agora leem seu estoque sem o app aberto — é só colar um endereço. Meu perfil mostra quem está conectado e corta qualquer um num segundo.",
+          "pt-pt": "O Claude.ai, o ChatGPT e as apps de telemóvel deles já leem o teu stock sem a app aberta — basta colar um endereço. O meu perfil mostra quem está ligado e corta qualquer um num segundo.",
+          "pl": "Claude.ai, ChatGPT i ich aplikacje na telefon czytają teraz twój zapas bez włączonej aplikacji — wystarczy wkleić adres. Mój profil pokazuje, kto jest podłączony, i odcina każdego w sekundę.",
+          "ru": "Claude.ai, ChatGPT и их мобильные приложения теперь читают твои запасы без запущенного приложения — достаточно вставить адрес. В «Мой профиль» видно, кто подключён, и любого можно отключить за секунду.",
+          "nl": "Claude.ai, ChatGPT en hun telefoon-apps lezen je voorraad nu ook zonder dat de app draait — alleen een adres plakken. Mijn profiel toont wie er verbonden is en sluit iedereen in een seconde af."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Progress bars that tell the ending",
+          "fr": "Des barres qui racontent la fin",
+          "de": "Fortschrittsbalken mit Ende",
+          "es": "Barras que cuentan el final",
+          "it": "Barre che raccontano il finale",
+          "zh": "会讲结局的进度条",
+          "pt": "Barras que contam o final",
+          "pt-pt": "Barras que contam o final",
+          "pl": "Paski, które mówią, jak się skończyło",
+          "ru": "Полоски, которые знают финал",
+          "nl": "Balken die het einde vertellen"
+        },
+        "body": {
+          "en": "Blue while it prints, green when it's done, red when it failed, grey when you stopped it. And the bar no longer empties itself the moment it ends.",
+          "fr": "Bleu pendant l'impression, vert quand c'est fini, rouge quand ça a raté, gris quand tu l'as arrêtée. Et la barre ne se vide plus au moment où ça se termine.",
+          "de": "Blau beim Drucken, grün wenn fertig, rot wenn's schiefging, grau wenn du abgebrochen hast. Und der Balken leert sich nicht mehr, sobald es vorbei ist.",
+          "es": "Azul mientras imprime, verde cuando termina, rojo si falló, gris si la paraste. Y la barra ya no se vacía justo al acabar.",
+          "it": "Blu mentre stampa, verde quando ha finito, rosso se è andata male, grigio se l'hai fermata. E la barra non si svuota più appena finisce.",
+          "zh": "打印中是蓝色，完成是绿色，失败是红色，被你停掉是灰色。结束那一刻进度条也不会再清空了。",
+          "pt": "Azul enquanto imprime, verde quando termina, vermelho quando falha, cinza quando você parou. E a barra não esvazia mais na hora que acaba.",
+          "pt-pt": "Azul enquanto imprime, verde quando acaba, vermelho quando falha, cinzento quando a paraste. E a barra já não se esvazia no momento em que termina.",
+          "pl": "Niebieski w trakcie, zielony po skończeniu, czerwony przy porażce, szary, gdy przerwałeś. A pasek nie znika już w chwili końca.",
+          "ru": "Синяя во время печати, зелёная по готовности, красная при сбое, серая, если ты остановил. И полоска больше не обнуляется в момент финиша.",
+          "nl": "Blauw tijdens het printen, groen als het klaar is, rood als het misging, grijs als jij stopte. En de balk loopt niet meer leeg zodra het eindigt."
+        }
+      },
+      {
+        "icon": "play",
+        "title": {
+          "en": "Videos play right here",
+          "fr": "Les vidéos se lancent ici",
+          "de": "Videos laufen direkt hier",
+          "es": "Los vídeos se ven aquí",
+          "it": "I video partono qui",
+          "zh": "视频直接在这里播放",
+          "pt": "Os vídeos tocam aqui mesmo",
+          "pt-pt": "Os vídeos tocam aqui mesmo",
+          "pl": "Filmy grają tutaj",
+          "ru": "Видео играет прямо здесь",
+          "nl": "Video's spelen hier af"
+        },
+        "body": {
+          "en": "A product's YouTube or Google Drive video now plays inside its card. Your browser can take a break.",
+          "fr": "La vidéo YouTube ou Google Drive d'un produit se lance maintenant dans sa fiche. Ton navigateur peut souffler.",
+          "de": "Das YouTube- oder Google-Drive-Video eines Produkts läuft jetzt direkt in seiner Karte. Dein Browser darf Pause machen.",
+          "es": "El vídeo de YouTube o Google Drive de un producto ahora se reproduce en su ficha. Tu navegador puede descansar.",
+          "it": "Il video YouTube o Google Drive di un prodotto ora parte dentro la sua scheda. Il browser può riposare.",
+          "zh": "产品的 YouTube 或 Google Drive 视频现在直接在卡片里播放。浏览器可以歇会儿了。",
+          "pt": "O vídeo do YouTube ou Google Drive de um produto agora toca dentro da ficha. Seu navegador pode descansar.",
+          "pt-pt": "O vídeo do YouTube ou do Google Drive de um produto passa agora dentro da ficha. O teu navegador pode descansar.",
+          "pl": "Film produktu z YouTube lub Google Drive odtwarza się teraz w jego karcie. Przeglądarka może odpocząć.",
+          "ru": "Видео товара с YouTube или Google Drive теперь играет прямо в его карточке. Браузер может отдохнуть.",
+          "nl": "De YouTube- of Google Drive-video van een product speelt nu in de kaart zelf. Je browser mag even uitrusten."
+        }
+      }
+    ]
   }
 }

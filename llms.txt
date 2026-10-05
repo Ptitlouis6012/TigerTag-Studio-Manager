@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.33.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.34.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Current version: **2.33.0** — macOS (Intel + Apple Silicon, signed & notarized
 - **Preload bridge**: `preload.js` — exposes IPC handlers to renderer via `window.electronAPI`
 - **NFC**: `services/nfc-process.js` runs as a `utilityProcess` (not a Worker Thread) to avoid SIGABRT on macOS; communicates via IPC
 - **Printer integrations**: `renderer/printers/<brand>/index.js` — one file per brand, loaded dynamically
-- **IoT sensors**: `renderer/IoT/td1s/` (TD1S color sensor), `renderer/IoT/tigerscale/` (TigerScale ESP32)
+- **IoT sensors**: `renderer/IoT/td1s/` (TD1S color sensor), `renderer/IoT/tigerscale/` (TigerScale ESP32), `renderer/IoT/tigerspool/` (TigerSpool printer reader)
 - **CSS**: `renderer/css/00-base.css` → `70-detail-misc.css` (10 files, loaded in numeric order via `<link>` tags)
 - **i18n**: `renderer/locales/` — 11 JSON files (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl), managed via `npm run i18n:add`
 - **TigerTag SDK**: `@tigertag/sdk` npm package — parse, verify, encode TigerTag NTAG chips (pages 4–39, 144 bytes, blockSize=4)
@@ -58,7 +58,9 @@ state = {
 Studio can serve the Model Context Protocol on 127.0.0.1 so Claude Desktop / Claude Code /
 Cursor / VS Code READ the signed-in account (inventory, friends' shared stock, wishlists,
 racks, printers, devices, history). Read-only, credentials masked, documents returned
-decoded. Reference: docs/MCP.md.
+decoded. Reference: docs/MCP.md. A HOSTED twin runs on the Tiger Hub
+(`https://mcp.tigersystem.io/mcp`, OAuth, no Studio needed — no live printer state); My profile
+lists its connected assistants via `mcp:hosted-grants` (main-process IPC → Hub `/api/account/mcp-grants`).
 
 ## Firestore data model
 
@@ -118,6 +120,7 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
   /printerSeen/{brand:id}  → { ts } last-seen stamp per printer, drives the online/offline column
   /prefs/app               → { lang }
   /scales/{mac}            → TigerScale heartbeat
+  /tigerspools/{mac}       → TigerSpool heartbeat (status, Wi-Fi, firmware, printers, printers_online)
   /apiKeys/{docId}         → API key docs
   /telemetry/{docId}       → aggregated usage metrics
   /uidMigrationMap/{id}    → decimal → hex UID migration
@@ -249,6 +252,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), filament edit per 
 ## Sensors
 
 - **TD1S** (`renderer/IoT/td1s/`) — USB color + TD sensor. `window.td1s.onStatus(cb)` supports multiple listeners (IPC `on`, not `once`). Scan color (1–3 slots) and TD value independently or together.
+- **TigerSpool** (`renderer/IoT/tigerspool/`) — ESP32-S3 printer-side RFID reader that writes a spool's filament into a printer slot. Studio reads `users/{uid}/tigerspools/{mac}`: header glyphs, side card per box (its printers, matched by doc id), launch card when none.
 - **TigerScale** (`renderer/IoT/tigerscale/`) — ESP32 scale over WebSocket. Live weight, container/filament split, TARE (hold-to-confirm), twin UID grid.
 - **USB scale (Dymo M-series)** (`renderer/IoT/usbscale/`) — HID scale opened in the main process (`node-hid`, vid `0x0922`, usage page `0x8D`), streamed over IPC (`usb-scale-update` / `usb-scale-data`). One-write-per-pose state machine: POD mode saves silently when reader chip UIDs identify the spool; side-card mode offers an inline confirm. Live UI in the open spool's WEIGHT section (`#usbScaleDock`).
 

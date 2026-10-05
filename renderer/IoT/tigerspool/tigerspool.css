@@ -97,34 +97,127 @@
 .tsp-printer-sub  { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tsp-printer-go   { color: var(--muted); font-size: 18px; line-height: 1; }
 
-/* ── Discovery modal — photo left, the pitch and the way to build one right ── */
-.modal-card.tsp-discover-card { width: 680px; padding: 22px 24px 24px; }
-.tsp-discover-body { display: flex; gap: 22px; align-items: center; margin-top: 8px; }
-.tsp-discover-photo {
-  width: 220px; flex-shrink: 0; height: auto;
-  user-select: none; -webkit-user-drag: none;
+/* ── Discovery modal — a product launch card: the two desktop stands floating
+   in a glow, the promise, an animated chip → TigerSpool → slot strip, then
+   three equal tiles (print it · discover it · hack it) ── */
+.modal-card.tsp-discover-card { width: 640px; padding: 22px 24px 22px; }
+.tsp-discover-body { display: flex; flex-direction: column; align-items: stretch; gap: 16px; margin-top: 4px; }
+
+.tsp-hero {
+  position: relative; overflow: hidden;
+  padding: 32px 16px 12px; border-radius: 16px;
+  background:
+    radial-gradient(60% 75% at 50% 85%, color-mix(in srgb, var(--primary) 38%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 8%, var(--surface-2)), var(--surface-2));
+  border: 1px solid color-mix(in srgb, var(--primary) 25%, var(--border));
 }
-.tsp-discover-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
-.tsp-discover-lead { margin: 0; font-size: 15px; font-weight: 600; line-height: 1.45; color: var(--text); }
-.tsp-discover-points { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--text); }
-.tsp-discover-build {
-  background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+.tsp-hero::after {   /* a slow light sweep across the stage */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255,255,255,.07) 50%, transparent 65%);
+  transform: translateX(-100%); animation: tspSweep 5s ease-in-out 1s infinite;
 }
-.tsp-discover-build-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.tsp-discover-build p { margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--muted); }
-.tsp-discover-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-.tsp-btn {
+.tsp-eyebrow {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--primary); color: #fff;
+  font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.tsp-hero-stands { display: flex; justify-content: center; align-items: flex-end; gap: 18px; }
+.tsp-hero-stands img {
+  height: 190px; width: auto; user-select: none; -webkit-user-drag: none;
+  filter: drop-shadow(0 16px 22px rgba(0,0,0,.45));
+  animation: tspFloat 4s ease-in-out infinite;
+}
+.tsp-hero-stands img:last-child { animation-delay: -2s; }
+
+.tsp-discover-text { display: flex; flex-direction: column; align-items: center; gap: 9px; text-align: center; }
+.tsp-discover-lead {
+  margin: 0; font-size: 26px; font-weight: 800; line-height: 1.15; letter-spacing: -.02em;
+  background: linear-gradient(90deg, var(--text) 10%, var(--primary) 90%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.tsp-discover-sub { margin: 0; max-width: 520px; font-size: 13.5px; line-height: 1.5; color: var(--muted); }
+.tsp-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 2px; }
+.tsp-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  font-size: 12px; font-weight: 600; color: var(--text);
+}
+.tsp-badge .icon { background: var(--primary); }
+
+/* chip → TigerSpool → slot — a light travels along each link */
+.tsp-flow { display: flex; align-items: flex-start; justify-content: center; align-self: center; width: 100%; max-width: 470px; }
+.tsp-flow-node {
+  flex: 0 0 120px; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 600; color: var(--text); text-align: center; line-height: 1.25;
+}
+.tsp-flow-ico {
+  width: 42px; height: 42px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.tsp-flow-ico .icon { background: var(--primary); }
+.tsp-flow-node:nth-child(3) .tsp-flow-ico {
+  border-color: var(--primary); box-shadow: 0 0 16px color-mix(in srgb, var(--primary) 45%, transparent);
+}
+.tsp-flow-spool {
+  height: 34px; aspect-ratio: 229.45 / 220.92; background-color: var(--primary);
+  -webkit-mask-image: url('../../../assets/svg/icons/icon_tigerspool_3d.svg');
+  -webkit-mask-size: auto 28px; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+}
+.tsp-flow-line {
+  position: relative; flex: 1; min-width: 30px; height: 2px; margin-top: 20px; border-radius: 2px;
+  background: color-mix(in srgb, var(--primary) 25%, var(--border)); overflow: hidden;
+}
+.tsp-flow-line::after {
+  content: ""; position: absolute; top: 0; left: -30%; width: 30%; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  animation: tspFlow 1.8s linear infinite;
+}
+.tsp-flow-line:last-of-type::after { animation-delay: .9s; }
+
+/* Three equal tiles — where to go next */
+.tsp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.tsp-tile {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px;
+  padding: 14px 14px 12px; border-radius: 14px; text-decoration: none; color: var(--text);
+  border: 1px solid var(--border); background: var(--surface-2);
+  transition: border-color .15s, transform .15s, box-shadow .15s;
+}
+a.tsp-tile:hover, .tsp-tile--hot:hover {
+  border-color: var(--primary); transform: translateY(-2px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.tsp-tile--hot {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 14%, var(--surface-2)), var(--surface-2));
+}
+.tsp-tile-ico {
+  width: 36px; height: 36px; margin-bottom: 6px; border-radius: 10px;
   display: inline-flex; align-items: center; justify-content: center;
-  height: 40px; padding: 0 16px; border-radius: 10px;
-  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
-  font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer;
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
 }
-.tsp-btn:hover { border-color: var(--primary); }
-.tsp-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
-.tsp-btn--primary:hover { filter: brightness(1.06); }
-@media (max-width: 720px) {
-  .tsp-discover-body { flex-direction: column; }
-  .tsp-discover-photo { width: 160px; }
+.tsp-tile-ico .icon { background: var(--primary); }
+.tsp-tile-title { font-size: 15px; font-weight: 800; }
+.tsp-tile-sub { font-size: 12px; color: var(--muted); }
+.tsp-tile-go { margin-top: auto; padding-top: 10px; align-self: flex-end; display: inline-flex; }
+.tsp-tile-go .icon { background: var(--muted); transition: background .15s, transform .15s; }
+a.tsp-tile:hover .tsp-tile-go .icon { background: var(--primary); transform: translateX(3px); }
+.tsp-pills { margin-top: auto; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; align-self: stretch; }
+.tsp-pill {
+  display: flex; align-items: center; justify-content: center; height: 30px; border-radius: 8px;
+  background: var(--primary); color: #fff; text-decoration: none;
+  font-size: 12px; font-weight: 700; transition: filter .15s, transform .1s;
+}
+.tsp-pill:hover { filter: brightness(1.08); }
+.tsp-pill:active { transform: scale(.98); }
+
+@keyframes tspFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes tspSweep { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+@keyframes tspFlow  { to { left: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .tsp-hero::after, .tsp-hero-stands img, .tsp-flow-line::after { animation: none; }
 }
 
 /* "TigerSpool-9918" is longer than a scale's name and shares its row with the

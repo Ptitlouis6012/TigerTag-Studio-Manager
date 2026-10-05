@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.33.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across six brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.34.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -114,6 +114,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - Per-item quantities (Amazon-cart style) — dropdown 1–9 + "10+" free-entry, persisted per item, factored into totals and the public snapshot (v2.9.0).
 - Payment-summary card (subtotal, estimated VAT, total) in the Lists view (v2.9.0).
 - Downloadable high-res QR PNG for the public-list share card, saved via a native Save dialog (v2.9.0).
+- **Bulk "Add to a list"** — a whole selection of materials, favorites or catalogue products goes into a list in one go (v2.34.0).
 - Add a friend's material to one of your own lists from friend-view — the "Add to a list" control (product card, grouped-spools side-card, spool detail panel) imports the friend's product into your account (picture, price, buy link, provenance) then adds it to your list (v2.11.0).
 
 ## Reorder & "To order" cart
@@ -137,6 +138,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
   - Shopping button — one control, two jobs: shop-green and opening the store when the product has a buy link, plain and landing on the buy-link field when it has none (v2.15.0).
 - Product web-link attachments — datasheets, tutorials or videos attached to a product identity and shared by every spool of it, tier-capped free 1 / plus 2 / premium 5 and enforced server-side (v2.12.0).
 - Favorites view — Grid, Table and "To order" modes, sortable table (v2.1.0; sortable v2.2.0).
+- **Catalogue multi-select** — tick products in the table or grid (shift-click for a range) and ★ favourite, 🛒 add to order or add to a list the whole selection at once (v2.34.0).
 - Grouped-spools side-card exposes the product's flag toggles (add-to-cart ❤, favourite ★, add-to-a-list ＋) as one icon-only row, in own and friend-view (v2.11.0).
 - Grouped-spools deck stamps each member with when it was added ("just now", "3 days ago", "2 months ago", exact date on hover) — the only thing distinguishing otherwise identical spools (v2.15.0).
 - Interest hierarchy — ❤ Love ⊆ ★ Favorite ⊆ tracked-for-reorder, coupled automatically on write (v2.1.0).
@@ -190,8 +192,9 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - Unified "Add a printer" flow — brand picker, model picker, docked options panel, connection tutorials (LAN-only mode / access code / IP walkthroughs, screenshots, all 9 locales) surfaced from both the add flow and printer settings (v1.8.19; flow redesign v1.10.26; **Bambu Lab A2L and X2D** recognised on discovery and given their walkthroughs v2.27.0).
 - LAN discovery per brand — mDNS/SSDP/UDP scans plus a persisted, account-synced shared "extra subnets" list and a manual "Add by IP" path across all six brands (v1.4.8 → v1.10.0; unified extra-subnets store v1.8.20; **tick one or several scan results and add them in one go**, each machine's own code asked on its card, v2.29.0).
 - Printer side panel — drag-drop reorder, inline field editing, online/offline indicator via HTTP ping (v1.4.7; "last seen" tracking v1.10.11).
-- Printer table/grid — live state pills, progress bar + remaining time, a **Preview** column showing the model currently on the bed, and an **"Ends at"** wall-clock column sortable by soonest finish (v1.7.1; Preview + Ends-at v2.0.0).
+- Printer table/grid — live state pills, progress bar + remaining time, a **Preview** column showing the model currently on the bed, and an **"Ends at"** wall-clock column sortable by soonest finish (v1.7.1; Preview + Ends-at v2.0.0); progress bars coloured by outcome — blue printing, green finished, red failed, grey cancelled — and frozen at the last % (v2.34.0).
 - Printer tags, with the same autocomplete UX as spool tags, plus a search bar and Brand/State/Tags filters in the Printers view (v2.0.0).
+- **Printers follow a new IP on their own** — when a LAN printer stops answering, its brand's network scan finds it again by its serial / MAC, saves the new address, reconnects and says so in a toast; printers record their stable identity on first connect, even when added by IP (v2.34.0).
 - Printer error alerts surfacing the machine's own message and code (Anycubic first) (v1.10.4).
 - Snapmaker Paxx-firmware helper — always-current download link, up-to-date indicator, per-printer update notification (v1.10.29).
 - FlashForge Creator 5 / 5 Pro official "Cloud + LAN" firmware helper — up-to-date indicator in the printer's Info window, per-model download of the latest release, USB install guide, and an update notification when a connected Creator 5 runs an older version (v2.30.0).
@@ -222,6 +225,7 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 - **TD1S** color/TD sensor — auto-detect on USB plug, live viewer, unified color+TD scanning modal with multi-slot (1–3 colour) support, edit-pencil swatch UI (v1.3+; unified modal v1.8.0).
 - **TigerScale** — WebSocket heartbeat presence (`users/{uid}/scales/{mac}`), live gradient card matching the mobile app: 56 px weight display, send-status badge (`idle → scanning → stable → send → success`), filament mini-panel pushed from firmware, twin-UID 2-reader grid, hold-to-confirm TARE (v1.5.0). Onboarding card for users without a scale, rebuilt around the **V3** machine — lit product shot with a generation badge, six icon-led capability rows, and two destinations: the firmware on GitHub and the printable body on MakerWorld (v2.19.0). Header presence rebuilt as **one glyph per scale** (capped at two), each coloured by its own state — **active** (green) / **standby** (blue) / **offline** (red) / grey when none — with a per-scale hover popover, an **iOS-style battery pill** (charge % + charging bolt) on the glyph, a distinct **standby** state with regime-aware offline detection (90 s active / 11 min screen-off, so a screen-off scale isn't shown disconnected), Wi-Fi coloured by connectivity, and a TARE confirmed only on a real 2xx response (v2.20.0). Live card rebuilt to mirror the scale's own weigh screen — weight and divider on the left, container and filament values plus **the spool's rack location** on the right, on the firmware's own palette — with TARE as a two-line key beneath the screen, inside the card, where it sits on the machine itself (v2.23.1).
 - **TigerPOD** dual-reader stand — dedicated modal with product video/imagery, MakerWorld STL download, dual-chip simultaneous encode ("Dual Link"), auto-opens when a chip action needs a reader that isn't connected (v1.8.0; redesigns v1.8.2, v2.9.0 hero video); ownership + reader-count telemetry signal (`hasPod`, `rfidReadersMax`) (v2.9.0); the modal now offers **both Pod models** to print — Standard and Mini (for OpenSpool) — each with its own MakerWorld download (v2.20.0).
+- **TigerSpool** — the open-source RFID reader that fills any printer's slot from a spool's chip: header presence (one glyph per box, active / screen-off / offline, battery), a side card per box with Wi-Fi, firmware and the printers it serves (with whether the box can reach each), hold-to-remove; with no box, a launch card presenting the product with its MakerWorld files (spool left / right), wiki and GitHub (v2.34.0).
 - **USB scale (Dymo M-series)** live weighing — plug a Dymo USB HID scale and spool weights fill themselves in: a chip on the reader (POD mode) saves the weight silently, or an open spool card offers an inline confirm; live grams appear in the spool's weight panel with an "asleep — tap to wake" hint when the scale powers down (v2.14.0).
 
 ## RFID / NFC & tags
@@ -278,6 +282,7 @@ Live integrations across six brands, each with real-time temperatures, per-slot 
 ## AI assistants (MCP)
 
 - **Local read-only MCP server** — Claude, Cursor and VS Code can read the account (inventory, racks, printers, devices, wishlists, friends' shared stock, data history) through 14 tools with decoded values and a built-in field notice; per-profile opt-in in *My profile*, one-click install per app, hold-to-renew key, credentials never exposed (v2.32.0).
+- **Online connector** — *My profile* presents the Tiger Hub's hosted server (`mcp.tigersystem.io`) for Claude.ai, ChatGPT and phone apps, with no Studio running: address + copy, the guide, and the online assistants connected to the account, each with a hold-to-cut button (v2.34.0).
 
 ## Dev tooling
 

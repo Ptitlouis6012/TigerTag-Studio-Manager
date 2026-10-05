@@ -97,6 +97,7 @@ Everything around TigerTag is open — the hardware, the firmware, the SDK, and 
 | **[TigerTag SDK for JavaScript](https://github.com/TigerTag-Project/TigerTag-SDK-JS)** | Parse, verify, and encode TigerTag NFC chips — used internally by this app | Apache-2.0 |
 | **[TigerTag SDK for Python](https://github.com/TigerTag-Project/TigerTag-SDK-Python)** | Parse, verify, and encode TigerTag NFC chips in Python — for scripts, tools, and automation | Apache-2.0 |
 | **[TigerScale V3](https://github.com/TigerTag-Project/Tiger-Scale-V3)** | ESP32-S3 firmware + hardware for the open-source filament scale — 3.5" touchscreen, dual NFC readers, battery | MIT |
+| **[TigerSpool](https://github.com/TigerTag-Project/TigerSpool-RFID)** | Open-source RFID reader that sends a spool's filament to any printer's slot — ESP32-S3, NFC reader, 3D-printed case | MIT |
 | **[TigerPOD](https://github.com/TigerTag-Project/TigerPOD)** | Open-source dual NFC reader/writer stand for spools — 3D-printable shell + two USB readers (free STL on MakerWorld: [Standard](https://makerworld.com/en/models/1289152-tigerpod-for-openspool-tigertag-rfid-filament#profileId-1318958) · [Mini](https://makerworld.com/en/models/3190348-tigerpod-mini-for-openspool-tigertag-rfid-filament#profileId-3609236)) | CC BY 4.0 |
 
 The **TigerTag SDK** is the low-level library that handles all NFC chip operations — reading the 144-byte NTAG payload, verifying the TigerTag format, and encoding new chip data. It is published as an npm package (`tigertag`) and can be used independently to build custom TigerTag-compatible tools.
@@ -180,6 +181,9 @@ Organize your filament collection into physical racks — drag spools onto slots
 #### ACR122U NFC reader
 Plug in a USB ACR122U reader and the app automatically opens the matching spool's detail panel the moment you scan a chip — no button, no search, instant access.
 
+#### 🧵 TigerSpool — the RFID reader for every 3D printer
+The **TigerSpool** ([repository](https://github.com/TigerTag-Project/TigerSpool-RFID)) is a cheap, easy-to-build open-source box that sits next to your printers: rest a TigerTag spool against it and it fills your printer's slot — material, colour, temperatures — like a native reader, on Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker and Anycubic. Studio shows each box live in the header (status, battery, the printers it serves). Print the desktop stand free on MakerWorld: [spool on the left](https://makerworld.com/models/3360492-tigerspool-desktop-stand-spool-on-the-left) · [spool on the right](https://makerworld.com/models/3360619-tigerspool-desktop-stand-spool-on-the-right).
+
 #### 🐯 TigerPOD — free 3D-printable dual reader stand
 
 <img src="assets/img/screenshots/screenshot_tigerpod.png" width="100%" alt="TigerPOD Free STL — Standard and Mini" />
@@ -235,6 +239,7 @@ A QR code to download the mobile app is always accessible in the sidebar.
 - Ask **Claude, Cursor or VS Code** about your stock — "what PLA am I low on?", "what does my friend have in black PETG?"
 - One-click install per app, turned on per profile in *My profile*
 - **Read-only** and local: the assistant can look, never change; passwords and keys are never shared
+- **From the web and your phone too**: Claude.ai, ChatGPT and their mobile apps connect online with one address — no Studio running — and *My profile* lists them with a button to cut access
 
 ### 🌗 Dark & Light
 - **Dark by default**, Light one click away in *Edit profile → Theme*

@@ -15,9 +15,13 @@
  */
 
 const WIKI = "https://wiki.tigersystem.io";
-const INSTALLER = "https://tigertag-project.github.io/TigerSpool-RFID/";
-const PHOTO = "../assets/img/TigerSpool.webp";          // the modal: box + spool, full render
-const PHOTO_CARD = "../assets/img/TigerSpool_card.png";  // the card: the whole box and its whole spool
+const GITHUB = "https://github.com/TigerTag-Project/TigerSpool-RFID";
+// The desktop stand comes in two mirror versions — the spool sits left or right of the box.
+const MAKERWORLD_LEFT  = "https://makerworld.com/models/3360492-tigerspool-desktop-stand-spool-on-the-left";
+const MAKERWORLD_RIGHT = "https://makerworld.com/models/3360619-tigerspool-desktop-stand-spool-on-the-right";
+const PHOTO_CARD = "../assets/img/TigerSpool_card.png";
+const PHOTO_LEFT  = "../assets/img/TigerSpool_left.webp";   // the modal: desktop stand, spool on the left
+const PHOTO_RIGHT = "../assets/img/TigerSpool_right.webp";  // … and spool on the right  // the card: the whole box and its whole spool
 
 const BRAND_LABEL = {
   bambulab: "Bambu Lab", creality: "Creality", elegoo: "Elegoo",
@@ -296,21 +300,47 @@ export function openTigerSpoolDiscover() {
   if (!body) return;
   const { t, esc, state } = _ctx;
   const guide = `${WIKI}${state.lang === "fr" ? "/fr" : ""}/products/tigerspool/`;
-  const points = ["tigerspoolPointBrands", "tigerspoolPointAccount", "tigerspoolPointOpen"]
-    .map(k => `<li>${esc(t(k))}</li>`).join("");
+  // A product launch card, not an install flow: the two desktop stands glowing
+  // up top, the promise, an animated "chip → TigerSpool → printer slot" strip
+  // that shows what it does at a glance, then three equal tiles saying where to
+  // go next — print it (MakerWorld, spool left / right), discover it (wiki),
+  // hack it (GitHub).
+  const badges = [["printer", "tigerspoolPointBrands"], ["coins", "tigerspoolPointCheap"], ["wrench", "tigerspoolPointEasy"]]
+    .map(([ico, k]) => `<span class="tsp-badge"><span class="icon icon-${ico} icon-13" aria-hidden="true"></span>${esc(t(k))}</span>`).join("");
+  const node = (ico, label) => `<div class="tsp-flow-node"><span class="tsp-flow-ico">${ico}</span><span>${esc(label)}</span></div>`;
+  const pill = (url, key) => `<a class="tsp-pill" href="${esc(url)}" data-tsp-link="${esc(url)}">${esc(t(key))}</a>`;
+  const tile = (ico, title, sub) => `
+      <span class="tsp-tile-ico"><span class="icon icon-${ico} icon-20" aria-hidden="true"></span></span>
+      <span class="tsp-tile-title">${esc(t(title))}</span>
+      <span class="tsp-tile-sub">${esc(t(sub))}</span>`;
+  const arrow = `<span class="tsp-tile-go"><span class="icon icon-arrow-r icon-13" aria-hidden="true"></span></span>`;
   body.innerHTML = `
-    <img class="tsp-discover-photo" src="${PHOTO}" alt="" draggable="false" />
+    <div class="tsp-hero">
+      <span class="tsp-eyebrow">${esc(t("tigerspoolEyebrow"))}</span>
+      <div class="tsp-hero-stands">
+        <img src="${PHOTO_LEFT}" alt="" draggable="false" />
+        <img src="${PHOTO_RIGHT}" alt="" draggable="false" />
+      </div>
+    </div>
     <div class="tsp-discover-text">
-      <p class="tsp-discover-lead">${esc(t("tigerspoolPitch"))}</p>
-      <ul class="tsp-discover-points">${points}</ul>
-      <div class="tsp-discover-build">
-        <div class="tsp-discover-build-title">${esc(t("tigerspoolBuildTitle"))}</div>
-        <p>${esc(t("tigerspoolBuildText"))}</p>
+      <h2 class="tsp-discover-lead">${esc(t("tigerspoolPitch"))}</h2>
+      <p class="tsp-discover-sub">${esc(t("tigerspoolSub"))}</p>
+      <div class="tsp-badges">${badges}</div>
+    </div>
+    <div class="tsp-flow" aria-hidden="true">
+      ${node(`<span class="icon icon-nfc icon-20"></span>`, t("tigerspoolFlowChip"))}
+      <span class="tsp-flow-line"></span>
+      ${node(`<span class="tsp-flow-spool"></span>`, "TigerSpool")}
+      <span class="tsp-flow-line"></span>
+      ${node(`<span class="icon icon-printer icon-20"></span>`, t("tigerspoolFlowSlot"))}
+    </div>
+    <div class="tsp-tiles">
+      <div class="tsp-tile tsp-tile--hot">
+        ${tile("package", "tigerspoolCtaPrint", "tigerspoolCtaPrintSub")}
+        <span class="tsp-pills">${pill(MAKERWORLD_LEFT, "tigerspoolSpoolLeft")}${pill(MAKERWORLD_RIGHT, "tigerspoolSpoolRight")}</span>
       </div>
-      <div class="tsp-discover-actions">
-        <a class="tsp-btn tsp-btn--primary" href="${esc(guide)}" data-tsp-link="${esc(guide)}">${esc(t("tigerspoolGuideBtn"))}</a>
-        <a class="tsp-btn" href="${INSTALLER}" data-tsp-link="${INSTALLER}">${esc(t("tigerspoolInstallBtn"))}</a>
-      </div>
+      <a class="tsp-tile" href="${esc(guide)}" data-tsp-link="${esc(guide)}">${tile("book", "tigerspoolCtaWiki", "tigerspoolCtaWikiSub")}${arrow}</a>
+      <a class="tsp-tile" href="${esc(GITHUB)}" data-tsp-link="${esc(GITHUB)}">${tile("github", "tigerspoolCtaCode", "tigerspoolCtaCodeSub")}${arrow}</a>
     </div>`;
   document.getElementById("tigerspoolDiscoverOverlay")?.classList.add("open");
 }
