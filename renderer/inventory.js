@@ -4293,6 +4293,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const mcpGroup = $("eacMcpGroup");
     if (mcpGroup) mcpGroup.hidden = !window.mcpBridge || _editingAccount.id !== state.activeAccountId;
     _mcpSettingsRefresh?.();
+    if (mcpGroup && !mcpGroup.hidden) _mcpGrantsRefresh?.();
     // Atomic paint via the centralised pipeline — gradient,
     // .av-initials text and the photo overlay all in one shot. No
     // textContent on #eacAvatar itself (that would wipe the hover
@@ -38405,4 +38406,81 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }, { hint: true });
     _mcpSettingsRefresh = refresh;
     refresh();
+  })();
+  // ── My profile › AI assistants › online — the Tiger Hub's HOSTED connector
+  // (mcp.tigersystem.io, OAuth). It does not depend on the local toggle: the
+  // address + guide are always there, and the list shows the assistants
+  // connected to THIS account online, each with a hold-to-cut button. The Hub
+  // route has no CORS headers, so the calls go through main (mcp:hosted-grants).
+  // A failure is one quiet line in the list, never a dialog.
+  const MCP_HOSTED_GUIDE = "https://wiki.tigersystem.io/guides/connect-an-ai-assistant/";
+  let _mcpGrantsRefresh = null;
+  (function wireMcpHosted() {
+    const api = window.mcpBridge;
+    const list = $("eacMcpGrants");
+    if (!api?.hostedGrants || !list) { $("eacMcpWeb")?.setAttribute("hidden", ""); return; }
+    const copyBtn = $("btnMcpWebCopy");
+    let copyT = null;
+    copyBtn.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("eacMcpWebUrl").textContent.trim()); } catch (_) { return; }
+      copyBtn.textContent = t("copiedFlash");
+      copyBtn.classList.add("is-done");
+      clearTimeout(copyT);
+      copyT = setTimeout(() => { copyBtn.textContent = t("copyLabel"); copyBtn.classList.remove("is-done"); }, 1800);
+    });
+    // The wiki has a French edition; every other language reads the English one.
+    $("btnMcpWebHowto").addEventListener("click", () => {
+      const url = state.lang === "fr" ? MCP_HOSTED_GUIDE.replace(".io/", ".io/fr/") : MCP_HOSTED_GUIDE;
+      window.electronAPI?.openExternal(url);
+    });
+    const idToken = () => firebase.app(state.activeAccountId).auth().currentUser?.getIdToken();
+    const line = (key, kind) => { list.innerHTML = `<div class="eac-mcp-grants-note"${kind ? ` data-kind="${kind}"` : ""}>${esc(t(key))}</div>`; };
+    const day = (iso) => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleDateString(state.lang) : "—"; };
+    const paint = (grants) => {
+      if (!grants.length) return line("eacMcpGrantsNone");
+      list.innerHTML = grants.map(g => {
+        const used = g.lastUsedAt && !isNaN(Date.parse(g.lastUsedAt))
+          ? ` · ${esc(t("eacMcpGrantUsed", { ago: timeAgo(Date.parse(g.lastUsedAt)) }))}` : "";
+        return `<div class="eac-mcp-grant" data-id="${esc(g.id)}">
+          <div class="eac-mcp-grant-text">
+            <span class="eac-mcp-grant-name">${esc(g.clientName || t("eacMcpGrantUnnamed"))}</span>
+            <span class="eac-mcp-grant-meta">${esc(t("eacMcpGrantSince", { date: day(g.createdAt) }))}${used}</span>
+          </div>
+          <button type="button" class="eac-mcp-key eac-mcp-cut" data-hold-tip="eacMcpGrantCutTip">
+            <span class="hold-progress"></span><span>${esc(t("eacMcpGrantCut"))}</span>
+          </button>
+        </div>`;
+      }).join("");
+      list.querySelectorAll(".eac-mcp-grant").forEach(row => {
+        setupHoldToConfirm(row.querySelector(".eac-mcp-cut"), 1500, () => cut(row), { hint: true });
+      });
+    };
+    let seq = 0;   // a profile reopened mid-request: only the latest answer paints
+    const refresh = async () => {
+      const mine = ++seq;
+      if (!list.querySelector(".eac-mcp-grant")) line("eacMcpGrantsLoading");
+      try {
+        const tok = await idToken();
+        const res = tok ? await api.hostedGrants(tok) : null;
+        if (mine !== seq) return;
+        if (!res?.ok || !Array.isArray(res.json?.grants)) return line("eacMcpGrantsErr", "err");
+        paint(res.json.grants);
+      } catch (_) { if (mine === seq) line("eacMcpGrantsErr", "err"); }
+    };
+    // 204 = cut; 404 = already gone (or not ours) — either way the row leaves.
+    // Only the row is removed: the rest of the list stays put.
+    async function cut(row) {
+      try {
+        const tok = await idToken();
+        const res = tok ? await api.hostedGrants(tok, row.dataset.id) : null;
+        if (!res || (!res.ok && res.status !== 404)) {
+          row.querySelector(".eac-mcp-grant-meta").textContent = t("eacMcpGrantsErr");
+          row.dataset.kind = "err";
+          return;
+        }
+        row.remove();
+        if (!list.querySelector(".eac-mcp-grant")) line("eacMcpGrantsNone");
+      } catch (_) { row.dataset.kind = "err"; }
+    }
+    _mcpGrantsRefresh = refresh;
   })();

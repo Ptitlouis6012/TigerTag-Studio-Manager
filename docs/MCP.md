@@ -56,6 +56,27 @@ with the token from `<userData>/mcp.json`. Logos: Simple Icons SVGs in
 
 Studio must be running (and signed in) for an assistant to get answers.
 
+### The online connector (hosted by the Tiger Hub)
+
+Below the tiles, a **From the web and your phone** sub-block presents the Hub's
+hosted server — `https://mcp.tigersystem.io/mcp` (OAuth 2.1, same 14 read-only tools,
+credentials masked; design: `MCP-HOSTED.md` in the `TigerTag_Hub` repo). It does **not**
+depend on the local toggle and is never greyed: it works without Studio.
+
+| Element | What happens |
+|---|---|
+| Address + **Copy** | copies `https://mcp.tigersystem.io/mcp`, to paste as a custom connector in Claude.ai / ChatGPT / Codex / Cursor |
+| **How to connect** | opens the public guide externally — `wiki.tigersystem.io/guides/connect-an-ai-assistant/` (`/fr/` edition when Studio is in French) |
+| One-line difference | local = only while Studio is open, sees live printer state; online = anywhere without Studio, no live printer state |
+| **Connected online assistants** | `GET https://tigersystem.io/api/account/mcp-grants` with the signed-in account's Firebase ID token → one row per grant (name, connected date, last used) |
+| **Cut access** (hold 1.5 s) | `DELETE …/mcp-grants?id=<id>` — 204 or 404 both remove the row |
+
+The Hub route sends no CORS headers, so both calls go through the main process
+(`mcp:hosted-grants` IPC → `mcpBridge.hostedGrants(idToken, revokeId?)`, fixed URL, GET/DELETE
+only). The list is fetched each time the profile opens; empty → a short "none yet" line,
+failure → one quiet error line (never a dialog). Same visibility rule as the rest of the block:
+the signed-in account's own profile only.
+
 ---
 
 ## 3. Architecture

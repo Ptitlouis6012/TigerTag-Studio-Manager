@@ -1639,5 +1639,18 @@
   "stgMcpAddOpened": "Nu in {{app}} — bevestig daar gewoon de installatie.",
   "stgMcpAddFailed": "{{app}} neemt niet op — staat het op deze computer?",
   "eacMcpRow": "Laat een AI mijn inventaris lezen",
-  "stgMcpNewKeyTip": "Vernieuwt de sleutel en ontkoppelt je assistenten."
+  "stgMcpNewKeyTip": "Vernieuwt de sleutel en ontkoppelt je assistenten.",
+  "eacMcpWebTitle": "Via het web en je telefoon",
+  "eacMcpWebSub": "Claude.ai, ChatGPT en hun telefoon-apps kunnen je voorraad ook lezen — niets te installeren, voeg gewoon dit adres toe als eigen connector.",
+  "eacMcpWebHowto": "Zo verbind je het",
+  "eacMcpWebDiff": "Op deze computer: alleen als Studio open is, maar hij ziet je printers live. Online: werkt overal zonder Studio, alleen zonder live printerbeeld.",
+  "eacMcpGrantsTitle": "Online verbonden AI-assistenten",
+  "eacMcpGrantsNone": "Nog geen — je voorraad heeft een rustige dag.",
+  "eacMcpGrantsLoading": "Even kijken wie er verbonden is…",
+  "eacMcpGrantsErr": "De lijst is nu even onbereikbaar — probeer het zo nog eens.",
+  "eacMcpGrantSince": "Verbonden op {{date}}",
+  "eacMcpGrantUsed": "laatst gebruikt {{ago}}",
+  "eacMcpGrantUnnamed": "Een mysterieuze assistent",
+  "eacMcpGrantCut": "Toegang afsluiten",
+  "eacMcpGrantCutTip": "Deze assistent leest je account niet meer. Je kunt hem altijd opnieuw verbinden."
 }

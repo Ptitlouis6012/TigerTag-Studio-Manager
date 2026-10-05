@@ -1638,5 +1638,18 @@
   "stgMcpAddOpened": "Teraz {{app}} — potwierdź tam instalację.",
   "stgMcpAddFailed": "{{app}} nie odbiera — czy jest zainstalowany na tym komputerze?",
   "eacMcpRow": "Pozwól AI czytać mój inwentarz",
-  "stgMcpNewKeyTip": "Odnawia klucz i rozłącza twoich asystentów."
+  "stgMcpNewKeyTip": "Odnawia klucz i rozłącza twoich asystentów.",
+  "eacMcpWebTitle": "Z przeglądarki i telefonu",
+  "eacMcpWebSub": "Claude.ai, ChatGPT i ich aplikacje na telefon też mogą czytać twój zapas — nic do instalowania, wystarczy dodać ten adres jako własny konektor.",
+  "eacMcpWebHowto": "Jak połączyć",
+  "eacMcpWebDiff": "Na tym komputerze: tylko gdy Studio jest otwarte, ale widzi drukarki na żywo. Online: działa wszędzie bez Studio, tylko bez podglądu drukarek na żywo.",
+  "eacMcpGrantsTitle": "Asystenci AI połączeni online",
+  "eacMcpGrantsNone": "Jeszcze żadnego — twój zapas ma spokój.",
+  "eacMcpGrantsLoading": "Sprawdzam, kto jest połączony…",
+  "eacMcpGrantsErr": "Nie da się teraz pobrać listy — spróbuj za chwilę.",
+  "eacMcpGrantSince": "Połączono {{date}}",
+  "eacMcpGrantUsed": "ostatnio użyty {{ago}}",
+  "eacMcpGrantUnnamed": "Tajemniczy asystent",
+  "eacMcpGrantCut": "Odetnij dostęp",
+  "eacMcpGrantCutTip": "Ten asystent przestanie czytać twoje konto. Zawsze możesz go podłączyć ponownie."
 }

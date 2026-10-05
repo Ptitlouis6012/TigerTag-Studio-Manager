@@ -1639,5 +1639,18 @@
   "stgMcpAddOpened": "Tu turno en {{app}} — solo confirma la instalación.",
   "stgMcpAddFailed": "{{app}} no contesta — ¿está instalado en este ordenador?",
   "eacMcpRow": "Dejar que una IA lea mi inventario",
-  "stgMcpNewKeyTip": "Renueva la clave y desconecta tus asistentes."
+  "stgMcpNewKeyTip": "Renueva la clave y desconecta tus asistentes.",
+  "eacMcpWebTitle": "Desde la web y tu móvil",
+  "eacMcpWebSub": "Claude.ai, ChatGPT y sus apps móviles también pueden leer tu stock — nada que instalar, solo añade esta dirección como conector personalizado.",
+  "eacMcpWebHowto": "Cómo conectarlo",
+  "eacMcpWebDiff": "En este ordenador: solo con Studio abierto, pero ve tus impresoras en directo. En línea: funciona en cualquier sitio sin Studio, sin el directo de las impresoras.",
+  "eacMcpGrantsTitle": "Asistentes IA conectados en línea",
+  "eacMcpGrantsNone": "Ninguno todavía — tu stock está tranquilo.",
+  "eacMcpGrantsLoading": "Mirando quién está conectado…",
+  "eacMcpGrantsErr": "No se pudo cargar la lista ahora — inténtalo en un rato.",
+  "eacMcpGrantSince": "Conectado el {{date}}",
+  "eacMcpGrantUsed": "último uso {{ago}}",
+  "eacMcpGrantUnnamed": "Un asistente misterioso",
+  "eacMcpGrantCut": "Cortar el acceso",
+  "eacMcpGrantCutTip": "Este asistente deja de leer tu cuenta. Siempre puedes volver a conectarlo."
 }

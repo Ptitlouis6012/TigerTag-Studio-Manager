@@ -247,3 +247,5 @@
 
 ### AI assistants (local MCP server)
 `stgMcpTitle`, `stgMcpToggleSub` (ⓘ bubble), `eacMcpRow`, `stgMcpAddClaude`, `stgMcpAddCursor`, `stgMcpAddVscode` (aria labels), `stgMcpAddOpened` (`{{app}}`), `stgMcpAddFailed` (`{{app}}`), `stgMcpNewKey`, `stgMcpNewKeyTip`, `stgMcpError` (`{{error}}`)
+
+Online (hosted) connector: `eacMcpWebTitle`, `eacMcpWebSub`, `eacMcpWebHowto`, `eacMcpWebDiff`, `eacMcpGrantsTitle`, `eacMcpGrantsNone`, `eacMcpGrantsLoading`, `eacMcpGrantsErr`, `eacMcpGrantSince` (`{{date}}`), `eacMcpGrantUsed` (`{{ago}}`), `eacMcpGrantUnnamed`, `eacMcpGrantCut`, `eacMcpGrantCutTip`

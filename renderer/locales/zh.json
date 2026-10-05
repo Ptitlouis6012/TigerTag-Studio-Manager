@@ -1639,5 +1639,18 @@
   "stgMcpAddOpened": "交给 {{app}} 了——在那边确认安装即可。",
   "stgMcpAddFailed": "{{app}} 没有响应——这台电脑上装了吗？",
   "eacMcpRow": "让 AI 读取我的库存",
-  "stgMcpNewKeyTip": "更新密钥并断开你的助手。"
+  "stgMcpNewKeyTip": "更新密钥并断开你的助手。",
+  "eacMcpWebTitle": "网页版和手机上",
+  "eacMcpWebSub": "Claude.ai、ChatGPT 及其手机 App 也能读取你的库存——无需安装，只要把这个地址添加为自定义连接器。",
+  "eacMcpWebHowto": "如何连接",
+  "eacMcpWebDiff": "本机：仅在 Studio 打开时可用，但能实时看到打印机。在线：随处可用、无需 Studio，只是看不到打印机的实时状态。",
+  "eacMcpGrantsTitle": "已在线连接的 AI 助手",
+  "eacMcpGrantsNone": "暂时还没有——你的库存今天很清静。",
+  "eacMcpGrantsLoading": "正在查看谁已连接…",
+  "eacMcpGrantsErr": "暂时拿不到列表——稍后再试。",
+  "eacMcpGrantSince": "连接于 {{date}}",
+  "eacMcpGrantUsed": "最近使用：{{ago}}",
+  "eacMcpGrantUnnamed": "一位神秘助手",
+  "eacMcpGrantCut": "切断访问",
+  "eacMcpGrantCutTip": "这个助手将不再读取你的账户。之后随时可以重新连接。"
 }

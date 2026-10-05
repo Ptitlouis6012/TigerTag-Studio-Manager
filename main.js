@@ -2001,6 +2001,39 @@ ipcMain.handle('mcp:new-token', async () => {
   return _mcpConfig();
 });
 
+// ── Hosted MCP connector — the online assistants connected to the account ──
+// The Tiger Hub serves its own MCP server (mcp.tigersystem.io, OAuth). Each
+// assistant a user connects there is a grant; this lists them and cuts one.
+// The Hub route sends no CORS headers, so a renderer fetch() with an
+// Authorization header dies on the preflight — Node's fetch() here in main is
+// CORS-exempt. Fixed URL, two verbs: never a generic outbound proxy.
+// The renderer passes the signed-in account's Firebase ID token.
+// Returns { ok, status, json? } | { ok:false, status:0, error }.
+const MCP_GRANTS_URL = 'https://tigersystem.io/api/account/mcp-grants';
+ipcMain.handle('mcp:hosted-grants', async (_evt, idToken, revokeId) => {
+  if (!idToken || typeof idToken !== 'string') return { ok: false, status: 0, error: 'no token' };
+  const del = revokeId != null;
+  if (del && (typeof revokeId !== 'string' || !/^[\w-]{1,128}$/.test(revokeId))) {
+    return { ok: false, status: 0, error: 'invalid id' };
+  }
+  const ctl = new AbortController();
+  const tm = setTimeout(() => ctl.abort(), 10000);
+  try {
+    const url = del ? `${MCP_GRANTS_URL}?id=${encodeURIComponent(revokeId)}` : MCP_GRANTS_URL;
+    const res = await fetch(url, {
+      method: del ? 'DELETE' : 'GET',
+      headers: { Authorization: `Bearer ${idToken}` },
+      signal: ctl.signal,
+    });
+    const json = res.status === 204 ? null : await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, json };
+  } catch (e) {
+    return { ok: false, status: 0, error: e?.message || String(e) };
+  } finally {
+    clearTimeout(tm);
+  }
+});
+
 // ── Auto-updater preference ─────────────────────────────────────────────
 // Persisted in <userData>/auto-update.json so it survives across launches
 // and is read at startup BEFORE the renderer has had a chance to send its

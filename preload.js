@@ -22,6 +22,8 @@ contextBridge.exposeInMainWorld('mcpBridge', {
   newToken:      () => ipcRenderer.invoke('mcp:new-token'),
   install:       (target) => ipcRenderer.invoke('mcp:install', target),
   setAccount:    (uid) => ipcRenderer.invoke('mcp:set-account', uid),
+  // Hosted connector (Tiger Hub): list the online assistants, or cut one (id).
+  hostedGrants:  (idToken, revokeId) => ipcRenderer.invoke('mcp:hosted-grants', idToken, revokeId),
 });
 
 contextBridge.exposeInMainWorld('bambulab', {

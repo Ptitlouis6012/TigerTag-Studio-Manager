@@ -1639,5 +1639,18 @@
   "stgMcpAddOpened": "Over to {{app}} — just confirm the install there.",
   "stgMcpAddFailed": "{{app}} didn’t pick up — is it installed on this computer?",
   "eacMcpRow": "Let an AI read my inventory",
-  "stgMcpNewKeyTip": "Renews the key and disconnects your assistants."
+  "stgMcpNewKeyTip": "Renews the key and disconnects your assistants.",
+  "eacMcpWebTitle": "From the web and your phone",
+  "eacMcpWebSub": "Claude.ai, ChatGPT and their phone apps can read your stock too — nothing to install, just add this address as a custom connector.",
+  "eacMcpWebHowto": "How to connect",
+  "eacMcpWebDiff": "On this computer: only while Studio is open, but it sees your printers live. Online: works anywhere without Studio, minus the live printer view.",
+  "eacMcpGrantsTitle": "Connected online assistants",
+  "eacMcpGrantsNone": "None yet — your stock is having a quiet day.",
+  "eacMcpGrantsLoading": "Checking who’s connected…",
+  "eacMcpGrantsErr": "Couldn’t reach the list right now — try again in a bit.",
+  "eacMcpGrantSince": "Connected {{date}}",
+  "eacMcpGrantUsed": "last used {{ago}}",
+  "eacMcpGrantUnnamed": "A mystery assistant",
+  "eacMcpGrantCut": "Cut access",
+  "eacMcpGrantCutTip": "This assistant stops reading your account. You can always connect it again."
 }

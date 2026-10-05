@@ -1639,5 +1639,18 @@
   "stgMcpAddOpened": "Weiter in {{app}} — bestätig dort einfach die Installation.",
   "stgMcpAddFailed": "{{app}} geht nicht ran — ist es auf diesem Rechner installiert?",
   "eacMcpRow": "Eine KI mein Inventar lesen lassen",
-  "stgMcpNewKeyTip": "Erneuert den Schlüssel und trennt deine Assistenten."
+  "stgMcpNewKeyTip": "Erneuert den Schlüssel und trennt deine Assistenten.",
+  "eacMcpWebTitle": "Im Web und auf dem Handy",
+  "eacMcpWebSub": "Claude.ai, ChatGPT und ihre Handy-Apps können deinen Bestand auch lesen — nichts zu installieren, einfach diese Adresse als eigenen Connector hinzufügen.",
+  "eacMcpWebHowto": "So verbindest du es",
+  "eacMcpWebDiff": "Auf diesem Computer: nur solange Studio offen ist, dafür sieht er deine Drucker live. Online: klappt überall ohne Studio, nur ohne Live-Druckeransicht.",
+  "eacMcpGrantsTitle": "Online verbundene KI-Assistenten",
+  "eacMcpGrantsNone": "Noch keiner — dein Bestand hat Ruhe.",
+  "eacMcpGrantsLoading": "Mal schauen, wer verbunden ist…",
+  "eacMcpGrantsErr": "Die Liste ist gerade nicht erreichbar — versuch’s gleich nochmal.",
+  "eacMcpGrantSince": "Verbunden am {{date}}",
+  "eacMcpGrantUsed": "zuletzt genutzt {{ago}}",
+  "eacMcpGrantUnnamed": "Ein mysteriöser Assistent",
+  "eacMcpGrantCut": "Zugang kappen",
+  "eacMcpGrantCutTip": "Dieser Assistent liest dein Konto nicht mehr. Du kannst ihn jederzeit neu verbinden."
 }

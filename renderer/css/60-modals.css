@@ -1304,6 +1304,57 @@
   }
   #editAccountModalOverlay .eac-mcp-key.is-done .icon { background: var(--success); }
 
+  /* AI assistants › online (hosted connector) — never greyed by the local
+     toggle: it works without Studio. Address + copy, guide link, the
+     local-vs-online line, then the connected assistants, one row each. */
+  #editAccountModalOverlay .eac-mcp-web {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  #editAccountModalOverlay .eac-mcp-web-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+  #editAccountModalOverlay .eac-mcp-web-title:not(:first-child) { margin-top: 4px; }
+  #editAccountModalOverlay .eac-mcp-web-sub,
+  #editAccountModalOverlay .eac-mcp-web-diff { margin: 0; font-size: 11.5px; line-height: 1.45; color: var(--muted); }
+  #editAccountModalOverlay .eac-mcp-url {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 4px 4px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-2);
+  }
+  #editAccountModalOverlay .eac-mcp-url code {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: 12px; color: var(--text); user-select: all;
+  }
+  #editAccountModalOverlay .eac-mcp-copy {
+    height: auto; flex-shrink: 0; padding: 5px 11px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    font-size: 12px; font-weight: 600; color: var(--text);
+    transition: border-color .15s, color .15s;
+  }
+  #editAccountModalOverlay .eac-mcp-copy:hover { border-color: var(--primary); color: var(--primary); }
+  #editAccountModalOverlay .eac-mcp-copy.is-done { border-color: var(--success); color: var(--success); }
+  #editAccountModalOverlay .eac-mcp-howto {
+    height: auto; align-self: flex-start; display: inline-flex; align-items: center; gap: 5px;
+    padding: 0; border: 0; background: none; cursor: pointer;
+    font-size: 12px; font-weight: 600; color: var(--primary);
+  }
+  #editAccountModalOverlay .eac-mcp-howto .icon { background: var(--primary); }
+  #editAccountModalOverlay .eac-mcp-howto:hover span:first-child { text-decoration: underline; }
+  #editAccountModalOverlay .eac-mcp-grants { display: flex; flex-direction: column; gap: 6px; }
+  #editAccountModalOverlay .eac-mcp-grants-note { font-size: 11.5px; color: var(--muted); }
+  #editAccountModalOverlay .eac-mcp-grants-note[data-kind="err"] { color: var(--danger); }
+  #editAccountModalOverlay .eac-mcp-grant {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 7px 7px 10px; border-radius: 8px; border: 1px solid var(--border);
+  }
+  #editAccountModalOverlay .eac-mcp-grant-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  #editAccountModalOverlay .eac-mcp-grant-name {
+    font-size: 12.5px; font-weight: 600; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  #editAccountModalOverlay .eac-mcp-grant-meta { font-size: 11px; color: var(--muted); }
+  #editAccountModalOverlay .eac-mcp-grant[data-kind="err"] .eac-mcp-grant-meta { color: var(--danger); }
+  #editAccountModalOverlay .eac-mcp-cut:hover { border-color: var(--danger); color: var(--danger); }
+
   /* The name field spans the section under its own caption — a text input needs
      room to show what you typed, which a right-hand column cannot give it. */
   #editAccountModalOverlay .eac-name-row { gap: 6px; }
