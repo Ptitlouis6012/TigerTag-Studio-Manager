@@ -952,6 +952,29 @@
   "scaleStatusOnline": "online",
   "scaleStatusOffline": "offline",
   "scaleStatusStandby": "stand-by",
+  "tigerspoolPrinterUnknown": "Onbekend: de TigerSpool is offline, of zijn firmware meldt de printerstatus nog niet",
+  "tigerspoolPrinterDown": "Deze TigerSpool bereikt deze printer nu niet",
+  "tigerspoolPrinterUp": "Deze TigerSpool ziet deze printer online",
+  "tigerspoolRemove": "Ingedrukt houden om deze TigerSpool uit je account te verwijderen (zet hem eerst uit, anders meldt hij zich opnieuw aan)",
+  "tigerspoolHealthNone": "Nog geen TigerSpool — klik om hem te ontdekken",
+  "tigerspoolPrintersTitle": {
+    "one": "Actieve printer ({{n}})",
+    "other": "Actieve printers ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Printer staat niet meer in Tiger Studio",
+  "tigerspoolNoPrinters": "Nog geen printer actief op dit kastje — kies ze op het scherm.",
+  "tigerspoolPitch": "Een kastje naast je printers. Kies een slot op het scherm, houd er een spoel tegen — het filament komt in dat slot. Niets over te typen.",
+  "tigerspoolPointBrands": "Werkt met Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker en Anycubic — tot 24 printers in de lijst.",
+  "tigerspoolPointAccount": "Hij haalt je printers uit je Tiger Studio-account: niets dubbel in te stellen.",
+  "tigerspoolPointOpen": "Open source: een ESP32-S3, een NFC-lezer en een 3D-geprinte behuizing.",
+  "tigerspoolBuildTitle": "Bouw je eigen",
+  "tigerspoolBuildText": "Gangbare onderdelen, een geprinte behuizing, en de firmware installeer je met één klik vanuit je browser. Zodra hij op je wifi zit en aan je account gekoppeld is, verschijnt hij hier vanzelf.",
+  "tigerspoolGuideBtn": "Zo bouw je hem",
+  "tigerspoolInstallBtn": "Installeren vanuit je browser",
+  "tigerspoolPrinters": {
+    "one": "{{n}} printer",
+    "other": "{{n}} printers"
+  },
   "scaleChipPower": "Voeding",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Batterij",
@@ -1639,5 +1662,6 @@
   "stgMcpAddOpened": "Nu in {{app}} — bevestig daar gewoon de installatie.",
   "stgMcpAddFailed": "{{app}} neemt niet op — staat het op deze computer?",
   "eacMcpRow": "Laat een AI mijn inventaris lezen",
-  "stgMcpNewKeyTip": "Vernieuwt de sleutel en ontkoppelt je assistenten."
+  "stgMcpNewKeyTip": "Vernieuwt de sleutel en ontkoppelt je assistenten.",
+  "printerRefound": "{{name}} is verhuisd naar {{ip}} — opgespoord en opnieuw verbonden."
 }

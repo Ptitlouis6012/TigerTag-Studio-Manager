@@ -3253,6 +3253,43 @@ ipcMain.handle('net:get-local-subnets', () => {
   return Array.from(prefixes);
 });
 
+// ── ARP — the MAC address behind a LAN IP, read from the OS neighbour cache.
+// A printer's IP changes with DHCP; its MAC does not, and the OS learns it the
+// moment we talk to the printer — whatever the brand, however it was added.
+// Only meaningful on a DIRECTLY attached subnet: across a router the cache
+// holds the ROUTER's MAC, so an IP outside every local interface's network
+// returns null rather than a wrong answer. Never throws.
+function _ipToInt(ip) {
+  const p = String(ip).split('.').map(Number);
+  return p.length === 4 && p.every(n => n >= 0 && n <= 255) ? ((p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]) >>> 0 : null;
+}
+function _isOnLocalSubnet(ip) {
+  const n = _ipToInt(ip);
+  if (n == null) return false;
+  for (const list of Object.values(require('os').networkInterfaces())) {
+    for (const ni of list || []) {
+      if (ni.internal || (ni.family !== 'IPv4' && ni.family !== 4)) continue;
+      const a = _ipToInt(ni.address), m = _ipToInt(ni.netmask);
+      if (a != null && m != null && ((a & m) >>> 0) === ((n & m) >>> 0)) return true;
+    }
+  }
+  return false;
+}
+ipcMain.handle('net:arp-mac', async (_e, ip) => {
+  if (!_isOnLocalSubnet(ip)) return null;
+  const { execFile } = require('child_process');
+  const cmd = process.platform === 'win32' ? ['arp', ['-a', ip]]
+            : process.platform === 'darwin' ? ['/usr/sbin/arp', ['-n', ip]]
+            : ['ip', ['neigh', 'show', ip]];
+  const out = await new Promise(res =>
+    execFile(cmd[0], cmd[1], { timeout: 2000, windowsHide: true }, (err, stdout) => res(err ? '' : String(stdout || ''))));
+  // macOS prints "0:e0:4c:…" (no leading zeros), Windows "00-e0-4c-…".
+  const m = out.match(/(?:^|[\s(])((?:[0-9a-f]{1,2}[:-]){5}[0-9a-f]{1,2})(?=[\s)]|$)/im);
+  if (!m) return null;
+  const mac = m[1].split(/[:-]/).map(h => h.padStart(2, '0')).join(':').toUpperCase();
+  return (mac === '00:00:00:00:00:00' || mac === 'FF:FF:FF:FF:FF:FF') ? null : mac;
+});
+
 // ── mDNS — browse for `_snapmaker._tcp.local.` (gold-standard discovery).
 // Snapmaker firmware advertises this service on every printer (hardcoded in
 // u1-moonraker/components/zeroconf.py: ZC_SERVICE_TYPE = "_snapmaker._tcp.local.").

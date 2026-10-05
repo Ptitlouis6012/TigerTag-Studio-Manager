@@ -8,6 +8,7 @@
  * Self-registers into the brands registry at module evaluation time.
  */
 import { ctx } from '../context.js';
+import { ensurePrinterIdentity } from '../identity.js';
 import { registerBrand, brands } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
 import { renderSnapJobCard, renderSnapTempCard, renderSnapFilamentCard } from './cards.js';
@@ -207,6 +208,15 @@ function snapOpenSocket(conn) {
   conn.status = "connecting";
   snapNotifyChange(conn);
 
+  // A dead address never refuses — the OS waits ~75 s before failing the
+  // handshake. Give up after a few seconds so the retry (and, after a few, the
+  // IP re-find) starts promptly. Closing a CONNECTING socket fires "close".
+  const openTimer = setTimeout(() => {
+    if (ws.readyState === WebSocket.CONNECTING) { try { ws.close(); } catch {} }
+  }, 8000);
+  ws.addEventListener("open",  () => clearTimeout(openTimer));
+  ws.addEventListener("close", () => clearTimeout(openTimer));
+
   // Wrap send so every outbound payload is captured for the log view.
   const sendLogged = (obj) => {
     const json = JSON.stringify(obj);
@@ -282,6 +292,7 @@ function snapOpenSocket(conn) {
     if (conn.status !== "connected") {
       conn.status = "connected"; conn.lastError = null; conn.retry = 0;
       snapNotifyChange(conn, /*statusChanged*/ true);
+      ensurePrinterIdentity("snapmaker", conn.key, conn.ip);   // so a re-find can match it after an IP change
     }
 
     // ── objects.list response → discover filament sensors ─────────────────
@@ -365,6 +376,7 @@ function snapScheduleReconnect(conn) {
   if (!_snapConns.has(conn.key)) return; // disposed
   // Capped exponential backoff: 2s, 4s, 8s, 16s, then 30s.
   conn.retry = Math.min(conn.retry + 1, 5);
+  if (conn.retry >= 3) ctx.requestPrinterRefind?.("snapmaker", conn.key);   // moved to another IP? (rate-limited there)
   const delay = Math.min(2000 * (1 << (conn.retry - 1)), 30000);
   conn.retryTimer = setTimeout(() => {
     conn.retryTimer = null;

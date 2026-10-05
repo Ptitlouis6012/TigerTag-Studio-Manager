@@ -13,6 +13,9 @@ import {
   renderScaleHealth,
 } from './IoT/tigerscale/index.js';
 
+// ── TigerSpool presence (header glyph only) ───────────────────────────────
+import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel } from './IoT/tigerspool/index.js';
+
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
 import { initUsbScale, usbScaleRefreshDock } from './IoT/usbscale/index.js';
 
@@ -32,6 +35,7 @@ import {
 // Import order determines registration order (affects brand picker list).
 import { ctx as _printerCtx } from './printers/context.js';
 import { brands } from './printers/registry.js';
+import { requestPrinterRefind } from './printers/refind.js';
 import {
   bambuKey, bambuGetConn, bambuIsOnline,
   bambuConnect, bambuDisconnect, bambuStopCam,
@@ -114,6 +118,7 @@ import {
 } from './printers/elegoo/index.js';
 import { renderElegooCamBanner } from './printers/elegoo/widget_camera.js';
 import { elgFanStep } from './printers/elegoo/widget_control.js';
+import { jobBar, jobBarFill } from './printers/job-bar.js';
 
   const API_BASE         = "https://cdn.tigertag.io";
 
@@ -693,6 +698,8 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     unsubRacks: null,        // Firestore unsubscribe handle for racks
     scales: [],              // [{ mac, name, last_seen, last_spool, fw_version, ... }]
     unsubScales: null,       // Firestore unsubscribe handle for scales
+    tigerspools: [],         // [{ mac, display_name, last_heartbeat_at, power_state, printers_active, ... }] — users/{uid}/tigerspools
+    unsubTigerspools: null,  // Firestore unsubscribe handle for tigerspools
     printers: [],            // [{ id, brand, printerName, printerModelId, isActive, updatedAt, sortIndex, ... }]
     unsubPrinters: [],       // array of Firestore unsubscribe handles (one per brand subcollection)
     containerOverrides: {},  // catalogue container id → { containerWeight } — the account's own
@@ -4078,6 +4085,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     tsToMs,
   });
 
+  // ── TigerSpool presence (header glyph + hover) ─────────────────────────
+  // Printer renames/removals reach the side card through its 10 s tick.
+  initTigerSpool({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, setupHoldToConfirm, reportError });
+
   // ── USB scale (Dymo) module init ───────────────────────────────────────
   // One weight write per pose: POD mode applies silently (UID = certainty),
   // side-card mode shows an inline confirm in the panel's WEIGHT section.
@@ -4852,6 +4863,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     if (_activePrinter && $("printerPanel")?.classList.contains("open")) {
       try { renderPrinterDetail(); } catch (_) {}
     }
+    try { refreshTigerSpoolPanel(); } catch (_) {}
     const uid = state.activeAccountId; if (!uid) return;
     try {
       await fbDb().collection("users").doc(uid).set({ Debug: enabled }, { merge: true });
@@ -5989,7 +6001,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // Common handler called when a named-instance user session becomes active.
   // uid must equal user.uid and be the current active account.
   async function handleSignedIn(user, uid) {
-    unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+    unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
     // CRITICAL — drop the previous account's racks immediately. `state.racks`
     // is derived per-account state that (unlike the inventory/racks SNAPSHOTS,
     // which are account-guarded) leaks across an account switch: it keeps the
@@ -6108,6 +6120,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
+    subscribeTigerSpools(uid);// live-sync the user's TigerSpool heartbeats (header glyph)
     subscribePrinters(uid);// live-sync the user's 3D printers across all 5 brand subcollections
     subscribeProducts(uid);// live-sync per-product buy links + reorder thresholds
     subscribeContainerOverrides(uid);  // the account's own container-weight corrections
@@ -6128,7 +6141,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
         if (uid === getActiveId()) await handleSignedIn(user, uid);
       } else if (uid === getActiveId()) {
         // Active account's session expired → show login
-        unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+        unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
         state.inventory = null; state.rows = [];
         state.isAdmin = false; state.debugEnabled = false;
         state.publicKey = null; state.privateKey = null;
@@ -6332,7 +6345,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     // Sign out the named instance so its IndexedDB session is cleared
     try { firebase.app(id).auth().signOut(); } catch (_) {}
     if (wasActive) {
-      unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+      unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
       state.inventory = null; state.rows = [];
       state.isAdmin = false; state.debugEnabled = false;
       state.publicKey = null; state.privateKey = null;
@@ -22476,13 +22489,14 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   const _DONE_STATES = new Set(["finished", "complete", "completed"]);
 
   function _getPrinterJob(p) {
-    let d = null;
-    if (p.brand === "snapmaker")  { const c = snapGetConn(snapKey(p));     if (c?.status === "connected") d = c.data; }
-    if (p.brand === "flashforge") { const c = ffgGetConn(ffgKey(p));       if (c?.status === "connected") d = c.data; }
-    if (p.brand === "creality")   { const c = creGetConn(creKey(p));       if (c?.status === "connected") d = c.data; }
-    if (p.brand === "elegoo")     { const c = elegooGetConn(elegooKey(p)); if (c?.status === "connected") d = c.data; }
-    if (p.brand === "bambulab")   { const c = bambuGetConn(bambuKey(p));   if (c?.status === "connected") d = c.data; }
-    if (p.brand === "anycubic")   { const c = acuGetConn(acuKey(p));       if (c?.status === "connected") d = c.data; }
+    let d = null, conn = null;
+    if (p.brand === "snapmaker")  conn = snapGetConn(snapKey(p));
+    if (p.brand === "flashforge") conn = ffgGetConn(ffgKey(p));
+    if (p.brand === "creality")   conn = creGetConn(creKey(p));
+    if (p.brand === "elegoo")     conn = elegooGetConn(elegooKey(p));
+    if (p.brand === "bambulab")   conn = bambuGetConn(bambuKey(p));
+    if (p.brand === "anycubic")   conn = acuGetConn(acuKey(p));
+    if (conn?.status === "connected") d = conn.data;
     if (!d) return null;
 
     // Normalize state across brands (Creality uses numeric state field)
@@ -22569,8 +22583,25 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                      : p.brand === "elegoo"   ? d.printLayerTotal
                      : d.totalLayer;                    // creality, snapmaker, flashforge
 
-    return { state, pct, isActive, isDone, paused, filename, remainSec, thumbUrl,
+    /* The bar's colour and length — blue while running, green at 100 % when
+       done, red (grey if cancelled) frozen at the last running % when the job
+       dies. Same memory as the brand side cards: printers/job-bar.js. */
+    const bar = jobBar(conn, state, pct);
+
+    return { state, pct, isActive, isDone, paused, filename, remainSec, thumbUrl, bar,
              layer: Number(layer) || 0, layerTotal: Number(layerTotal) || 0 };
+  }
+  // Length of a job bar: the live % while running, 100 when done, the frozen
+  // last % after a failure or a cancel, empty when idle (printers/job-bar.js).
+  function _jobBarPct(job) {
+    if (!job || (!job.isActive && job.bar.tone === "idle")) return 0;
+    return job.bar.pct;
+  }
+  // In-place refreshes patch the width only; the colour has to follow the state.
+  function _setJobFillTone(fill, job) {
+    if (!fill) return;
+    const cls = `job-fill job-fill--${job?.bar?.tone || "idle"}`;
+    if (fill.className !== cls) fill.className = cls;
   }
   // Table thumbnail cell HTML — the print preview (active or just-finished), or
   // empty when idle/unavailable. thumbUrl is already gated in _getPrinterJob.
@@ -22617,7 +22648,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   // filename on every card. Brand-agnostic: same guard helps all 5 brands.
   function _jobSignature(job) {
     if (!job) return "";
-    return `${job.state}|${job.isActive ? 1 : 0}|${job.pct}|${job.remainSec ?? ""}|${job.filename ?? ""}`;
+    return `${job.state}|${job.isActive ? 1 : 0}|${job.pct}|${job.bar.tone}|${job.bar.pct}|${job.remainSec ?? ""}|${job.filename ?? ""}`;
   }
   /* Only the fill moves. The card is a machine, a name, a dot and a track; a
      job starting or finishing changes one width, so there is nothing to rebuild
@@ -22756,7 +22787,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     const w = SIMPLE_WIDGETS.find(x => x.kind === "job");
     if (!widgetOn(p, "job")) return "";
     const job   = _getPrinterJob(p);
-    const pct   = (job?.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+    const pct   = _jobBarPct(job);
     const label = job ? (t("snapState_" + job.state) || job.state) : "—";
     /* No preview → the MACHINE's own photo, the same fallback chain the panel's
        hero uses (model image, then the brand's placeholder). An empty grey
@@ -22786,7 +22817,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
           </div>
         </div>
       </div>
-      <div class="job-card-bar"><span style="width:${pct}%"></span></div>
+      <div class="job-card-bar">${jobBarFill({ tone: job?.bar?.tone || "idle", pct })}</div>
       <div class="job-card-row">
         <span class="job-card-time">${esc(remain)} · ${esc(_fmtEndClock(job))}</span>
         <span class="job-card-val">${esc(layers)}</span>
@@ -22801,7 +22832,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
      preview only when its URL genuinely changes. */
   function _refreshJobWidget(el, p) {
     const job  = _getPrinterJob(p);
-    const pct  = (job?.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+    const pct  = _jobBarPct(job);
     const set  = (sel, txt) => { const n = el.querySelector(sel); if (n && n.textContent !== txt) n.textContent = txt; };
 
     const thumb = el.querySelector(".job-card-thumb");
@@ -22821,6 +22852,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     set(".job-card-pct-n", String(pct));
     const fill = el.querySelector(".job-card-bar > span");
     if (fill && fill.style.width !== pct + "%") fill.style.width = pct + "%";
+    _setJobFillTone(fill, job);
     const pill = el.querySelector(".snap-job-state");
     if (pill) {
       const st = job?.state || "idle";
@@ -23070,9 +23102,10 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
       const fill = card?.querySelector(".printer-card-prog > span");
       if (!fill) return;
       const job = _getPrinterJob(p);
-      const pct = (job && job.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
+      const pct = _jobBarPct(job);
       const next = pct + "%";
       if (fill.style.width !== next) fill.style.width = next;
+      _setJobFillTone(fill, job);
 
       /* The two job keys. A print STARTING or ENDING changes the card's shape,
          so that goes through the board's own rebuild: it happens rarely, and
@@ -23201,12 +23234,13 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
 
   function _jobCellHtml(job) {
     if (!job) return `<span class="pt-job-idle">—</span>`;
-    if (!job.isActive)
+    // Idle: the state word alone. Running, finished, failed or cancelled: the bar.
+    if (!job.isActive && job.bar.tone === "idle")
       return `<span class="snap-job-state snap-job-state--${esc(job.state)} snap-job-state--compact">${esc(t("snapState_" + job.state) || job.state)}</span>`;
-    return `<div class="pt-job-bar"><span style="width:${job.pct}%"></span></div>
+    return `<div class="pt-job-bar">${jobBarFill(job.bar)}</div>
            <div class="pt-job-meta">
              <span class="snap-job-state snap-job-state--${esc(job.state)} snap-job-state--compact">${esc(t("snapState_" + job.state) || job.state)}</span>
-             <span class="pt-job-pct">${job.pct}%${job.remainSec != null ? ` · ${esc(_fmtRemain(job.remainSec))}` : ""}</span>
+             <span class="pt-job-pct">${job.bar.pct}%${job.remainSec != null ? ` · ${esc(_fmtRemain(job.remainSec))}` : ""}</span>
            </div>${job.filename ? `<div class="pt-job-file">${esc(_truncFilename(job.filename))}</div>` : ""}`;
   }
 
@@ -23267,17 +23301,17 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
   function _jobCardHtml(job) {
     const stateLabel = t("snapState_" + job.state) || job.state;
     const statePill = `<span class="snap-job-state snap-job-state--${esc(job.state)} snap-job-state--compact">${esc(stateLabel)}</span>`;
-    if (!job.isActive) {
+    if (!job.isActive && job.bar.tone === "idle") {
       return `<div class="printer-card-job printer-card-job--idle">${statePill}</div>`;
     }
     const fileHtml = job.filename
       ? `<div class="printer-card-job-file">${esc(_truncFilename(job.filename))}</div>`
       : "";
     return `<div class="printer-card-job">
-      <div class="printer-card-job-bar"><span style="width:${job.pct}%"></span></div>
+      <div class="printer-card-job-bar">${jobBarFill(job.bar)}</div>
       <div class="printer-card-job-info">
         ${statePill}
-        <span class="printer-card-job-right">${job.pct}%${job.remainSec != null ? ` · ${esc(_fmtRemain(job.remainSec))}` : ""}</span>
+        <span class="printer-card-job-right">${job.bar.pct}%${job.remainSec != null ? ` · ${esc(_fmtRemain(job.remainSec))}` : ""}</span>
       </div>${fileHtml}
     </div>`;
   }
@@ -23593,8 +23627,7 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
                change height on their own, exactly what this view was rebuilt to
                stop. */
             const job = _getPrinterJob(p);
-            const pct = (job && job.isActive && Number.isFinite(job.pct)) ? Math.max(0, Math.min(100, job.pct)) : 0;
-            return `<div class="printer-card-prog"><span style="width:${pct}%"></span></div>`;
+            return `<div class="printer-card-prog">${jobBarFill({ tone: job?.bar?.tone || "idle", pct: _jobBarPct(job) })}</div>`;
           })()}
         </div>`;
     };
@@ -27103,6 +27136,27 @@ import { elgFanStep } from './printers/elegoo/widget_control.js';
     }
   };
 
+  _printerCtx.savePrinterField = (brand, id, field, value) => savePrinterField(brand, id, field, value);
+  // Re-find a LAN printer after a DHCP IP change (printers/refind.js): brand
+  // modules ask for it when they give up; it rescans, matches on the printer's
+  // stable identity, saves the new IP and comes back here to reconnect + tell.
+  _printerCtx.requestPrinterRefind = requestPrinterRefind;
+  _printerCtx.isPrinterOnline = p => _isPrinterOnline(p);
+  _printerCtx.reconnectPrinter = p => {
+    try {
+      if (p.brand === "snapmaker")  { snapDisconnect(snapKey(p)); snapConnect(p); }
+      if (p.brand === "flashforge") { ffgDisconnect(ffgKey(p)); ffgConnect(p); }
+      if (p.brand === "creality")   { creDisconnect(creKey(p)); creConnect(p); }
+      if (p.brand === "bambulab")   { bambuDisconnect(bambuKey(p)); bambuConnect(p); }
+      if (p.brand === "elegoo")     { elegooDisconnect(elegooKey(p)); elegooConnect(p); }
+      if (p.brand === "anycubic")   { acuDisconnect(acuKey(p)); acuConnect(p); }
+    } catch (e) { console.warn("[refind] reconnect failed:", e?.message || e); }
+  };
+  _printerCtx.onPrinterRefound = (p, _oldIp, newIp) => {
+    _flashMessage(t("printerRefound", { name: p.printerName || p.name || p.brand, ip: newIp }));
+    try { renderPrinterDetail(); } catch (_) {}
+    if (_isPrinterMode(state.viewMode) && state.viewMode !== "printer-cam") try { renderPrintersView(); } catch (_) {}
+  };
   _printerCtx.saveBambuLanAddress = async (printer, ip) => {
     const uid = state.activeAccountId;
     if (!uid || !printer?.id || !ip) return;

@@ -952,6 +952,29 @@
   "scaleStatusOnline": "en ligne",
   "scaleStatusOffline": "hors ligne",
   "scaleStatusStandby": "veille",
+  "tigerspoolPrinterUnknown": "Inconnu : le TigerSpool est hors ligne, ou son firmware ne donne pas encore l’état des imprimantes",
+  "tigerspoolPrinterDown": "Ce TigerSpool ne joint pas cette imprimante pour l’instant",
+  "tigerspoolPrinterUp": "Ce TigerSpool voit cette imprimante en ligne",
+  "tigerspoolRemove": "Maintiens pour retirer ce TigerSpool de ton compte (éteins-le d’abord, sinon il se reconnecte)",
+  "tigerspoolHealthNone": "Pas encore de TigerSpool — clique pour le découvrir",
+  "tigerspoolPrintersTitle": {
+    "one": "Imprimante active ({{n}})",
+    "other": "Imprimantes actives ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Imprimante qui n'est plus dans Tiger Studio",
+  "tigerspoolNoPrinters": "Aucune imprimante active sur ce boîtier — choisis-les sur son écran.",
+  "tigerspoolPitch": "Un petit boîtier à côté de tes imprimantes. Tu choisis un emplacement sur son écran, tu poses la bobine contre lui — le filament arrive dans cet emplacement. Rien à retaper.",
+  "tigerspoolPointBrands": "Fonctionne avec Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker et Anycubic — jusqu'à 24 imprimantes dans sa liste.",
+  "tigerspoolPointAccount": "Il récupère tes imprimantes depuis ton compte Tiger Studio : rien à configurer deux fois.",
+  "tigerspoolPointOpen": "Open source : un ESP32-S3, un lecteur NFC et un boîtier imprimé en 3D.",
+  "tigerspoolBuildTitle": "Fabrique le tien",
+  "tigerspoolBuildText": "Des pièces courantes, un boîtier imprimé, et le firmware s'installe depuis ton navigateur en un clic. Une fois sur ton Wi-Fi et relié à ton compte, il apparaît ici tout seul.",
+  "tigerspoolGuideBtn": "Comment le fabriquer",
+  "tigerspoolInstallBtn": "Installer depuis le navigateur",
+  "tigerspoolPrinters": {
+    "one": "{{n}} imprimante",
+    "other": "{{n}} imprimantes"
+  },
   "scaleChipPower": "Alim",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Batterie",
@@ -1639,5 +1662,6 @@
   "stgMcpAddOpened": "À toi de jouer dans {{app}} — confirme juste l’installation.",
   "stgMcpAddFailed": "{{app}} n’a pas décroché — il est bien installé sur cet ordi ?",
   "eacMcpRow": "Laisser une IA lire mon inventaire",
-  "stgMcpNewKeyTip": "Renouvelle la clé et déconnecte tes assistants."
+  "stgMcpNewKeyTip": "Renouvelle la clé et déconnecte tes assistants.",
+  "printerRefound": "{{name}} a déménagé en {{ip}} — retrouvée et reconnectée."
 }

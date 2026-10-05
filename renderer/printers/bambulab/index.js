@@ -434,6 +434,10 @@ if (typeof window !== "undefined" && window.bambulab) {
       _scheduleRefresh(conn);
     } else {
       conn.status = status;
+      // The MQTT client keeps retrying in main; if the printer is still down
+      // in a while, it may simply have moved to another IP.
+      if (status !== "connecting" && !conn.cloud)
+        ctx.requestPrinterRefind?.("bambulab", key, { afterStillDown: true });
     }
     const isOnline  = conn.status === "connected";
     // Full rebuild only when online ↔ offline section membership changes.

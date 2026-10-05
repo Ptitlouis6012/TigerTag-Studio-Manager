@@ -123,8 +123,8 @@
   }
   .snap-job-bar > span {
     display: block; height: 100%;
-    background: linear-gradient(90deg, var(--primary), #6ea8ff);
-    transition: width .25s linear;
+    background: var(--info);   /* colour by state: .job-fill--* in 40-printers.css */
+    transition: width .25s linear, background-color .3s;
   }
   .snap-job-foot {
     display: flex; align-items: center; justify-content: space-between;

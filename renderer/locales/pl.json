@@ -951,6 +951,29 @@
   "scaleStatusOnline": "Połączona",
   "scaleStatusOffline": "Rozłączona",
   "scaleStatusStandby": "czuwanie",
+  "tigerspoolPrinterUnknown": "Nieznane: TigerSpool jest offline albo jego firmware nie podaje jeszcze stanu drukarek",
+  "tigerspoolPrinterDown": "Ten TigerSpool nie może teraz połączyć się z tą drukarką",
+  "tigerspoolPrinterUp": "Ten TigerSpool widzi tę drukarkę online",
+  "tigerspoolRemove": "Przytrzymaj, aby usunąć ten TigerSpool z konta (najpierw go wyłącz, inaczej zaloguje się ponownie)",
+  "tigerspoolHealthNone": "Jeszcze bez TigerSpool — kliknij, aby go poznać",
+  "tigerspoolPrintersTitle": {
+    "one": "Aktywna drukarka ({{n}})",
+    "other": "Aktywne drukarki ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Drukarki nie ma już w Tiger Studio",
+  "tigerspoolNoPrinters": "Na tym urządzeniu nie ma jeszcze aktywnej drukarki — wybierz je na jego ekranie.",
+  "tigerspoolPitch": "Małe urządzenie obok twoich drukarek. Wybierz slot na ekranie, przyłóż szpulę — filament trafia do tego slotu. Nic do przepisywania.",
+  "tigerspoolPointBrands": "Działa z Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker i Anycubic — do 24 drukarek na liście.",
+  "tigerspoolPointAccount": "Pobiera twoje drukarki z konta Tiger Studio: nic nie trzeba konfigurować dwa razy.",
+  "tigerspoolPointOpen": "Open source: ESP32-S3, czytnik NFC i obudowa wydrukowana w 3D.",
+  "tigerspoolBuildTitle": "Zbuduj własny",
+  "tigerspoolBuildText": "Popularne części, wydrukowana obudowa, a firmware instaluje się z przeglądarki jednym kliknięciem. Gdy będzie w twoim Wi-Fi i połączony z kontem, pojawi się tutaj sam.",
+  "tigerspoolGuideBtn": "Jak go zbudować",
+  "tigerspoolInstallBtn": "Zainstaluj z przeglądarki",
+  "tigerspoolPrinters": {
+    "one": "{{n}} drukarka",
+    "other": "{{n}} drukarek"
+  },
   "scaleChipPower": "Zasilanie",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Bateria",
@@ -1638,5 +1661,6 @@
   "stgMcpAddOpened": "Teraz {{app}} — potwierdź tam instalację.",
   "stgMcpAddFailed": "{{app}} nie odbiera — czy jest zainstalowany na tym komputerze?",
   "eacMcpRow": "Pozwól AI czytać mój inwentarz",
-  "stgMcpNewKeyTip": "Odnawia klucz i rozłącza twoich asystentów."
+  "stgMcpNewKeyTip": "Odnawia klucz i rozłącza twoich asystentów.",
+  "printerRefound": "{{name}} przeprowadziła się na {{ip}} — namierzona i ponownie połączona."
 }

@@ -952,6 +952,29 @@
   "scaleStatusOnline": "Connessa",
   "scaleStatusOffline": "Disconnessa",
   "scaleStatusStandby": "In attesa",
+  "tigerspoolPrinterUnknown": "Sconosciuto: il TigerSpool è offline o il suo firmware non riporta ancora lo stato delle stampanti",
+  "tigerspoolPrinterDown": "Questo TigerSpool al momento non raggiunge questa stampante",
+  "tigerspoolPrinterUp": "Questo TigerSpool vede questa stampante online",
+  "tigerspoolRemove": "Tieni premuto per rimuovere questo TigerSpool dal tuo account (spegnilo prima, altrimenti si ricollega)",
+  "tigerspoolHealthNone": "Ancora nessun TigerSpool — clicca per scoprirlo",
+  "tigerspoolPrintersTitle": {
+    "one": "Stampante attiva ({{n}})",
+    "other": "Stampanti attive ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Stampante non più presente in Tiger Studio",
+  "tigerspoolNoPrinters": "Ancora nessuna stampante attiva su questo box — sceglile dal suo schermo.",
+  "tigerspoolPitch": "Un piccolo box accanto alle tue stampanti. Scegli uno slot sul suo schermo, avvicina una bobina — il filamento finisce in quello slot. Niente da ridigitare.",
+  "tigerspoolPointBrands": "Funziona con Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker e Anycubic — fino a 24 stampanti nella sua lista.",
+  "tigerspoolPointAccount": "Prende le tue stampanti dal tuo account Tiger Studio: niente da configurare due volte.",
+  "tigerspoolPointOpen": "Open source: un ESP32-S3, un lettore NFC e un case stampato in 3D.",
+  "tigerspoolBuildTitle": "Costruisci il tuo",
+  "tigerspoolBuildText": "Componenti comuni, un case stampato, e il firmware si installa dal browser con un clic. Una volta sul tuo Wi-Fi e collegato al tuo account, compare qui da solo.",
+  "tigerspoolGuideBtn": "Come costruirlo",
+  "tigerspoolInstallBtn": "Installa dal browser",
+  "tigerspoolPrinters": {
+    "one": "{{n}} stampante",
+    "other": "{{n}} stampanti"
+  },
   "scaleChipPower": "Aliment.",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Batteria",
@@ -1639,5 +1662,6 @@
   "stgMcpAddOpened": "Tocca a {{app}} — conferma lì l’installazione.",
   "stgMcpAddFailed": "{{app}} non risponde — è installato su questo computer?",
   "eacMcpRow": "Lascia che un’IA legga il mio inventario",
-  "stgMcpNewKeyTip": "Rinnova la chiave e disconnette i tuoi assistenti."
+  "stgMcpNewKeyTip": "Rinnova la chiave e disconnette i tuoi assistenti.",
+  "printerRefound": "{{name}} si è trasferita su {{ip}} — ritrovata e ricollegata."
 }

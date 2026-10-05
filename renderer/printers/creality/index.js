@@ -7,6 +7,8 @@
  * Self-registers into the brands registry at module evaluation time.
  */
 import { ctx } from '../context.js';
+import { jobBar, jobBarFill } from '../job-bar.js';
+import { ensurePrinterIdentity } from '../identity.js';
 import { registerBrand } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
 import { schemaWidget } from '../modal-helpers.js';
@@ -231,6 +233,15 @@ function creOpenSocket(conn) {
   conn.status = "connecting";
   creNotifyChange(conn);
 
+  // A dead address never refuses — the OS waits ~75 s before failing the
+  // handshake. Give up after a few seconds so the retry (and, after a few, the
+  // IP re-find) starts promptly. Closing a CONNECTING socket fires "close".
+  const openTimer = setTimeout(() => {
+    if (ws.readyState === WebSocket.CONNECTING) { try { ws.close(); } catch {} }
+  }, 8000);
+  ws.addEventListener("open",  () => clearTimeout(openTimer));
+  ws.addEventListener("close", () => clearTimeout(openTimer));
+
   ws.addEventListener("open", () => {
     // The WebSocket transport is open, but the printer hasn't answered yet.
     // Stay "connecting" — we only flip to "connected" once a real frame comes
@@ -253,6 +264,7 @@ function creOpenSocket(conn) {
     if (conn.status !== "connected") {
       conn.status = "connected"; conn.lastError = null; conn.retry = 0; conn._abandoned = false;
       creNotifyChange(conn, /*statusChanged*/ true);
+      ensurePrinterIdentity("creality", conn.key, conn.ip);   // so a re-find can match it after an IP change
     }
 
     creLogPush(conn, "←", ev.data);
@@ -288,6 +300,7 @@ function creScheduleReconnect(conn) {
     conn.status = "error";
     conn.lastError = `Unreachable after ${CRE_MAX_RETRIES} attempts`;
     creNotifyChange(conn, true);
+    ctx.requestPrinterRefind?.("creality", conn.key);   // moved to another IP?
     return;
   }
   conn.retry++;
@@ -953,6 +966,7 @@ function renderCreJobCard(p, conn) {
   const codesText = codeParts.join(" · ");
 
   const progress = isFinished ? 100 : Math.min(100, Math.max(0, progressRaw));
+  const bar      = jobBar(conn, jobStateCls, progress);
 
   let layerText = "";
   if (totalLayer > 0)      layerText = `${layer}/${totalLayer}`;
@@ -989,7 +1003,7 @@ function renderCreJobCard(p, conn) {
           ${durationText ? `<span class="snap-job-time">${ctx.SNAP_ICON_CLOCK}<span>${ctx.esc(durationText)}</span></span>` : ""}
           ${leftText     ? `<span class="snap-job-time snap-job-time--left">${ctx.SNAP_ICON_CLOCK}<span>${ctx.esc(leftText)}</span></span>` : ""}
         </div>
-        <div class="snap-job-bar"><span style="width:${progress}%"></span></div>
+        <div class="snap-job-bar">${jobBarFill(bar)}</div>
         <div class="snap-job-foot">
           <span class="snap-job-state snap-job-state--${ctx.esc(jobStateCls)}">${ctx.esc(stateLabel)}</span>
           ${layerText ? `<span class="snap-job-layers">${ctx.esc(layerText)}</span>` : ""}

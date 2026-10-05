@@ -5,6 +5,7 @@
  * module scope, so inventory.js can populate it after import resolution.
  */
 import { ctx } from '../context.js';
+import { jobBar, jobBarFill } from '../job-bar.js';
 
 export function renderSnapJobCard(p, conn) {
   const d = conn.data;
@@ -13,7 +14,9 @@ export function renderSnapJobCard(p, conn) {
   const isActive  = !["standby", "complete", "cancelled"].includes(jobState);
   // Just-finished: keep showing the print's thumbnail until it goes to standby.
   const isDone    = jobState === "complete";
-  const pct       = isActive ? Math.round(((d.progress || 0) * 100)) : 0;
+  // Blue while running, green at 100 % when done, red frozen at its last % on a failure.
+  const bar       = jobBar(conn, jobState, (d.progress || 0) * 100);
+  const pct       = isActive || bar.tone !== "idle" ? bar.pct : 0;
   const leafName  = isActive && d.printFilename
                   ? ctx.snapFilenameRel(d.printFilename).split("/").pop()
                   : "";
@@ -62,7 +65,7 @@ export function renderSnapJobCard(p, conn) {
           <span class="snap-job-pct">${pct}%</span>
           <span class="snap-job-time">${ctx.SNAP_ICON_CLOCK} <span>${ctx.esc(durationText)}</span></span>
         </div>
-        <div class="snap-job-bar"><span style="width:${pct}%"></span></div>
+        <div class="snap-job-bar">${jobBarFill(bar)}</div>
         <div class="snap-job-foot">
           <span class="snap-job-state snap-job-state--${ctx.esc(jobState)}">${ctx.esc(stateLabel)}</span>
           ${layerText ? `<span class="snap-job-layers">${ctx.esc(layerText)}</span>` : ""}

@@ -272,6 +272,7 @@ function _startGlobalHandlers() {
         if (conn._pingTimer)    { clearInterval(conn._pingTimer);    conn._pingTimer = null; }
         window.elegoo.disconnect(key); // stops the MQTT client retry loop
         elgLogPush(conn, '✗', `Unreachable after ${MAX} attempts — giving up (check IP)`);
+        ctx.requestPrinterRefind?.('elegoo', key);   // moved to another IP?
       } else {
         conn.status = status === 'offline' ? 'offline' : 'error';
         elgLogPush(conn, '!', status === 'offline'

@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="rfid_protocol/tigertag/modal.css" />
 <link rel="stylesheet" href="css/70-detail-misc.css" />
 <link rel="stylesheet" href="IoT/tigerscale/tigerscale.css" />
+<link rel="stylesheet" href="IoT/tigerspool/tigerspool.css" />
 <link rel="stylesheet" href="IoT/usbscale/usbscale.css" />
 <link rel="stylesheet" href="IoT/td1s/td1s.css" />
 </head>
@@ -158,6 +159,7 @@
       <div class="top-status-icons">
         <div id="rfidReadersBar" class="rfid-readers-bar"></div>
         <div class="health scale-health" id="scaleHealth"><span class="scale-glyphs"><span class="scale-glyph"><span class="scale-health-icon"></span></span></span></div>
+        <div class="health scale-health tsp-health" id="tigerspoolHealth"></div>
         <!-- Backend health — hidden while all is well; only shown on a network problem (offline / cache). -->
         <div class="health hidden" id="health" data-tooltip="Backend: idle"><span class="icon icon-cloud-3d icon-20"></span></div>
         <div class="health update-health hidden" id="updateStatusIcon" data-tooltip=""><span class="update-health-icon"></span></div>
@@ -662,6 +664,27 @@
     <button class="panel-close" id="scalesPanelClose">✕</button>
   </div>
   <div class="panel-body" id="scalesPanelBody"></div>
+</div>
+
+<!-- TigerSpool side card (header glyph → users/{uid}/tigerspools) — IoT/tigerspool/panel.js -->
+<div class="panel-overlay" id="tigerspoolOverlay"></div>
+<div class="detail-panel scales-panel tsp-panel" id="tigerspoolPanel">
+  <div class="panel-header">
+    <span class="panel-title">TigerSpool</span>
+    <button class="panel-close" id="tigerspoolPanelClose">✕</button>
+  </div>
+  <div class="panel-body" id="tigerspoolPanelBody"></div>
+</div>
+
+<!-- TigerSpool discovery modal — opened by the glyph while the account has no box -->
+<div class="modal-overlay" id="tigerspoolDiscoverOverlay">
+  <div class="modal-card tsp-discover-card">
+    <div class="modal-header">
+      <span class="modal-title">TigerSpool</span>
+      <button class="panel-close" id="tigerspoolDiscoverClose">✕</button>
+    </div>
+    <div class="tsp-discover-body" id="tigerspoolDiscoverBody"></div>
+  </div>
 </div>
 
 <!-- Printer detail panel (slide-in from right — opens when clicking a printer card) -->

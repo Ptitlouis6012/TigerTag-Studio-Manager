@@ -952,6 +952,29 @@
   "scaleStatusOnline": "онлайн",
   "scaleStatusOffline": "офлайн",
   "scaleStatusStandby": "ожидание",
+  "tigerspoolPrinterUnknown": "Неизвестно: TigerSpool не в сети или его прошивка пока не сообщает состояние принтеров",
+  "tigerspoolPrinterDown": "Этот TigerSpool сейчас не может связаться с принтером",
+  "tigerspoolPrinterUp": "Этот TigerSpool видит принтер в сети",
+  "tigerspoolRemove": "Удерживайте, чтобы удалить этот TigerSpool из аккаунта (сначала выключите его, иначе он снова подключится)",
+  "tigerspoolHealthNone": "TigerSpool пока нет — нажмите, чтобы узнать",
+  "tigerspoolPrintersTitle": {
+    "one": "Активный принтер ({{n}})",
+    "other": "Активные принтеры ({{n}})"
+  },
+  "tigerspoolPrinterMissing": "Принтера больше нет в Tiger Studio",
+  "tigerspoolNoPrinters": "На этом устройстве пока нет активных принтеров — выберите их на его экране.",
+  "tigerspoolPitch": "Небольшая коробочка рядом с вашими принтерами. Выберите слот на её экране, приложите катушку — филамент попадает в этот слот. Ничего не нужно вводить заново.",
+  "tigerspoolPointBrands": "Работает с Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker и Anycubic — до 24 принтеров в списке.",
+  "tigerspoolPointAccount": "Он берёт ваши принтеры из аккаунта Tiger Studio: ничего не нужно настраивать дважды.",
+  "tigerspoolPointOpen": "Открытый исходный код: ESP32-S3, NFC-считыватель и корпус, напечатанный на 3D-принтере.",
+  "tigerspoolBuildTitle": "Соберите свой",
+  "tigerspoolBuildText": "Обычные детали, напечатанный корпус, а прошивка ставится из браузера в один клик. Как только устройство подключится к вашему Wi-Fi и аккаунту, оно само появится здесь.",
+  "tigerspoolGuideBtn": "Как собрать",
+  "tigerspoolInstallBtn": "Установить из браузера",
+  "tigerspoolPrinters": {
+    "one": "{{n}} принтер",
+    "other": "{{n}} принтеров"
+  },
   "scaleChipPower": "Питание",
   "scaleChipPowerUsb": "USB",
   "scaleChipPowerBattery": "Батарея",
@@ -1639,5 +1662,6 @@
   "stgMcpAddOpened": "Дальше в {{app}} — просто подтверди установку.",
   "stgMcpAddFailed": "{{app}} не отвечает — он установлен на этом компьютере?",
   "eacMcpRow": "Разрешить ИИ читать мой инвентарь",
-  "stgMcpNewKeyTip": "Обновляет ключ и отключает твоих ассистентов."
+  "stgMcpNewKeyTip": "Обновляет ключ и отключает твоих ассистентов.",
+  "printerRefound": "{{name}} переехал на {{ip}} — нашли и переподключили."
 }
