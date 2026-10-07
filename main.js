@@ -3136,6 +3136,118 @@ ipcMain.handle('snap:http-get', async (_evt, url, timeoutMs) => {
   }
 });
 
+// ── Prusa — PrusaLink HTTP IPC (port 80) ──────────────────────────────────────
+// Every Prusa that runs PrusaLink (MK4/MK4S, MK3.9, Core One, XL, MINI/MINI+ on
+// Buddy firmware; MK3S+/MK2.5S through a Raspberry Pi) answers the same local
+// REST API. It sends no CORS headers and wants HTTP DIGEST auth (user `maker`,
+// password shown on the printer), so the renderer goes through here: Node's
+// fetch() is CORS-exempt, and the digest handshake lives in one place.
+// An `X-Api-Key` is sent instead when the printer was set up with an API key
+// (older PrusaLink builds). Reference: renderer/printers/prusa/PROTOCOL.md.
+//
+// Tight path allowlist: this must never become a generic outbound proxy.
+// Returns { ok, status, json?, data? (base64), contentType?, error? }.
+const PRUSA_HTTP_TIMEOUT_MS = 6000;
+const PRUSA_ALLOWED = [
+  /^\/api\/version$/,
+  /^\/api\/v1\/(status|info|storage|job|cameras)$/,
+  /^\/api\/v1\/job\/\d+(\/(pause|resume|continue))?$/,
+  /^\/api\/v1\/cameras\/snap$/,
+  /^\/api\/v1\/cameras\/[\w-]{1,64}\/snap$/,
+  /^\/api\/v1\/files\/[\w.-]+(\/[^?#]*)?$/,
+  /^\/api\/thumbnails\/[^?#]+$/,
+  /^\/thumb\/[sl]\/[^?#]+$/,
+];
+const _prusaDigest = new Map();   // host → { realm, nonce, opaque, qop, algorithm, nc }
+
+function _prusaDigestHeader(host, method, uri, user, pass) {
+  const d = _prusaDigest.get(host);
+  if (!d) return null;
+  const md5 = (s) => crypto.createHash('md5').update(s).digest('hex');
+  d.nc = (d.nc || 0) + 1;
+  const nc = d.nc.toString(16).padStart(8, '0');
+  const cnonce = crypto.randomBytes(8).toString('hex');
+  const ha1 = md5(`${user}:${d.realm}:${pass}`);
+  const ha2 = md5(`${method}:${uri}`);
+  const qop = d.qop ? (d.qop.split(',').map(s => s.trim()).includes('auth') ? 'auth' : d.qop.split(',')[0].trim()) : null;
+  const response = qop ? md5(`${ha1}:${d.nonce}:${nc}:${cnonce}:${qop}:${ha2}`) : md5(`${ha1}:${d.nonce}:${ha2}`);
+  let h = `Digest username="${user}", realm="${d.realm}", nonce="${d.nonce}", uri="${uri}", response="${response}"`;
+  if (d.algorithm) h += `, algorithm=${d.algorithm}`;
+  if (d.opaque) h += `, opaque="${d.opaque}"`;
+  if (qop) h += `, qop=${qop}, nc=${nc}, cnonce="${cnonce}"`;
+  return h;
+}
+function _prusaParseChallenge(header) {
+  if (!header || !/^\s*Digest\b/i.test(header)) return null;
+  const out = {};
+  for (const m of header.matchAll(/(\w+)=(?:"([^"]*)"|([^,\s]+))/g)) out[m[1].toLowerCase()] = m[2] ?? m[3];
+  return out.nonce ? { realm: out.realm || '', nonce: out.nonce, opaque: out.opaque || null, qop: out.qop || null, algorithm: out.algorithm || null, nc: 0 } : null;
+}
+
+ipcMain.handle('prusa:http', async (_evt, opts) => {
+  const { host, method = 'GET', path: p = '', user = 'maker', password = '', apiKey = '', body = null, binary = false, timeoutMs } = opts || {};
+  if (!host || typeof host !== 'string' || !/^[\w.\-]+(:\d{1,5})?$/.test(host)) return { ok: false, status: 0, error: 'invalid host' };
+  const m = String(method).toUpperCase();
+  if (!['GET', 'PUT', 'DELETE', 'HEAD'].includes(m)) return { ok: false, status: 0, error: 'method not allowed' };
+  const uri = String(p);
+  if (!PRUSA_ALLOWED.some(rx => rx.test(uri.split('?')[0]))) return { ok: false, status: 0, error: 'path not allowed' };
+
+  const send = async (auth) => {
+    const ctl = new AbortController();
+    const tm = setTimeout(() => ctl.abort(), Math.min(Number(timeoutMs) || PRUSA_HTTP_TIMEOUT_MS, 20000));
+    try {
+      const headers = {};
+      if (apiKey) headers['X-Api-Key'] = apiKey;
+      else if (auth) headers.Authorization = auth;
+      if (body != null) headers['Content-Type'] = 'application/json';
+      return await fetch(`http://${host}${uri}`, { method: m, headers, body: body != null ? JSON.stringify(body) : undefined, signal: ctl.signal });
+    } finally { clearTimeout(tm); }
+  };
+  try {
+    // A cached challenge saves the 401 round-trip on every poll; a stale nonce
+    // costs one retry.
+    let res = await send(apiKey ? null : _prusaDigestHeader(host, m, uri, user, password));
+    if (res.status === 401 && !apiKey) {
+      const ch = _prusaParseChallenge(res.headers.get('www-authenticate'));
+      if (ch) { _prusaDigest.set(host, ch); res = await send(_prusaDigestHeader(host, m, uri, user, password)); }
+    }
+    const contentType = res.headers.get('content-type') || '';
+    if (res.status === 204 || m === 'HEAD') return { ok: res.ok, status: res.status, contentType };
+    if (binary && res.ok) {
+      const buf = Buffer.from(await res.arrayBuffer());
+      return { ok: true, status: res.status, contentType, data: buf.toString('base64') };
+    }
+    const text = await res.text();
+    let json = null;
+    try { json = text ? JSON.parse(text) : null; } catch (_) {}
+    return { ok: res.ok, status: res.status, contentType, json, error: res.ok ? undefined : (json?.title || json?.message || text.slice(0, 200) || `HTTP ${res.status}`) };
+  } catch (e) {
+    return { ok: false, status: 0, error: e?.name === 'AbortError' ? 'timeout' : (e?.message || String(e)) };
+  }
+});
+
+// Discovery probe — ONE unauthenticated GET /api/version. A PrusaLink printer
+// answers 401 with a Digest challenge (Buddy realm "Printer API"), or 200 with
+// `{ text: "PrusaLink …" }` when auth is off; the `Server` header often says
+// PrusaLink too. Nothing is sent but the path, so it is safe on a scan.
+ipcMain.handle('prusa:probe', async (_evt, host, timeoutMs) => {
+  if (!host || typeof host !== 'string' || !/^[\w.\-]+(:\d{1,5})?$/.test(host)) return { prusa: false };
+  const ctl = new AbortController();
+  const tm = setTimeout(() => ctl.abort(), Math.min(Number(timeoutMs) || 800, 5000));
+  try {
+    const res = await fetch(`http://${host}/api/version`, { signal: ctl.signal });
+    const server = res.headers.get('server') || '';
+    const wwwAuth = res.headers.get('www-authenticate') || '';
+    let json = null;
+    if (res.ok) { try { json = await res.json(); } catch (_) {} }
+    const prusa = /prusa/i.test(server) || /printer api|prusa/i.test(wwwAuth)
+      || (!!json && (/prusa/i.test(String(json.text || '')) || (json.api && json.printer && json.firmware)));
+    return { prusa, status: res.status, server, needsAuth: res.status === 401, version: json };
+  } catch (e) {
+    return { prusa: false, error: e?.name === 'AbortError' ? 'timeout' : (e?.message || String(e)) };
+  } finally { clearTimeout(tm); }
+});
+
 // ── Creality Moonraker HTTP IPC (port 7125) ───────────────────────────────────
 // The K-series runs Klipper + Moonraker, which sends NO CORS headers. A renderer
 // fetch() is therefore blocked: a JSON-body / non-GET request triggers a preflight
@@ -3893,6 +4005,75 @@ let _ffmpegBin = null;
   ipcMain.on('bambulab:cam-stop-rtsp', (_evt, key) => {
     const p = _bambuRtspProcs.get(key);
     if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); }
+  });
+
+  // ── Prusa Buddy3D camera — plain RTSP on the camera's OWN address ──────────
+  // `rtsp://<camera-ip>/live` once "RTSP stream on local network" is switched
+  // on in the Prusa app / Prusa Connect. No credentials, no TLS. Same ffmpeg
+  // → MJPEG-pipe pipeline as the Bambu stream above, on its own channel.
+  const _prusaRtspProcs = new Map();
+  app.on('will-quit', () => {
+    for (const p of _prusaRtspProcs.values()) { p._stopped = true; try { p.kill(); } catch (_) {} }
+    _prusaRtspProcs.clear();
+  });
+  ipcMain.on('prusa:cam-start-rtsp', (event, { key, host }) => {
+    const prev = _prusaRtspProcs.get(key);
+    if (prev) { prev._stopped = true; try { prev.kill('SIGTERM'); } catch (_) {} _prusaRtspProcs.delete(key); }
+    if (!_ffmpegBin || !host || !/^[\w.\-]+(:\d{1,5})?$/.test(String(host))) return;
+    let restarts = 0;
+    const MAX_RESTARTS = 10;
+    const launch = () => {
+      if (event.sender.isDestroyed()) return;
+      const rtspUrl = `rtsp://${host}/live`;
+      let proc;
+      try {
+        proc = spawn(_ffmpegBin, [
+          '-loglevel', 'error', '-rtsp_transport', 'tcp',
+          '-fflags', 'nobuffer', '-flags', 'low_delay', '-probesize', '32', '-analyzeduration', '0',
+          '-i', rtspUrl, '-vf', 'fps=15', '-f', 'image2pipe', '-vcodec', 'mjpeg', '-qscale:v', '4', 'pipe:1',
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+      } catch (err) {
+        console.error(`[prusa-rtsp:${key}] cannot start ffmpeg:`, err?.message || err);
+        return;
+      }
+      proc._stopped = false;
+      _prusaRtspProcs.set(key, proc);
+      proc.stderr.on('data', chunk => { const msg = chunk.toString().trim(); if (msg) console.error(`[prusa-rtsp:${key}]`, msg); });
+      let buf = Buffer.alloc(0);
+      proc.stdout.on('data', chunk => {
+        buf = Buffer.concat([buf, chunk]);
+        let start = -1;
+        for (let i = 0; i < buf.length - 1; i++) {
+          if (buf[i] === 0xFF && buf[i + 1] === 0xD8) start = i;
+          if (start !== -1 && buf[i] === 0xFF && buf[i + 1] === 0xD9) {
+            const frame = buf.slice(start, i + 2);
+            buf = buf.slice(i + 2);
+            if (!event.sender.isDestroyed()) event.sender.send('prusa:cam-frame', key, frame);
+            if (_camWindow && !_camWindow.isDestroyed()) _camWindow.webContents.send('prusa:cam-frame', key, frame);
+            start = -1; i = -1;
+          }
+        }
+      });
+      proc.on('close', (code) => {
+        if (_prusaRtspProcs.get(key) === proc) _prusaRtspProcs.delete(key);
+        if (proc._stopped) return;
+        if (restarts < MAX_RESTARTS) {
+          restarts++;
+          setTimeout(launch, Math.min(1500 * restarts, 12000));
+        } else {
+          console.warn(`[prusa-rtsp:${key}] gave up after ${MAX_RESTARTS} restarts (last code ${code})`);
+        }
+      });
+      proc.on('error', (err) => {
+        console.error(`[prusa-rtsp:${key}] spawn error:`, err.message);
+        if (_prusaRtspProcs.get(key) === proc) _prusaRtspProcs.delete(key);
+      });
+    };
+    launch();
+  });
+  ipcMain.on('prusa:cam-stop-rtsp', (_evt, key) => {
+    const p = _prusaRtspProcs.get(key);
+    if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _prusaRtspProcs.delete(key); }
   });
 }
 

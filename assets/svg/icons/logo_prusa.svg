@@ -1,0 +1,6 @@
+<svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" height="24" width="24">
+  <title>Prusa</title>
+  <!-- Placeholder mark (a bold "P"), not the official Prusa logo — swap in the
+       real artwork through assets-src/ before a public release. -->
+  <path fill-rule="evenodd" d="M5 2h8.5a6.5 6.5 0 0 1 0 13H10v7H5Zm5 4.5v4h3.2a2 2 0 0 0 0-4Z"/>
+</svg>

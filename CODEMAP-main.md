@@ -31,9 +31,9 @@ L1750-2471   Printer discovery probes (FlashForge / Creality / Bambu / Elegoo / 
 L2473-2628   Infra IPC — image cache, LAN subnets, mDNS, app info, TigerTag DB
 L2629-2765   Elegoo MQTT bridge + timelapse download + ffmpeg detection
 L2766-3019   Bambu Lab — MQTT (8883) + JPEG-TCP (6000) & RTSP (322) cameras
-L3020-3343   Anycubic LAN — MQTT (9883) + slicer-config provisioning + FLV camera (18088)
-L3344-3809   Anycubic cloud — signed REST + shared cloud-MQTT (publish + subscribe)
-L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
+L3020-3455   Anycubic LAN — MQTT (9883) + slicer-config provisioning + FLV camera (18088)
+L3456-3921   Anycubic cloud — signed REST + shared cloud-MQTT (publish + subscribe)
+L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 ```
 
 ---
@@ -92,6 +92,7 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 | 2701-2900 | Bambu Lab — SSDP multicast (`bambu:ssdp-discover`) + TLS cert sniff (`bambu:tls-probe`) + print thumbnail via FTPS | `_parseBambuSsdp` |
 | 2901-3015 | Elegoo — UDP discovery/probe (`elegoo:udp-discover` / `elegoo:udp-probe`) | `_parseElegooReply` |
 | 3016-3065 | Snapmaker — HTTP GET bridge (`snap:http-get`) | — |
+| 3139-3250 | Prusa — PrusaLink HTTP IPC (`prusa:http`: Digest auth, cached challenge, path allowlist, binary for thumbnails/snapshots) + discovery probe (`prusa:probe`, one unauthenticated `GET /api/version`) | — |
 | 3066-3130 | Creality — Moonraker HTTP IPC port 7125, live controls (`cre:http`) | — |
 
 ## Infra IPC — image cache, subnets, mDNS, app info, DB (L2663-2818)
@@ -106,47 +107,48 @@ L3810-3870   App lifecycle (whenReady, window-all-closed, activate)
 
 | L | What | IPC |
 |---|---|---|
-| 3247-3276 | Timelapse video download (`timelapse:download`) | — |
-| 3277-3349 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
-| 3350-3404 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
+| 3359-3388 | Timelapse video download (`timelapse:download`) | — |
+| 3389-3461 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
+| 3462-3516 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3405-3673)
-
-| L | What | Anchors / IPC |
-|---|---|---|
-| 3405-3465 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
-| 3466-3555 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
-| 3556-3673 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
-
-## Bambu Lab cloud — REST + shared cloud MQTT (L3674-4220)
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3517-3785)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 3674-3766 | Tolerant REST helper over ELECTRON's `net` — Chromium's stack on purpose, because the login sits behind Cloudflare, which reads the TLS fingerprint | `_bblFetch`, `_bblHeaders` |
-| 3767-3890 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
-| 3891-3991 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
+| 3517-3577 | MQTTS 8883 control bus (`bambulab:connect` / `disconnect` / `publish`) | — |
+| 3578-3667 | JPEG-TCP camera, port 6000 (`bambulab:cam-start` / `cam-stop`) — 80-byte auth packet, retry/timeout | `_bambuCamAuthPacket` |
+| 3668-3785 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
+| 4010-4077 | Prusa Buddy3D camera — plain RTSP `rtsp://<camera-ip>/live` via the same ffmpeg pipeline, 15 fps (`prusa:cam-start-rtsp` / `prusa:cam-stop-rtsp`, frames on `prusa:cam-frame`) | — |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L4211-4547)
-
-| L | What | Anchors / IPC |
-|---|---|---|
-| 3210-3296 | MQTTS 9883 control bus, TLS 1.2 (`anycubic:connect` / `disconnect` / `publish`) | — |
-| 3297-3402 | FLV camera via ffmpeg, port 18088 (`anycubic:cam-start` / `cam-stop`) — URL-aware (`/flv` or `/live/<token>`) | — |
-| 3403-3425 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
-| 3426-3533 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
-
-## Anycubic cloud — REST + cloud MQTT (L4548-5023)
+## Bambu Lab cloud — REST + shared cloud MQTT (L3786-4401)
 
 | L | What | Anchors / IPC |
 |---|---|---|
-| 3534-3606 | Signed REST helpers (`Xx-Signature` md5, `XX-Token`) | `_cloudHeaders`, `_cloudFetch` |
-| 3607-3718 | Web login (`anycubic:cloud-web-login`) + CDP token grab (`anycubic:cloud-cdp-token`) from a bridge-mode slicer | `_cdpEvaluate` |
-| 3719-3857 | REST: `cloud-get-printers`, `cloud-printer-info` (temps + thumbnail + latest project), `cloud-verify`, `cloud-send-order`, `cloud-camera-open` (order 1001 → Agora "shengwang" creds) | — |
-| 3858-3894 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
-| 3895-3999 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
+| 3786-3878 | Tolerant REST helper over ELECTRON's `net` — Chromium's stack on purpose, because the login sits behind Cloudflare, which reads the TLS fingerprint | `_bblFetch`, `_bblHeaders` |
+| 3879-4002 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
+| 4003-4172 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
 
-## App lifecycle (L5024-5089)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L4392-4728)
+
+| L | What | Anchors / IPC |
+|---|---|---|
+| 3322-3408 | MQTTS 9883 control bus, TLS 1.2 (`anycubic:connect` / `disconnect` / `publish`) | — |
+| 3409-3514 | FLV camera via ffmpeg, port 18088 (`anycubic:cam-start` / `cam-stop`) — URL-aware (`/flv` or `/live/<token>`) | — |
+| 3515-3537 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
+| 3538-3645 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
+
+## Anycubic cloud — REST + cloud MQTT (L4729-5204)
+
+| L | What | Anchors / IPC |
+|---|---|---|
+| 3646-3718 | Signed REST helpers (`Xx-Signature` md5, `XX-Token`) | `_cloudHeaders`, `_cloudFetch` |
+| 3719-3830 | Web login (`anycubic:cloud-web-login`) + CDP token grab (`anycubic:cloud-cdp-token`) from a bridge-mode slicer | `_cdpEvaluate` |
+| 3831-3969 | REST: `cloud-get-printers`, `cloud-printer-info` (temps + thumbnail + latest project), `cloud-verify`, `cloud-send-order`, `cloud-camera-open` (order 1001 → Agora "shengwang" creds) | — |
+| 3970-4006 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
+| 4007-4180 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
+
+## App lifecycle (L5205-5270)
 
 | L | What |
 |---|---|
-| 5024-5089 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |
+| 5205-5270 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |

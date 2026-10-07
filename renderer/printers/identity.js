@@ -15,6 +15,7 @@
  *   creality   → `serialNumber`  (the WebSocket hello's `deviceSn`)
  *   snapmaker  → `serialNumber`  (Moonraker / product info `serial_number`)
  *   anycubic   → `macAddress`    (from `/info` `usn` = "uuid:fdm:<MAC>")
+ *   prusa      → `macAddress`    (ARP; the serial is saved by prusa/index.js)
  *   creality, when it has neither → `hostName` (weak, unique-match only)
  *
  * On top of that, `macAddress` is read from the OS neighbour (ARP) cache, which
@@ -69,6 +70,13 @@ const IDENTITY = {
     field: "macAddress",
     fromDiscovery: p => macFromUsn(p.discovery?.usn),
     probe: async ip => macFromUsn((await acuProbeIp(ip, null, { directInfo: true }))?.usn),
+  },
+  // The serial comes from the authenticated /api/v1/info (prusa/index.js saves
+  // it); here only the ARP MAC is collected, which is what a re-find matches.
+  prusa: {
+    field: "serialNumber",
+    fromDiscovery: () => null,
+    probe: async () => null,
   },
 };
 

@@ -1,0 +1,114 @@
+[
+  {
+    "id": "1",
+    "name": "MK4S",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "2",
+    "name": "MK4",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "3",
+    "name": "MK3.9S",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "4",
+    "name": "MK3.9",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "5",
+    "name": "Core One",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU",
+      "Enclosed"
+    ]
+  },
+  {
+    "id": "6",
+    "name": "XL",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "7",
+    "name": "XL — 2 toolheads",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 2,
+    "features": [
+      "Toolchanger"
+    ]
+  },
+  {
+    "id": "8",
+    "name": "XL — 5 toolheads",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 5,
+    "features": [
+      "Toolchanger"
+    ]
+  },
+  {
+    "id": "9",
+    "name": "MINI+",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "10",
+    "name": "MINI",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "11",
+    "name": "MK3S+ (PrusaLink on Raspberry Pi)",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "12",
+    "name": "MK2.5S (PrusaLink on Raspberry Pi)",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "MMU"
+    ]
+  },
+  {
+    "id": "0",
+    "name": "Select Printer",
+    "image": "assets/images/prusa_printers/no_printer.png",
+    "tools": 1,
+    "features": [
+      "No"
+    ]
+  }
+]

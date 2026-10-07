@@ -18,7 +18,7 @@
  */
 
 const RUN  = new Set(["printing", "running", "paused", "pausing", "resuming", "heating",
-  "preparing", "prepare", "leveling", "checking", "busy", "slicing"]);
+  "preparing", "prepare", "leveling", "checking", "busy", "slicing", "attention"]);
 const DONE = new Set(["finished", "finish", "complete", "completed", "success"]);
 const FAIL = new Set(["error", "failed", "failure", "fail"]);
 const STOP = new Set(["cancelled", "canceled", "cancel", "stopped", "aborted"]);

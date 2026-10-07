@@ -14,6 +14,8 @@
  *   snapmaker  serialNumber
  *   creality   serialNumber (↔ `deviceSn`), else hostName (weak)
  *   anycubic   macAddress    ↔ scan `usn`
+ *   prusa      macAddress (ARP) — the scan is unauthenticated, so it carries no
+ *              serial; the serial PrusaLink gives once signed in is kept too
  * plus `macAddress` for any brand, read from the ARP cache of each candidate.
  *
  * Guards: LAN printers only (cloud ones have no address to lose); never a
@@ -31,6 +33,7 @@ import { ffgScanLan } from "./flashforge/probe.js";
 import { snapScanLan } from "./snapmaker/probe.js";
 import { creScanLan } from "./creality/probe.js";
 import { acuScanLan } from "./anycubic/probe.js";
+import { prusaScanLan } from "./prusa/probe.js";
 
 // A printer that is simply switched off would otherwise be searched for every
 // few minutes all day: each fruitless search doubles the wait (5 → 10 → 20 …
@@ -65,6 +68,9 @@ const BRANDS = {
   anycubic:   { scan: acuScanLan,    ipField: "ip",
                 strong: c => [normMac(c.usn)],
                 mine:   p => [normMac(p.macAddress), normMac(p.discovery?.usn)] },
+  prusa:      { scan: prusaScanLan,  ipField: "ip",
+                strong: () => [],
+                mine:   p => [normId(p.serialNumber), normMac(p.macAddress)] },
 };
 
 const _lastTry = new Map();      // key → { at, misses } of the last search

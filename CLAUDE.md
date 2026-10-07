@@ -445,6 +445,7 @@ Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a **self-contained a
 | **Elegoo** | MQTT 1883, UDP spray port 52700, filament 4 slots canvas/tray | ✅ implemented |
 | **FlashForge** | HTTP poll 8898, TCP M-codes 8899, UDP multicast 225.0.0.9:19000 | ✅ implemented |
 | **Snapmaker** | WS 7125 Moonraker + proprietary, RRGGBBAA color, HTTP scan | ✅ implemented |
+| **Prusa** | PrusaLink HTTP 80 (Digest auth, via main `prusa:http`), status poll 2 s, MMU 5 slots / XL tools from the model catalog, camera = Buddy3D RTSP (own IP) or PrusaLink `/cameras/snap`, HTTP `/api/version` sweep scan | 🧪 beta (LAN) |
 | **Anycubic** | LAN: MQTTS 9883 TLS 1.2 direct, ACE slots + print/temp telemetry, FLV cam 18088 via ffmpeg, creds from slicer config, /info scan 18910. Cloud: signed REST + cloud-MQTT (bundled cert), token via attach-only CDP from bridge-mode slicer | ✅ implemented (LAN + cloud) |
 
 > **RETRO.md** (Creality only) — raw live-hardware SSH observations; PROTOCOL.md is the authoritative merge.

@@ -955,6 +955,7 @@
   .pba-brand-logo[data-brand="creality"],    .pt-thumb-logo[data-brand="creality"]    { background-color: #2ee65c; -webkit-mask-image: url('../../assets/svg/icons/logo_creality.svg');   mask-image: url('../../assets/svg/icons/logo_creality.svg'); }
   .pba-brand-logo[data-brand="elegoo"],      .pt-thumb-logo[data-brand="elegoo"]      { background-color: #1f4ed8; -webkit-mask-image: url('../../assets/svg/icons/logo_elegoo.svg');     mask-image: url('../../assets/svg/icons/logo_elegoo.svg'); }
   .pba-brand-logo[data-brand="flashforge"],  .pt-thumb-logo[data-brand="flashforge"]  { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/icons/logo_flashforge.svg'); mask-image: url('../../assets/svg/icons/logo_flashforge.svg'); }
+  .pba-brand-logo[data-brand="prusa"],       .pt-thumb-logo[data-brand="prusa"]       { background-color: #fa6831; -webkit-mask-image: url('../../assets/svg/icons/logo_prusa.svg'); mask-image: url('../../assets/svg/icons/logo_prusa.svg'); }
   .pba-brand-logo[data-brand="snapmaker"],   .pt-thumb-logo[data-brand="snapmaker"]   { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/icons/logo_snapmaker.svg');  mask-image: url('../../assets/svg/icons/logo_snapmaker.svg'); }
   .pba-brand-text {
     display: flex; flex-direction: column;

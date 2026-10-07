@@ -26,6 +26,15 @@ contextBridge.exposeInMainWorld('mcpBridge', {
   hostedGrants:  (idToken, revokeId) => ipcRenderer.invoke('mcp:hosted-grants', idToken, revokeId),
 });
 
+// Prusa — PrusaLink HTTP (digest auth, path-allowlisted in main) + Buddy3D RTSP camera.
+contextBridge.exposeInMainWorld('prusa', {
+  http:         (opts)           => ipcRenderer.invoke('prusa:http', opts),
+  probe:        (host, timeout)  => ipcRenderer.invoke('prusa:probe', host, timeout),
+  camStartRtsp: (key, host)      => ipcRenderer.send('prusa:cam-start-rtsp', { key, host }),
+  camStopRtsp:  (key)            => ipcRenderer.send('prusa:cam-stop-rtsp', key),
+  onCamFrame:   (cb)             => ipcRenderer.on('prusa:cam-frame', (_, key, buf) => cb(key, buf)),
+});
+
 contextBridge.exposeInMainWorld('bambulab', {
   connect:    (opts) => ipcRenderer.send('bambulab:connect',    opts),
   disconnect: (key)  => ipcRenderer.send('bambulab:disconnect', key),

@@ -65,6 +65,12 @@ import { openSnapAddFlow } from './printers/snapmaker/add-flow.js';
 import { paxxEnsureLatest, paxxProbeInstalled, paxxUpdateAvailable } from './printers/snapmaker/paxx.js';
 import { snapFanPct, snapFanStep, renderSnapControlCard } from './printers/snapmaker/widget_control.js';
 import { openFfgAddFlow }  from './printers/flashforge/add-flow.js';
+import {
+  prusaKey, prusaGetConn, prusaIsOnline, prusaPingPrinter, prusaConnect, prusaDisconnect,
+  renderPrusaOnlineBadge, renderPrusaLiveInner, renderPrusaLogInner, prusaWireLive,
+} from './printers/prusa/index.js';
+import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
+import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
 import { openCreAddFlow }  from './printers/creality/add-flow.js';
 import { openBblAddFlow }  from './printers/bambulab/add-flow.js';
 import { openElgAddFlow }  from './printers/elegoo/add-flow.js';
@@ -1517,7 +1523,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         ["elegoo",     "../data/printers/eleg_printer_models.json"],
         ["flashforge", "../data/printers/ffg_printer_models.json"],
         ["snapmaker",  "../data/printers/snap_printer_models.json"],
-        ["anycubic",   "../data/printers/acu_printer_models.json"]
+        ["anycubic",   "../data/printers/acu_printer_models.json"],
+        ["prusa",      "../data/printers/prusa_printer_models.json"]
       ];
       state.db.printerModels = {};
       await Promise.all(printerCatalogs.map(async ([brand, url]) => {
@@ -21340,6 +21347,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   const _DBG_BRAND_PREFIX = {
     acu: ["Anycubic", "anycubic"], bbl: ["Bambu Lab", "bambulab"], cre: ["Creality", "creality"],
     elg: ["Elegoo", "elegoo"], ffg: ["FlashForge", "flashforge"], snap: ["Snapmaker", "snapmaker"],
+    prusa: ["Prusa", "prusa"],
   };
   function _dbgSurface(id) {
     if (!id) return null;
@@ -22257,7 +22265,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
      mergeBrandSnap callback so a snapshot for any brand updates only that
      brand's slice while preserving the others.
      See docs/03-data-model.md → users/{uid}/printers/{brand}/devices.       */
-  const PRINTER_BRANDS = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic"];
+  const PRINTER_BRANDS = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa"];
 
   function subscribePrinters(uid) {
     unsubscribePrinters();
@@ -22457,6 +22465,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     (state.printers || []).filter(p => p.brand === 'flashforge').forEach(p => {
       try { ffgDisconnect(ffgKey(p)); } catch (_) {}
     });
+    (state.printers || []).filter(p => p.brand === 'prusa').forEach(p => {
+      try { prusaDisconnect(prusaKey(p)); } catch (_) {}
+    });
+    try { prusaCamStopAll(); } catch (_) {}
     (state.printers || []).filter(p => p.brand === 'creality').forEach(p => {
       try { creDisconnect(creKey(p)); if (p.ip) stopCreCam(p.ip); } catch (_) {}
     });
@@ -22482,7 +22494,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
    * @returns {{ state: string, pct: number } | null}
    */
   // States where a progress bar is meaningful (printer actively running a job).
-  const _ACTIVE_STATES = new Set(["printing", "running", "paused", "heating", "preparing", "prepare", "leveling", "checking", "busy"]);
+  const _ACTIVE_STATES = new Set(["printing", "running", "paused", "heating", "preparing", "prepare", "leveling", "checking", "busy", "attention"]);
   // Just-finished states — the plate is done but still on the bed, so we keep
   // showing "what just printed". Covers every brand's word for it (Bambu
   // "finished", Snapmaker/Creality "complete", FlashForge "completed").
@@ -22497,6 +22509,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     if (p.brand === "elegoo")     conn = elegooGetConn(elegooKey(p));
     if (p.brand === "bambulab")   conn = bambuGetConn(bambuKey(p));
     if (p.brand === "anycubic")   conn = acuGetConn(acuKey(p));
+    if (p.brand === "prusa")      conn = prusaGetConn(prusaKey(p));
     if (conn?.status === "connected") d = conn.data;
     if (!d) return null;
 
@@ -22526,6 +22539,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     else if (p.brand === "elegoo"   && d.printRemainingMs > 0) remainSec = Math.round(d.printRemainingMs / 1000);
     else if (p.brand === "creality" && d.printLeftTime > 0)    remainSec = d.printLeftTime;
     else if (p.brand === "flashforge" && d.printEstimated > 0) remainSec = d.printEstimated; // already remaining seconds
+    else if (p.brand === "prusa"      && d.printEstimated > 0) remainSec = d.printEstimated; // PrusaLink time_remaining, seconds
     else if (p.brand === "snapmaker") {
       // Snapmaker/Moonraker gives no direct "remaining" — derive it from the
       // slicer's estimated_time minus elapsed print_duration, falling back to a
@@ -22550,7 +22564,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
        Re-asking here would blank an idle cloud card that has a picture to show. */
     if (p.brand === "bambulab") thumbUrl = d.printPreviewUrl || null;
     else if (isActive || isDone) {
-      if (p.brand === "snapmaker" || p.brand === "flashforge") thumbUrl = d.printPreviewUrl || null;
+      if (p.brand === "snapmaker" || p.brand === "flashforge" || p.brand === "prusa") thumbUrl = d.printPreviewUrl || null;
       else if (p.brand === "anycubic") thumbUrl = d.printThumb || null;
       else if (p.brand === "elegoo")   thumbUrl = d.thumbnail || null;
       else if (p.brand === "creality") {
@@ -22888,7 +22902,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
      same way. (The panel banner also carries a fixed element id, which cannot be
      right on a view that draws one per machine.) */
   const _boardCamHtml = p =>
-    p.brand === "flashforge" ? renderFfgCamWallBanner(p) : renderCamBanner(p);
+    p.brand === "flashforge" ? renderFfgCamWallBanner(p)
+    : p.brand === "prusa"    ? renderPrusaCamWallBanner(p) : renderCamBanner(p);
   const _camOfflineHtml = () =>
     `<div class="cam-card-off"><span class="icon icon-eye-off icon-24"></span></div>`;
   const _camPlayHtml = key =>
@@ -22914,6 +22929,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     try {
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -23330,6 +23346,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   function _isPrinterOnline(p) {
     if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
     if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
+    if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
     if (p.brand === "creality")   return creIsOnline(p)    === true;
     if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
     if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -23492,6 +23509,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     state.printers.forEach(p => {
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -23527,6 +23545,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (p.brand === "snapmaker" && p.ip) snapPingPrinter(p);
       // Same for FlashForge — fires a 2.5s POST /detail probe.
       if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
+      if (p.brand === "prusa" && p.ip)      prusaPingPrinter(p);
       // Same for Creality — opens a brief WS to port 9999.
       if (p.brand === "creality"   && p.ip) crePingPrinter(p);
       /* A MINIMAL card: the machine, its name, and a dot saying whether it is
@@ -23809,7 +23828,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // ── Printer table sub-view ───────────────────────────────────────────────
   // Brands that ship a logo SVG (assets/svg/icons/logo_<brand>.svg) → the Brand
   // column shows the tinted logo; any other brand falls back to the text pill.
-  const _BRAND_HAS_LOGO = new Set(["anycubic", "bambulab", "creality", "elegoo", "flashforge", "snapmaker"]);
+  const _BRAND_HAS_LOGO = new Set(["anycubic", "bambulab", "creality", "elegoo", "flashforge", "snapmaker", "prusa"]);
   // When each printer was last seen online (key `brand:id` → ms timestamp).
   // Used by the "Last seen" column. Backed by Firestore (see below) so it
   // survives reloads/restarts; updated live in-memory by the heartbeat + renders.
@@ -23857,6 +23876,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     state.printers.forEach(p => {
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -23866,6 +23886,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const _isOnline = p => {
       if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
       if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
+      if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
       if (p.brand === "creality")   return creIsOnline(p)    === true;
       if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
       if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -24074,6 +24095,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     state.printers.forEach(p => {
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -24084,6 +24106,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const _isOnline = p => {
       if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
       if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
+      if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
       if (p.brand === "creality")   return creIsOnline(p)    === true;
       if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
       if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -26319,6 +26342,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
                    : printer.brand === "creality"   ? creKey(printer)
                    : printer.brand === "bambulab"   ? bambuKey(printer)
                    : printer.brand === "anycubic"   ? acuKey(printer)
+                   : printer.brand === "prusa"      ? prusaKey(printer)
                    : printer.brand === "elegoo"     ? elegooKey(printer) : null;
     if (_openKey) _ppForcedOfflineKeys.delete(_openKey);
     renderPrinterDetail();
@@ -26344,6 +26368,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         if (img) ffgMuxRegister(key, img);
       }
     }
+    // Prusa — PrusaLink 2 s poll; the camera feed starts with its banner.
+    if (printer.brand === "prusa" && printer.ip) prusaConnect(printer);
     // Creality — open the WebSocket on port 9999 and start 2 s polling.
     if (printer.brand === "creality" && printer.ip) {
       creConnect(printer);
@@ -26844,6 +26870,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     if (p.brand === "bambulab")   connStatus = bambuGetConn(bambuKey(p))?.status   ?? null;
     if (p.brand === "elegoo")     connStatus = elegooGetConn(elegooKey(p))?.status ?? null;
     if (p.brand === "anycubic")   connStatus = acuGetConn(acuKey(p))?.status       ?? null;
+    if (p.brand === "prusa")      connStatus = prusaGetConn(prusaKey(p))?.status   ?? null;
     const active    = connStatus === "connected" || connStatus === "connecting";
     const labelKey  = active ? "printerDisconnect" : "printerConnect";
     btn.title       = t(labelKey);
@@ -26873,6 +26900,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
                  : p.brand === "creality"   ? creKey(p)
                  : p.brand === "bambulab"   ? bambuKey(p)
                  : p.brand === "anycubic"   ? acuKey(p)
+                 : p.brand === "prusa"      ? prusaKey(p)
                  : p.brand === "elegoo"     ? elegooKey(p) : null;
     if (active) {
       // Mark as explicitly offline BEFORE disconnecting so that any
@@ -26884,11 +26912,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (p.brand === "bambulab")   bambuDisconnect(bambuKey(p));
       if (p.brand === "elegoo")     elegooDisconnect(elegooKey(p));
       if (p.brand === "anycubic")   acuDisconnect(acuKey(p));
+      if (p.brand === "prusa")      prusaDisconnect(prusaKey(p));
     } else {
       // Clear forced-offline so isOnline() falls back to live conn status.
       if (_brKey) _ppForcedOfflineKeys.delete(_brKey);
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
+      if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
       if (p.brand === "creality"   && p.ip)               { creDisconnect(creKey(p)); creConnect(p); }
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo")                           elegooConnect(p);
@@ -27151,6 +27181,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (p.brand === "bambulab")   { bambuDisconnect(bambuKey(p)); bambuConnect(p); }
       if (p.brand === "elegoo")     { elegooDisconnect(elegooKey(p)); elegooConnect(p); }
       if (p.brand === "anycubic")   { acuDisconnect(acuKey(p)); acuConnect(p); }
+      if (p.brand === "prusa")      { prusaDisconnect(prusaKey(p)); prusaConnect(p); }
     } catch (e) { console.warn("[refind] reconnect failed:", e?.message || e); }
   };
   _printerCtx.onPrinterRefound = (p, _oldIp, newIp) => {
@@ -27319,6 +27350,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       case "elegoo":     return renderElegooCamBanner(p);
       case "bambulab":   return renderBambuCamBanner(p);
       case "anycubic":   return renderAcuCamBanner(p);
+      case "prusa":      return renderPrusaCamBanner(p);
       default: return "";
     }
   }
@@ -27418,6 +27450,25 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // with the Snapmaker dispatch above.
     const ffgLiveHtml = (p.brand === "flashforge")
       ? `<div id="ffgLive" class="snap-live-host">${renderFlashforgeLiveInner(p)}</div>`
+      : "";
+
+    // Prusa live data block (PrusaLink poll) — same .snap-* classes; host id
+    // `prusaLive` for the module's rAF-coalesced partial re-renders.
+    const prusaLiveHtml = (p.brand === "prusa")
+      ? `<div id="prusaLive" class="snap-live-host">${renderPrusaLiveInner(p)}</div>`
+      : "";
+    // Its request log — debug mode only (every PrusaLink call + the answer),
+    // the first thing to read when a beta printer misbehaves.
+    const prusaConnRef = (p.brand === "prusa") ? prusaGetConn(prusaKey(p)) : null;
+    const prusaLogHtml = (p.brand === "prusa" && state.debugEnabled)
+      ? `<section class="pp-section pp-section--collapsible snap-log-section" data-collapsed="true">
+           <button class="pp-section-head pp-section-head--btn" type="button">
+             <span>${esc(t("snapLogTitle"))}
+                   <span class="snap-log-count" id="prusaLogCount">${(prusaConnRef?.log?.length) || 0}</span></span>
+             <span class="pp-chev icon icon-chevron-r icon-14"></span>
+           </button>
+           <div class="pp-section-body"><div id="prusaLog">${renderPrusaLogInner(p)}</div></div>
+         </section>`
       : "";
 
     // Creality live data block — same reusable .snap-* CSS classes.
@@ -27670,6 +27721,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // updates as soon as the side card opens.
     if (p.brand === "snapmaker" && p.ip) snapPingPrinter(p);
     if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
+    if (p.brand === "prusa" && p.ip)      prusaPingPrinter(p);
     if (p.brand === "creality"   && p.ip) crePingPrinter(p);
 
     // Unregister the previous sidecard img from the MJPEG mux before wiping
@@ -27718,6 +27770,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
       ${snapLiveHtml}
       ${ffgLiveHtml}
+      ${prusaLiveHtml}
       ${creLiveHtml}
       ${elgLiveHtml}
       ${bblLiveHtml}
@@ -27746,9 +27799,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
       ${snapLogHtml}
       ${ffgLogHtml}
+      ${prusaLogHtml}
       ${creLogHtml}
       ${bblLogHtml}
       ${acuLogHtml}` : ""}`;
+
+    // Prusa — the job keys are hold-to-confirm, wired on every full render.
+    if (p.brand === "prusa") prusaWireLive($("prusaLive"), p);
 
     // Creality camera — register the sidecard's <video> as a stream consumer,
     // then start (or reuse) the WebRTC connection.  addCreCamConsumer() is
@@ -29070,6 +29127,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           openElgAddFlow();
         } else if (brand === "anycubic") {
           openAcuAddFlow();
+        } else if (brand === "prusa") {
+          openPrusaAddFlow();
         } else {
           openPrinterAddForm(brand);
         }
@@ -38277,7 +38336,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       "users/{uid}/racks/{rackId}": "storage racks: name, level = number of shelves, position = slots per shelf",
       "users/{uid}/products/{keyHash}": "per-product info shared by identical spools: buy link, price (buyPriceHt = tax-free), min stock, favourite / liked, note",
       "users/{uid}/lists/{listId}": "wishlists / shopping lists and their items",
-      "users/{uid}/printers/{brand}/devices/{id}": "3D printers (brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic); credentials live in a secrets subtree that is never shared",
+      "users/{uid}/printers/{brand}/devices/{id}": "3D printers (brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic | prusa); credentials live in a secrets subtree that is never shared",
       "users/{uid}/scales/{mac}": "TigerScale devices (heartbeats)",
       "users/{uid}/rfidList/{UID}": "every physical chip ever used (first/last seen, TigerTag+ backup present)",
       "users/{uid}/friends/{friendUid}": "accepted friends; friendRequests / blacklist likewise",
@@ -38363,7 +38422,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     async list_devices() {
       const me = _mcpMe(), u = fbDb(me).collection("users").doc(me);
       const scales = await u.collection("scales").get().catch(() => null);
-      const brands = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic"];
+      const brands = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa"];
       const printers = [];
       await Promise.all(brands.map(async b => {
         const s = await u.collection("printers").doc(b).collection("devices").get().catch(() => null);

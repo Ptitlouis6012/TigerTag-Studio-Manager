@@ -43,11 +43,11 @@ const llms = read("llms.txt");
 // Version. package.json is pre-bumped to the NEXT patch right after a release
 // (see CLAUDE.md), so llms.txt legitimately trails by one patch — accept either
 // the current value or the released one it was bumped from.
-const mVer = llms.match(/Current version:\s*\*\*([\d.]+)\*\*/);
+const mVer = llms.match(/Current version:\s*\*\*(\d[\w.-]*)\*\*/);
 if (!mVer) {
   fail("llms.txt", "no 'Current version: **x.y.z**' line", version, "add one");
 } else {
-  const [maj, min, pat] = version.split(".").map(Number);
+  const [maj, min, pat] = version.replace(/-.*/, "").split(".").map(Number);   // a pre-release (2.35.0-beta.1) counts as its base
   const prevPatch = pat > 0 ? `${maj}.${min}.${pat - 1}` : null;
   if (mVer[1] !== version && mVer[1] !== prevPatch) {
     fail("llms.txt", `version ${mVer[1]}`, version, `set it to ${version}`);
@@ -101,11 +101,11 @@ if (mKeys) {
 
 // ── FEATURES.md — the catalogue states the release it is current as of ──
 const feats = read("FEATURES.md");
-const mFeat = feats.match(/current as of \*\*v([\d.]+)\*\*/);
+const mFeat = feats.match(/current as of \*\*v(\d[\w.-]*)\*\*/);
 if (!mFeat) {
   fail("FEATURES.md", "no 'current as of **vX.Y.Z**' line", version, "add one");
 } else {
-  const [maj, min, pat] = version.split(".").map(Number);
+  const [maj, min, pat] = version.replace(/-.*/, "").split(".").map(Number);   // a pre-release (2.35.0-beta.1) counts as its base
   const prevPatch = pat > 0 ? `${maj}.${min}.${pat - 1}` : null;
   if (mFeat[1] !== version && mFeat[1] !== prevPatch) {
     fail("FEATURES.md", `current as of v${mFeat[1]}`, `v${version}`,

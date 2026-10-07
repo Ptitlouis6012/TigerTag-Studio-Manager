@@ -1,0 +1,28 @@
+/* ── Prusa printer side card — only what the shared .snap-* blocks lack ──── */
+
+/* Camera — Buddy3D RTSP frames or PrusaLink snapshots, painted into an <img>.
+   The .pp-cam-full box (16:9, positioning) is shared by every brand. */
+.prusa-cam-host {
+  position: relative;
+  overflow: hidden;
+  background: #000;
+  border-radius: 10px 10px 0 0;
+}
+.prusa-camera-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border: none;
+}
+
+/* "MMU" next to the Filament title — says where the five slots are. */
+.prusa-mmu-tag {
+  display: inline-flex; align-items: center;
+  margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: color-mix(in srgb, #fa6831 16%, transparent);
+  color: #fa6831; font-size: 10.5px; font-weight: 700; letter-spacing: .04em;
+  vertical-align: middle;
+}

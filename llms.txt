@@ -2,7 +2,7 @@
 
 > Desktop companion for the TigerTag RFID filament-tracking ecosystem. Electron app — Vanilla JS + Firebase + NFC.
 
-Tiger Studio Manager is an Electron desktop application for managing 3D-printing filament spools tagged with TigerTag RFID chips. It provides real-time Firestore inventory sync, live 3D printer integration for 6 brands, NFC chip read/write, hardware sensors (color sensor, scale), rack storage management, shareable wishlists and a friends system — all in a single window without a build step (no bundler).
+Tiger Studio Manager is an Electron desktop application for managing 3D-printing filament spools tagged with TigerTag RFID chips. It provides real-time Firestore inventory sync, live 3D printer integration for 7 brands, NFC chip read/write, hardware sensors (color sensor, scale), rack storage management, shareable wishlists and a friends system — all in a single window without a build step (no bundler).
 
 **Positioning:** this app is one piece of the wider **TigerSystem** ecosystem, and deliberately a laboratory rather
 than the destination — a demonstration of what open, documented technology allows once a spool can identify itself.
@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.34.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.35.0-beta.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -246,8 +246,9 @@ Each brand has `renderer/printers/<brand>/PROTOCOL.md` (self-contained spec) and
 | FlashForge | HTTP poll + TCP M-codes | 8898 / 8899 |
 | Snapmaker | Moonraker WebSocket | 7125 |
 | Anycubic | MQTTS TLS 1.2 (LAN) + signed REST / cloud MQTT | 9883 |
+| Prusa | PrusaLink HTTP poll (Digest auth) + Buddy3D RTSP camera — beta | 80 |
 
-All brands: printer discovery (mDNS + port scan + manual IP), filament edit per slot, camera widget.
+All brands: printer discovery (mDNS + port scan + manual IP), camera widget; filament edit per slot except Prusa (PrusaLink reports no loaded filament — slots show what the running job expects).
 
 ## Sensors
 
@@ -265,7 +266,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), filament edit per 
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1577 keys × 11 locales as of v2.33.1
+1617 keys × 11 locales as of v2.35.0-beta.1
 
 ## CSS conventions
 
