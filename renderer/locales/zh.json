@@ -1443,8 +1443,6 @@
   "vatCustomSymbolLabel": "符号",
   "vatCustomSymbolHint": "例如：€、$、£",
   "priceInputLabel": "价格",
-  "reorderPanelTitle": "产品信息",
-  "reorderOpenProductCard": "打开产品卡片",
   "reorderInStock": "库存：{{n}}",
   "reorderStockSection": "库存",
   "toolReorder": "产品信息",
