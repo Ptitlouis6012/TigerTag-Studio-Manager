@@ -2379,23 +2379,24 @@
   <div id="containerPickerList" class="cp-list"></div>
 </div>
 
-<!-- Reorder / buy-link side card — tucks to the LEFT of the spool detail card.
-     Its content (buy link + price HT/TTC + min-stock) is rendered by JS from the
-     per-product-identity `products` table, so it applies to every identical spool. -->
+<!-- THE product card (owner) — one wide side card that tucks to the LEFT of the
+     spool detail card: what the product is (illustration, identity, print
+     settings, documents, details) AND everything tracked about it (stock, buy
+     link, price, tags, note, SKU/EAN). Rendered by JS from the per-product-identity
+     `products` table, so it applies to every identical spool. -->
 <button class="pp-close-tab" id="reorderCloseTab" title="Close" aria-label="Close" hidden>»</button>
 <div class="detail-panel ro-panel" id="reorderPanel">
   <div class="panel-header">
-    <span class="panel-title" data-i18n="reorderPanelTitle">Product info</span>
     <div class="ro-header-flags" id="roHeaderFlags"></div>
     <button class="panel-close" id="reorderPanelClose" aria-label="Close">✕</button>
   </div>
   <div class="panel-body" id="reorderPanelBody"></div>
 </div>
 
-<!-- Product "business card" — a LIGHT, read-only version of the Materials side
-     card, shown for a product with no live spool (e.g. a friend's favorite they
-     don't have in stock). No location / RFID / weight edit / chip functions;
-     the filament illustration is always shown full (100%). Rendered by JS. -->
+<!-- Product "business card" — a LIGHT, read-only card shown in a FRIEND's view for
+     one of their products. No location / RFID / weight edit / chip functions;
+     the filament illustration is always shown full (100%). Rendered by JS.
+     (The owner gets the wide merged card above instead.) -->
 <button class="pp-close-tab" id="productCardCloseTab" title="Close" aria-label="Close" hidden>»</button>
 <div class="detail-panel pc-panel" id="productCardPanel">
   <!-- No title bar / ✕ — like the Materials side card; closed via the » tab. -->

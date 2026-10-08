@@ -1466,8 +1466,6 @@
   "vatCustomSymbolLabel": "Symbool",
   "vatCustomSymbolHint": "bijv. €, $, £",
   "priceInputLabel": "Prijzen",
-  "reorderPanelTitle": "Productinfo",
-  "reorderOpenProductCard": "Productkaart openen",
   "reorderInStock": "Op voorraad: {{n}}",
   "reorderStockSection": "Voorraad",
   "toolReorder": "Productinfo",

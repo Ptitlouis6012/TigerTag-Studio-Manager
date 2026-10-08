@@ -1466,8 +1466,6 @@
   "vatCustomSymbolLabel": "Symbole",
   "vatCustomSymbolHint": "Ex. : €, $, £",
   "priceInputLabel": "Prix",
-  "reorderPanelTitle": "Infos produit",
-  "reorderOpenProductCard": "Ouvrir la fiche produit",
   "reorderInStock": "En stock : {{n}}",
   "reorderStockSection": "Stock",
   "toolReorder": "Infos produit",

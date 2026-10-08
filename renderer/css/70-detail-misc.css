@@ -3599,9 +3599,11 @@
      the wrap just gives it the section's horizontal padding. */
   .pc-from-wrap { padding: 4px 16px 0; }
   .pc-note { margin: 12px 16px 0; padding: 8px 12px; border-radius: 10px; background: var(--surface-2); color: var(--muted); font-size: 12px; text-align: center; }
-  /* No separator line under the "Product info" title — the identity header below
-     already frames the content. */
-  .ro-panel .panel-header { border-bottom: none; }
+  /* The merged product card is TWO side cards wide (the old "Product info" +
+     "Product card" pair). No title bar text and no separator: the hero right
+     below already says what the card is about; only ❤/★/list and the ✕ remain. */
+  #reorderPanel { width: 620px; }
+  .ro-panel .panel-header { border-bottom: none; justify-content: flex-end; padding-bottom: 0; }
   .ro-panel .panel-body {
     /* flex:1 + min-height:0 make the body fill the panel's flex column and
        scroll (the base .panel-body sets flex:1; overriding display:flex here
@@ -3618,28 +3620,25 @@
      last fields squash to nothing). */
   .ro-panel .panel-body > * { flex-shrink: 0; }
   .ro-panel .panel-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
-  /* Product identity header (thumb + brand/material/colour + open-card chevron). */
-  .ro-head { display: flex; align-items: center; gap: 12px; }
-  /* Clickable identity header → opens the read-only Product card. Full-bleed hover
-     (negative margins cancel the panel-body's 16px padding; the padding re-insets
-     the content so it stays aligned with the sections below — no overflow). */
-  .ro-head--clickable {
-    box-sizing: border-box; text-align: left; border: none; background: none;
-    padding: 10px 16px; margin: -8px -16px 2px; cursor: pointer;
-    font: inherit; color: inherit; transition: background .15s;
-  }
-  /* No full-zone grey on hover — the round chevron is the only affordance. */
-  .ro-head--clickable:hover .ro-head-go { opacity: 1; background: var(--border); transform: translateX(1px); }
-  /* Open-card affordance — a subtle round button, vertically centred, that never
-     crowds the text (the text column owns all remaining width and truncates). */
-  .ro-head-go {
-    margin-left: auto; flex-shrink: 0;
-    width: 26px; height: 26px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--surface-2); opacity: .75;
-    transition: opacity .15s, transform .15s, background .15s;
-  }
-  .ro-head-go .icon { background: var(--muted); }
+  /* Hero: illustration left, identity + the "+ Material" action right. */
+  .ro-hero { display: flex; gap: 16px; align-items: stretch; }
+  .ro-hero .panel-img-wrap { width: 190px; flex-shrink: 0; border-radius: 12px; overflow: hidden; }
+  /* Colour frame the exact size of the grid cards' (152 px card → 130 px photo,
+     10 px corners): a fixed 11 px, not the 7 % the narrow side cards use, which
+     would grow with this larger photo. */
+  .ro-hero .panel-img-wrap:has(> .panel-img) { padding: 11px; }
+  .ro-hero .panel-img-wrap > .panel-img { border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
+  .ro-hero .panel-img-color-placeholder { aspect-ratio: 1; }
+  .ro-hero-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .ro-hero-txt .pi-row1 { font-size: 13px; }
+  .ro-hero-txt .pi-row2--name { font-size: 20px; font-weight: 700; margin-top: 1px; }
+  /* Sections borrowed from the read-only card keep their own padding — but inside
+     this card the body already pads, so they sit flush like the .ro-field blocks. */
+  .ro-panel .panel-body > .panel-section { padding: 0; border-top: none; }
+  .ro-panel .panel-body > .pc-note { margin: 0; }
+  /* Buy link + price: one commerce pair. */
+  .ro-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .ro-pair > .ro-field { min-width: 0; }
   /* ❤ Liked / ★ Favorite toggles. In the Product-info card they sit in the panel
      HEADER (left of the ✕); the spool detail identity block uses .pi-flags. */
   .ro-header-flags { display: flex; gap: 6px; flex-shrink: 0; margin-right: 6px; }
@@ -3673,45 +3672,6 @@
      neutral→primary hover as the add-to-list button, not a toggle. */
   .flag-toggle--info:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); border-color: var(--primary); }
   .flag-toggle--info:hover .icon { background-color: var(--primary); }
-  /* "+ Material" — styled as a toolbox row (see .toolbox-row); a small top margin
-     separates it from the References block above. */
-  .ro-cloud-row { margin-top: 4px; }
-  .ro-swatch {
-    width: 58px; height: 58px; border-radius: 13px; flex-shrink: 0;
-    border: 1px solid var(--border); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-  }
-  .ro-thumb {
-    width: 58px; height: 58px; border-radius: 13px; flex-shrink: 0;
-    object-fit: cover; background: var(--surface-2);
-    border: 1px solid var(--border);
-  }
-  /* The spool colour frames the photo, like everywhere else: a 5 px border,
-     painted with the colour as a border-box background (it can be a gradient —
-     bicolor, rainbow — so it can't be a border-color), the usual grey under the
-     photo itself, and the photo corners rounded inside (radius minus border). */
-  .ro-thumb:not(.ro-thumb--broken) {
-    border: 5px solid transparent;
-    background: linear-gradient(var(--surface-2), var(--surface-2)) padding-box,
-                var(--spool-bg, var(--surface-2)) border-box;
-  }
-  .ro-thumb--broken { object-fit: initial; }
-  /* Text column owns all width left of the chevron, so every line truncates
-     cleanly instead of colliding with the open-card affordance. */
-  .ro-head-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-  .ro-head-brand {
-    font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.2;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .ro-head-mat {
-    font-size: 12px; color: var(--muted); line-height: 1.2;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  /* Colour line: swatch dot (handles bi/tricolor/rainbow) + name, truncating. */
-  .ro-head-color { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 1px; }
-  .ro-head-color-txt {
-    font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
-  }
   /* Provenance block — shown when a favorite was imported from a friend's
      inventory. Prominent identity card (avatar + label + pseudo), styled like
      the sidebar account row. */
@@ -4623,13 +4583,10 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
 .inv-catalog-view .cv-sentinel { height: 1px; grid-column: 1 / -1; }
 
 
-/* Search views: the Product card carries the one control that writes — a square
-   `+` in the actions row, reusing the app's existing "+ material" affordance
-   (.flag-toggle--addmat). Only the result line lives further down. */
-.pc-cat-add-btn:disabled { opacity: .45; cursor: not-allowed; }
-.pc-cat-add-btn.is-busy { opacity: .6; pointer-events: none; }
-.pc-cat-add:has(.pc-cat-msg:empty) { display: none; }
-.pc-cat-msg .alert { margin-top: 0; }
+/* Search views: the product card's "+ Material" is the one control that writes —
+   dimmed while the catalogue product is being created. */
+#roCreateCloud:disabled { opacity: .45; cursor: not-allowed; }
+#roCreateCloud.is-busy { opacity: .6; pointer-events: none; }
 
 /* Catalogue row thumbnail — colour underneath, photo on top. The colour is the
    element's own background so it paints before the image arrives (and remains
