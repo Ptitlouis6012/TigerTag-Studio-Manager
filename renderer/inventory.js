@@ -25402,6 +25402,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // How wide a row is: the board as arranged so far, or what is on screen if wider.
     const _zoom = parseFloat((getComputedStyle(container).transform.match(/matrix\(([^,]+)/) || [])[1]) || 1;
     const _rowWidth = Math.max(right, (container.parentElement?.clientWidth || container.clientWidth) / _zoom);
+    const placedNow = new Set();   // what THIS pass placed itself — the only objects the settle may second-guess
     orphans.forEach(el => {
       /* A unit that has never been placed goes beside its machine — under the
          card, then to the right of whichever of its siblings is already there,
@@ -25458,6 +25459,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       }
       el.style.left = x + "px";
       el.style.top  = y + "px";
+      placedNow.add(id);
       /* PLACED, but only ADOPTED once we are certain the stored arrangement has
          actually arrived. An object looks unplaced both when it has never been
          placed AND when its coordinates simply have not loaded yet — and the two
@@ -25503,7 +25505,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       right  = Math.max(right,  x + el.offsetWidth);
       bottom = Math.max(bottom, y + el.offsetHeight);
     });
-    _planSettleColumns(container);
+    _planSettleColumns(container, placedNow);
     /* Compact the stacking to 1..N: a machine can never climb above the drag
        layer or the guides, however many times it has been moved. */
     Array.from(container.children)
@@ -31810,7 +31812,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
      machine's own objects, never one in the user's hand — another printer's
      card is not ours to move, and an arrangement the user made is left alone
      unless it has become a pile. */
-  function _planSettleColumns(container) {
+  function _planSettleColumns(container, autoPlaced = new Set()) {
     const PAD = 4;
     const all = Array.from(container.children)
       .filter(el => el.dataset.boardId && el.style.left !== "" && el.offsetWidth)
@@ -31840,14 +31842,18 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         }
       }
     }
-    /* A WIDGET resting on another machine's things is always a pile, never a
-       choice — widgets travel with their own machine, nobody parks one on a
-       neighbour. (Two CARDS overlapping may be deliberate and are left alone.) */
+    /* A widget the LAYOUT has just put on another machine's things is a pile, not
+       a choice — nobody asked for it to be there. But only those: one the user
+       dropped there is exactly where they meant it, and the board's rule is that
+       overlapping is allowed (it is drawn in red, never refused). Pushing the
+       OTHER machine's cards and widgets away from a dropped group — and saving
+       that — left them stranded with a hole above, which moving the group back
+       never closed: moving one printer rearranged its neighbour. */
     const isWidget = b => { const o = _boardObj(b.id); return !!(o && o.unit); };
     const ownerOf = b => { const o = _boardObj(b.id); return o && o.p ? _printerKey(o.p) : b.id; };
     const sorted = all.slice().sort((u, v) => u.y - v.y);
     for (const a of sorted) {
-      if (!isWidget(a)) continue;
+      if (!isWidget(a) || !autoPlaced.has(a.id)) continue;
       for (const b of sorted) {
         if (b === a || ownerOf(b) === ownerOf(a) || b.y < a.y) continue;
         if (overlaps(a, b) && a.y + a.h + PAD > b.y) push(a, b);
