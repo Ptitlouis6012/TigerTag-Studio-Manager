@@ -1443,8 +1443,6 @@
   "vatCustomSymbolLabel": "Символ",
   "vatCustomSymbolHint": "например, €, $, £",
   "priceInputLabel": "Цены",
-  "reorderPanelTitle": "Информация о товаре",
-  "reorderOpenProductCard": "Открыть карточку товара",
   "reorderInStock": "В наличии: {{n}}",
   "reorderStockSection": "Запас",
   "toolReorder": "Информация о товаре",
