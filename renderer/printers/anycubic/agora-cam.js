@@ -70,6 +70,14 @@ function _attach(key) {
     if (!already) {
       try { video.srcObject = new MediaStream([mst]); const pr = video.play && video.play(); if (pr && pr.catch) pr.catch(() => {}); } catch (_) {}
     }
+    // The video is here: drop the "loading" dots the banner was drawn with (and the
+    // board card's own wait overlay). The side panel is rebuilt on every tick so
+    // it lost them by itself, but a container that persists — the board card —
+    // kept them on top of the picture for good (the LAN path clears them on the
+    // first frame in index.js; this is the Agora equivalent).
+    container.classList.remove('pp-cam-loading');
+    container.querySelectorAll('.pp-cam-loading-overlay').forEach(o => o.remove());
+    container.closest('.printer-card-thumb')?.querySelectorAll('.pp-cam-loading-overlay--board').forEach(o => o.remove());
     shown = true;
   });
   if (shown && !st.live) { st.live = true; try { _onLive && _onLive(key); } catch (_) {} }
