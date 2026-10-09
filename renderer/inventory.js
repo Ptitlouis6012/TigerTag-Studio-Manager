@@ -10662,6 +10662,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       try { ffgTearDownCamera(); } catch (_) {}
       try { acuReleaseCloudCameras(); } catch (_) {} // leave Agora channels when off the wall
     }
+    /* The board's play key can now start a cloud Anycubic's camera too. That
+       stream is billed in RTC minutes while the channel is joined, so leave it —
+       and forget it was asked for, or coming back would restart it unasked — as
+       soon as the board is no longer on screen. */
+    if (prevMode === "printer" && mode !== "printer") {
+      for (const k of [..._camPlaying]) if (k.startsWith("anycubic:")) _camPlaying.delete(k);
+      try { acuReleaseCloudCameras(); } catch (_) {}
+    }
     renderInventory();
     _syncGroupToggleBtn();
     // Safety re-subscribe when switching to rack mode (handles users connected before this feature)
@@ -23395,6 +23403,19 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   const _boardCamHtml = p =>
     p.brand === "flashforge" ? renderFfgCamWallBanner(p)
     : p.brand === "prusa"    ? renderPrusaCamWallBanner(p) : renderCamBanner(p);
+  /* CAN a camera be asked for on this machine, even though none runs yet? The
+     banner above cannot say: a cloud Anycubic's banner is empty until its camera
+     has been requested (it sits on the hero photo), so the card never offered
+     the key that makes the request — the camera could not start from the board,
+     only from the side panel. An online cloud Anycubic can always be asked, and
+     pressing the key does ask (`_camKick` → `acuConnect` → the cloud camera). */
+  const _camStartable = p => p.brand === "anycubic" && p.mode === "cloud";
+  /* Asked, and the video has not arrived yet — the order-1001 round trip plus
+     joining the channel takes a second or two. */
+  const _camStarting = p => _camStartable(p) && _camPlaying.has(_printerKey(p))
+    && !!acuGetConn(acuKey(p))?.data?.camWanted;
+  const _camWaitHtml =
+    `<div class="pp-cam-loading-overlay pp-cam-loading-overlay--board"><span class="pp-cam-loading-dots"><span></span><span></span><span></span></span></div>`;
   const _camOfflineHtml = () =>
     `<div class="cam-card-off"><span class="icon icon-eye-off icon-24"></span></div>`;
   const _camPlayHtml = key =>
@@ -23446,6 +23467,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (!html) return;
       thumb.querySelector("img")?.remove();
       thumb.querySelector(".cam-play")?.remove();
+      thumb.querySelector(".pp-cam-loading-overlay--board")?.remove();
       thumb.insertAdjacentHTML("afterbegin", html);
       placed = true;
     });
@@ -23466,7 +23488,12 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (html) {
         thumb.querySelector("img")?.remove();
         thumb.querySelector(".cam-play")?.remove();
+        thumb.querySelector(".pp-cam-loading-overlay--board")?.remove();
         thumb.insertAdjacentHTML("afterbegin", html);
+      } else if (_camStarting(p) && !thumb.querySelector(".pp-cam-loading-overlay--board")) {
+        // Asked but not here yet (cloud Anycubic): say so instead of leaving the key.
+        thumb.querySelector(".cam-play")?.remove();
+        thumb.insertAdjacentHTML("beforeend", _camWaitHtml);
       }
     }
     _wireCamWidgets(root);
@@ -24050,8 +24077,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
          brand or a model without one — so a machine that cannot be watched
          simply never shows the key. */
       const _camKey   = `${p.brand}:${p.id}`;
-      const _camMaybe = online ? _boardCamHtml(p) : "";
-      const _camLive  = (_camMaybe && _camPlaying.has(_camKey)) ? _camMaybe : "";
+      const _camHtml  = online ? _boardCamHtml(p) : "";
+      const _camMaybe = !!_camHtml || (online && _camStartable(p));   // a camera can be shown
+      const _camLive  = (_camHtml && _camPlaying.has(_camKey)) ? _camHtml : "";
+      const _camWait  = online && !_camLive && _camStarting(p);       // asked, not here yet
       /* Pause and stop, ON THE CARD, only while a job is running — the same two
          controls the machine's own panel offers, brought to where you are
          actually looking when you are watching a fleet. They name their printer
@@ -24125,9 +24154,11 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
                 ? _camLive
                 : `<img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>`
             }${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge"><span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span></span>` : ""}${
-              !_camLive && _camMaybe
-                ? `<button type="button" class="cam-play cam-play--card" data-cam-play="${esc(_camKey)}" aria-label="${esc(t("boardCamPlay"))}"><span class="icon icon-play icon-18"></span></button>`
-                : ""
+              _camWait
+                ? _camWaitHtml
+                : (!_camLive && _camMaybe
+                    ? `<button type="button" class="cam-play cam-play--card" data-cam-play="${esc(_camKey)}" aria-label="${esc(t("boardCamPlay"))}"><span class="icon icon-play icon-18"></span></button>`
+                    : "")
             }${jobBtns ? `<div class="printer-card-jobkeys">${jobBtns}</div>` : ""}</div>` : ""}
           ${(() => {
             /* A progress track under EVERY machine, connected or not, printing
@@ -24659,8 +24690,17 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           .map(c => `${c.dataset.brand}:${c.dataset.id}`)
       );
       const newKeys = new Set(_wallPrinters.map(p => `${p.brand}:${p.id}`));
+      /* Same cards AND each still in the same state. A placed camera is kept as a
+         dimmed empty card while its machine is off, so the set of cards does not
+         move when the machine comes online — comparing keys alone left that card
+         on its "no camera" placeholder for good (a cloud Anycubic only asks for its
+         camera as the wall opens, so it always started there). */
       const sameSet = existingKeys.size === newKeys.size &&
-                      [...newKeys].every(k => existingKeys.has(k));
+                      [...newKeys].every(k => existingKeys.has(k)) &&
+                      _wallPrinters.every(p => {
+                        const card = existingWall.querySelector(`[data-brand="${p.brand}"][data-id="${p.id}"]`);
+                        return !!card && card.classList.contains("cam-wall-card--offline") === !_camHtmlMap.has(`${p.brand}:${p.id}`);
+                      });
       if (sameSet) {
         _wallPrinters.forEach((p, idx) => {
           const card = existingWall.querySelector(
@@ -26952,7 +26992,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // Anycubic — release the camera (tell the printer to stop capturing +
     // stop ffmpeg) since the panel is closing. The background MQTT session
     // stays alive; acuReleaseCamera no-ops if the cam wall is still showing.
-    if (_activePrinter?.brand === "anycubic") {
+    // Not while the printers board is playing this machine's camera: the card
+    // and the panel are two consumers of the SAME cloud (Agora) player, so
+    // stopping it with the panel left the card on a black frame.
+    if (_activePrinter?.brand === "anycubic" && !_camPlaying.has(_printerKey(_activePrinter))) {
       try { acuReleaseCamera(_activePrinter); } catch {}
     }
     // Elegoo — close filament-edit / file-history sheets if open.

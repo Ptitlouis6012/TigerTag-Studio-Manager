@@ -538,11 +538,24 @@ async function _acuCloudRequestCamera(conn) {
   if (typeof window === "undefined" || !window.AgoraRTC) return; // SDK missing → hero photo
   const p = conn.printer;
   if (!p || !p.cloudToken || p.cloudPrinterId == null) return;
+  // The board's play key re-asks on every redraw while a camera is wanted: one
+  // request at a time (a second order 1001 could re-issue the subscriber uid and
+  // kick the channel being joined), and a pause after a failure instead of
+  // hammering the cloud every tick.
+  // A request that arrives while another is in flight is not lost: it is
+  // remembered and honoured when that one lands (the surface that asked may have
+  // changed meanwhile — grid → wall — and released the first ask).
+  if (conn._camReqBusy) { conn._camReqAgain = true; return; }
+  if (conn._camFailAt && Date.now() - conn._camFailAt < 10000) return;
   conn.data.camWanted = true;
-  const agora = await _acuCloudCameraCreds(conn);
+  conn._camReqBusy = true;
+  let agora = null;
+  try { agora = await _acuCloudCameraCreds(conn); } finally { conn._camReqBusy = false; }
+  if (conn._camReqAgain) { conn._camReqAgain = false; conn.data.camWanted = true; }
   // Released (panel closed) or disconnected while the REST call was in flight.
   if (!_acuConns.has(conn.key) || !conn.data.camWanted) return;
-  if (!agora) { conn.data.camWanted = false; return; }
+  if (!agora) { conn.data.camWanted = false; conn._camFailAt = Date.now(); return; }
+  conn._camFailAt = 0;
   // Pass a renew fn so the player can refresh the short-lived RTC token itself.
   acuAgoraStart(conn.key, agora, () => _acuCloudCameraCreds(conn));
   ctx.onPrinterStatusChange?.(conn.key, "connected"); // render the (loading) container
