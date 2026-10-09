@@ -1526,6 +1526,7 @@
   "roPanelDetails": "产品详情",
   "roDetRange": "系列",
   "roDetColor": "颜色",
+  "roDetHex": "十六进制色值",
   "roDetNetWeight": "净重",
   "roPanelStock": "库存管理",
   "roPanelSlicer": "切片配置",

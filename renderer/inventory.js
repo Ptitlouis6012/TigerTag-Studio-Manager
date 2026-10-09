@@ -18975,7 +18975,6 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           ${row1Parts.length ? `<div class="pi-row1">${row1Parts.join(" · ")}</div>` : ""}
           ${name2 ? `<div class="pi-row2 pi-row2--name">${esc(name2)}</div>` : ""}
           <div class="aspect-chips pc-ident-chips">${badgeHtml}${weightChip}</div>
-          ${hexList.length ? `<div class="aspect-chips pc-ident-chips ro-hex-chips">${hexList.map(h => `<span class="aspect-chip aspect-chip--hex"><span class="ro-color-dot" style="background:${esc(h.length === 9 ? h.slice(0, 7) : h)}"></span>${esc(h)}</span>`).join("")}</div>` : ""}
           ${desc ? `<p class="ro-hero-desc">${esc(desc)}</p>` : ""}
           <div class="ro-kpis">
             <div class="ro-kpi" id="roStock">
@@ -19060,6 +19059,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
             ${detRow("list", t("roDetRange"), val(d.series))}
             ${detRow("droplets", t("detMaterial"), val(d.material))}
             ${detRow("palette", t("roDetColor"), val(d.colorName) ? `${colorDot}${val(d.colorName)}` : "")}
+            ${detRow("pipette", t("roDetHex"), hexList.length ? `<span class="ro-hex-list">${hexList.map(h => `<span class="ro-hex-val">${esc(h)}</span>`).join("")}</span>` : "")}
             ${detRow("scale", t("roDetNetWeight"), esc(capTxt))}
             ${detRow("tag", t("detProductId"), pid ? extLink(`https://tigersystem.io/fr/catalog/${pid}`, pid) : "")}
             ${detRow("package", t("detType"), val(d.productType))}

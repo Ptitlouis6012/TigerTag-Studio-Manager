@@ -1526,6 +1526,7 @@
   "roPanelDetails": "О продукте",
   "roDetRange": "Серия",
   "roDetColor": "Цвет",
+  "roDetHex": "HEX-код",
   "roDetNetWeight": "Вес нетто",
   "roPanelStock": "Запасы",
   "roPanelSlicer": "Профили слайсера",
