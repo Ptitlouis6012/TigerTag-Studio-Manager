@@ -768,6 +768,8 @@
   "printerHintCrealityIP": "Lokaal netwerk-IP.",
   "printerHintCrealityAccount": "Altijd 'Root' op Creality K-serie.",
   "printerHintCrealityPassword": "Klipper-/Moonraker-toegangswachtwoord.",
+  "printerLblCameraUrl": "Camera-adres",
+  "printerHintCrealityCameraUrl": "Optioneel — de camera wordt meestal vanzelf gevonden. Alleen voor een eigen opstelling: het adres van de videostream.",
   "printerHintElegooIP": "Lokaal netwerk-IP.",
   "printerHintElegooSerial": "Serienummer van het Over-scherm van de printer.",
   "printerHintElegooMqtt": "Toegangscode uit de netwerkinstellingen van de printer (standaard: 123456).",

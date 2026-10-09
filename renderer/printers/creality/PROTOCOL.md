@@ -178,6 +178,34 @@ export function stopCreCam() {
 
 ---
 
+### MJPEG fallback — K1 / K1C / K1 Max (issue #38)
+
+The K1 series has no WebRTC service on :8000. Its camera is served by
+**mjpg-streamer on :8080**:
+
+```
+http://<ip>:8080/?action=stream     → multipart MJPEG, a plain <img> plays it
+http://<ip>:8080/?action=snapshot   → one still frame
+```
+
+Studio (`widget_camera.js`) picks the mode per IP:
+
+1. a **camera address** set in the printer's settings (`cameraUrl`, http/https
+   only) → MJPEG straight away, no WebRTC attempt — for rooted / custom setups;
+2. a **K1-series model** (catalog ids 6 K1 SE, 7 K1, 8 K1C, 9 K1 Max) →
+   `:8080/?action=snapshot` probe FIRST (4 s) → MJPEG; WebRTC only if :8080
+   stays silent;
+3. any other model → WebRTC on :8000 first; if signaling fails, the same
+   :8080 probe → MJPEG.
+
+Whatever is found is remembered for that IP, so later starts skip the probing.
+
+In MJPEG mode each `.cre-cam-video` consumer is hidden and gets an
+`<img class="cre-cam-mjpeg">` sibling (one HTTP connection per surface);
+stopping empties its `src` (closes the stream) and removes it. The detached
+camera window gets `camType: "mjpeg"` when the mode is known, and falls back to
+`:8080` on its own if its WebRTC call fails.
+
 ## 3. Découverte réseau LAN
 
 ### Algorithme

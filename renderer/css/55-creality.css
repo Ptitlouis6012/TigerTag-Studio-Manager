@@ -12,7 +12,8 @@
    object-fit:contain keeps the full camera frame visible with letterbox
    bars rather than cropping. Use "cover" if you prefer edge-to-edge fill
    at the cost of slight cropping on non-16:9 streams. */
-.cre-cam-video {
+.cre-cam-video,
+.cre-cam-mjpeg {
   position: absolute;
   top: 0;
   left: 0;

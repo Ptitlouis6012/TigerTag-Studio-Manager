@@ -31,8 +31,23 @@
  *   addCreCamConsumer(videoEl)     — register a <video> to its IP's live stream
  *   removeCreCamConsumer(videoEl)  — unregister and clear a consumer
  *   reAttachCreCamConsumers()      — (re)register every .cre-cam-video to its session
+ *   creCamMjpegUrl(ip)             — the MJPEG address this printer's camera uses, if any
+ *
+ * MJPEG fallback (issue #38)
+ * ──────────────────────────
+ * Not every Creality runs the WebRTC service: the K1 / K1C / K1 Max serve their
+ * camera with mjpg-streamer on :8080 (`/?action=stream`). So a session can run
+ * in one of two modes:
+ *   • WebRTC — the default, tried first;
+ *   • MJPEG  — when the printer has a camera address set in its settings; for
+ *     the K1 series, tried FIRST (WebRTC only if :8080 stays silent); for any
+ *     other model, when WebRTC signaling fails and `:8080/?action=snapshot` answers. Each
+ *     <video> consumer is then hidden and gets an <img class="cre-cam-mjpeg">
+ *     sibling showing the stream (one HTTP connection per surface — mjpg-streamer
+ *     serves several clients). The choice is remembered per IP, so the next
+ *     start goes straight to MJPEG without retrying WebRTC.
  */
-import { creGetConn, creKey } from './index.js';
+import { creGetConn, creKey, creConnByIp } from './index.js';
 
 // ── Per-IP session state ────────────────────────────────────────────────────────
 // ip → { pc: RTCPeerConnection|null, stream: MediaStream|null, consumers: Set<video> }
@@ -40,8 +55,69 @@ const _sessions = new Map();
 
 function _sess(ip) {
   let s = _sessions.get(ip);
-  if (!s) { s = { pc: null, stream: null, consumers: new Set() }; _sessions.set(ip, s); }
+  if (!s) { s = { pc: null, stream: null, mjpeg: null, consumers: new Set() }; _sessions.set(ip, s); }
   return s;
+}
+
+// ip → MJPEG stream URL found by the fallback probe (survives stop/start).
+const _mjpegFound = new Map();
+
+// Catalog model ids (data/printers/cre_printer_models.json) of the K1 series —
+// K1 SE, K1, K1C, K1 Max — whose camera is mjpg-streamer on :8080, not WebRTC.
+const CRE_MJPEG_FIRST_MODEL_IDS = new Set(["6", "7", "8", "9"]);
+const _mjpegStreamOf = ip => `http://${ip}:8080/?action=stream`;
+
+// Only plain http(s) addresses are ever put in an <img src>.
+function _safeHttp(u) {
+  try { const x = new URL(String(u || "").trim()); return /^https?:$/.test(x.protocol) ? x.href : null; }
+  catch { return null; }
+}
+
+/** The MJPEG address this printer's camera uses (custom one first), or null. */
+export function creCamMjpegUrl(ip) {
+  return _safeHttp(creConnByIp(ip)?.cameraUrl) || _mjpegFound.get(ip) || null;
+}
+
+// Show the MJPEG stream on one consumer: hide the <video>, add/refresh its <img>.
+function _mjpegOn(videoEl, url) {
+  const host = videoEl.parentElement;
+  if (!host) return;
+  let img = host.querySelector(":scope > img.cre-cam-mjpeg");
+  if (!img) {
+    img = document.createElement("img");
+    img.className = "cre-cam-mjpeg";
+    img.alt = "";
+    img.draggable = false;
+    img.referrerPolicy = "no-referrer";
+    videoEl.after(img);
+  }
+  if (img.getAttribute("src") !== url) img.src = url;
+  videoEl.style.display = "none";
+}
+function _mjpegOff(videoEl) {
+  const img = videoEl.parentElement?.querySelector(":scope > img.cre-cam-mjpeg");
+  if (img) { img.src = ""; img.remove(); }   // empty src first → the stream connection closes
+  videoEl.style.display = "";
+}
+
+// Does mjpg-streamer answer on :8080? One snapshot, 4 s max.
+function _probeMjpeg(ip) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const done = ok => { clearTimeout(t); img.onload = img.onerror = null; img.src = ""; resolve(ok); };
+    const t = setTimeout(() => done(false), 4000);
+    img.onload = () => done(img.naturalWidth > 0);
+    img.onerror = () => done(false);
+    img.src = `http://${ip}:8080/?action=snapshot&t=${Date.now()}`;
+  });
+}
+
+function _startMjpeg(ip, url) {
+  const s = _sess(ip);
+  if (s.pc) { try { s.pc.close(); } catch {} s.pc = null; s.stream = null; }
+  s.mjpeg = url;
+  _reAttachForIp(ip);
+  _broadcast(s);
 }
 
 // The IP a given <video> element should display (stamped by renderCreCamBanner /
@@ -56,6 +132,7 @@ export function addCreCamConsumer(videoEl) {
   if (!videoEl || !ip) return;
   const s = _sess(ip);
   s.consumers.add(videoEl);
+  if (s.mjpeg) { _mjpegOn(videoEl, s.mjpeg); return; }
   if (s.stream) {
     videoEl.srcObject = s.stream;
     videoEl.play().catch(() => {});
@@ -69,6 +146,7 @@ export function removeCreCamConsumer(videoEl) {
   const s = ip ? _sessions.get(ip) : null;
   if (s) s.consumers.delete(videoEl);
   try { videoEl.srcObject = null; } catch {}
+  _mjpegOff(videoEl);
 }
 
 // ── Internal broadcast ────────────────────────────────────────────────────────
@@ -77,6 +155,7 @@ function _broadcast(s) {
   s.consumers.forEach(el => {
     // Skip elements that have already been removed from the DOM.
     if (!el.isConnected) { s.consumers.delete(el); return; }
+    if (s.mjpeg) { _mjpegOn(el, s.mjpeg); return; }
     if (el.srcObject !== s.stream) {
       el.srcObject = s.stream;
       el.play().catch(() => {});
@@ -125,6 +204,27 @@ export function renderCreCamBanner(p) {
 export async function startCreCam(ip) {
   if (!ip) return;
   const s = _sess(ip);
+
+  // A camera address set on the printer, or MJPEG already found for this IP →
+  // no WebRTC attempt at all.
+  const mjpeg = creCamMjpegUrl(ip);
+  if (mjpeg) {
+    if (s.mjpeg === mjpeg) { _reAttach(ip); return; }
+    _startMjpeg(ip, mjpeg);
+    return;
+  }
+  if (s.mjpeg) { _reAttach(ip); return; }
+
+  // K1 series: go straight to :8080 — no 5-9 s WebRTC timeout first. WebRTC
+  // stays as the fallback in case a firmware ever moves the camera there.
+  if (!s.pc && !s.probing && CRE_MJPEG_FIRST_MODEL_IDS.has(creConnByIp(ip)?.modelId || "")) {
+    s.probing = true;
+    const ok = await _probeMjpeg(ip);
+    s.probing = false;
+    if (_sessions.get(ip) !== s) return;   // stopped while probing
+    if (ok) { _mjpegFound.set(ip, _mjpegStreamOf(ip)); _startMjpeg(ip, _mjpegStreamOf(ip)); return; }
+  }
+  if (s.probing) return;                    // a probe for this IP is already running
 
   if (s.pc) {
     // Session already live — just re-attach whichever video elements for this IP
@@ -179,6 +279,15 @@ export async function startCreCam(ip) {
     await pc.setRemoteDescription(new RTCSessionDescription(answer));
   } catch (err) {
     console.warn("[cre-cam] signaling failed:", err.message);
+    // No WebRTC service (K1 series) → try mjpg-streamer on :8080 before giving up.
+    if (s.pc !== pc) return;
+    if (await _probeMjpeg(ip)) {
+      if (s.pc !== pc) return;   // stopped / replaced while probing
+      _mjpegFound.set(ip, _mjpegStreamOf(ip));
+      console.info(`[cre-cam] ${ip}: no WebRTC on :8000 — using the MJPEG stream on :8080`);
+      _startMjpeg(ip, _mjpegFound.get(ip));
+      return;
+    }
     stopCreCam(ip);
   }
 }
@@ -200,7 +309,7 @@ export function stopCreCam(ip) {
   if (s.pc) {
     try { s.pc.close(); } catch {}
   }
-  s.consumers.forEach(el => { try { el.srcObject = null; } catch {} });
+  s.consumers.forEach(el => { try { el.srcObject = null; } catch {} _mjpegOff(el); });
   _sessions.delete(ip);
 }
 
@@ -229,5 +338,5 @@ function _reAttach(ip) {
   // Register any new .cre-cam-video elements for this IP that appeared after a rebuild.
   _reAttachForIp(ip);
   // Push the stream to everyone on this session.
-  if (s.stream) _broadcast(s);
+  if (s.stream || s.mjpeg) _broadcast(s);
 }

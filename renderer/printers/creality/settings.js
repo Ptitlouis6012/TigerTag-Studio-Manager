@@ -27,6 +27,13 @@ export const schema = {
         placeholder: "Root",     mono: true },
       { key: "password", labelKey: "printerLblPassword", hintKey: "printerHintCrealityPassword",
         placeholder: "••••••••", mono: true, secret: true }
+    ]},
+    // Optional camera address — an MJPEG stream URL. Most printers need none:
+    // the camera is found on its own (WebRTC on :8000, else mjpg-streamer on
+    // :8080 for the K1 series). For rooted / custom setups (issue #38).
+    { fields: [
+      { key: "cameraUrl", labelKey: "printerLblCameraUrl", hintKey: "printerHintCrealityCameraUrl",
+        placeholder: "http://192.168.1.50:8080/?action=stream", mono: true }
     ]}
   ]
 };

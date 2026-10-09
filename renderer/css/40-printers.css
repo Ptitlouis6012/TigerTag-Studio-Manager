@@ -2936,6 +2936,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .cam-wall-card .pp-cam-full,
 .cam-wall-card .snap-camera-frame,
 .cam-wall-card .cre-cam-video,
+.cam-wall-card .cre-cam-mjpeg,
 .cam-wall-card img[src*="8898"] { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
 
 /* ½× compact — spans 1 sub-column (half of a normal card) */
@@ -3145,10 +3146,12 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   .cam-card-body .pp-cam-full,
   .cam-card-body .snap-camera-frame,
   .cam-card-body .cre-cam-video,
+  .cam-card-body .cre-cam-mjpeg,
   .cam-card-body img[src*="8898"],
   .printer-card-thumb .pp-cam-full,
   .printer-card-thumb .snap-camera-frame,
   .printer-card-thumb .cre-cam-video,
+  .printer-card-thumb .cre-cam-mjpeg,
   .printer-card-thumb img[src*="8898"] { display: block; width: 100%; aspect-ratio: 16/9; object-fit: cover; }
   /* A feed FILLS its box; the box alone decides the shape. Needed because the
      photo area sizes any image to its intrinsic size (`width/height: auto`,

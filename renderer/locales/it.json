@@ -768,6 +768,8 @@
   "printerHintCrealityIP": "IP della rete locale.",
   "printerHintCrealityAccount": "Sempre 'Root' sulle Creality serie K.",
   "printerHintCrealityPassword": "Password di accesso Klipper / Moonraker.",
+  "printerLblCameraUrl": "Indirizzo della videocamera",
+  "printerHintCrealityCameraUrl": "Facoltativo — di solito la videocamera si trova da sola. Solo per una configurazione personalizzata: l'indirizzo del suo flusso video.",
   "printerHintElegooIP": "IP della rete locale.",
   "printerHintElegooSerial": "Numero di serie nella schermata Informazioni.",
   "printerHintElegooMqtt": "Codice di accesso dalle impostazioni di rete della stampante (predefinito: 123456).",

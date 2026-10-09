@@ -768,6 +768,8 @@
   "printerHintCrealityIP": "本地网络 IP。",
   "printerHintCrealityAccount": "Creality K 系列始终为 'Root'。",
   "printerHintCrealityPassword": "Klipper / Moonraker 访问密码。",
+  "printerLblCameraUrl": "摄像头地址",
+  "printerHintCrealityCameraUrl": "可选——通常会自动找到摄像头。仅用于自定义设置：填写视频流地址。",
   "printerHintElegooIP": "本地网络 IP。",
   "printerHintElegooSerial": "关于屏幕中的序列号。",
   "printerHintElegooMqtt": "可在打印机的网络设置中找到访问码（默认：123456）。",

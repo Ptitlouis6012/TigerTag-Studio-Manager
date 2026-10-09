@@ -87,7 +87,7 @@ import {
   acuLight, acuMove, acuHome, acuMotorsOff, acuFan, acuSetSpeedMode,
 } from './printers/anycubic/index.js';
 import { renderAcuCamBanner } from './printers/anycubic/widget_camera.js';
-import { renderCreCamBanner, startCreCam, stopCreCam, reAttachCreCamConsumers, addCreCamConsumer, removeCreCamConsumer } from './printers/creality/widget_camera.js';
+import { renderCreCamBanner, startCreCam, stopCreCam, reAttachCreCamConsumers, addCreCamConsumer, removeCreCamConsumer, creCamMjpegUrl } from './printers/creality/widget_camera.js';
 import {
   snapKey, snapGetConn, snapIsOnline,
   snapPingPrinter,
@@ -24529,6 +24529,9 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (p.brand === "creality") {
         const conn = creGetConn(creKey(p));
         if (!conn || conn.status !== "connected" || !conn.ip) return [];
+        // K1 series / custom address → the MJPEG stream (issue #38).
+        const mjpeg = creCamMjpegUrl(conn.ip);
+        if (mjpeg) return [{ brand: "creality", id: p.id, name, camType: "mjpeg", url: mjpeg, bblKey: null, ip: null }];
         return [{ brand: "creality", id: p.id, name, camType: "webrtc",
                   ip: conn.ip, url: null, bblKey: null }];
       }

@@ -40,6 +40,11 @@ export function creKey(p) { return `${p.brand}:${p.id}`; }
 // Read-only access to a live connection object (for panel event handlers in
 // inventory.js that need to mutate conn.log / conn.logPaused).
 export function creGetConn(key) { return _creConns.get(key) ?? null; }
+// The live connection talking to `ip` — the camera module only knows the IP.
+export function creConnByIp(ip) {
+  for (const c of _creConns.values()) if (c.ip === ip) return c;
+  return null;
+}
 
 // Authoritative "is this Creality printer reachable?" reading.
 // Prefers live WebSocket state; falls back to the HTTP ping cache.
@@ -125,13 +130,22 @@ export function creConnect(printer) {
   const key = creKey(printer);
   const existing = _creConns.get(key);
   if (existing) {
-    if (existing.ip === printer.ip) return; // already managing this IP — even if abandoned, wait for explicit reconnect
+    // Same IP: keep the connection, but pick up a camera address edited meanwhile.
+    if (existing.ip === printer.ip) {
+      existing.cameraUrl = (printer.cameraUrl || "").trim();
+      existing.modelId   = String(printer.printerModelId || "");
+      return;
+    }
     creDisconnect(key); // different IP → replace
   }
   const conn = {
     ip:       printer.ip,
     account:  (printer.account  || "").trim(),
     password: (printer.password || "").trim(),
+    // Optional camera address (MJPEG stream) — for printers without the WebRTC
+    // service on :8000 and for rooted / custom setups (issue #38).
+    cameraUrl: (printer.cameraUrl || "").trim(),
+    modelId:   String(printer.printerModelId || ""),   // catalog id — picks the camera transport
     key,
     ws:         null,
     status:     "connecting", // "connecting" | "connected" | "offline" | "error"

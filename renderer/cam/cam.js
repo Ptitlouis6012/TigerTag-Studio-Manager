@@ -261,6 +261,15 @@ async function startCrePeer(camId, ip) {
   } catch (err) {
     console.warn(`[cam-detach] Creality WebRTC failed for ${ip}:`, err.message);
     stopCrePeer(camId);
+    // No WebRTC service (K1 series) → mjpg-streamer on :8080 (issue #38).
+    const img = document.createElement('img');
+    img.className = 'cam-frame mjpeg-img';
+    img.alt = 'camera';
+    img.draggable = false;
+    img.referrerPolicy = 'no-referrer';
+    img.onload = img.onerror = () => img.closest('.cam-card-body')?.querySelector('.cam-loading-overlay')?.remove();
+    img.src = `http://${ip}:8080/?action=stream`;
+    videoEl.replaceWith(img);
   }
 }
 
