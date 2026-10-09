@@ -69,6 +69,7 @@
   .icon-book      { -webkit-mask-image: url('../../assets/svg/icons/icon_book.svg');         mask-image: url('../../assets/svg/icons/icon_book.svg'); }
   .icon-list      { -webkit-mask-image: url('../../assets/svg/icons/icon_list.svg');         mask-image: url('../../assets/svg/icons/icon_list.svg'); }
   .icon-palette   { -webkit-mask-image: url('../../assets/svg/icons/icon_palette.svg');      mask-image: url('../../assets/svg/icons/icon_palette.svg'); }
+  .icon-pipette   { -webkit-mask-image: url('../../assets/svg/icons/icon_pipette.svg');      mask-image: url('../../assets/svg/icons/icon_pipette.svg'); }
   .icon-apple     { -webkit-mask-image: url('../../assets/svg/icons/icon_apple.svg');        mask-image: url('../../assets/svg/icons/icon_apple.svg'); }
   .icon-android   { -webkit-mask-image: url('../../assets/svg/icons/icon_android.svg');      mask-image: url('../../assets/svg/icons/icon_android.svg'); }
   .icon-package   { -webkit-mask-image: url('../../assets/svg/icons/icon_package.svg');      mask-image: url('../../assets/svg/icons/icon_package.svg'); }
@@ -3770,9 +3771,10 @@
   .ro-det-k { color: var(--muted); }
   .ro-det-v { color: var(--text); font-weight: 600; text-align: right; display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; min-width: 0; }
   .ro-det-v.is-low { color: var(--danger); }
-  /* Second chip row: the colour(s) as HEX, each with its dot. */
-  .ro-hex-chips { margin-top: -2px; }
-  .aspect-chip--hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; gap: 6px; }
+  /* Colour(s) as plain HEX text, one per line under "Colour" in the details card
+     (the colour itself is already shown by the dot on the Colour row). */
+  .ro-hex-list { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .ro-hex-val { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; }
   .ro-det-v .pv-link { color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .ro-det-v .pv-link:hover { text-decoration: underline; }
   .ro-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(255,255,255,.15); }

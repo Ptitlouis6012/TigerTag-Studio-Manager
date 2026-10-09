@@ -1526,6 +1526,7 @@
   "roPanelDetails": "Product details",
   "roDetRange": "Range",
   "roDetColor": "Colour",
+  "roDetHex": "Hex code",
   "roDetNetWeight": "Net weight",
   "roPanelStock": "Stock",
   "roPanelSlicer": "Slicer profiles",

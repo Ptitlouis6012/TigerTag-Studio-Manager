@@ -1525,6 +1525,7 @@
   "roPanelDetails": "Szczegóły produktu",
   "roDetRange": "Seria",
   "roDetColor": "Kolor",
+  "roDetHex": "Kod hex",
   "roDetNetWeight": "Waga netto",
   "roPanelStock": "Zapasy",
   "roPanelSlicer": "Profile slicera",
