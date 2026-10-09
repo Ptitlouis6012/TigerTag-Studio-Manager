@@ -2034,3 +2034,51 @@ api_register → 1036{} → 2005{} → 1044{local} → 1002{}   ← burst simult
 - [ ] Timelapse : `1036{}` → filtrer `time_lapse_video_status=1` → `1051{url:entry.time_lapse_video_url}` → HTTP GET `http://{ip}:8080/{result.url}` (§23)
 - [ ] status=12 / sub_status 3020/3021 → ignorer en UI (téléchargement vidéo en cours, pas une impression)
 - [ ] Écouter push 6008 sur `api_status` → détecter autres clients connectés (optionnel)
+
+---
+
+## 25. Centauri Carbon 1 — SDCP v3 (second transport, BETA)
+
+> Everything above is the **Centauri Carbon 2** (MQTT). The **Centauri Carbon 1**
+> does not speak it: no answer to `method 7000` on UDP 52700, no broker on 1883.
+> It speaks **SDCP v3** — confirmed on CC1 firmware **V1.4.49** (issue #41).
+> Implementation: `renderer/printers/elegoo/sdcp.js`; every exported entry point
+> of `index.js` hands over to it when `printer.protocol === "sdcp"`.
+
+**Discovery** — the text `M99999` to **UDP 3000** (unicast and broadcast both
+answered on V1.4.49). Reply:
+`{ Id, Data: { Name, MachineName, BrandName, MainboardIP, MainboardID, ProtocolVersion: "V3.0.0", FirmwareVersion } }`.
+Main: `elegoo:sdcp-discover` (unicast spray + one directed broadcast per /24,
+2.4 s listen) and `elegoo:sdcp-probe` (one IP). Run in parallel with the MQTT
+probe; the protocol that answers picks the catalog model (`"1"` CC2, `"2"` CC1).
+
+**Link** — `ws://<ip>:3030/websocket`, **no authentication**, opened by the
+renderer. Plain-text `ping` → `pong` every 10 s. Request envelope:
+
+```json
+{ "Id": "<uuid>", "Topic": "sdcp/request/<MainboardID>",
+  "Data": { "Cmd": 0, "Data": {}, "RequestID": "<uuid>", "MainboardID": "<id>", "TimeStamp": 1700000000, "From": 0 } }
+```
+
+Replies on `sdcp/response/<id>` (`Data.Data.Ack`, correlate on `Data.RequestID`);
+pushes on `sdcp/status/<id>` (~2 s), `sdcp/attributes/<id>`, `sdcp/error/…`, `sdcp/notice/…`.
+
+**Commands used** — `0` status (also every 5 s), `1` attributes, `386`
+`{Enable:1}` camera → `VideoUrl` (`http://<ip>:3031/video`, MJPEG), `129` pause,
+`131` resume, `130` stop. ⚠️ 129/130/131/386 are from the OpenCentauri API doc
+(firmware 1.1.x) and **not yet confirmed on 1.4.x**.
+
+**Status mapping** — `CurrentStatus` [0 idle, 1 printing, 2 file transfer,
+3 calibrating, 4 device test]; `PrintInfo.Status` 5/6 pausing/paused, 7 stopping,
+8 stopped, 9 complete. Idle keeps the LAST job's totals with Status 8 and an empty
+`Filename` → "a job" = `CurrentStatus` 1, or `Filename` + Status 8/9.
+`PrintInfo.Progress` (V1.4.49) else `CurrentLayer/TotalLayer`; ticks are **seconds**.
+Temps `TempOfNozzle/Hotbed/Box` + `TempTarget…`; fans `CurrentFanSpeed.ModelFan/AuxiliaryFan/BoxFan`;
+speed `PrintSpeedPct` (V1.4.49) or `PrintSpeed`.
+
+**Not available over SDCP** — Canvas slot colours/materials (one unknown "Ext."
+slot is shown), temperature targets, jog/home, fan control, thumbnails.
+
+**Stored on the printer doc** — `protocol: "sdcp"` (form variant `sdcpSchema`:
+IP only), `discovery.mainboardId` (re-probed if missing → `mainboardId`),
+`macAddress` from the attributes (`MainboardMAC`, used by the IP re-find).

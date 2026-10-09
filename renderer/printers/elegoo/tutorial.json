@@ -4,13 +4,13 @@
   "series": [
     {
       "id": "default",
-      "label": "Centauri Carbon",
+      "label": "Centauri Carbon 2",
       "steps": [
         { "image": "elegoo_lan_only.png", "body": "tutoElegooStep1" }
       ]
     }
   ],
   "models": [
-    { "id": "cc2", "label": "Centauri Carbon", "image": "models/cc2.png", "series": "default" }
+    { "id": "cc2", "label": "Centauri Carbon 2", "image": "models/cc2.png", "series": "default" }
   ]
 }

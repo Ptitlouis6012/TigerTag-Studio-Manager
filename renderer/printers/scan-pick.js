@@ -77,9 +77,10 @@ export function createScanPicker({ ctx, brand, resultsId, prefillFor, onSingle, 
      asks for them, and asking twice would be noise. */
   function _syncFields() {
     const multi = picked.size > 1;
-    const required = ctx.printerRequiredFields(brand);
     for (const [card, entry] of picked) {
       let box = card.querySelector(':scope > .scan-pick-fields');
+      // Per candidate: a brand may need different fields per model (Elegoo CC1 vs CC2).
+      const required = ctx.printerRequiredFields(brand, entry.prefill);
       const missing = entry.prefill ? required.filter(f => !String(entry.prefill[f.key] ?? '').trim()) : [];
       if (!multi || !missing.length) { box?.remove(); continue; }
       if (box) continue;

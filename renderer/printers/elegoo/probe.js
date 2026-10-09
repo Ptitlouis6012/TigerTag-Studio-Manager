@@ -8,8 +8,13 @@
  *   - elegooUdpProbe(ip)          — targeted single-IP probe (two sends 60 ms
  *     apart, 1.4 s listen) for manual "Add by IP".
  *
+ *   - elegooSdcpDiscover / elegooSdcpProbe — the SAME two gestures for SDCP
+ *     printers (Centauri Carbon 1): `M99999` on UDP 3000. Run in parallel with
+ *     the MQTT probe; each candidate carries `protocol: "mqtt" | "sdcp"`.
+ *
  * Discovery is keyed on the source IP of the reply; the sn (mainboard serial)
  * is REQUIRED for MQTT connection later, so we surface it in the candidate.
+ * An SDCP printer needs nothing but its IP (its MainboardID comes with it).
  */
 
 const ELG_SCAN_EXPECTED_MS = 3500;   // for the smooth progress animation
@@ -21,18 +26,21 @@ let _elgScanLastEnv = null;
 export function getLastElgScanEnv() { return _elgScanLastEnv; }
 
 // ── Model resolution ────────────────────────────────────────────────────────
-// The Elegoo catalog (data/printers/eleg_printer_models.json) only has the
-// Centauri Carbon 2 (id "1") + placeholder (id "0"). Discovery returns the
-// model name as a string; substring-match "centauri" / "centaury" (the
-// catalog itself spells it "Centaury" — typo).
+// Catalog (data/printers/eleg_printer_models.json): "1" Centauri Carbon 2
+// (MQTT), "2" Centauri Carbon (SDCP, beta), "0" placeholder. The PROTOCOL the
+// printer answered on decides it: both report "Centauri Carbon" as a name, so
+// a name match alone would call a CC1 a CC2 (issue #41).
+export const ELEGOO_MODEL_ID = { CC2: '1', CC1: '2' };
 
 /**
- * @param {string|null} model - `machine_model` from the discovery reply.
+ * @param {string|null} model    - model name from the discovery reply.
+ * @param {string}      protocol - "mqtt" (default) | "sdcp".
  * @returns {string} Catalog id.
  */
-export function elegooModelIdFromMachineModel(model) {
+export function elegooModelIdFromMachineModel(model, protocol = 'mqtt') {
   const m = String(model || '').toLowerCase();
-  if (m.includes('centauri') || m.includes('centaury')) return '1';
+  if (protocol === 'sdcp') return m.includes('centauri') ? ELEGOO_MODEL_ID.CC1 : '0';
+  if (m.includes('centauri') || m.includes('centaury')) return ELEGOO_MODEL_ID.CC2;
   return '0';
 }
 
@@ -40,6 +48,25 @@ export function elegooModelIdFromMachineModel(model) {
 
 export async function elegooProbeIp(ip, _signal, { logPush } = {}) {
   if (!ip) return null;
+  // Ask both ways at once: a CC2 answers the MQTT probe, a CC1 the SDCP one.
+  const [mqtt, sdcp] = await Promise.all([
+    _elegooMqttProbeIp(ip, logPush),
+    _elegooSdcpProbeIp(ip, logPush),
+  ]);
+  return mqtt || sdcp;
+}
+
+async function _elegooSdcpProbeIp(ip, logPush) {
+  if (typeof window.electronAPI?.elegooSdcpProbe !== 'function') return null;
+  let res;
+  try { res = await window.electronAPI.elegooSdcpProbe(ip); } catch (_) { return null; }
+  if (!res?.ok || !res.candidate) { logPush?.('ambiguous', `${ip} — no SDCP response on :3000`, res); return null; }
+  const c = { ...res.candidate, modelId: elegooModelIdFromMachineModel(res.candidate.machineModel, 'sdcp') };
+  logPush?.('found', `${ip} → ${c.machineModel || 'Elegoo'} (SDCP ${c.protocolVersion || ''}, fw ${c.firmwareVersion || '?'})`, c);
+  return c;
+}
+
+async function _elegooMqttProbeIp(ip, logPush) {
   if (typeof window.electronAPI?.elegooUdpProbe !== 'function') {
     logPush?.('err', 'elegooUdpProbe IPC bridge missing — fully quit and relaunch the app');
     return null;
@@ -53,7 +80,7 @@ export async function elegooProbeIp(ip, _signal, { logPush } = {}) {
   }
   const c = res.candidate;
   const modelId = elegooModelIdFromMachineModel(c.machineModel);
-  const candidate = { ...c, modelId };
+  const candidate = { ...c, protocol: 'mqtt', modelId };
   logPush?.('found', `${ip} → ${c.machineModel || c.hostName || 'Elegoo'}${c.sn ? ' (sn:' + c.sn + ')' : ''}`, candidate);
   return candidate;
 }
@@ -89,8 +116,12 @@ export async function elegooScanLan({ onCandidate, onProgress, signal, logPush, 
     onProgress?.({ done: pct, total: 100, prefixes });
   }, 120);
 
-  let result;
-  try { result = await window.electronAPI.elegooUdpDiscover(prefixes); }
+  // MQTT (CC2, :52700) and SDCP (CC1, :3000) sweeps run side by side.
+  const sdcpSweep = typeof window.electronAPI?.elegooSdcpDiscover === 'function'
+    ? window.electronAPI.elegooSdcpDiscover(prefixes).catch(e => ({ ok: false, error: e?.message || String(e), candidates: [] }))
+    : Promise.resolve({ ok: true, candidates: [] });
+  let result, sdcpResult;
+  try { [result, sdcpResult] = await Promise.all([window.electronAPI.elegooUdpDiscover(prefixes), sdcpSweep]); }
   catch (e) {
     stopProgress();
     logPush?.('err', `UDP discovery failed: ${e?.message || e}`);
@@ -102,11 +133,15 @@ export async function elegooScanLan({ onCandidate, onProgress, signal, logPush, 
 
   const raw = Array.isArray(result?.candidates) ? result.candidates : [];
   if (result?.ok === false) logPush?.('warn', `UDP error: ${result.error || 'unknown'}`);
+  const rawSdcp = Array.isArray(sdcpResult?.candidates) ? sdcpResult.candidates : [];
+  if (sdcpResult?.ok === false) logPush?.('warn', `SDCP error: ${sdcpResult.error || 'unknown'}`);
+  const mqttIps = new Set(raw.map(c => c.ip));
 
-  const out = raw.map(c => ({
-    ...c,
-    modelId: elegooModelIdFromMachineModel(c.machineModel),
-  })).sort((a, b) => (b.score || 0) - (a.score || 0) ||
+  const out = [
+    ...raw.map(c => ({ ...c, protocol: 'mqtt', modelId: elegooModelIdFromMachineModel(c.machineModel) })),
+    ...rawSdcp.filter(c => !mqttIps.has(c.ip))
+      .map(c => ({ ...c, score: 10, modelId: elegooModelIdFromMachineModel(c.machineModel, 'sdcp') })),
+  ].sort((a, b) => (b.score || 0) - (a.score || 0) ||
     String(a.ip || '').localeCompare(String(b.ip || ''), undefined, { numeric: true, sensitivity: 'base' }));
 
   for (const c of out) {
@@ -117,7 +152,7 @@ export async function elegooScanLan({ onCandidate, onProgress, signal, logPush, 
   logPush?.('info', `UDP scan complete — ${out.length} Elegoo printer(s) in ${Math.round((Date.now() - startMs) / 100) / 10}s`);
 
   _elgScanLastEnv = {
-    method: 'udp-spray', port: 52700, prefixes,
+    method: 'udp-spray', port: '52700 + 3000 (sdcp)', prefixes, sdcpFound: rawSdcp.length,
     durationMs: Date.now() - startMs, found: out.length,
   };
   return out;
@@ -128,7 +163,10 @@ export async function elegooScanLan({ onCandidate, onProgress, signal, logPush, 
 export function elegooBuildDiscoveryRecord(c) {
   return {
     method:          'lan-scan',
-    transport:       'udp-52700',
+    transport:       c?.protocol === 'sdcp' ? 'udp-3000-sdcp' : 'udp-52700',
+    protocol:        c?.protocol || 'mqtt',
+    mainboardId:     c?.mainboardId     || null,
+    firmwareVersion: c?.firmwareVersion || null,
     ip:              c?.ip              || null,
     sn:              c?.sn              || null,
     machineModel:    c?.machineModel    || null,

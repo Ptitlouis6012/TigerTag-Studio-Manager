@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.35.0-beta.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.35.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -48,7 +48,7 @@ state = {
   lang, i18n, viewMode, sortCol, sortDir,
   products,         // { [keyHash]: product identity } — buy links, price, attachments, favourite
   lists,            // { [listId]: user-made list of product identities }
-  containerOverrides, // { [containerId]: { containerWeight } } — per-account calibration
+  containerOverrides, // { [containerId]: { containerWeight?, favorite? } } — per-account calibration + favourite MasterSpools
   activeAccountId, displayName, db
 }
 ```
@@ -124,8 +124,9 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
   /apiKeys/{docId}         → API key docs
   /telemetry/{docId}       → aggregated usage metrics
   /uidMigrationMap/{id}    → decimal → hex UID migration
-  /containerOverrides/{id} → per-account container calibration { containerWeight } — overrides the
-                               bundled catalogue weight at resolution time, never mutates it
+  /containerOverrides/{id} → per-account container calibration { containerWeight?, favorite? } — overrides the
+                               bundled catalogue weight at resolution time, never mutates it;
+                               `favorite: true` puts a MasterSpool first when a refill asks for its container
   /rfidList/{chipUid}      → physical chips seen by this account (firstSeen; a `backup` hex dump
                                means TigerTag+)
   /notifications/{id}      → friend-to-friend notifications (field-whitelisted in the rules)
@@ -242,7 +243,7 @@ Each brand has `renderer/printers/<brand>/PROTOCOL.md` (self-contained spec) and
 |---|---|---|
 | Bambu Lab | MQTTS TLS (LAN) + account cloud MQTT / REST | 8883 |
 | Creality | WebSocket | 9999 |
-| Elegoo | MQTT | 1883 |
+| Elegoo | MQTT (Centauri Carbon 2) + SDCP WebSocket (Centauri Carbon 1, beta) | 1883 / 3030 |
 | FlashForge | HTTP poll + TCP M-codes | 8898 / 8899 |
 | Snapmaker | Moonraker WebSocket | 7125 |
 | Anycubic | MQTTS TLS 1.2 (LAN) + signed REST / cloud MQTT | 9883 |
@@ -266,7 +267,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1617 keys × 11 locales as of v2.35.0-beta.1
+1652 keys × 11 locales as of v2.35.0
 
 ## CSS conventions
 

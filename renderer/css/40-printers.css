@@ -3324,3 +3324,20 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .job-fill.job-fill--done { background: var(--success); }
 .job-fill.job-fill--fail { background: var(--danger); }
 .job-fill.job-fill--stop { background: var(--muted); }
+
+/* "Beta" next to a brand in the add-printer picker (Prusa while it is new). */
+.pba-beta-tag {
+  display: inline-flex; align-items: center; margin-left: 6px; padding: 1px 7px;
+  border-radius: 999px; vertical-align: middle;
+  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+}
+/* The beta notice at the top of a beta printer's live block (Prusa, Elegoo CC1). */
+/* Doubled class: beats .ffg-error-banner (50-snapmaker.css loads after this file),
+   so a beta notice reads as information, not as an error. */
+.ffg-error-banner.printer-beta-note {
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
+  color: var(--text);
+}
+.ffg-error-banner.printer-beta-note .icon { background-color: var(--primary); }

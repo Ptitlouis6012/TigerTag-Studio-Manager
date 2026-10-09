@@ -3507,6 +3507,15 @@
     border-radius: 8px; font-size: 13px; color: var(--text); outline: none;
   }
   .cp-search:focus { border-color: var(--primary); }
+  .cp-kinds { display: flex; gap: 5px; padding: 8px 12px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+  .cp-kind {
+    flex: 1 1 auto; min-width: 0; height: 26px; padding: 0 7px; border-radius: 13px; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    border: 1px solid var(--border); background: none; color: var(--muted);
+    font-size: 11px; font-weight: 600; transition: color .15s, border-color .15s, background .15s;
+  }
+  .cp-kind:hover { color: var(--text); border-color: var(--muted); }
+  .cp-kind.is-on { color: var(--primary); border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent); }
   .cp-list {
     overflow-y: auto; padding: 8px; flex: 1;
   }
@@ -3553,7 +3562,26 @@
     padding: 1px 6px; border-radius: 999px;
   }
   .cp-check { color: var(--primary); font-size: 14px; flex-shrink: 0; }
+  .cp-fav { flex-shrink: 0; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: none; cursor: pointer; padding: 0; }
+  .cp-fav .icon { background: var(--muted); opacity: .45; transition: opacity .15s, background .15s; }
+  .cp-item:hover .cp-fav .icon, .cp-fav:focus-visible .icon { opacity: 1; }
+  .cp-fav:hover { background: var(--surface-3, var(--surface-2)); }
+  .cp-fav.is-on .icon { background: #f5b301; opacity: 1; }
   .cp-empty { padding: 24px; text-align: center; font-size: 13px; color: var(--muted); }
+  /* A newly added spool: the list is narrowed to its likely containers — the line
+     says why, and "Show all" lifts the filter. */
+  .cp-hint {
+    display: flex; align-items: center; gap: 8px; justify-content: space-between;
+    margin: 4px 12px 8px; padding: 9px 12px; border-radius: 10px;
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    font-size: 12.5px; line-height: 1.4; color: var(--text);
+  }
+  .cp-show-all {
+    flex-shrink: 0; height: auto; padding: 4px 9px; border-radius: 7px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-size: 11.5px; font-weight: 600;
+  }
+  .cp-show-all:hover { border-color: var(--primary); color: var(--primary); }
 
   /* ── Reorder / buy-link side card ─────────────────────────────────────────
      Tucks to the LEFT of the spool detail (shares the container picker's slot),
@@ -3571,6 +3599,44 @@
      group, so it must tuck behind it at the seam — but ABOVE the reorder card (98)
      which docks further left still. */
   #productCardPanel { z-index: 99; width: 300px; }
+  /* Catalogue card — the four ways to take a product, as a 2 × 2 grid of real
+     buttons right under its identity; "+ Inventory" leads in the accent colour,
+     cart / favourite turn into a ✓ state once done. */
+  .pc-cta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pc-cta-btn {
+    height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 0 10px; border-radius: 10px; cursor: pointer; min-width: 0;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+    font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    transition: border-color .15s, background .15s, color .15s, transform .1s;
+  }
+  .pc-cta-btn .icon { background: currentColor; flex-shrink: 0; }
+  .pc-cta-btn:hover { border-color: var(--primary); }
+  .pc-cta-btn:active { transform: scale(.98); }
+  .pc-cta-btn--primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .pc-cta-btn--primary:hover { filter: brightness(1.06); }
+  .pc-cta-btn--primary.is-busy { opacity: .6; cursor: progress; }
+  .pc-cta-btn.is-on { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); color: var(--success);
+                      background: color-mix(in srgb, var(--success) 10%, var(--surface-2)); }
+  /* "Product sheet" — opens the full management card beside this one. */
+  .pc-sheet-btn {
+    display: flex; align-items: center; gap: 8px; width: calc(100% - 32px); margin: 2px 16px 0;
+    height: 36px; padding: 0 12px; border-radius: 10px; cursor: pointer;
+    border: 1px solid var(--border); background: none; color: var(--text);
+    font-size: 12.5px; font-weight: 600; text-align: left;
+  }
+  .pc-sheet-btn .icon { background: var(--muted); flex-shrink: 0; }
+  .pc-sheet-btn > span:nth-child(2) { flex: 1; }
+  .pc-sheet-btn:hover { border-color: var(--primary); }
+  .pc-sheet-btn:hover .icon { background: var(--primary); }
+  .pc-sheet-btn[aria-pressed="true"] { border-color: var(--primary); color: var(--primary); }
+  .pc-sheet-btn[aria-pressed="true"] .icon { background: var(--primary); }
+  .pc-owned { display: flex; align-items: center; gap: 7px; margin: 10px 16px 0; font-size: 12.5px; color: var(--muted); }
+  .pc-owned .icon { background: var(--muted); }
+  .pc-cat-msg { margin: 6px 16px 0; font-size: 12.5px; }
+  .pc-cat-msg:empty { display: none; }
+  /* The catalogue's description of the product — plain text, its own line breaks. */
+  .pc-description { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--muted); white-space: pre-line; }
   #productCardCloseTab { z-index: 99; }
   .pc-panel .panel-body { padding: 0 0 16px; overflow-y: auto; scrollbar-width: none; }
   .pc-panel .panel-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
@@ -3603,7 +3669,18 @@
      "Product card" pair). No title bar text and no separator: the hero right
      below already says what the card is about; only ❤/★/list and the ✕ remain. */
   #reorderPanel { width: 620px; }
-  .ro-panel .panel-header { border-bottom: none; justify-content: flex-end; padding-bottom: 0; }
+  /* The header only holds the actions (+, list, ❤, ★, ✕): it floats over the
+     top-right corner so the illustration can take the top-left corner, flush
+     with the card's edges — the way the spool detail card shows its photo. */
+  .ro-panel .panel-body { position: relative; }   /* anchors the header that scrolls with it */
+  .ro-panel .panel-header {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 2; pointer-events: none;
+    border-bottom: none; justify-content: flex-end; padding: 14px 16px 0;
+  }
+  .ro-panel .panel-header > * { pointer-events: auto; }
+  /* The actions (+, list, to-order, ★) sit in a row in the top-right corner,
+     just left of the ✕ — the identity starts below them. */
+  .ro-panel .ro-header-flags { margin: 0 6px 0 0; }
   .ro-panel .panel-body {
     /* flex:1 + min-height:0 make the body fill the panel's flex column and
        scroll (the base .panel-body sets flex:1; overriding display:flex here
@@ -3622,14 +3699,96 @@
   .ro-panel .panel-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
   /* Hero: illustration left, identity + the "+ Material" action right. */
   .ro-hero { display: flex; gap: 16px; align-items: stretch; }
-  .ro-hero .panel-img-wrap { width: 190px; flex-shrink: 0; border-radius: 12px; overflow: hidden; }
+  /* Flush into the card's top-left corner: pulled over the body's 16 px padding,
+     rounded like the card (14 px) on that corner and softly on the opposite one. */
+  .ro-hero .panel-img-wrap {
+    width: 236px; flex-shrink: 0; overflow: hidden;
+    margin: -16px 0 0 -16px; border-radius: 14px 0 12px 0;
+  }
   /* Colour frame the exact size of the grid cards' (152 px card → 130 px photo,
      10 px corners): a fixed 11 px, not the 7 % the narrow side cards use, which
      would grow with this larger photo. */
-  .ro-hero .panel-img-wrap:has(> .panel-img) { padding: 11px; }
+  .ro-hero .panel-img-wrap:has(> .panel-img) { padding: 20px; }
   .ro-hero .panel-img-wrap > .panel-img { border-radius: 10px; box-shadow: 0 1px 3px rgba(0, 0, 0, .18); }
   .ro-hero .panel-img-color-placeholder { aspect-ratio: 1; }
-  .ro-hero-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  /* Top padding clears the floating action buttons above the identity. */
+  .ro-hero-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-start; gap: 6px; padding: 34px 0 0; }   /* below the action row */
+  /* The catalogue description, three lines at most in the hero. */
+  .ro-hero-desc {
+    margin: 2px 0 0; font-size: 12px; line-height: 1.45; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line;
+  }
+  /* Two figures: stock (dot coloured by state) and its estimated value. */
+  .ro-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 6px; }
+  .ro-kpi {
+    display: flex; align-items: center; gap: 10px; min-width: 0;
+    padding: 9px 11px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface-2);
+  }
+  .ro-kpi .icon { background: var(--muted); flex-shrink: 0; }
+  .ro-kpi-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 20%, transparent); }
+  .ro-kpi.is-empty .ro-kpi-dot, .ro-kpi.ro-stock--low .ro-kpi-dot { background: var(--danger); box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 20%, transparent); }
+  .ro-kpi-k { font-size: 11px; color: var(--muted); white-space: nowrap; }
+  .ro-kpi-v { font-size: 13.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #roStock .ro-kpi-v { color: var(--success); }
+  #roStock.is-empty .ro-kpi-v, #roStock.ro-stock--low .ro-kpi-v { color: var(--danger); }
+  /* Buy link / price — two big plain buttons, no labels above them. */
+  .ro-commerce .ro-shop-btn { justify-content: center; }
+  .ro-commerce .ro-cur--mode { margin-left: 4px; }
+  .ro-commerce .ro-price-cur { display: none; }   /* the value already carries its currency */
+  /* The "≈ … HT · VAT n %" line only while the price is being typed — at rest the
+     button already shows the price, the line was noise. */
+  .ro-commerce .ro-derived { display: none; }
+  .ro-commerce .ro-shop-editor:not([hidden]) + .ro-derived:not(:empty) { display: block; }
+  .ro-det-k { white-space: nowrap; }
+  /* Tabs */
+  .ro-tabs { display: flex; border-bottom: 1px solid var(--border); margin: -4px -16px 0; padding: 0 16px; }
+  .ro-tab {
+    flex: 1; height: 40px; border: 0; background: none; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color .15s, border-color .15s;
+    border-radius: 0; padding: 0;
+  }
+  .ro-tab:hover { color: var(--text); }
+  .ro-tab.is-active { color: var(--primary); border-bottom-color: var(--primary); }
+  .ro-tab-count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 6px; border-radius: 9px; background: var(--primary); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; vertical-align: 1px; }
+  .ro-tabpanel { display: flex; flex-direction: column; gap: 12px; }
+  .ro-tabpanel[hidden] { display: none; }
+  /* Cards inside the Info tab */
+  .ro-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+  .ro-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+  .ro-ptiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }   /* 2 rows of 3 */
+  .ro-ptile { display: flex; align-items: center; gap: 10px; padding: 10px 11px; border-radius: 10px; background: var(--surface-2); min-width: 0; }
+  .ro-ptile .icon { background: var(--muted); flex-shrink: 0; }
+  .ro-ptile-k { font-size: 11px; color: var(--muted); }
+  .ro-ptile-v { font-size: 14px; font-weight: 700; color: var(--text); }
+  .ro-cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ro-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .ro-brand-link { display: inline-flex; align-items: center; gap: 5px; }
+  .ro-brand-link .icon { background: currentColor; }
+  .ro-det-row { display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 10px; padding: 6px 0; font-size: 12.5px; }
+  .ro-det-row .icon { background: var(--muted); }
+  .ro-det-k { color: var(--muted); }
+  .ro-det-v { color: var(--text); font-weight: 600; text-align: right; display: inline-flex; align-items: center; gap: 6px; justify-content: flex-end; min-width: 0; }
+  .ro-det-v.is-low { color: var(--danger); }
+  /* Second chip row: the colour(s) as HEX, each with its dot. */
+  .ro-hex-chips { margin-top: -2px; }
+  .aspect-chip--hex { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; gap: 6px; }
+  .ro-det-v .pv-link { color: var(--primary); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ro-det-v .pv-link:hover { text-decoration: underline; }
+  .ro-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1px rgba(255,255,255,.15); }
+  /* The minimum: a light link-style value, pencil once set. */
+  .ro-shop--inline { display: inline-flex; align-items: center; gap: 4px; }
+  .ro-shop--inline .ro-shop-btn--link { height: auto; padding: 2px 6px; border: 0; background: none; font-size: 12.5px; font-weight: 600; color: var(--primary); }
+  .ro-shop--inline .ro-shop-btn--link.ro-shop-btn--active { color: var(--text); }
+  .ro-shop--inline .ro-shop-edit { width: 24px; height: 24px; }
+  /* Note — one line that grows, counter on the right. */
+  .ro-note-wrap { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); }
+  .ro-note-wrap > .icon { background: var(--muted); flex-shrink: 0; }
+  .ro-panel .ro-note-wrap .ro-note { flex: 1; border: 0; background: none; padding: 4px 0; min-height: 22px; resize: vertical; }
+  .ro-note-count { font-size: 11px; color: var(--muted); align-self: flex-end; }
+  /* Personal links — a dashed drop-zone look, like the mockup. */
+  .ro-attach-zone { border: 1px dashed color-mix(in srgb, var(--muted) 45%, transparent); border-radius: 12px; padding: 12px 14px; }
+  .ro-empty { padding: 18px 8px; text-align: center; font-size: 12.5px; color: var(--muted); }
   .ro-hero-txt .pi-row1 { font-size: 13px; }
   .ro-hero-txt .pi-row2--name { font-size: 20px; font-weight: 700; margin-top: 1px; }
   /* Sections borrowed from the read-only card keep their own padding — but inside
@@ -4620,3 +4779,12 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
    filament, so the date is what tells a fresh one from an old one. */
 .gp-member-added { font-size: 11px; color: var(--muted); margin-top: 4px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Catalogue search with no match → make it by hand */
+.cv-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 56px 24px; max-width: 420px; margin: 0 auto; }
+.cv-empty > .icon { width: 28px; height: 28px; background: var(--muted); opacity: .5; margin-bottom: 6px; }
+.cv-empty-title { font-size: 15px; font-weight: 700; color: var(--text); }
+.cv-empty-sub { font-size: 13px; color: var(--muted); line-height: 1.45; }
+.cv-empty-cta { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
+.cv-empty-cta .icon { background: #fff; }
+.cv-empty-cta:hover { filter: brightness(1.08); }

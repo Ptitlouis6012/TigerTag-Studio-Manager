@@ -76,14 +76,14 @@ function elgAbortScan() { if (_elgScanCtl && !_elgScanCtl.signal.aborted) _elgSc
 // ── Candidate card ───────────────────────────────────────────────────────────
 
 function _elgCandidateCardHtml(c) {
-  const modelId   = c.modelId || elegooModelIdFromMachineModel(c.machineModel);
+  const modelId   = c.modelId || elegooModelIdFromMachineModel(c.machineModel, c.protocol);
   const matched   = ctx.findPrinterModel('elegoo', modelId);
   const fallback  = ctx.findPrinterModel('elegoo', '0');
   const modelName = matched && String(matched.id) !== '0' ? matched.name : null;
   const title     = c.hostName || modelName || c.machineModel || c.ip;
   const modelLine = modelName && modelName !== title ? modelName
                   : (c.machineModel && c.machineModel !== title ? c.machineModel : '');
-  const snLine    = c.sn ? `SN · ${c.sn}` : '';
+  const snLine    = c.sn ? `SN · ${c.sn}` : (c.firmwareVersion ? `FW · ${c.firmwareVersion}` : '');
 
   const imgUrl    = ctx.printerImageUrl(matched) || ctx.printerImageUrl(fallback);
   const thumbHtml = imgUrl
@@ -106,8 +106,9 @@ function _elgCandidateCardHtml(c) {
 
 /** The Printer Settings prefill for a candidate. */
 function _prefillFor(c) {
-  const modelId = c.modelId || elegooModelIdFromMachineModel(c.machineModel);
+  const modelId = c.modelId || elegooModelIdFromMachineModel(c.machineModel, c.protocol);
   return {
+    protocol:    c.protocol || 'mqtt',   // picks the form variant (CC1 = IP only)
     ip:          c.ip || '',
     sn:          c.sn || '',
     printerName: c.hostName || c.machineModel || (c.ip ? `Elegoo ${c.ip}` : 'Elegoo'),

@@ -3086,6 +3086,79 @@ ipcMain.handle('elegoo:udp-probe', async (_evt, ip) => {
   });
 });
 
+// ── Elegoo SDCP discovery (Centauri Carbon 1, Saturn/Mars range) ────────────
+// SDCP printers do not answer the CC2's method-7000 probe on 52700 and run no
+// MQTT broker. They answer the text `M99999` on UDP 3000 with
+// { Id, Data: { Name, MachineName, BrandName, MainboardIP, MainboardID,
+//   ProtocolVersion, FirmwareVersion } } — confirmed unicast AND broadcast on
+// CC1 firmware V1.4.49 (issue #41). The live link is then a plain WebSocket
+// on :3030 opened by the renderer (printers/elegoo/sdcp.js).
+const SDCP_UDP_PORT = 3000;
+const SDCP_PROBE = Buffer.from('M99999');
+function _parseSdcpReply(text, srcIp) {
+  let j; try { j = JSON.parse(text); } catch { return null; }
+  const d = j?.Data || j?.data;
+  if (!d || !d.MainboardID) return null;
+  return {
+    ip: d.MainboardIP || srcIp, protocol: 'sdcp',
+    mainboardId: String(d.MainboardID), machineModel: d.MachineName || d.Name || null,
+    hostName: d.Name || null, brandName: d.BrandName || null,
+    protocolVersion: d.ProtocolVersion || null, firmwareVersion: d.FirmwareVersion || null,
+    source: 'sdcp-udp',
+  };
+}
+// Sweep: a unicast spray of every host of each /24 (what works through Wi-Fi
+// isolation and routed VLANs) plus one directed broadcast per /24.
+ipcMain.handle('elegoo:sdcp-discover', async (_evt, prefixes) => {
+  const list = Array.isArray(prefixes) ? prefixes.filter(p => /^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(p)) : [];
+  if (!list.length) return { ok: true, candidates: [] };
+  const dgram = require('dgram');
+  return new Promise((resolve) => {
+    const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+    const candidates = new Map();
+    let done = false;
+    const finish = () => { if (done) return; done = true; try { sock.close(); } catch {} resolve({ ok: true, candidates: [...candidates.values()] }); };
+    sock.on('error', (e) => { if (done) return; done = true; try { sock.close(); } catch {} resolve({ ok: false, error: e?.message || String(e), candidates: [] }); });
+    sock.on('message', (msg, rinfo) => {
+      const c = _parseSdcpReply(msg.toString('utf8'), rinfo.address);
+      if (c) candidates.set(c.ip, c);
+    });
+    sock.bind(0, async () => {
+      try { sock.setBroadcast(true); } catch {}
+      let i = 0;
+      for (const prefix of list) {
+        try { sock.send(SDCP_PROBE, 0, SDCP_PROBE.length, SDCP_UDP_PORT, `${prefix}.255`); } catch {}
+        for (let host = 1; host <= 254; host++) {
+          if (done) return;
+          try { sock.send(SDCP_PROBE, 0, SDCP_PROBE.length, SDCP_UDP_PORT, `${prefix}.${host}`); } catch {}
+          if ((++i & 15) === 0) await new Promise(r => setImmediate(r));
+        }
+      }
+      setTimeout(finish, 2400);
+    });
+  });
+});
+// One address (manual "Add by IP"): two sends, 1.4 s listen.
+ipcMain.handle('elegoo:sdcp-probe', async (_evt, ip) => {
+  if (!ip || typeof ip !== 'string' || !/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) return { ok: false, error: 'invalid ip' };
+  const dgram = require('dgram');
+  return new Promise((resolve) => {
+    const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+    let done = false, hit = null;
+    const finish = () => { if (done) return; done = true; try { sock.close(); } catch {} resolve({ ok: !!hit, candidate: hit }); };
+    sock.on('error', () => finish());
+    sock.on('message', (msg, rinfo) => {
+      if (rinfo.address !== ip) return;
+      const c = _parseSdcpReply(msg.toString('utf8'), rinfo.address);
+      if (c) hit = c;
+    });
+    sock.bind(0, () => {
+      const send = () => { try { sock.send(SDCP_PROBE, 0, SDCP_PROBE.length, SDCP_UDP_PORT, ip); } catch {} };
+      send(); setTimeout(send, 60); setTimeout(finish, 1400);
+    });
+  });
+});
+
 // ── Snapmaker HTTP GET — main-process bridge (CORS bypass) ───────────────────
 // Mirrors the FlashForge bridge above. The renderer's Chromium engine treats
 // requests from http://localhost:<port> to http://192.168.x.x:7125 as cross-

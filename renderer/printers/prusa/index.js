@@ -469,9 +469,11 @@ export function renderPrusaLiveInner(p) {
     return `<div class="ffg-error-banner"><span class="icon icon-info icon-14"></span><span>${ctx.esc(key ? ctx.t(key) : String(conn.lastError || ""))}</span></div>`;
   }
   const b = brands.get("prusa");
+  const betaNote = `<div class="ffg-error-banner printer-beta-note"><span class="icon icon-info icon-14"></span><span>${ctx.esc(ctx.t("printerBetaNote"))}</span></div>`;
   const msg = conn.data.statusMessage || (conn.data.printState === "attention" ? ctx.t("prusaAttention") : "");
   const banner = msg ? `<div class="ffg-error-banner"><span class="icon icon-alert icon-14"></span><span>${ctx.esc(msg)}</span></div>` : "";
   return `
+    ${betaNote}
     ${banner}
     ${b.renderJobCard(p, conn)}
     ${renderPrusaStatusCard(conn)}

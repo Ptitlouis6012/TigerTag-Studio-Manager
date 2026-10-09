@@ -9987,5 +9987,213 @@
         }
       }
     ]
+  },
+  "2.35.0": {
+    "date": "2026-10-09",
+    "items": [
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Prusa joins the party (beta)",
+          "fr": "Prusa rejoint la fête (bêta)",
+          "de": "Prusa ist dabei (Beta)",
+          "es": "Prusa se une a la fiesta (beta)",
+          "it": "Prusa si unisce alla festa (beta)",
+          "zh": "Prusa 加入啦（测试版）",
+          "pt": "A Prusa chegou na festa (beta)",
+          "pt-pt": "A Prusa junta-se à festa (beta)",
+          "pl": "Prusa dołącza do imprezy (beta)",
+          "ru": "Prusa в деле (бета)",
+          "nl": "Prusa doet mee (bèta)"
+        },
+        "body": {
+          "en": "MK4, Core One, XL, MINI and friends: temperatures, progress, MMU slots, camera, pause and stop — all from here. It's a beta, so tell us what it gets wrong.",
+          "fr": "MK4, Core One, XL, MINI et compagnie : températures, progression, slots MMU, caméra, pause et stop — tout depuis ici. C'est une bêta, dis-nous ce qui cloche.",
+          "de": "MK4, Core One, XL, MINI und Co.: Temperaturen, Fortschritt, MMU-Slots, Kamera, Pause und Stopp — alles von hier. Es ist eine Beta, sag uns, was hakt.",
+          "es": "MK4, Core One, XL, MINI y compañía: temperaturas, progreso, ranuras MMU, cámara, pausa y stop — todo desde aquí. Es una beta, cuéntanos qué falla.",
+          "it": "MK4, Core One, XL, MINI e compagnia: temperature, avanzamento, slot MMU, videocamera, pausa e stop — tutto da qui. È una beta, dicci cosa non va.",
+          "zh": "MK4、Core One、XL、MINI 等等：温度、进度、MMU 槽位、摄像头、暂停和停止——都在这里。这是测试版，有问题告诉我们。",
+          "pt": "MK4, Core One, XL, MINI e companhia: temperaturas, progresso, slots MMU, câmera, pausar e parar — tudo daqui. É beta, conta pra gente o que der errado.",
+          "pt-pt": "MK4, Core One, XL, MINI e companhia: temperaturas, progresso, slots MMU, câmara, pausa e paragem — tudo daqui. É uma beta, diz-nos o que falha.",
+          "pl": "MK4, Core One, XL, MINI i spółka: temperatury, postęp, sloty MMU, kamera, pauza i stop — wszystko stąd. To beta, daj znać, co nie gra.",
+          "ru": "MK4, Core One, XL, MINI и компания: температуры, прогресс, слоты MMU, камера, пауза и стоп — всё отсюда. Это бета, расскажи, что не так.",
+          "nl": "MK4, Core One, XL, MINI en co: temperaturen, voortgang, MMU-slots, camera, pauze en stop — alles vanaf hier. Het is een bèta, laat ons weten wat er misgaat."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "The first Centauri Carbon is welcome too (beta)",
+          "fr": "La première Centauri Carbon est la bienvenue (bêta)",
+          "de": "Auch die erste Centauri Carbon ist willkommen (Beta)",
+          "es": "La primera Centauri Carbon también es bienvenida (beta)",
+          "it": "Benvenuta anche alla prima Centauri Carbon (beta)",
+          "zh": "第一代 Centauri Carbon 也来了（测试版）",
+          "pt": "A primeira Centauri Carbon também é bem-vinda (beta)",
+          "pt-pt": "A primeira Centauri Carbon também é bem-vinda (beta)",
+          "pl": "Pierwsza Centauri Carbon też mile widziana (beta)",
+          "ru": "Первая Centauri Carbon тоже в деле (бета)",
+          "nl": "Ook de eerste Centauri Carbon is welkom (bèta)"
+        },
+        "body": {
+          "en": "Your Elegoo Centauri Carbon (the original one) now shows up with its status, its camera and its pause / stop buttons. Just its IP address and you're in.",
+          "fr": "Ton Elegoo Centauri Carbon (la toute première) s'affiche maintenant avec son état, sa caméra et ses boutons pause / stop. Juste son adresse IP et c'est parti.",
+          "de": "Deine Elegoo Centauri Carbon (die allererste) zeigt jetzt Status, Kamera und Pause-/Stopp-Knöpfe. Nur ihre IP-Adresse, und los geht's.",
+          "es": "Tu Elegoo Centauri Carbon (la original) ya aparece con su estado, su cámara y sus botones de pausa / stop. Solo su dirección IP y listo.",
+          "it": "La tua Elegoo Centauri Carbon (la prima) ora mostra stato, videocamera e pulsanti pausa / stop. Basta il suo indirizzo IP.",
+          "zh": "你的 Elegoo Centauri Carbon（初代）现在能显示状态、摄像头和暂停 / 停止按钮。只要它的 IP 地址就行。",
+          "pt": "Sua Elegoo Centauri Carbon (a original) agora aparece com status, câmera e botões de pausar / parar. Só o endereço IP e pronto.",
+          "pt-pt": "A tua Elegoo Centauri Carbon (a original) já aparece com estado, câmara e botões de pausa / paragem. Só o endereço IP e está feito.",
+          "pl": "Twoja Elegoo Centauri Carbon (ta pierwsza) pokazuje teraz stan, kamerę i przyciski pauza / stop. Wystarczy jej adres IP.",
+          "ru": "Твоя Elegoo Centauri Carbon (самая первая) теперь показывает статус, камеру и кнопки паузы / стопа. Только её IP-адрес — и готово.",
+          "nl": "Je Elegoo Centauri Carbon (de allereerste) toont nu zijn status, camera en pauze-/stopknoppen. Alleen zijn IP-adres en klaar."
+        }
+      },
+      {
+        "icon": "cart",
+        "title": {
+          "en": "Catalogue products get their own card",
+          "fr": "Les produits du catalogue ont leur propre fiche",
+          "de": "Katalogprodukte bekommen ihre eigene Karte",
+          "es": "Los productos del catálogo tienen su propia ficha",
+          "it": "I prodotti del catalogo hanno la loro scheda",
+          "zh": "目录商品有了专属卡片",
+          "pt": "Produtos do catálogo ganham o próprio card",
+          "pt-pt": "Os produtos do catálogo têm a sua própria ficha",
+          "pl": "Produkty z katalogu mają własną kartę",
+          "ru": "У товаров каталога своя карточка",
+          "nl": "Catalogusproducten krijgen hun eigen kaart"
+        },
+        "body": {
+          "en": "Click a product in the catalogue: one tap to add it to your inventory, a wishlist, your shopping cart or your favourites. And if the catalogue draws a blank, make the spool yourself in a click.",
+          "fr": "Clique sur un produit du catalogue : une touche pour l'ajouter à ton inventaire, une wishlist, ton panier ou tes favoris. Et si le catalogue sèche, crée la bobine toi-même en un clic.",
+          "de": "Klick auf ein Produkt im Katalog: ein Tipp, und es landet im Inventar, auf einer Wunschliste, im Warenkorb oder in den Favoriten. Und findet der Katalog nichts, legst du die Spule selbst an.",
+          "es": "Haz clic en un producto del catálogo: un toque para añadirlo a tu inventario, una lista de deseos, tu carrito o tus favoritos. Y si el catálogo no lo tiene, crea la bobina tú mismo en un clic.",
+          "it": "Clicca un prodotto del catalogo: un tocco per aggiungerlo all'inventario, a una wishlist, al carrello o ai preferiti. E se il catalogo non lo trova, crea la bobina tu in un clic.",
+          "zh": "在目录里点一个商品：一键加入库存、心愿单、购物车或收藏。目录里找不到？一键自己创建线轴。",
+          "pt": "Clique num produto do catálogo: um toque para colocar no inventário, numa wishlist, no carrinho ou nos favoritos. E se o catálogo não achar, crie o carretel você mesmo num clique.",
+          "pt-pt": "Clica num produto do catálogo: um toque para o pôr no inventário, numa wishlist, no carrinho ou nos favoritos. E se o catálogo não o tiver, cria a bobina tu mesmo num clique.",
+          "pl": "Kliknij produkt w katalogu: jedno dotknięcie i jest w magazynie, na liście życzeń, w koszyku albo w ulubionych. A jak katalog nic nie znajdzie, utworzysz szpulę sam jednym kliknięciem.",
+          "ru": "Нажми на товар в каталоге: одно касание — и он в инвентаре, в вишлисте, в корзине или в избранном. А если каталог ничего не нашёл, создай катушку сам в один клик.",
+          "nl": "Klik op een product in de catalogus: één tik en het staat in je voorraad, op een verlanglijst, in je winkelwagen of bij je favorieten. Vindt de catalogus niets, maak de spoel dan zelf met één klik."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "A product card worth framing",
+          "fr": "Une fiche produit à encadrer",
+          "de": "Eine Produktkarte zum Einrahmen",
+          "es": "Una ficha de producto para enmarcar",
+          "it": "Una scheda prodotto da incorniciare",
+          "zh": "值得裱起来的商品卡片",
+          "pt": "Uma ficha de produto pra emoldurar",
+          "pt-pt": "Uma ficha de produto para emoldurar",
+          "pl": "Karta produktu do oprawienia w ramkę",
+          "ru": "Карточка товара — хоть в рамку",
+          "nl": "Een productkaart om in te lijsten"
+        },
+        "body": {
+          "en": "One card instead of two: your stock and what it's worth up top, then neat tabs for the info, the documents (with a counter) and your notes. Same filament, way less hunting.",
+          "fr": "Une seule fiche au lieu de deux : ton stock et ce qu'il vaut tout en haut, puis des onglets bien rangés pour les infos, les documents (avec un compteur) et tes notes. Même filament, beaucoup moins de fouille.",
+          "de": "Eine Karte statt zwei: dein Bestand und sein Wert ganz oben, dann ordentliche Tabs für Infos, Dokumente (mit Zähler) und deine Notizen. Gleiches Filament, viel weniger Suchen.",
+          "es": "Una ficha en lugar de dos: tu stock y lo que vale arriba, y luego pestañas ordenadas para la info, los documentos (con contador) y tus notas. Mismo filamento, mucha menos búsqueda.",
+          "it": "Una scheda invece di due: la tua scorta e quanto vale in alto, poi schede ordinate per info, documenti (con contatore) e note. Stesso filamento, molta meno caccia.",
+          "zh": "两张卡合成一张：库存和价值放在最上面，下面是整齐的标签页——信息、文档（带数量）和你的笔记。同样的耗材，少找好多。",
+          "pt": "Uma ficha em vez de duas: seu estoque e quanto vale lá em cima, depois abas arrumadinhas pra info, os documentos (com contador) e suas notas. Mesmo filamento, bem menos caça.",
+          "pt-pt": "Uma ficha em vez de duas: o teu stock e quanto vale lá em cima, depois separadores arrumados para a info, os documentos (com contador) e as tuas notas. Mesmo filamento, muito menos procura.",
+          "pl": "Jedna karta zamiast dwóch: zapas i jego wartość na górze, potem porządne zakładki z informacjami, dokumentami (z licznikiem) i notatkami. Ten sam filament, dużo mniej szukania.",
+          "ru": "Одна карточка вместо двух: запас и его стоимость наверху, дальше аккуратные вкладки — информация, документы (со счётчиком) и твои заметки. Тот же филамент, гораздо меньше поисков.",
+          "nl": "Eén kaart in plaats van twee: je voorraad en wat die waard is bovenaan, daarna nette tabbladen voor info, documenten (met teller) en je notities. Zelfde filament, veel minder zoeken."
+        }
+      },
+      {
+        "icon": "star",
+        "title": {
+          "en": "Your MasterSpools, your favourites",
+          "fr": "Tes MasterSpools, tes favorites",
+          "de": "Deine MasterSpools, deine Favoriten",
+          "es": "Tus MasterSpools, tus favoritas",
+          "it": "Le tue MasterSpool, le tue preferite",
+          "zh": "你的 MasterSpool，你的最爱",
+          "pt": "Suas MasterSpools, suas favoritas",
+          "pt-pt": "As tuas MasterSpools, as tuas favoritas",
+          "pl": "Twoje MasterSpoole, twoje ulubione",
+          "ru": "Твои MasterSpool, твои любимые",
+          "nl": "Jouw MasterSpools, jouw favorieten"
+        },
+        "body": {
+          "en": "Star the MasterSpools you actually own: they sit at the top of the list, and every refill asks whether it goes into one of them or into the brand's own. Cardboard, plastic or MasterSpool? There's a filter for that too.",
+          "fr": "Mets une étoile aux MasterSpools que tu as vraiment : elles passent en tête de liste, et chaque recharge te demande si elle va dans l'une d'elles ou dans celle de la marque. Carton, plastique ou MasterSpool ? Il y a un filtre pour ça aussi.",
+          "de": "Gib den MasterSpools, die du wirklich hast, einen Stern: Sie stehen ganz oben, und jede Nachfüllung fragt, ob sie in eine davon kommt oder in die der Marke. Karton, Kunststoff oder MasterSpool? Dafür gibt's jetzt auch einen Filter.",
+          "es": "Marca con estrella las MasterSpools que tienes de verdad: van arriba de la lista y cada recarga te pregunta si va en una de ellas o en la de la marca. ¿Cartón, plástico o MasterSpool? También hay un filtro para eso.",
+          "it": "Metti una stella alle MasterSpool che hai davvero: finiscono in cima alla lista e ogni ricarica ti chiede se va in una di quelle o in quella del marchio. Cartone, plastica o MasterSpool? C'è un filtro anche per quello.",
+          "zh": "给你真正拥有的 MasterSpool 加星：它们排在列表最上面，每次补充装都会问你放进其中一个还是品牌自己的那个。纸质、塑料还是 MasterSpool？也有筛选了。",
+          "pt": "Dê estrela às MasterSpools que você tem de verdade: elas ficam no topo da lista, e cada refil pergunta se vai numa delas ou na da marca. Papelão, plástico ou MasterSpool? Tem filtro pra isso também.",
+          "pt-pt": "Dá uma estrela às MasterSpools que tens mesmo: ficam no topo da lista, e cada recarga pergunta se vai para uma delas ou para a da marca. Cartão, plástico ou MasterSpool? Também há filtro para isso.",
+          "pl": "Oznacz gwiazdką MasterSpoole, które naprawdę masz: lądują na górze listy, a każdy wkład pyta, czy idzie do jednej z nich, czy do tej od marki. Karton, plastik czy MasterSpool? Na to też jest filtr.",
+          "ru": "Отметь звёздочкой MasterSpool, которые у тебя реально есть: они встают в начало списка, а каждый рефилл спросит, в какую из них его ставить или в фирменную. Картон, пластик или MasterSpool? Для этого теперь тоже есть фильтр.",
+          "nl": "Geef de MasterSpools die je echt hebt een ster: ze staan bovenaan de lijst en elke navulling vraagt of die in een van hen gaat of in die van het merk. Karton, plastic of MasterSpool? Daar is nu ook een filter voor."
+        }
+      },
+      {
+        "icon": "package",
+        "title": {
+          "en": "New spools find their spool",
+          "fr": "Les nouvelles bobines trouvent leur bobine",
+          "de": "Neue Spulen finden ihren Spulenkörper",
+          "es": "Las bobinas nuevas encuentran su carrete",
+          "it": "Le nuove bobine trovano il loro rocchetto",
+          "zh": "新线轴自己找到线盘",
+          "pt": "Carretéis novos acham seu carretel",
+          "pt-pt": "As bobinas novas encontram o seu carreto",
+          "pl": "Nowe szpule same znajdują swój korpus",
+          "ru": "Новые катушки сами находят свою шпулю",
+          "nl": "Nieuwe spoelen vinden hun spoel"
+        },
+        "body": {
+          "en": "Add a spool and it gets its brand's empty spool for the weight maths. Several to choose from? We ask. A refill always goes into a MasterSpool — never into thin air.",
+          "fr": "Ajoute une bobine et elle récupère la bobine vide de sa marque pour le calcul du poids. Plusieurs au choix ? On te demande. Une recharge va toujours dans une MasterSpool — jamais dans le vide.",
+          "de": "Füg eine Spule hinzu, und sie bekommt den leeren Spulenkörper ihrer Marke für die Gewichtsrechnung. Mehrere zur Wahl? Wir fragen. Eine Nachfüllung kommt immer in eine MasterSpool — nie ins Leere.",
+          "es": "Añade una bobina y recibe el carrete vacío de su marca para calcular el peso. ¿Hay varios? Te preguntamos. Una recarga siempre va en una MasterSpool — nunca al vacío.",
+          "it": "Aggiungi una bobina e riceve il rocchetto vuoto del suo marchio per il calcolo del peso. Più di uno? Te lo chiediamo. Una ricarica va sempre in una MasterSpool — mai nel vuoto.",
+          "zh": "添加线轴后，它会自动配上品牌的空线盘来算重量。有好几个可选？我们会问你。补充装永远放进 MasterSpool——绝不悬空。",
+          "pt": "Adicione um carretel e ele pega o carretel vazio da marca pra conta do peso. Tem vários? A gente pergunta. Um refil sempre vai numa MasterSpool — nunca no vazio.",
+          "pt-pt": "Adiciona uma bobina e ela recebe o carreto vazio da marca para as contas do peso. Há vários? Nós perguntamos. Uma recarga vai sempre para uma MasterSpool — nunca para o vazio.",
+          "pl": "Dodaj szpulę, a dostanie pusty korpus swojej marki do liczenia wagi. Kilka do wyboru? Zapytamy. Wkład zawsze trafia do MasterSpoola — nigdy w próżnię.",
+          "ru": "Добавь катушку — и она получит пустую шпулю своего бренда для расчёта веса. Вариантов несколько? Мы спросим. Рефилл всегда идёт в MasterSpool — никогда в пустоту.",
+          "nl": "Voeg een spoel toe en hij krijgt de lege spoel van zijn merk voor de gewichtsberekening. Meerdere keuzes? Dan vragen we het. Een navulling gaat altijd in een MasterSpool — nooit in het niets."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "Search like you talk",
+          "fr": "Cherche comme tu parles",
+          "de": "Such, wie du sprichst",
+          "es": "Busca como hablas",
+          "it": "Cerca come parli",
+          "zh": "想怎么搜就怎么搜",
+          "pt": "Pesquise do jeito que você fala",
+          "pt-pt": "Pesquisa como falas",
+          "pl": "Szukaj tak, jak mówisz",
+          "ru": "Ищи, как говоришь",
+          "nl": "Zoek zoals je praat"
+        },
+        "body": {
+          "en": "\"Bambu PETG HF\" now finds your spools just like it finds them in the catalogue — and your cards read the same way too: \"PETG HF - Blue\", Bambu Lab · PETG.",
+          "fr": "« Bambu PETG HF » trouve maintenant tes bobines comme il les trouve dans le catalogue — et tes cartes s'affichent pareil : « PETG HF - Blue », Bambu Lab · PETG.",
+          "de": "„Bambu PETG HF“ findet jetzt deine Spulen genauso wie im Katalog — und deine Karten lesen sich gleich: „PETG HF - Blue“, Bambu Lab · PETG.",
+          "es": "«Bambu PETG HF» ahora encuentra tus bobinas igual que en el catálogo — y tus tarjetas se leen igual: «PETG HF - Blue», Bambu Lab · PETG.",
+          "it": "«Bambu PETG HF» ora trova le tue bobine come nel catalogo — e le tue schede si leggono allo stesso modo: «PETG HF - Blue», Bambu Lab · PETG.",
+          "zh": "「Bambu PETG HF」现在能像在目录里一样找到你的线轴——卡片显示也一样：「PETG HF - Blue」，Bambu Lab · PETG。",
+          "pt": "\"Bambu PETG HF\" agora acha seus carretéis igualzinho ao catálogo — e seus cards aparecem do mesmo jeito: \"PETG HF - Blue\", Bambu Lab · PETG.",
+          "pt-pt": "«Bambu PETG HF» encontra agora as tuas bobinas tal como no catálogo — e os teus cartões leem-se da mesma forma: «PETG HF - Blue», Bambu Lab · PETG.",
+          "pl": "„Bambu PETG HF” znajduje teraz twoje szpule tak samo jak w katalogu — a karty czytają się identycznie: „PETG HF - Blue”, Bambu Lab · PETG.",
+          "ru": "«Bambu PETG HF» теперь находит твои катушки так же, как в каталоге — и карточки читаются одинаково: «PETG HF - Blue», Bambu Lab · PETG.",
+          "nl": "\"Bambu PETG HF\" vindt nu je spoelen net zoals in de catalogus — en je kaarten lezen hetzelfde: \"PETG HF - Blue\", Bambu Lab · PETG."
+        }
+      }
+    ]
   }
 }

@@ -442,7 +442,7 @@ Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a **self-contained a
 |-------|------------------------|-----------------|
 | **Bambu Lab** | LAN: MQTTS 8883 TLS, AMS 16-slot, SSDP+TLS scan, JPEG TCP 6000 / RTSP 322. Cloud (§17): REST behind Cloudflare — needs Electron's `net` — + one account MQTT broker; same `push_status`, so the LAN parser is reused | ✅ implemented (LAN + cloud) |
 | **Creality** | WS 9999, heartbeat `"ok"`, CFS boxsInfo type 0/1, WebRTC port 8000 | ✅ implemented |
-| **Elegoo** | MQTT 1883, UDP spray port 52700, filament 4 slots canvas/tray | ✅ implemented |
+| **Elegoo** | CC2: MQTT 1883, UDP spray port 52700, filament 4 slots canvas/tray. CC1 (§25): SDCP v3 — `M99999` UDP 3000, WebSocket 3030 no auth, `elegoo/sdcp.js` | ✅ implemented (CC1 🧪 beta) |
 | **FlashForge** | HTTP poll 8898, TCP M-codes 8899, UDP multicast 225.0.0.9:19000 | ✅ implemented |
 | **Snapmaker** | WS 7125 Moonraker + proprietary, RRGGBBAA color, HTTP scan | ✅ implemented |
 | **Prusa** | PrusaLink HTTP 80 (Digest auth, via main `prusa:http`), status poll 2 s, MMU 5 slots / XL tools from the model catalog, camera = Buddy3D RTSP (own IP) or PrusaLink `/cameras/snap`, HTTP `/api/version` sweep scan | 🧪 beta (LAN) |

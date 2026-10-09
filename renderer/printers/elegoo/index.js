@@ -9,7 +9,13 @@
  */
 import { ctx } from '../context.js';
 import { registerBrand, brands } from '../registry.js';
-import { meta, schema, helper } from './settings.js';
+// Centauri Carbon 1 & other SDCP printers — a second transport under the same
+// brand. Every exported entry point below hands over to it for those printers.
+import {
+  sdcpIsPrinter, sdcpOwns, sdcpConnect, sdcpDisconnect, sdcpGetConn, sdcpKey,
+  sdcpLiveInner, sdcpLogInner, sdcpGetSlots, sdcpGetUnits, sdcpTempHtml, sdcpJobControl,
+} from './sdcp.js';
+import { meta, schema, sdcpSchema, helper } from './settings.js';
 import { renderElegooJobCard, renderElegooTempCard, renderElegooFilamentCard } from './cards.js';
 import { renderElegooControlCard, patchElegooControlCard } from './widget_control.js';
 import { schemaWidget } from '../modal-helpers.js';
@@ -25,13 +31,13 @@ const _elegooConns = new Map();
 
 export function elegooKey(p) { return `${p.brand}:${p.id}`; }
 
-export function elegooGetConn(key) { return _elegooConns.get(key) ?? null; }
+export function elegooGetConn(key) { return _elegooConns.get(key) ?? sdcpGetConn(key); }
 
 export function elegooIsOnline(printer) {
   if (printer?.brand !== 'elegoo') return null;
   const key = elegooKey(printer);
   if (ctx.isForcedOffline?.(key)) return false; // explicitly disconnected via button
-  const conn = _elegooConns.get(key);
+  const conn = _elegooConns.get(key) || sdcpGetConn(key);
   if (!conn) return null;
   if (conn.status === 'connected') return true;
   // Anything that isn't an established connection — including an in-flight
@@ -833,6 +839,7 @@ function _mergeThumbnail(conn, data) {
 // ── Connection lifecycle ──────────────────────────────────────────────────
 
 export function elegooConnect(printer) {
+  if (sdcpIsPrinter(printer)) { sdcpConnect(printer); return; }
   if (!window.elegoo) return;
   const key = elegooKey(printer);
   const existing = _elegooConns.get(key);
@@ -919,6 +926,7 @@ export function elegooConnect(printer) {
 }
 
 export function elegooDisconnect(key) {
+  if (sdcpOwns(key)) { sdcpDisconnect(key); return; }
   const conn = _elegooConns.get(key);
   if (conn?._refreshTimer) { clearInterval(conn._refreshTimer); conn._refreshTimer = null; }
   if (conn?._pingTimer)    { clearInterval(conn._pingTimer);    conn._pingTimer = null; }
@@ -929,6 +937,7 @@ export function elegooDisconnect(key) {
 // ── Live inner renderers ──────────────────────────────────────────────────
 
 export function renderElegooLiveInner(p) {
+  if (sdcpIsPrinter(p)) return sdcpLiveInner(p);
   const conn = _elegooConns.get(elegooKey(p));
   if (!conn) return `
     <div class="snap-empty">
@@ -944,6 +953,7 @@ export function renderElegooLiveInner(p) {
 }
 
 export function renderElegooLogInner(p) {
+  if (sdcpIsPrinter(p)) return sdcpLogInner(p);
   const conn = _elegooConns.get(elegooKey(p));
   const log = conn?.log || [];
   if (!log.length) {
@@ -1603,6 +1613,7 @@ document.getElementById('elgFileSheetRefresh')?.addEventListener('click', () => 
    show anywhere else without copying the unpacking with it.
    Empty while disconnected: these describe what is loaded RIGHT NOW. */
 export function elegooGetSlots(printer) {
+  if (sdcpIsPrinter(printer)) return sdcpGetSlots(printer);
   const conn = _elegooConns.get(elegooKey(printer));
   if (!conn || conn.status !== 'connected') return [];
   const fils = conn.data?.filaments || [];
@@ -1621,6 +1632,7 @@ export function elegooGetSlots(printer) {
 
 /* ── Storage units ──────────────────────────────────────────────────────── */
 export function elegooGetUnits(printer) {
+  if (sdcpIsPrinter(printer)) return sdcpGetUnits(printer);
   const slots = elegooGetSlots(printer);
   if (!slots.length) return [];
   const conn = _elegooConns.get(elegooKey(printer));
@@ -1644,6 +1656,7 @@ export function elegooGetUnits(printer) {
    parallel version would drift from the panel the first time either changed.
    Read-only on the board — the setpoint editors are the panel's. */
 export function elegooGetTempHtml(printer) {
+  if (sdcpIsPrinter(printer)) { const c = sdcpGetConn(sdcpKey(printer)); return c && c.status === 'connected' ? sdcpTempHtml(c) : ''; }
   const conn = _elegooConns.get(elegooKey(printer));
   return (conn && conn.status === 'connected') ? renderElegooTempCard(conn) : "";
 }
@@ -1653,12 +1666,15 @@ registerBrand('elegoo', {
      buttons reach the same code through `_activePrinter` — the machine whose
      panel is open — which is right there and wrong anywhere else: the board
      shows every machine at once, so a card has to say which one it means. */
-  controlJob: (p, a) => { const c = elegooGetConn(elegooKey(p));
+  controlJob: (p, a) => { if (sdcpIsPrinter(p)) { sdcpJobControl(p, a === 'stop' ? 'stop' : a === 'resume' ? 'resume' : 'pause'); return; }
+    const c = _elegooConns.get(elegooKey(p));
     if (c) _elgPublish(c, a === 'pause' ? 1021 : a === 'resume' ? 1023 : 1022, {}); },
   getTempHtml:          elegooGetTempHtml,
   getUnits:             elegooGetUnits,
   getSlots:             elegooGetSlots,
   meta, schema, helper,
+  // CC1 (SDCP) needs only its IP — no serial, no access code (see settings.js).
+  schemaFor: (subject) => (subject?.protocol === 'sdcp' || subject?.discovery?.protocol === 'sdcp') ? sdcpSchema : null,
   renderJobCard:        renderElegooJobCard,
   renderTempCard:       renderElegooTempCard,
   renderFilamentCard:   renderElegooFilamentCard,

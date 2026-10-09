@@ -113,11 +113,13 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - Detail side panel — color, print settings, weight slider with auto-save, container, raw JSON
 - Weight tracking — slider or manual entry; instant cloud sync after update
 - **Container weight calibration** — correct a container's empty weight against your own scale, with a guided "how to measure" step; kept on your account and applied to every spool in that container (the bundled catalogue is never modified)
+- **The right container, every time** *(new in 2.35.0)* — a new spool gets its brand's empty spool for the weight maths, you are asked when there is a choice, and the MasterSpools you star are offered first for every refill
 - **TigerData** — create fully-digital spools with no chip; promote to a real chip later, atomically
 - **TigerData+** *(new in 2.15.0)* — a fully-digital spool that is nonetheless tied to a **real product in the official catalogue**: the exact brand, colour, material, temperatures, diameter, SKU and EAN, straight from the source instead of from whatever you typed. No chip to buy, nothing to stick on — and it is not a TigerTag+, so it carries its own badge and never pretends to be one
 - **Catalogue search** *(new in 2.15.0)* — browse the whole official TigerTag+ catalogue from inside the app, in grid or list, filtered by type, brand, series and material. Pick a product to see its real spec sheet, then add it as a TigerData+ in one click, already filled in. The catalogue is downloaded once and searched locally, so it is instant and works offline
 - **The catalogue travels with the app** *(new in 2.16.0)* — nearly 5 000 filaments ship inside the installer, so search works on the very first launch, offline, without waiting for a download. It still refreshes itself in the background
 - **Find a filament by its barcode** *(new in 2.17.0)* — scan the EAN on the box with a barcode reader, or type it in, and the catalogue opens that product. The search also covers the reference, the series, the colour name, the finish, the product type and the weight
+- **A card for every catalogue product** *(new in 2.35.0)* — open a product from the catalogue and add it to your inventory, a wishlist, your cart or your favourites in one click; nothing found? create the spool by hand from the same spot
 - **Spools that keep themselves current** *(new in 2.16.0)* — when a brand corrects a temperature, a diameter or a colour name, the spools you own follow along on their own. Only a TigerTag+ can ever ask you for anything, and only when the change concerns something written on the chip itself
 - **Photos framed in the spool's colour** *(new in 2.30.0)* — every spool photo sits in a frame of its own colour, in the grid, the lists, the catalogue and the details, so you spot the red one at a glance
 - Custom product image for DIY & Cloud spools
@@ -140,7 +142,7 @@ Every brand at a glance:
 | **Anycubic** | MQTTS 9883 (TLS) / cloud + ACE | ✅ Live |
 | **Bambu Lab** | MQTTS 8883 (TLS) + AMS | ✅ Live |
 | **Creality** | WebSocket 9999 + CFS | ✅ Live |
-| **Elegoo** | MQTT 1883 + Canvas | ✅ Live |
+| **Elegoo** | MQTT 1883 + Canvas (Centauri Carbon 2) · SDCP 3030 (Centauri Carbon 1) | ✅ Live · CC1 🧪 Beta |
 | **FlashForge** | HTTP polling 8898 + matlStation | ✅ Live |
 | **Prusa** | PrusaLink HTTP 80 (MK4/MK4S, MK3.9, Core One, XL, MINI, MK3S+ via Pi) + MMU + Buddy3D camera | 🧪 Beta |
 | **Snapmaker** | Moonraker WebSocket 7125 | ✅ Live |

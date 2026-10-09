@@ -71,6 +71,7 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
+import { schemaWidget } from './printers/modal-helpers.js';
 import { openCreAddFlow }  from './printers/creality/add-flow.js';
 import { openBblAddFlow }  from './printers/bambulab/add-flow.js';
 import { openElgAddFlow }  from './printers/elegoo/add-flow.js';
@@ -123,6 +124,7 @@ import {
   openElegooFileSheet, closeElegooFileSheet,
 } from './printers/elegoo/index.js';
 import { renderElegooCamBanner } from './printers/elegoo/widget_camera.js';
+import { sdcpWireLive } from './printers/elegoo/sdcp.js';
 import { elgFanStep } from './printers/elegoo/widget_control.js';
 import { jobBar, jobBarFill } from './printers/job-bar.js';
 
@@ -708,7 +710,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     unsubTigerspools: null,  // Firestore unsubscribe handle for tigerspools
     printers: [],            // [{ id, brand, printerName, printerModelId, isActive, updatedAt, sortIndex, ... }]
     unsubPrinters: [],       // array of Firestore unsubscribe handles (one per brand subcollection)
-    containerOverrides: {},  // catalogue container id → { containerWeight } — the account's own
+    containerOverrides: {},  // catalogue container id → { containerWeight?, favorite? } — the account's own
                              // correction of a container's empty weight (users/{uid}/containerOverrides).
                              // Applied over the bundled catalogue by containerFind(); the JSON is untouched.
     products: {},       // keyHash → { key, label, buyUrl, buyPriceHt, minStockSpools, note, tags, liked(❤), favorite(★), sku, ean, cloudSeed, updatedAt } — per-product-identity record. Price stored tax-free (HT).
@@ -1588,6 +1590,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     return Number.isFinite(w) ? w : +c?.container_weight;
   }
   function containerIsEdited(c) { return Number.isFinite(+state.containerOverrides?.[c?.id]?.containerWeight); }
+  // A MasterSpool the account marked as a favourite (same per-account doc,
+  // `favorite: true`) — offered first, whatever its brand, whenever a refill
+  // asks which container it goes into.
+  function containerIsFavorite(c) { return state.containerOverrides?.[c?.id]?.favorite === true; }
   // Catalogue entry with the correction folded in. Everything downstream reads
   // `container_weight`, so resolving it HERE fixes every consumer at once.
   function containerResolve(c) {
@@ -1709,6 +1715,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       isCloud,
       isCloudPlus,
       series: data.series || null,
+      // The full catalogue record a catalogue spool keeps (see _catalogFullRecord).
+      catalogProduct: data.catalogProduct && typeof data.catalogProduct === "object" ? data.catalogProduct : null,
       label: data.label && data.label !== "--" ? data.label : null,
       productName: data.name && data.name !== "--" ? data.name : null,
       sku: data.sku && data.sku !== "--" ? data.sku : null,
@@ -5927,6 +5935,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           autoAssignMissingContainers(uid, raw).catch(e =>
             console.warn("[subscribeInventory] container auto-assign failed:", e)
           );
+          _healGhostProducts(uid).catch(e => console.warn("[heal ghosts]", e?.message));
         }
         // Factory-bug fix: link twin pairs whose chip timestamps drifted ≤ 2s.
         // Fire-and-forget — the resulting Firestore writes will trigger a fresh
@@ -6793,10 +6802,30 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         || String(r.uid || "").toLowerCase() === q;
   }
 
+  /* ONE search, the same everywhere (inventory, products, catalogue): the query
+     is split into words and EVERY word must appear somewhere in the item —
+     "bambu petg hf" finds a Bambu Lab PETG HF whatever field holds which word.
+     The inventory used to look for the whole phrase inside a single field, so a
+     multi-word search found nothing the catalogue found at once (issue #43). */
+  function _searchTokens(q) { return String(q || "").trim().toLowerCase().split(/\s+/).filter(Boolean); }
+  function _hayHasAll(hay, toks) { for (const tk of toks) if (!hay.includes(tk)) return false; return true; }
+  // A spool's haystack: everything a human types to find it — brand, series,
+  // product name, material, aspects, colour, the note, codes, tags, capacity.
+  const _rowHay = new WeakMap();
+  function _rowSearchHay(r) {
+    let hay = _rowHay.get(r);
+    if (hay == null) {
+      hay = [r.brand, r.series, r.productName, r.label, r.material, r.aspect1, r.aspect2, r.colorName,
+             r.note, r.sku, r.barcode, r.uid, ...(r.tags || []),
+             r.capacity ? `${r.capacity}g ${r.capacity} g` : ""]
+        .filter(x => x && x !== "-").join(" ").toLowerCase();
+      _rowHay.set(r, hay);
+    }
+    return hay;
+  }
   function _rowMatchesSearch(r, q) {
     if (_searchHasExactCode(q)) return _rowIsExactCode(r, q);
-    return [r.uid, r.material, r.brand, r.colorName, r.note, r.series, r.sku, r.barcode, ...(r.tags || [])]
-      .some(v => String(v || "").toLowerCase().includes(q));
+    return _hayHasAll(_rowSearchHay(r), _searchTokens(q));
   }
 
   // NOTE: unused — the live filter is applyInventoryFilter(), which shows/hides
@@ -8016,6 +8045,39 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // Material label with aspect1 appended (e.g. "PLA" + "Basic" → "PLA Basic").
   // aspect2 is intentionally not shown. Returns the bare material when aspect1
   // is missing / "None" / "-".
+  /* The material as the catalogue names the product: with its SERIES — "PETG HF",
+     "PLA Basic" — rather than the bare material, so a spool reads the same in the
+     inventory as in the catalogue it came from (issue #43). A series that
+     already starts with the material is shown as is; one that does not ("HF",
+     "Basic") is put after it. No series → the material alone. */
+  function materialWithSeries(r) {
+    const mat = v(r.material);
+    const ser = String(r.series || "").trim();
+    if (!ser || ser === "-") return mat;
+    if (mat === "-") return ser;
+    return ser.toLowerCase().includes(String(mat).toLowerCase()) ? ser : `${mat} ${ser}`;
+  }
+  // …and with the first aspect too ("PLA Basic Silk"), unless the series already
+  // says it — for the table and the grouped spools, which used to show the aspect.
+  // A spool card reads like the catalogue card of its product: the product name
+  // as the title ("PETG HF - Blue" — the catalogue's own title when the spool
+  // came from it, else "<series> - <colour>"), then "Brand · Material".
+  function spoolCardTitle(r) {
+    const cat = String(r.catalogProduct?.title || "").trim();
+    if (cat) return cat;
+    const color = v(r.colorName) !== "-" ? r.colorName
+      : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ");
+    const ser = String(r.series || "").trim();
+    if (ser && ser !== "-") return color ? `${ser} - ${color}` : ser;
+    return color || v(r.material);
+  }
+  function spoolCardSub(r) { return `${v(r.brand)} · ${v(r.material)}`; }
+  function materialWithSeriesAspect(r) {
+    const base = materialWithSeries(r);
+    const asp = r.aspect1;
+    if (base === "-" || !asp || asp === "-" || asp === "None" || !String(asp).trim()) return base;
+    return base.toLowerCase().includes(String(asp).toLowerCase()) ? base : `${base} ${asp}`;
+  }
   function materialWithAspect(r) {
     const mat = v(r.material);
     if (mat === "-") return mat;
@@ -8127,7 +8189,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
 
   // Doc id for a spool's filament-link row (hash of its product identity key).
-  function _productKeyHash(r) { return _flHash(_spoolProductKey(r)); }
+  /* A row SYNTHESISED from a product record (no live spool behind it) carries the
+     record's id — the hash of its identity, computed from a real spool when the
+     record was written. Recomputing it from the seed would miss the tier (a
+     "PRODUCT_" id is not chipless, so a TigerData+ fell back to its attribute key)
+     and the stock / minimum / ★ would point at another record. (The record's own
+     `key` field is not reliable for this: older writes stored it with the tier.) */
+  function _productKeyHash(r) { return r?._productHash || _flHash(_spoolProductKey(r)); }
 
 
   /* ── VAT / currency helpers (shared by the account country picker + the
@@ -8326,8 +8394,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
   function _filamentStockCount(r) {
     if (!r) return 0;
-    const key = _spoolProductKey(r);
-    const rows = (state.rows || []).filter(row => !row.deleted && _spoolProductKey(row) === key);
+    const hash = _productKeyHash(r);   // the identity, also for a row built from a product record
+    const rows = (state.rows || []).filter(row => !row.deleted && _productKeyHash(row) === hash);
     return _countPhysicalSpools(rows);
   }
 
@@ -8480,6 +8548,50 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   //     forever, even after re-adding a min).
   //   • min > 0 but favorite ≠ true (orphan)          → restore favorite=true so
   //     the "min>0 ⇒ favorite" invariant holds again (keeps the reorder target).
+  /* One-time repair of "ghost" product records. A catalogue preview used to be
+     identified on a "PRODUCT_" row — not chipless, so a TigerData+ got its
+     attribute key instead of "tt:<id_product>" — and a ★ / cart / minimum / note
+     set on it was written to that wrong record, which no spool ever matched.
+     A record is merged into the right one only when ALL hold: its seed names a
+     real catalogue product, no live spool uses it, and live spools of that
+     product exist under "tt:<id>". Flags OR-ed, minimum = the larger, text fields
+     and tags filled only where the target is empty; then the ghost is deleted. */
+  const _ghostHealed = new Set();
+  async function _healGhostProducts(uid) {
+    if (!uid || _ghostHealed.has(uid) || state.friendView) return;
+    const rows = (state.rows || []).filter(r => !r.deleted);
+    if (!rows.length || state.productsLoading !== false) return;   // wait for BOTH snapshots
+    _ghostHealed.add(uid);
+    const used = new Set(rows.map(r => _productKeyHash(r)));
+    const col = fbDb(uid).collection("users").doc(uid).collection("products");
+    const FV = firebase.firestore.FieldValue;
+    let batch = null, n = 0;
+    for (const [hash, g] of Object.entries(state.products)) {
+      const pid = Number(g?.cloudSeed?.id_product);
+      if (!_hasRealProductId(pid) || used.has(hash)) continue;
+      const key = "tt:" + pid, target = _flHash(key);
+      if (target === hash || !used.has(target)) continue;
+      const cur = state.products[target] || {};
+      const patch = { key, updatedAt: FV.serverTimestamp() };
+      if (g.favorite && !cur.favorite) patch.favorite = true;
+      if (g.liked && !cur.liked) patch.liked = true;
+      const gMin = +g.minStockSpools || 0, cMin = +cur.minStockSpools || 0;
+      if (gMin > cMin) patch.minStockSpools = gMin;
+      for (const f of ["buyUrl", "buyPriceHt", "note", "sku", "ean", "label", "cloudSeed", "importedFrom"]) {
+        if (g[f] != null && g[f] !== "" && (cur[f] == null || cur[f] === "")) patch[f] = g[f];
+      }
+      const tags = [...new Set([...(cur.tags || []), ...(g.tags || [])])];
+      if (tags.length > (cur.tags || []).length) patch.tags = tags;
+      if (Array.isArray(g.attachments) && g.attachments.length && !(cur.attachments || []).length) patch.attachments = g.attachments;
+      if (!batch) batch = fbDb(uid).batch();
+      batch.set(col.doc(target), patch, { merge: true });
+      batch.delete(col.doc(hash));
+      if (++n % 200 === 0) { await batch.commit().catch(() => {}); batch = null; }
+    }
+    if (batch) await batch.commit().catch(e => console.warn("[heal ghosts]", e?.message));
+    if (n) console.info(`[heal] merged ${n} ghost product record(s) into their real product`);
+  }
+
   const _reorderHealed = new Set();
   function _healProductReorderState(uid) {
     if (!uid || _reorderHealed.has(uid)) return;
@@ -8521,6 +8633,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         snap.docs.forEach(d => { map[d.id] = { id: d.id, ...d.data() }; });
         state.products = map;
         _healProductReorderState(uid);   // one-time repair of docs corrupted by the old reorder bug
+        _healGhostProducts(uid).catch(e => console.warn("[heal ghosts]", e?.message));   // needs rows too — retried from the inventory snapshot
         _syncAllPublicSnapshots();       // price / image / link edits refresh public list snapshots
         _updateCartBadge();   // min-stock / saved-for-later change → refresh the cart badge
         renderStats();        // a price change moves the "Stock value" stat → recompute it live
@@ -9196,6 +9309,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       state.priceInputMode || "",         // HT/TTC display mode
       r.colorName || "",
       r.material || "",
+      r.series || "",                     // in the card title (spoolCardTitle)
+      r.catalogProduct?.title || "",
       r.brand || "",
       r.aspect1 || "",
       r.aspect2 || "",
@@ -9239,9 +9354,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       : `<span class="card-weight">${r.weightAvailable!=null ? r.weightAvailable+" g" : "-"}</span>`;
     // Name (title) + sub-identity line — overridable so the Products grid can show
     // a type-aware label (Brand · Series · Material) regardless of chip type.
-    const nameText = opts.nameText != null ? opts.nameText
-      : (v(r.colorName) !== "-" ? r.colorName : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.material);
-    const subText  = opts.subText != null ? opts.subText : `${v(r.material)} · ${v(r.brand)}`;
+    const nameText = opts.nameText != null ? opts.nameText : spoolCardTitle(r);
+    const subText  = opts.subText != null ? opts.subText : spoolCardSub(r);
     // Optional second sub-line (Products grid: Series for TigerTag+, else Aspect).
     const subExtra = opts.subExtraText ? `<div class="card-sub card-sub--extra">${esc(opts.subExtraText)}</div>` : "";
     return `
@@ -9331,10 +9445,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       const swatch = "";   // same as the full card build: the colour frame replaces the dot
       const pct = (r.weightAvailable != null && r.capacity) ? Math.max(0,Math.min(100,Math.round(r.weightAvailable/r.capacity*100))) : null;
       const badge = tierBadgeHTML(r, "", { backup: false }); // shield lives in the top-right cluster here
-      const nameText = v(r.colorName) !== "-" ? r.colorName : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.material;
+      const nameText = spoolCardTitle(r);
       body.innerHTML = `
         <div class="card-name">${swatch}${esc(nameText)}</div>
-        <div class="card-sub">${esc(v(r.material))} · ${esc(v(r.brand))}</div>
+        <div class="card-sub">${esc(spoolCardSub(r))}</div>
         <div class="card-footer">
           <span class="card-weight">${r.weightAvailable!=null ? r.weightAvailable+" g" : "-"}</span>
           <span style="display:flex;gap:3px;align-items:center">${badge}</span>
@@ -9482,7 +9596,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       </div>
       <div class="gp-member-info">
         <div class="gp-member-name">${esc(name)}</div>
-        <div class="gp-member-sub">${esc(materialWithAspect(r))} · ${esc(v(r.brand))}</div>
+        <div class="gp-member-sub">${esc(materialWithSeriesAspect(r))} · ${esc(v(r.brand))}</div>
         <div class="gp-member-weight">${wTxt}</div>
         ${bar}
         ${_gpAddedHTML(r)}
@@ -9877,7 +9991,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       <td class="sel-cell"><span class="sel-check" aria-hidden="true"></span></td>
       <td class="thumb-cell">${thumbHTML(r, 50)}</td>
       <td>${tierBadgeHTML(r)}</td>
-      <td>${esc(materialWithAspect(r))}</td>
+      <td>${esc(materialWithSeriesAspect(r))}</td>
       <td>${esc(v(r.brand))}</td>
       <td>${esc(v(r.colorName) !== "-" ? r.colorName : [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None").join(" ") || r.colorName)}</td>
       <td style="font-variant-numeric:tabular-nums">${wCell}</td>
@@ -11339,6 +11453,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   $("btnViewCatalogTable")?.addEventListener("click", () => setViewMode("catalogTable"));
   // Delegated on the stable container — cards/rows are rebuilt on every query.
   $("catalogViewBody")?.addEventListener("click", e => {
+    if (e.target.closest?.("[data-cv-create]")) { openAddProductPanel(); return; }
     const el = e.target.closest?.(".cv-card, .cv-row");
     if (!el?.dataset.id) return;
     // The tick (card corner / table column) or select mode → multi-select;
@@ -12352,6 +12467,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       if (!res.ok) throw new Error(res.error || "unknown");
       const api = res.api;
       const update = {};
+      const _full = _catalogFullRecord(api);
+      if (_full)                             update.catalogProduct     = _full;   // everything the catalogue knows
       if (api.name)                          update.name               = api.name;
       if (api.sku)                           update.sku                = api.sku;
       if (api.barcode)                       update.barcode            = api.barcode;
@@ -12437,9 +12554,40 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // Only the *catalogue-sourced* fields live here; identity ids, colours as
   // RGB, measures and data slots are the caller's business (they differ: a
   // conversion must not clobber what the chip already says).
+  /* The FULL product record kept on a catalogue spool (`catalogProduct`). The chip
+     only carries what the TigerTag protocol defines (ids, RGBA, data1-7…); the
+     catalogue knows far more — description, every document link, fan speeds,
+     slicer profiles (Bambu / Creality ids), brand logo and site, dates… — and all
+     of it is kept here so the app has the most data locally, for display and for
+     what comes next. Base = the local catalogue entry (`id_catalog.json` / the
+     synced catalogue: RFID_Data, title, measure…), ENRICHED with whatever the
+     `product/get` detail adds that the entry lacks (filled per field, nested
+     objects merged key by key; the entry's own values are kept). */
+  function _catalogFullRecord(api) {
+    if (!api || api.id == null) return null;
+    const entry = _catalogIndex.find(e => String(e.it?.id) === String(api.id))?.it || null;
+    const base = {};
+    if (entry) for (const [k, v] of Object.entries(entry)) if (!k.startsWith("_")) base[k] = v;
+    const isObj = v => v && typeof v === "object" && !Array.isArray(v);
+    const fill = (into, extra) => {
+      for (const [k, x] of Object.entries(extra || {})) {
+        if (x == null) continue;
+        const b = into[k];
+        if (b == null || b === "") into[k] = x;
+        else if (isObj(b) && isObj(x)) fill(b, x);
+      }
+      return into;
+    };
+    // JSON round-trip: a private copy (the index entry is never mutated) and no
+    // `undefined` anywhere — Firestore refuses it.
+    return fill(JSON.parse(JSON.stringify(base)), JSON.parse(JSON.stringify(api)));
+  }
+
   function _productApiFields(api) {
     const out = {};
     if (!api) return out;
+    const full = _catalogFullRecord(api);
+    if (full) out.catalogProduct = full;
     if (api.name)                        out.name              = api.name;
     if (api.sku)                         out.sku               = api.sku;
     if (api.barcode)                     out.barcode           = api.barcode;
@@ -12834,7 +12982,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
   function _catalogFilter(query, fBrand = "", fMat = "") {
     const raw  = String(query || "").trim().toLowerCase();
-    const toks = raw.split(/\s+/).filter(Boolean);
+    const toks = _searchTokens(raw);   // same words as the inventory search
     /* The colour window narrows the catalogue too — an entry carries a single
        hex, and one that has none simply cannot answer a colour question, so it
        drops out rather than slipping through. */
@@ -13072,7 +13220,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const uid = state.activeAccountId;
     if (!uid || state.friendView) return;
     // Feedback goes to whichever surface the user actually triggered this from.
-    const res$ = $("roSaveResult");
+    const res$ = $("pcCatMsg") || $("roSaveResult");
     _catalogSetBusy(true);
     try {
       // The one network call of this path — the same detail endpoint the
@@ -13097,7 +13245,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       bumpStudioCounters({ cloudPlusAddedTotal: 1 });
       // The product card has done its job: close it and open the new spool's
       // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
-      closeReorderPanel();
+      if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
       _openCreatedSpool(cloudId);
     } catch (e) {
       console.error("[catalog] create failed:", e);
@@ -13112,7 +13260,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   function _catalogSetBusy(busy) {
     _catalogBusy = !!busy;
     // The only control that writes is the product card's "+ Material" button.
-    const btn = $("roCreateCloud");
+    const btn = $("pcCatAdd") || $("roCreateCloud");
     if (btn) { btn.disabled = !!busy; btn.classList.toggle("is-busy", !!busy); }
   }
 
@@ -13255,6 +13403,18 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       // sentinel hook is ours.
       body.className = `cv-body ${grid ? "cv-body--grid inv-grid" : "cv-body--table"}`;
       body.innerHTML = grid ? "" : _catViewTableHTML();
+      // Nothing matches (and the catalogue is really loaded): offer to make the
+      // spool by hand instead — the same "Add product" card as "Manually".
+      if (!_catViewHits.length && _catalogIndex.length && !_catalogSyncing && !state.friendView) {
+        body.className = "cv-body";
+        body.innerHTML = `
+          <div class="cv-empty">
+            <span class="icon icon-search" aria-hidden="true"></span>
+            <div class="cv-empty-title">${esc(t("catEmptyTitle"))}</div>
+            <div class="cv-empty-sub">${esc(t("catEmptySub"))}</div>
+            <button type="button" class="cv-empty-cta" data-cv-create="1"><span class="icon icon-plus icon-14" aria-hidden="true"></span>${esc(t("catEmptyCta"))}</button>
+          </div>`;
+      }
     }
     _catViewRenderChunk();
     _catViewSyncStatus();
@@ -13477,19 +13637,25 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // The selection may have moved (or been cleared) while the fetch was in
     // flight — don't yank the card onto a product the user has left behind.
     if (String(it.id) !== String(_catViewSelectedId)) return;
-    const seed = _catalogDocFromApi(api, it.id, _adpCloudId());
+    // Adding from the catalogue makes a TigerData+ (chipless id + real product
+    // id), so the preview is identified as exactly that spool would be: built on
+    // a chipless id, keyed by `_spoolProductKey` ("tt:<id>"). It used to be built
+    // on "PRODUCT_<id>" (not chipless → attribute key) and keyed with the TIER
+    // suffix, so the card never met the real spools: "In stock: 0" right after
+    // adding one, and a minimum / ★ set here landed on a different record.
+    const cloudId = _adpCloudId();
+    const seed = _catalogDocFromApi(api, it.id, cloudId);
     let row = null;
-    try { row = normalizeRow("PRODUCT_" + it.id, seed); } catch (_) {}
-    // Hash by the product's IDENTITY, exactly as an owned spool would be — so
-    // the card's ★/❤ light up when this product is already in the inventory.
+    try { row = normalizeRow(cloudId, seed); } catch (_) {}
     const hash = row ? _productKeyHash(row) : "cat:" + it.id;
     openProductCard({
       id: hash,
-      key: row ? _spoolGroupKey(row) : "cat:" + it.id,
+      key: row ? _spoolProductKey(row) : "cat:" + it.id,
       label: row ? _productLabel(row) : {},
       cloudSeed: seed,
       favorite: false, liked: false,
-      catalogItem: it,        // marks this card as a catalogue preview → add button
+      catalogItem: it,        // marks this card as a catalogue preview → the catalogue card
+      catalogRow: row,        // the spool "+ Inventory" would create — the identity ★ / cart / lists use
     });
   }
 
@@ -13859,9 +14025,9 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       // A product identity carries one colour, not a spool's three slots.
       if (!_colorsMatchHue([l.colorHex])) return false;
       if (q) {
-        const hay = [l.brand, l.material, l.series, l.colorName, p.note, p.sku, p.ean, ...(p.tags || [])]
+        const hay = [l.brand, l.series, l.material, l.aspect, l.aspect2, l.colorName, p.note, p.sku, p.ean, ...(p.tags || [])]
           .filter(Boolean).join(" ").toLowerCase();
-        if (!hay.includes(q)) return false;
+        if (!_hayHasAll(hay, _searchTokens(q))) return false;
       }
       return true;
     });
@@ -13956,7 +14122,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // straight into the price / buy-link editor.
   function _listRowFor(p) {
     if (!p) return null;
-    return (state.rows || []).find(x => !x.deleted && _spoolProductKey(x) === p.key) || _productAsRow(p);
+    // Matched on the record id (identity hash), not its stored `key` (see _productKeyHash).
+    return (state.rows || []).find(x => !x.deleted && (_productKeyHash(x) === p.id || _spoolProductKey(x) === p.key)) || _productAsRow(p);
   }
   // Buy-button label = the shop's host (e.g. "amazon.fr", "atome3d.com") rather
   // than a generic "Buy", so a wishlist reads like a shopping list of shops.
@@ -14574,10 +14741,12 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // (`cloudSeed`); fall back to a minimal row from the display `label` for any
   // legacy record saved before cloudSeed existed.
   function _productAsRow(p) {
-    if (p?.cloudSeed) { try { return normalizeRow("PRODUCT_" + p.id, p.cloudSeed); } catch (_) {} }
+    if (p?.cloudSeed) {
+      try { const r = normalizeRow("PRODUCT_" + p.id, p.cloudSeed); if (p.id) r._productHash = p.id; return r; } catch (_) {}
+    }
     const l = p?.label || {};
     return {
-      spoolId: "PRODUCT_" + (p?.id || ""), key: p?.key,
+      spoolId: "PRODUCT_" + (p?.id || ""), key: p?.key, _productHash: p?.id || undefined,
       brand: l.brand, material: l.material, colorName: l.colorName,
       colorHex: l.colorHex, imgUrl: l.imgUrl, aspect1: l.aspect1, aspect2: l.aspect2,
       weightAvailable: null, capacity: null, td: null,
@@ -15769,6 +15938,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const ghost = panel.cloneNode(true);
     ghost.classList.add("detail-ghost");   // z-index:100 (behind detail 101 / printer 105), inert
     ghost.style.right = panel.style.right || "";   // match any stacked offset
+    // A panel that sits at or below the ghost's own z (the product card, 99)
+    // gets its ghost one slot under it instead — never on top of the new card.
+    const z = parseInt(getComputedStyle(panel).zIndex, 10);
+    if (Number.isFinite(z) && z <= 100) ghost.style.setProperty("z-index", String(z - 1), "important");
     // Neutralise live media (camera <iframe>/<webview>/<video>) so the clone
     // doesn't spin up a second stream — swap each for a same-size dark box (sized
     // from the REAL element, measured before insertion → no flicker / no load).
@@ -17613,9 +17786,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   let _cpRow = null; // spool row currently being edited in the picker
   let _cpFadeUpdate = null; // scroll-fade updater for the picker list (see _renderCpList)
 
-  function openContainerPicker(r) {
+  let _cpOnly = null, _cpHint = "", _cpOnClose = null;   // narrowed list (new spool), its reason, after-close hook
+  let _cpKind = "";   // material filter chip: "" (all) | CONTAINER_KIND.CARDBOARD / PLASTIC / MASTERSPOOL
+  function openContainerPicker(r, opts = {}) {
     _cpRow = r;
-    _renderCpList("");
+    _cpOnly = Array.isArray(opts.only) && opts.only.length ? new Set(opts.only) : null;
+    _cpHint = _cpOnly ? (opts.hint || "") : "";
+    _cpOnClose = opts.onClose || null;
+    _cpSetKind("");
     $("containerPickerSearch").value = "";
     $("containerPanel").classList.add("open");   // side card to the LEFT of the spool detail
     _syncPanels();                                // place the picker + close tabs
@@ -17626,19 +17804,25 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     $("containerPanel").classList.remove("open");
     _syncPanels();
     _cpRow = null;
+    _cpOnly = null; _cpHint = "";
+    const after = _cpOnClose; _cpOnClose = null;
+    after?.();
   }
   function _renderCpList(query) {
     const q = query.trim().toLowerCase();
     const containers = (state.db.containers || []).map(containerResolve).filter(c =>
-      !q ||
+      (!_cpOnly || _cpOnly.has(c.id)) && (!_cpKind || _containerKind(c) === _cpKind) && (!q ||
       c.brand.toLowerCase().includes(q) ||
       c.label.toLowerCase().includes(q) ||
       c.type.toLowerCase().includes(q) ||
-      String(c.container_weight).includes(q)
+      String(c.container_weight).includes(q))
     );
+    // Favourite MasterSpools get their own group, pinned above everything else
+    // (and leave their brand group, so nothing is listed twice).
+    const favs = containers.filter(c => _isMasterspool(c) && containerIsFavorite(c));
     // Group by brand
     const byBrand = {};
-    containers.forEach(c => { (byBrand[c.brand] = byBrand[c.brand] || []).push(c); });
+    containers.filter(c => !favs.includes(c)).forEach(c => { (byBrand[c.brand] = byBrand[c.brand] || []).push(c); });
     const currentId = _cpRow?.containerId;
     // Alphabetical by brand. The groups used to come out in catalogue order — the
     // order containers were ADDED to the file — so finding a brand in 30+ groups
@@ -17647,12 +17831,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // The generic containers stay PINNED at the top: they are the customizable
     // catch-alls you fall back to when your spool's brand isn't listed, and they
     // would be lost mid-list between Geeetech and GIANTARM. Keyed on `brandId == 0`
-    // — the same sentinel resolveContainerForBrand uses — not on the label.
+    // — the same sentinel _containerChoice uses — not on the label.
     const isGeneric = items => Number(items[0]?.brandId) === 0;
     const groups = Object.entries(byBrand).sort(([aName, aItems], [bName, bItems]) =>
       isGeneric(aItems) !== isGeneric(bItems)
         ? (isGeneric(aItems) ? -1 : 1)
         : aName.localeCompare(bName, undefined, { sensitivity: "base", numeric: true }));
+    if (favs.length) groups.unshift([t("cpFavorites"), favs]);
     const html = groups.map(([brand, items]) => `
       <div class="cp-group-label">${esc(brand)}</div>
       ${items.map(c => `
@@ -17660,14 +17845,17 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           <img src="${esc(c.img)}" alt="${esc(c.label)}" onerror="this.style.display='none'" />
           <div class="cp-item-info">
             <div class="cp-item-name">${esc(c.label)}</div>
-            <div class="cp-item-meta">${esc(c.type)}</div>
+            <div class="cp-item-meta">${favs.includes(c) ? `${esc(c.brand)} · ` : ""}${esc(c.type)}</div>
             ${_cpWeightRowHTML(c)}
           </div>
           ${c.id === currentId ? '<span class="cp-check">✓</span>' : ""}
+          ${_isMasterspool(c) ? `<button type="button" class="cp-fav${containerIsFavorite(c) ? " is-on" : ""}" data-cp-fav="${esc(c.id)}" aria-pressed="${containerIsFavorite(c)}" aria-label="${esc(t(containerIsFavorite(c) ? "cpFavRemove" : "cpFavAdd"))}"><span class="icon icon-${containerIsFavorite(c) ? "star-fill" : "star"} icon-14"></span></button>` : ""}
         </div>
       `).join("")}
     `).join("");
-    $("containerPickerList").innerHTML = html || `<div class="cp-empty">—</div>`;
+    // Narrowed for a newly added spool: say why, and let the user see everything.
+    const hint = _cpOnly ? `<div class="cp-hint"><span>${esc(_cpHint)}</span><button type="button" class="cp-show-all" data-cp-all="1">${esc(t("cpShowAll"))}</button></div>` : "";
+    $("containerPickerList").innerHTML = hint + (html || `<div class="cp-empty">—</div>`);
     // Scroll fade on both edges — .cp-list hides its scrollbar, so without it
     // nothing says the 30+ groups continue past the fold. No sticky header inside
     // the scroller (the brand labels scroll with the rows), so the top fade needs
@@ -17686,6 +17874,30 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
 
   function _cpRepaint() { _renderCpList($("containerPickerSearch")?.value || ""); }
+  // One chip at a time; pressing the active one again shows everything again.
+  function _cpSetKind(kind) {
+    _cpKind = kind === _cpKind && kind ? "" : kind;
+    $("containerPickerKinds")?.querySelectorAll("[data-cp-kind]").forEach(b => {
+      const on = b.dataset.cpKind === _cpKind;
+      b.classList.toggle("is-on", on); b.setAttribute("aria-pressed", String(on));
+    });
+    _cpRepaint();
+  }
+
+  async function _cpToggleFavorite(id) {
+    const uid = state.activeAccountId; if (!uid) return;
+    const cur = state.containerOverrides[id] || {};
+    const on = cur.favorite !== true;
+    const ref = fbDb(uid).collection("users").doc(uid).collection("containerOverrides").doc(id);
+    try {
+      if (on) await ref.set({ favorite: true, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+      else if (Number.isFinite(+cur.containerWeight)) await ref.update({ favorite: firebase.firestore.FieldValue.delete() });
+      else await ref.delete();
+    } catch (e) { console.warn("[containerOverrides] favorite failed:", e.code); return; }
+    const next = { ...cur }; if (on) next.favorite = true; else delete next.favorite;
+    if (Object.keys(next).length) state.containerOverrides[id] = next; else delete state.containerOverrides[id];
+    _cpRepaint();
+  }
 
   /* ── Container-weight editor (modal) ──────────────────────────────────
      Editing happens against the container itself — photo, name and origin shown —
@@ -17823,7 +18035,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         .collection("containerOverrides").doc(id)
         .set({ containerWeight: grams, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
       // Optimistic — the snapshot repaints too, but this keeps the list instant.
-      state.containerOverrides[id] = { containerWeight: grams };
+      state.containerOverrides[id] = { ...state.containerOverrides[id], containerWeight: grams };
     } catch (e) { console.warn("[containerOverrides] save failed:", e.code); return false; }
     _cpRepaint();
     return true;
@@ -17832,8 +18044,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   async function _cpResetWeight(id) {
     const uid = state.activeAccountId; if (!uid) return;
     try {
-      await fbDb(uid).collection("users").doc(uid).collection("containerOverrides").doc(id).delete();
-      delete state.containerOverrides[id];
+      const ref = fbDb(uid).collection("users").doc(uid).collection("containerOverrides").doc(id);
+      if (state.containerOverrides[id]?.favorite === true) {   // keep the favourite, drop only the weight
+        await ref.update({ containerWeight: firebase.firestore.FieldValue.delete() });
+        state.containerOverrides[id] = { favorite: true };
+      } else {
+        await ref.delete();
+        delete state.containerOverrides[id];
+      }
     } catch (e) { console.warn("[containerOverrides] reset failed:", e.code); return; }
     _cpRepaint();
   }
@@ -17907,8 +18125,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     if ($("notifPanel")?.classList.contains("open")) closeNotifs();   // notif centre takes over the right — dismiss it
     // Reorder + container picker share the same left slot → mutually exclusive.
     if ($("containerPanel")?.classList.contains("open")) closeContainerPicker();
-    // The friend-view read-only card describes the PREVIOUS product → drop it.
-    if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
+    // The light card (friend / catalogue) describing ANOTHER product is stale →
+    // drop it. The same product stays open beside: the catalogue card's
+    // "Product sheet" button opens this one next to it.
+    if ($("productCardPanel")?.classList.contains("open") && _productCardData?.id !== opts.product?.id) closeProductCard();
     // Opened for a specific product record (catalogue preview, favourite…) → the
     // card describes THAT record; otherwise it derives one from the row.
     _reorderProductCtx = opts.product ? { hash: _productKeyHash(r), p: opts.product } : null;
@@ -17930,7 +18150,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     _subscribeImportedProfile(null);   // drop the provenance profile listener
     // A Search row/card that opened this stays highlighted otherwise, pointing at
     // a panel that is no longer there. No-op everywhere else (nothing selected).
-    _catViewClearSelection();
+    // The catalogue card may still be open on its product — keep its row selected then.
+    if (!$("productCardPanel")?.classList.contains("open")) _catViewClearSelection();
   }
   // "Product info" button behaviour: open the card, or CLOSE it if it's already
   // showing this same product (same group identity) → the button toggles it.
@@ -17968,11 +18189,12 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       api = res.api;
       _catDetailCache.set(String(pid), api);
     }
-    const stillShown = state.friendView ? _productCardData === p : _reorderProductCtx?.p === p;
+    const light = state.friendView || !!p.catalogItem;   // friend's or catalogue card (#productCardPanel)
+    const stillShown = light ? _productCardData === p : _reorderProductCtx?.p === p;
     if (!stillShown) return;                                 // the user moved to another product
     const seed = { ...p.cloudSeed, ..._catalogDocFromApi(api, pid, p.cloudSeed?.uid || "PRODUCT_" + pid) };
     const rich = { ...p, cloudSeed: seed };
-    if (state.friendView) { _renderProductCard(rich); return; }
+    if (light) { _productCardData = rich; _renderProductCard(rich); return; }
     // Owner: swap the record the merged card describes, then repaint it — unless
     // the user is mid-edit in it (their typing must survive the catalogue landing).
     _reorderProductCtx = { hash: _reorderProductCtx.hash, p: rich };
@@ -17985,7 +18207,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // light card (#productCardPanel), since there is nothing of theirs to edit.
   function openProductCard(p, opts = {}) {
     if (!p) return;
-    if (!state.friendView) {
+    // A catalogue product (Search views) gets its own card — what it is + the
+    // four ways to take it (inventory, wishlist, cart, favourite) — not the
+    // owner's management card: nothing about it is tracked yet.
+    if (!state.friendView && !p.catalogItem) {
       const row = _listRowFor(p);
       if (!row) return;
       // Paints at once from what we already hold, then tops the seed up from the
@@ -17995,6 +18220,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       return;
     }
     if ($("notifPanel")?.classList.contains("open")) closeNotifs();   // notif centre takes over the right — dismiss it
+    // Another product while the card is open → the new card slides in over a
+    // ghost of the old one (same swap as the spool / printer cards), and the
+    // product sheet beside it, which described the old product, closes.
+    const pc = $("productCardPanel");
+    if (pc?.classList.contains("open") && _productCardData && _productCardData.id !== p.id) {
+      if ($("reorderPanel")?.classList.contains("open") && !_reorderShows(p.id)) closeReorderPanel();
+      _ghostSwapPanel(pc, "#productCardBody");
+    }
     _productCardData = p;
     _renderProductCard(p);
     _enrichProductCardFromCatalogue(p).catch(e => console.warn("[productCard] enrich:", e?.message));
@@ -18008,6 +18241,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // A Search row/card that opened this stays highlighted otherwise, pointing at
     // a panel that is no longer there. No-op everywhere else (nothing selected).
     _catViewClearSelection();
+  }
+  // Is the full product sheet (#reorderPanel) open on this product?
+  function _reorderShows(hash) {
+    return !!$("reorderPanel")?.classList.contains("open") && !!_reorderRow && _productKeyHash(_reorderRow) === hash;
   }
   // Is the card open on this product (owner → merged card, friend → light card)?
   function _productCardShows(hash) {
@@ -18037,6 +18274,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const l = p.label || {};
     let r = null;
     if (p.cloudSeed) { try { r = normalizeRow("PRODUCT_" + (p.id || ""), p.cloudSeed); } catch (_) { r = null; } }
+    if (r && p.id) r._productHash = p.id;   // keep the record's identity (see _productKeyHash)
     return r || {
       spoolId: "PRODUCT_" + (p.id || ""), key: p.key,
       brand: l.brand || "", series: l.series || "", material: l.material || "",
@@ -18047,6 +18285,22 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
   // PARAMÈTRES D'IMPRESSION — from the chip's own temps when present, else the
   // material DB's recommended values (same source + markup as buildPanelHTML).
+  // The print figures of a product row, formatted — shared by the print section
+  // and the product card's tiles. Chip temps win; else the material DB's
+  // recommended values; "—" when neither exists.
+  function _printValues(r) {
+    const temps = r.temps || {};
+    const mat = r.materialData || null;
+    const rec = mat && mat.recommended;
+    return {
+      nozzle: (temps.nozzleMin && temps.nozzleMax) ? `${temps.nozzleMin}–${temps.nozzleMax} °C` : rec ? `${rec.nozzleTempMin}–${rec.nozzleTempMax} °C` : "—",
+      bed:    (temps.bedMin && temps.bedMax) ? `${temps.bedMin}–${temps.bedMax} °C` : rec ? `${rec.bedTempMin}–${rec.bedTempMax} °C` : "—",
+      dryT:   temps.dryTemp ? `${temps.dryTemp} °C` : rec ? `${rec.dryTemp} °C` : "—",
+      dryH:   temps.dryTime ? `${temps.dryTime} h` : rec ? `${rec.dryTime} h` : "—",
+      density: mat && mat.density ? mat.density : null,
+      td: r.td != null ? r.td : null,
+    };
+  }
   function _pcPrintHTML(r) {
     const temps = r.temps || {};
     const mat = r.materialData || null;
@@ -18075,7 +18329,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // Video (YouTube thumbnail → browser, or inline MP4) + document links (MSDS,
   // TDS, RoHS, REACH, food, YouTube) — same as the materials card, from the
   // cloudSeed's LinkXXX fields. r.links only exists when built from a seed.
-  function _pcDocsHTML(r, p) {
+  // `countOnly` → how many documents + videos the tab would show (its badge).
+  function _pcDocsHTML(r, p, countOnly = false) {
     const links = r.links || {};
     const videoInfo = parseVideoUrl(links.youtube);
     const videoHtml = _productVideosHTML(links.youtube, p);
@@ -18089,6 +18344,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       ...(videoInfo?.type === "external" ? [{ key: "youtube", label: t("linkYt") }] : []),
     ];
     const activeLinks = linkDefs.filter(dl => links[dl.key]);
+    if (countOnly) return activeLinks.length + _productVideoUrls(links.youtube, p).length;
     const linksHtml = activeLinks.length ? `
       <div class="panel-section">
         <div class="panel-label">${esc(t("sectionLinks"))}</div>
@@ -18100,6 +18356,26 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // Manufactured / location — those are spool-specific and absent here). `merged`
   // drops what the merged card already shows elsewhere: brand · series · name ·
   // material live in its hero, SKU / EAN in its editable References block.
+  // The product's colour(s) as HEX — one per colour slot. The chip carries RGB(A)
+  // bytes, `online_color_list` the hex strings; a short RRGGBB is completed with
+  // the chip's own alpha byte (never padded with FF — alpha can be anything).
+  function _productHexList(r) {
+    const list = (Array.isArray(r.colorList) && r.colorList.length) ? r.colorList : (r.colorHex ? [r.colorHex] : []);
+    const a = Number(r.raw?.color_a);
+    const aHex = Number.isFinite(a) && a >= 0 && a <= 255 ? a.toString(16).padStart(2, "0").toUpperCase() : "";
+    return list.map(c => String(c || "").trim().replace(/^#/, "").toUpperCase()).filter(Boolean)
+               .map((c, i) => "#" + (c.length === 6 && i === 0 && aHex ? c + aHex : c));
+  }
+  // The catalogue's own description of the product (catalogProduct) — kept locally,
+  // never on the chip. Literal "\n" sequences in the API text become line breaks.
+  function _pcDescriptionHTML(r) {
+    const d = String(r.catalogProduct?.description || "").replace(/\\n/g, "\n").trim();
+    return d ? `
+      <div class="panel-section">
+        <div class="panel-label">${esc(t("sectionDescription"))}</div>
+        <p class="pc-description">${esc(d)}</p>
+      </div>` : "";
+  }
   function _pcDetailsHTML(r, p, merged = false) {
     const brand = (r.brand && r.brand !== "-") ? r.brand : "";
     const series = (r.series && r.series !== "-") ? r.series : "";
@@ -18155,6 +18431,24 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         [t("detSku"),       sku],
         [t("detBarcode"),   ean],
       ]),
+      // From the full catalogue record (catalogProduct) — not on the chip.
+      ...(() => {
+        const cp = r.catalogProduct;
+        if (!cp) return [];
+        const fan = cp.fan || {};
+        const fanTxt = fan.speed_min != null || fan.speed_max != null
+          ? (fan.speed_min != null && fan.speed_max != null && fan.speed_min !== fan.speed_max
+              ? `${fan.speed_min}–${fan.speed_max} %` : `${fan.speed_max ?? fan.speed_min} %`) : "";
+        const md = cp.metadata || {};
+        const prof = (lbl, id) => [lbl, id].filter(Boolean).join(" · ");
+        const site = String(cp.brand_url || "").trim();
+        return [
+          [t("detFanSpeed"),       fanTxt],
+          [t("detBambuProfile"),   prof(md.bambuLabel, md.bambuID)],
+          [t("detCrealityProfile"), prof(md.crealityLabel, md.crealityID)],
+          [t("detBrandSite"),      site ? site.replace(/^https?:\/\//, "").replace(/\/$/, "") : "", site || null],
+        ];
+      })(),
     ].filter(([, v]) => v && v !== "-")
      // 4th slot = multiline: keeps the newlines in the value (colours, one per
      // line) without letting HTML through — the text stays escaped.
@@ -18232,9 +18526,31 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // doesn't blank and reload each time — only the rest of the body is rebuilt.
     const keepImg = body._pcImgSection === imgSection ? body.querySelector(".panel-img-wrap") : null;
     body._pcImgSection = imgSection;
+    /* CATALOGUE card (owner, Search views): nothing is tracked yet, so instead of
+       the ★/❤ toggles it offers the four ways to take the product — into the
+       inventory (a TigerData+, like the catalogue's own add), a wishlist, the
+       cart, the favourites. Cart / favourite light up once done. */
+    const isCat = !!p.catalogItem && !state.friendView;
+    const owned = isCat && p.catalogRow ? _filamentStockCount(p.catalogRow) : 0;
+    const cta = (key, icon, labelKey, on, extra = "") => `
+        <button type="button" class="pc-cta-btn${on ? " is-on" : ""}${extra}" data-pc-cat="${key}"${key === "inv" ? ` id="pcCatAdd"` : ""} aria-pressed="${on ? "true" : "false"}">
+          <span class="icon icon-${on ? "check" : icon} icon-14" aria-hidden="true"></span><span>${esc(t(labelKey))}</span>
+        </button>`;
+    const catHTML = isCat ? `
+      <button type="button" class="pc-sheet-btn" data-pc-cat="sheet" aria-pressed="${_reorderShows(p.id) ? "true" : "false"}">
+        <span class="icon icon-info icon-14" aria-hidden="true"></span><span>${esc(t("pcOpenSheet"))}</span>
+      </button>
+      <div class="panel-section pc-cta">
+        ${cta("inv",  "package",    "pcCtaInventory", false, " pc-cta-btn--primary")}
+        ${cta("list", "list-check", "pcCtaList",      false)}
+        ${cta("cart", "cart-plus",  liked ? "pcCtaInCart" : "pcCtaCart", liked)}
+        ${cta("fav",  "star",       fav ? "pcCtaIsFav" : "pcCtaFav",     fav)}
+      </div>
+      ${owned ? `<div class="pc-owned"><span class="icon icon-package icon-13"></span><span>${esc(t("pcCatOwned", { n: owned }))}</span></div>` : ""}
+      <div class="pc-cat-msg" id="pcCatMsg"></div>` : "";
     body.innerHTML = `
       ${imgSection}
-      <div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>
+      ${isCat ? "" : `<div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>`}
       <div class="panel-section panel-identity pc-identity">
         <div class="pi-ident-text">
           ${row1Parts.length ? `<div class="pi-row1">${row1Parts.join(" · ")}</div>` : ""}
@@ -18242,6 +18558,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           <div class="aspect-chips pc-ident-chips">${badgeHtml}${weightChip}</div>
         </div>
       </div>
+      ${catHTML}
+      ${_pcDescriptionHTML(r)}
       ${_pcPrintHTML(r)}
       ${_pcDocsHTML(r, p)}
       ${_attachReadOnlyHTML(p)}
@@ -18251,7 +18569,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       </div>` : ""}
       ${_pcDetailsHTML(r, p)}
       ${fromHTML ? `<div class="pc-from-wrap">${fromHTML}</div>` : ""}
-      <div class="pc-note">${esc(t("pcNoStock"))}</div>
+      ${isCat ? "" : `<div class="pc-note">${esc(t("pcNoStock"))}</div>`}
       ${state.debugEnabled ? `
       <div class="panel-section">
         <details class="debug" id="pcRawDetails">
@@ -18282,9 +18600,12 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // the shared price/link/SKU-EAN carried over. No bespoke write here anymore.
   async function _toggleProductCardFlag(field) {
     const p = _productCardData; if (!p?.id) return;
-    let row = null;
-    if (p.cloudSeed) { try { row = normalizeRow("PRODUCT_" + p.id, p.cloudSeed); } catch (_) { row = null; } }
+    // A catalogue card carries the very row "+ Inventory" would create, so ★ /
+    // cart land on the same product record as the spools added from it.
+    let row = p.catalogRow || null;
+    if (!row && p.cloudSeed) { try { row = normalizeRow("PRODUCT_" + p.id, p.cloudSeed); } catch (_) { row = null; } }
     if (!row) row = _productAsRow(p);   // fallback (label) — cloudSeed is the norm
+    else if (!p.catalogRow) row._productHash = p.id;
     await _toggleProductFlag(row, field);
     _renderProductCard(p);   // reflect my new ★/❤ state (reads state.products[p.id])
   }
@@ -18310,15 +18631,28 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
   // Paint "In stock: N / min" + the amber below-target state, reading the min
   // from the LIVE input so the two linked figures update as the user types.
+  let _reorderTab = "info";   // the product card's open tab — kept across re-renders
   function _reorderUpdateStock() {
     if (!_reorderRow) return;
     const stock = _filamentStockCount(_reorderRow);
     const raw = $("roMinStock")?.value;
     const min = (raw !== "" && raw != null && Number.isFinite(+raw)) ? Math.max(0, Math.round(+raw)) : 0;
-    const txt = $("roStockTxt");
-    // Show the target next to the count when a minimum is set → "In stock: 3 / 5".
-    if (txt) txt.textContent = t("reorderInStock", { n: stock }) + (min > 0 ? ` / ${min}` : "");
-    $("roStock")?.classList.toggle("ro-stock--low", min > 0 && stock < min);
+    const low = min > 0 && stock < min;
+    // With a minimum set, the figure reads "stock/minimum" ("2/1"); without, "2 spools".
+    const spools = min > 0 ? `${stock}/${min}` : t("roKpiSpools", { n: stock });
+    const txt = $("roStockTxt"); if (txt) txt.textContent = spools;
+    const now = $("roStockNow");
+    if (now) { now.textContent = t("roKpiSpools", { n: stock }); now.classList.toggle("is-low", low || stock === 0); }
+    const kpi = $("roStock");
+    kpi?.classList.toggle("ro-stock--low", low);
+    kpi?.classList.toggle("is-empty", stock === 0);
+    // Stock value = spools × unit price, in the account's entry mode (HT / TTC).
+    const pRaw = $("roPrice")?.value;
+    const unit = (pRaw === "" || pRaw == null || !Number.isFinite(+pRaw)) ? 0 : +pRaw;
+    const mode = _reorderMode() === "HT" ? t("reorderHT") : t("reorderTTC");
+    const value = `${_fmtMoney(stock * unit)} ${_vatInfo().symbol} ${mode}`;
+    const v1 = $("roKpiValue"); if (v1) v1.textContent = value;
+    const v2 = $("roStockValue"); if (v2) v2.textContent = value;
   }
   // Paint the read-only min-stock value ("5", or a muted "—" when unset) from the
   // input — shown when its inline editor is collapsed.
@@ -18332,7 +18666,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       btn?.classList.add("ro-shop-btn--active");
       if (edit) edit.hidden = false;
     } else {
-      el.textContent = t("reorderAddMin");
+      el.textContent = t("roMinUnset");   // "Not set" — the value itself is the button
       btn?.classList.remove("ro-shop-btn--active");
       if (edit) edit.hidden = true;
     }
@@ -18588,6 +18922,40 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const { imgSection, row1Parts, name2, badgeHtml, weightChip } = _productHeroParts(d, p);
     _subscribeImportedProfile(link.importedFrom?.uid || null);   // live pseudo/avatar, friend or not
     const fromHTML = _importedFromHTML(link);
+    // ── Layout (founder mockup): hero + two figures, the commerce pair, then four
+    //    tabs. Every interactive element keeps its id, so _wireReorderPanel and
+    //    the _reorderUpdate* painters work unchanged.
+    const pv = _printValues(d);
+    const hexList = _productHexList(d);
+    if (_reorderTab === "print") _reorderTab = "info";   // the Printing tab is gone — its data now lives in Info
+    const tab = _reorderTab;
+    // Details only the old Printing tab showed: product id (catalogue link), type,
+    // diameter, and what the full catalogue record adds (fan, slicer profiles, site).
+    const pid = _hasRealProductId(d.raw?.id_product) ? String(Number(d.raw.id_product)) : "";
+    const cp = d.catalogProduct || {};
+    const fan = cp.fan || {};
+    const fanTxt = fan.speed_min != null || fan.speed_max != null
+      ? (fan.speed_min != null && fan.speed_max != null && fan.speed_min !== fan.speed_max ? `${fan.speed_min}–${fan.speed_max} %` : `${fan.speed_max ?? fan.speed_min} %`) : "";
+    const md = cp.metadata || {};
+    const prof = (lbl, id) => [lbl, id].filter(Boolean).join(" · ");
+    const site = String(cp.brand_url || "").trim();
+    const extLink = (href, text) => `<a class="pv-link" href="${safeHref(href)}" target="_blank" rel="noopener">${esc(text)}</a>`;
+    const desc = String(d.catalogProduct?.description || "").replace(/\\n/g, "\n").trim();
+    const detRow = (icon, label, valueHTML) => valueHTML ? `
+        <div class="ro-det-row"><span class="icon icon-${icon} icon-14" aria-hidden="true"></span><span class="ro-det-k">${esc(label)}</span><span class="ro-det-v">${valueHTML}</span></div>` : "";
+    const val = x => (x && x !== "-") ? esc(String(x)) : "";
+    const colorDot = `<span class="ro-color-dot" style="background:${colorBg(d)}"></span>`;
+    const capTxt = d.capacity ? `${d.capacity} g` : "";
+    const tile = (icon, label, value) => `
+        <div class="ro-ptile"><span class="icon icon-${icon} icon-18" aria-hidden="true"></span>
+          <div><div class="ro-ptile-k">${esc(label)}</div><div class="ro-ptile-v">${esc(value)}</div></div></div>`;
+    const tabBtn = (id, key, n = 0) => `<button type="button" class="ro-tab${tab === id ? " is-active" : ""}" data-ro-tab="${id}" role="tab" aria-selected="${tab === id}">${esc(t(key))}${n > 0 ? `<span class="ro-tab-count">${n}</span>` : ""}</button>`;
+    const panel = (id, html) => `<div class="ro-tabpanel" data-ro-panel="${id}"${tab === id ? "" : " hidden"}>${html}</div>`;
+    // The header (actions + ✕) lives INSIDE the scrolling body, top-right, so it
+    // scrolls away with the content instead of floating over it. Lifted out
+    // before the rebuild and put back after — same node, same listeners.
+    const _hdr = $("reorderPanel")?.querySelector(".panel-header");
+    _hdr?.remove();
     body.innerHTML = `
       <div class="ro-hero">
         ${imgSection}
@@ -18595,54 +18963,29 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           ${row1Parts.length ? `<div class="pi-row1">${row1Parts.join(" · ")}</div>` : ""}
           ${name2 ? `<div class="pi-row2 pi-row2--name">${esc(name2)}</div>` : ""}
           <div class="aspect-chips pc-ident-chips">${badgeHtml}${weightChip}</div>
+          ${hexList.length ? `<div class="aspect-chips pc-ident-chips ro-hex-chips">${hexList.map(h => `<span class="aspect-chip aspect-chip--hex"><span class="ro-color-dot" style="background:${esc(h.length === 9 ? h.slice(0, 7) : h)}"></span>${esc(h)}</span>`).join("")}</div>` : ""}
+          ${desc ? `<p class="ro-hero-desc">${esc(desc)}</p>` : ""}
+          <div class="ro-kpis">
+            <div class="ro-kpi" id="roStock">
+              <span class="ro-kpi-dot" aria-hidden="true"></span>
+              <div><div class="ro-kpi-k">${esc(t("roKpiInStock"))}</div><div class="ro-kpi-v" id="roStockTxt"></div></div>
+            </div>
+            <div class="ro-kpi">
+              <span class="icon icon-coins icon-18" aria-hidden="true"></span>
+              <div><div class="ro-kpi-k">${esc(t("roKpiValue"))}</div><div class="ro-kpi-v" id="roKpiValue"></div></div>
+            </div>
+          </div>
         </div>
       </div>
       ${fromHTML}
 
-      <!-- Minimum (left) + current stock (right): side by side. -->
-      <div class="ro-pair">
-      <div class="ro-field">
-        <div class="ro-label">${esc(t("reorderMinStock"))}</div>
-        <!-- Big button like the buy-link / price: icon + "Add a minimum" when
-             empty (click to add), the value when set (click to edit); the pencil
-             appears once a minimum is set. -->
-        <div class="ro-shop" id="roMinDisplay">
-          <button type="button" class="ro-shop-btn${min ? " ro-shop-btn--active" : ""}" id="roMinBtn">
-            <span class="icon icon-bell icon-14"></span>
-            <span id="roMinVal"></span>
-          </button>
-          <button type="button" class="ro-shop-edit" id="roMinEdit" title="${esc(t("reorderEditMin"))}"${min ? "" : " hidden"}>
-            <span class="icon icon-edit icon-13"></span>
-          </button>
-        </div>
-        <div class="ro-shop-editor" id="roMinEditor" hidden>
-          <input type="number" id="roMinStock" class="ro-input" min="0" step="1" placeholder="0" value="${min}" />
-          <button type="button" class="ro-shop-ok" id="roMinOk" title="${esc(t("btnSave"))}">
-            <span class="icon icon-check icon-14"></span>
-          </button>
-        </div>
-        <div class="ro-hint">${esc(t("reorderMinStockHint"))}</div>
-      </div>
-      <div class="ro-field">
-        <div class="ro-label">${esc(t("reorderStockSection"))}</div>
-        <div class="ro-stock${below ? " ro-stock--low" : ""}" id="roStock">
-          <span class="icon icon-package icon-14"></span>
-          <span id="roStockTxt"></span>
-        </div>
-      </div>
-      </div>
-
-      <!-- Buy link + price: one commerce pair, side by side. -->
-      <div class="ro-pair">
+      <!-- Buy link + price: one commerce pair. -->
+      <div class="ro-pair ro-commerce">
         <div class="ro-field">
-          <div class="ro-label">${esc(t("reorderBuyLink"))}</div>
-          <!-- The URL is never shown as text (no interest): just a Shopify button —
-               grey when empty (click to add), green when set (click to open the
-               shop). The pencil reveals the input to change it, then hides again. -->
           <input type="hidden" id="roBuyUrl" value="${esc(link.buyUrl || "")}" />
           <div class="ro-shop" id="roShopDisplay">
             <button type="button" class="ro-shop-btn${link.buyUrl ? " ro-shop-btn--active" : ""}" id="roShopBtn">
-              <span class="icon icon-cart icon-14"></span>
+              <span class="icon icon-link icon-14"></span>
               <span>${esc(link.buyUrl ? _buyHost(link.buyUrl) : t("reorderAddLink"))}</span>
             </button>
             <button type="button" class="ro-shop-edit" id="roShopEdit" title="${esc(t("reorderEditLink"))}"${link.buyUrl ? "" : " hidden"}>
@@ -18657,18 +19000,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
             </button>
           </div>
         </div>
-
         <div class="ro-field">
-          <div class="ro-label">${esc(t("reorderPrice"))}
-            <span class="ro-cur" id="roCur">${esc(info.currency)}</span>
-            <span class="ro-cur ro-cur--mode" id="roMode">${esc(mode === "HT" ? t("reorderHT") : t("reorderTTC"))}</span>
-          </div>
-          <!-- Big button like the buy-link: icon + "Add a price" when empty (click
-               to add), the value when set (click to edit); pencil shown once set. -->
           <div class="ro-shop" id="roPriceDisplay">
             <button type="button" class="ro-shop-btn${price !== "" ? " ro-shop-btn--active" : ""}" id="roPriceBtn">
-              <span class="ro-price-cur" id="roPriceSym">${esc(info.symbol)}</span>
+              <span class="icon icon-tag icon-14"></span>
+              <span class="ro-price-cur" id="roPriceSym" hidden>${esc(info.symbol)}</span>
               <span id="roPriceVal"></span>
+              <span class="ro-cur" id="roCur" hidden>${esc(info.currency)}</span>
+              <span class="ro-cur ro-cur--mode" id="roMode">${esc(mode === "HT" ? t("reorderHT") : t("reorderTTC"))}</span>
             </button>
             <button type="button" class="ro-shop-edit" id="roPriceEdit" title="${esc(t("reorderEditPrice"))}"${price !== "" ? "" : " hidden"}>
               <span class="icon icon-edit icon-13"></span>
@@ -18684,73 +19023,127 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         </div>
       </div>
 
-      ${_pcPrintHTML(d)}
-
-      <div class="ro-field" id="roAttachField">${_attachFieldHTML(r)}</div>
-
-      ${_pcDocsHTML(d, p)}
-
-      <div class="ro-field">
-        <div class="tags-head">
-          <span class="ro-label">${esc(t("sectionTags"))}</span>
-          <button type="button" class="tags-edit-btn" id="roTagsEditBtn" title="${esc(t("tagsEdit"))}" aria-label="${esc(t("tagsEdit"))}"><span class="icon icon-edit icon-13"></span></button>
-        </div>
-        <div class="tags-input-wrap">
-          <input id="roTagInput" class="tag-input" placeholder="${esc(t("tagAdd"))}" spellcheck="false" autocomplete="off" maxlength="${TAG_MAX_LEN}" />
-          <div class="tags-dd" id="roTagDropdown" hidden></div>
-        </div>
-        <div class="tag-chips" id="roTagChips">${tags.map(tag => _tagChipHtml(tag, false)).join("")}</div>
+      <div class="ro-tabs" role="tablist">
+        ${tabBtn("info", "roTabInfo")}${tabBtn("docs", "roTabDocs", _pcDocsHTML(d, p, true))}${tabBtn("notes", "roTabNotes")}
       </div>
 
-      <div class="ro-field">
-        <div class="ro-label">${esc(t("reorderNote"))}</div>
-        <textarea id="roNote" class="ro-input ro-note" rows="2" maxlength="500"
-                  placeholder="${esc(t("reorderNotePlaceholder"))}">${esc(link.note || "")}</textarea>
-      </div>
-
-      ${_pcDetailsHTML(d, p, true)}
-
-      <div class="ro-field">
-        <div class="ro-label">${esc(t("reorderRefs"))}</div>
-        <div class="ro-ref-row">
-          <span class="ro-ref-label">SKU</span>
-          ${skuAuto
-            ? `<button type="button" class="ro-ref-copyval" id="roSkuCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(skuAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roSku" value="${esc(skuAuto)}" />`
-            : `<div class="ro-ref-editwrap">
-                 <div class="ro-ref-display" id="roSkuDisplay">
-                   <button type="button" class="ro-ref-copyval" id="roSkuCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val" id="roSkuVal"></span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button>
-                 </div>
-                 <div class="ro-ref-editor" id="roSkuEditor" hidden><input type="text" id="roSku" class="ro-ref-input" placeholder="—" value="${esc(skuVal)}" /></div>
-                 <button type="button" class="ro-ref-toggle" id="roSkuEdit" title="${esc(t("reorderEditRef"))}" aria-label="${esc(t("reorderEditRef"))}"><span class="icon icon-edit icon-13"></span></button>
-               </div>`}
+      ${panel("info", `
+        <div class="ro-card">
+          <div class="ro-card-title">${esc(t("sectionPrint"))}</div>
+          <div class="ro-ptiles">
+            ${tile("nozzle", t("lbNozzle"), pv.nozzle)}
+            ${tile("bed", t("lbBed"), pv.bed)}
+            ${tile("water", t("lbDryTemp"), pv.dryT)}
+            ${tile("clock", t("lbDryTime"), pv.dryH)}
+            ${tile("package", t("lbDensity"), pv.density ? `${pv.density} g/cm³` : "—")}
+            ${tile("palette", "TD", pv.td != null ? String(pv.td) : "—")}
+          </div>
         </div>
-        <div class="ro-ref-row">
-          <span class="ro-ref-label">EAN</span>
-          ${eanAuto
-            ? `<button type="button" class="ro-ref-copyval" id="roEanCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(eanAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roEan" value="${esc(eanAuto)}" />`
-            : `<div class="ro-ref-editwrap">
-                 <div class="ro-ref-display" id="roEanDisplay">
-                   <button type="button" class="ro-ref-copyval" id="roEanCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val" id="roEanVal"></span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button>
-                 </div>
-                 <div class="ro-ref-editor" id="roEanEditor" hidden><input type="text" id="roEan" class="ro-ref-input" inputmode="numeric" placeholder="—" value="${esc(eanVal)}" /></div>
-                 <button type="button" class="ro-ref-toggle" id="roEanEdit" title="${esc(t("reorderEditRef"))}" aria-label="${esc(t("reorderEditRef"))}"><span class="icon icon-edit icon-13"></span></button>
-               </div>`}
+        <div class="ro-cards2">
+          <div class="ro-card">
+            <div class="ro-card-title">${esc(t("roPanelDetails"))}</div>
+            ${detRow("tag", t("detBrand"), site && val(d.brand)
+              ? `<a class="pv-link ro-brand-link" href="${safeHref(site)}" target="_blank" rel="noopener">${val(d.brand)}<span class="icon icon-globe icon-12" aria-hidden="true"></span></a>`
+              : val(d.brand))}
+            ${detRow("list", t("roDetRange"), val(d.series))}
+            ${detRow("droplets", t("detMaterial"), val(d.material))}
+            ${detRow("palette", t("roDetColor"), val(d.colorName) ? `${colorDot}${val(d.colorName)}` : "")}
+            ${detRow("scale", t("roDetNetWeight"), esc(capTxt))}
+            ${detRow("tag", t("detProductId"), pid ? extLink(`https://tigersystem.io/fr/catalog/${pid}`, pid) : "")}
+            ${detRow("package", t("detType"), val(d.productType))}
+            ${detRow("nozzle", t("detDiameter"), val(d.diameter))}
+            ${detRow("speed", t("detFanSpeed"), esc(fanTxt))}
+          </div>
+          <div class="ro-col">
+          <div class="ro-card">
+            <div class="ro-card-title">${esc(t("roPanelStock"))}</div>
+            <div class="ro-det-row ro-det-row--min">
+              <span class="icon icon-bell icon-14" aria-hidden="true"></span><span class="ro-det-k">${esc(t("reorderMinStock"))}</span>
+              <span class="ro-det-v">
+                <span class="ro-shop ro-shop--inline" id="roMinDisplay">
+                  <button type="button" class="ro-shop-btn ro-shop-btn--link${min ? " ro-shop-btn--active" : ""}" id="roMinBtn"><span id="roMinVal"></span></button>
+                  <button type="button" class="ro-shop-edit" id="roMinEdit" title="${esc(t("reorderEditMin"))}"${min ? "" : " hidden"}><span class="icon icon-edit icon-13"></span></button>
+                </span>
+              </span>
+            </div>
+            <div class="ro-shop-editor" id="roMinEditor" hidden>
+              <input type="number" id="roMinStock" class="ro-input" min="0" step="1" placeholder="0" value="${min}" />
+              <button type="button" class="ro-shop-ok" id="roMinOk" title="${esc(t("btnSave"))}"><span class="icon icon-check icon-14"></span></button>
+            </div>
+            <div class="ro-det-row"><span class="icon icon-package icon-14" aria-hidden="true"></span><span class="ro-det-k">${esc(t("roStockNow"))}</span><span class="ro-det-v" id="roStockNow"></span></div>
+            <div class="ro-det-row"><span class="icon icon-coins icon-14" aria-hidden="true"></span><span class="ro-det-k">${esc(t("roStockValue"))}</span><span class="ro-det-v" id="roStockValue"></span></div>
+          </div>
+            ${(md.bambuLabel || md.bambuID || md.crealityLabel || md.crealityID) ? `<div class="ro-card">
+              <div class="ro-card-title">${esc(t("roPanelSlicer"))}</div>
+              ${detRow("settings", t("detBambuProfile"), esc(prof(md.bambuLabel, md.bambuID)))}
+              ${detRow("settings", t("detCrealityProfile"), esc(prof(md.crealityLabel, md.crealityID)))}
+            </div>` : ""}
+          </div>
         </div>
-      </div>
+        <div class="ro-note-wrap">
+          <span class="icon icon-edit icon-16" aria-hidden="true"></span>
+          <textarea id="roNote" class="ro-input ro-note" rows="1" maxlength="500"
+                    placeholder="${esc(t("reorderNotePlaceholder"))}">${esc(link.note || "")}</textarea>
+          <span class="ro-note-count" id="roNoteCount">${String(link.note || "").length}/500</span>
+        </div>
+        <div class="ro-field ro-attach-zone" id="roAttachField">${_attachFieldHTML(r)}</div>
+      `)}
 
-      ${stock === 0 ? `<div class="pc-note">${esc(t("pcNoStock"))}</div>` : ""}
-      ${state.debugEnabled ? `
-      <div class="ro-field">
-        <details class="debug" id="pcRawDetails">
-          <summary style="display:flex;align-items:center;justify-content:space-between">
-            <strong>${esc(t("sectionRaw"))}</strong>
-            <button class="stg-copy-btn" id="btnCopyPcRaw" title="Copy JSON" style="height:26px;width:26px;flex-shrink:0">${SVG_COPY}</button>
-          </summary>
-          <pre class="json" id="pcRawJsonPre" style="margin-top:10px;max-height:400px">${highlight(d.raw || {})}</pre>
-        </details>
-      </div>` : ""}
+      ${panel("docs", _pcDocsHTML(d, p) || `<div class="ro-empty">${esc(t("roDocsEmpty"))}</div>`)}
+
+      ${panel("notes", `
+        <div class="ro-field">
+          <div class="tags-head">
+            <span class="ro-label">${esc(t("sectionTags"))}</span>
+            <button type="button" class="tags-edit-btn" id="roTagsEditBtn" title="${esc(t("tagsEdit"))}" aria-label="${esc(t("tagsEdit"))}"><span class="icon icon-edit icon-13"></span></button>
+          </div>
+          <div class="tags-input-wrap">
+            <input id="roTagInput" class="tag-input" placeholder="${esc(t("tagAdd"))}" spellcheck="false" autocomplete="off" maxlength="${TAG_MAX_LEN}" />
+            <div class="tags-dd" id="roTagDropdown" hidden></div>
+          </div>
+          <div class="tag-chips" id="roTagChips">${tags.map(tag => _tagChipHtml(tag, false)).join("")}</div>
+        </div>
+        <div class="ro-field">
+          <div class="ro-label">${esc(t("reorderRefs"))}</div>
+          <div class="ro-ref-row">
+            <span class="ro-ref-label">SKU</span>
+            ${skuAuto
+              ? `<button type="button" class="ro-ref-copyval" id="roSkuCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(skuAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roSku" value="${esc(skuAuto)}" />`
+              : `<div class="ro-ref-editwrap">
+                   <div class="ro-ref-display" id="roSkuDisplay">
+                     <button type="button" class="ro-ref-copyval" id="roSkuCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val" id="roSkuVal"></span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button>
+                   </div>
+                   <div class="ro-ref-editor" id="roSkuEditor" hidden><input type="text" id="roSku" class="ro-ref-input" placeholder="—" value="${esc(skuVal)}" /></div>
+                   <button type="button" class="ro-ref-toggle" id="roSkuEdit" title="${esc(t("reorderEditRef"))}" aria-label="${esc(t("reorderEditRef"))}"><span class="icon icon-edit icon-13"></span></button>
+                 </div>`}
+          </div>
+          <div class="ro-ref-row">
+            <span class="ro-ref-label">EAN</span>
+            ${eanAuto
+              ? `<button type="button" class="ro-ref-copyval" id="roEanCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(eanAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roEan" value="${esc(eanAuto)}" />`
+              : `<div class="ro-ref-editwrap">
+                   <div class="ro-ref-display" id="roEanDisplay">
+                     <button type="button" class="ro-ref-copyval" id="roEanCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val" id="roEanVal"></span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button>
+                   </div>
+                   <div class="ro-ref-editor" id="roEanEditor" hidden><input type="text" id="roEan" class="ro-ref-input" inputmode="numeric" placeholder="—" value="${esc(eanVal)}" /></div>
+                   <button type="button" class="ro-ref-toggle" id="roEanEdit" title="${esc(t("reorderEditRef"))}" aria-label="${esc(t("reorderEditRef"))}"><span class="icon icon-edit icon-13"></span></button>
+                 </div>`}
+          </div>
+        </div>
+        ${state.debugEnabled ? `
+        <div class="ro-field">
+          <details class="debug" id="pcRawDetails">
+            <summary style="display:flex;align-items:center;justify-content:space-between">
+              <strong>${esc(t("sectionRaw"))}</strong>
+              <button class="stg-copy-btn" id="btnCopyPcRaw" title="Copy JSON" style="height:26px;width:26px;flex-shrink:0">${SVG_COPY}</button>
+            </summary>
+            <pre class="json" id="pcRawJsonPre" style="margin-top:10px;max-height:400px">${highlight(d.raw || {})}</pre>
+          </details>
+        </div>` : ""}
+      `)}
 
       <div id="roSaveResult" class="ro-save-result"></div>`;
+    if (_hdr) body.prepend(_hdr);
     // "+ Material" and the ❤/★/list toggles live in the panel HEADER (left of the
     // ✕), not the body head. "+" comes first, like on the spool detail card.
     const addBtn = state.friendView ? ""
@@ -18830,6 +19223,15 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       });
     });
     $("roPrice")?.addEventListener("input", _reorderUpdateDerived);
+    $("roPrice")?.addEventListener("input", _reorderUpdateStock);   // stock value follows the price
+    // Tabs — swap panels in place (no re-render: editors keep their state).
+    $("reorderPanelBody")?.querySelectorAll("[data-ro-tab]").forEach(b => b.addEventListener("click", () => {
+      _reorderTab = b.dataset.roTab;
+      const body = $("reorderPanelBody");
+      body.querySelectorAll("[data-ro-tab]").forEach(x => { const on = x === b; x.classList.toggle("is-active", on); x.setAttribute("aria-selected", on); });
+      body.querySelectorAll("[data-ro-panel]").forEach(pn => { pn.hidden = pn.dataset.roPanel !== _reorderTab; });
+    }));
+    $("roNote")?.addEventListener("input", e => { const c = $("roNoteCount"); if (c) c.textContent = `${e.target.value.length}/500`; });
     $("roMinStock")?.addEventListener("input", _reorderUpdateStock);
     // Price — value shown as text + pencil; the number input is hidden until edit,
     // then a ✓ saves + collapses (mirrors the buy-link pattern).
@@ -19159,10 +19561,12 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // EVERY video of a product, in one place: the chip's own video link first, then
   // the playable web-link attachments (deduped). The spool detail and the product
   // card both draw their videos through this — never open-code a player elsewhere.
-  function _productVideosHTML(chipUrl, prod) {
-    const urls = [chipUrl, ..._attachmentsOf(prod).map(a => a.url)]
+  function _productVideoUrls(chipUrl, prod) {
+    return [chipUrl, ..._attachmentsOf(prod).map(a => a.url)]
       .filter((u, i, all) => u && _isPlayableVideo(u) && all.indexOf(u) === i);
-    return urls.map(_videoSectionHTML).join("");
+  }
+  function _productVideosHTML(chipUrl, prod) {
+    return _productVideoUrls(chipUrl, prod).map(_videoSectionHTML).join("");
   }
   // Poster → player, in place (delegated: both cards rebuild their body).
   document.addEventListener("click", e => {
@@ -19210,11 +19614,18 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // container picker events (side card — no overlay backdrop, closed via the chevron tab)
   $("containerCloseTab")?.addEventListener("click", closeContainerPicker);
   $("containerPickerSearch").addEventListener("input", e => _renderCpList(e.target.value));
+  $("containerPickerKinds")?.addEventListener("click", e => {
+    const b = e.target.closest("[data-cp-kind]");
+    if (b) _cpSetKind(b.dataset.cpKind);
+  });
   $("containerPickerList").addEventListener("click", e => {
     // Weight-editing controls live inside the row — handle them first, and never
     // let the click fall through to "pick this container".
     const edit = e.target.closest("[data-cw-edit]");
     if (edit) { openContainerWeightModal(edit.dataset.cwEdit); return; }
+    const fav = e.target.closest("[data-cp-fav]");
+    if (fav) { _cpToggleFavorite(fav.dataset.cpFav); return; }
+    if (e.target.closest("[data-cp-all]")) { _cpOnly = null; _cpHint = ""; _cpRepaint(); return; }
     const btn = e.target.closest(".cp-item[data-cid]");
     if (btn && _cpRow) doContainerUpdate(_cpRow, btn.dataset.cid);
   });
@@ -19237,6 +19648,23 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   $("productCardBody")?.addEventListener("click", e => {
     const flag = e.target.closest(".flag-toggle[data-pc-flag]");
     if (flag) { _toggleProductCardFlag(flag.dataset.pcFlag).catch(err => reportError("productCard.flag", err)); return; }
+    // Catalogue card — the four ways to take the product.
+    const cat = e.target.closest("[data-pc-cat]");
+    if (cat && _productCardData?.catalogItem) {
+      const p = _productCardData, act = cat.dataset.pcCat;
+      if (act === "inv")  { if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id)); return; }
+      if (act === "list") { _openAddToListMenu(cat, p.id, p.catalogRow || null); return; }
+      if (act === "cart") { _toggleProductCardFlag("liked").catch(err => reportError("catalogCard.cart", err)); return; }
+      if (act === "fav")  { _toggleProductCardFlag("favorite").catch(err => reportError("catalogCard.fav", err)); return; }
+      // The full product sheet (stock, price, link, tabs…) beside this card — a
+      // second press closes it again.
+      if (act === "sheet") {
+        if (_reorderShows(p.id)) { closeReorderPanel(); cat.setAttribute("aria-pressed", "false"); return; }
+        const row = _listRowFor(p);
+        if (row) { openReorderPanel(row, { product: p }); cat.setAttribute("aria-pressed", "true"); }
+        return;
+      }
+    }
     // "Added from …" block → jump to that friend's inventory (when they're a friend).
     const from = e.target.closest(".ro-from--link[data-ro-friend]");
     if (from) {
@@ -20699,35 +21127,83 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
      deleted:true tombstone docs and hard-delete them. Fire-and-forget — the
      resulting Firestore writes trigger a clean snapshot that no longer
      contains those docs, so the migration is automatically idempotent.   */
-  /* ── Auto-assign container to spools that have none ────────────────────────
-     Mirrors Flutter's _resolveSpoolForBrand logic.
-     Triggered on every live Firestore snapshot — once all spools have a
-     container_id the filter finds nothing and the function is a no-op.
-     Also fires implicitly after saveAddProduct() because that write triggers
-     a fresh snapshot, so new spools are covered without touching that path.
+  /* ── Container of a newly added spool ─────────────────────────────────────
+     Which empty spool a filament sits on decides its net weight, so a new spool
+     gets one at once — chosen by these rules, keyed on the brand ID (`brandId` ==
+     `id_brand`), never on a name:
 
-     Resolution order (ISO with Flutter):
-       1. First catalog entry whose brandId matches the spool's id_brand.
-       2. Fallback: first entry with brandId == 0 (Generic / custom_cardboard).
-       3. Safety net: very first entry in the catalog.                        */
+       not a refill → the brand's own container (any but "Without MasterSpool");
+                      several → the user picks among them;
+                      none    → the user picks a generic one (cardboard, plastic…),
+                                never "Without MasterSpool".
+       refill       → the brand's MasterSpool; several → the user picks among them;
+                      none → the user picks among every MasterSpool.
 
-  function resolveContainerForBrand(brandId) {
+     `_containerChoice` returns { pick } (one obvious answer, written silently) or
+     { ask, hint } (a short list offered in the container picker). Only a spool
+     ADDED during this session is asked about; older spools without a container
+     are filled in only when the answer is obvious. */
+  const CONTAINER_KIND = { MASTERSPOOL: "masterspool", CARDBOARD: "cardboard", PLASTIC: "plastic", NONE: "without masterspool" };
+  const _containerKind = c => String(c?.type || "").trim().toLowerCase();
+  const _isNoContainer = c => _containerKind(c) === CONTAINER_KIND.NONE;
+  const _isMasterspool = c => _containerKind(c) === CONTAINER_KIND.MASTERSPOOL;
+
+  function _containerChoice(data) {
     const catalog = state.db.containers || [];
     if (!catalog.length) return null;
-    // 1) Brand-specific match
-    if (brandId != null) {
-      const match = catalog.find(c => Number(c.brandId) === Number(brandId));
-      if (match) return match;
+    const brandId = Number(data?.id_brand);
+    const ofBrand = catalog.filter(c => Number(c.brandId) !== 0 && Number(c.brandId) === brandId);
+    if (data?.info1) {   // refill (info1) — it goes into a reusable MasterSpool
+      const masters = ofBrand.filter(_isMasterspool);
+      // With favourite MasterSpools (any brand), the choice is ALWAYS asked:
+      // the favourites + the brand's own ones, nothing else ("Show all" opens
+      // the rest). Set silently only when the favourite IS the brand's only one.
+      const favs = catalog.filter(c => _isMasterspool(c) && containerIsFavorite(c));
+      if (favs.length) {
+        const ask = [...new Set([...favs, ...masters])];
+        if (ask.length === 1 && masters.length === 1) return { pick: ask[0] };
+        return { ask, hint: "cpHintRefillAny" };   // other brands in the list → no brand in the line
+      }
+      if (masters.length === 1) return { pick: masters[0] };
+      if (masters.length > 1)   return { ask: masters, hint: "cpHintRefillBrand" };
+      return { ask: catalog.filter(_isMasterspool), hint: "cpHintRefillAny" };
     }
-    // 2) Generic fallback (brandId == 0 → custom_cardboard)
-    const generic = catalog.find(c => Number(c.brandId) === 0);
-    if (generic) return generic;
-    // 3) Safety net
-    return catalog[0];
+    const own = ofBrand.filter(c => !_isNoContainer(c));
+    if (own.length === 1) return { pick: own[0] };
+    if (own.length > 1)   return { ask: own, hint: "cpHintBrandChoose" };
+    return { ask: catalog.filter(c => Number(c.brandId) === 0 && !_isNoContainer(c)), hint: "cpHintGeneric" };
+  }
+
+  // Spools present when this account's inventory first loaded: never asked about.
+  let _cpSeenUid = null, _cpSeen = new Set();
+  const _cpAsked = new Set();
+  const _cpIsNew = id => !_cpSeen.has(id);
+
+  // One question at a time: open the new spool's card, then the container
+  // picker narrowed to the candidates, with a line saying why.
+  const _cpAskQueue = [];
+  let _cpAskBusy = false;
+  function _queueContainerAsk(spoolId, choice) { _cpAskQueue.push({ spoolId, choice }); _cpAskNext(); }
+  async function _cpAskNext() {
+    if (_cpAskBusy) return;
+    const job = _cpAskQueue.shift();
+    if (!job) return;
+    _cpAskBusy = true;
+    const t0 = Date.now();
+    let row = null;
+    while (!(row = state.rows.find(x => x.spoolId === job.spoolId)) && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 100));
+    if (!row || row.containerId) { _cpAskBusy = false; _cpAskNext(); return; }
+    if (state.selected !== job.spoolId) openDetail(job.spoolId);
+    openContainerPicker(row, {
+      only: job.choice.ask.map(c => c.id),
+      hint: t(job.choice.hint, { brand: v(row.brand) !== "-" ? row.brand : "" }),
+      onClose: () => { _cpAskBusy = false; setTimeout(_cpAskNext, 300); },
+    });
   }
 
   async function autoAssignMissingContainers(uid, inventoryRaw) {
-    // Find spools that have no container_id yet (and are not deleted).
+    const firstPass = _cpSeenUid !== uid;
+    if (firstPass) { _cpSeenUid = uid; _cpSeen = new Set(Object.keys(inventoryRaw)); _cpAsked.clear(); }
     const missing = Object.entries(inventoryRaw).filter(
       ([, data]) => !data.container_id && data.deleted !== true
     );
@@ -20740,18 +21216,24 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const ts = firebase.firestore.FieldValue.serverTimestamp();
 
     for (const [spoolId, data] of missing) {
-      const container = resolveContainerForBrand(data.id_brand);
-      if (!container) continue;
-      batch.update(invRef.doc(spoolId), {
-        container_id:     container.id,
-        container_weight: container.container_weight,
-        updatedAt:        ts,
-      });
-      assigned++;
-      if (++ops >= 400) {
-        await batch.commit();
-        batch = fbDb().batch();
-        ops = 0;
+      const choice = _containerChoice(data);
+      if (!choice) continue;
+      if (choice.pick) {
+        batch.update(invRef.doc(spoolId), {
+          container_id:     choice.pick.id,
+          container_weight: choice.pick.container_weight,
+          updatedAt:        ts,
+        });
+        assigned++;
+        if (++ops >= 400) {
+          await batch.commit();
+          batch = fbDb().batch();
+          ops = 0;
+        }
+      } else if (choice.ask?.length && !firstPass && _cpIsNew(spoolId)
+                 && !_cpAsked.has(spoolId) && !_cpAsked.has(data.twin_tag_uid || "")) {
+        _cpAsked.add(spoolId);   // a twin shares the answer (_updateSpoolTwinned)
+        _queueContainerAsk(spoolId, choice);
       }
     }
     if (ops > 0) await batch.commit();
@@ -22487,6 +22969,14 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // (openPrinterAddForm, renderPrintersView, etc.) works unchanged.
   const PRINTER_BRAND_META = Object.fromEntries([...brands].map(([id, b]) => [id, b.meta]));
   const PRINTER_ADD_SCHEMA = Object.fromEntries([...brands].map(([id, b]) => [id, b.schema]));
+  /* A brand may ask for different fields depending on the printer: an Elegoo
+     Centauri Carbon (SDCP) needs only its IP, a Centauri Carbon 2 (MQTT) a
+     serial + access code. `schemaFor(printer | prefill)` returns that variant;
+     its `fixed` values (e.g. { protocol: "sdcp" }) are written with the doc. */
+  function _printerSchemaFor(brand, subject) {
+    const b = brands.get(brand);
+    return (subject && b?.schemaFor?.(subject)) || PRINTER_ADD_SCHEMA[brand];
+  }
   const PRINTER_ADD_HELPER = Object.fromEntries([...brands].map(([id, b]) => [id, b.helper]));
 
   /**
@@ -27041,8 +27531,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   /* Scan multi-select (printers/scan-pick.js). The required fields a scan result
      may lack — an access code, a check code — so the picker can ask for them on
      the card itself instead of routing every printer through the form. */
-  _printerCtx.printerRequiredFields = (brand) =>
-    (PRINTER_ADD_SCHEMA[brand]?.sections || []).flatMap(s => s.fields)
+  _printerCtx.printerRequiredFields = (brand, prefill) =>
+    (_printerSchemaFor(brand, prefill)?.sections || []).flatMap(s => s.fields)
       .filter(f => f.required)
       .map(f => ({ key: f.key, label: f.labelText || t(f.labelKey), placeholder: f.placeholder || "",
                    secret: !!f.secret, mono: !!f.mono }));
@@ -27051,9 +27541,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
      (schema fields + name + model + discovery) — one batch, all or nothing. */
   _printerCtx.addScannedPrinters = async (brand, prefills) => {
     const uid = state.activeAccountId;
-    const schema = PRINTER_ADD_SCHEMA[brand];
-    if (!uid || !schema || !prefills?.length) return { ok: false, error: "missing-params" };
-    const fields = schema.sections.flatMap(s => s.fields);
+    if (!uid || !PRINTER_ADD_SCHEMA[brand] || !prefills?.length) return { ok: false, error: "missing-params" };
     const devices = fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand).collection("devices");
     const batch = fbDb(uid).batch();
     const ids = [];
@@ -27062,7 +27550,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         printerName:    String(pf.printerName || "").trim(),
         printerModelId: String(pf.printerModelId || pf.modelId || "").trim(),
       };
+      const schema = _printerSchemaFor(brand, pf);
+      const fields = schema.sections.flatMap(s => s.fields);
       for (const f of fields) data[f.key] = String(pf[f.key] ?? "").trim();
+      Object.assign(data, schema.fixed || {});
       if (!data.printerName || fields.some(f => f.required && !data[f.key])) {
         return { ok: false, error: "missing-fields", index: i };
       }
@@ -27809,6 +28300,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
     // Prusa — the job keys are hold-to-confirm, wired on every full render.
     if (p.brand === "prusa") prusaWireLive($("prusaLive"), p);
+    if (p.brand === "elegoo") sdcpWireLive($("elgLive"), p);   // CC1 (SDCP) job keys; no-op for a CC2
 
     // Creality camera — register the sidecard's <video> as a stream consumer,
     // then start (or reuse) the WebRTC connection.  addCreCamConsumer() is
@@ -29074,6 +29566,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   // hits "Add". Cleared on close so a subsequent add (re-opened blank)
   // doesn't accidentally inherit the previous run's data.
   let _printerAddDiscovery = null;
+  let _printerAddSchema = null;      // the field set the open form shows (brand variant, see _printerSchemaFor)
 
   function openPrinterBrandPicker() {
     const list = $("printerBrandPickerList");
@@ -29098,7 +29591,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         <button type="button" class="pba-brand" data-brand="${esc(brand)}">
           <span class="pba-brand-logo" data-brand="${esc(brand)}"></span>
           <span class="pba-brand-text">
-            <span class="pba-brand-label">${esc(meta.label)}</span>
+            <span class="pba-brand-label">${esc(meta.label)}${meta.beta ? ` <span class="pba-beta-tag">${esc(t("betaTag"))}</span>` : ""}</span>
             <span class="pba-brand-conn">${esc(meta.connection)}</span>
           </span>
           <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
@@ -29174,6 +29667,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     _printerAddBrand    = brand;
     _printerEditContext = editPrinter ? { brand, deviceId: editPrinter.id } : null;
     _printerAddDiscovery = (!editPrinter && prefill?.discovery) ? prefill.discovery : null;
+    _printerAddSchema = _printerSchemaFor(brand, editPrinter || prefill);
     const isEdit = !!editPrinter;
 
     // ── Shell: header sub-label (brand name) ────────────────────────────────
@@ -29212,7 +29706,8 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
     // ── Delegate body to brand widget ────────────────────────────────────────
     const bodyEl = $("printerAddBody");
-    brandEntry.renderSettingsWidget(editPrinter, bodyEl, widgetCtx);
+    (_printerAddSchema === brandEntry.schema ? brandEntry.renderSettingsWidget : schemaWidget(_printerAddSchema))
+      (editPrinter, bodyEl, widgetCtx);
 
     // ── Open + initial focus ─────────────────────────────────────────────────
     // Non-modal, like the spool sidecard: no dimming overlay so the list and the
@@ -29237,6 +29732,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     _printerAddBrand = null;
     _printerEditContext = null;
     _printerAddDiscovery = null;
+    _printerAddSchema = null;
     _syncPanels(); // reset the config offset + re-lay-out remaining panels
   }
   // ── Tutorial image bottom-sheet ──────────────────────────────────────────
@@ -29561,7 +30057,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // if the user cleared an optional one) so an empty string can be
     // written back to wipe the previous value rather than leaving stale
     // data on the doc.
-    const schema = PRINTER_ADD_SCHEMA[brand];
+    const schema = _printerAddSchema || PRINTER_ADD_SCHEMA[brand];
     const data = {};
     const nameInput = body.querySelector("input[name=printerName]");
     data.printerName = (nameInput?.value || "").trim();
@@ -29572,6 +30068,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       const v  = (el?.value || "").trim();
       data[f.key] = v;
     }));
+    Object.assign(data, schema.fixed || {});
 
     if (!data.printerName) {
       err.textContent = t("printerAddErrName");
@@ -38314,6 +38811,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       id_product: "catalogue product id; 4294967295 = none",
       "color_r/g/b/a": "colour 1 (0-255); color_r2.. / color_r3.. = colours 2 and 3 of a bi/tri-colour",
       online_color_list: "catalogue colour list (hex RRGGBB or RRGGBBAA); online_color_type: mono | multi | gradient | conic_gradient",
+      catalogProduct: "catalogue spools only: the FULL catalogue record (description, links, fan speeds, slicer profiles in metadata, brand_url…) — informational, not on the chip; URLs are untrusted text",
       "data1-data7": "seven chip slots whose meaning DEPENDS ON id_type — see data_slots_by_product_type; `decoded` already applies the right one",
       "(0 in a data slot)": "not set — for filament the app then shows the material's recommended values",
       measure: "nominal capacity in `id_unit`",

@@ -416,6 +416,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // ── Elegoo UDP probe — targeted single-IP discovery (manual "Add by IP").
   // Two sends 60 ms apart, 1.4 s listen. Returns { ok, candidate? }.
   elegooUdpProbe: (ip) => ipcRenderer.invoke('elegoo:udp-probe', ip),
+  // SDCP printers (Centauri Carbon 1): M99999 on UDP 3000 — sweep + single IP.
+  elegooSdcpDiscover: (prefixes) => ipcRenderer.invoke('elegoo:sdcp-discover', prefixes),
+  elegooSdcpProbe: (ip) => ipcRenderer.invoke('elegoo:sdcp-probe', ip),
 
   // ── Image cache (main-process side) ─────────────────────────────────────
   imgGet: (url) => ipcRenderer.invoke('img:get', url),

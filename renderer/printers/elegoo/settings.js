@@ -6,7 +6,7 @@
 export const meta = {
   label: "Elegoo",
   accent: "#00a3e0",
-  connection: "MQTT (LAN)"
+  connection: "MQTT / SDCP (LAN)"
 };
 
 export const schema = {
@@ -26,6 +26,20 @@ export const schema = {
     { fields: [
       { key: "mqttPassword", labelKey: "printerLblAccessCode", hintKey: "printerHintElegooMqtt",
         placeholder: "—", mono: true, required: true, secret: true }
+    ]}
+  ]
+};
+
+// Centauri Carbon 1 (SDCP — beta): the printer needs only its address; its
+// MainboardID comes with discovery and no password is asked. `fixed` is
+// written with the printer doc so every later session knows the transport.
+export const sdcpSchema = {
+  docsUrl: null,
+  fixed: { protocol: "sdcp" },
+  sections: [
+    { titleKey: "printerSecConnection", fields: [
+      { key: "ip", labelKey: "printerLblIP", hintKey: "printerHintElegooSdcpIP",
+        placeholder: "192.168.1.139", mono: true, required: true }
     ]}
   ]
 };

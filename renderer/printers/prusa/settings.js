@@ -12,7 +12,8 @@
 export const meta = {
   label: "Prusa",
   accent: "#fa6831",
-  connection: "PrusaLink (LAN)"
+  connection: "PrusaLink (LAN)",
+  beta: true          // brand picker shows a "Beta" tag until it is proven on real printers
 };
 
 export const schema = {
