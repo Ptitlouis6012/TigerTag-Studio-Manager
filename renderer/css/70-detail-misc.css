@@ -2151,13 +2151,17 @@
   .panel-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; font-weight: 600; }
 
   /* Prominent price + buy-link block (above Details) */
-  .det-buy .det-buy-body { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-  .det-buy-price { font-size: 18px; font-weight: 800; color: var(--text); }
+  /* Price on the left, shop button filling the rest of the row. The label is never
+     cut: when the button does not fit beside the price it drops to its own row,
+     full width, instead of sitting right-aligned under it (that looked misaligned). */
+  .det-buy .det-buy-body { display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap; }
+  .det-buy-price { font-size: 16px; font-weight: 800; color: var(--text); display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap; }
+  .det-buy-price .icon { background: var(--muted); flex-shrink: 0; }
   .det-buy-link {
-    display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 10px;
     border-radius: 10px; border: 1px solid var(--primary); background: var(--primary); color: var(--on-accent);
-    font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer;
-    transition: filter .15s; margin-left: auto;
+    font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; white-space: nowrap;
+    transition: filter .15s; flex: 1 1 auto;
   }
   .det-buy-link:hover { filter: brightness(1.06); }
   .det-buy-link .icon { background-color: var(--on-accent); }
@@ -2374,6 +2378,9 @@
      `max-width` on the value used to cap it at 60% of the row, so a SKU wrapped
      onto two lines with half the row still empty next to a short label. */
   .panel-row .pk { color: var(--muted); flex: 0 0 auto; }
+  /* Pictogram before the label in the spool card's Details rows. */
+  .panel-details-body .panel-row .pk { display: inline-flex; align-items: center; gap: 10px; }
+  .panel-details-body .panel-row .pk .icon { background: var(--muted); flex-shrink: 0; }
   /* `flex:1 1 auto` + `min-width:0` let it use the free space AND shrink;
      `overflow-wrap: anywhere` breaks a value that has no spaces at all (a SKU,
      a barcode), which otherwise ran off the right edge of the card. */
@@ -3919,7 +3926,8 @@
   }
   /* SKU / EAN rows — label + value (read-only, auto for TigerTag+) or input. */
   .ro-ref-row { display: flex; align-items: center; gap: 10px; min-height: 34px; }
-  .ro-ref-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted); width: 40px; flex-shrink: 0; }
+  .ro-ref-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--muted); width: 58px; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; }
+  .ro-ref-label .icon { background: var(--muted); flex-shrink: 0; }
   .ro-ref-val { font-size: 13px; color: var(--text); font-variant-numeric: tabular-nums; word-break: break-all; }
   .ro-ref-input {
     flex: 1; min-width: 0; height: 34px; padding: 0 10px;

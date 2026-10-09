@@ -18309,29 +18309,30 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       td: r.td != null ? r.td : null,
     };
   }
+  // One print tile — pictogram on the left, label over value. The look of the
+  // merged product card's print block (`.ro-ptile`), shared by the spool detail
+  // card and the catalogue card so the three read alike. `valueHtml` is trusted
+  // markup (callers escape); `attrs` / `extra` let the editable TD tile keep its
+  // id, title and class.
+  function _printTileHTML(icon, label, valueHtml, attrs = "", extra = "") {
+    return `
+        <div class="temp-chip ro-ptile${extra}"${attrs}><span class="icon icon-${icon} icon-18" aria-hidden="true"></span>
+          <div><div class="ro-ptile-k">${esc(label)}</div><div class="ro-ptile-v">${valueHtml}</div></div></div>`;
+  }
   function _pcPrintHTML(r) {
     const temps = r.temps || {};
     const mat = r.materialData || null;
     const rec = mat && mat.recommended;
     const hasDirect = temps.nozzleMin || temps.nozzleMax || temps.bedMin || temps.bedMax || temps.dryTemp || temps.dryTime;
-    const nozzle = (temps.nozzleMin && temps.nozzleMax) ? `${temps.nozzleMin}–${temps.nozzleMax} °C` : rec ? `${rec.nozzleTempMin}–${rec.nozzleTempMax} °C` : "—";
-    const bed    = (temps.bedMin && temps.bedMax) ? `${temps.bedMin}–${temps.bedMax} °C` : rec ? `${rec.bedTempMin}–${rec.bedTempMax} °C` : "—";
-    const dryT   = temps.dryTemp ? `${temps.dryTemp} °C` : rec ? `${rec.dryTemp} °C` : "—";
-    const dryH   = temps.dryTime ? `${temps.dryTime} h` : rec ? `${rec.dryTime} h` : "—";
-    const density = mat && mat.density ? mat.density : null;
-    const tdVal   = (r.td != null) ? r.td : null;
-    return (hasDirect || rec || tdVal != null || density) ? `
+    const pv = _printValues(r);
+    return (hasDirect || rec || pv.td != null || pv.density) ? `
       <div class="panel-section">
         <div class="panel-label">${esc(t("sectionPrint"))}</div>
         <div class="temp-grid">
-          ${(hasDirect || rec) ? `
-          <div class="temp-chip"><div class="tc-label">${esc(t("lbNozzle"))}</div><div class="tc-value">${nozzle}</div></div>
-          <div class="temp-chip"><div class="tc-label">${esc(t("lbBed"))}</div><div class="tc-value">${bed}</div></div>
-          <div class="temp-chip"><div class="tc-label">${esc(t("lbDryTemp"))}</div><div class="tc-value">${dryT}</div></div>
-          <div class="temp-chip"><div class="tc-label">${esc(t("lbDryTime"))}</div><div class="tc-value">${dryH}</div></div>` : ""}
-          <div class="temp-chip"><div class="tc-label">TD</div><div class="tc-value">${tdVal != null ? esc(String(tdVal)) : "—"}</div></div>
+          ${(hasDirect || rec) ? `${_printTileHTML("nozzle", t("lbNozzle"), esc(pv.nozzle))}${_printTileHTML("bed", t("lbBed"), esc(pv.bed))}${_printTileHTML("water", t("lbDryTemp"), esc(pv.dryT))}${_printTileHTML("clock", t("lbDryTime"), esc(pv.dryH))}` : ""}
+          ${pv.density ? _printTileHTML("package", t("lbDensity"), `${esc(String(pv.density))} g/cm³`) : ""}
+          ${_printTileHTML("palette", "TD", pv.td != null ? esc(String(pv.td)) : "—")}
         </div>
-        ${density ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">${esc(t("lbDensity"))}: ${esc(String(density))} g/cm³</div>` : ""}
       </div>` : "";
   }
   // Video (YouTube thumbnail → browser, or inline MP4) + document links (MSDS,
@@ -18392,16 +18393,18 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const productId = _hasRealProductId(r.raw?.id_product) ? String(Number(r.raw.id_product)) : "";
     const sku = (r.sku || p.sku || "").toString().trim();
     const ean = (r.barcode || p.ean || "").toString().trim();
+    // Each row is [label, value, href, multiline, icon] — the icon is the one the
+    // merged product card uses for the same fact, so the cards read alike.
     const detailRows = [
-      [t("detProductId"), productId, productId ? `https://tigersystem.io/fr/catalog/${productId}` : null],
-      [t("detType"),      r.productType],
+      [t("detProductId"), productId, productId ? `https://tigersystem.io/fr/catalog/${productId}` : null, false, "tag"],
+      [t("detType"),      r.productType, null, false, "package"],
       ...(merged ? [] : [
-        [t("detBrand"),     brand],
-        [t("detSeries"),    series],
-        [t("thName"),       colorName],
-        [t("detMaterial"),  material],
+        [t("detBrand"),     brand, null, false, "tag"],
+        [t("detSeries"),    series, null, false, "list"],
+        [t("thName"),       colorName, null, false, "palette"],
+        [t("detMaterial"),  material, null, false, "droplets"],
       ]),
-      [t("detDiameter"),  r.diameter],
+      [t("detDiameter"),  r.diameter, null, false, "nozzle"],
       // Colour(s) as HEX — the chip carries RGB(A) bytes, `online_color_list` the
       // hex strings. Multi-colour products list every slot, so a dual/tri shows
       // all of them rather than just the first.
@@ -18424,7 +18427,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         // One per line — a tri-colour joined on a single line wrapped badly.
         // Rendered with `white-space: pre-line` (4th tuple slot below).
         return hex.length ? hex.join("\n") : "";
-      })(), null, true],
+      })(), null, true, "palette"],
       // Quantity as the product states it: the RAW `measure` with its own unit
       // (500 g, but also 2 kg) — not the grams the gauge uses, which would read
       // "2000 g" for a 2 kg spool.
@@ -18434,10 +18437,10 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         const u = (state.db.unit || []).find(x => x.id === r.raw?.id_unit);
         const label = u ? (u.name || u.label || u.symbol || "") : "";
         return label ? `${v} ${label}` : String(v);
-      })()],
+      })(), null, false, "scale"],
       ...(merged ? [] : [
-        [t("detSku"),       sku],
-        [t("detBarcode"),   ean],
+        [t("detSku"),       sku, null, false, "tag"],
+        [t("detBarcode"),   ean, null, false, "tag"],
       ]),
       // From the full catalogue record (catalogProduct) — not on the chip.
       ...(() => {
@@ -18451,18 +18454,19 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         const prof = (lbl, id) => [lbl, id].filter(Boolean).join(" · ");
         const site = String(cp.brand_url || "").trim();
         return [
-          [t("detFanSpeed"),       fanTxt],
-          [t("detBambuProfile"),   prof(md.bambuLabel, md.bambuID)],
-          [t("detCrealityProfile"), prof(md.crealityLabel, md.crealityID)],
-          [t("detBrandSite"),      site ? site.replace(/^https?:\/\//, "").replace(/\/$/, "") : "", site || null],
+          [t("detFanSpeed"),       fanTxt, null, false, "speed"],
+          [t("detBambuProfile"),   prof(md.bambuLabel, md.bambuID), null, false, "settings"],
+          [t("detCrealityProfile"), prof(md.crealityLabel, md.crealityID), null, false, "settings"],
+          [t("detBrandSite"),      site ? site.replace(/^https?:\/\//, "").replace(/\/$/, "") : "", site || null, false, "globe"],
         ];
       })(),
     ].filter(([, v]) => v && v !== "-")
      // 4th slot = multiline: keeps the newlines in the value (colours, one per
-     // line) without letting HTML through — the text stays escaped.
-     .map(([k, v, href, multi]) => `<div class="panel-row"><span class="pk">${esc(k)}</span>${href
-        ? `<a class="pv pv-link" href="${safeHref(href)}" target="_blank" rel="noopener">${esc(String(v))}</a>`
-        : `<span class="pv"${multi ? ` style="white-space:pre-line;text-align:right"` : ""}>${esc(String(v))}</span>`}</div>`).join("");
+     // line) without letting HTML through — the text stays escaped. Same row
+     // markup as the merged product card (`.ro-det-row`: icon · label · value).
+     .map(([k, v, href, multi, icon]) => `<div class="ro-det-row"><span class="icon icon-${icon} icon-14" aria-hidden="true"></span><span class="ro-det-k">${esc(k)}</span>${href
+        ? `<span class="ro-det-v"><a class="pv-link" href="${safeHref(href)}" target="_blank" rel="noopener">${esc(String(v))}</a></span>`
+        : `<span class="ro-det-v"${multi ? ` style="white-space:pre-line;text-align:right"` : ""}>${esc(String(v))}</span>`}</div>`).join("");
     return detailRows ? `
       <div class="panel-section">
         <div class="panel-label">${esc(t("sectionDetails"))}</div>
@@ -19114,7 +19118,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         <div class="ro-field">
           <div class="ro-label">${esc(t("reorderRefs"))}</div>
           <div class="ro-ref-row">
-            <span class="ro-ref-label">SKU</span>
+            <span class="ro-ref-label"><span class="icon icon-tag icon-14" aria-hidden="true"></span>SKU</span>
             ${skuAuto
               ? `<button type="button" class="ro-ref-copyval" id="roSkuCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(skuAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roSku" value="${esc(skuAuto)}" />`
               : `<div class="ro-ref-editwrap">
@@ -19126,7 +19130,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
                  </div>`}
           </div>
           <div class="ro-ref-row">
-            <span class="ro-ref-label">EAN</span>
+            <span class="ro-ref-label"><span class="icon icon-tag icon-14" aria-hidden="true"></span>EAN</span>
             ${eanAuto
               ? `<button type="button" class="ro-ref-copyval" id="roEanCopyEl" title="${esc(t("copyLabel"))}" aria-label="${esc(t("copyLabel"))}"><span class="ro-ref-val">${esc(eanAuto)}</span><span class="icon icon-copy icon-12 ro-ref-hint"></span></button><input type="hidden" id="roEan" value="${esc(eanAuto)}" />`
               : `<div class="ro-ref-editwrap">
@@ -19795,15 +19799,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     const hasDirect = temps.nozzleMin || temps.nozzleMax || temps.bedMin || temps.bedMax || temps.dryTemp || temps.dryTime;
     const rec = mat && mat.recommended;
     // TD chip — editable only when viewing own inventory
+    // Same tile as the product card's print block (icon on the left, label over
+    // value — `.ro-ptile`), so the two cards read alike.
+    const ptile = _printTileHTML;
     const tdChipEl = state.friendView
-      ? `<div class="temp-chip">
-          <div class="tc-label">TD</div>
-          <div class="tc-value">${r.td != null ? r.td : "—"}</div>
-        </div>`
-      : `<div class="temp-chip temp-chip--editable" id="btnEditTd" title="${t("tdEditTitle")}">
-          <div class="tc-label">TD</div>
-          <div class="tc-value">${r.td != null ? r.td : `<span class="tc-add">${t("tdNotSet")}</span>`}</div>
-        </div>`;
+      ? ptile("palette", "TD", `${r.td != null ? r.td : "—"}`)
+      : ptile("palette", "TD", r.td != null ? `${r.td}` : `<span class="tc-add">${t("tdNotSet")}</span>`,
+              ` id="btnEditTd" title="${t("tdEditTitle")}"`, " temp-chip--editable");
 
     let tempHtml = "";
     {
@@ -19813,17 +19815,16 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
                    : rec ? `${rec.bedTempMin}–${rec.bedTempMax} °C` : "—";
       const dryT   = temps.dryTemp ? `${temps.dryTemp} °C` : rec ? `${rec.dryTemp} °C` : "—";
       const dryH   = temps.dryTime ? `${temps.dryTime} h`  : rec ? `${rec.dryTime} h`  : "—";
-      const density = mat && mat.density ? `<div style="margin-top:8px;font-size:12px;color:var(--muted)">${t("lbDensity")}: ${mat.density} g/cm³</div>` : "";
-      const tempChips = (hasDirect || rec) ? `
-          <div class="temp-chip"><div class="tc-label">${t("lbNozzle")}</div><div class="tc-value">${nozzle}</div></div>
-          <div class="temp-chip"><div class="tc-label">${t("lbBed")}</div><div class="tc-value">${bed}</div></div>
-          <div class="temp-chip"><div class="tc-label">${t("lbDryTemp")}</div><div class="tc-value">${dryT}</div></div>
-          <div class="temp-chip"><div class="tc-label">${t("lbDryTime")}</div><div class="tc-value">${dryH}</div></div>` : "";
+      // Density is a tile too (like the product card), between the drying tiles and TD.
+      const density = mat && mat.density ? ptile("package", t("lbDensity"), `${mat.density} g/cm³`) : "";
+      const tempChips = (hasDirect || rec)
+        ? ptile("nozzle", t("lbNozzle"), nozzle) + ptile("bed", t("lbBed"), bed)
+          + ptile("water", t("lbDryTemp"), dryT) + ptile("clock", t("lbDryTime"), dryH)
+        : "";
       tempHtml = `
       <div class="panel-section">
         <div class="panel-label">${t("sectionPrint")}</div>
-        <div class="temp-grid">${tempChips}${tdChipEl}</div>
-        ${density}
+        <div class="temp-grid">${tempChips}${density}${tdChipEl}</div>
       </div>`;
     }
 
@@ -19956,26 +19957,28 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       // Tier first — the badge (+ backup shield) reuses the existing graphic and
       // replaces the standalone badge that used to sit below (no dup). 5th tuple
       // element = raw HTML cell.
-      [t("detTagType"),       tierBadgeHTML(r), null, null, true],
-      [t("detUid"),           r.uid],
-      [t("detProductId"),     _productId, null, _productId ? `https://tigersystem.io/fr/catalog/${_productId}` : null],
-      [t("detType"),          r.productType],
-      [t("detBrand"),         r.brand],
-      [t("detSeries"),        r.series],
-      [t("thName"),           r.colorName !== "-" ? r.colorName : null],
-      [t("detMaterial"),      r.material],
-      [t("detDiameter"),      r.diameter],
-      [t("detSku"),           r.sku || _fShareSku || null],
-      [t("detBarcode"),       r.barcode || _fShareEan || null],
+      // 6th element = the row's pictogram — the same ones the product card uses
+      // for the same facts (brand/ID tag, series list, material drops, nozzle…).
+      [t("detTagType"),       tierBadgeHTML(r), null, null, true, "nfc"],
+      [t("detUid"),           r.uid, null, null, false, "key"],
+      [t("detProductId"),     _productId, null, _productId ? `https://tigersystem.io/fr/catalog/${_productId}` : null, false, "tag"],
+      [t("detType"),          r.productType, null, null, false, "package"],
+      [t("detBrand"),         r.brand, null, null, false, "tag"],
+      [t("detSeries"),        r.series, null, null, false, "list"],
+      [t("thName"),           r.colorName !== "-" ? r.colorName : null, null, null, false, "palette"],
+      [t("detMaterial"),      r.material, null, null, false, "droplets"],
+      [t("detDiameter"),      r.diameter, null, null, false, "nozzle"],
+      [t("detSku"),           r.sku || _fShareSku || null, null, null, false, "tag"],
+      [t("detBarcode"),       r.barcode || _fShareEan || null, null, null, false, "tag"],
       // Friend's price + clickable buy link (from their shared product slice).
-      ...(_fSharePriceTxt ? [[t("thPrice"), _fSharePriceTxt]] : []),
-      ...(_fShareUrl ? [[t("reorderBuyLink"), _fShareHost, null, _normalizeBuyUrl(_fShareUrl)]] : []),
-      [t("detContainer"),     r.containerId],
-      [t("detTwin"),          r.twinUid],
+      ...(_fSharePriceTxt ? [[t("thPrice"), _fSharePriceTxt, null, null, false, "tag"]] : []),
+      ...(_fShareUrl ? [[t("reorderBuyLink"), _fShareHost, null, _normalizeBuyUrl(_fShareUrl), false, "link"]] : []),
+      [t("detContainer"),     r.containerId, null, null, false, "package"],
+      [t("detTwin"),          r.twinUid, null, null, false, "swap"],
       // "Chip 1 of 2" — offset 39 (protocol v2.2). Unknown on pre-v2.2 chips → no row.
-      [t("detTagIndex"),      r.tagCount ? t("detTagIndexVal", { i: r.tagIndex ?? "?", n: r.tagCount }) : null],
-      [t("detUpdated"),       fmtTs(r.lastUpdate), "detUpdatedVal"],
-      ...(!r.isPlus && fmtChipTs(r.chipTimestamp) ? [[t("detManufactured"), fmtChipTs(r.chipTimestamp)]] : []),
+      [t("detTagIndex"),      r.tagCount ? t("detTagIndexVal", { i: r.tagIndex ?? "?", n: r.tagCount }) : null, null, null, false, "nfc"],
+      [t("detUpdated"),       fmtTs(r.lastUpdate), "detUpdatedVal", null, false, "refresh"],
+      ...(!r.isPlus && fmtChipTs(r.chipTimestamp) ? [[t("detManufactured"), fmtChipTs(r.chipTimestamp), null, null, false, "clock"]] : []),
     ].filter(([,val]) => val && val !== "-");
 
     // Details section is collapsible — state persisted in localStorage.
@@ -19988,13 +19991,13 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           <span class="panel-details-chevron">›</span>
         </button>
         <div class="panel-details-body">
-          ${infoRows.map(([k,val,pvId,href,isHtml]) => {
+          ${infoRows.map(([k,val,pvId,href,isHtml,icon]) => {
             const cell = isHtml
               ? `<span class="pv pv-badge"${pvId ? ` id="${pvId}"` : ""}>${val}</span>`
               : href
                 ? `<a class="pv pv-link" href="${safeHref(href)}" target="_blank" rel="noopener"${pvId ? ` id="${pvId}"` : ""}>${esc(String(val))}</a>`
                 : `<span class="pv"${pvId ? ` id="${pvId}"` : ""}>${esc(String(val))}</span>`;
-            return `<div class="panel-row"><span class="pk">${k}</span>${cell}</div>`;
+            return `<div class="panel-row"><span class="pk">${icon ? `<span class="icon icon-${icon} icon-14" aria-hidden="true"></span>` : ""}${k}</span>${cell}</div>`;
           }).join("")}
           ${infoHtml2}
           ${r.deleted ? `<div style="margin-top:8px"><span class="badge bad" style="font-size:11px">${t("badgeDeleted")}</span></div>` : ""}
@@ -20009,7 +20012,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
       <div class="panel-section det-buy">
         <div class="panel-label">${t("sectionBuy")}</div>
         <div class="det-buy-body">
-          ${_fSharePriceTxt ? `<div class="det-buy-price">${esc(_fSharePriceTxt)}</div>` : ""}
+          ${_fSharePriceTxt ? `<div class="det-buy-price"><span class="icon icon-tag icon-14" aria-hidden="true"></span>${esc(_fSharePriceTxt)}</div>` : ""}
           ${_fShareUrl ? `<a class="det-buy-link" href="${safeHref(_normalizeBuyUrl(_fShareUrl))}" target="_blank" rel="noopener"><span class="icon icon-cart icon-14"></span><span>${esc(_fShareHost || t("reorderBuyLink"))}</span></a>` : ""}
         </div>
       </div>` : "";
