@@ -236,7 +236,9 @@ async function authedPost(url, body) {
 // open, a local notice says so. Per account, in localStorage; the remembered count
 // moves only when the user looks (or closes the request), so an unseen reply is
 // announced again at every start. It cannot tell who wrote the comment.
-const SEEN_KEY = uid => `tigertag.reportSeen.${uid}`;
+// v2: counts are team `replies` now (v1 held every comment, which would mask
+// new replies) — a fresh key gives everyone a silent baseline.
+const SEEN_KEY = uid => `tigertag.reportSeen.v2.${uid}`;
 const _replyNotifId = id => `req-reply-${id}`;
 function _loadSeen(uid) {
   try { return JSON.parse(localStorage.getItem(SEEN_KEY(uid)) || "{}") || {}; } catch (_) { return {}; }
@@ -290,10 +292,13 @@ async function closeMine(id) {
     await authedPost(MINE_ENDPOINT, { action: "close", reportId: id });
     if (r) {
       r.status = "cancelled"; r.closing = false;
-      // Closing posts a comment of its own — that one is not a reply to announce.
-      const uid = _mine.uid;
-      if (uid) { const m = _loadSeen(uid); m[id] = (Number(r.comments) || 0) + 1; _saveSeen(uid, m); }
+      // Closing posts a comment from the app's account. The server's `replies`
+      // never counts it; only the older `comments` fallback does — skip it there.
       r.comments = (Number(r.comments) || 0) + 1;
+      if (r.replies == null) {
+        const uid = _mine.uid;
+        if (uid) { const m = _loadSeen(uid); m[id] = r.comments; _saveSeen(uid, m); }
+      }
     }
   } catch (_) { if (r) { r.closing = false; r.closeFailed = true; } }
   render();

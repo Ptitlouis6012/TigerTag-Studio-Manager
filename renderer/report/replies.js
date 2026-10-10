@@ -4,10 +4,13 @@
  * localStorage and raises the notifications.
  *
  * `seen` is { [reportId]: replyCount } as it was the last time the user opened
- * "My requests". The server already returns each request's current reply count
- * (`comments`), so a reply is simply a count above the one remembered. It cannot
- * tell WHO wrote the comment — a reply the user wrote on GitHub counts too.
+ * "My requests". A reply is a count above the one remembered. The count is the
+ * server's `replies` — comments from the TEAM only (owner / members /
+ * collaborators, never the app's own account), so the user's own comments on
+ * GitHub and the app's "closed by the reporter" note are not announced. A
+ * server that predates it only sends `comments` (every comment): fallback.
  */
+const replyCount = r => Number(r.replies ?? r.comments) || 0;
 
 /**
  * @param {Array<{id:string, comments?:number}>} list  the requests, as synced
@@ -24,7 +27,7 @@ export function repliesSince(list, seen, { skipStatus = ["cancelled"] } = {}) {
   const fresh = [];
   for (const r of list || []) {
     if (!r || r.id == null) continue;
-    const n = Number(r.comments) || 0;
+    const n = replyCount(r);
     if (!(r.id in next)) { next[r.id] = n; continue; }   // first sighting: baseline, silent
     // A request the user closed himself: nothing to announce, and its count follows
     // so that a comment left on it does not pile up as "unseen".
@@ -37,6 +40,6 @@ export function repliesSince(list, seen, { skipStatus = ["cancelled"] } = {}) {
 /** Every request marked as seen at its current reply count. */
 export function seenAll(list) {
   const m = {};
-  for (const r of list || []) if (r && r.id != null) m[r.id] = Number(r.comments) || 0;
+  for (const r of list || []) if (r && r.id != null) m[r.id] = replyCount(r);
   return m;
 }
