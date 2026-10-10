@@ -4674,12 +4674,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!state.supportPublicly) return null;
     return SQUAD_TIERS.includes(state.squadTier) ? state.squadTier : (state.supporter ? "gold" : "bronze");
   }
-  let _ownProfileUnsub = null, _ownProfileUid = null;
+  let _ownProfileUnsub = null, _ownProfileUid = null, _ownXpUnsub = null;
   function _subscribeOwnSquad(uid) {
     if (uid === _ownProfileUid) return;
     try { _ownProfileUnsub?.(); } catch (_) {}
-    _ownProfileUnsub = null; _ownProfileUid = uid || null; state.squadTier = null;
+    try { _ownXpUnsub?.(); } catch (_) {}
+    _ownProfileUnsub = null; _ownXpUnsub = null; _ownProfileUid = uid || null; state.squadTier = null;
     if (!uid) return;
+    // XP lives on the account doc and the server rewrites it after a scan, a
+    // join or a leave — follow it live rather than guessing when to re-read.
+    _ownXpUnsub = fbDb(uid).collection("users").doc(uid).onSnapshot(ds => {
+      if (uid !== state.activeAccountId) return;
+      const d = ds.data() || {};
+      const xp = typeof d.xpPoints === "number" ? d.xpPoints : null;
+      const cert = typeof d.certifiedPlusCount === "number" ? d.certifiedPlusCount : null;
+      if (xp === state.xpPoints && cert === state.certifiedPlusCount) return;
+      state.xpPoints = xp; state.certifiedPlusCount = cert;
+      _renderSquadXp();
+    }, () => {});
     _ownProfileUnsub = fbDb(uid).collection("userProfiles").doc(uid).onSnapshot(ps => {
       if (uid !== state.activeAccountId) return;
       const tier = ps.exists ? (ps.get("tigerSquad")?.tier || null) : null;
@@ -4762,15 +4774,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // publishes it on the public profile: TigerSquad if they gave, supporter otherwise.
   function _setSupportPublicly(on, input) {
     const uid = state.activeAccountId; if (!uid) return;
+    // Leaving the squad lifts any "Later": the invite comes back at the next start.
+    if (!on) { try { localStorage.removeItem(_squadInviteKey(uid)); } catch {} }
     state.supportPublicly = on; renderSupporterBadge(); renderFriendBanner();
     fbDb(uid).collection("users").doc(uid).set({ supportPublicly: on }, { merge: true })
       .catch(() => { state.supportPublicly = !on; if (input) input.checked = !on; renderSupporterBadge(); renderFriendBanner(); });
   }
   // ── TigerSquad invite — a one-card popup asking a signed-in user who is not
-  // in the squad yet to join (free → Bronze). Shown at most once a session, a
-  // little after start-up, never over another dialog; "Later" snoozes it for
-  // 30 days on this account (localStorage, per uid).
+  // in the squad yet to join (free → Bronze), and offering a coffee to boost
+  // straight to Gold. Only for accounts older than 7 days (they've had time to
+  // like the app); at most once a session, a little after start-up, never over
+  // another dialog; "Later" snoozes it for 30 days on this account (localStorage).
   const SQUAD_INVITE_SNOOZE_MS = 30 * 24 * 3600 * 1000;
+  const SQUAD_INVITE_MIN_AGE_MS = 7 * 24 * 3600 * 1000;
   const _squadInviteKey = uid => `tigertag.squadInvite.${uid}`;
   let _squadInviteShown = false, _squadInviteTimer = null;
   function _maybeInviteSquad() {
@@ -4778,6 +4794,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _squadInviteTimer = setTimeout(() => {
       const uid = state.activeAccountId;
       if (!uid || _squadInviteShown || state.supportPublicly || state.friendView) return;
+      const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
+      if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
       let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
       if (Date.now() < until) return;
       if (document.querySelector(".modal-overlay.open, .support-menu, .squad-invite")) return;
@@ -4796,11 +4814,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     card.setAttribute("aria-labelledby", "squadInviteTitle");
     const tiers = SQUAD_TIERS.map(x => `<span class="sb-squad-pill sq-${x}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>${squadTierLabel(x)}</span>`).join("");
     card.innerHTML = `
+      <button type="button" class="squad-invite-x" data-act="later" aria-label="${esc(t("squadInviteLater"))}"><span class="icon icon-close icon-14"></span></button>
       <div class="squad-invite-heart sq-bronze" aria-hidden="true"><span class="icon icon-heart-fill"></span></div>
       <h2 class="squad-invite-title" id="squadInviteTitle">${esc(t("squadInviteTitle"))}</h2>
-      <p class="squad-invite-body">${esc(t("squadInviteBody"))}</p>
+      ${String(t("squadInviteBody")).split(/\n\s*\n/).map(p => `<p class="squad-invite-body">${esc(p)}</p>`).join("")}
+      <p class="squad-invite-call">${esc(t("squadInviteCall"))}</p>
       <div class="squad-invite-tiers">${tiers}</div>
       <p class="squad-invite-levels">${esc(t("squadLevels"))}</p>
+      <div class="squad-invite-boost">
+        <span>${esc(t("squadInviteBoost"))}</span>
+        <button type="button" class="squad-invite-coffee" data-act="coffee"><img src="../assets/svg/logos/logo_kofi.svg" alt="" aria-hidden="true">${esc(t("reportCoffeeCta"))}</button>
+      </div>
       <div class="squad-invite-actions">
         <button type="button" class="squad-invite-later" data-act="later">${esc(t("squadInviteLater"))}</button>
         <button type="button" class="squad-invite-join" data-act="join"><span class="icon icon-heart-fill icon-12" aria-hidden="true"></span>${esc(t("squadInviteJoin"))}</button>
@@ -4818,6 +4842,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const act = e.target.closest("[data-act]")?.dataset.act;
       if (act === "join") { _setSupportPublicly(true); close(); }
       else if (act === "later") { snooze(); close(); }
+      else if (act === "coffee") { snooze(); close(); setTimeout(() => _openCoffee(null), 160); }   // the support chooser, centred
       else if (act === "wall") window.electronAPI?.openExternal(`https://tigersystem.io/${state.lang === "pt-pt" ? "pt-pt" : (state.lang || "en")}/tigersquad`);
     });
     bd.addEventListener("click", () => { snooze(); close(); });
@@ -38066,27 +38091,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const nowBacked = hadBackup || (isPlus && !!rawHex);
       await _invCol(uid).doc(chipUid).set({ rfidListed: true, rfidBackup: nowBacked }, { merge: true });
       if (isNew) bumpStudioCounters({ rfidChipsTotal: 1 });
-      if (Object.keys(update).length) _scheduleXpRefresh(uid);   // the server re-counts this chip
     } catch (e) {
       console.warn("[rfidList] scan record failed:", e.code || e.message);
     }
-  }
-  // A chip just entered the census → the server (certifyChip) updates the XP a
-  // moment later; read it back once things settle (a scan burst = one read).
-  let _xpRefreshTimer = null;
-  function _scheduleXpRefresh(uid) {
-    clearTimeout(_xpRefreshTimer);
-    _xpRefreshTimer = setTimeout(async () => {
-      if (uid !== state.activeAccountId) return;
-      try {
-        const d = (await fbDb(uid).collection("users").doc(uid).get()).data() || {};
-        if (typeof d.xpPoints === "number") {
-          state.xpPoints = d.xpPoints;
-          state.certifiedPlusCount = typeof d.certifiedPlusCount === "number" ? d.certifiedPlusCount : state.certifiedPlusCount;
-          _renderSquadXp();
-        }
-      } catch (_) {}
-    }, 8000);
   }
 
   async function syncUserDoc(uid) {

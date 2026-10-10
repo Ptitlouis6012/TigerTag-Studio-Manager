@@ -720,3 +720,24 @@
   font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
 }
 .sb-xp-pill .icon { background: var(--primary); }
+/* "Boost to Gold with a coffee" — inside the invite. */
+.squad-invite-boost {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -6px 0 16px; padding: 10px 12px;
+  border-radius: 12px; text-align: left; font-size: 12px; line-height: 1.4; color: var(--muted);
+  background: color-mix(in srgb, #FFD600 8%, transparent); border: 1px dashed color-mix(in srgb, #FFD600 40%, var(--border));
+}
+.squad-invite-coffee {
+  flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 8px; border: none; border-radius: 9px;
+  background: #FFDD00; color: #0d0c22; font-family: inherit; font-size: 12.5px; font-weight: 800; cursor: pointer; white-space: nowrap;
+}
+.squad-invite-coffee img { width: 18px; height: 18px; }
+.squad-invite-coffee:hover { filter: brightness(1.05); }
+.squad-invite-body + .squad-invite-body { margin-top: -6px; }
+.squad-invite-call { margin: 0 0 14px; font-size: 14px; font-weight: 800; color: var(--text); }
+.squad-invite-x {
+  position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border: none; border-radius: 50%;
+  background: transparent; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: background .15s;
+}
+.squad-invite-x .icon { background: var(--muted); }
+.squad-invite-x:hover { background: color-mix(in srgb, var(--text) 8%, transparent); }
+.squad-invite-x:hover .icon { background: var(--text); }
