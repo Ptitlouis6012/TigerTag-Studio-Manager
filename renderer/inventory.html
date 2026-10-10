@@ -2060,15 +2060,16 @@
         </div>
       </section>
 
-      <!-- ── TigerSquad — the public supporters' group. Joined from the support
-           menu, left (or joined) here; the server publishes membership on the
-           public profile for supporters only (publishSupporter). ── -->
+      <!-- ── TigerSquad — the Hub's wall of fame, open to everyone, with a level
+           (bronze / silver / gold / platinum) the server computes. Joined from
+           the support menu, the invite or here (publishSupporter). ── -->
       <section class="eac-group">
         <h3 class="eac-group-title">TigerSquad</h3>
         <div class="eac-row">
           <span class="eac-row-label eac-squad-label">
-            <span class="sb-squad-pill eac-squad-pill"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad</span>
-            <span class="eac-squad-sub" data-i18n="squadProfileSub">Your badge for your friends and your name on the wall of fame — supporters only.</span>
+            <span data-i18n="squadJoin">Join the TigerSquad</span>
+            <span class="eac-squad-sub" data-i18n="squadLevels">Free: Bronze. 20 certified TigerTag+: Silver. A coffee: Gold. A coffee and 50 certified TigerTag+: Platinum.</span>
+            <span class="eac-squad-xp hidden" id="eacSquadXp"></span>
           </span>
           <label class="eac-toggle">
             <input type="checkbox" id="eacSquadToggle" />

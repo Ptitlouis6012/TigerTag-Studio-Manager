@@ -418,13 +418,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function avatarMarkup(source, className, extraClass) {
     const p = _buildAvatarParts(source);
     // TigerSquad members (public supporters) wear a golden ring, wherever drawn.
-    const cls = className + (extraClass ? ' ' + extraClass : '') + (source?.tigerSquad ? ' av-squad' : '');
+    const tier = source?.tigerSquad ? (source.squadTier || "gold") : null;
+    const cls = className + (extraClass ? ' ' + extraClass : '') + (tier ? ` av-squad sq-${tier}` : '');
     const style = p.bg || p.fg ? ` style="${p.bg ? `background:${p.bg};` : ""}${p.fg ? `color:${p.fg}` : ""}"` : "";
-    return `<span class="${cls}" data-av-mode="${p.mode}"${style}>` +
+    const html = `<span class="${cls}" data-av-mode="${p.mode}"${style}>` +
       `<span class="av-initials">${esc(p.initials)}</span>` +
       AV_PLUS_SVG +
       _avatarPhotoTag(p.photoURL) +
       `</span>`;
+    // TigerSquad: the golden heart sits on the corner. Avatars clip their own
+    // overflow, so the heart rides on a wrapper around the avatar instead.
+    return source?.tigerSquad
+      ? `<span class="av-squad-host">${html}<span class="av-squad-heart sq-${tier}" aria-hidden="true"><span class="icon icon-heart-fill"></span></span></span>`
+      : html;
   }
 
   // Backward-compatibility shim — existing call sites still invoke
@@ -4336,7 +4342,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // report useful. `roles` still gates the Admin badge, and nothing else here.
     $("eacDebugRow").classList.remove("hidden");
     $("eacDebugToggle").checked = state.debugEnabled;
-    $("eacSquadToggle").checked = !!state.joinTigerSquad;
+    $("eacSquadToggle").checked = !!state.supportPublicly;
+    _renderSquadXp();
+    if (state.xpPoints == null) _requestXpRecount();   // never counted yet → ask the server once
     const isCustom = _editingAccount?.color === "custom";
     if (isCustom && _editingAccount.customColor) {
       $("eacCustomColor").value = _editingAccount.customColor;
@@ -4657,25 +4665,55 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   let _supportAnchor = null;
   // Supporter badge on the sidebar avatar's corner — set by the server once a
   // payment is tied to the account (functions/supportWebhooks.js).
+  // TigerSquad level — "bronze" (joined for free), "silver" (20+ certified
+  // TigerTag+), "gold" (gave), "platinum" (gave + 50+ certified). The server
+  // computes it on the public profile (userProfiles/{uid}.tigerSquad.tier);
+  // until it lands, a fresh join shows the obvious bronze / gold.
+  const SQUAD_TIERS = ["bronze", "silver", "gold", "platinum"];
+  const squadTierLabel = tier => tier ? tier[0].toUpperCase() + tier.slice(1) : "";
+  function _ownSquadTier() {
+    if (!state.supportPublicly) return null;
+    return SQUAD_TIERS.includes(state.squadTier) ? state.squadTier : (state.supporter ? "gold" : "bronze");
+  }
+  let _ownProfileUnsub = null, _ownProfileUid = null;
+  function _subscribeOwnSquad(uid) {
+    if (uid === _ownProfileUid) return;
+    try { _ownProfileUnsub?.(); } catch (_) {}
+    _ownProfileUnsub = null; _ownProfileUid = uid || null; state.squadTier = null;
+    if (!uid) return;
+    _ownProfileUnsub = fbDb(uid).collection("userProfiles").doc(uid).onSnapshot(ps => {
+      if (uid !== state.activeAccountId) return;
+      const tier = ps.exists ? (ps.get("tigerSquad")?.tier || null) : null;
+      if (tier === state.squadTier) return;
+      state.squadTier = tier;
+      renderSupporterBadge(); renderFriendBanner();
+    }, () => {});
+  }
   function renderSupporterBadge() {
     const host = document.querySelector("#sbUser .sb-avatar-wrap"); if (!host) return;
-    // TigerSquad pill under the name — a member is a supporter who chose to join.
+    // TigerSquad member (any level) → heart, ring and pill in the level's colour —
+    // exactly what friends and the Hub see. Not a member → nothing.
+    const tier = _ownSquadTier();
+    const av = $("sbAvatar");
+    av?.classList.toggle("av-squad", !!tier);
+    SQUAD_TIERS.forEach(x => av?.classList.toggle(`sq-${x}`, tier === x));
     const info = document.querySelector("#sbUser .sb-user-info");
     let pill = info?.querySelector(".sb-squad-pill");
-    $("sbAvatar")?.classList.toggle("av-squad", !!(state.supporter && state.joinTigerSquad));
-    if (state.supporter && state.joinTigerSquad) {
-      if (info && !pill) {
-        pill = document.createElement("span");
-        pill.className = "sb-squad-pill";
-        pill.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad`;
-        info.appendChild(pill);
-      }
-    } else pill?.remove();
+    if (pill && pill.dataset.tier !== (tier || "")) { pill.remove(); pill = null; }
+    if (tier && info && !pill) {
+      pill = document.createElement("span");
+      pill.className = `sb-squad-pill sq-${tier}`;
+      pill.dataset.tier = tier;
+      pill.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(tier)}`;
+      info.appendChild(pill);
+    }
     let b = host.querySelector(".sb-supporter-badge");
-    if (!state.supporter) { b?.remove(); return; }
+    if (b && b.dataset.tier !== (tier || "")) { b.remove(); b = null; }
+    if (!tier) return;
     if (b) return;
     b = document.createElement("span");
-    b.className = "sb-supporter-badge";
+    b.className = `sb-supporter-badge sq-${tier}`;
+    b.dataset.tier = tier;
     b.setAttribute("role", "img");
     b.setAttribute("aria-label", t("supporterBadge"));
     b.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>`;
@@ -4709,13 +4747,88 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     } catch (_) {}
     return null;
   }
-  // Join / leave the TigerSquad — a preference on the user doc; the server
-  // publishes the membership on the public profile for supporters only.
-  function _setJoinTigerSquad(on, input) {
+  // Support publicly (or stop) — a preference on the user doc; the server
+  // publishes it on the public profile: TigerSquad if they gave, supporter otherwise.
+  function _setSupportPublicly(on, input) {
     const uid = state.activeAccountId; if (!uid) return;
-    state.joinTigerSquad = on; renderSupporterBadge();
-    fbDb(uid).collection("users").doc(uid).set({ joinTigerSquad: on }, { merge: true })
-      .catch(() => { state.joinTigerSquad = !on; if (input) input.checked = !on; renderSupporterBadge(); });
+    state.supportPublicly = on; renderSupporterBadge(); renderFriendBanner();
+    fbDb(uid).collection("users").doc(uid).set({ supportPublicly: on }, { merge: true })
+      .catch(() => { state.supportPublicly = !on; if (input) input.checked = !on; renderSupporterBadge(); renderFriendBanner(); });
+  }
+  // ── TigerSquad invite — a one-card popup asking a signed-in user who is not
+  // in the squad yet to join (free → Bronze). Shown at most once a session, a
+  // little after start-up, never over another dialog; "Later" snoozes it for
+  // 30 days on this account (localStorage, per uid).
+  const SQUAD_INVITE_SNOOZE_MS = 30 * 24 * 3600 * 1000;
+  const _squadInviteKey = uid => `tigertag.squadInvite.${uid}`;
+  let _squadInviteShown = false, _squadInviteTimer = null;
+  function _maybeInviteSquad() {
+    clearTimeout(_squadInviteTimer);
+    _squadInviteTimer = setTimeout(() => {
+      const uid = state.activeAccountId;
+      if (!uid || _squadInviteShown || state.supportPublicly || state.friendView) return;
+      let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
+      if (Date.now() < until) return;
+      if (document.querySelector(".modal-overlay.open, .support-menu, .squad-invite")) return;
+      _squadInviteShown = true;
+      _openSquadInvite();
+    }, 20000);
+  }
+  function _openSquadInvite() {
+    const uid = state.activeAccountId; if (!uid) return;
+    const bd = document.createElement("div");
+    bd.className = "support-backdrop";
+    const card = document.createElement("div");
+    card.className = "squad-invite";
+    card.setAttribute("role", "dialog");
+    card.setAttribute("aria-modal", "true");
+    card.setAttribute("aria-labelledby", "squadInviteTitle");
+    const tiers = SQUAD_TIERS.map(x => `<span class="sb-squad-pill sq-${x}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>${squadTierLabel(x)}</span>`).join("");
+    card.innerHTML = `
+      <div class="squad-invite-heart sq-bronze" aria-hidden="true"><span class="icon icon-heart-fill"></span></div>
+      <h2 class="squad-invite-title" id="squadInviteTitle">${esc(t("squadInviteTitle"))}</h2>
+      <p class="squad-invite-body">${esc(t("squadInviteBody"))}</p>
+      <div class="squad-invite-tiers">${tiers}</div>
+      <p class="squad-invite-levels">${esc(t("squadLevels"))}</p>
+      <div class="squad-invite-actions">
+        <button type="button" class="squad-invite-later" data-act="later">${esc(t("squadInviteLater"))}</button>
+        <button type="button" class="squad-invite-join" data-act="join"><span class="icon icon-heart-fill icon-12" aria-hidden="true"></span>${esc(t("squadInviteJoin"))}</button>
+      </div>
+      <button type="button" class="squad-invite-wall" data-act="wall">${esc(t("squadInviteWall"))}<span class="icon icon-arrow-up-right icon-11" aria-hidden="true"></span></button>`;
+    const close = () => {
+      document.removeEventListener("keydown", onKey);
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { card.remove(); bd.remove(); return; }
+      card.classList.add("is-closing"); bd.classList.add("is-closing");
+      setTimeout(() => { card.remove(); bd.remove(); }, 140);
+    };
+    const snooze = () => { try { localStorage.setItem(_squadInviteKey(uid), String(Date.now() + SQUAD_INVITE_SNOOZE_MS)); } catch {} };
+    const onKey = e => { if (e.key === "Escape") { snooze(); close(); } };
+    card.addEventListener("click", e => {
+      const act = e.target.closest("[data-act]")?.dataset.act;
+      if (act === "join") { _setSupportPublicly(true); close(); }
+      else if (act === "later") { snooze(); close(); }
+      else if (act === "wall") window.electronAPI?.openExternal(`https://tigersystem.io/${state.lang === "pt-pt" ? "pt-pt" : (state.lang || "en")}/tigersquad`);
+    });
+    bd.addEventListener("click", () => { snooze(); close(); });
+    document.addEventListener("keydown", onKey);
+    document.body.append(bd, card);
+    card.querySelector(".squad-invite-join")?.focus();
+  }
+  // "407 XP · 19 certified TigerTag+" in My profile → TigerSquad.
+  function _renderSquadXp() {
+    const el = $("eacSquadXp"); if (!el) return;
+    if (state.xpPoints == null) { el.classList.add("hidden"); return; }
+    el.textContent = t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 });
+    el.classList.remove("hidden");
+  }
+  let _xpRecountAsked = false;
+  async function _requestXpRecount() {
+    if (_xpRecountAsked || !state.activeAccountId) return;
+    _xpRecountAsked = true;
+    try {
+      const j = await _supportPost({ action: "xp" });
+      if (j && typeof j.xp === "number") { state.xpPoints = j.xp; state.certifiedPlusCount = j.certified || 0; _renderSquadXp(); }
+    } catch (_) {}
   }
   async function _claimSupport(m) {
     const input = m.querySelector(".support-claim-input"), btn = m.querySelector(".support-claim-go"), msg = m.querySelector(".support-claim-msg");
@@ -4753,11 +4866,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <span>${esc(t("supportCodeHint"))}</span>
         <button type="button" class="support-code-chip${_supporterCodeCached() ? "" : " is-loading"}" data-support-copy="${esc(_supporterCodeCached() || "")}"><span>${esc(_supporterCodeCached() || "TS-····-····")}</span><span class="icon icon-copy icon-12" aria-hidden="true"></span></button>
       </div>` : ""}
-      ${state.activeAccountId && !state.joinTigerSquad ? `
+      ${state.activeAccountId && !state.supportPublicly ? `
       <label class="support-squad">
-        <input type="checkbox" class="support-squad-input"${state.joinTigerSquad ? " checked" : ""}>
+        <input type="checkbox" class="support-squad-input">
         <span class="support-squad-box" aria-hidden="true"><span class="icon icon-check icon-10"></span></span>
-        <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSub"))}</small></span>
+        <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSubFree"))}</small></span>
       </label>` : ""}
       ${!state.supporter && state.activeAccountId ? `
       <details class="support-claim">
@@ -4827,7 +4940,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Joined → the card folds away; leaving is done from My profile (eacSquadToggle).
     m.querySelector(".support-squad-input")?.addEventListener("change", ev => {
       if (!ev.target.checked) return;
-      _setJoinTigerSquad(true, ev.target);
+      _setSupportPublicly(true, ev.target);
       const card = ev.target.closest(".support-squad");
       setTimeout(() => card?.classList.add("is-joined"), 450);   // let the tick show first
       card?.addEventListener("transitionend", () => card.remove(), { once: true });
@@ -5060,7 +5173,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("btnSaveDisplayName").addEventListener("click", saveDisplayName);
   $("eacDisplayNameInput").addEventListener("keydown", e => { if (e.key === "Enter") saveDisplayName(); });
 
-  $("eacSquadToggle").addEventListener("change", e => _setJoinTigerSquad(e.target.checked, e.target));
+  $("eacSquadToggle").addEventListener("change", e => _setSupportPublicly(e.target.checked, e.target));
   $("eacDebugToggle").addEventListener("change", async () => {
     const enabled = $("eacDebugToggle").checked;
     state.debugEnabled = enabled;
@@ -22289,7 +22402,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const activeUid = state.friendView?.uid || "";
     const sig = "list|" + activeUid + "|" + state.friends.map(f => {
       const p = _buildAvatarParts(f);
-      return `${f.uid}:${p.mode}:${p.photoURL || ""}:${p.initials}:${p.bg}:${_shortName(f.displayName, f.uid)}:${f.tigerSquad ? 1 : 0}`;
+      return `${f.uid}:${p.mode}:${p.photoURL || ""}:${p.initials}:${p.bg}:${_shortName(f.displayName, f.uid)}:${f.tigerSquad ? f.squadTier || "gold" : ""}`;
     }).join(",");
     if (sig === _sbFriendsSig) return;  // identical → keep the <img>s, no flash
     _sbFriendsSig = sig;
@@ -22778,6 +22891,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (!ps || !ps.exists) return;
         const pd = ps.data();
         f.tigerSquad = !!pd.tigerSquad;   // public TigerSquad membership (server-set)
+        f.squadTier = pd.tigerSquad?.tier || null;
         const liveDisplayName = pd.displayName || "";
         const liveColor       = profileColor(pd);   // "#rrggbb" or null
         const updates = {};
@@ -22900,7 +23014,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             if (p.displayName) f.displayName = p.displayName;
             if (p.color)       f.color       = p.color;
             if (p.photoURL)    f.photoURL    = p.photoURL;
-            if (p.tigerSquad)  f.tigerSquad  = true;   // TigerSquad ring — from their public profile
+            if (p.tigerSquad)  { f.tigerSquad = true; f.squadTier = p.squadTier || null; }   // TigerSquad ring — from their public profile
           }
           return f;
         });
@@ -22955,6 +23069,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (photo !== (fr.photoURL || null)) { fr.photoURL = photo; changed = true; }
         if (!!pd.isPublic !== !!fr.isPublic) { fr.isPublic = !!pd.isPublic; changed = true; }
         if (!!pd.tigerSquad !== !!fr.tigerSquad) { fr.tigerSquad = !!pd.tigerSquad; changed = true; }
+        if ((pd.tigerSquad?.tier || null) !== (fr.squadTier || null)) { fr.squadTier = pd.tigerSquad?.tier || null; changed = true; }
         if (!changed) return;
         _cacheFriends(uid, state.friends);
         _renderFriendsEverywhere();
@@ -35072,13 +35187,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!banner) return;
     // ─── Friend view ───────────────────────────────────────────────
     if (state.friendView) {
-      const { displayName, avatarColor, photoURL, error, isPublic, publicKey, friendsCount, socials, tigerSquad } = state.friendView;
+      const { displayName, avatarColor, photoURL, error, isPublic, publicKey, friendsCount, socials, tigerSquad, squadTier } = state.friendView;
       // Build a synthetic source so avatarMarkup can pull gradient
       // from the friend's avatarColor (a single hex, not an RGB
       // triplet like an account uses).
-      const friendSource = { displayName, photoURL, color: avatarColor, tigerSquad };
+      const friendSource = { displayName, photoURL, color: avatarColor, tigerSquad, squadTier };
       const p = _buildAvatarParts(friendSource);
-      const sig = `friend|${displayName || ""}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${error || ""}|${isPublic ? 1 : 0}|${publicKey || ""}|${friendsCount ?? ""}|${(socials || []).join(",")}|${tigerSquad ? 1 : 0}|${state.lang}`;
+      const sig = `friend|${displayName || ""}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${error || ""}|${isPublic ? 1 : 0}|${publicKey || ""}|${friendsCount ?? ""}|${(socials || []).join(",")}|${tigerSquad ? squadTier || "gold" : ""}|${state.lang}`;
       if (sig !== _fvbSig) {
         _fvbSig = sig;
         // ONE relationship badge next to the name — "Public" (green) if the
@@ -35100,8 +35215,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // Line 2 badges: relationship (Public / Friend) on the LEFT, the "Share"
         // badge on the RIGHT — side by side. "X friends" count sits by the name.
         // TigerSquad member (public supporter) → the golden pill beside the relationship badge.
+        const fTier = squadTier || "gold";
         const squadBadge = (!error && tigerSquad)
-          ? `<span class="sb-squad-pill fvb-squad"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad</span>`
+          ? `<span class="sb-squad-pill fvb-squad sq-${fTier}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(fTier)}</span>`
           : "";
         const line2 = relBadge + squadBadge + shareBtn;
         banner.innerHTML = `
@@ -35127,7 +35243,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const own = _shortName(state.displayName || acc.displayName, acc.email);
     const p = _buildAvatarParts(acc);
     const isPub = !!state.isPublic, myKey = state.publicKey, myCount = (state.friends || []).length;
-    const sig = `own|${own}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${isPub ? 1 : 0}|${myKey || ""}|${myCount}|${(state.socials || []).join(",")}|${state.lang}`;
+    const sig = `own|${own}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${isPub ? 1 : 0}|${myKey || ""}|${myCount}|${(state.socials || []).join(",")}|${_ownSquadTier() || ""}|${state.lang}`;
     if (sig !== _fvbSig) {
       _fvbSig = sig;
       // Same badges as a friend banner, for MY account: Public / Private (so I see
@@ -35144,7 +35260,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         : "";
       banner.innerHTML = `
         <button type="button" class="fvb-avatar-edit" id="fvbAvatarEdit" data-i18n-title="changeAvatar" title="${esc(t("changeAvatar"))}" aria-label="${esc(t("changeAvatar"))}">
-          ${avatarMarkup(acc, "fvb-avatar")}
+          ${avatarMarkup({ ...acc, tigerSquad: !!_ownSquadTier(), squadTier: _ownSquadTier() }, "fvb-avatar")}
           <span class="fvb-avatar-ovl" aria-hidden="true"><span class="icon icon-edit icon-12"></span></span>
         </button>
         <div class="fvb-inner">
@@ -35220,7 +35336,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // friend banner renders the colour-circle + initials fallback.
     const _friendRec = state.friends?.find(f => f.uid === friendUid);
     const friendPhoto = _friendRec?.photoURL || null;
-    state.friendView = { uid: friendUid, displayName: friendName, avatarColor, photoURL: friendPhoto, isPublic: _friendIsPublic, publicKey: _friendRec?.publicKey || null, friendsCount: null, tigerSquad: !!_friendRec?.tigerSquad, error: null };
+    state.friendView = { uid: friendUid, displayName: friendName, avatarColor, photoURL: friendPhoto, isPublic: _friendIsPublic, publicKey: _friendRec?.publicKey || null, friendsCount: null, tigerSquad: !!_friendRec?.tigerSquad, squadTier: _friendRec?.squadTier || null, error: null };
     // Read the friend's public profile for the invite code (share link) + their
     // friends count ("X friends" in the banner). userProfiles is auth-readable.
     fbDb().collection("userProfiles").doc(friendUid).get()
@@ -35230,6 +35346,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (d.publicKey) state.friendView.publicKey = d.publicKey;
         if (typeof d.friendsCount === "number") state.friendView.friendsCount = d.friendsCount;
         state.friendView.tigerSquad = !!d.tigerSquad;
+        state.friendView.squadTier = d.tigerSquad?.tier || null;
         state.friendView.socials = _cleanSocials(d.socials);
         // AUTHORITATIVE public/friend state. The initial guess above comes from
         // state.friends[].isPublic, which is populated asynchronously at startup —
@@ -37212,7 +37329,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // nothing cached yet (first ever login).
   function hydrateUserDocCache(uid) {
     const c = Cache.read("userdoc", uid);
-    if (!c) return;
+    if (!c) {
+      // No cache for this account (first time here): never keep the PREVIOUS
+      // account's supporter badges on screen until syncUserDoc lands.
+      state.supporter = false; state.supportPublicly = false; state.squadTier = null;
+      try { renderSupporterBadge(); } catch {}
+      return;
+    }
     state.isAdmin      = c.roles === "admin";
     state.debugEnabled = !!c.Debug;   // every account's switch now, not just an admin's
     if (c.publicKey)  state.publicKey  = c.publicKey;
@@ -37220,7 +37343,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.isPublic       = !!c.isPublic;
     state.tier           = c.tier || "free";
     state.supporter      = !!c.supporter;
-    state.joinTigerSquad = !!c.joinTigerSquad;
+    state.supportPublicly = !!c.supportPublicly;
     state.vatCountry     = c.vatCountry || null;
     state.vatCustomRate     = (typeof c.vatCustomRate === "number") ? c.vatCustomRate : null;
     state.vatCustomCurrency = c.vatCustomCurrency || null;
@@ -37967,9 +38090,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.tier       = data.tier || "free";   // plan (server-set); gates product web-link attachment count
       // Backed the project (server-set by the payment webhooks) — a thank-you badge, never a feature gate.
       state.supporter  = !!data.supporter;
-      // Chose to join the TigerSquad (public supporters' group) — counts once a supporter.
-      state.joinTigerSquad = data.joinTigerSquad === true;
-      if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.joinTigerSquad;   // My profile may already be open
+      // Chose to support the project publicly — TigerSquad if they gave, public supporter otherwise.
+      state.supportPublicly = data.supportPublicly === true;
+      // XP from the account's chips + certified TigerTag+ — both counted by the server.
+      state.xpPoints = typeof data.xpPoints === "number" ? data.xpPoints : null;
+      state.certifiedPlusCount = typeof data.certifiedPlusCount === "number" ? data.certifiedPlusCount : null;
+      _renderSquadXp();
+      if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.supportPublicly;   // My profile may already be open
+      _subscribeOwnSquad(uid);
+      _maybeInviteSquad();
       renderSupporterBadge();
       state.socials    = _cleanSocials(data.socials);   // social-profile links (mirrored to userProfiles)
       state.vatCountry = data.vatCountry || null;    // ISO country code for VAT rate + currency (filament reorder)
@@ -38023,7 +38152,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         isPublic:   !!data.isPublic,
         tier:       data.tier || "free",
         supporter:  !!data.supporter,
-        joinTigerSquad: data.joinTigerSquad === true,
+        supportPublicly: data.supportPublicly === true,
         vatCountry: data.vatCountry || null,
         vatCustomRate: (typeof data.vatCustomRate === "number") ? data.vatCustomRate : null,
         vatCustomCurrency: data.vatCustomCurrency || null,
