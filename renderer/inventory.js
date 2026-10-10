@@ -4704,8 +4704,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       pill.className = `sb-squad-pill sq-${tier}`;
       pill.dataset.tier = tier;
       pill.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(tier)}`;
-      info.appendChild(pill);
+      info.insertBefore(pill, info.querySelector(".sb-xp-pill"));
     }
+    // XP chip under the name — every account, member or not.
+    let xp = info?.querySelector(".sb-xp-pill");
+    if (typeof state.xpPoints === "number" && info) {   // 0 XP shows too — something to fill up
+      if (!xp) {
+        xp = document.createElement("span");
+        xp.className = "sb-xp-pill";
+        xp.innerHTML = `<span class="icon icon-star-fill icon-10" aria-hidden="true"></span><span class="sb-xp-n"></span>`;
+        info.appendChild(xp);
+      }
+      xp.querySelector(".sb-xp-n").textContent = `${state.xpPoints.toLocaleString(state.lang)} XP`;
+      xp.setAttribute("aria-label", t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }));
+    } else xp?.remove();
     let b = host.querySelector(".sb-supporter-badge");
     if (b && b.dataset.tier !== (tier || "")) { b.remove(); b = null; }
     if (!tier) return;
@@ -4815,15 +4827,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   // "407 XP · 19 certified TigerTag+" in My profile → TigerSquad.
   function _renderSquadXp() {
+    try { renderSupporterBadge(); } catch (_) {}
     const el = $("eacSquadXp"); if (!el) return;
     if (state.xpPoints == null) { el.classList.add("hidden"); return; }
     el.textContent = t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 });
     el.classList.remove("hidden");
   }
-  let _xpRecountAsked = false;
+  const _xpRecountAsked = new Set();   // per account, once a session
   async function _requestXpRecount() {
-    if (_xpRecountAsked || !state.activeAccountId) return;
-    _xpRecountAsked = true;
+    const acc = state.activeAccountId;
+    if (!acc || _xpRecountAsked.has(acc)) return;
+    _xpRecountAsked.add(acc);
     try {
       const j = await _supportPost({ action: "xp" });
       if (j && typeof j.xp === "number") { state.xpPoints = j.xp; state.certifiedPlusCount = j.certified || 0; _renderSquadXp(); }
@@ -37340,7 +37354,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!c) {
       // No cache for this account (first time here): never keep the PREVIOUS
       // account's supporter badges on screen until syncUserDoc lands.
-      state.supporter = false; state.supportPublicly = false; state.squadTier = null;
+      state.supporter = false; state.supportPublicly = false; state.squadTier = null; state.xpPoints = null; state.certifiedPlusCount = null;
       try { renderSupporterBadge(); } catch {}
       return;
     }
@@ -37352,6 +37366,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.tier           = c.tier || "free";
     state.supporter      = !!c.supporter;
     state.supportPublicly = !!c.supportPublicly;
+    state.xpPoints = typeof c.xpPoints === "number" ? c.xpPoints : null;
+    state.certifiedPlusCount = typeof c.certifiedPlusCount === "number" ? c.certifiedPlusCount : null;
     state.vatCountry     = c.vatCountry || null;
     state.vatCustomRate     = (typeof c.vatCustomRate === "number") ? c.vatCustomRate : null;
     state.vatCustomCurrency = c.vatCustomCurrency || null;
@@ -38050,9 +38066,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const nowBacked = hadBackup || (isPlus && !!rawHex);
       await _invCol(uid).doc(chipUid).set({ rfidListed: true, rfidBackup: nowBacked }, { merge: true });
       if (isNew) bumpStudioCounters({ rfidChipsTotal: 1 });
+      if (Object.keys(update).length) _scheduleXpRefresh(uid);   // the server re-counts this chip
     } catch (e) {
       console.warn("[rfidList] scan record failed:", e.code || e.message);
     }
+  }
+  // A chip just entered the census → the server (certifyChip) updates the XP a
+  // moment later; read it back once things settle (a scan burst = one read).
+  let _xpRefreshTimer = null;
+  function _scheduleXpRefresh(uid) {
+    clearTimeout(_xpRefreshTimer);
+    _xpRefreshTimer = setTimeout(async () => {
+      if (uid !== state.activeAccountId) return;
+      try {
+        const d = (await fbDb(uid).collection("users").doc(uid).get()).data() || {};
+        if (typeof d.xpPoints === "number") {
+          state.xpPoints = d.xpPoints;
+          state.certifiedPlusCount = typeof d.certifiedPlusCount === "number" ? d.certifiedPlusCount : state.certifiedPlusCount;
+          _renderSquadXp();
+        }
+      } catch (_) {}
+    }, 8000);
   }
 
   async function syncUserDoc(uid) {
@@ -38104,6 +38138,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.xpPoints = typeof data.xpPoints === "number" ? data.xpPoints : null;
       state.certifiedPlusCount = typeof data.certifiedPlusCount === "number" ? data.certifiedPlusCount : null;
       _renderSquadXp();
+      if (state.xpPoints == null) _requestXpRecount();   // never counted yet → ask the server once
       if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.supportPublicly;   // My profile may already be open
       _subscribeOwnSquad(uid);
       _maybeInviteSquad();
@@ -38161,6 +38196,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         tier:       data.tier || "free",
         supporter:  !!data.supporter,
         supportPublicly: data.supportPublicly === true,
+        xpPoints: typeof data.xpPoints === "number" ? data.xpPoints : null,
+        certifiedPlusCount: typeof data.certifiedPlusCount === "number" ? data.certifiedPlusCount : null,
         vatCountry: data.vatCountry || null,
         vatCustomRate: (typeof data.vatCustomRate === "number") ? data.vatCustomRate : null,
         vatCustomCurrency: data.vatCustomCurrency || null,
