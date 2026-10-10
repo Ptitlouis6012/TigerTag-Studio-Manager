@@ -76,6 +76,19 @@
   .icon-rack-grid { -webkit-mask-image: url('../../assets/svg/icons/icon_rack_grid.svg');    mask-image: url('../../assets/svg/icons/icon_rack_grid.svg'); }
   .icon-pin       { -webkit-mask-image: url('../../assets/svg/icons/icon_pin.svg');          mask-image: url('../../assets/svg/icons/icon_pin.svg'); }
   .icon-shopify   { -webkit-mask-image: url('../../assets/svg/icons/icon_shopify.svg');      mask-image: url('../../assets/svg/icons/icon_shopify.svg'); }
+  .icon-camera        { -webkit-mask-image: url('../../assets/svg/icons/icon_camera.svg'); mask-image: url('../../assets/svg/icons/icon_camera.svg'); }
+  .icon-arrow-up-right{ -webkit-mask-image: url('../../assets/svg/icons/icon_arrow_up_right.svg'); mask-image: url('../../assets/svg/icons/icon_arrow_up_right.svg'); }
+  .icon-square        { -webkit-mask-image: url('../../assets/svg/icons/icon_square.svg'); mask-image: url('../../assets/svg/icons/icon_square.svg'); }
+  .icon-highlighter   { -webkit-mask-image: url('../../assets/svg/icons/icon_highlighter.svg'); mask-image: url('../../assets/svg/icons/icon_highlighter.svg'); }
+  .icon-undo          { -webkit-mask-image: url('../../assets/svg/icons/icon_undo.svg'); mask-image: url('../../assets/svg/icons/icon_undo.svg'); }
+  .icon-eraser        { -webkit-mask-image: url('../../assets/svg/icons/icon_eraser.svg'); mask-image: url('../../assets/svg/icons/icon_eraser.svg'); }
+  .icon-line          { -webkit-mask-image: url('../../assets/svg/icons/icon_line.svg'); mask-image: url('../../assets/svg/icons/icon_line.svg'); }
+  .icon-circle        { -webkit-mask-image: url('../../assets/svg/icons/icon_circle.svg'); mask-image: url('../../assets/svg/icons/icon_circle.svg'); }
+  .icon-type          { -webkit-mask-image: url('../../assets/svg/icons/icon_type.svg'); mask-image: url('../../assets/svg/icons/icon_type.svg'); }
+  .icon-step-number   { -webkit-mask-image: url('../../assets/svg/icons/icon_step_number.svg'); mask-image: url('../../assets/svg/icons/icon_step_number.svg'); }
+  .icon-blur          { -webkit-mask-image: url('../../assets/svg/icons/icon_blur.svg'); mask-image: url('../../assets/svg/icons/icon_blur.svg'); }
+  .icon-redo          { -webkit-mask-image: url('../../assets/svg/icons/icon_redo.svg'); mask-image: url('../../assets/svg/icons/icon_redo.svg'); }
+  .icon-suggestion    { -webkit-mask-image: url('../../assets/svg/icons/icon_suggestion.svg'); mask-image: url('../../assets/svg/icons/icon_suggestion.svg'); }
   .icon-image     { -webkit-mask-image: url('../../assets/svg/icons/icon_image.svg');        mask-image: url('../../assets/svg/icons/icon_image.svg'); }
   .icon-printer   { -webkit-mask-image: url('../../assets/svg/icons/icon_printer.svg');      mask-image: url('../../assets/svg/icons/icon_printer.svg'); }
   /* Extra illustration icons (What's New + general use). */
@@ -1566,7 +1579,7 @@
   .view-toggle button { height: 30px; min-width: 34px; padding: 0 9px; font-size: 13px; border: none; background: transparent; color: var(--muted); border-radius: 8px; transition: color .18s ease; display: inline-flex; align-items: center; justify-content: center; }
   .view-toggle button .icon { background-color: currentColor; }   /* follow muted → active text colour */
   /* Since the buttons are icon-only, a custom bubble names the view on hover —
-     appears after a 1s dwell (delayed fade-IN), disappears instantly on leave.
+     appears at once, disappears instantly on leave.
      Reads the already-localised aria-label; no native title tooltip. */
   .view-toggle-groups .view-toggle button::after {
     content: attr(aria-label);
@@ -1577,7 +1590,15 @@
     opacity: 0; pointer-events: none; z-index: 60;
     box-shadow: 0 4px 12px rgba(0,0,0,.3); transition: opacity .12s;
   }
-  .view-toggle-groups .view-toggle button:hover::after { opacity: 1; transition-delay: 1s; }
+  /* Shown at once. Each button is its own stacking context (z-index 1, above
+     the sliding indicator), so the bubble's z-index alone could not beat the
+     search field's orange + (z 2) right under it: the hovered button itself
+     climbs above. */
+  .view-toggle-groups .view-toggle button:hover { z-index: 70; transition: color .18s ease, z-index 0s; }
+  /* …and stays up until the bubble's fade-out (.12s) is over — dropping back at
+     once let the fading bubble slip under the orange +. */
+  .view-toggle-groups .view-toggle button { transition: color .18s ease, z-index 0s linear .14s; }
+  .view-toggle-groups .view-toggle button:hover::after { opacity: 1; transition-delay: 0s; }
   .view-toggle button.active { background: var(--surface-raised); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 
   /* Sliding selection bubble — only in the main view selector (Inventory /

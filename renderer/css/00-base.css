@@ -933,18 +933,21 @@
   .sidebar.collapsed .sb-makerworld-btn,
   .sidebar.collapsed .sb-discord-btn,
   .sidebar.collapsed .sb-shop-btn,
-  .sidebar.collapsed .sb-coffee-btn {
+  .sidebar.collapsed .sb-coffee-btn,
+  .sidebar.collapsed .sb-report-btn {
     width: 40px; padding: 0; border-radius: 10px;   /* 40×40 square (height from the shared 40px rule) */
     gap: 0;   /* drop the icon↔label gap so the icon stays centred when the label collapses */
   }
   /* Labels collapse the same animated way as the Notifications row (no display:none). */
   .sidebar.collapsed .sb-actions .label,
   .sidebar.collapsed .sb-community .label { max-width: 0; opacity: 0; margin-left: 0; }
-  .sidebar.collapsed .sb-qr-wrap { padding: 0; width: 100%; }
-  .sidebar.collapsed .sb-qr-label,
-  .sidebar.collapsed .sb-qr-hint { display: none; }
-  .sidebar.collapsed .sb-qr-label-short { display: block; text-align: center; }
-  .sidebar.collapsed .sb-qr-img { width: 52px; height: 52px; }
+  /* Footer v2, collapsed: no group titles, square rows centred, version over the gear. */
+  .sidebar.collapsed .sb-group-label { display: none; }
+  .sidebar.collapsed .sb-group { align-items: center; }
+  .sidebar.collapsed .sb-community .sb-group > button { width: 40px; height: 40px; padding: 0; justify-content: center; gap: 0; }
+  .sidebar.collapsed .sb-foot { flex-direction: column-reverse; gap: 2px; }
+  .sidebar.collapsed .sb-foot .sb-version { text-align: center; font-size: 10px; }
+  .sidebar.collapsed .sb-settings-btn { width: 40px; justify-content: center; padding: 0; gap: 0; }
 
   /* App version — discrete line at the very bottom of the sidebar */
   .sb-version {

@@ -127,6 +127,7 @@ import { renderElegooCamBanner } from './printers/elegoo/widget_camera.js';
 import { sdcpWireLive } from './printers/elegoo/sdcp.js';
 import { elgFanStep } from './printers/elegoo/widget_control.js';
 import { jobBar, jobBarFill } from './printers/job-bar.js';
+import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, reportDragState, syncReports } from './report/index.js';
 
   const API_BASE         = "https://cdn.tigertag.io";
 
@@ -1402,11 +1403,6 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
   }
   _makeDraggableModal("colorEditModalOverlay", ".td-edit-card", ".modal-header");
 
-  // Sidebar "Mobile Apps" QR — generated locally (offline), fixed dark theme.
-  // Deferred so it runs AFTER the whole module has evaluated: `_makeQrDataUrl` reads
-  // module-level const/let (`_QR_STYLE_KEY`, `_qrLogoImg`) declared further down, which
-  // would be in the temporal dead zone if called during top-level init here.
-  queueMicrotask(() => { const _sbq = document.getElementById("sbQrImg"); if (_sbq) _sbq.src = _makeQrDataUrl("https://taap.it/nX7QSrz", { size: 110, margin: 2, fg: "#ffffff", bg: "#0f1117" }); });
   _enhanceSelect(document.getElementById("whatsNewVersionSelect"));   // app-styled dropdown, like the app's other selects
   document.getElementById("whatsNewVersionSelect")?.addEventListener("change", (e) => {
     _wnGoTo(e.target.value);   // browse history — doesn't change the "seen" version
@@ -2007,10 +2003,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         <span>${t("friendsTitle")}</span>
         <span id="acctDropFriendsBadge" class="acct-drop-badge">${_friendCount > 0 ? _friendCount : "+"}</span>
       </button>
-      <button class="acct-drop-action" data-drop-action="open-settings">
-        <span class="icon icon-settings icon-13"></span>
-        <span>${t("settingsOpenBtn")}</span>
-      </button>`;
+`;
 
     list.querySelectorAll("[data-drop-id]").forEach(btn => {
       btn.addEventListener("click", () => {
@@ -4013,10 +4006,9 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     $("settingsPanel").classList.remove("open"); $("settingsOverlay").classList.remove("open");
     _layoutSettingsStack();
   }
-  // (Sidebar Settings button removed — Settings is reached from the
-  // account dropdown, just under "Manage profiles". The dropdown's
-  // delegated handler dispatches `data-drop-action="open-settings"`
-  // → openSettings().)
+  // Settings is reached from the sidebar footer, right of the version (it used
+  // to sit in the account dropdown).
+  $("sbSettingsBtn")?.addEventListener("click", openSettings);
   $("settingsClose").addEventListener("click", closeSettings);
   $("settingsCloseTab")?.addEventListener("click", closeSettings);
   $("settingsOverlay").addEventListener("click", closeSettings);
@@ -6135,6 +6127,9 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     subscribeFriendRequests(uid);
     subscribeFriends(uid);  // live-sync friends (add/remove on the fly, both sides) + per-friend avatar/name listeners
     subscribeNotifications(uid);  // live notification center (general notifs + unread badge)
+    // "My requests": the backend reads their GitHub status and raises a
+    // notification for any change — once per sign-in, after the app settles.
+    setTimeout(() => { if (uid === state.activeAccountId) syncReports().catch(() => {}); }, 8000);
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
@@ -16613,7 +16608,21 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
     // While the import modal is open its own dropzone handles the drop, so the
     // window-level handler stands down (no full-window hint over the modal).
     const modalOpen = () => $("ttagImportOverlay")?.classList.contains("open");
-    const hasFiles = (e) => !internalDrag && !modalOpen() && Array.from(e.dataTransfer && e.dataTransfer.types || []).includes("Files");
+    // Same while the "Improvements & suggestions" card is open: a file dropped
+    // then is an attachment for the report, wherever it lands in the window.
+    const osFiles = (e) => !internalDrag && Array.from(e.dataTransfer && e.dataTransfer.types || []).includes("Files");
+    const hasFiles = (e) => osFiles(e) && !modalOpen() && !isReportOpen();
+    let repDepth = 0;
+    window.addEventListener("dragenter", (e) => { if (isReportOpen() && osFiles(e)) { repDepth++; reportDragState(true); } });
+    window.addEventListener("dragleave", (e) => { if (isReportOpen() && osFiles(e)) { repDepth = Math.max(0, repDepth - 1); if (!repDepth) reportDragState(false); } });
+    window.addEventListener("dragend", () => { repDepth = 0; reportDragState(false); }, true);
+    window.addEventListener("dragover", (e) => { if (isReportOpen() && osFiles(e)) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "copy"; } });
+    window.addEventListener("drop", (e) => {
+      repDepth = 0; reportDragState(false);
+      if (!isReportOpen() || !osFiles(e)) return;
+      e.preventDefault(); clear();
+      reportDropFiles(Array.from(e.dataTransfer && e.dataTransfer.files || []));
+    });
     // Capture phase so we see the dragstart even if a source handler stops it.
     window.addEventListener("dragstart", () => { internalDrag = true; clear(); }, true);
     window.addEventListener("dragend", () => { internalDrag = false; clear(); }, true);
@@ -18427,7 +18436,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         // One per line — a tri-colour joined on a single line wrapped badly.
         // Rendered with `white-space: pre-line` (4th tuple slot below).
         return hex.length ? hex.join("\n") : "";
-      })(), null, true, "palette"],
+      })(), null, true, "pipette"],
       // Quantity as the product states it: the RAW `measure` with its own unit
       // (500 g, but also 2 kg) — not the grams the gauge uses, which would read
       // "2000 g" for a 2 kg spool.
@@ -21655,11 +21664,61 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 
   /* ── community buttons ── */
   $("sbWikiBtn").addEventListener("click", () => _clickCommunityBtn("wiki"));
+  // tigersystem.io serves the downloads page in these languages; others → English.
+  $("sbDownloadBtn")?.addEventListener("click", () => {
+    const site = ["fr", "en", "de", "es", "it", "zh", "pt", "pl"];
+    const l = state.lang === "pt-pt" ? "pt" : state.lang;
+    window.electronAPI?.openExternal(`https://tigersystem.io/${site.includes(l) ? l : "en"}/download`);
+  });
   $("sbGithubBtn").addEventListener("click", () => _clickCommunityBtn("github"));
   $("sbMakerWorldBtn").addEventListener("click", () => _clickCommunityBtn("makerworld"));
   $("sbDiscordBtn").addEventListener("click", () => _clickCommunityBtn("discord"));
   $("sbShopBtn").addEventListener("click", () => _clickCommunityBtn("shop"));
   $("sbCoffeeBtn")?.addEventListener("click", _openCoffee);
+  // Bug or idea? → in-app report that becomes a public GitHub issue (report/index.js).
+  initReport({
+    t, esc,
+    getIdToken: force => state.activeAccountId ? firebase.app(state.activeAccountId).auth().currentUser?.getIdToken(!!force) : null,
+    openExternal: url => window.electronAPI?.openExternal(url),
+    openCoffee: () => _openCoffee(),
+    timeAgo: ms => timeAgo(ms),
+    getUid: () => state.activeAccountId || null,
+    // Catalogue corrections name their product: the same index and the same
+    // words as the Catalogue view (no colour-window or filter narrowing here),
+    // an exact barcode / SKU / id first.
+    searchCatalog: async (q, limit = 8) => {
+      if (!_catalogIndex.length) _catalogLoadCache();
+      if (!_catalogIndex.length) await _catalogLoadBundled();
+      const raw = String(q || "").trim().toLowerCase();
+      const exact = _catalogIndex.filter(e => [e.it.barcode, e.it.sku, e.it.id].some(v => String(v || "").toLowerCase() === raw));
+      const toks = _searchTokens(raw);
+      const list = exact.length ? exact : _catalogIndex.filter(e => _hayHasAll(e.hay, toks));
+      return list.slice(0, limit).map(({ it }) => ({
+        id: it.id, title: it.title || it._name || "", brand: it.brand || "", material: it.material || "",
+        sku: it.sku || "", barcode: it.barcode || "", img: it.img_src ? cdnImg(it.img_src, 40) : "",
+      }));
+    },
+    // The sidebar button is lit while the card is open or a request is in
+    // progress (same rule as the card's tab).
+    onToggle: active => $("sbReportBtn")?.classList.toggle("is-on", !!active),
+    // What travels with the report — shown to the user before sending. Never
+    // an id, a name, an address or a credential.
+    getMeta: async () => {
+      const info = await loadAppInfo();
+      const brands = {};
+      (state.printers || []).forEach(p => { const b = p.brand || "?"; brands[b] = (brands[b] || 0) + 1; });
+      return {
+        appVersion: info?.appVersion || "",
+        os: [({ darwin: "macOS", win32: "Windows", linux: "Linux" })[info?.platform] || info?.platform,
+             info?.systemVersion, info?.arch].filter(Boolean).join(" "),
+        view: state.viewMode || "",
+        lang: state.lang || "",
+        printers: Object.entries(brands).map(([b, n]) => n > 1 ? `${b} ×${n}` : b).join(", "),
+        errors: _errorLog.slice(0, 10).map(e => `${e.context}${e.code ? " · " + e.code : ""}: ${String(e.message || "").slice(0, 240)}`),
+      };
+    },
+  });
+  $("sbReportBtn")?.addEventListener("click", () => toggleReport());
   $("btnSupportAbout")?.addEventListener("click", _openCoffee);
   $("whatsNewCoffee")?.addEventListener("click", _openCoffee);
 
@@ -36090,6 +36149,19 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
           </div>
         </div>`;
       }
+      // A request of mine changed status on GitHub (server-written by `myReports`).
+      // Worded HERE, in the user's language — the server only says which status.
+      if (n.type === "request_status") {
+        const st = n.data?.status || "open";
+        return `<div class="notif-item${unread} notif-item--clickable" data-id="${esc(n.id)}" data-notif-action="report">
+          <span class="notif-ic notif-ic--req notif-ic--req-${esc(st)}"><span class="icon icon-suggestion icon-14"></span></span>
+          <div class="fp-friend-main">
+            <div class="notif-title">${esc(t(`notifReq_${st}`, { n: n.data?.number || "" }))}</div>
+            <div class="notif-text">${esc(n.data?.title || "")}</div>
+            <div class="fp-friend-date">${esc(when)}</div>
+          </div>
+        </div>`;
+      }
       // Owner-authored event (low_stock / community / announcement): icon chip +
       // title + text + time, clickable to its action. NO delete (social-style feed).
       const action = n.action || "", img = n.data?.img;
@@ -36146,6 +36218,7 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
         closeNotifs();
         const a = row.dataset.notifAction;
         if (a === "lowstock") _openLowStockProduct(row.dataset.notifKey);
+        else if (a === "report") openReport({ tab: "mine" });
         else if (a === "whatsnew") openWhatsNew(row.dataset.notifVersion || undefined, { manual: true });
         else if (COMMUNITY[a]) _openCommunityLink(a);
       }));

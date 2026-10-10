@@ -293,6 +293,11 @@
     background: var(--surface); border: 1px solid var(--border);
   }
   .notif-ic .icon { background: var(--primary); }
+  /* "My requests" status change — the chip takes the status colour. */
+  .notif-ic--req-done        { background: color-mix(in srgb, #2f9e44 18%, transparent); }
+  .notif-ic--req-done .icon  { background: #2f9e44; }
+  .notif-ic--req-in_progress .icon { background: #f08c00; }
+  .notif-ic--req-declined .icon, .notif-ic--req-cancelled .icon { background: var(--muted); }
   /* Community nudges — the real app-icon look: brand-coloured rounded square,
      white logo filling the box (Discord purple, GitHub slate, MakerWorld teal). */
   .notif-ic--wiki       { background: var(--primary); border-color: var(--primary); } /* ours — follows the theme */

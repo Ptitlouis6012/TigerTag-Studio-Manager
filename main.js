@@ -3580,6 +3580,15 @@ ipcMain.handle('mdns:browse-snapmaker', async () => {
 });
 
 // ── App info (used by the diagnostic / error report panel) ─────────────────
+// In-app bug report: a screenshot of the window that asked, as a JPEG data URL
+// (the renderer hides its report dialog first). Full window, current DPI.
+ipcMain.handle('report:capture', async (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return null;
+  const img = await win.webContents.capturePage();
+  return img.isEmpty() ? null : `data:image/jpeg;base64,${img.toJPEG(88).toString('base64')}`;
+});
+
 ipcMain.handle('app:info', () => {
   const os = require('os');
   return {
@@ -3591,6 +3600,7 @@ ipcMain.handle('app:info', () => {
     arch:        process.arch,
     osRelease:   os.release(),
     osVersion:   os.version(),   // human-readable: "macOS 15.4", "Windows 11 Pro", etc.
+    systemVersion: process.getSystemVersion(),   // "26.0.1" on macOS, "10.0.26100" on Windows
   };
 });
 

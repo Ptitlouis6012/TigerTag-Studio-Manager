@@ -314,6 +314,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // ── App info (version / platform — used by the diagnostic report) ──────
   getAppInfo:      () => ipcRenderer.invoke('app:info'),
+  // Screenshot of this window for the in-app bug report (JPEG data URL or null).
+  captureWindow:   () => ipcRenderer.invoke('report:capture'),
   // Open a URL in the default system application (e.g. VLC for rtsp://).
   openExternal: (url) => ipcRenderer.send('shell:open-external', url),
 

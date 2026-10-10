@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="IoT/tigerspool/tigerspool.css" />
 <link rel="stylesheet" href="IoT/usbscale/usbscale.css" />
 <link rel="stylesheet" href="IoT/td1s/td1s.css" />
+<link rel="stylesheet" href="report/report.css" />
 </head>
 <body>
 <div class="app-layout">
@@ -98,11 +99,15 @@
 
     <!-- community footer (always visible) -->
     <div class="sb-community">
-      <div class="sb-qr-wrap" id="sbQrWrap">
-        <div class="sb-qr-label" data-i18n="mobileApp">TigerTag Mobile Apps</div>
-        <div class="sb-qr-label-short" data-i18n="mobileAppShort">Apps</div>
-        <img class="sb-qr-img" id="sbQrImg" alt="QR" />
-      </div>
+      <!-- Resources: plain rows, the brand only in the icon's colour. -->
+      <div class="sb-group sb-group--res">
+      <div class="sb-group-label" data-i18n="sbResources">Resources</div>
+      <!-- Downloads page on tigersystem.io (apps for every platform), in the
+           user's language when the site has it. -->
+      <button class="sb-download-btn" id="sbDownloadBtn">
+        <span class="icon icon-download icon-14"></span>
+        <span class="label" data-i18n="sbDownloadBtn">Downloads</span>
+      </button>
       <!-- Documentation wiki (opens in the browser) -->
       <button class="sb-wiki-btn" id="sbWikiBtn">
         <span class="icon icon-book icon-14"></span>
@@ -130,6 +135,9 @@
         <span class="label" data-i18n="discordBtn">Discord</span>
         <span class="sb-community-badge" aria-hidden="true">1</span>
       </button>
+      </div>
+      <div class="sb-group sb-group--support">
+      <div class="sb-group-label" data-i18n="sbSupport">Support the project</div>
       <!-- Buy me a coffee → support the project (opens in the browser). Official
            brand button image; the badge only lights up after a few days of use
            (see _maybeNudgeCommunity). Collapsed rail shows the cup glyph only. -->
@@ -138,8 +146,23 @@
         <span class="label" data-i18n="coffeeBtn">Buy me a coffee</span>
         <span class="sb-community-badge" aria-hidden="true">1</span>
       </button>
-      <!-- App version (always visible, discreet — populated at runtime from preload) -->
-      <div class="sb-version" id="sbVersion">v—</div>
+      <!-- Improvements & suggestions → the in-app request card (report/index.js):
+           problem, improvement, idea, question, catalogue fix or new brand, with
+           screenshots — ends up as a public GitHub issue. A tool: no badge. -->
+      <button class="sb-report-btn" id="sbReportBtn">
+        <span class="icon icon-suggestion icon-14" aria-hidden="true"></span>
+        <span class="label" data-i18n="reportBtn">Improvements &amp; suggestions</span>
+      </button>
+      </div>
+      <!-- Footer: app version (populated from preload) + Settings, which used to
+           sit in the account dropdown. -->
+      <div class="sb-foot">
+        <div class="sb-version" id="sbVersion">v—</div>
+        <button type="button" class="sb-settings-btn" id="sbSettingsBtn">
+          <span class="icon icon-settings icon-14" aria-hidden="true"></span>
+          <span class="label" data-i18n="settingsOpenBtn">Settings</span>
+        </button>
+      </div>
     </div>
   </aside>
 
