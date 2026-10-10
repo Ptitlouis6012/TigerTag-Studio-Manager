@@ -351,7 +351,7 @@ function onClick(e) {
   else if (act === "annotate") annotate(Number(a.dataset.i));
   else if (act === "send") send();
   else if (act === "issue" && st.done?.url) ctx.openExternal(st.done.url);
-  else if (act === "coffee") ctx.openCoffee?.();
+  else if (act === "coffee") ctx.openCoffee?.(a);
   else if (act === "view") { _view = a.dataset.view; _closeAsk = null; render(); if (_view === "mine") syncReports(); }
   else if (act === "mineOpen") { const r = (_mine.list || []).find(x => x.id === a.dataset.id); if (r?.url) ctx.openExternal(r.url); }
   else if (act === "mineClose") { _closeAsk = a.dataset.id; render(); setTimeout(() => { if (_closeAsk === a.dataset.id) { _closeAsk = null; render(); } }, 4000); }

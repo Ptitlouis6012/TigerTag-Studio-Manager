@@ -4641,10 +4641,55 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // "Buy me a coffee" — every entry point (sidebar / About / What's New) opens
   // the page directly and marks the nudge done, so we never pester someone who
   // already visited it.
-  function _openCoffee() {
-    _markCommunitySeen("coffee");
-    window.electronAPI?.openExternal(COFFEE_URL);
+  // "Support the project" — a tiny chooser instead of a single platform: some
+  // supporters can't (or won't) use Buy Me a Coffee and only pay with Ko-fi or PayPal.
+  // Anchored to the button that opened it; closes on pick, outside click or Esc.
+  const PAYPAL_URL = "https://paypal.me/tigersystemio";
+  const KOFI_URL = "https://ko-fi.com/tigersystemio";
+  let _supportMenu = null;
+  function _closeSupportMenu() { _supportMenu?.remove(); _supportMenu = null; }
+  function _openCoffee(e) {
+    const anchor = e?.currentTarget || (e instanceof Element ? e : null);
+    if (_supportMenu) { _closeSupportMenu(); return; }
+    const m = document.createElement("div");
+    m.className = "support-menu";
+    m.setAttribute("role", "menu");
+    m.innerHTML = `
+      <div class="support-menu-title">${esc(t("sbSupport"))}</div>
+      <button type="button" class="support-opt" data-support="bmc" role="menuitem">
+        <img src="../assets/svg/logos/logo_buy_me_coffee.svg" alt="" aria-hidden="true">
+        <span><b>Buy Me a Coffee</b><small>${esc(t("supportBmcSub"))}</small></span>
+      </button>
+      <button type="button" class="support-opt" data-support="kofi" role="menuitem">
+        <img src="../assets/svg/logos/logo_kofi.svg" alt="" aria-hidden="true">
+        <span><b>Ko-fi</b><small>${esc(t("supportKofiSub"))}</small></span>
+      </button>
+      <button type="button" class="support-opt" data-support="paypal" role="menuitem">
+        <img src="../assets/svg/logos/logo_paypal.svg" alt="" aria-hidden="true">
+        <span><b>PayPal</b><small>${esc(t("supportPaypalSub"))}</small></span>
+      </button>`;
+    document.body.appendChild(m);
+    // Place it next to its button, kept inside the window.
+    const r = anchor?.getBoundingClientRect?.();
+    const W = m.offsetWidth, H = m.offsetHeight;
+    let x = r ? r.right + 10 : (innerWidth - W) / 2, y = r ? r.top + r.height / 2 - H / 2 : (innerHeight - H) / 2;
+    if (x + W > innerWidth - 8) x = r ? r.left - W - 10 : innerWidth - W - 8;
+    if (x < 8) x = 8;
+    y = Math.max(8, Math.min(y, innerHeight - H - 8));
+    m.style.left = `${Math.round(x)}px`; m.style.top = `${Math.round(y)}px`;
+    m.addEventListener("click", ev => {
+      const b = ev.target.closest("[data-support]"); if (!b) return;
+      _closeSupportMenu();
+      _markCommunitySeen("coffee");
+      window.electronAPI?.openExternal({ paypal: PAYPAL_URL, kofi: KOFI_URL }[b.dataset.support] || COFFEE_URL);
+    });
+    _supportMenu = m;
+    setTimeout(() => {
+      const off = ev => { if (!_supportMenu || _supportMenu.contains(ev.target) || anchor?.contains?.(ev.target)) return; _closeSupportMenu(); document.removeEventListener("mousedown", off, true); };
+      document.addEventListener("mousedown", off, true);
+    });
   }
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && _supportMenu) _closeSupportMenu(); });
 
   // The header chip (own view) renders an editable avatar too — clicking it
   // (hover shows a pencil overlay) changes the photo. Delegated on the static
@@ -21680,7 +21725,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     t, esc,
     getIdToken: force => state.activeAccountId ? firebase.app(state.activeAccountId).auth().currentUser?.getIdToken(!!force) : null,
     openExternal: url => window.electronAPI?.openExternal(url),
-    openCoffee: () => _openCoffee(),
+    openCoffee: anchor => _openCoffee(anchor),
     timeAgo: ms => timeAgo(ms),
     getUid: () => state.activeAccountId || null,
     // Catalogue corrections name their product: the same index and the same
