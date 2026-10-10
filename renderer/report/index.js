@@ -405,7 +405,7 @@ const closeX = () => `<button type="button" class="rep-x" data-rep="close" aria-
 function coffeeHTML() {
   return `
     <div class="rep-coffee">
-      <img class="rep-coffee-cup" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt="" aria-hidden="true">
+      <img class="rep-coffee-cup" src="../assets/svg/logos/logo_kofi.svg" alt="" aria-hidden="true">
       <div class="rep-coffee-txt">
         <div class="rep-coffee-title">${esc(t("reportCoffeeTitle"))}</div>
         <div class="rep-coffee-sub">${esc(t("reportCoffeeSub"))}</div>

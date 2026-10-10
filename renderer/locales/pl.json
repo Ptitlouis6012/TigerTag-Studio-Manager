@@ -12,12 +12,6 @@
   "td1sDisconnected": "TD1S: disconnected",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "TD1S scan: {{td}} — spool not found in inventory.",
-  "welcomeBack": [
-    "Witaj z powrotem,",
-    "Gotowy do druku,",
-    "✨ Miło Cię widzieć,",
-    "Twórzmy razem,"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "Pliki 3D",
   "discordBtn": "Discord",

@@ -14,7 +14,6 @@
 | `rfidNoReader` | RFID no reader |
 | `rfidScanned` | RFID scanned `{{uid}}` |
 | `rfidNotFound` | RFID unknown UID `{{uid}}` |
-| `welcomeBack` | Array of random greeting strings |
 
 ### Community / links
 | Key | Purpose |

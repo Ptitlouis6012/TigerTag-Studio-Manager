@@ -12,13 +12,6 @@
   "td1sDisconnected": "TD1S: niet verbonden",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "TD1S-scan: {{td}} — spoel niet gevonden in inventaris.",
-  "welcomeBack": [
-    "Welkom terug,",
-    "Leuk je te zien,",
-    "Zullen we,",
-    "Klaar om te printen,",
-    "✨ Hé, fijn dat je er bent,"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "3D-bestanden",
   "discordBtn": "Discord",

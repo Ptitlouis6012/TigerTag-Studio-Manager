@@ -12,13 +12,6 @@
   "td1sDisconnected": "TD1S: desconectado",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "TD1S scan: {{td}} — bobina não encontrada no inventário.",
-  "welcomeBack": [
-    "Bem-vindo de volta,",
-    "Que bom te ver,",
-    "Vamos lá,",
-    "Pronto para imprimir,",
-    "✨ Olá, que bom que você veio,"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "Arquivos 3D",
   "discordBtn": "Discord",

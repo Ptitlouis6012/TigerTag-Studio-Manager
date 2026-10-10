@@ -12,13 +12,6 @@
   "td1sDisconnected": "TD1S: отключен",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "Сканирование TD1S: {{td}} — катушка не найдена в инвентаре.",
-  "welcomeBack": [
-    "С возвращением,",
-    "Рады видеть,",
-    "Ну что, поехали,",
-    "Готовы печатать,",
-    "✨ Привет, рады, что вы здесь,"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "3D-файлы",
   "discordBtn": "Discord",

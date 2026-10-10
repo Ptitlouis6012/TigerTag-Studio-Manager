@@ -1874,7 +1874,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // afterwards and pushes the live delta.
     _hydrateFriendsCache(state.activeAccountId);
     renderFriendsBadge();   // show friend count (or "+") on first paint
-    $("sbWelcome").textContent = t("welcomeBack");
     $("sbName").textContent = shown;
     $("sbUser").classList.remove("sb-user--empty");
     // Single source-of-truth paint — gradient, initials (STRICT from
@@ -35265,7 +35264,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </button>
         <div class="fvb-inner">
           <div class="fvb-name-row"><span class="fvb-name">${esc(own)}</span>${countText}</div>
-          <div class="fvb-badges">${relBadge}${shareBtn}</div>
+          <div class="fvb-badges">${relBadge}${_ownSquadTier() ? `<span class="sb-squad-pill fvb-squad sq-${_ownSquadTier()}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(_ownSquadTier())}</span>` : ""}${shareBtn}</div>
           ${_socialsRowHTML(state.socials)}
         </div>`;
     }

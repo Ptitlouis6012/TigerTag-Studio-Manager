@@ -12,13 +12,6 @@
   "td1sDisconnected": "TD1S: 已断开",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "TD1S 扫描：{{td}} — 库存中未找到卷轴。",
-  "welcomeBack": [
-    "欢迎回来，",
-    "很高兴见到你，",
-    "出发，",
-    "准备好打印了，",
-    "✨ 嘿，很高兴你在这里，"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "3D 文件",
   "discordBtn": "Discord",

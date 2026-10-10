@@ -12,13 +12,6 @@
   "td1sDisconnected": "TD1S: getrennt",
   "td1sScanned": "TD1S: {{td}}",
   "td1sNotFound": "TD1S Scan: {{td}} — Spule nicht im Inventar gefunden.",
-  "welcomeBack": [
-    "Willkommen zurück,",
-    "Schön dich zu sehen,",
-    "Los geht's,",
-    "Bereit zum Drucken,",
-    "✨ Hey, gut dass du da bist,"
-  ],
   "githubBtn": "GitHub",
   "makerWorldBtn": "3D-Dateien",
   "discordBtn": "Discord",

@@ -571,10 +571,7 @@
 /* Buy Me a Coffee cup on a dark surface — the brand cup's outline is black, so
    the dark theme swaps in the white-outline variant (the coffee stays #FFDD00).
    The yellow .support-btn pill keeps the original: black reads on yellow. */
-:root[data-theme="dark"] .support-opt[data-support="bmc"] img,
-:root[data-theme="dark"] .rep-coffee-cup { content: url('../../assets/svg/logos/logo_buy_me_coffee_dark.svg'); }
-/* Sidebar entry: a solid coffee-yellow cup, like the other coloured resource icons. */
-:root[data-theme="dark"] .sb-coffee-cup { content: url('../../assets/svg/logos/logo_buy_me_coffee_yellow.svg'); }
+:root[data-theme="dark"] .support-opt[data-support="bmc"] img { content: url('../../assets/svg/logos/logo_buy_me_coffee_dark.svg'); }
 
 /* Supporter badge — a small golden heart on the sidebar avatar's corner, shown
    once a payment is tied to the account (users/{uid}.supporter, server-set). */
@@ -712,3 +709,5 @@
 .squad-invite-wall:hover { color: var(--text); }
 .eac-squad-xp { margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--text); }
 .eac-squad-label.eac-squad-label, .eac-squad-label > * { text-align: left; align-self: flex-start; }
+/* Avatars sized in % of their container (my own banner's edit button) keep it through the heart wrapper. */
+.fvb-avatar-edit .av-squad-host { width: 100%; height: 100%; }
