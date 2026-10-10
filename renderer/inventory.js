@@ -22289,7 +22289,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const activeUid = state.friendView?.uid || "";
     const sig = "list|" + activeUid + "|" + state.friends.map(f => {
       const p = _buildAvatarParts(f);
-      return `${f.uid}:${p.mode}:${p.photoURL || ""}:${p.initials}:${p.bg}:${_shortName(f.displayName, f.uid)}`;
+      return `${f.uid}:${p.mode}:${p.photoURL || ""}:${p.initials}:${p.bg}:${_shortName(f.displayName, f.uid)}:${f.tigerSquad ? 1 : 0}`;
     }).join(",");
     if (sig === _sbFriendsSig) return;  // identical → keep the <img>s, no flash
     _sbFriendsSig = sig;
@@ -22900,6 +22900,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             if (p.displayName) f.displayName = p.displayName;
             if (p.color)       f.color       = p.color;
             if (p.photoURL)    f.photoURL    = p.photoURL;
+            if (p.tigerSquad)  f.tigerSquad  = true;   // TigerSquad ring — from their public profile
           }
           return f;
         });
@@ -35071,13 +35072,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!banner) return;
     // ─── Friend view ───────────────────────────────────────────────
     if (state.friendView) {
-      const { displayName, avatarColor, photoURL, error, isPublic, publicKey, friendsCount, socials } = state.friendView;
+      const { displayName, avatarColor, photoURL, error, isPublic, publicKey, friendsCount, socials, tigerSquad } = state.friendView;
       // Build a synthetic source so avatarMarkup can pull gradient
       // from the friend's avatarColor (a single hex, not an RGB
       // triplet like an account uses).
-      const friendSource = { displayName, photoURL, color: avatarColor };
+      const friendSource = { displayName, photoURL, color: avatarColor, tigerSquad };
       const p = _buildAvatarParts(friendSource);
-      const sig = `friend|${displayName || ""}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${error || ""}|${isPublic ? 1 : 0}|${publicKey || ""}|${friendsCount ?? ""}|${(socials || []).join(",")}|${state.lang}`;
+      const sig = `friend|${displayName || ""}|${p.mode}|${p.photoURL || ""}|${p.initials}|${p.bg}|${error || ""}|${isPublic ? 1 : 0}|${publicKey || ""}|${friendsCount ?? ""}|${(socials || []).join(",")}|${tigerSquad ? 1 : 0}|${state.lang}`;
       if (sig !== _fvbSig) {
         _fvbSig = sig;
         // ONE relationship badge next to the name — "Public" (green) if the
@@ -35098,7 +35099,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           : "";
         // Line 2 badges: relationship (Public / Friend) on the LEFT, the "Share"
         // badge on the RIGHT — side by side. "X friends" count sits by the name.
-        const line2 = relBadge + shareBtn;
+        // TigerSquad member (public supporter) → the golden pill beside the relationship badge.
+        const squadBadge = (!error && tigerSquad)
+          ? `<span class="sb-squad-pill fvb-squad"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad</span>`
+          : "";
+        const line2 = relBadge + squadBadge + shareBtn;
         banner.innerHTML = `
           ${avatarMarkup(friendSource, "fvb-avatar")}
           <div class="fvb-inner">
@@ -35215,7 +35220,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // friend banner renders the colour-circle + initials fallback.
     const _friendRec = state.friends?.find(f => f.uid === friendUid);
     const friendPhoto = _friendRec?.photoURL || null;
-    state.friendView = { uid: friendUid, displayName: friendName, avatarColor, photoURL: friendPhoto, isPublic: _friendIsPublic, publicKey: _friendRec?.publicKey || null, friendsCount: null, error: null };
+    state.friendView = { uid: friendUid, displayName: friendName, avatarColor, photoURL: friendPhoto, isPublic: _friendIsPublic, publicKey: _friendRec?.publicKey || null, friendsCount: null, tigerSquad: !!_friendRec?.tigerSquad, error: null };
     // Read the friend's public profile for the invite code (share link) + their
     // friends count ("X friends" in the banner). userProfiles is auth-readable.
     fbDb().collection("userProfiles").doc(friendUid).get()
@@ -35224,6 +35229,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const d = s.data();
         if (d.publicKey) state.friendView.publicKey = d.publicKey;
         if (typeof d.friendsCount === "number") state.friendView.friendsCount = d.friendsCount;
+        state.friendView.tigerSquad = !!d.tigerSquad;
         state.friendView.socials = _cleanSocials(d.socials);
         // AUTHORITATIVE public/friend state. The initial guess above comes from
         // state.friends[].isPublic, which is populated asynchronously at startup —

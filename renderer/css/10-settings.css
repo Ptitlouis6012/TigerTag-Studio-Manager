@@ -661,3 +661,4 @@
 .eac-squad-label .eac-squad-pill { margin-top: 0; align-self: flex-start; }
 .eac-squad-label { text-align: left; }
 .eac-squad-sub { font-size: 11.5px; line-height: 1.35; color: var(--muted); font-weight: 400; }
+.sb-squad-pill.fvb-squad { margin-top: 0; align-self: center; height: 20px; box-sizing: border-box; padding: 0 8px; font-size: 10px; gap: 4px; }
