@@ -466,3 +466,45 @@
   /* Downloads: same quiet row (base geometry — it has no legacy brand style). */
   .sb-download-btn { display: flex; align-items: center; cursor: pointer; width: 100%; box-sizing: border-box; font-family: inherit;
     transition: background .15s, width .25s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Sidebar footer — founder's palette & micro-motion ─────────────────────
+     Icons carry the colour (and a halo of that same colour on hover, through
+     `--ic`), labels stay neutral. Hover: lighter row, icon +6 %, row nudged
+     2 px right, 180 ms. Backgrounds/text are the dark-theme values; the light
+     theme keeps its own tokens. */
+  .sb-community .sb-group > button { --ic: currentColor; transition: background 180ms ease, border-color 180ms ease, transform 180ms ease, width .25s cubic-bezier(.4,0,.2,1); }
+  .sb-community .sb-group > button > .icon { transition: transform 180ms ease, filter 180ms ease; }
+  .sb-community .sb-group > button:hover { transform: translateX(2px); }
+  .sb-community .sb-group > button:hover > .icon { transform: scale(1.06); filter: drop-shadow(0 0 5px var(--ic)); }
+  .sb-community .sb-group > .sb-download-btn   { --ic: #FF8A32; }
+  .sb-community .sb-group > .sb-wiki-btn       { --ic: #FFC83D; }
+  .sb-community .sb-group > .sb-shop-btn       { --ic: #7ABF43; }
+  .sb-community .sb-group > .sb-github-btn     { --ic: #E2E8F0; }
+  .sb-community .sb-group > .sb-makerworld-btn { --ic: #00D4C7; }
+  .sb-community .sb-group > .sb-discord-btn    { --ic: #5865F2; }
+  .sb-community .sb-group > .sb-coffee-btn     { --ic: #FFD600; }
+  .sb-community .sb-group > .sb-report-btn     { --ic: #FFC83D; }
+  .sb-community .sb-group > button > .icon { background: var(--ic) !important; }
+  .sb-community .sb-group > .sb-coffee-btn:hover .sb-coffee-cup { transform: scale(1.06); filter: drop-shadow(0 0 5px #FFD600); }
+  .sb-community .sb-group > .sb-coffee-btn .sb-coffee-cup { transition: transform 180ms ease, filter 180ms ease; }
+  /* GitHub's white mark would vanish on the light theme: dark there. */
+  :root:not([data-theme="dark"]) .sb-community .sb-group > .sb-github-btn { --ic: #2d333b; }
+
+  :root[data-theme="dark"] .sb-community .sb-group > button { background: #211F2B; color: #E8EAF2; }
+  :root[data-theme="dark"] .sb-community .sb-group > button:hover { background: #2C2938; border-color: #34303F; }
+  :root[data-theme="dark"] .sb-group-label { color: #858397; }
+  :root[data-theme="dark"] .sb-community-badge { background: #FF4D5A; }
+  :root[data-theme="dark"] .sb-foot .sb-version { color: #9294A6; }
+
+  /* Improvements & suggestions — the card's door: its own warm treatment. */
+  .sb-community .sb-group > .sb-report-btn { transition: background 200ms ease, border-color 200ms ease, box-shadow 200ms ease, transform 180ms ease, width .25s cubic-bezier(.4,0,.2,1); }
+  :root[data-theme="dark"] .sb-community .sb-group > .sb-report-btn { background: #211A23; border-color: #C88B22; color: #F5F0E8; }
+  :root[data-theme="dark"] .sb-community .sb-group > .sb-report-btn:hover,
+  :root[data-theme="dark"] .sb-community .sb-group > .sb-report-btn.is-on { background: #30251F; border-color: #FFC83D; box-shadow: 0 0 12px rgba(255,200,61,.12); }
+  .sb-community .sb-group > .sb-report-btn:hover > .icon { animation: sb-sparkle 450ms ease; filter: drop-shadow(0 0 5px #FFC83D); }
+  @keyframes sb-sparkle { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(8deg) scale(1.12); } 100% { transform: rotate(0) scale(1); } }
+
+  /* Settings: light grey, white on hover. */
+  .sb-settings-btn { color: #9299AA; transition: color 180ms ease, background 180ms ease; }
+  .sb-settings-btn:hover { color: #fff; }
+  :root:not([data-theme="dark"]) .sb-settings-btn:hover { color: var(--text); }

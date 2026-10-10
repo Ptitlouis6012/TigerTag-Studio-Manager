@@ -21712,6 +21712,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         os: [({ darwin: "macOS", win32: "Windows", linux: "Linux" })[info?.platform] || info?.platform,
              info?.systemVersion, info?.arch].filter(Boolean).join(" "),
         view: state.viewMode || "",
+        // The view as the user reads it: "Catalogue · Grid" (group label + the
+        // active button's own localised label).
+        page: (() => {
+          const b = document.querySelector(".view-toggle-groups .view-toggle button.active");
+          const g = b?.closest(".vtg-group")?.querySelector(".vtg-label")?.textContent?.trim();
+          return [g, b?.getAttribute("aria-label")].filter(Boolean).join(" · ") || state.viewMode || "";
+        })(),
+        screen: `${window.innerWidth} × ${window.innerHeight}`,
         lang: state.lang || "",
         printers: Object.entries(brands).map(([b, n]) => n > 1 ? `${b} ×${n}` : b).join(", "),
         errors: _errorLog.slice(0, 10).map(e => `${e.context}${e.code ? " · " + e.code : ""}: ${String(e.message || "").slice(0, 240)}`),

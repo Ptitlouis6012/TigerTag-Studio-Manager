@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.35.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.36.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -142,6 +142,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - Product web-link attachments — datasheets, tutorials or videos attached to a product identity and shared by every spool of it, tier-capped free 1 / plus 2 / premium 5 and enforced server-side (v2.12.0).
 - Favorites view — Grid, Table and "To order" modes, sortable table (v2.1.0; sortable v2.2.0).
 - **Catalogue multi-select** — tick products in the table or grid (shift-click for a range) and ★ favourite, 🛒 add to order or add to a list the whole selection at once (v2.34.0).
+- Sidebar **Downloads** entry (tigersystem.io download page in the user's language) and a redesigned Resources / Support footer with Settings next to the version (v2.36.0).
 - **Catalogue product card** — a product opened from the catalogue gets its own card: + Inventory, + Wishlist, + Cart, + Favorite, and a button opening the full product card beside it; spools added from the catalogue keep the full catalogue record (description, documents, slicer profiles, fan, brand site) (v2.35.0).
 - **Catalogue "nothing found"** — an empty search offers to create the spool by hand (v2.35.0).
 - **Unified product card** — one card instead of two: stock and estimated value, then Info / Documents (with a count) / Notes tabs, product details, stock management and slicer profiles (v2.35.0; merge contributed in PR #39).
@@ -190,6 +191,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 
 - **Bambu Lab** — LAN (MQTTS 8883 TLS) **and cloud**: sign in with a Bambu account and every printer on it is offered with its picture, ticked one or several at a time, arriving with the LAN access code the cloud hands over; cloud machines report from anywhere and learn their own address from telemetry, so their camera starts unattended on the same network (cloud v2.26.0; **China-mainland accounts, phone-number sign-in by SMS** v2.29.0). Job/temp/AMS cards, camera (JPEG-TCP + RTSP by model), full machine controls over LAN (jog/home/light/fans/speed/heated chamber where supported), print-plate thumbnails via FTPS+3mf extraction, H2-series dual-nozzle display (v1.6.0; full controls v1.10.7; thumbnails v2.1.0). A CLOUD connection is read-only — the machine accepts no command but its light, so only that one is offered (v2.27.3).
 - **Creality** — WebSocket 9999 with heartbeat; job/temp cards, CFS colour-box grid, WebRTC camera, full machine controls (jog/home/temps/fans), per-slot CFS load/unload (v1.4.15; controls v1.10.13).
+  - K1 / K1C / K1 Max camera over mjpg-streamer (:8080), probed first for the K1 series and as the fallback for any model; optional per-printer camera address (v2.36.0).
 - **Elegoo** — MQTT 1883 + UDP discovery 52700; job/temp/filament (mono + 4-slot Canvas) cards, XY-jog control card, fan cards, files/history sheet, filament edit sheet (v1.6.0).
 - **Elegoo Centauri Carbon 1 (beta)** — the first Centauri Carbon over SDCP v3 (UDP 3000 discovery, WebSocket 3030): live state, progress, layers, temps, fans, MJPEG camera, pause/resume/stop; added by IP alone (v2.35.0).
 - **FlashForge** — HTTP polling 8898 + MJPEG camera; 5-slot matlStation grid, tool-changer support (Creator 5 Pro), official 24-swatch colour-palette constraint, lifetime-stats info panel (v1.4.11; monitoring & controls v1.10.10).
@@ -246,6 +248,12 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - Product ID surfaced from the chip with a link to the product catalogue page (v1.10.29).
 - Terminology unification: all user-facing "RFID" strings renamed to "NFC" (v2.5.0).
 - **Tag index / tag count** (TigerTag protocol v2.2) — every chip says which one of its object it is ("chip 1 of 2"): written by the guided encode (single `0x11`, twin `0x12`/`0x22`), kept intact through weight and colour syncs, stored on each spool on scan, shown on the spool card, carried in `.ttag`; a twin whose partner was never scanned gets a "scan the other chip" banner, and two chips that say they are singles are never paired as a twin (v2.33.0).
+
+## Feedback & requests
+
+- **Improvements & suggestions** — an in-app side card that turns a request into a public GitHub issue, no GitHub account needed: six topics (problem, idea, improvement, question, catalogue correction with the material picked from the catalogue search, new brand with its website), Markdown description, up to 5 attachments (window capture, images, PDFs) dropped anywhere in the window, automatic information shown up front, public-consent check; the draft survives closing the card, whose tab stays parked on the sidebar edge while a request is in progress (v2.36.0).
+- **Screenshot editor** — arrows, lines, boxes, circles, pen, highlighter, text, numbered steps and a blur for private details; every mark stays editable until Done, with undo / redo and shortcuts (v2.36.0).
+- **My requests** — status of every request (sent, in progress, done, not planned, closed by you), close your own, and a notification when one changes (v2.36.0).
 
 ## "What's New" & release UX
 

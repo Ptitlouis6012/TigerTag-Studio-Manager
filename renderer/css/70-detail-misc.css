@@ -89,6 +89,11 @@
   .icon-blur          { -webkit-mask-image: url('../../assets/svg/icons/icon_blur.svg'); mask-image: url('../../assets/svg/icons/icon_blur.svg'); }
   .icon-redo          { -webkit-mask-image: url('../../assets/svg/icons/icon_redo.svg'); mask-image: url('../../assets/svg/icons/icon_redo.svg'); }
   .icon-suggestion    { -webkit-mask-image: url('../../assets/svg/icons/icon_suggestion.svg'); mask-image: url('../../assets/svg/icons/icon_suggestion.svg'); }
+  .icon-chat          { -webkit-mask-image: url('../../assets/svg/icons/icon_chat.svg'); mask-image: url('../../assets/svg/icons/icon_chat.svg'); }
+  .icon-send          { -webkit-mask-image: url('../../assets/svg/icons/icon_send.svg'); mask-image: url('../../assets/svg/icons/icon_send.svg'); }
+  .icon-bars          { -webkit-mask-image: url('../../assets/svg/icons/icon_bars.svg'); mask-image: url('../../assets/svg/icons/icon_bars.svg'); }
+  .icon-question      { -webkit-mask-image: url('../../assets/svg/icons/icon_question.svg'); mask-image: url('../../assets/svg/icons/icon_question.svg'); }
+  .icon-emoji         { -webkit-mask-image: url('../../assets/svg/icons/icon_emoji.svg'); mask-image: url('../../assets/svg/icons/icon_emoji.svg'); }
   .icon-image     { -webkit-mask-image: url('../../assets/svg/icons/icon_image.svg');        mask-image: url('../../assets/svg/icons/icon_image.svg'); }
   .icon-printer   { -webkit-mask-image: url('../../assets/svg/icons/icon_printer.svg');      mask-image: url('../../assets/svg/icons/icon_printer.svg'); }
   /* Extra illustration icons (What's New + general use). */

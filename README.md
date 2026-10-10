@@ -238,6 +238,10 @@ The mobile app handles chip programming, NFC scanning on the go, and catalogue b
 
 A QR code to download the mobile app is always accessible in the sidebar.
 
+### 💬 Feedback, straight from the app
+
+- **Improvements & suggestions** *(new in 2.36.0)* — report a problem, suggest an idea, fix a catalogue product or suggest a missing brand without leaving the app (and without a GitHub account): annotate a screenshot of the window — arrows, steps, a blur for anything private — attach images or PDFs, and follow every request in *My requests*, with a notification when it moves
+
 ### 🤖 AI assistants
 - Ask **Claude, Cursor or VS Code** about your stock — "what PLA am I low on?", "what does my friend have in black PETG?"
 - One-click install per app, turned on per profile in *My profile*

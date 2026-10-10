@@ -168,7 +168,7 @@
      and the sidebar finally belong to the same surface, instead of a light
      document sitting inside a dark frame. */
   :root[data-theme="dark"] {
-    --sidebar-bg: linear-gradient(175deg, #0f1117 0%, #18101f 100%);
+    --sidebar-bg: linear-gradient(180deg, #101018 0%, #15111D 55%, #1A1020 100%);   /* subtle depth, founder's palette */
 
     /* On a dark ground the grid has to be lighter than the surface, not darker. */
     --grid-line:  rgba(255,255,255,.075);

@@ -5,6 +5,43 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.36.0 — 2026-10-10
+
+### Added
+
+- **In-app requests → public GitHub issues ("Improvements & suggestions").** A sidebar entry opens a left side card (`renderer/report/`) that slides out from behind the sidebar with the right-hand cards' motion (.25s translate, mirrored, inside the click-through clipping window `.rep-clip`). Not a modal: the draft (topic, text, attachments) survives close / reopen; once a topic is picked the request is *in progress* and the card's tab stays parked on the sidebar edge as **»** (and the sidebar entry stays lit) until it is sent, cancelled or abandoned (back to the topic list).
+  - **Topics** (`KINDS`, same ids as the backend): Report a problem (`bug`), Suggest an idea (`idea`), Suggest an improvement (`enhancement`), Fix a product sheet (`catalog` — the material is picked with the Catalogue search: same index and words, exact barcode / SKU / id first; the issue carries link, id, brand, material, SKU, EAN), Suggest a brand (`new-brand` — name + validated website), Ask a question (`question`). Each GitHub issue gets its label + `from-app` and a `[Bug]` / `[Idea]`… title tag.
+  - **Form**: per-topic title / lead / placeholders / send label, required marks (description required except for a brand), a Markdown toolbar (bold, italic, list, link, emoji picker), up to 5 attachments — images, window captures (`report:capture` → `webContents.capturePage()` with the card hidden) and PDFs (≤ 5 MB, max 2, `%PDF`-checked server-side) — by drop anywhere in the window (the `.ttag` import drop zone stands down while the card is open, with a full "Drop to attach" overlay), paste or file picker; images re-encoded client-side to JPEG ≤ 1920 px. A collapsible **Automatic information** panel shows exactly what travels with it: app version, current page ("Catalogue · Grid"), OS (`app:info.systemVersion`), window size, printer brands; opt-in recent error log; a mandatory **public** checkbox; no uid, name or email in the issue.
+  - **Screenshot editor** (`renderer/report/annotator.js`, opens straight after a capture): every mark stays an object until Done (select, move, resize by handles, recolour, resize, delete, duplicate); move, pen (smoothed), eraser (cuts pen strokes, removes other objects), arrow, line, box, circle (⇧ square / circle / 45° snap), highlighter, inline text (double-click to edit, contrasting halo), auto-numbered steps, **blur** (pixelates private details); 7 colours, S/M/L/XL, undo / redo (80), shortcuts (V P E A L R O H T N B, 1–7, ⌘Z / ⇧⌘Z, ⌫, ⌘D, arrow nudges), contextual tips; exported at the image's own size.
+  - **Screens** after the founder's mockup: hero + *Send feedback* / *My requests* tabs + six colour-tiled topic cards (hover: icon zoom, coloured border, chevron slide) + coffee card → form → *Sending…* (spinning ring, four steps ticked in turn, ≥ 300 ms each) → confirmation (drawn check, confetti that blur out, tracking `#issue` with copy, *See my requests* / *Send another one*, thank-you and coffee cards); screens slide horizontally (200 ms).
+  - **My requests**: the account's requests with topic, title, `#issue`, age, reply count and status — Sent / In progress (label `in progress`) / Done / Not planned / Closed by you — a GitHub link and **close my own request** (two-step; comments and closes the issue as not planned). Statuses are read from GitHub on demand (sign-in + 8 s, and when the tab opens — no webhook); a change writes a `request_status` notification (`data: { reportId, number, status, title }`) worded by the app in the user's language (`notifReq_*`), opening *My requests* on click; reports without a known status are recorded silently.
+  - **Backend** (TigerTag_Firebase_Backend `functions/reportIssue.js`): `reportIssue` (Firebase ID token in `X-Firebase-Id-Token` — a Bearer `Authorization` is inspected by Cloud Run itself and was once refused upstream — one retry with a forced refresh; 5 requests / account / 24 h; images re-encoded with sharp, EXIF dropped, stored at `bugReports/{id}/n.jpg` / `doc-n.pdf` with download tokens; issue opened with the fine-grained secret `GITHUB_ISSUES_TOKEN`; private trace in `bugReports/{id}`, quota in `bugReportQuota/{uid}`, both Admin-SDK only) and `myReports` (`list` with sync / owner-checked `close`).
+- **Downloads** in the sidebar Resources — `tigersystem.io/<lang>/download` in the user's language when the site has it (fr, en, de, es, it, zh, pt, pl), else English.
+- Creality printer settings: optional **Camera address** (`cameraUrl`, http/https) to use an MJPEG stream directly (rooted / custom setups).
+
+### Changed
+
+- **Sidebar footer** redesigned after the founder's mockup and palette: labelled **Resources** (Downloads, Wiki, Shop, GitHub, 3D Files, Discord) and **Support the project** (Buy me a coffee, Improvements & suggestions) groups of quiet rows — brand colour on the icon only (`#FF8A32`, `#FFC83D`, `#7ABF43`, `#E2E8F0`, `#00D4C7`, `#5865F2`), hover = lighter row + 2 px nudge + icon ×1.06 with a halo in its own colour (180 ms), the suggestions row warm-outlined with a little 8° sparkle; dark sidebar gradient `#101018 → #15111D → #1A1020`; **Settings** moved from the account dropdown to the footer, right of the version.
+- One look for the spool card, the catalogue card and the product card (PR #47 by @Ptitlouis6012): print settings as icon tiles (density a tile, TD still editable), an icon on every Details row, a tag icon on price and SKU / EAN, the friend-view shop button fills its row.
+- Product card: the colour HEX moves to a **Hex code** row under Colour in Product details (PR #46 by @Ptitlouis6012; `.icon-pipette` declared); the catalogue card's HEX row uses the pipette too.
+- View switcher order: Inventory / Favorites / Lists / Catalogue / Printers (PR #45 by @Ptitlouis6012).
+- View-switcher tooltips show at once (no 1 s dwell) and stay above the search field's orange + while fading out.
+
+### Fixed
+
+- **Creality K1 / K1C / K1 Max camera stayed black** (issue #38): no WebRTC on :8000 there — the camera is mjpg-streamer on :8080. K1-series models (catalog ids 6–9) probe `:8080/?action=snapshot` first and show `/?action=stream` (an `<img class="cre-cam-mjpeg">` beside each hidden `<video>`, remembered per IP); other models fall back to it when WebRTC signaling fails; side card, board, camera wall and detached window all follow.
+- **Cloud Anycubic camera from the printers board** (PR #48 by @Ptitlouis6012, tested on a real Kobra 3 Max): play key offered for an online cloud Anycubic, loading dots while order 1001 + the Agora join run, closing the side panel no longer releases a camera the board plays, leaving the board releases the cloud cameras it started, one order-1001 request at a time (10 s pause after a failure), Agora clears its loading overlays; the camera wall rebuilds when a placed card flips offline ↔ live (all brands).
+
+### Removed
+
+- The sidebar's "TigerTag Mobile Apps" QR code and title (Downloads now leads to the apps).
+
+### i18n
+
+- Added the `report*` set (topics, hints, leads, labels, placeholders, send labels, editor tools and tips, attachments, automatic information, sending steps, confirmation, My requests, statuses), `notifReq_*`, `sbResources`, `sbSupport`, `sbDownloadBtn`, `roDetHex`, `printerLblCameraUrl`, `printerHintCrealityCameraUrl` — 11 locales. Removed `mobileApp`, `mobileAppShort`.
+
+---
+
 ## v2.35.0 — 2026-10-09
 
 ### Added

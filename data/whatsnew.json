@@ -10195,5 +10195,213 @@
         }
       }
     ]
+  },
+  "2.36.0": {
+    "date": "2026-10-10",
+    "items": [
+      {
+        "icon": "suggestion",
+        "title": {
+          "en": "Tell us everything",
+          "fr": "Raconte-nous tout",
+          "de": "Erzähl uns alles",
+          "es": "Cuéntanoslo todo",
+          "it": "Raccontaci tutto",
+          "zh": "跟我们说说吧",
+          "pt": "Conta tudo pra gente",
+          "pt-pt": "Conta-nos tudo",
+          "pl": "Opowiedz nam wszystko",
+          "ru": "Расскажи нам всё",
+          "nl": "Vertel ons alles"
+        },
+        "body": {
+          "en": "A bug, an idea, a question? Hit “Improvements & suggestions” in the sidebar and send it from right here — no GitHub account, no detour. We read everything (yes, everything).",
+          "fr": "Un bug, une idée, une question ? Clique sur « Améliorations & suggestions » dans le menu et envoie-le d'ici — sans compte GitHub, sans détour. On lit tout (oui, tout).",
+          "de": "Ein Bug, eine Idee, eine Frage? Klick links auf „Verbesserungen & Vorschläge“ und schick es direkt von hier — ohne GitHub-Konto, ohne Umweg. Wir lesen alles (ja, alles).",
+          "es": "¿Un bug, una idea, una pregunta? Pulsa «Mejoras y sugerencias» en el menú y envíalo desde aquí — sin cuenta de GitHub, sin rodeos. Lo leemos todo (sí, todo).",
+          "it": "Un bug, un'idea, una domanda? Clicca «Miglioramenti e suggerimenti» nel menu e invialo da qui — niente account GitHub, niente giri. Leggiamo tutto (sì, tutto).",
+          "zh": "遇到 bug、有想法或疑问？点击侧边栏的「改进与建议」，直接在这里发送——无需 GitHub 账号，不绕路。我们每一条都会看（真的每一条）。",
+          "pt": "Um bug, uma ideia, uma dúvida? Clica em “Melhorias e sugestões” no menu e manda daqui mesmo — sem conta no GitHub, sem rodeio. A gente lê tudo (sim, tudo).",
+          "pt-pt": "Um bug, uma ideia, uma dúvida? Clica em «Melhorias e sugestões» no menu e envia daqui mesmo — sem conta GitHub, sem voltas. Lemos tudo (sim, tudo).",
+          "pl": "Błąd, pomysł, pytanie? Kliknij „Ulepszenia i sugestie” w menu i wyślij prosto stąd — bez konta na GitHubie, bez kombinowania. Czytamy wszystko (tak, wszystko).",
+          "ru": "Баг, идея, вопрос? Нажми «Улучшения и предложения» в меню и отправь прямо отсюда — без аккаунта GitHub и обходных путей. Мы читаем всё (да, всё).",
+          "nl": "Een bug, een idee, een vraag? Klik op ‘Verbeteringen & suggesties’ in het menu en stuur het hier vandaan — zonder GitHub-account, zonder omweg. We lezen alles (ja, alles)."
+        }
+      },
+      {
+        "icon": "camera",
+        "title": {
+          "en": "Point at it, literally",
+          "fr": "Montre-le du doigt, littéralement",
+          "de": "Zeig drauf, wortwörtlich",
+          "es": "Señálalo, literalmente",
+          "it": "Indicalo, letteralmente",
+          "zh": "直接指给我们看",
+          "pt": "Aponta, literalmente",
+          "pt-pt": "Aponta, literalmente",
+          "pl": "Pokaż palcem, dosłownie",
+          "ru": "Покажи пальцем — буквально",
+          "nl": "Wijs het aan, letterlijk"
+        },
+        "body": {
+          "en": "One click snaps the app, then draw on it: arrows, circles, numbered steps, text — and a blur brush for anything private. The card waits in the corner while you go grab another screen.",
+          "fr": "Un clic capture l'app, et tu dessines dessus : flèches, ronds, étapes numérotées, texte — et un flou pour tout ce qui est privé. La carte attend dans son coin pendant que tu vas capturer un autre écran.",
+          "de": "Ein Klick nimmt die App auf, dann zeichnest du drauf: Pfeile, Kreise, nummerierte Schritte, Text — und ein Weichzeichner für alles Private. Die Karte wartet am Rand, während du noch einen Bildschirm holst.",
+          "es": "Un clic captura la app y dibujas encima: flechas, círculos, pasos numerados, texto — y un difuminado para lo privado. La tarjeta espera en su rincón mientras capturas otra pantalla.",
+          "it": "Un clic cattura l'app e ci disegni sopra: frecce, cerchi, passi numerati, testo — e una sfocatura per tutto ciò che è privato. La scheda aspetta nel suo angolo mentre catturi un'altra schermata.",
+          "zh": "一键截取应用，然后直接标注：箭头、圆圈、编号步骤、文字——还有打码工具遮住隐私。你去截其他页面时，卡片会在角落等你。",
+          "pt": "Um clique captura o app e você desenha em cima: setas, círculos, passos numerados, texto — e um desfoque pra tudo que é privado. O card espera no canto enquanto você captura outra tela.",
+          "pt-pt": "Um clique captura a app e desenhas por cima: setas, círculos, passos numerados, texto — e um desfoque para tudo o que é privado. O cartão espera no canto enquanto vais capturar outro ecrã.",
+          "pl": "Jedno kliknięcie robi zrzut aplikacji, a ty rysujesz: strzałki, kółka, numerowane kroki, tekst — i rozmycie na wszystko, co prywatne. Karta czeka z boku, gdy łapiesz kolejny ekran.",
+          "ru": "Один клик — снимок приложения, и рисуй поверх: стрелки, круги, шаги с номерами, текст — и размытие для всего личного. Карточка подождёт сбоку, пока ты снимешь другой экран.",
+          "nl": "Eén klik legt de app vast, dan teken je erop: pijlen, cirkels, genummerde stappen, tekst — en een vervaging voor alles wat privé is. De kaart wacht aan de kant terwijl je nog een scherm pakt."
+        }
+      },
+      {
+        "icon": "tag",
+        "title": {
+          "en": "Catalogue fixes, one click away",
+          "fr": "Corriger le catalogue, à portée de clic",
+          "de": "Katalogkorrekturen, einen Klick entfernt",
+          "es": "Corregir el catálogo, a un clic",
+          "it": "Correggere il catalogo, a portata di clic",
+          "zh": "一键纠正目录",
+          "pt": "Corrigir o catálogo, a um clique",
+          "pt-pt": "Corrigir o catálogo, à distância de um clique",
+          "pl": "Poprawki katalogu na jedno kliknięcie",
+          "ru": "Правки каталога в один клик",
+          "nl": "Catalogus verbeteren, één klik verder"
+        },
+        "body": {
+          "en": "Wrong barcode? Missing brand? Pick the material from the catalogue search and say what's off — or hand us a brand and its website. The catalogue gets better for everyone.",
+          "fr": "Un code-barres faux ? Une marque absente ? Retrouve le matériau avec la recherche du catalogue et dis ce qui cloche — ou propose une marque avec son site. Le catalogue s'améliore pour tout le monde.",
+          "de": "Falscher Barcode? Fehlende Marke? Such das Material im Katalog und sag, was nicht stimmt — oder schlag eine Marke samt Website vor. Der Katalog wird für alle besser.",
+          "es": "¿Código de barras erróneo? ¿Falta una marca? Busca el material en el catálogo y di qué falla — o propón una marca con su web. El catálogo mejora para todos.",
+          "it": "Codice a barre sbagliato? Manca un marchio? Trova il materiale con la ricerca del catalogo e di' cosa non va — o proponi un marchio col suo sito. Il catalogo migliora per tutti.",
+          "zh": "条形码不对？缺了品牌？用目录搜索找到材料并说明问题——或推荐一个品牌及其官网。目录会为所有人变得更好。",
+          "pt": "Código de barras errado? Falta uma marca? Acha o material na busca do catálogo e diz o que está errado — ou sugere uma marca com o site dela. O catálogo melhora pra todo mundo.",
+          "pt-pt": "Código de barras errado? Falta uma marca? Encontra o material na pesquisa do catálogo e diz o que está mal — ou propõe uma marca com o site. O catálogo melhora para todos.",
+          "pl": "Zły kod kreskowy? Brak marki? Znajdź materiał w wyszukiwarce katalogu i napisz, co nie gra — albo zaproponuj markę z jej stroną. Katalog robi się lepszy dla wszystkich.",
+          "ru": "Неверный штрихкод? Нет бренда? Найди материал через поиск по каталогу и напиши, что не так — или предложи бренд с его сайтом. Каталог станет лучше для всех.",
+          "nl": "Foute barcode? Ontbrekend merk? Zoek het materiaal in de catalogus en zeg wat er mis is — of stel een merk voor met de website. De catalogus wordt beter voor iedereen."
+        }
+      },
+      {
+        "icon": "clock",
+        "title": {
+          "en": "Follow your requests",
+          "fr": "Suis tes demandes",
+          "de": "Verfolge deine Anfragen",
+          "es": "Sigue tus solicitudes",
+          "it": "Segui le tue richieste",
+          "zh": "跟进你的请求",
+          "pt": "Acompanhe seus pedidos",
+          "pt-pt": "Acompanha os teus pedidos",
+          "pl": "Śledź swoje zgłoszenia",
+          "ru": "Следи за запросами",
+          "nl": "Volg je verzoeken"
+        },
+        "body": {
+          "en": "“My requests” shows where each one stands — sent, in progress, done — and a notification pings you when it moves. Changed your mind? Close your own.",
+          "fr": "« Mes demandes » montre où en est chacune — envoyée, en cours, livrée — et une notification te prévient quand ça bouge. Changé d'avis ? Ferme la tienne.",
+          "de": "„Meine Anfragen“ zeigt, wo jede steht — gesendet, in Arbeit, erledigt — und eine Benachrichtigung meldet sich, wenn sich was tut. Meinung geändert? Schließ deine selbst.",
+          "es": "«Mis solicitudes» muestra en qué punto está cada una — enviada, en curso, hecha — y una notificación te avisa cuando se mueve. ¿Cambiaste de idea? Cierra la tuya.",
+          "it": "«Le mie richieste» mostra a che punto è ognuna — inviata, in corso, fatta — e una notifica ti avvisa quando si muove. Hai cambiato idea? Chiudi la tua.",
+          "zh": "「我的请求」显示每条请求的进展——已发送、处理中、已完成——有变化时会通知你。改主意了？可以关闭自己的请求。",
+          "pt": "“Meus pedidos” mostra em que pé está cada um — enviado, em andamento, feito — e uma notificação avisa quando muda. Mudou de ideia? Fecha o seu.",
+          "pt-pt": "«Os meus pedidos» mostra em que ponto está cada um — enviado, em curso, feito — e uma notificação avisa quando muda. Mudaste de ideia? Fecha o teu.",
+          "pl": "„Moje zgłoszenia” pokazują, na jakim etapie jest każde — wysłane, w toku, gotowe — a powiadomienie da znać, gdy coś się ruszy. Zmiana zdania? Zamknij swoje.",
+          "ru": "«Мои запросы» показывают, на каком этапе каждый — отправлен, в работе, готов, — а уведомление сообщит, когда что-то изменится. Передумал? Закрой свой.",
+          "nl": "‘Mijn verzoeken’ toont waar elk verzoek staat — verstuurd, bezig, klaar — en een melding laat weten wanneer er iets beweegt. Van gedachten veranderd? Sluit je eigen verzoek."
+        }
+      },
+      {
+        "icon": "download",
+        "title": {
+          "en": "A sidebar with good taste",
+          "fr": "Un menu qui a du goût",
+          "de": "Eine Seitenleiste mit Geschmack",
+          "es": "Un menú con buen gusto",
+          "it": "Un menu di buon gusto",
+          "zh": "更有品味的侧边栏",
+          "pt": "Um menu com bom gosto",
+          "pt-pt": "Um menu com bom gosto",
+          "pl": "Menu z gustem",
+          "ru": "Меню со вкусом",
+          "nl": "Een menu met smaak"
+        },
+        "body": {
+          "en": "Resources and support now sit in tidy groups with colourful icons, a new Downloads entry for every app, and Settings tucked next to the version.",
+          "fr": "Ressources et soutien se rangent en groupes propres avec des icônes colorées, une nouvelle entrée Téléchargements pour toutes les applis, et Paramètres glissé à côté de la version.",
+          "de": "Ressourcen und Unterstützung stehen jetzt ordentlich gruppiert mit bunten Icons, ein neuer Eintrag Downloads für alle Apps, und die Einstellungen sitzen neben der Version.",
+          "es": "Recursos y apoyo ahora van en grupos ordenados con iconos de colores, una nueva entrada Descargas para todas las apps y Ajustes junto a la versión.",
+          "it": "Risorse e sostegno ora stanno in gruppi ordinati con icone colorate, una nuova voce Download per tutte le app e le Impostazioni accanto alla versione.",
+          "zh": "资源与支持现在整齐分组，配上彩色图标；新增「下载」入口获取所有应用，设置也挪到了版本号旁边。",
+          "pt": "Recursos e apoio agora ficam em grupos arrumados com ícones coloridos, uma nova entrada Downloads pra todos os apps e Configurações ao lado da versão.",
+          "pt-pt": "Recursos e apoio estão agora em grupos arrumados com ícones coloridos, uma nova entrada Transferências para todas as apps e Definições ao lado da versão.",
+          "pl": "Zasoby i wsparcie są teraz w schludnych grupach z kolorowymi ikonami, nowy wpis Pobieranie dla wszystkich aplikacji, a Ustawienia przy numerze wersji.",
+          "ru": "Ресурсы и поддержка теперь в аккуратных группах с цветными иконками, новый пункт «Загрузки» для всех приложений, а настройки — рядом с версией.",
+          "nl": "Bronnen en steun staan nu in nette groepen met kleurrijke iconen, een nieuw item Downloads voor alle apps, en Instellingen naast het versienummer."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "K1 cameras wake up",
+          "fr": "Les caméras K1 se réveillent",
+          "de": "K1-Kameras wachen auf",
+          "es": "Las cámaras K1 despiertan",
+          "it": "Le videocamere K1 si svegliano",
+          "zh": "K1 摄像头醒了",
+          "pt": "As câmeras K1 acordaram",
+          "pt-pt": "As câmaras K1 acordaram",
+          "pl": "Kamery K1 się budzą",
+          "ru": "Камеры K1 проснулись",
+          "nl": "K1-camera’s worden wakker"
+        },
+        "body": {
+          "en": "Creality K1, K1C and K1 Max cameras finally show their picture instead of a black square. Custom setup? Paste your camera's address in the printer settings.",
+          "fr": "Les caméras des Creality K1, K1C et K1 Max affichent enfin leur image au lieu d'un carré noir. Config perso ? Colle l'adresse de ta caméra dans les réglages de l'imprimante.",
+          "de": "Die Kameras von Creality K1, K1C und K1 Max zeigen endlich ein Bild statt eines schwarzen Quadrats. Eigenes Setup? Trag die Kamera-Adresse in den Druckereinstellungen ein.",
+          "es": "Las cámaras de las Creality K1, K1C y K1 Max por fin muestran imagen en vez de un cuadro negro. ¿Configuración propia? Pega la dirección de tu cámara en los ajustes de la impresora.",
+          "it": "Le videocamere delle Creality K1, K1C e K1 Max finalmente mostrano l'immagine invece di un riquadro nero. Configurazione personalizzata? Incolla l'indirizzo della videocamera nelle impostazioni della stampante.",
+          "zh": "Creality K1、K1C 和 K1 Max 的摄像头终于有画面了，不再是黑屏。自定义配置？在打印机设置里填入摄像头地址即可。",
+          "pt": "As câmeras das Creality K1, K1C e K1 Max finalmente mostram imagem em vez de um quadrado preto. Configuração própria? Cola o endereço da câmera nas configurações da impressora.",
+          "pt-pt": "As câmaras das Creality K1, K1C e K1 Max finalmente mostram imagem em vez de um quadrado preto. Configuração própria? Cola o endereço da câmara nas definições da impressora.",
+          "pl": "Kamery Creality K1, K1C i K1 Max w końcu pokazują obraz zamiast czarnego kwadratu. Własna konfiguracja? Wklej adres kamery w ustawieniach drukarki.",
+          "ru": "Камеры Creality K1, K1C и K1 Max наконец показывают картинку, а не чёрный квадрат. Своя сборка? Вставь адрес камеры в настройках принтера.",
+          "nl": "De camera’s van de Creality K1, K1C en K1 Max tonen eindelijk beeld in plaats van een zwart vlak. Eigen opstelling? Plak het camera-adres in de printerinstellingen."
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Anycubic cloud cameras on the board",
+          "fr": "Les caméras Anycubic cloud sur le tableau",
+          "de": "Anycubic-Cloud-Kameras auf dem Board",
+          "es": "Cámaras Anycubic en la nube en el tablero",
+          "it": "Videocamere Anycubic cloud sulla bacheca",
+          "zh": "看板上也能看 Anycubic 云端摄像头",
+          "pt": "Câmeras Anycubic na nuvem no painel",
+          "pt-pt": "Câmaras Anycubic na nuvem no quadro",
+          "pl": "Kamery Anycubic w chmurze na tablicy",
+          "ru": "Облачные камеры Anycubic на доске",
+          "nl": "Anycubic-cloudcamera’s op het bord"
+        },
+        "body": {
+          "en": "Hit play on an Anycubic connected through the cloud right from the printers board — and the camera wall stops showing “no camera” once it's back online.",
+          "fr": "Lance la caméra d'une Anycubic connectée par le cloud directement depuis le tableau des imprimantes — et le mur caméra arrête d'afficher « pas de caméra » quand elle revient en ligne.",
+          "de": "Starte die Kamera eines per Cloud verbundenen Anycubic direkt vom Drucker-Board — und die Kamerawand zeigt nicht mehr „keine Kamera“, sobald er wieder online ist.",
+          "es": "Inicia la cámara de una Anycubic conectada por la nube directamente desde el tablero de impresoras — y el muro de cámaras deja de mostrar «sin cámara» cuando vuelve a estar en línea.",
+          "it": "Avvia la videocamera di una Anycubic collegata via cloud direttamente dalla bacheca stampanti — e il muro videocamere smette di mostrare «nessuna videocamera» quando torna online.",
+          "zh": "直接在打印机看板上启动云端连接的 Anycubic 摄像头——设备重新上线后，摄像头墙也不再显示「无摄像头」。",
+          "pt": "Liga a câmera de uma Anycubic conectada pela nuvem direto do painel de impressoras — e o mural de câmeras para de mostrar “sem câmera” quando ela volta.",
+          "pt-pt": "Liga a câmara de uma Anycubic ligada pela nuvem diretamente no quadro de impressoras — e o mural de câmaras deixa de mostrar «sem câmara» quando volta a estar online.",
+          "pl": "Włącz kamerę Anycubica połączonego przez chmurę prosto z tablicy drukarek — a ściana kamer przestaje pokazywać „brak kamery”, gdy drukarka wraca online.",
+          "ru": "Включай камеру Anycubic, подключённого через облако, прямо с доски принтеров — а стена камер больше не пишет «нет камеры», когда он снова онлайн.",
+          "nl": "Start de camera van een via de cloud verbonden Anycubic direct vanaf het printerbord — en de camerawand toont geen ‘geen camera’ meer zodra hij weer online is."
+        }
+      }
+    ]
   }
 }

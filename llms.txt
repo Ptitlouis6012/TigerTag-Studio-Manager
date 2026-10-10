@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.35.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.36.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -20,6 +20,7 @@ Current version: **2.35.0** — macOS (Intel + Apple Silicon, signed & notarized
 - **NFC**: `services/nfc-process.js` runs as a `utilityProcess` (not a Worker Thread) to avoid SIGABRT on macOS; communicates via IPC
 - **Printer integrations**: `renderer/printers/<brand>/index.js` — one file per brand, loaded dynamically
 - **IoT sensors**: `renderer/IoT/td1s/` (TD1S color sensor), `renderer/IoT/tigerscale/` (TigerScale ESP32), `renderer/IoT/tigerspool/` (TigerSpool printer reader)
+- **In-app requests**: `renderer/report/` — `index.js` (the *Improvements & suggestions* side card: topics, form, attachments, My requests) + `annotator.js` (screenshot editor). Requests become public GitHub issues through the backend functions `reportIssue` / `myReports` (TigerTag_Firebase_Backend `functions/reportIssue.js`); the private trace lives in the server-only `bugReports/{id}` collection; status changes arrive as `users/{uid}/notifications` of type `request_status`.
 - **CSS**: `renderer/css/00-base.css` → `70-detail-misc.css` (10 files, loaded in numeric order via `<link>` tags)
 - **i18n**: `renderer/locales/` — 11 JSON files (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl), managed via `npm run i18n:add`
 - **TigerTag SDK**: `@tigertag/sdk` npm package — parse, verify, encode TigerTag NTAG chips (pages 4–39, 144 bytes, blockSize=4)
@@ -267,7 +268,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1769 keys × 11 locales as of v2.35.0
+1810 keys × 11 locales as of v2.36.0
 
 ## CSS conventions
 
