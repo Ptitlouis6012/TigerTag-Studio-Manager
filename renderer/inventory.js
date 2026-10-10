@@ -417,7 +417,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // on the host drives the invariant.
   function avatarMarkup(source, className, extraClass) {
     const p = _buildAvatarParts(source);
-    const cls = className + (extraClass ? ' ' + extraClass : '');
+    // TigerSquad members (public supporters) wear a golden ring, wherever drawn.
+    const cls = className + (extraClass ? ' ' + extraClass : '') + (source?.tigerSquad ? ' av-squad' : '');
     const style = p.bg || p.fg ? ` style="${p.bg ? `background:${p.bg};` : ""}${p.fg ? `color:${p.fg}` : ""}"` : "";
     return `<span class="${cls}" data-av-mode="${p.mode}"${style}>` +
       `<span class="av-initials">${esc(p.initials)}</span>` +
@@ -4335,6 +4336,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // report useful. `roles` still gates the Admin badge, and nothing else here.
     $("eacDebugRow").classList.remove("hidden");
     $("eacDebugToggle").checked = state.debugEnabled;
+    $("eacSquadToggle").checked = !!state.joinTigerSquad;
     const isCustom = _editingAccount?.color === "custom";
     if (isCustom && _editingAccount.customColor) {
       $("eacCustomColor").value = _editingAccount.customColor;
@@ -4657,6 +4659,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // payment is tied to the account (functions/supportWebhooks.js).
   function renderSupporterBadge() {
     const host = document.querySelector("#sbUser .sb-avatar-wrap"); if (!host) return;
+    // TigerSquad pill under the name — a member is a supporter who chose to join.
+    const info = document.querySelector("#sbUser .sb-user-info");
+    let pill = info?.querySelector(".sb-squad-pill");
+    $("sbAvatar")?.classList.toggle("av-squad", !!(state.supporter && state.joinTigerSquad));
+    if (state.supporter && state.joinTigerSquad) {
+      if (info && !pill) {
+        pill = document.createElement("span");
+        pill.className = "sb-squad-pill";
+        pill.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad`;
+        info.appendChild(pill);
+      }
+    } else pill?.remove();
     let b = host.querySelector(".sb-supporter-badge");
     if (!state.supporter) { b?.remove(); return; }
     if (b) return;
@@ -4695,6 +4709,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     } catch (_) {}
     return null;
   }
+  // Join / leave the TigerSquad — a preference on the user doc; the server
+  // publishes the membership on the public profile for supporters only.
+  function _setJoinTigerSquad(on, input) {
+    const uid = state.activeAccountId; if (!uid) return;
+    state.joinTigerSquad = on; renderSupporterBadge();
+    fbDb(uid).collection("users").doc(uid).set({ joinTigerSquad: on }, { merge: true })
+      .catch(() => { state.joinTigerSquad = !on; if (input) input.checked = !on; renderSupporterBadge(); });
+  }
   async function _claimSupport(m) {
     const input = m.querySelector(".support-claim-input"), btn = m.querySelector(".support-claim-go"), msg = m.querySelector(".support-claim-msg");
     const query = input.value.trim(); if (query.length < 4) return;
@@ -4731,6 +4753,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <span>${esc(t("supportCodeHint"))}</span>
         <button type="button" class="support-code-chip${_supporterCodeCached() ? "" : " is-loading"}" data-support-copy="${esc(_supporterCodeCached() || "")}"><span>${esc(_supporterCodeCached() || "TS-····-····")}</span><span class="icon icon-copy icon-12" aria-hidden="true"></span></button>
       </div>` : ""}
+      ${state.activeAccountId && !state.joinTigerSquad ? `
+      <label class="support-squad">
+        <input type="checkbox" class="support-squad-input"${state.joinTigerSquad ? " checked" : ""}>
+        <span class="support-squad-box" aria-hidden="true"><span class="icon icon-check icon-10"></span></span>
+        <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSub"))}</small></span>
+      </label>` : ""}
       ${!state.supporter && state.activeAccountId ? `
       <details class="support-claim">
         <summary>${esc(t("supportClaimToggle"))}</summary>
@@ -4794,6 +4822,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       window.electronAPI?.openExternal({ paypal: PAYPAL_URL, kofi: KOFI_URL, star: GITHUB_REPO_URL }[b.dataset.support] || COFFEE_URL);
     });
     m.querySelector(".support-claim-form")?.addEventListener("submit", ev => { ev.preventDefault(); _claimSupport(m); });
+    // Join / leave the TigerSquad — a preference on the user doc; the server
+    // publishes the membership on the public profile for supporters only.
+    // Joined → the card folds away; leaving is done from My profile (eacSquadToggle).
+    m.querySelector(".support-squad-input")?.addEventListener("change", ev => {
+      if (!ev.target.checked) return;
+      _setJoinTigerSquad(true, ev.target);
+      const card = ev.target.closest(".support-squad");
+      setTimeout(() => card?.classList.add("is-joined"), 450);   // let the tick show first
+      card?.addEventListener("transitionend", () => card.remove(), { once: true });
+    });
     // First time on this account: ask the server for the supporter code, then fill the chip.
     const chip = m.querySelector(".support-code-chip.is-loading");
     if (chip) _supporterCode().then(code => {
@@ -5022,6 +5060,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("btnSaveDisplayName").addEventListener("click", saveDisplayName);
   $("eacDisplayNameInput").addEventListener("keydown", e => { if (e.key === "Enter") saveDisplayName(); });
 
+  $("eacSquadToggle").addEventListener("change", e => _setJoinTigerSquad(e.target.checked, e.target));
   $("eacDebugToggle").addEventListener("change", async () => {
     const enabled = $("eacDebugToggle").checked;
     state.debugEnabled = enabled;
@@ -22738,6 +22777,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const ps = profileSnaps[i];
         if (!ps || !ps.exists) return;
         const pd = ps.data();
+        f.tigerSquad = !!pd.tigerSquad;   // public TigerSquad membership (server-set)
         const liveDisplayName = pd.displayName || "";
         const liveColor       = profileColor(pd);   // "#rrggbb" or null
         const updates = {};
@@ -22913,6 +22953,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (col && col !== fr.color)     { fr.color = col;       changed = true; }
         if (photo !== (fr.photoURL || null)) { fr.photoURL = photo; changed = true; }
         if (!!pd.isPublic !== !!fr.isPublic) { fr.isPublic = !!pd.isPublic; changed = true; }
+        if (!!pd.tigerSquad !== !!fr.tigerSquad) { fr.tigerSquad = !!pd.tigerSquad; changed = true; }
         if (!changed) return;
         _cacheFriends(uid, state.friends);
         _renderFriendsEverywhere();
@@ -37173,6 +37214,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.isPublic       = !!c.isPublic;
     state.tier           = c.tier || "free";
     state.supporter      = !!c.supporter;
+    state.joinTigerSquad = !!c.joinTigerSquad;
     state.vatCountry     = c.vatCountry || null;
     state.vatCustomRate     = (typeof c.vatCustomRate === "number") ? c.vatCustomRate : null;
     state.vatCustomCurrency = c.vatCustomCurrency || null;
@@ -37919,6 +37961,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.tier       = data.tier || "free";   // plan (server-set); gates product web-link attachment count
       // Backed the project (server-set by the payment webhooks) — a thank-you badge, never a feature gate.
       state.supporter  = !!data.supporter;
+      // Chose to join the TigerSquad (public supporters' group) — counts once a supporter.
+      state.joinTigerSquad = data.joinTigerSquad === true;
+      if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.joinTigerSquad;   // My profile may already be open
       renderSupporterBadge();
       state.socials    = _cleanSocials(data.socials);   // social-profile links (mirrored to userProfiles)
       state.vatCountry = data.vatCountry || null;    // ISO country code for VAT rate + currency (filament reorder)
@@ -37972,6 +38017,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         isPublic:   !!data.isPublic,
         tier:       data.tier || "free",
         supporter:  !!data.supporter,
+        joinTigerSquad: data.joinTigerSquad === true,
         vatCountry: data.vatCountry || null,
         vatCustomRate: (typeof data.vatCustomRate === "number") ? data.vatCustomRate : null,
         vatCustomCurrency: data.vatCustomCurrency || null,

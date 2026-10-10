@@ -623,3 +623,41 @@
 .support-claim-msg.is-ok { color: #20E39A; }
 .support-claim-msg.is-ko { color: #FF8A65; }
 .support-code-chip.is-loading { opacity: .55; cursor: progress; }
+
+/* TigerSquad — supporters who chose to show it. A golden ring on the avatar
+   wherever it is drawn (own sidebar, friends lists, banners), and a pill under
+   one's own name: belonging you can see. */
+.av-squad.av-squad { box-shadow: 0 0 0 2px #FFD600, 0 0 10px color-mix(in srgb, #FFD600 45%, transparent); }
+.sb-squad-pill {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
+  background: linear-gradient(135deg, #FFD600, #FF9F1C); color: #1a1205; font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content;
+}
+.sb-squad-pill .icon { background: #1a1205; }
+/* "Join the TigerSquad" — in the support popover. */
+.support-squad {
+  display: flex; align-items: flex-start; gap: 10px; margin: 2px 0 0; padding: 9px 10px; border-radius: 10px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, #FFD600 40%, var(--border));
+  background: color-mix(in srgb, #FFD600 7%, transparent); transition: background .15s, border-color .15s;
+}
+.support-squad:hover { background: color-mix(in srgb, #FFD600 12%, transparent); }
+.support-squad-input { position: absolute; opacity: 0; pointer-events: none; }
+.support-squad-box {
+  flex-shrink: 0; width: 18px; height: 18px; margin-top: 1px; border-radius: 5px; border: 1.5px solid var(--muted);
+  display: inline-flex; align-items: center; justify-content: center; transition: background .15s, border-color .15s;
+}
+.support-squad-box .icon { background: #1a1205; opacity: 0; transition: opacity .15s; }
+.support-squad-input:checked + .support-squad-box { background: #FFD600; border-color: #FFD600; }
+.support-squad-input:checked + .support-squad-box .icon { opacity: 1; }
+.support-squad-input:focus-visible + .support-squad-box { outline: 2px solid #FFD600; outline-offset: 2px; }
+.support-squad-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.support-squad-txt b { font-size: 12.5px; color: var(--text); }
+.support-squad-txt small { font-size: 11px; line-height: 1.35; color: var(--muted); }
+/* Joined from the popover: the card folds away (leaving lives in My profile). */
+.support-squad { max-height: 120px; overflow: hidden; transition: background .15s, border-color .15s, max-height .25s ease, opacity .2s, margin .25s, padding .25s; }
+.support-squad.is-joined { max-height: 0; opacity: 0; margin: 0; padding-top: 0; padding-bottom: 0; border-width: 0; }
+@media (prefers-reduced-motion: reduce) { .support-squad { transition: none; } }
+/* My profile → TigerSquad row. */
+.eac-squad-label { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.eac-squad-label .eac-squad-pill { margin-top: 0; align-self: flex-start; }
+.eac-squad-label { text-align: left; }
+.eac-squad-sub { font-size: 11.5px; line-height: 1.35; color: var(--muted); font-weight: 400; }

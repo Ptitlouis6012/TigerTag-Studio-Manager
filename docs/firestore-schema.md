@@ -14,6 +14,7 @@ userProfiles/
     displayName string      — user's chosen pseudo
     isPublic    boolean     — whether inventory is publicly visible
     (color fields for avatar)
+    tigerSquad  map?        — { since } TigerSquad member (public supporter): SERVER-ONLY, set by publishSupporter for a supporter who joined; refused from clients
 
 users/
   {uid}/
@@ -24,6 +25,7 @@ users/
     email         string
     roles         string   — "admin" | undefined
     Debug         boolean  — debug mode enabled
+    joinTigerSquad boolean? — the user chose to join the TigerSquad (public supporters' group); client-written, effective once `supporter` exists
     supporter     map?     — SERVER-ONLY (payment webhooks, functions/supportWebhooks.js): { since, lastAt, sources: ["kofi"…], monthly, count } — set once a Ko-fi (…) payment is tied to the account; drives the Supporter badge, never a feature. Refused from any client like `roles` / `tier`
     publicKey     string   — discovery code XXX-XXX (also in publicKeys/{key})
     privateKey    string   — 40-char hex access token (used by Firestore rules)
