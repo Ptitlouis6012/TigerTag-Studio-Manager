@@ -110,6 +110,8 @@
   .icon-filter    { -webkit-mask-image: url('../../assets/svg/icons/icon_filter.svg');       mask-image: url('../../assets/svg/icons/icon_filter.svg'); }
   .icon-json      { -webkit-mask-image: url('../../assets/svg/icons/icon_json.svg');         mask-image: url('../../assets/svg/icons/icon_json.svg'); }
   .icon-package-download { -webkit-mask-image: url('../../assets/svg/icons/icon_package_download.svg'); mask-image: url('../../assets/svg/icons/icon_package_download.svg'); }
+  .icon-community { -webkit-mask-image: url('../../assets/svg/icons/icon_community.svg'); mask-image: url('../../assets/svg/icons/icon_community.svg'); }
+  .icon-coffee   { -webkit-mask-image: url('../../assets/svg/icons/icon_coffee.svg'); mask-image: url('../../assets/svg/icons/icon_coffee.svg'); }
   .icon-gift      { -webkit-mask-image: url('../../assets/svg/icons/icon_gift.svg');         mask-image: url('../../assets/svg/icons/icon_gift.svg'); }
   .icon-grid      { -webkit-mask-image: url('../../assets/svg/icons/icon_grid.svg');         mask-image: url('../../assets/svg/icons/icon_grid.svg'); }
   .icon-grip      { -webkit-mask-image: url('../../assets/svg/icons/icon_grip.svg');         mask-image: url('../../assets/svg/icons/icon_grip.svg'); }

@@ -4743,9 +4743,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     host.appendChild(b);
   }
   // Closes with a short fade (120 ms) — instant when the user asked for less motion.
+  let _supportClosedAt = 0;   // lets a window under the chooser ignore the Esc / outside click that just closed it
   function _closeSupportMenu() {
     const m = _supportMenu; if (!m) return;
-    _supportMenu = null;
+    _supportMenu = null; _supportClosedAt = performance.now();
     _supportAnchor?.classList.remove("support-anchor-open"); _supportAnchor = null;
     const bd = m._backdrop;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) { m.remove(); bd?.remove(); return; }
@@ -4777,8 +4778,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Leaving the squad lifts any "Later": the invite comes back at the next start.
     if (!on) { try { localStorage.removeItem(_squadInviteKey(uid)); } catch {} }
     state.supportPublicly = on; renderSupporterBadge(); renderFriendBanner();
-    fbDb(uid).collection("users").doc(uid).set({ supportPublicly: on }, { merge: true })
-      .catch(() => { state.supportPublicly = !on; if (input) input.checked = !on; renderSupporterBadge(); renderFriendBanner(); });
+    // Returned so a caller can wait for the real write (the invite's join button).
+    return fbDb(uid).collection("users").doc(uid).set({ supportPublicly: on }, { merge: true })
+      .then(() => true)
+      .catch(() => { state.supportPublicly = !on; if (input) input.checked = !on; renderSupporterBadge(); renderFriendBanner(); return false; });
   }
   // ── TigerSquad invite — a one-card popup asking a signed-in user who is not
   // in the squad yet to join (free → Bronze), and offering a coffee to boost
@@ -4787,24 +4790,52 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // another dialog; "Later" snoozes it for 30 days on this account (localStorage).
   const SQUAD_INVITE_SNOOZE_MS = 30 * 24 * 3600 * 1000;
   const SQUAD_INVITE_MIN_AGE_MS = 7 * 24 * 3600 * 1000;
+  // TEMPORARY — design review of the invite: shows it ~3 s after every start,
+  // ignoring membership, account age and "Later". MUST be false before a release.
+  const SQUAD_INVITE_FORCE = true;
   const _squadInviteKey = uid => `tigertag.squadInvite.${uid}`;
   let _squadInviteShown = false, _squadInviteTimer = null;
   function _maybeInviteSquad() {
     clearTimeout(_squadInviteTimer);
     _squadInviteTimer = setTimeout(() => {
       const uid = state.activeAccountId;
-      if (!uid || _squadInviteShown || state.supportPublicly || state.friendView) return;
-      const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
-      if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
-      let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
-      if (Date.now() < until) return;
+      if (!uid || _squadInviteShown || state.friendView) return;
+      if (!SQUAD_INVITE_FORCE) {
+        if (state.supportPublicly) return;
+        const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
+        if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
+        let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
+        if (Date.now() < until) return;
+      }
       if (document.querySelector(".modal-overlay.open, .support-menu, .squad-invite")) return;
       _squadInviteShown = true;
       _openSquadInvite();
-    }, 20000);
+    }, SQUAD_INVITE_FORCE ? 3000 : 20000);
+  }
+  // ── Invite window building blocks ────────────────────────────────────────
+  // Artwork slots — null until the files land in assets/img/tigersquad/ (see
+  // its README); a null slot draws a local placeholder, never a broken image.
+  const SQUAD_ASSETS = {
+    bronze: "../assets/img/tigersquad/tigersquad-bronze.webp", silver: "../assets/img/tigersquad/tigersquad-silver.webp",
+    gold: "../assets/img/tigersquad/tigersquad-gold.webp", platinum: "../assets/img/tigersquad/tigersquad-platinum.webp",
+    coffee: "../assets/img/tigersquad/tigersquad-coffee.webp" };
+  // TigerSquadRankBadge — one level: badge slot (asset or placeholder), name, rule.
+  function tigerSquadRankBadgeHTML({ rank, label, description, assetSrc = null }) {
+    return `<li class="tsq-rank tsq-rank--${rank}" tabindex="0" aria-label="${esc(`${label} — ${description}`)}">
+        <span class="tsq-rank-badge">${assetSrc
+          ? `<img src="${esc(assetSrc)}" alt="">`
+          : `<svg viewBox="0 0 64 64" aria-hidden="true"><path class="tsq-rank-shield" d="M32 5 54 13v17c0 14-9.5 24-22 29C19.5 54 10 44 10 30V13Z"/><path class="tsq-rank-heart" d="M32 43 21.5 33.3c-3.4-3.2-3.2-8 .5-10 2.7-1.5 6.2-.8 8 1.8L32 27.6l2-2.5c1.8-2.6 5.3-3.3 8-1.8 3.7 2 3.9 6.8.5 10Z"/></svg>`}</span>
+        <span class="tsq-rank-name">${esc(label)}</span>
+        <span class="tsq-rank-desc">${esc(description)}</span>
+      </li>`;
+  }
+  // TigerSquadCoffeeAsset — the support card's illustration slot.
+  function tigerSquadCoffeeAssetHTML(src = SQUAD_ASSETS.coffee) {
+    return `<div class="tsq-coffee-art" aria-hidden="true">${src ? `<img src="${esc(src)}" alt="">` : `<span class="icon icon-coffee"></span>`}</div>`;
   }
   function _openSquadInvite() {
     const uid = state.activeAccountId; if (!uid) return;
+    const opener = document.activeElement;   // focus goes back here on close
     const bd = document.createElement("div");
     bd.className = "support-backdrop";
     const card = document.createElement("div");
@@ -4812,43 +4843,149 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     card.setAttribute("role", "dialog");
     card.setAttribute("aria-modal", "true");
     card.setAttribute("aria-labelledby", "squadInviteTitle");
-    const tiers = SQUAD_TIERS.map(x => `<span class="sb-squad-pill sq-${x}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>${squadTierLabel(x)}</span>`).join("");
+    card.setAttribute("aria-describedby", "squadInviteDesc");
+    const ranks = SQUAD_TIERS.map(r => tigerSquadRankBadgeHTML({
+      rank: r, label: squadTierLabel(r), description: t(`squadRank_${r}`), assetSrc: SQUAD_ASSETS[r],
+    })).join(`<li class="tsq-rank-arrow" aria-hidden="true"><span class="icon icon-arrow-r icon-12"></span></li>`);
+    const perk = (kind, icon, title, body) => `
+        <li class="tsq-perk tsq-perk--${kind}">
+          <span class="tsq-perk-ic"><img src="../assets/img/tigersquad/perk-${icon}.svg" alt="" aria-hidden="true"></span>
+          <b>${esc(t(title))}</b><span>${esc(t(body))}</span>
+        </li>`;
+    const wallUrl = `https://tigersystem.io/${state.lang || "en"}/tigersquad`;
     card.innerHTML = `
-      <button type="button" class="squad-invite-x" data-act="later" aria-label="${esc(t("squadInviteLater"))}"><span class="icon icon-close icon-14"></span></button>
-      <div class="squad-invite-heart sq-bronze" aria-hidden="true"><span class="icon icon-heart-fill"></span></div>
-      <h2 class="squad-invite-title" id="squadInviteTitle">${esc(t("squadInviteTitle"))}</h2>
-      ${String(t("squadInviteBody")).split(/\n\s*\n/).map(p => `<p class="squad-invite-body">${esc(p)}</p>`).join("")}
-      <p class="squad-invite-call">${esc(t("squadInviteCall"))}</p>
-      <div class="squad-invite-tiers">${tiers}</div>
-      <p class="squad-invite-levels">${esc(t("squadLevels"))}</p>
-      <div class="squad-invite-boost">
-        <span>${esc(t("squadInviteBoost"))}</span>
-        <button type="button" class="squad-invite-coffee" data-act="coffee"><img src="../assets/svg/logos/logo_kofi.svg" alt="" aria-hidden="true">${esc(t("reportCoffeeCta"))}</button>
-      </div>
-      <div class="squad-invite-actions">
-        <button type="button" class="squad-invite-later" data-act="later">${esc(t("squadInviteLater"))}</button>
-        <button type="button" class="squad-invite-join" data-act="join"><span class="icon icon-heart-fill icon-12" aria-hidden="true"></span>${esc(t("squadInviteJoin"))}</button>
-      </div>
-      <button type="button" class="squad-invite-wall" data-act="wall">${esc(t("squadInviteWall"))}<span class="icon icon-arrow-up-right icon-11" aria-hidden="true"></span></button>`;
+      <button type="button" class="squad-invite-x" data-act="later" aria-label="${esc(t("squadLaterCta"))}"><span class="icon icon-close icon-14"></span></button>
+      <div class="tsq-scroll">
+        <h2 class="tsq-title" id="squadInviteTitle">${esc(t("squadInvTitle")).replace("TigerSquad", '<span class="tsq-grad">TigerSquad</span>')}</h2>
+        <p class="tsq-sub">${esc(t("squadInvSub"))}</p>
+        <p class="tsq-desc" id="squadInviteDesc">${esc(t("squadInvDesc"))}</p>
+        <ul class="tsq-perks">
+          ${perk("xp", "gift", "squadPerkXpTitle", "squadPerkXpBody")}
+          ${perk("badges", "badges", "squadPerkBadgesTitle", "squadPerkBadgesBody")}
+          ${perk("support", "heart", "squadPerkSupportTitle", "squadPerkSupportBody")}
+        </ul>
+        <section class="tsq-adventure">
+          <div class="tsq-adv-head">
+            <span class="tsq-adv-title"><img class="tsq-adv-trophy" src="../assets/img/tigersquad/trophy.svg" alt="" aria-hidden="true">${esc(t("squadAdventure"))}</span>
+            <button type="button" class="tsq-adv-link" data-act="levels" aria-expanded="false" aria-controls="tsqExplainer">${esc(t("squadLevelsLink"))}</button>
+          </div>
+          <ol class="tsq-ranks">${ranks}</ol>
+          <div class="tsq-explainer" id="tsqExplainer" role="dialog" aria-label="${esc(t("squadLevelsLink").replace(/\s*→\s*$/, ""))}" hidden>
+            <dl>${SQUAD_TIERS.map(r => `<div class="tsq-rule tsq-rank--${r}"><dt>${esc(squadTierLabel(r))}</dt><dd>${esc(t(`squadRule_${r}`))}</dd></div>`).join("")}</dl>
+            <p class="tsq-rule-xp"><span class="icon icon-star-fill icon-12" aria-hidden="true"></span>${esc(t("squadRuleXp"))}</p>
+            <button type="button" class="tsq-wall-link" data-act="wall">${esc(t("squadLevelsWall"))}</button>
+          </div>
+          <p class="tsq-every">${esc(t("squadEveryContribution"))}</p>
+        </section>
+        <section class="tsq-coffee">
+          ${tigerSquadCoffeeAssetHTML()}
+          <div class="tsq-coffee-txt">
+            <b>${esc(t("squadCoffeeTitle"))}</b>
+            <span>${esc(t("squadCoffeeBody"))}</span>
+            <small>${esc(t("squadCoffeeNote"))}</small>
+          </div>
+          <button type="button" class="tsq-coffee-btn" data-act="coffee"><span class="icon icon-coffee" aria-hidden="true"></span>${esc(t("reportCoffeeCta"))}</button>
+        </section>
+        <button type="button" class="tsq-join" data-act="join"><span class="icon icon-community" aria-hidden="true"></span><span class="tsq-join-txt">${esc(t("squadJoinCta"))}</span></button>
+        <p class="tsq-join-msg" role="status" aria-live="polite"></p>
+        <ul class="tsq-reassure">
+          <li><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(t("squadReassureFree"))}</li>
+          <li><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(t("squadReassureNoCommit"))}</li>
+          <li><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(t("squadReassureNoPay"))}</li>
+        </ul>
+        <button type="button" class="tsq-later" data-act="later">${esc(t("squadLaterCta"))}</button>
+        <div class="tsq-foot">
+          <span class="tsq-members" hidden><span class="icon icon-community" aria-hidden="true"></span><span class="tsq-members-n"></span></span>
+          <span>${esc(t("squadFooter"))}</span>
+        </div>
+      </div>`;
+    // "128 members" bottom-left — a count of the public profiles that carry
+    // tigerSquad (the same set the Hub's wall lists); hidden if it fails.
+    _squadMemberCount().then(n => {
+      const el = card.querySelector(".tsq-members");
+      if (!el || !Number.isFinite(n) || n < 1) return;
+      el.querySelector(".tsq-members-n").textContent = t("squadMembers", { n });
+      el.hidden = false;
+    });
+    let busy = false;   // a join in flight: no closing, no second click
     const close = () => {
       document.removeEventListener("keydown", onKey);
-      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { card.remove(); bd.remove(); return; }
+      const done = () => { card.remove(); bd.remove(); try { opener?.focus?.(); } catch (_) {} };
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { done(); return; }
       card.classList.add("is-closing"); bd.classList.add("is-closing");
-      setTimeout(() => { card.remove(); bd.remove(); }, 140);
+      setTimeout(done, 160);
     };
     const snooze = () => { try { localStorage.setItem(_squadInviteKey(uid), String(Date.now() + SQUAD_INVITE_SNOOZE_MS)); } catch {} };
-    const onKey = e => { if (e.key === "Escape") { snooze(); close(); } };
+    // Keyboard: Esc = later; Tab stays inside the window.
+    const onKey = e => {
+      if (e.key === "Escape" && !card.querySelector("#tsqExplainer").hidden) { setLevelsBubble(false); card.querySelector(".tsq-adv-link")?.focus(); return; }
+      if (e.key === "Escape" && (_supportMenu || performance.now() - _supportClosedAt < 250)) return;   // Esc closed the chooser, not the window
+      if (e.key === "Escape" && !busy) { snooze(); close(); return; }
+      if (e.key !== "Tab") return;
+      const f = [...card.querySelectorAll("button:not([disabled]), [href], [tabindex='0']")].filter(el => el.offsetParent);
+      if (!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    };
+    const join = async () => {
+      if (busy) return;
+      busy = true;
+      const btn = card.querySelector(".tsq-join"), txt = card.querySelector(".tsq-join-txt"), msg = card.querySelector(".tsq-join-msg");
+      btn.disabled = true; btn.classList.add("is-busy"); txt.textContent = t("squadJoining"); msg.textContent = ""; msg.className = "tsq-join-msg";
+      const ok = await _setSupportPublicly(true);   // the real write — nothing is shown as done before it lands
+      busy = false;
+      if (ok) {
+        btn.classList.remove("is-busy"); btn.classList.add("is-done"); txt.textContent = t("squadJoined");
+        setTimeout(close, 1400);
+      } else {
+        btn.disabled = false; btn.classList.remove("is-busy"); txt.textContent = t("squadJoinCta");
+        msg.textContent = t("squadJoinError"); msg.classList.add("is-error");
+      }
+    };
+    // The levels info bubble (anchored to "Discover the levels →"): toggled by its
+    // link, closed by a click elsewhere in the window or by Esc (before the window).
+    const setLevelsBubble = open => {
+      const box = card.querySelector("#tsqExplainer"), link = card.querySelector(".tsq-adv-link");
+      box.hidden = !open;
+      link.setAttribute("aria-expanded", String(open));
+    };
+    card.addEventListener("click", e => {
+      if (!e.target.closest("#tsqExplainer, .tsq-adv-link") && !card.querySelector("#tsqExplainer").hidden) setLevelsBubble(false);
+    }, true);
     card.addEventListener("click", e => {
       const act = e.target.closest("[data-act]")?.dataset.act;
-      if (act === "join") { _setSupportPublicly(true); close(); }
+      if (!act || (busy && act !== "wall")) return;
+      if (act === "join") join();
       else if (act === "later") { snooze(); close(); }
-      else if (act === "coffee") { snooze(); close(); setTimeout(() => _openCoffee(null), 160); }   // the support chooser, centred
-      else if (act === "wall") window.electronAPI?.openExternal(`https://tigersystem.io/${state.lang === "pt-pt" ? "pt-pt" : (state.lang || "en")}/tigersquad`);
+      else if (act === "coffee") _openCoffee(e.target.closest("[data-act]"));   // the support chooser, anchored to the button — the window stays open
+      else if (act === "wall") window.electronAPI?.openExternal(wallUrl);
+      else if (act === "levels") setLevelsBubble(card.querySelector("#tsqExplainer").hidden);   // info bubble: real rules + XP
     });
-    bd.addEventListener("click", () => { snooze(); close(); });
+    bd.addEventListener("click", () => { if (!busy && performance.now() - _supportClosedAt > 250) { snooze(); close(); } });
     document.addEventListener("keydown", onKey);
     document.body.append(bd, card);
-    card.querySelector(".squad-invite-join")?.focus();
+    card.querySelector(".tsq-join")?.focus();
+  }
+  // How many accounts are in the TigerSquad — a COUNT aggregation over
+  // userProfiles (public read) through Firestore REST: ordering on
+  // tigerSquad.since also filters to the profiles that have it. Cached 10 min.
+  let _squadCountCache = null;
+  async function _squadMemberCount() {
+    if (_squadCountCache && Date.now() - _squadCountCache.at < 600000) return _squadCountCache.n;
+    try {
+      const project = firebase.app(state.activeAccountId).options.projectId;
+      const res = await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents:runAggregationQuery`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ structuredAggregationQuery: {
+          structuredQuery: { from: [{ collectionId: "userProfiles" }], orderBy: [{ field: { fieldPath: "tigerSquad.since" }, direction: "ASCENDING" }] },
+          aggregations: [{ alias: "n", count: {} }],
+        } }),
+      });
+      const n = Number((await res.json())?.[0]?.result?.aggregateFields?.n?.integerValue);
+      if (Number.isFinite(n)) _squadCountCache = { n, at: Date.now() };
+      return n;
+    } catch (_) { return NaN; }
   }
   // "407 XP · 19 certified TigerTag+" in My profile → TigerSquad.
   function _renderSquadXp() {
@@ -4904,7 +5041,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <span>${esc(t("supportCodeHint"))}</span>
         <button type="button" class="support-code-chip${_supporterCodeCached() ? "" : " is-loading"}" data-support-copy="${esc(_supporterCodeCached() || "")}"><span>${esc(_supporterCodeCached() || "TS-····-····")}</span><span class="icon icon-copy icon-12" aria-hidden="true"></span></button>
       </div>` : ""}
-      ${state.activeAccountId && !state.supportPublicly ? `
+      ${state.activeAccountId && !state.supportPublicly && !anchor?.closest?.(".squad-invite") ? `
       <label class="support-squad">
         <input type="checkbox" class="support-squad-input">
         <span class="support-squad-box" aria-hidden="true"><span class="icon icon-check icon-10"></span></span>
@@ -9333,13 +9470,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     return out;
   }
-  // Row of brand-coloured social icons (used on the account + friend banners).
-  function _socialsRowHTML(socials) {
+  // Row of brand-coloured social icons (used on the account + friend banners),
+  // with the "Share" badge riding at its end so the badge line stays short.
+  function _socialsRowHTML(socials, trailing = "") {
     const items = (Array.isArray(socials) ? socials : []).map(u => {
       const m = _socialMeta(u); if (!m) return "";
       return `<a class="fvb-social" href="${safeHref(_normalizeBuyUrl(u))}" target="_blank" rel="noopener noreferrer" style="--sc:${m.color}" aria-label="${esc(m.host)}"><span class="icon icon-${m.icon} icon-13"></span></a>`;
     }).filter(Boolean).join("");
-    return items ? `<div class="fvb-socials">${items}</div>` : "";
+    return (items || trailing) ? `<div class="fvb-socials">${items}${trailing}</div>` : "";
   }
   function _genListToken() {
     // Compact, unguessable, URL-safe id: 64 random bits encoded base36 (0-9a-z)
@@ -35261,13 +35399,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const squadBadge = (!error && tigerSquad)
           ? `<span class="sb-squad-pill fvb-squad sq-${fTier}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(fTier)}</span>`
           : "";
-        const line2 = relBadge + squadBadge + shareBtn;
+        const line2 = relBadge + squadBadge;
         banner.innerHTML = `
           ${avatarMarkup(friendSource, "fvb-avatar")}
           <div class="fvb-inner">
             <div class="fvb-name-row"><span class="fvb-name">${esc(displayName || "—")}</span>${countText}</div>
             ${line2 ? `<div class="fvb-badges">${line2}</div>` : ""}
-            ${_socialsRowHTML(socials)}
+            ${_socialsRowHTML(socials, shareBtn)}
           </div>`;
       }
       banner.classList.remove("fvb--own");
@@ -35307,8 +35445,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </button>
         <div class="fvb-inner">
           <div class="fvb-name-row"><span class="fvb-name">${esc(own)}</span>${countText}</div>
-          <div class="fvb-badges">${relBadge}${_ownSquadTier() ? `<span class="sb-squad-pill fvb-squad sq-${_ownSquadTier()}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(_ownSquadTier())}</span>` : ""}${shareBtn}</div>
-          ${_socialsRowHTML(state.socials)}
+          <div class="fvb-badges">${relBadge}${_ownSquadTier() ? `<span class="sb-squad-pill fvb-squad sq-${_ownSquadTier()}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(_ownSquadTier())}</span>` : ""}</div>
+          ${_socialsRowHTML(state.socials, shareBtn)}
         </div>`;
     }
     banner.classList.remove("fvb--error");

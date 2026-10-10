@@ -5160,3 +5160,5 @@ body.ttag-dragging .ttag-drop-hint { display: flex; }
 #ttagImportOverlay .ttag-mode-opt.is-selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
 #ttagImportOverlay .ttag-mode-opt-title { font-size: 13px; font-weight: 700; color: var(--text); }
 #ttagImportOverlay .ttag-mode-opt-desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+  /* The "Share" badge sits at the end of the socials row, a little apart from the icons. */
+  .fvb-socials .fvb-badge--share { margin-left: 4px; }

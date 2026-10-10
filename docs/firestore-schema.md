@@ -27,6 +27,7 @@ users/
     Debug         boolean  — debug mode enabled
     xpPoints      number?  — SERVER-ONLY: XP from the account's chips (certified TigerTag+ 10, TigerTag+ 2, TigerTag 1, per chip, one account per chip) — certifyChip; refused from clients
     certifiedPlusCount number? — SERVER-ONLY: genuine TigerTag+ counted for the account (backups in rfidList verified with the TigerTag SDK by certifyChip; one account per chip); refused from clients
+    tigerTagCount      number? — SERVER-ONLY: every TigerTag chip counted for the account (TigerTag, TigerTag+ or certified; one account per chip) — 20+ makes a free member Silver; refused from clients
     supportPublicly boolean? — the user chose to join the TigerSquad (shown on the wall of fame); client-written
     supporter     map?     — SERVER-ONLY (payment webhooks, functions/supportWebhooks.js): { since, lastAt, sources: ["kofi"…], monthly, count } — set once a Ko-fi (…) payment is tied to the account; drives the Supporter badge, never a feature. Refused from any client like `roles` / `tier`
     publicKey     string   — discovery code XXX-XXX (also in publicKeys/{key})

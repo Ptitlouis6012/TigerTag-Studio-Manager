@@ -51,6 +51,11 @@ starts from the master here rather than from an already-compressed file.
 | `img/spool_filament/oem_carton_core.png` | 1080², 1.1 MB | `assets/img/spool_filament/oem_carton_core.png` — 226×220, 20 KB |
 | `img/spool_filament/oem_kitchen_scale.png` | 1536×1024, 2.1 MB | `assets/img/spool_filament/oem_kitchen_scale.png` — 364×220, 15 KB |
 | `img/Hero-TigerSystem-ecosystem.png` | 2000×1414, 1.6 MB | `assets/img/Hero-TigerSystem-ecosystem.png` — 1200×848, 151 KB |
+| `img/tigersquad/tigersquad-coffee.png` | 1225×1284, 1.1 MB | `assets/img/tigersquad/tigersquad-coffee.webp` — 135×180, 10 KB |
+| `img/tigersquad/tigersquad-bronze.png` | 682², cut from the founder's 4-badge sheet (centred, common scale) | `assets/img/tigersquad/tigersquad-bronze.webp` — 160² |
+| `img/tigersquad/tigersquad-silver.png` | 682², cut from the founder's 4-badge sheet (centred, common scale) | `assets/img/tigersquad/tigersquad-silver.webp` — 160² |
+| `img/tigersquad/tigersquad-gold.png` | 682², cut from the founder's 4-badge sheet (centred, common scale) | `assets/img/tigersquad/tigersquad-gold.webp` — 160² |
+| `img/tigersquad/tigersquad-platinum.png` | 682², cut from the founder's 4-badge sheet (centred, common scale) | `assets/img/tigersquad/tigersquad-platinum.webp` — 160² |
 | `img/hero_tigerpod_rainbow_7.png` | 1672×941, 1.4 MB | — not loaded by the app (shop / Hub / social / press) |
 | `img/hero-TigerPOD-MirrorEffect-Rainbow-9.png` | 1672×941, 1.4 MB | — not loaded by the app (shop / Hub / social / press) |
 | `img/TigerScale_V3.png` | 1254², 1.4 MB | `assets/img/TigerScale_V3.png` — 512², 78 KB (scale card 56 px, empty state 216 px, README 480 px) |
