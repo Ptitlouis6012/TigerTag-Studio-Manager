@@ -515,3 +515,8 @@
   clip-path: none; transform: translateX(0); opacity: 1; box-shadow: 8px 0 32px rgba(0,0,0,.12);
   transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, visibility 0s;
 }
+/* TigerSquad card — same build as the coffee card, in the squad's orange. */
+.rep-squad.rep-squad { border-color: color-mix(in srgb, #FF923F 75%, transparent); background: color-mix(in srgb, #FF923F 9%, transparent); }
+.rep-squad .rep-coffee-cup { width: 40px; height: 40px; object-fit: contain; }
+.rep-squad .rep-coffee-cta.rep-coffee-cta { background: linear-gradient(180deg, #FF8A2E, #FF6F12); color: #17120E; }
+.rep-squad .rep-coffee-cta .icon { background: #17120E; }

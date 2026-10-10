@@ -419,6 +419,7 @@ function onClick(e) {
   else if (act === "send") send();
   else if (act === "issue" && st.done?.url) ctx.openExternal(st.done.url);
   else if (act === "coffee") ctx.openCoffee?.(a);
+  else if (act === "squad") ctx.openSquad?.();
   else if (act === "view") { _view = a.dataset.view; _closeAsk = null; render(); if (_view === "mine") syncReports(); }
   else if (act === "mineOpen") { const r = (_mine.list || []).find(x => x.id === a.dataset.id); if (r?.url) ctx.openExternal(r.url); }
   else if (act === "mineClose") { _closeAsk = a.dataset.id; render(); setTimeout(() => { if (_closeAsk === a.dataset.id) { _closeAsk = null; render(); } }, 4000); }
@@ -459,6 +460,21 @@ function coffeeHTML() {
         <div class="rep-coffee-title">${esc(t("reportCoffeeTitle"))}</div>
         <div class="rep-coffee-sub">${esc(t("reportCoffeeSub"))}</div>
         <button type="button" class="rep-coffee-cta" data-rep="coffee">${esc(t("reportCoffeeCta"))}<span class="icon icon-arrow-up-right icon-12"></span></button>
+      </div>
+    </div>`;
+}
+
+// TigerSquad — under the coffee card, only for an account that hasn't joined;
+// opens the full invite (perks, levels, free join) over the panel.
+function squadHTML() {
+  if (!ctx.canJoinSquad?.()) return "";
+  return `
+    <div class="rep-coffee rep-squad">
+      <img class="rep-coffee-cup" src="../assets/img/tigersquad/tigersquad-gold.webp" alt="" aria-hidden="true">
+      <div class="rep-coffee-txt">
+        <div class="rep-coffee-title">${esc(t("squadInvTitle"))}</div>
+        <div class="rep-coffee-sub">${esc(t("squadJoinSubFree"))}</div>
+        <button type="button" class="rep-coffee-cta" data-rep="squad">${esc(t("squadReqCta"))}<span class="icon icon-arrow-r icon-12"></span></button>
       </div>
     </div>`;
 }
@@ -575,6 +591,7 @@ function render() {
           <div><div class="rep-adventure-title">${esc(t("reportAdventureTitle"))}</div><div class="rep-adventure-sub">${esc(t("reportAdventureText"))}</div></div>
         </div>
         ${coffeeHTML()}
+        ${squadHTML()}
       </div>`);
     return;
   }
@@ -624,6 +641,7 @@ function render() {
           </button>`).join("")}
         </div>
         ${coffeeHTML()}
+        ${squadHTML()}
       </div>`);
     return;
   }

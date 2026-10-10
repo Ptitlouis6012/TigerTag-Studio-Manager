@@ -4790,9 +4790,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // another dialog; "Later" snoozes it for 30 days on this account (localStorage).
   const SQUAD_INVITE_SNOOZE_MS = 30 * 24 * 3600 * 1000;
   const SQUAD_INVITE_MIN_AGE_MS = 7 * 24 * 3600 * 1000;
-  // TEMPORARY — design review of the invite: shows it ~3 s after every start,
-  // ignoring membership, account age and "Later". MUST be false before a release.
-  const SQUAD_INVITE_FORCE = true;
   const _squadInviteKey = uid => `tigertag.squadInvite.${uid}`;
   let _squadInviteShown = false, _squadInviteTimer = null;
   function _maybeInviteSquad() {
@@ -4800,17 +4797,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _squadInviteTimer = setTimeout(() => {
       const uid = state.activeAccountId;
       if (!uid || _squadInviteShown || state.friendView) return;
-      if (!SQUAD_INVITE_FORCE) {
-        if (state.supportPublicly) return;
-        const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
-        if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
-        let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
-        if (Date.now() < until) return;
-      }
+      if (state.supportPublicly) return;   // already in the TigerSquad
+      const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
+      if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
+      let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
+      if (Date.now() < until) return;
       if (document.querySelector(".modal-overlay.open, .support-menu, .squad-invite")) return;
       _squadInviteShown = true;
       _openSquadInvite();
-    }, SQUAD_INVITE_FORCE ? 3000 : 20000);
+    }, 20000);
   }
   // ── Invite window building blocks ────────────────────────────────────────
   // Artwork slots — null until the files land in assets/img/tigersquad/ (see
@@ -4995,6 +4990,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     el.textContent = t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 });
     el.classList.remove("hidden");
   }
+  const XP_COUNT_VERSION = 2;   // matches the server's counting rules (supportWebhooks.js)
   const _xpRecountAsked = new Set();   // per account, once a session
   async function _requestXpRecount() {
     const acc = state.activeAccountId;
@@ -5042,11 +5038,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <button type="button" class="support-code-chip${_supporterCodeCached() ? "" : " is-loading"}" data-support-copy="${esc(_supporterCodeCached() || "")}"><span>${esc(_supporterCodeCached() || "TS-····-····")}</span><span class="icon icon-copy icon-12" aria-hidden="true"></span></button>
       </div>` : ""}
       ${state.activeAccountId && !state.supportPublicly && !anchor?.closest?.(".squad-invite") ? `
-      <label class="support-squad">
-        <input type="checkbox" class="support-squad-input">
-        <span class="support-squad-box" aria-hidden="true"><span class="icon icon-check icon-10"></span></span>
+      <button type="button" class="support-squad" data-squad-open>
+        <img class="support-squad-badge" src="../assets/img/tigersquad/tigersquad-gold.webp" alt="" aria-hidden="true">
         <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSubFree"))}</small></span>
-      </label>` : ""}
+        <span class="icon icon-arrow-r icon-12 support-squad-go" aria-hidden="true"></span>
+      </button>` : ""}
       ${!state.supporter && state.activeAccountId ? `
       <details class="support-claim">
         <summary>${esc(t("supportClaimToggle"))}</summary>
@@ -5104,22 +5100,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         setTimeout(() => cp.classList.remove("is-copied"), 1200);
         return;
       }
+      // TigerSquad → the full invite (perks, levels, the free join), never a silent join.
+      if (ev.target.closest("[data-squad-open]")) {
+        _closeSupportMenu();
+        if (!document.querySelector(".squad-invite")) setTimeout(_openSquadInvite, 130);
+        return;
+      }
       const b = ev.target.closest("[data-support]"); if (!b) return;
       _closeSupportMenu();
       _markCommunitySeen("coffee");
       window.electronAPI?.openExternal({ paypal: PAYPAL_URL, kofi: KOFI_URL, star: GITHUB_REPO_URL }[b.dataset.support] || COFFEE_URL);
     });
     m.querySelector(".support-claim-form")?.addEventListener("submit", ev => { ev.preventDefault(); _claimSupport(m); });
-    // Join / leave the TigerSquad — a preference on the user doc; the server
-    // publishes the membership on the public profile for supporters only.
-    // Joined → the card folds away; leaving is done from My profile (eacSquadToggle).
-    m.querySelector(".support-squad-input")?.addEventListener("change", ev => {
-      if (!ev.target.checked) return;
-      _setSupportPublicly(true, ev.target);
-      const card = ev.target.closest(".support-squad");
-      setTimeout(() => card?.classList.add("is-joined"), 450);   // let the tick show first
-      card?.addEventListener("transitionend", () => card.remove(), { once: true });
-    });
     // First time on this account: ask the server for the supporter code, then fill the chip.
     const chip = m.querySelector(".support-code-chip.is-loading");
     if (chip) _supporterCode().then(code => {
@@ -22173,6 +22165,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     getIdToken: force => state.activeAccountId ? firebase.app(state.activeAccountId).auth().currentUser?.getIdToken(!!force) : null,
     openExternal: url => window.electronAPI?.openExternal(url),
     openCoffee: anchor => _openCoffee(anchor),
+    canJoinSquad: () => !!state.activeAccountId && !state.supportPublicly && !state.friendView,
+    openSquad: () => { if (!document.querySelector(".squad-invite")) _openSquadInvite(); },
     timeAgo: ms => timeAgo(ms),
     getUid: () => state.activeAccountId || null,
     // Catalogue corrections name their product: the same index and the same
@@ -38283,7 +38277,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.xpPoints = typeof data.xpPoints === "number" ? data.xpPoints : null;
       state.certifiedPlusCount = typeof data.certifiedPlusCount === "number" ? data.certifiedPlusCount : null;
       _renderSquadXp();
-      if (state.xpPoints == null) _requestXpRecount();   // never counted yet → ask the server once
+      // Never counted, or counted under older rules (v2: inventory spools count too) → ask the server once.
+      if (state.xpPoints == null || data.xpCountVersion !== XP_COUNT_VERSION) _requestXpRecount();
       if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.supportPublicly;   // My profile may already be open
       _subscribeOwnSquad(uid);
       _maybeInviteSquad();
