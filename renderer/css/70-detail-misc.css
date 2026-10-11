@@ -700,6 +700,13 @@
   .card-tl-badge .icon { background-color: var(--on-accent); }
   .card-tl-badge--twin   { background: linear-gradient(135deg,var(--info),var(--info)); }
   .card-tl-badge--backup { background: linear-gradient(135deg,var(--success-hover),var(--success)); }
+  /* Refill (a coil that goes into a reusable MasterSpool) — green. */
+  .card-tl-badge--refill, .panel-img-refill-badge { background: linear-gradient(135deg,var(--success-hover),var(--success)); }
+  /* "Refill" pill — recycle icon + the word; a plain round icon on the small thumbnails. */
+  .card-tl-badge.card-tl-badge--refill { width: auto; min-width: 22px; padding: 0 7px 0 5px; gap: 3px; border-radius: 999px; }
+  .card-badges-tl--sm .card-tl-badge--refill { width: 15px; min-width: 0; padding: 0; border-radius: 50%; }
+  .panel-img-icon-badge.panel-img-refill-badge { width: auto; padding: 0 8px 0 6px; gap: 4px; border-radius: 999px; }
+  .refill-txt { font-size: 10.5px; font-weight: 800; letter-spacing: .02em; line-height: 1; color: var(--on-accent); }
   /* Compact variant for the tiny table thumbnails. */
   .card-badges-tl--sm { top: 3px; left: 3px; gap: 3px; }
   .card-badges-tl--sm .card-tl-badge { width: 15px; height: 15px; border-width: 1px; }
@@ -3799,8 +3806,12 @@
   .ro-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
   .ro-card-title { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
   .ro-ptiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }   /* 2 rows of 3 */
-  .ro-ptile { display: flex; align-items: center; gap: 10px; padding: 10px 11px; border-radius: 10px; background: var(--surface-2); min-width: 0; }
-  .ro-ptile .icon { background: var(--muted); flex-shrink: 0; }
+  /* Icon + label share the title line; the value takes the full width below it. */
+  .ro-ptile { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 6px; row-gap: 3px; padding: 9px 11px; border-radius: 10px; background: var(--surface-2); min-width: 0; }
+  .ro-ptile > div { display: contents; }
+  .ro-ptile .icon { background: var(--muted); flex-shrink: 0; width: 15px; height: 15px; }
+  .ro-ptile-k { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ro-ptile-v { grid-column: 1 / -1; }
   .ro-ptile-k { font-size: 11px; color: var(--muted); }
   .ro-ptile-v { font-size: 14px; font-weight: 700; color: var(--text); }
   .ro-cards2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

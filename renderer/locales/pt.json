@@ -34,6 +34,8 @@
   "squadJoinSubFree": "Grátis. Você aparece no mural da TigerSquad — seu selo acompanha seu nível (Bronze → Platinum) e seus amigos veem.",
   "squadJoinSubMember": "Você aparece no mural da TigerSquad — seu selo acompanha seu nível (Bronze → Platinum) e seus amigos veem.",
   "squadReqCta": "Ver o que tem",
+  "squadInTitle": "Você faz parte da TigerSquad",
+  "squadInBody": "Seu selo está no mural e seus amigos veem. Valeu por fazer parte — seu nível sobe sozinho com o tempo.",
   "squadXpLine": "{{xp}} XP · {{n}} TigerTag+ certificados",
   "supportThanks": "Você apoiou o projeto — valeu! Mais um café é sempre bem-vindo.",
   "supportCodeHint": "Coloque seu código na mensagem do pagamento: ele liga sua doação à sua conta (Gold na TigerSquad)",

@@ -34,6 +34,8 @@
   "squadJoinSubFree": "免费。你会出现在 TigerSquad 墙上 — 徽章随你的等级变化（Bronze → Platinum），好友也看得到。",
   "squadJoinSubMember": "你会出现在 TigerSquad 墙上 — 徽章随你的等级变化（Bronze → Platinum），好友也看得到。",
   "squadReqCta": "看看有什么",
+  "squadInTitle": "你已加入 TigerSquad",
+  "squadInBody": "你的徽章已上墙，好友也看得到。感谢你的加入 — 等级会随着你的使用自动提升。",
   "squadXpLine": "{{xp}} XP · {{n}} 个认证 TigerTag+",
   "supportThanks": "你支持了这个项目——谢谢！再来一杯咖啡也永远欢迎。",
   "supportCodeHint": "在付款留言中加上你的代码：捐助会关联到你的账号（在 TigerSquad 中升为 Gold）",

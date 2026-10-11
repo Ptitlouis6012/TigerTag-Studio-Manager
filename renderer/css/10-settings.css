@@ -974,3 +974,12 @@
   15% { opacity: 1; transform: translateX(5px); background: var(--tsq-orange); }
 }
 @media (prefers-reduced-motion: reduce) { .tsq-rank-arrow .icon { animation: none; opacity: .8; } }
+/* Already in the TigerSquad — the member's badge, level and the squad's head count. */
+.support-squad--in.support-squad--in { border-color: color-mix(in srgb, var(--sq-a) 55%, var(--border)); background: color-mix(in srgb, var(--sq-a) 8%, transparent); }
+.support-squad--in:hover { background: color-mix(in srgb, var(--sq-a) 14%, transparent); }
+.support-squad--in b { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.support-squad-tier {
+  padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 800; letter-spacing: .3px;
+  background: linear-gradient(135deg, var(--sq-a), var(--sq-b)); color: var(--sq-ink);
+}
+.support-squad-n[hidden] { display: none; }

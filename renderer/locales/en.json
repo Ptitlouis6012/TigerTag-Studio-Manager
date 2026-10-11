@@ -34,6 +34,8 @@
   "squadJoinSubFree": "Free. You show up on the TigerSquad wall — your badge follows your level (Bronze → Platinum), and your friends see it.",
   "squadJoinSubMember": "You show up on the TigerSquad wall — your badge follows your level (Bronze → Platinum), and your friends see it.",
   "squadReqCta": "See what's in it",
+  "squadInTitle": "You're in the TigerSquad",
+  "squadInBody": "Your badge is on the wall and your friends see it. Thanks for being part of it — your level climbs on its own as you go.",
   "squadXpLine": "{{xp}} XP · {{n}} certified TigerTag+",
   "supportThanks": "You backed the project — thank you! Another coffee is always welcome.",
   "supportCodeHint": "Add your code to your payment message: it links your gift to your account (Gold in the TigerSquad)",

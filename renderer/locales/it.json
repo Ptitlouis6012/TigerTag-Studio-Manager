@@ -34,6 +34,8 @@
   "squadJoinSubFree": "Gratis. Compari sul muro della TigerSquad — il tuo badge segue il tuo livello (Bronze → Platinum) e i tuoi amici lo vedono.",
   "squadJoinSubMember": "Compari sul muro della TigerSquad — il tuo badge segue il tuo livello (Bronze → Platinum) e i tuoi amici lo vedono.",
   "squadReqCta": "Scopri cosa c'è dentro",
+  "squadInTitle": "Fai parte della TigerSquad",
+  "squadInBody": "Il tuo badge è sul muro e i tuoi amici lo vedono. Grazie di esserci — il tuo livello sale da solo col tempo.",
   "squadXpLine": "{{xp}} XP · {{n}} TigerTag+ certificati",
   "supportThanks": "Hai sostenuto il progetto, grazie! Un altro caffè è sempre benvenuto.",
   "supportCodeHint": "Aggiungi il tuo codice al messaggio del pagamento: collega la donazione al tuo account (Gold nella TigerSquad)",

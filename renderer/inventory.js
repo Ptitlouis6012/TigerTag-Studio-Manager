@@ -127,7 +127,7 @@ import { renderElegooCamBanner } from './printers/elegoo/widget_camera.js';
 import { sdcpWireLive } from './printers/elegoo/sdcp.js';
 import { elgFanStep } from './printers/elegoo/widget_control.js';
 import { jobBar, jobBarFill } from './printers/job-bar.js';
-import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, reportDragState, syncReports } from './report/index.js';
+import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, reportDragState, syncReports, refreshSquadCard } from './report/index.js';
 
   const API_BASE         = "https://cdn.tigertag.io";
 
@@ -4700,11 +4700,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       renderSupporterBadge(); renderFriendBanner();
     }, () => {});
   }
+  let _lastSquadTier;   // what the TigerSquad card last showed (undefined = never rendered)
+  let _squadCountCache = null;   // { n, at } — the TigerSquad head count (_squadMemberCount)
   function renderSupporterBadge() {
     const host = document.querySelector("#sbUser .sb-avatar-wrap"); if (!host) return;
     // TigerSquad member (any level) → heart and ring in the level's colour on the
     // avatar (the level pill lives on the banner, not here). Not a member → nothing.
     const tier = _ownSquadTier();
+    // Joined, left or changed level → the head count is stale, and the requests
+    // panel's card flips between "join" and "you're in".
+    if (tier !== _lastSquadTier) {
+      _lastSquadTier = tier; _squadCountCache = null;
+      try { refreshSquadCard(); } catch (_) {}
+      const row = _supportMenu?.querySelector(".support-squad");
+      if (row) { const tmp = document.createElement("div"); tmp.innerHTML = _supportSquadRowHTML(); tmp.firstElementChild ? row.replaceWith(tmp.firstElementChild) : row.remove(); }
+    }
     const av = $("sbAvatar");
     av?.classList.toggle("av-squad", !!tier);
     SQUAD_TIERS.forEach(x => av?.classList.toggle(`sq-${x}`, tier === x));
@@ -4956,7 +4966,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // How many accounts are in the TigerSquad — a COUNT aggregation over
   // userProfiles (public read) through Firestore REST: ordering on
   // tigerSquad.since also filters to the profiles that have it. Cached 10 min.
-  let _squadCountCache = null;
   async function _squadMemberCount() {
     if (_squadCountCache && Date.now() - _squadCountCache.at < 600000) return _squadCountCache.n;
     try {
@@ -5004,6 +5013,30 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // The badge itself arrives with the user doc (server-set); show it right away.
     if (status === "granted") { state.supporter = true; renderSupporterBadge(); }
   }
+  // The TigerSquad row of the support menu: "join" (opens the invite) for an
+  // account outside, "you're in" (badge, level, head count → the wall) for a member.
+  function _supportSquadRowHTML() {
+    if (!state.activeAccountId || state.friendView) return "";
+    const tier = _ownSquadTier();
+    if (!tier) return `
+      <button type="button" class="support-squad" data-squad-open>
+        <img class="support-squad-badge" src="../assets/img/tigersquad/tigersquad-gold.webp" alt="" aria-hidden="true">
+        <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSubFree"))}</small></span>
+        <span class="icon icon-arrow-r icon-12 support-squad-go" aria-hidden="true"></span>
+      </button>`;
+    const n = _squadCountCache?.n;
+    if (!(n >= 1)) _squadMemberCount().then(c => {
+      const el = _supportMenu?.querySelector(".support-squad-n");
+      if (el && c >= 1) { el.textContent = t("squadMembers", { n: c }); el.hidden = false; }
+    });
+    return `
+      <button type="button" class="support-squad support-squad--in sq-${tier}" data-squad-wall>
+        <img class="support-squad-badge" src="${esc(SQUAD_ASSETS[tier])}" alt="" aria-hidden="true">
+        <span class="support-squad-txt"><b>${esc(t("squadInTitle"))}<span class="support-squad-tier">${esc(squadTierLabel(tier))}</span></b>
+          <small class="support-squad-n"${n >= 1 ? "" : " hidden"}>${n >= 1 ? esc(t("squadMembers", { n })) : ""}</small></span>
+        <span class="icon icon-arrow-up-right icon-12 support-squad-go" aria-hidden="true"></span>
+      </button>`;
+  }
   function _openCoffee(e) {
     const anchor = e?.currentTarget || (e instanceof Element ? e : null);
     if (_supportMenu) { _closeSupportMenu(); return; }
@@ -5028,12 +5061,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <span>${esc(t("supportCodeHint"))}</span>
         <button type="button" class="support-code-chip${_supporterCodeCached() ? "" : " is-loading"}" data-support-copy="${esc(_supporterCodeCached() || "")}"><span>${esc(_supporterCodeCached() || "TS-····-····")}</span><span class="icon icon-copy icon-12" aria-hidden="true"></span></button>
       </div>` : ""}
-      ${state.activeAccountId && !state.supportPublicly && !anchor?.closest?.(".squad-invite") ? `
-      <button type="button" class="support-squad" data-squad-open>
-        <img class="support-squad-badge" src="../assets/img/tigersquad/tigersquad-gold.webp" alt="" aria-hidden="true">
-        <span class="support-squad-txt"><b>${esc(t("squadJoin"))}</b><small>${esc(t(state.supporter ? "squadJoinSubMember" : "squadJoinSubFree"))}</small></span>
-        <span class="icon icon-arrow-r icon-12 support-squad-go" aria-hidden="true"></span>
-      </button>` : ""}
+      ${!anchor?.closest?.(".squad-invite") ? _supportSquadRowHTML() : ""}
       ${!state.supporter && state.activeAccountId ? `
       <details class="support-claim">
         <summary>${esc(t("supportClaimToggle"))}</summary>
@@ -5092,6 +5120,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         return;
       }
       // TigerSquad → the full invite (perks, levels, the free join), never a silent join.
+      if (ev.target.closest("[data-squad-wall]")) {
+        _closeSupportMenu();
+        window.electronAPI?.openExternal(`https://tigersystem.io/${state.lang || "en"}/tigersquad`);
+        return;
+      }
       if (ev.target.closest("[data-squad-open]")) {
         _closeSupportMenu();
         if (!document.querySelector(".squad-invite")) setTimeout(_openSquadInvite, 130);
@@ -8442,7 +8475,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       ? `<span class="card-tl-badge card-tl-badge--twin" title="${t('twinBadge')} — ${t('twinTitle')}"><span class="icon icon-link ${iconSize}"></span></span>` : "";
     const backup = (withBackup && r.isPlus && r.rfidBackup)
       ? `<span class="card-tl-badge card-tl-badge--backup" title="${esc(t('backupBadge'))}"><span class="icon icon-backup ${iconSize}"></span></span>` : "";
-    return (twin || backup) ? `<div class="card-badges-tl${compact ? " card-badges-tl--sm" : ""}">${twin}${backup}</div>` : "";
+    // Refill (info1) — a coil with no spool of its own; the same flag as the "Refill" chip. First in the stack.
+    const refill = r.isRefill
+      ? `<span class="card-tl-badge card-tl-badge--refill"><span class="icon icon-recycle ${iconSize}" aria-hidden="true"></span>${compact ? "" : "<span class=\"refill-txt\">Refill</span>"}</span>` : "";
+    return (twin || backup || refill) ? `<div class="card-badges-tl${compact ? " card-badges-tl--sm" : ""}">${refill}${twin}${backup}</div>` : "";
   }
 
   // Tier badge shown next to a row everywhere we display its origin:
@@ -9790,6 +9826,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       r.isPlus ? 1 : 0,
       r.isCloud ? 1 : 0,
       r.rfidBackup ? 1 : 0,
+      r.isRefill ? 1 : 0,
       r.colorHex || "",
       r.colorHex2 || "",
       r.colorHex3 || "",
@@ -18966,9 +19003,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const imgUrl = r.imgUrl || p.label?.imgUrl || "";
     const _img = imgUrl ? resolvedImg(imgUrl) : null;
     const onerr = `this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`;
+    // Refill pictogram top-right, as on the spool's detail panel — known once the
+    // product detail (`product/get` → filament.refill → info1) has arrived.
+    const refill = r.isRefill
+      ? `<div class="panel-img-badge panel-img-badge--tr panel-img-badge-tr-group"><span class="panel-img-badge-tr-item panel-img-icon-badge panel-img-refill-badge"><span class="icon icon-recycle icon-11" aria-hidden="true"></span><span class="refill-txt">Refill</span></span></div>`
+      : "";
     const imgSection = _img
-      ? `<div class="panel-img-wrap" style="background:${colorBg(r)}"><img class="panel-img" src="${esc(_img)}" onerror="${esc(onerr)}" /></div>`
-      : `<div class="panel-img-wrap"><div class="panel-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" class="panel-img-logo" /></div></div>`;
+      ? `<div class="panel-img-wrap" style="background:${colorBg(r)}"><img class="panel-img" src="${esc(_img)}" onerror="${esc(onerr)}" />${refill}</div>`
+      : `<div class="panel-img-wrap"><div class="panel-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" class="panel-img-logo" /></div>${refill}</div>`;
     // Identity — Brand · Series · Material on line 1, colour name on line 2.
     const brand = (r.brand && r.brand !== "-") ? r.brand : "";
     const series = (r.series && r.series !== "-") ? r.series : "";
@@ -20242,8 +20284,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const badgeBackup = (r.isPlus && r.rfidBackup)
       ? `<span class="panel-img-badge-tr-item panel-img-icon-badge panel-img-backup-badge" title="${esc(t("backupBadge"))}"><span class="icon icon-backup icon-11"></span></span>`
       : "";
-    const badgeTrGroup = (badgeBackup || badgeTwin || badgeChip)
-      ? `<div class="panel-img-badge panel-img-badge--tr panel-img-badge-tr-group">${badgeTwin}${badgeBackup}${badgeChip}</div>`
+    const badgeRefill = r.isRefill
+      ? `<span class="panel-img-badge-tr-item panel-img-icon-badge panel-img-refill-badge"><span class="icon icon-recycle icon-11" aria-hidden="true"></span><span class="refill-txt">Refill</span></span>`
+      : "";
+    const badgeTrGroup = (badgeBackup || badgeTwin || badgeChip || badgeRefill)
+      ? `<div class="panel-img-badge panel-img-badge--tr panel-img-badge-tr-group">${badgeRefill}${badgeTwin}${badgeBackup}${badgeChip}</div>`
       : "";
     // Bottom-right ❤/★/🛍 status cluster, same as the grid/table illustrations.
     const overlays = badgeLeft + badgeTrGroup + badgeTd + _productBadgesHTML(r);
@@ -22157,6 +22202,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     openExternal: url => window.electronAPI?.openExternal(url),
     openCoffee: anchor => _openCoffee(anchor),
     canJoinSquad: () => !!state.activeAccountId && !state.supportPublicly && !state.friendView,
+    // Already in → the card shows the member's badge instead, with the squad's head count.
+    squadMember: () => {
+      const tier = state.activeAccountId && !state.friendView ? _ownSquadTier() : null;
+      return tier ? { tier, label: squadTierLabel(tier), src: SQUAD_ASSETS[tier], wall: `https://tigersystem.io/${state.lang || "en"}/tigersquad` } : null;
+    },
+    squadMemberCount: () => _squadMemberCount(),
     openSquad: () => { if (!document.querySelector(".squad-invite")) _openSquadInvite(); },
     timeAgo: ms => timeAgo(ms),
     getUid: () => state.activeAccountId || null,

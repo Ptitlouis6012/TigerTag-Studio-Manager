@@ -520,3 +520,16 @@
 .rep-squad .rep-coffee-cup { width: 40px; height: 40px; object-fit: contain; }
 .rep-squad .rep-coffee-cta.rep-coffee-cta { background: linear-gradient(180deg, #FF8A2E, #FF6F12); color: #17120E; }
 .rep-squad .rep-coffee-cta .icon { background: #17120E; }
+/* Already in the TigerSquad — the member's badge, their level and the squad's head count. */
+.rep-squad--in.rep-squad--in { border-color: color-mix(in srgb, var(--sq-a, #FF923F) 70%, transparent); background: color-mix(in srgb, var(--sq-a, #FF923F) 9%, transparent); }
+.rep-squad--in .rep-coffee-cup { width: 46px; height: 46px; }
+.rep-squad--in .rep-coffee-title { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.rep-squad-tier {
+  padding: 1px 8px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: .3px;
+  background: linear-gradient(135deg, var(--sq-a, #FFD600), var(--sq-b, #FF9F1C)); color: var(--sq-ink, #1a1205);
+}
+.rep-squad-count { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--text); }
+.rep-squad-count[hidden] { display: none; }
+.rep-squad-count .icon { width: 15px; height: 15px; background: var(--sq-a, #FF923F); }
+.rep-squad--in .rep-coffee-cta.rep-coffee-cta { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.rep-squad--in .rep-coffee-cta.rep-coffee-cta:hover { background: var(--surface-2); filter: none; }

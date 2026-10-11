@@ -34,6 +34,8 @@
   "squadJoinSubFree": "Gratis. Apareces en el muro de la TigerSquad — tu insignia sigue tu nivel (Bronze → Platinum) y tus amigos la ven.",
   "squadJoinSubMember": "Apareces en el muro de la TigerSquad — tu insignia sigue tu nivel (Bronze → Platinum) y tus amigos la ven.",
   "squadReqCta": "Ver qué incluye",
+  "squadInTitle": "Formas parte de la TigerSquad",
+  "squadInBody": "Tu insignia está en el muro y tus amigos la ven. Gracias por estar — tu nivel sube solo con el tiempo.",
   "squadXpLine": "{{xp}} XP · {{n}} TigerTag+ certificados",
   "supportThanks": "Apoyaste el proyecto, ¡gracias! Otro café siempre es bienvenido.",
   "supportCodeHint": "Añade tu código al mensaje del pago: vincula tu donación a tu cuenta (Gold en la TigerSquad)",

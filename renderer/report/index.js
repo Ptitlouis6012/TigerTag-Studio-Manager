@@ -315,6 +315,16 @@ export function reportDragState(on) {
   _overlay.classList.toggle("rep-dragging", !!on && !!st && !st.done && !!kindOf(st.kind));
 }
 export function toggleReport() { isReportOpen() ? closeReport() : openReport(); }
+// The TigerSquad card follows the account live (joined ↔ left, level change):
+// swap just that card, the rest of the panel (a draft, the scroll) stays put.
+export function refreshSquadCard() {
+  const old = _overlay?.querySelector(".rep-squad"); const coffee = _overlay?.querySelector(".rep-coffee:not(.rep-squad)");
+  if (!old && !coffee) return;
+  const tmp = document.createElement("div"); tmp.innerHTML = squadHTML();
+  const next = tmp.firstElementChild;
+  if (old) next ? old.replaceWith(next) : old.remove();
+  else if (next) coffee.after(next);
+}
 
 export async function openReport(opts = {}) {
   if (!ctx) return;
@@ -420,6 +430,7 @@ function onClick(e) {
   else if (act === "issue" && st.done?.url) ctx.openExternal(st.done.url);
   else if (act === "coffee") ctx.openCoffee?.(a);
   else if (act === "squad") ctx.openSquad?.();
+  else if (act === "squadWall") ctx.openExternal(a.dataset.url);
   else if (act === "view") { _view = a.dataset.view; _closeAsk = null; render(); if (_view === "mine") syncReports(); }
   else if (act === "mineOpen") { const r = (_mine.list || []).find(x => x.id === a.dataset.id); if (r?.url) ctx.openExternal(r.url); }
   else if (act === "mineClose") { _closeAsk = a.dataset.id; render(); setTimeout(() => { if (_closeAsk === a.dataset.id) { _closeAsk = null; render(); } }, 4000); }
@@ -467,6 +478,27 @@ function coffeeHTML() {
 // TigerSquad — under the coffee card, only for an account that hasn't joined;
 // opens the full invite (perks, levels, free join) over the panel.
 function squadHTML() {
+  const member = ctx.squadMember?.();
+  if (member) {
+    // Filled once the count arrives (cached after the first ask); hidden if it never does.
+    ctx.squadMemberCount?.().then(n => {
+      _overlay?.querySelectorAll("[data-squad-count]").forEach(el => {
+        if (!Number.isFinite(n) || n < 1) return;
+        el.querySelector("b").textContent = t("squadMembers", { n });
+        el.hidden = false;
+      });
+    });
+    return `
+    <div class="rep-coffee rep-squad rep-squad--in sq-${member.tier}">
+      <img class="rep-coffee-cup" src="${esc(member.src)}" alt="" aria-hidden="true">
+      <div class="rep-coffee-txt">
+        <div class="rep-coffee-title">${esc(t("squadInTitle"))}<span class="rep-squad-tier">${esc(member.label)}</span></div>
+        <div class="rep-coffee-sub">${esc(t("squadInBody"))}</div>
+        <div class="rep-squad-count" data-squad-count hidden><span class="icon icon-community" aria-hidden="true"></span><b></b></div>
+        <button type="button" class="rep-coffee-cta" data-rep="squadWall" data-url="${esc(member.wall)}">${esc(t("squadLevelsWall"))}</button>
+      </div>
+    </div>`;
+  }
   if (!ctx.canJoinSquad?.()) return "";
   return `
     <div class="rep-coffee rep-squad">
