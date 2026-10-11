@@ -109,7 +109,7 @@
   .icon-bug       { -webkit-mask-image: url('../../assets/svg/icons/icon_bug.svg');          mask-image: url('../../assets/svg/icons/icon_bug.svg'); }
   .icon-filter    { -webkit-mask-image: url('../../assets/svg/icons/icon_filter.svg');       mask-image: url('../../assets/svg/icons/icon_filter.svg'); }
   .icon-json      { -webkit-mask-image: url('../../assets/svg/icons/icon_json.svg');         mask-image: url('../../assets/svg/icons/icon_json.svg'); }
-  .icon-package-download { -webkit-mask-image: url('../../assets/svg/icons/icon_package_download.svg'); mask-image: url('../../assets/svg/icons/icon_package_download.svg'); }
+  .icon-software-download { -webkit-mask-image: url('../../assets/svg/icons/icon_software_download.svg'); mask-image: url('../../assets/svg/icons/icon_software_download.svg'); }
   .icon-community { -webkit-mask-image: url('../../assets/svg/icons/icon_community.svg'); mask-image: url('../../assets/svg/icons/icon_community.svg'); }
   .icon-coffee   { -webkit-mask-image: url('../../assets/svg/icons/icon_coffee.svg'); mask-image: url('../../assets/svg/icons/icon_coffee.svg'); }
   .icon-gift      { -webkit-mask-image: url('../../assets/svg/icons/icon_gift.svg');         mask-image: url('../../assets/svg/icons/icon_gift.svg'); }
@@ -712,6 +712,10 @@
   .card-badges-tl--sm .card-tl-badge { width: 15px; height: 15px; border-width: 1px; }
 
   td.thumb-cell { padding: 4px 6px; width: 58px; }
+  /* Block-level in its cell: an inline thumb sits on the text baseline, and a photo
+     and a colour placeholder have different baselines — the rows came out at
+     different heights. As a block both are exactly the thumb's size. */
+  td.thumb-cell > .thumb-wrap, td.thumb-cell > .group-thumb-badge { display: flex; width: fit-content; }
 
   /* ── identical-spool grouping (Table) ───────────────────────────────────── */
   /* Group header row — the "folder". Raised background + bold; clicking it

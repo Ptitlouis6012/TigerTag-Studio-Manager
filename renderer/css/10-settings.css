@@ -983,3 +983,11 @@
   background: linear-gradient(135deg, var(--sq-a), var(--sq-b)); color: var(--sq-ink);
 }
 .support-squad-n[hidden] { display: none; }
+/* Improvements & suggestions — while its side card is open the button turns solid
+   orange with white sparkles (collapsed and expanded sidebar alike). */
+.sb-community .sb-group > .sb-report-btn.is-on.is-on,
+:root[data-theme="dark"] .sb-community .sb-group > .sb-report-btn.is-on.is-on {
+  background: var(--primary); border-color: var(--primary); color: var(--on-accent); box-shadow: 0 0 12px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.sb-community .sb-group > .sb-report-btn.is-on.is-on { --ic: #fff; }
+.sb-community .sb-group > .sb-report-btn.is-on.is-on > .icon { filter: none; }
