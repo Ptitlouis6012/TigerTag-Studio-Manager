@@ -37,6 +37,7 @@
   "squadInTitle": "Ты в TigerSquad",
   "squadInBody": "Твой значок на стене, и друзья его видят. Спасибо, что ты с нами — уровень растёт сам по ходу дела.",
   "squadXpLine": "{{xp}} XP · {{n}} сертифицированных TigerTag+",
+  "squadCountryLabel": "Команда",
   "supportThanks": "Ты поддержал проект — спасибо! Ещё один кофе всегда кстати.",
   "supportCodeHint": "Добавь свой код в сообщение к платежу: он привяжет донат к аккаунту (Gold в TigerSquad)",
   "supportClaimToggle": "Уже поддержал? Привяжи донат",

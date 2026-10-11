@@ -2,7 +2,7 @@
 import { initRfidTester } from './rfid_protocol/tigertag/index.js';
 
 // ── Offline timezone → country (telemetry, no IP geolocation) ──────────────
-import { tzToCountry } from './tz-country.js';
+import { tzToCountry, COUNTRY_CODES } from './tz-country.js';
 
 // ── TigerScale IoT module ─────────────────────────────────────────────────
 import {
@@ -4342,6 +4342,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("eacDebugRow").classList.remove("hidden");
     $("eacDebugToggle").checked = state.debugEnabled;
     $("eacSquadToggle").checked = !!state.supportPublicly;
+    _fillSquadCountry();
     _renderSquadXp();
     if (state.xpPoints == null) _requestXpRecount();   // never counted yet → ask the server once
     const isCustom = _editingAccount?.color === "custom";
@@ -4774,6 +4775,29 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   // Support publicly (or stop) — a preference on the user doc; the server
   // publishes it on the public profile: TigerSquad if they gave, supporter otherwise.
+  // TigerSquad flag — the country a member's XP counts for in the Hub's
+  // countries ranking. users/{uid}.squadCountry (ISO alpha-2) when picked;
+  // "auto" = the country this app detects (the server falls back to it).
+  const _flagOf = cc => String.fromCodePoint(...[...cc].map(c => 0x1F1A5 + c.charCodeAt(0)));
+  function _fillSquadCountry() {
+    const sel = $("eacSquadCountry"); if (!sel) return;
+    let names; try { names = new Intl.DisplayNames([state.lang || "en"], { type: "region" }); } catch (_) {}
+    const name = cc => { try { return names?.of(cc) || cc; } catch (_) { return cc; } };
+    const detected = deriveCountry();
+    const opts = COUNTRY_CODES.map(cc => ({ cc, n: name(cc), label: `${_flagOf(cc)}  ${name(cc)}` }))
+      .sort((a, b) => a.n.localeCompare(b.n, state.lang || "en"));
+    // First entry = the detected country (cleared pick), shown like any other.
+    sel.innerHTML = `<option value="">${esc(detected ? `${_flagOf(detected)}  ${name(detected)}` : "—")}</option>`
+      + opts.map(o => `<option value="${o.cc}">${esc(o.label)}</option>`).join("");
+    sel.value = state.squadCountry || "";
+    _enhanceSelect(sel); sel._cselRefresh?.();
+  }
+  function _setSquadCountry(cc) {
+    const uid = state.activeAccountId; if (!uid) return;
+    const FV = firebase.firestore.FieldValue;
+    state.squadCountry = cc || null;
+    fbDb(uid).collection("users").doc(uid).set({ squadCountry: cc || FV.delete() }, { merge: true }).catch(() => {});
+  }
   function _setSupportPublicly(on, input) {
     const uid = state.activeAccountId; if (!uid) return;
     // Leaving the squad lifts any "Later": the invite comes back at the next start.
@@ -5365,6 +5389,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("eacDisplayNameInput").addEventListener("keydown", e => { if (e.key === "Enter") saveDisplayName(); });
 
   $("eacSquadToggle").addEventListener("change", e => _setSupportPublicly(e.target.checked, e.target));
+  $("eacSquadCountry")?.addEventListener("change", e => _setSquadCountry(e.target.value));
   $("eacDebugToggle").addEventListener("change", async () => {
     const enabled = $("eacDebugToggle").checked;
     state.debugEnabled = enabled;
@@ -38315,6 +38340,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.supporter  = !!data.supporter;
       // Chose to support the project publicly — TigerSquad if they gave, public supporter otherwise.
       state.supportPublicly = data.supportPublicly === true;
+      state.squadCountry = /^[A-Z]{2}$/.test(data.squadCountry || "") ? data.squadCountry : null;
       // XP from the account's chips + certified TigerTag+ — both counted by the server.
       state.xpPoints = typeof data.xpPoints === "number" ? data.xpPoints : null;
       state.certifiedPlusCount = typeof data.certifiedPlusCount === "number" ? data.certifiedPlusCount : null;

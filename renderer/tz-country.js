@@ -175,6 +175,9 @@ const TZ_PREFIX = {
  * @param {string} tz e.g. "Europe/Paris"
  * @returns {string|null} "FR", or null when unknown.
  */
+// Every country the map knows — the list behind the TigerSquad flag picker.
+export const COUNTRY_CODES = [...new Set(Object.values(TZ_COUNTRY))].sort();
+
 export function tzToCountry(tz) {
   if (!tz || typeof tz !== "string") return null;
   if (TZ_COUNTRY[tz]) return TZ_COUNTRY[tz];

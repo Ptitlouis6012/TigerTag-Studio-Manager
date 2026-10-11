@@ -37,6 +37,7 @@
   "squadInTitle": "Formas parte de la TigerSquad",
   "squadInBody": "Tu insignia está en el muro y tus amigos la ven. Gracias por estar — tu nivel sube solo con el tiempo.",
   "squadXpLine": "{{xp}} XP · {{n}} TigerTag+ certificados",
+  "squadCountryLabel": "Equipo",
   "supportThanks": "Apoyaste el proyecto, ¡gracias! Otro café siempre es bienvenido.",
   "supportCodeHint": "Añade tu código al mensaje del pago: vincula tu donación a tu cuenta (Gold en la TigerSquad)",
   "supportClaimToggle": "¿Ya donaste? Vincula tu donación",
