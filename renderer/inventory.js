@@ -4702,22 +4702,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function renderSupporterBadge() {
     const host = document.querySelector("#sbUser .sb-avatar-wrap"); if (!host) return;
-    // TigerSquad member (any level) → heart, ring and pill in the level's colour —
-    // exactly what friends and the Hub see. Not a member → nothing.
+    // TigerSquad member (any level) → heart and ring in the level's colour on the
+    // avatar (the level pill lives on the banner, not here). Not a member → nothing.
     const tier = _ownSquadTier();
     const av = $("sbAvatar");
     av?.classList.toggle("av-squad", !!tier);
     SQUAD_TIERS.forEach(x => av?.classList.toggle(`sq-${x}`, tier === x));
     const info = document.querySelector("#sbUser .sb-user-info");
-    let pill = info?.querySelector(".sb-squad-pill");
-    if (pill && pill.dataset.tier !== (tier || "")) { pill.remove(); pill = null; }
-    if (tier && info && !pill) {
-      pill = document.createElement("span");
-      pill.className = `sb-squad-pill sq-${tier}`;
-      pill.dataset.tier = tier;
-      pill.innerHTML = `<span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(tier)}`;
-      info.insertBefore(pill, info.querySelector(".sb-xp-pill"));
-    }
     // XP chip under the name — every account, member or not.
     let xp = info?.querySelector(".sb-xp-pill");
     if (typeof state.xpPoints === "number" && info) {   // 0 XP shows too — something to fill up
