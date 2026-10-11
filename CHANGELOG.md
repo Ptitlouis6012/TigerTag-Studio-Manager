@@ -19,6 +19,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
   - Popover per the redesign mockup: title with a red heart, a short reassuring intro (free and open source for good), a caret pointing at the button that opened it, smart placement (right of the button when there is room, otherwise above, then below), the opener lit with a yellow ring while open, a ↗ hint on the hovered platform, lift-on-hover, 150 ms open / 120 ms close (off under reduced motion), options left-aligned (a global button rule was centring them); opened from the requests side card it sits to the right of the whole card (the topic list stays visible), or becomes a compact centred modal over a dimmed backdrop when there is no room
 
 ### Changed
+- Bundled reference data refreshed before the build: brands, materials and the product catalogue (14,463 products, was 13,906) — `assets/db/tigertag/` (`db_update.py`)
 - "Improvements & suggestions" sidebar button turns solid orange with white sparkles while its side card is open — `renderer/css/10-settings.css`
 - Print-setting tiles (product card + detail panel): the icon now sits on the title line next to the label, and the value spans the full width below it, so long ranges ("190–230 °C") stay on one line — `renderer/css/70-detail-misc.css` (`.ro-ptile`)
 - Support menu copy no longer promises a badge for a gift alone: the code / claim lines say the gift is LINKED to the account, and the badge (Gold) comes with joining the TigerSquad — i18n `supportCodeHint`, `supportClaimToggle`, `supportClaimOk` (11 locales)

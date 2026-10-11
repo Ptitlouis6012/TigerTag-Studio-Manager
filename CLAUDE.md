@@ -158,6 +158,8 @@ Rule of thumb: *would a user notice a new thing they can now do?* → **MINOR**.
 
 0. **Decide the version** (policy above) and set `package.json` to it — correcting the placeholder if the WORKLOG warrants a MINOR/MAJOR (confirm MAJOR with the human first).
 
+   **Then refresh the bundled reference data — before EVERY build, no exception:** `cd assets/db/tigertag && python3 db_update.py`. It re-downloads the `id_*.json` tables and the product catalogue `id_catalog.json` (+ `last_update.json`) when the API has newer ones, so the app ships with the latest brands, materials and catalogue on first launch and offline. Commit whatever it changed with the release. (Skipped once: v2.37.0 was about to ship a catalogue a month old — 13,906 products instead of 14,463.)
+
 1. **Synthesize `WORKLOG.md`** (Rule 3 above) → write the new `CHANGELOG.md` entry (register 1 — technical).
 2. **Write the release note** (register 2 — BambuLab style) → `data/release-notes/vX.Y.Z.md`. Rewrite the changelog into factual, jargon-free bullets (`Fixed an issue where …`, no internal code names); end with the standard footer (copy it from the previous version's file). This file becomes the **GitHub Release page body** verbatim via `scripts/extract-changelog.mjs`. Skipping it means the release page falls back to the raw changelog — avoid that.
 3. **Write the "What's New" entry** (register 3 — Discord/app voice) for the version → `data/whatsnew.json`. Run `npm run whatsnew:add -- <x.y.z> [--items N] [--date YYYY-MM-DD]` to scaffold an empty **11-locale** block, then fill each item's `icon` (an icon-name → `.icon-<name>` mask, e.g. `list-check`, `cart`, `user`, `link`, `swap`, `bell`; **not** a literal emoji) + vulgarised `title`/`body` for **all 11 locales** (history is kept — never delete old versions). Verify with `npm run whatsnew:check` (must pass — no empty locale). This drives the in-app "What's New" modal shown once per version (and re-openable from Settings → About).
@@ -206,7 +208,7 @@ The working file is wiped so it stays clean and unambiguous: whatever is in `WOR
 
 **Always keep on the main loop (never delegate):** the version decision (SemVer), all validators (`npm run i18n:check`, `whatsnew:check`, `codemap:check`, `node --check`), the final consistency read-through, and all git/gh (commit, tag, push, publish-latest, build watch).
 
-**Order of operations:** decide version → write CHANGELOG → note + What's New + FEATURES + README + codemap (inline) → run ALL validators + one consistency read-through → commit → tag → push → watch build → publish latest → reset WORKLOG + bump `package.json`.
+**Order of operations:** decide version → refresh bundled data (`db_update.py`) → write CHANGELOG → note + What's New + FEATURES + README + codemap (inline) → run ALL validators + one consistency read-through → commit → tag → push → watch build → publish latest → reset WORKLOG + bump `package.json`.
 
 **Separately, keep `data/whatsnew.json` from bloating** (it's re-read on every release): when its history grows large, propose archiving the oldest versions out of the loaded file so each release stops paying to read the full back-catalogue.
 

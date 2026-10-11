@@ -421,6 +421,13 @@
     ]
   },
   {
+    "id": 26145,
+    "name": "3DMA",
+    "type_ids": [
+      142
+    ]
+  },
+  {
     "id": 26379,
     "name": "Formlabs",
     "type_ids": [
@@ -911,6 +918,13 @@
   {
     "id": 58410,
     "name": "AzureFilm",
+    "type_ids": [
+      142
+    ]
+  },
+  {
+    "id": 58863,
+    "name": "iSANMATE",
     "type_ids": [
       142
     ]
