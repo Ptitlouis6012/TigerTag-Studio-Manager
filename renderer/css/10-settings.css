@@ -1115,3 +1115,66 @@
 .sqb-next-cta { align-self: flex-start; height: 32px; padding: 0 14px; border: none; border-radius: 9px; cursor: pointer;
   background: linear-gradient(180deg, #FF8A2E, #FF6F12); color: #17120E; font-family: inherit; font-size: 13px; font-weight: 800; }
 .sqb-next.sq-platinum { align-items: center; }
+/* TigerSquad windows (invite + rankings): a white halo of light so they stand
+   out from the app behind — light rim, soft glow, gently breathing. */
+.squad-invite {
+  border-color: color-mix(in srgb, #FFFFFF 35%, var(--tsq-line));
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .45), 0 0 40px 6px rgba(255, 255, 255, .32), 0 0 160px 40px rgba(255, 255, 255, .16), 0 24px 70px rgba(0, 0, 0, .55);
+  animation: tsq-in .24s cubic-bezier(.2, .8, .2, 1), tsq-halo 3.2s ease-in-out .3s infinite;
+}
+@keyframes tsq-halo {
+  0%, 100% { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .45), 0 0 40px 6px rgba(255, 255, 255, .32), 0 0 160px 40px rgba(255, 255, 255, .16), 0 24px 70px rgba(0, 0, 0, .55); }
+  50%      { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .6), 0 0 56px 12px rgba(255, 255, 255, .42), 0 0 220px 60px rgba(255, 255, 255, .22), 0 24px 70px rgba(0, 0, 0, .55); }
+}
+@media (prefers-reduced-motion: reduce) { .squad-invite { animation: none; } }
+/* Joining the TigerSquad — the celebration over the invite card. */
+.tsq-celebrate {
+  position: absolute; inset: 0; z-index: 5; border-radius: inherit; overflow: hidden; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--sq-a) 30%, #0b0d12) 0, #0b0d12 58%); backdrop-filter: blur(8px);
+  animation: tsq-cel-in .35s ease-out both;
+}
+.tsq-cel-rays { position: absolute; left: 50%; top: 42%; width: 900px; height: 900px; margin: -450px 0 0 -450px;
+  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--sq-a) 30%, transparent) 0deg 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 0, transparent 60%); mask: radial-gradient(circle, #000 0, transparent 60%);
+  animation: tsq-cel-spin 9s linear infinite, tsq-cel-in .6s ease-out both; }
+.tsq-cel-badge { position: relative; width: 190px; height: 190px; object-fit: contain;
+  filter: drop-shadow(0 0 28px color-mix(in srgb, var(--sq-a) 80%, transparent)); animation: tsq-cel-badge .9s cubic-bezier(.2, 1.4, .3, 1) .1s both; }
+.tsq-cel-xp { position: relative; font-size: 30px; font-weight: 900; color: #FFD34D; text-shadow: 0 0 18px rgba(255, 200, 61, .7); animation: tsq-cel-xp 1.6s ease-out .5s both; }
+.tsq-cel-title { position: relative; font-size: 22px; font-weight: 800; color: #fff; animation: tsq-cel-up .5s ease-out .7s both; }
+.tsq-cel-tier { position: relative; font-size: 15px; font-weight: 800; letter-spacing: 3px; text-transform: uppercase; color: var(--sq-a); animation: tsq-cel-up .5s ease-out .85s both; }
+.tsq-cel-sparks { position: absolute; left: 50%; top: 42%; }
+.tsq-cel-sparks i { position: absolute; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%;
+  background: radial-gradient(circle, #fff, var(--sq-a) 60%, transparent 70%); opacity: 0;
+  animation: tsq-cel-spark 1.3s cubic-bezier(.15, .7, .3, 1) calc(.25s + var(--dl)) both; }
+@keyframes tsq-cel-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes tsq-cel-spin { to { transform: rotate(360deg); } }
+@keyframes tsq-cel-badge { 0% { transform: scale(.2) rotate(-25deg); opacity: 0; } 60% { opacity: 1; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes tsq-cel-xp { 0% { transform: translateY(16px) scale(.8); opacity: 0; } 25% { transform: translateY(0) scale(1.08); opacity: 1; } 100% { transform: translateY(-6px) scale(1); opacity: 1; } }
+@keyframes tsq-cel-up { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tsq-cel-spark { 0% { transform: translate(0, 0) scale(1.4); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .tsq-celebrate, .tsq-cel-rays, .tsq-cel-badge, .tsq-cel-xp, .tsq-cel-title, .tsq-cel-tier { animation: none; }
+}
+/* Level-up window: the celebration plays over it, then fades into the card. */
+.squad-levelup { width: min(460px, calc(100vw - 32px)); }
+.tsq-levelup-body { padding: 34px 26px 22px; display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.tsq-levelup-kicker { margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 3px; color: var(--sq-a); }
+.tsq-levelup-from { display: flex; align-items: center; gap: 12px; margin: 6px 0; }
+.tsq-levelup-from img { width: 72px; height: 72px; object-fit: contain; }
+.tsq-levelup-from img:last-child { width: 120px; height: 120px; filter: drop-shadow(0 0 22px color-mix(in srgb, var(--sq-a) 70%, transparent)); }
+.tsq-levelup-from .icon { background: var(--tsq-muted); }
+.tsq-levelup-text { margin: 0 0 6px; font-size: 14px; line-height: 1.5; color: #C3CAD8; }
+.tsq-celebrate.is-fading { transition: opacity .5s ease; opacity: 0; }
+/* Join button — on hover a light runs round its edge (a conic sweep masked to a 2 px ring). */
+@property --tsq-join-ang { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.tsq-join { position: relative; isolation: isolate; }
+.tsq-join::before {
+  content: ""; position: absolute; inset: -3px; border-radius: 15px; padding: 3px; pointer-events: none;
+  background: conic-gradient(from var(--tsq-join-ang), transparent 0 45%, rgba(255, 200, 120, .55) 65%, #FFF6D8 80%, #FFFFFF 84%, transparent 86%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude;
+  opacity: 0; transition: opacity .25s; filter: drop-shadow(0 0 4px #FFF) drop-shadow(0 0 10px rgba(255, 190, 110, .9));
+}
+.tsq-join:hover:not(:disabled)::before, .tsq-join:focus-visible::before { opacity: 1; animation: tsq-join-spin 1.6s linear infinite; }
+@keyframes tsq-join-spin { to { --tsq-join-ang: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .tsq-join:hover::before { animation: none; } }

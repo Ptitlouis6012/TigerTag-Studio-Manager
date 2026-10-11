@@ -2011,13 +2011,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <span id="acctDropFriendsBadge" class="acct-drop-badge">${_friendCount > 0 ? _friendCount : "+"}</span>
       </button>
       ${_ownSquadTier() ? `
-      <button class="acct-drop-action" data-drop-action="squad-ranking">
+      <button class="acct-drop-action acct-drop-squad" data-drop-action="squad-ranking">
         <span class="icon icon-community icon-13"></span>
-        <span>${esc(t("acctSquadRanking"))}</span>
+        <span class="acct-drop-squad-txt">${esc(t("acctSquadRanking"))}</span>
       </button>` : `
-      <button class="acct-drop-action" data-drop-action="squad-join">
+      <button class="acct-drop-action acct-drop-squad" data-drop-action="squad-join">
         <span class="icon icon-community icon-13"></span>
-        <span>${esc(t("squadJoin"))}</span>
+        <span class="acct-drop-squad-txt">${esc(t("squadJoin"))}</span>
       </button>`}
 `;
 
@@ -4705,15 +4705,72 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.xpPoints = xp; state.certifiedPlusCount = cert;
       _renderSquadXp();
     }, () => {});
-    _ownProfileUnsub = fbDb(uid).collection("userProfiles").doc(uid).onSnapshot(ps => {
+    _ownProfileUnsub = fbDb(uid).collection("userProfiles").doc(uid).onSnapshot({ includeMetadataChanges: true }, ps => {
       if (uid !== state.activeAccountId) return;
       const tier = ps.exists ? (ps.get("tigerSquad")?.tier || null) : null;
       const pubXp = ps.exists ? (ps.get("tigerSquad")?.xp ?? null) : null;
       if (pubXp !== state.squadXpPublic) { state.squadXpPublic = pubXp; _squadRankCache = null; _renderSquadXp(); }
+      if (ps.metadata?.fromCache === false) _checkSquadLevelUp(uid, tier);   // server truth only
       if (tier === state.squadTier) return;
       state.squadTier = tier;
       renderSupporterBadge(); renderFriendBanner();
     }, () => {});
+  }
+  // Level-up: the last level this account was SHOWN is kept on the device
+  // (tigertag.squadSeenTier.<uid>). A higher level than that — reached while the
+  // app is open, or since the last launch — opens the level-up window once.
+  // First sight just records the level (no fanfare for a level you already had);
+  // a lower level (left, or a rule change) records silently too.
+  const _squadSeenKey = uid => `tigertag.squadSeenTier.${uid}`;
+  function _checkSquadLevelUp(uid, tier) {
+    let seen = null; try { seen = localStorage.getItem(_squadSeenKey(uid)); } catch {}
+    const rank = r => SQUAD_TIERS.indexOf(r);
+    const now = tier || "none";
+    if (seen === now) return;
+    try { localStorage.setItem(_squadSeenKey(uid), now); } catch {}
+    if (!seen || !tier || rank(tier) <= rank(seen)) return;
+    _openSquadLevelUp(seen === "none" ? null : seen, tier);   // joined elsewhere (Hub, phone) counts too
+  }
+  function _openSquadLevelUp(from, to) {
+    if (document.querySelector(".squad-levelup")) return;
+    const opener = document.activeElement;
+    const bd = document.createElement("div"); bd.className = "support-backdrop";
+    const card = document.createElement("div");
+    card.className = `squad-invite squad-levelup sq-${to}`;
+    card.setAttribute("role", "dialog"); card.setAttribute("aria-modal", "true"); card.setAttribute("aria-labelledby", "squadLevelUpTitle");
+    card.innerHTML = `
+      <button type="button" class="squad-invite-x" data-act="close" aria-label="${esc(t("tutoClose"))}"><span class="icon icon-close icon-14"></span></button>
+      <div class="tsq-levelup-body">
+        <p class="tsq-levelup-kicker">${esc(t("squadLevelUpKicker"))}</p>
+        <h2 class="tsq-title" id="squadLevelUpTitle">${esc(t("squadLevelUpTitle", { tier: squadTierLabel(to) }))}</h2>
+        <div class="tsq-levelup-from">
+          ${from ? `<img src="${esc(SQUAD_ASSETS[from])}" alt="${esc(squadTierLabel(from))}"><span class="icon icon-arrow-r icon-14" aria-hidden="true"></span>` : ""}
+          <img src="${esc(SQUAD_ASSETS[to])}" alt="${esc(squadTierLabel(to))}">
+        </div>
+        <p class="tsq-levelup-text">${esc(t("squadLevelUpText_" + to))}</p>
+        <button type="button" class="tsq-join" data-act="board"><span class="tsq-join-txt">${esc(t("squadBoardOpen"))}</span></button>
+        <button type="button" class="tsq-later" data-act="close">${esc(t("squadLevelUpOk"))}</button>
+      </div>`;
+    const close = () => {
+      document.removeEventListener("keydown", onKey);
+      const done = () => { card.remove(); bd.remove(); try { opener?.focus?.(); } catch (_) {} };
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { done(); return; }
+      card.classList.add("is-closing"); bd.classList.add("is-closing"); setTimeout(done, 160);
+    };
+    const onKey = e => { if (e.key === "Escape") close(); };
+    card.addEventListener("click", e => {
+      const act = e.target.closest("[data-act]")?.dataset.act;
+      if (act === "close") close();
+      else if (act === "board") { close(); setTimeout(() => _openSquadBoard("makers"), 170); }
+    });
+    bd.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.append(bd, card);
+    // The same moment as joining: badge out of a burst of light, sparks, fanfare —
+    // then it settles into the window with the before → after badges.
+    _squadCelebrate(card, to);
+    setTimeout(() => card.querySelector(".tsq-celebrate")?.classList.add("is-fading"), 2600);
+    setTimeout(() => card.querySelector(".tsq-celebrate")?.remove(), 3100);
   }
   let _lastSquadTier;   // what the TigerSquad card last showed (undefined = never rendered)
   let _squadCountCache = null;   // { n, at } — the TigerSquad head count (_squadMemberCount)
@@ -4852,28 +4909,53 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // ── TigerSquad invite — a one-card popup asking a signed-in user who is not
   // in the squad yet to join (free → Bronze), and offering a coffee to boost
   // straight to Gold. Only for accounts older than 3 days; at most once a
-  // session, 10 s after start-up, wherever the user is (own stock or a friend's,
+  // session PER ACCOUNT (switching account asks the new one), 10 s after start-up / the switch, wherever the user is (own stock or a friend's,
   // even over another window); "Later" brings it back the next day (localStorage).
   const SQUAD_INVITE_MIN_AGE_MS = 3 * 24 * 3600 * 1000;   // accounts older than 3 days
   const SQUAD_INVITE_DELAY_MS = 10000;                     // 10 s after start-up
   // "Later" = back the next day (local midnight), not in 30 days.
   const _squadInviteTomorrow = () => { const d = new Date(); d.setHours(24, 0, 0, 0); return d.getTime(); };
   const _squadInviteKey = uid => `tigertag.squadInvite.${uid}`;
-  let _squadInviteShown = false, _squadInviteTimer = null;
+  const _squadInviteShown = new Set();   // accounts invited this session — switching account asks the new one
+  let _squadInviteTimer = null;
   function _maybeInviteSquad() {
     clearTimeout(_squadInviteTimer);
     _squadInviteTimer = setTimeout(() => {
       const uid = state.activeAccountId;
-      if (!uid || _squadInviteShown) return;   // anywhere — own stock or a friend's
+      if (!uid || _squadInviteShown.has(uid)) return;   // anywhere — own stock or a friend's
       if (state.supportPublicly) return;   // already in the TigerSquad
       const created = Date.parse(firebase.app(uid).auth().currentUser?.metadata?.creationTime || "");
       if (!created || Date.now() - created < SQUAD_INVITE_MIN_AGE_MS) return;   // too new to ask
       let until = 0; try { until = Number(localStorage.getItem(_squadInviteKey(uid))) || 0; } catch {}
       if (Date.now() < until) return;
       if (document.querySelector(".squad-invite")) return;   // never twice; over anything else it's fine
-      _squadInviteShown = true;
+      _squadInviteShown.add(uid);
       _openSquadInvite();
+      _soundSquadInvite();
     }, SQUAD_INVITE_DELAY_MS);
+  }
+  // Joining is an EVENT: the legendary sound, the level badge rising out of a
+  // burst of light with rays, a shower of sparks, "+50 XP" floating up and a
+  // welcome line — over the invite card, ~3 s. Calm (no particles, no motion)
+  // under reduced motion; the sound still plays.
+  function _squadCelebrate(card, forced) {
+    _soundSquadLegendary();
+    const tier = forced || _ownSquadTier() || (state.supporter ? "gold" : "bronze");
+    const fx = document.createElement("div");
+    fx.className = `tsq-celebrate sq-${tier}`;
+    const sparks = matchMedia("(prefers-reduced-motion: reduce)").matches ? "" :
+      Array.from({ length: 28 }, (_, i) => {
+        const a = (i / 28) * Math.PI * 2 + Math.random() * 0.3, d = 140 + Math.random() * 120;
+        return `<i style="--dx:${Math.round(Math.cos(a) * d)}px;--dy:${Math.round(Math.sin(a) * d)}px;--dl:${(Math.random() * 0.25).toFixed(2)}s"></i>`;
+      }).join("");
+    fx.innerHTML = `
+      <div class="tsq-cel-rays" aria-hidden="true"></div>
+      <div class="tsq-cel-sparks" aria-hidden="true">${sparks}</div>
+      <img class="tsq-cel-badge" src="${esc(SQUAD_ASSETS[tier])}" alt="">
+      ${forced ? "" : `<div class="tsq-cel-xp">+50 XP</div>`}
+      <div class="tsq-cel-title">${esc(forced ? t("squadLevelUpTitle", { tier: squadTierLabel(tier) }) : t("squadJoined"))}</div>
+      <div class="tsq-cel-tier">${esc(squadTierLabel(tier))}</div>`;
+    card.appendChild(fx);
   }
   // ── Invite window building blocks ────────────────────────────────────────
   // Artwork slots — null until the files land in assets/img/tigersquad/ (see
@@ -5024,7 +5106,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     { id: "tigerPod", xp: 50, once: true }, { id: "td1s", xp: 30, once: true }, { id: "printer", per: 20 },
     { id: "rfidReader", xp: 20, once: true }, { id: "friend", per: 10 }, { id: "photo", xp: 10 },
     { id: "firstRack", xp: 10, once: true }, { id: "social", per: 5 }, { id: "publicProfile", xp: 5 },
-    { id: "firstList", xp: 5, once: true },
+    { id: "firstList", xp: 5, once: true }, { id: "link", per: 5, once: true },
   ];
   // "How do I reach the next level?" — the member's current level, the next
   // one, a progress bar when it is a count, and what to do (same rules as the
@@ -5186,7 +5268,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       busy = false;
       if (ok) {
         btn.classList.remove("is-busy"); btn.classList.add("is-done"); txt.textContent = t("squadJoined");
-        setTimeout(close, 1400);
+        _squadCelebrate(card);
+        // This celebration IS the level-up moment — don't replay it when the server publishes the level.
+        try { localStorage.setItem(_squadSeenKey(uid), state.supporter ? "gold" : "bronze"); } catch {}
+        setTimeout(close, 3400);   // let the moment play out
       } else {
         btn.disabled = false; btn.classList.remove("is-busy"); txt.textContent = t("squadJoinCta");
         msg.textContent = t("squadJoinError"); msg.classList.add("is-error");
@@ -5212,6 +5297,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       else if (act === "levels") setLevelsBubble(card.querySelector("#tsqExplainer").hidden);   // info bubble: real rules + XP
     });
     bd.addEventListener("click", () => { if (!busy && performance.now() - _supportClosedAt > 250) { snooze(); close(); } });
+    // Little ticks on hover: perk cards one note, level badges climbing Bronze → Platinum.
+    card.querySelectorAll(".tsq-perk").forEach(el => el.addEventListener("mouseenter", () => _soundHoverTick(0)));
+    card.querySelectorAll(".tsq-rank").forEach((el, i) => el.addEventListener("mouseenter", () => _soundHoverTick(i + 1)));
+    card.querySelector(".tsq-join")?.addEventListener("mouseenter", e => { if (!e.currentTarget.disabled) _soundJoinHover(); });
+    card.querySelector(".tsq-coffee")?.addEventListener("mouseenter", () => _soundHoverTick(-2));
     document.addEventListener("keydown", onKey);
     document.body.append(bd, card);
     card.querySelector(".tsq-join")?.focus();
@@ -7086,6 +7176,63 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       osc.connect(g); g.connect(ctx.destination);
       osc.start(start); osc.stop(start + dur + 0.03);
     }
+  }
+  // TigerSquad invite arriving — a soft three-note sparkle, inviting not alarming.
+  function _soundSquadInvite() {
+    _playTones([{ f: 1046.5, d: 0.20 }, { f: 1318.5, t: 0.09, d: 0.24 }, { f: 1568.0, t: 0.18, d: 0.42 }], { type: "sine", gain: 0.12 });
+    _playTones([{ f: 2093.0, t: 0.24, d: 0.30 }], { type: "triangle", gain: 0.05 });
+  }
+  // Joining the TigerSquad — the legendary one: a low impact, a brass-like
+  // fanfare climbing C–E–G–C, a held major chord that swells and fades, and a
+  // shower of high sparkles on top.
+  function _soundSquadLegendary() {
+    const ctx = _uiAudio(); if (!ctx) return;
+    const t0 = ctx.currentTime + 0.02;
+    // Loud and full, but a compressor keeps the peaks from clipping.
+    const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 6; comp.connect(ctx.destination);
+    const out = ctx.createGain(); out.gain.value = 2.4; out.connect(comp);
+    const voice = (f, start, dur, { type = "sawtooth", gain = 0.05, cutoff = 2400, attack = 0.02 } = {}) => {
+      const o = ctx.createOscillator(), g = ctx.createGain(), lp = ctx.createBiquadFilter();
+      o.type = type; o.frequency.value = f; lp.type = "lowpass"; lp.frequency.value = cutoff;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(gain, start + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      o.connect(lp); lp.connect(g); g.connect(out); o.start(start); o.stop(start + dur + 0.05);
+    };
+    // Impact: a falling sine thump.
+    const b = ctx.createOscillator(), bg = ctx.createGain();
+    b.type = "sine"; b.frequency.setValueAtTime(140, t0); b.frequency.exponentialRampToValueAtTime(45, t0 + 0.5);
+    bg.gain.setValueAtTime(0.0001, t0); bg.gain.exponentialRampToValueAtTime(0.22, t0 + 0.01); bg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.7);
+    b.connect(bg); bg.connect(out); b.start(t0); b.stop(t0 + 0.75);
+    // Fanfare arpeggio, then the held chord.
+    [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => voice(f, t0 + 0.08 + i * 0.12, 0.32, { gain: 0.045 }));
+    [523.25, 659.25, 783.99, 1046.5].forEach(f => voice(f, t0 + 0.58, 1.6, { gain: 0.035, attack: 0.12, cutoff: 1800 }));
+    voice(261.63, t0 + 0.58, 1.6, { type: "triangle", gain: 0.06, attack: 0.1 });
+    // Sparkles.
+    [2093, 2637, 3136, 2349, 3520].forEach((f, i) => voice(f, t0 + 0.62 + i * 0.09, 0.35, { type: "sine", gain: 0.018, cutoff: 8000 }));
+  }
+  // Hovering a perk card or a level badge in the invite — a tiny glassy tick;
+  // `step` raises the pitch (Bronze → Platinum climb a scale).
+  let _hoverTickAt = 0;
+  function _soundHoverTick(step = 0) {
+    const now = performance.now(); if (now - _hoverTickAt < 60) return; _hoverTickAt = now;
+    const f = 1318.5 * Math.pow(2, step * 2 / 12);
+    _playTones([{ f, d: 0.09 }, { f: f * 1.5, t: 0.03, d: 0.10 }], { type: "sine", gain: 0.09 });
+  }
+  // Hovering "Join" — a rising shimmer: an airy sweep up into a bright fifth.
+  let _joinHoverAt = 0;
+  function _soundJoinHover() {
+    const now = performance.now(); if (now - _joinHoverAt < 400) return; _joinHoverAt = now;
+    const ctx = _uiAudio(); if (!ctx) return;
+    const t0 = ctx.currentTime + 0.005, len = Math.floor(ctx.sampleRate * 0.35);
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const n = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    n.buffer = buf; bp.type = "bandpass"; bp.Q.value = 3;
+    bp.frequency.setValueAtTime(600, t0); bp.frequency.exponentialRampToValueAtTime(5000, t0 + 0.3);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.10, t0 + 0.15); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.35);
+    n.connect(bp); bp.connect(g); g.connect(ctx.destination); n.start(t0);
+    _playTones([{ f: 783.99, t: 0.16, d: 0.30 }, { f: 1174.66, t: 0.22, d: 0.40 }, { f: 1567.98, t: 0.28, d: 0.45 }], { type: "triangle", gain: 0.07 });
   }
   // Bright ascending blip — switching between your OWN logged-in accounts.
   function _soundAccountSwitch() { _playTones([{ f: 587.33, d: 0.10 }, { f: 880.00, t: 0.07, d: 0.16 }], { type: "triangle", gain: 0.06 }); }
@@ -24822,6 +24969,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
   }
 
+  // Empty printer screens: one printer per brand Studio speaks to, the
+  // flagships in the middle, instead of a lone icon.
+  const PRINTERS_EMPTY_LINEUP = ["acu_printers/kobras1.png", "eleg_printers/cc2.png", "cre_printers/k2plus.png",
+    "bbl_printers/x1c.png", "ffg_printers/ad5x.png", "snap_printers/u1.png"];
+  function _printersLineupHTML() {
+    return `<div class="printers-empty-lineup" aria-hidden="true">${PRINTERS_EMPTY_LINEUP.map((f, i) =>
+      `<img src="../assets/img/${f}" alt="" style="--i:${i}" draggable="false">`).join("")}</div>`;
+  }
+
   /* ── Render the user's 3D printers in the main panel.
      Read-only listing — adding / editing / deleting printers happens in the
      mobile companion app. Sensitive fields (broker, password, ip, sn) are
@@ -24874,7 +25030,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (state.friendView) {
       host.innerHTML = `
         <div class="printers-empty-card">
-          <span class="icon icon-printer icon-32"></span>
+          ${_printersLineupHTML()}
           <div class="printers-empty-title">${esc(t("printersFriendNATitle"))}</div>
           <div class="printers-empty-sub">${esc(t("printersFriendNASub"))}</div>
         </div>`;
@@ -24898,7 +25054,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // path to their first printer right from the empty card.
       host.innerHTML = `
         <div class="printers-empty-card">
-          <span class="icon icon-printer icon-32"></span>
+          ${_printersLineupHTML()}
           <div class="printers-empty-title">${esc(t("printersEmptyTitle"))}</div>
           <ul class="printers-empty-bullets">
             <li>${esc(t("printersEmptyBullet1"))}</li>

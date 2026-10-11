@@ -639,6 +639,21 @@
     background: var(--muted);
     margin-bottom: 4px;
   }
+  /* Brand line-up instead of a lone icon: printers stand side by side on a
+     shared floor, slightly overlapping, the middle ones a touch larger. */
+  .printers-empty-card:has(.printers-empty-lineup) { max-width: 560px; padding-top: 22px; }
+  .printers-empty-lineup {
+    display: flex; align-items: flex-end; justify-content: center; margin: 0 0 8px; padding-bottom: 6px;
+    background: radial-gradient(ellipse 60% 14px at 50% 100%, rgba(0, 0, 0, .35), transparent 70%);
+  }
+  .printers-empty-lineup img {
+    height: 92px; width: auto; margin: 0 -6px; object-fit: contain; user-select: none;
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .35));
+    animation: printers-lineup-in .5s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(var(--i) * 60ms);
+  }
+  .printers-empty-lineup img:nth-child(3), .printers-empty-lineup img:nth-child(4) { height: 108px; position: relative; z-index: 1; }
+  @keyframes printers-lineup-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .printers-empty-lineup img { animation: none; } }
   .printers-empty-title {
     font-size: 16px; font-weight: 600; color: var(--text);
   }

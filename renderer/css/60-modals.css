@@ -1545,6 +1545,20 @@
     transition: background .13s, color .13s;
   }
   .acct-drop-action:hover { background: var(--ink-08); color: var(--ink-85); }
+  /* "Join the TigerSquad" stands out: an orange-tinted pill, bold label with a light sweeping across it. */
+  .acct-drop-action.acct-drop-squad {
+    margin-top: 4px; background: linear-gradient(90deg, rgba(255, 138, 46, .16), rgba(255, 170, 97, .08));
+    box-shadow: inset 0 0 0 1px rgba(255, 146, 63, .45); font-weight: 800; font-size: 12.5px;
+  }
+  .acct-drop-action.acct-drop-squad:hover { background: linear-gradient(90deg, rgba(255, 138, 46, .28), rgba(255, 170, 97, .14)); box-shadow: inset 0 0 0 1px rgba(255, 146, 63, .8), 0 0 14px rgba(255, 146, 63, .3); }
+  .acct-drop-squad .icon { background: #FF923F; width: 15px; height: 15px; }
+  .acct-drop-squad-txt {
+    background: linear-gradient(100deg, #FF8A2E 0%, #FFB463 38%, #FFF3DC 50%, #FFB463 62%, #FF8A2E 100%) 0 0 / 250% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: acct-squad-shine 3.2s ease-in-out infinite;
+  }
+  @keyframes acct-squad-shine { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
+  @media (prefers-reduced-motion: reduce) { .acct-drop-squad-txt { animation: none; } }
   .acct-drop-badge {
     margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px;
     display: inline-flex; align-items: center; justify-content: center;
