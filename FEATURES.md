@@ -1,11 +1,12 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.36.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.37.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
 ## Inventory & spools
 
+- **Refill tag** — refill spools (`info1`) wear a green Refill pill on cards, thumbnails, the spool detail and the catalogue product card (v2.37.0).
 - Real-time Firestore sync of the inventory — table view + grid view, column sort, full-text search (v1.0+).
 - **Colour range filter** — a rainbow bar plus a white-to-black bar for neutrals, with a draggable window that dims what falls outside it. Shared by Inventory, Favorites, the order list, the Catalogue and Storage, and it keeps its selection across views (v2.21.0).
 - Type-to-filter inside the Brand / Material / Aspect / Type / Tag dropdowns, matching anywhere in the name and ignoring case and accents (v2.21.0).
@@ -249,11 +250,20 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - Terminology unification: all user-facing "RFID" strings renamed to "NFC" (v2.5.0).
 - **Tag index / tag count** (TigerTag protocol v2.2) — every chip says which one of its object it is ("chip 1 of 2"): written by the guided encode (single `0x11`, twin `0x12`/`0x22`), kept intact through weight and colour syncs, stored on each spool on scan, shown on the spool card, carried in `.ttag`; a twin whose partner was never scanned gets a "scan the other chip" banner, and two chips that say they are singles are never paired as a twin (v2.33.0).
 
+## TigerSquad, XP & support
+
+- **TigerSquad** — a free, opt-in public community with a wall of fame on tigersystem.io; joined from an invitation window (accounts older than 7 days, snoozable), the Support menu, the requests card or My profile; +50 XP on joining (v2.37.0).
+- **Levels** — Bronze (joined), Silver (20+ TigerTag chips), Gold (donated), Platinum (donated + 50 certified TigerTag+), computed server-side and shown as a coloured ring, heart and level pill on avatars and banners, to friends and on the wall (v2.37.0).
+- **XP points** — per physical chip: certified TigerTag+ 10, TigerTag+ 2, TigerTag 1, counted once per UID from the chip census and the inventory, kept for good; shown under the name and in My profile (v2.37.0).
+- **Member card** — members see their level, the head count and a link to the wall in the Support menu and the requests card, swapped live on join / leave (v2.37.0).
+- **Support the project** — Buy Me a Coffee, Ko-fi or PayPal from every coffee button; donations linked to the account by a fixed supporter code, the payer email or a later claim, with a thank-you notification (v2.37.0).
+
 ## Feedback & requests
 
 - **Improvements & suggestions** — an in-app side card that turns a request into a public GitHub issue, no GitHub account needed: six topics (problem, idea, improvement, question, catalogue correction with the material picked from the catalogue search, new brand with its website), Markdown description, up to 5 attachments (window capture, images, PDFs) dropped anywhere in the window, automatic information shown up front, public-consent check; the draft survives closing the card, whose tab stays parked on the sidebar edge while a request is in progress (v2.36.0).
 - **Screenshot editor** — arrows, lines, boxes, circles, pen, highlighter, text, numbered steps and a blur for private details; every mark stays editable until Done, with undo / redo and shortcuts (v2.36.0).
 - **My requests** — status of every request (sent, in progress, done, not planned, closed by you), close your own, and a notification when one changes (v2.36.0).
+- Reply notifications — a team reply on one of your requests raises a notification; JSON attachments accepted (v2.37.0).
 
 ## "What's New" & release UX
 

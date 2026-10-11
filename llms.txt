@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.36.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.37.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -67,11 +67,14 @@ lists its connected assistants via `mcp:hosted-grants` (main-process IPC → Hub
 
 ```
 publicKeys/{key}           → { uid, claimedAt }
-userProfiles/{uid}         → { publicKey, displayName, isPublic, color_* }
+userProfiles/{uid}         → { publicKey, displayName, isPublic, color_*,
+                               tigerSquad: { since, tier, certified, xp } }   ← SERVER-ONLY (publishSupporter); present = TigerSquad member
 publicLists/{token}        → world-readable snapshot of a list shared by web link (unguessable
                              token); written by the owner when a list's visibility is "public"
 users/{uid}                → { displayName, email, publicKey, privateKey, isPublic,
                                roles, tier, Debug,   ← roles + tier are SERVER-ONLY (rules reject client writes)
+                               supportPublicly,      ← the user CHOSE to join the TigerSquad (client-written)
+                               supporter, xpPoints, certifiedPlusCount, tigerTagCount, xpCountVersion,  ← SERVER-ONLY (payment webhooks, certifyChip / countInventoryChip)
                                studioTheme,   ← UI theme "dark"|"light" (Studio-only; `prefs/app` is the CROSS-APP doc)
                                studioVersion, studioElectron, studioPlatform, studioArch,
                                studioOsRelease, studioOsVersion, studioLang, studioLocale,
@@ -339,6 +342,13 @@ stays free; voluntary support goes to its maintainer:
 - Buy Me a Coffee: https://buymeacoffee.com/benoitl
 - Ko-fi: https://ko-fi.com/tigersystemio
 - PayPal: https://paypal.me/tigersystemio
+
+**TigerSquad** (v2.37.0) — the opt-in public community / wall of fame. Levels are computed by
+the backend (`functions/supportWebhooks.js`): bronze = joined, silver = 20+ TigerTag chips
+(`tigerTagCount`), gold = donated (`supporter`), platinum = donated + 50 certified TigerTag+
+(`certifiedPlusCount`, verified with the TigerTag SDK). XP = chip points (certified 10, TigerTag+ 2,
+TigerTag 1) counted once per chip UID (`countedChips/{uid}`, server-only) from the census AND the
+inventory, + 50 while a member. A donation alone gives no badge — the badge comes with joining.
 
 ## Optional docs
 

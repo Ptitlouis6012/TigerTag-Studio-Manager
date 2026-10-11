@@ -179,6 +179,11 @@ Organize your filament collection into physical racks — drag spools onto slots
 - View a friend's inventory in read-only mode, inline in the same UI
 - Public inventory toggle for frictionless sharing
 
+### 🐯 TigerSquad
+- Join the TigerSquad for free — the community of makers behind open 3D printing, with a public [wall of fame](https://tigersystem.io/en/tigersquad)
+- Four levels shown as a badge on your avatar: Bronze, Silver (20 TigerTag chips), Gold (a coffee), Platinum (a coffee + 50 certified TigerTag+)
+- XP for every TigerTag chip you own — certified TigerTag+ count the most — to rank the makers
+
 ### ⚖ Sensors & Devices
 
 #### ACR122U NFC reader
@@ -466,6 +471,8 @@ Everything stays free; if it saves you a spool or two, you can support it:
 - ☕ [Buy Me a Coffee](https://buymeacoffee.com/benoitl)
 - ❤️ [Ko-fi](https://ko-fi.com/tigersystemio)
 - 💙 [PayPal](https://paypal.me/tigersystemio)
+
+Linked to your account, a donation lifts you to **Gold** in the [TigerSquad](https://tigersystem.io/en/tigersquad).
 
 Support goes to the maintainer — never required, always appreciated.
 

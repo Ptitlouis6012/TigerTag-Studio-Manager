@@ -1,4 +1,183 @@
 {
+  "2.37.0": {
+    "date": "2026-10-11",
+    "items": [
+      {
+        "icon": "community",
+        "title": {
+          "en": "The TigerSquad is open — get in",
+          "fr": "La TigerSquad est ouverte — viens",
+          "de": "Die TigerSquad ist offen — komm rein",
+          "es": "La TigerSquad está abierta — entra",
+          "it": "La TigerSquad è aperta — entra",
+          "zh": "TigerSquad 开放啦 — 快加入",
+          "pt": "A TigerSquad abriu — chega mais",
+          "pt-pt": "A TigerSquad abriu — entra",
+          "pl": "TigerSquad otwarty — wbijaj",
+          "ru": "TigerSquad открыт — заходи",
+          "nl": "De TigerSquad is open — kom erbij"
+        },
+        "body": {
+          "en": "The crew of makers who keep open 3D printing moving. Joining is free, takes one click, and drops 50 XP on your account straight away. Members get the perks first — and the earlier you're in, the better it looks on the wall.",
+          "fr": "Le crew des makers qui font avancer l'impression 3D libre. C'est gratuit, ça prend un clic, et 50 XP tombent direct sur ton compte. Les membres ont les avantages en premier — et plus tu arrives tôt, mieux ça rend sur le mur.",
+          "de": "Die Crew der Maker, die offenen 3D-Druck voranbringen. Kostenlos, ein Klick, und sofort landen 50 XP auf deinem Konto. Mitglieder bekommen die Vorteile zuerst — und wer früh dabei ist, macht an der Wand mehr her.",
+          "es": "La banda de makers que impulsa la impresión 3D libre. Es gratis, es un clic y caen 50 XP en tu cuenta al momento. Los miembros tienen las ventajas primero — y cuanto antes llegues, mejor queda en el muro.",
+          "it": "La crew di maker che manda avanti la stampa 3D libera. È gratis, basta un clic, e ti arrivano subito 50 XP. I membri hanno i vantaggi per primi — e prima arrivi, meglio fai figura sul muro.",
+          "zh": "推动开放 3D 打印的创客团队。免费加入，一键搞定，账号立刻到账 50 XP。成员优先享受福利 — 越早加入，在墙上越显眼。",
+          "pt": "A galera de makers que faz a impressão 3D livre andar. É grátis, é um clique e 50 XP caem na hora na sua conta. Membros têm as vantagens primeiro — e quanto antes você chega, melhor fica no mural.",
+          "pt-pt": "O grupo de makers que faz avançar a impressão 3D livre. É grátis, é um clique e caem logo 50 XP na tua conta. Os membros têm as vantagens primeiro — e quanto mais cedo chegares, melhor ficas no mural.",
+          "pl": "Ekipa makerów, która pcha do przodu wolny druk 3D. Za darmo, jedno kliknięcie i od razu 50 XP na koncie. Członkowie dostają korzyści pierwsi — a im wcześniej wbijesz, tym lepiej wyglądasz na ścianie.",
+          "ru": "Команда мейкеров, которая двигает открытую 3D-печать. Бесплатно, в один клик, и сразу +50 XP на аккаунт. Участники получают плюшки первыми — и чем раньше ты с нами, тем круче смотришься на стене.",
+          "nl": "De crew van makers die open 3D-printen vooruit helpt. Gratis, één klik, en meteen 50 XP op je account. Leden krijgen de voordelen als eerste — en hoe eerder je erbij bent, hoe beter het staat op de muur."
+        }
+      },
+      {
+        "icon": "heart-fill",
+        "title": {
+          "en": "Bronze, Silver, Gold, Platinum",
+          "fr": "Bronze, Silver, Gold, Platinum",
+          "de": "Bronze, Silver, Gold, Platinum",
+          "es": "Bronze, Silver, Gold, Platinum",
+          "it": "Bronze, Silver, Gold, Platinum",
+          "zh": "Bronze、Silver、Gold、Platinum",
+          "pt": "Bronze, Silver, Gold, Platinum",
+          "pt-pt": "Bronze, Silver, Gold, Platinum",
+          "pl": "Bronze, Silver, Gold, Platinum",
+          "ru": "Bronze, Silver, Gold, Platinum",
+          "nl": "Bronze, Silver, Gold, Platinum"
+        },
+        "body": {
+          "en": "Your level shows as a badge on your avatar, for your friends and on the public wall. Bronze the day you join, Silver at 20 TigerTag chips, Gold with a coffee, Platinum with a coffee and 50 certified TigerTag+. It climbs on its own — you just keep printing.",
+          "fr": "Ton niveau s'affiche en badge sur ton avatar, chez tes amis et sur le mur public. Bronze le jour où tu rejoins, Silver à 20 puces TigerTag, Gold avec un café, Platinum avec un café et 50 TigerTag+ certifiées. Il grimpe tout seul — toi, tu continues d'imprimer.",
+          "de": "Dein Level erscheint als Abzeichen an deinem Avatar, bei deinen Freunden und an der öffentlichen Wand. Bronze ab dem Beitritt, Silver ab 20 TigerTag-Chips, Gold mit einem Kaffee, Platinum mit Kaffee und 50 zertifizierten TigerTag+. Es steigt von selbst — du druckst einfach weiter.",
+          "es": "Tu nivel aparece como insignia en tu avatar, para tus amigos y en el muro público. Bronze al unirte, Silver con 20 chips TigerTag, Gold con un café, Platinum con un café y 50 TigerTag+ certificados. Sube solo — tú sigue imprimiendo.",
+          "it": "Il tuo livello appare come badge sull'avatar, per gli amici e sul muro pubblico. Bronze quando entri, Silver con 20 chip TigerTag, Gold con un caffè, Platinum con un caffè e 50 TigerTag+ certificati. Sale da solo — tu continua a stampare.",
+          "zh": "你的等级会以徽章显示在头像上，好友和公开墙都看得到。加入即 Bronze，20 个 TigerTag 芯片升 Silver，请杯咖啡升 Gold，咖啡加 50 个认证 TigerTag+ 升 Platinum。它会自己往上涨 — 你只管继续打印。",
+          "pt": "Seu nível aparece como selo no avatar, para os amigos e no mural público. Bronze ao entrar, Silver com 20 chips TigerTag, Gold com um café, Platinum com um café e 50 TigerTag+ certificados. Ele sobe sozinho — você só continua imprimindo.",
+          "pt-pt": "O teu nível aparece como selo no avatar, para os amigos e no mural público. Bronze ao entrares, Silver com 20 chips TigerTag, Gold com um café, Platinum com um café e 50 TigerTag+ certificados. Sobe sozinho — tu só continuas a imprimir.",
+          "pl": "Twój poziom widać jako odznakę na awatarze, u znajomych i na publicznej ścianie. Bronze od dołączenia, Silver przy 20 chipach TigerTag, Gold z kawą, Platinum z kawą i 50 certyfikowanymi TigerTag+. Rośnie sam — ty po prostu drukuj dalej.",
+          "ru": "Твой уровень — это значок на аватаре, у друзей и на публичной стене. Bronze при вступлении, Silver с 20 чипами TigerTag, Gold с кофе, Platinum с кофе и 50 сертифицированными TigerTag+. Растёт сам — ты просто печатай дальше.",
+          "nl": "Je niveau staat als badge op je avatar, bij je vrienden en op de openbare muur. Bronze zodra je erbij komt, Silver bij 20 TigerTag-chips, Gold met een koffie, Platinum met een koffie en 50 gecertificeerde TigerTag+. Het stijgt vanzelf — jij print gewoon door."
+        }
+      },
+      {
+        "icon": "star-fill",
+        "title": {
+          "en": "XP for every chip — even the old ones",
+          "fr": "De l'XP pour chaque puce — même les anciennes",
+          "de": "XP für jeden Chip — auch die alten",
+          "es": "XP por cada chip — incluso los viejos",
+          "it": "XP per ogni chip — anche i vecchi",
+          "zh": "每个芯片都有 XP — 老的也算",
+          "pt": "XP por cada chip — até os antigos",
+          "pt-pt": "XP por cada chip — até os antigos",
+          "pl": "XP za każdy chip — nawet stare",
+          "ru": "XP за каждый чип — даже старые",
+          "nl": "XP voor elke chip — ook de oude"
+        },
+        "body": {
+          "en": "Every TigerTag in your stock earns points: 1 for a TigerTag, 2 for a TigerTag+, 10 for a certified one. Everything already on your shelves counts from day one, and your total sits right under your name.",
+          "fr": "Chaque TigerTag de ton stock rapporte des points : 1 pour une TigerTag, 2 pour une TigerTag+, 10 pour une certifiée. Tout ce qui est déjà sur tes étagères compte dès le premier jour, et ton total s'affiche juste sous ton nom.",
+          "de": "Jeder TigerTag in deinem Bestand bringt Punkte: 1 für einen TigerTag, 2 für einen TigerTag+, 10 für einen zertifizierten. Alles, was schon im Regal liegt, zählt ab Tag eins, und deine Summe steht direkt unter deinem Namen.",
+          "es": "Cada TigerTag de tu stock da puntos: 1 por un TigerTag, 2 por un TigerTag+, 10 por uno certificado. Todo lo que ya está en tus estantes cuenta desde el primer día, y tu total aparece justo bajo tu nombre.",
+          "it": "Ogni TigerTag in magazzino porta punti: 1 per un TigerTag, 2 per un TigerTag+, 10 per uno certificato. Tutto quello che hai già sugli scaffali conta dal primo giorno, e il totale sta proprio sotto il tuo nome.",
+          "zh": "库存里的每个 TigerTag 都能拿分：TigerTag 1 分，TigerTag+ 2 分，认证款 10 分。架子上已有的从第一天起就算数，总分就显示在你名字下面。",
+          "pt": "Cada TigerTag no seu estoque rende pontos: 1 por TigerTag, 2 por TigerTag+, 10 por um certificado. Tudo que já está na prateleira conta desde o primeiro dia, e o total aparece logo abaixo do seu nome.",
+          "pt-pt": "Cada TigerTag no teu stock dá pontos: 1 por TigerTag, 2 por TigerTag+, 10 por um certificado. Tudo o que já está nas prateleiras conta desde o primeiro dia, e o total aparece mesmo por baixo do teu nome.",
+          "pl": "Każdy TigerTag w magazynie daje punkty: 1 za TigerTag, 2 za TigerTag+, 10 za certyfikowany. Wszystko, co już leży na półkach, liczy się od pierwszego dnia, a suma wisi tuż pod twoim nickiem.",
+          "ru": "Каждый TigerTag на складе приносит очки: 1 за TigerTag, 2 за TigerTag+, 10 за сертифицированный. Всё, что уже на полках, считается с первого дня, а сумма видна прямо под твоим именем.",
+          "nl": "Elke TigerTag in je voorraad levert punten op: 1 voor een TigerTag, 2 voor een TigerTag+, 10 voor een gecertificeerde. Alles wat al op je planken ligt telt vanaf dag één, en je totaal staat meteen onder je naam."
+        }
+      },
+      {
+        "icon": "coffee",
+        "title": {
+          "en": "Buy the project a coffee, your way",
+          "fr": "Offre un café au projet, à ta façon",
+          "de": "Spendier dem Projekt einen Kaffee, wie du willst",
+          "es": "Invita un café al proyecto, a tu manera",
+          "it": "Offri un caffè al progetto, come preferisci",
+          "zh": "按你的方式请项目喝杯咖啡",
+          "pt": "Pague um café pro projeto, do seu jeito",
+          "pt-pt": "Oferece um café ao projeto, à tua maneira",
+          "pl": "Postaw projektowi kawę, po swojemu",
+          "ru": "Угости проект кофе — как удобно",
+          "nl": "Trakteer het project op koffie, op jouw manier"
+        },
+        "body": {
+          "en": "Buy Me a Coffee, Ko-fi or PayPal — pick the one you like. The app stays free and open source either way; a coffee just links to your account and lifts you to Gold once you're in the TigerSquad.",
+          "fr": "Buy Me a Coffee, Ko-fi ou PayPal — choisis celui qui te va. L'app reste gratuite et open source quoi qu'il arrive ; un café se rattache simplement à ton compte et te fait passer Gold une fois dans la TigerSquad.",
+          "de": "Buy Me a Coffee, Ko-fi oder PayPal — such dir eins aus. Die App bleibt so oder so kostenlos und Open Source; ein Kaffee wird einfach deinem Konto zugeordnet und macht dich Gold, sobald du in der TigerSquad bist.",
+          "es": "Buy Me a Coffee, Ko-fi o PayPal — elige el que prefieras. La app sigue gratis y open source pase lo que pase; un café se vincula a tu cuenta y te sube a Gold cuando estás en la TigerSquad.",
+          "it": "Buy Me a Coffee, Ko-fi o PayPal — scegli quello che ti piace. L'app resta gratis e open source in ogni caso; un caffè si collega al tuo account e ti porta a Gold una volta nella TigerSquad.",
+          "zh": "Buy Me a Coffee、Ko-fi 或 PayPal — 挑你顺手的。应用始终免费开源；一杯咖啡会关联到你的账号，加入 TigerSquad 后直接升 Gold。",
+          "pt": "Buy Me a Coffee, Ko-fi ou PayPal — escolha o que preferir. O app continua grátis e open source de qualquer jeito; um café só fica ligado à sua conta e te leva a Gold quando você está na TigerSquad.",
+          "pt-pt": "Buy Me a Coffee, Ko-fi ou PayPal — escolhe o que preferires. A app continua grátis e open source de qualquer forma; um café fica ligado à tua conta e leva-te a Gold quando estás na TigerSquad.",
+          "pl": "Buy Me a Coffee, Ko-fi albo PayPal — wybierz, co ci pasuje. Aplikacja i tak zostaje darmowa i open source; kawa po prostu przypisuje się do twojego konta i daje ci Gold, gdy jesteś w TigerSquad.",
+          "ru": "Buy Me a Coffee, Ko-fi или PayPal — выбирай, что нравится. Приложение в любом случае остаётся бесплатным и открытым; кофе просто привязывается к аккаунту и поднимает тебя до Gold, когда ты в TigerSquad.",
+          "nl": "Buy Me a Coffee, Ko-fi of PayPal — kies wat je wilt. De app blijft hoe dan ook gratis en open source; een koffie wordt gewoon aan je account gekoppeld en maakt je Gold zodra je in de TigerSquad zit."
+        }
+      },
+      {
+        "icon": "recycle",
+        "title": {
+          "en": "Refills, spotted at a glance",
+          "fr": "Les recharges, repérées d'un coup d'œil",
+          "de": "Refills auf einen Blick",
+          "es": "Recargas, vistas de un vistazo",
+          "it": "Le ricariche, a colpo d'occhio",
+          "zh": "补充装，一眼认出",
+          "pt": "Refis, vistos num relance",
+          "pt-pt": "Recargas, vistas num relance",
+          "pl": "Refille widać od razu",
+          "ru": "Рефилы — видно сразу",
+          "nl": "Navullingen, in één oogopslag"
+        },
+        "body": {
+          "en": "Spools that come without their own reel now wear a green Refill tag on their picture — in the grid, the lists, the spool details and the catalogue product card. No more opening each one to check.",
+          "fr": "Les bobines livrées sans flasque portent maintenant une étiquette verte Refill sur leur photo — dans la grille, les listes, le détail de la bobine et la fiche produit du catalogue. Fini d'ouvrir chaque bobine pour vérifier.",
+          "de": "Spulen ohne eigene Rolle tragen jetzt ein grünes Refill-Etikett auf ihrem Bild — im Raster, in den Listen, in den Spulendetails und auf der Produktkarte im Katalog. Kein Durchklicken mehr zum Nachschauen.",
+          "es": "Las bobinas que llegan sin carrete propio llevan ahora una etiqueta verde Refill en su foto — en la cuadrícula, las listas, el detalle de la bobina y la ficha del catálogo. Se acabó abrir cada una para mirar.",
+          "it": "Le bobine senza rocchetto proprio ora hanno un'etichetta verde Refill sulla foto — nella griglia, nelle liste, nel dettaglio della bobina e nella scheda del catalogo. Basta aprirle una a una per controllare.",
+          "zh": "没有自带线盘的耗材现在会在图片上显示绿色 Refill 标签 — 网格、列表、耗材详情和目录商品卡都有。不用再一个个点开确认了。",
+          "pt": "Bobinas que vêm sem carretel próprio agora têm uma etiqueta verde Refill na foto — na grade, nas listas, no detalhe da bobina e na ficha do catálogo. Chega de abrir uma por uma pra conferir.",
+          "pt-pt": "As bobinas que vêm sem carretel próprio têm agora uma etiqueta verde Refill na foto — na grelha, nas listas, no detalhe da bobina e na ficha do catálogo. Acabou abrir uma a uma para confirmar.",
+          "pl": "Szpule bez własnej szpulki mają teraz zieloną plakietkę Refill na zdjęciu — w siatce, na listach, w szczegółach szpuli i na karcie produktu w katalogu. Koniec z otwieraniem każdej po kolei.",
+          "ru": "Катушки без собственной бобины теперь носят зелёную метку Refill на фото — в сетке, списках, деталях катушки и карточке товара в каталоге. Больше не нужно открывать каждую.",
+          "nl": "Spoelen zonder eigen haspel dragen nu een groen Refill-label op hun foto — in het raster, de lijsten, de spoeldetails en de productkaart in de catalogus. Niet meer elke spoel openen om te checken."
+        }
+      },
+      {
+        "icon": "bell",
+        "title": {
+          "en": "We answered? You'll know",
+          "fr": "On t'a répondu ? Tu le sais",
+          "de": "Wir haben geantwortet? Du erfährst es",
+          "es": "¿Te respondimos? Te enteras",
+          "it": "Ti abbiamo risposto? Lo sai",
+          "zh": "我们回复了？你会知道",
+          "pt": "A gente respondeu? Você fica sabendo",
+          "pt-pt": "Respondemos? Ficas a saber",
+          "pl": "Odpisaliśmy? Dowiesz się",
+          "ru": "Мы ответили? Ты узнаешь",
+          "nl": "Hebben we gereageerd? Je weet het"
+        },
+        "body": {
+          "en": "When the team replies to one of your requests, a notification pops up and takes you straight to it. Your own comments don't ping you — only the answers you were waiting for.",
+          "fr": "Quand l'équipe répond à une de tes demandes, une notification apparaît et t'y emmène direct. Tes propres commentaires ne te notifient pas — seulement les réponses que tu attendais.",
+          "de": "Wenn das Team auf eine deiner Anfragen antwortet, erscheint eine Benachrichtigung und bringt dich direkt hin. Deine eigenen Kommentare melden sich nicht — nur die Antworten, auf die du gewartet hast.",
+          "es": "Cuando el equipo responde a una de tus solicitudes, salta una notificación que te lleva directo a ella. Tus propios comentarios no te avisan — solo las respuestas que esperabas.",
+          "it": "Quando il team risponde a una tua richiesta, compare una notifica che ti porta dritto lì. I tuoi commenti non ti notificano — solo le risposte che aspettavi.",
+          "zh": "团队回复你的请求时，会弹出通知并直接带你过去。你自己的评论不会提醒你 — 只提醒你在等的回复。",
+          "pt": "Quando a equipe responde a um pedido seu, aparece uma notificação que te leva direto pra ele. Seus próprios comentários não te avisam — só as respostas que você esperava.",
+          "pt-pt": "Quando a equipa responde a um pedido teu, aparece uma notificação que te leva direto a ele. Os teus próprios comentários não te avisam — só as respostas que esperavas.",
+          "pl": "Gdy zespół odpowie na twoje zgłoszenie, wyskoczy powiadomienie i zabierze cię prosto do niego. Twoje własne komentarze cię nie zaczepiają — tylko odpowiedzi, na które czekasz.",
+          "ru": "Когда команда отвечает на твой запрос, всплывает уведомление и ведёт прямо к нему. Твои собственные комментарии не беспокоят — только ответы, которых ты ждал.",
+          "nl": "Als het team op een van je verzoeken reageert, verschijnt er een melding die je er direct naartoe brengt. Je eigen reacties pingen je niet — alleen de antwoorden waar je op wachtte."
+        }
+      }
+    ]
+  },
   "2.32.1": {
     "date": "2026-09-29",
     "items": [
