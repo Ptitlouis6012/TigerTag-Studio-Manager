@@ -557,14 +557,14 @@
   }
   .printer-card-name-dot.is-cloud.is-online {
     background: transparent;     /* beats the round rule's green fill */
-    animation: printer-name-dot-pulse 1.8s ease-in-out infinite;
+    animation: printer-name-dot-pulse 1.8s ease-in-out 3;   /* then steady: a forever pulse kept the window re-compositing (#66) */
   }
   .printer-card-name-dot.is-cloud.is-online::before { background: var(--success); }
 
   .printer-card-name-dot.is-online {
     background: var(--success);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
-    animation: printer-name-dot-pulse 1.8s ease-in-out infinite;
+    animation: printer-name-dot-pulse 1.8s ease-in-out 3;   /* then steady: a forever pulse kept the window re-compositing (#66) */
   }
   @keyframes printer-name-dot-pulse {
     0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 50%, transparent); }

@@ -40,7 +40,10 @@
 .tsp-live::before {
   content: ""; position: absolute; inset: 0; border-radius: 50%;
   background: var(--success); opacity: 0;
-  animation: scale-live-ping 1.4s ease-out infinite;   /* keyframes: tigerscale.css */
+  /* Pings three times when the device comes online, then stays lit: a ping
+     looping forever kept the whole window re-compositing at 60 fps — ~25 % CPU
+     on an idle inventory (issue #66). */
+  animation: scale-live-ping 1.4s ease-out 3;   /* keyframes: tigerscale.css */
 }
 @media (prefers-reduced-motion: reduce) {
   .tsp-live::before { animation: none; }

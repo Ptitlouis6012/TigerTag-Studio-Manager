@@ -1044,3 +1044,16 @@
     #000 calc(var(--sf-top-offset, 0px) + var(--sf-size)),
     #000 calc(100% - var(--sf-size)), transparent);
 }
+
+/* Nothing animates while it can't be seen. Closed windows and the account menu
+   stay in the page at opacity 0, so their looping animations (pulses, spinners,
+   rings, the menu's light sweep) kept the renderer repainting at 60 fps: on an
+   idle inventory that was ~50 % CPU on a Mac and worse on Linux without GPU
+   compositing (issue #66). Paused, not removed: an animation resumes as the
+   window opens. */
+.modal-overlay:not(.open) *,
+.modal-overlay:not(.open) *::before,
+.modal-overlay:not(.open) *::after,
+.acct-dropdown:not(.open) *,
+.acct-dropdown:not(.open) *::before,
+.acct-dropdown:not(.open) *::after { animation-play-state: paused !important; }
