@@ -74,11 +74,15 @@ publicLists/{token}        → world-readable snapshot of a list shared by web l
 users/{uid}                → { displayName, email, publicKey, privateKey, isPublic,
                                roles, tier, Debug,   ← roles + tier are SERVER-ONLY (rules reject client writes)
                                supportPublicly,      ← the user CHOSE to join the TigerSquad (client-written)
-                               supporter, xpPoints, certifiedPlusCount, tigerTagCount, xpCountVersion,  ← SERVER-ONLY (payment webhooks, certifyChip / countInventoryChip)
+                               supporter, xpPoints, certifiedPlusCount, tigerTagCount, xpCountVersion,
+                               xpBreakdown, xpUnlocked,  ← SERVER-ONLY (payment webhooks, certifyChip / countInventoryChip, XP achievements)
+                               squadCountry,   ← the member's TigerSquad flag (ISO alpha-2, client-written)
                                studioTheme,   ← UI theme "dark"|"light" (Studio-only; `prefs/app` is the CROSS-APP doc)
                                studioVersion, studioElectron, studioPlatform, studioArch,
                                studioOsRelease, studioOsVersion, studioLang, studioLocale,
                                studioLastSeen }
+  /xpHistory/{id}          → { at, key, delta, xp, n?, total } — one entry per XP gain/loss (SERVER-written, owner-read)
+  /td1s/{usbSerial}        → { serialNumber, manufacturer, vendorId, productId, firstSeenAt, lastSeenAt } — each TD1S the account connected
   /inventory/{spoolId}     → { uid, id_brand, id_material, color_name, online_color_list,
                                weight_available, container_weight, container_id, capacity,
                                updatedAt, deleted, twin_tag_uid,
@@ -271,7 +275,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1864 keys × 11 locales as of v2.36.0
+1924 keys × 11 locales as of v2.37.1
 
 ## CSS conventions
 

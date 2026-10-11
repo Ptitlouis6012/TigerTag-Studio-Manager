@@ -1654,6 +1654,7 @@ function initTD1S() {
     return null;
   }
 
+  let td1sDevice = null;   // USB identity of the TD1S found by td1sFind
   async function td1sFind() {
     td1sLog('debug', `Scan serial ports (VID=${TD1S_VID} PID=${TD1S_PID})...`);
     const ports = await SerialPort.list();
@@ -1667,7 +1668,12 @@ function initTD1S() {
       td1sLog(match ? 'success' : 'debug',
         `  ${p.path}  VID=${vid || '----'} PID=${pid || '----'}${label}${match ? '  ← MATCH TD1S' : ''}`
       );
-      if (match) return p.path;   // use path as-is (tty.* works, no cu.* conversion needed)
+      if (match) {
+        // Who this sensor is — recorded on the account once it streams (td1s/{serial}).
+        td1sDevice = { serialNumber: p.serialNumber || null, manufacturer: p.manufacturer || null,
+                       vendorId: vid, productId: pid };
+        return p.path;   // use path as-is (tty.* works, no cu.* conversion needed)
+      }
     }
     return null;
   }
@@ -1743,6 +1749,7 @@ function initTD1S() {
           state = 'READING'; td1sConnected = true;
           td1sLog('success', 'Stream active — reading data');
           td1sStatus('Status: Sensor connected');
+          if (td1sDevice) mainWindow?.webContents.send('td1s-device', td1sDevice);
           return;
         }
         // READING

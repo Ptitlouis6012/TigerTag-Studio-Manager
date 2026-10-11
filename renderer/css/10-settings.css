@@ -670,9 +670,9 @@
    reads these. Bronze = joined, Silver = 20+ certified TigerTag+,
    Gold = gave, Platinum = gave + 50+ certified. */
 .sq-bronze   { --sq-a: #F0B27A; --sq-b: #A8652B; --sq-ink: #2a1606; }
-.sq-silver   { --sq-a: #E5EAF0; --sq-b: #9AA6B4; --sq-ink: #1b2430; }
+.sq-silver   { --sq-a: #C9D3E0; --sq-b: #8794A6; --sq-ink: #1b2430; }
 .sq-gold     { --sq-a: #FFD600; --sq-b: #FF9F1C; --sq-ink: #1a1205; }
-.sq-platinum { --sq-a: #F4F7FB; --sq-b: #8EA3C4; --sq-ink: #121a2b; }
+.sq-platinum { --sq-a: #6CB8FF; --sq-b: #2F6FE0; --sq-ink: #0b1630; }   /* the blue of the Platinum crystals */
 
 .eac-squad-xp { margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--text); }
 .eac-squad-label.eac-squad-label, .eac-squad-label > * { text-align: left; align-self: flex-start; }
@@ -991,3 +991,127 @@
 }
 .sb-community .sb-group > .sb-report-btn.is-on.is-on { --ic: #fff; }
 .sb-community .sb-group > .sb-report-btn.is-on.is-on > .icon { filter: none; }
+/* TigerSquad rankings window (Countries League + makers) — reuses the invite's dark shell. */
+.squad-board { width: min(560px, calc(100vw - 32px)); }
+.squad-board .tsq-scroll { gap: 12px; padding-top: 26px; }
+.sqb-tabs { display: flex; gap: 6px; padding: 4px; border-radius: 12px; background: var(--tsq-bg2); border: 1px solid var(--tsq-line); }
+.sqb-tab { flex: 1; height: 36px; border: none; border-radius: 9px; background: none; color: var(--tsq-muted); font-family: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: background .15s, color .15s; }
+.sqb-tab:hover { color: var(--tsq-text); }
+.sqb-tab.is-on { background: linear-gradient(180deg, #FF8A2E, #FF6F12); color: #17120E; }
+.sqb-you { margin: 0; font-size: 13px; font-weight: 700; color: var(--tsq-orange); text-align: center; }
+.sqb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sqb-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--tsq-card); border: 1px solid var(--tsq-line); }
+.sqb-row.is-me { border-color: var(--tsq-orange); background: color-mix(in srgb, #FF923F 10%, var(--tsq-card)); box-shadow: 0 0 14px -6px rgba(255, 146, 63, .6); }
+.sqb-rank { width: 26px; flex-shrink: 0; text-align: center; font-size: 15px; font-weight: 800; color: var(--tsq-muted); }
+.sqb-medal-1 .sqb-rank { color: #FFD34D; } .sqb-medal-2 .sqb-rank { color: #C9D3E0; } .sqb-medal-3 .sqb-rank { color: #E0965A; }
+.sqb-flag { font-size: 24px; line-height: 1; }
+.sqb-av { flex-shrink: 0; }
+.sqb-avatar { width: 34px; height: 34px; border-radius: 50%; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
+.sqb-name { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 14px; font-weight: 700; color: var(--tsq-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sqb-name small { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; color: var(--tsq-muted); }
+.sqb-name small[class*="sq-"] { color: var(--sq-a); }
+.sqb-name small img { width: 16px; height: 16px; }
+.sqb-mini-flag { font-size: 14px; }
+.sqb-xp { flex-shrink: 0; font-size: 14px; font-weight: 800; color: var(--tsq-text); font-variant-numeric: tabular-nums; }
+.sqb-empty { padding: 18px; text-align: center; font-size: 13px; color: var(--tsq-muted); }
+.sqb-wall { align-self: center; border: none; background: none; color: var(--tsq-muted); font-family: inherit; font-size: 12.5px; cursor: pointer; }
+.sqb-wall:hover { color: var(--tsq-orange); text-decoration: underline; }
+.eac-squad-xp.is-link { cursor: pointer; }
+.eac-squad-xp.is-link:hover { color: var(--primary); text-decoration: underline; }
+.sqb-row { text-align: left; }
+.sqb-name { align-items: flex-start; }
+.sqb-n1 { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The level badge (Bronze → Platinum art) replaces the heart on avatar corners —
+   sidebar, banners, friends' lists. No disc behind it: the artwork is the shape. */
+.sb-supporter-badge, .av-squad-heart { background: none; box-shadow: none; border-radius: 0; }
+.sb-supporter-badge { width: 22px; height: 22px; right: -6px; bottom: -6px; }
+.av-squad-heart { width: 46%; min-width: 16px; max-width: 24px; right: -5px; bottom: -5px; }
+.sb-supporter-badge img, .av-squad-heart img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
+/* My XP tab — achievements (earned / to unlock) + gains & losses history. */
+.sqb-section { margin: 8px 2px 0; font-size: 11.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--tsq-muted); text-align: left; }
+.sqb-ach .sqb-ach-ic { width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--tsq-bg2); border: 1px solid var(--tsq-line); }
+.sqb-ach .sqb-ach-ic .icon { background: var(--tsq-muted); }
+.sqb-ach.is-earned .sqb-ach-ic { background: color-mix(in srgb, #2ED16E 18%, transparent); border-color: color-mix(in srgb, #2ED16E 60%, transparent); }
+.sqb-ach.is-earned .sqb-ach-ic .icon { background: #2ED16E; }
+.sqb-ach:not(.is-earned) { opacity: .78; }
+.sqb-ach:not(.is-earned) .sqb-xp { color: var(--tsq-orange); font-size: 13px; }
+.sqb-ach .sqb-name small, .sqb-hist .sqb-name small { white-space: normal; }
+.sqb-delta { width: 54px; flex-shrink: 0; text-align: center; font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.sqb-delta.is-up { color: #2ED16E; }
+.sqb-delta.is-down { color: #FF6B6B; }
+.sqb-hist .sqb-xp { font-size: 12.5px; font-weight: 700; color: var(--tsq-muted); }
+/* Friends in the sidebar wear the badge at the same size and spot as my own avatar (40 px avatar, 22 px badge). */
+#sbFriendsList .av-squad-heart { width: 22px; min-width: 22px; max-width: 22px; right: -6px; bottom: -6px; }
+/* The friends list scrolls, so it clips on x (overflow-x: hidden) — and it was
+   exactly as wide as the avatars, so a member's ring + glow and corner badge
+   were cut while MY avatar (in .sb-user, which clips nothing) showed whole.
+   Room inside the clip box on both sides, cancelled by a negative margin and a
+   matching width so the chips do not move by a pixel. */
+.sb-friends-list, .sidebar.collapsed .sb-friends-list { padding-left: 8px; padding-right: 8px; margin-left: -8px; margin-right: -8px; width: calc(100% + 16px); box-sizing: border-box; }
+/* While the sidebar expands, the name + XP block grows from 0 px wide: the XP
+   pill used to wrap onto an extra line (44 → 58 px tall), pushing the avatar
+   and the friends list down, then snap back. Never wrap inside it — the block
+   keeps its height at every width, so nothing jumps. */
+.sb-user-info { overflow: hidden; }
+.sb-user-info > .sb-name, .sb-xp-pill { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.sb-xp-pill { flex-shrink: 0; }
+/* Same row height collapsed and expanded (the name + XP block is 44 px tall), so
+   the avatar and the friends below never shift when the sidebar folds. */
+/* Same row height collapsed and expanded (the name + XP block is ~44 px tall), so
+   the avatar and the friends below never shift when the sidebar folds. */
+.sb-user-row { min-height: 44px; }
+/* Same distance from the left edge folded or unfolded: the rail padding is
+   12.5 px in both states and the friend chips add none on the left, so my avatar,
+   the buttons and every friend stay put horizontally too. */
+.sb-user { padding-left: 12.5px; padding-right: 12.5px; }
+.sb-actions button.sb-friend-chip, button.sb-friend-chip { padding-left: 0; }
+/* Folded, the action buttons were CENTRED while their width animated 215 → 40 px,
+   so the Notifications button slid right then back. Left-anchored, it just narrows. */
+.sidebar.collapsed .sb-actions { align-items: flex-start; }
+/* The XP chip opens the rankings. */
+.sb-xp-pill[role="button"] { cursor: pointer; transition: filter .15s; }
+.sb-xp-pill[role="button"]:hover { filter: brightness(1.25); }
+/* Rankings window: one fixed height (opens at its final size, never grows when
+   the data lands or the tab changes) + shimmering skeleton rows while loading. */
+.squad-board { height: min(680px, 88vh); }
+.squad-board .tsq-scroll { flex: 1; min-height: 0; }
+.sqb-skel { pointer-events: none; }
+.sqb-skel span, .sqb-skel i { display: block; border-radius: 8px; background: linear-gradient(90deg, rgba(255,255,255,.05) 25%, rgba(255,255,255,.12) 50%, rgba(255,255,255,.05) 75%); background-size: 200% 100%; animation: sqb-shimmer 1.2s ease-in-out infinite; }
+.sqb-skel-a { width: 34px; height: 34px; border-radius: 50% !important; flex-shrink: 0; }
+.sqb-skel-b { flex: 1; display: flex !important; flex-direction: column; gap: 6px; background: none !important; animation: none !important; }
+.sqb-skel-b i:first-child { width: 45%; height: 12px; }
+.sqb-skel-b i:last-child { width: 25%; height: 10px; }
+.sqb-skel-c { width: 64px; height: 14px; flex-shrink: 0; }
+@keyframes sqb-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+@media (prefers-reduced-motion: reduce) { .sqb-skel span, .sqb-skel i { animation: none; } }
+/* World rank chip, next to the XP chip: gold community icon + "#2". */
+.sb-rank-pill {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text);
+  font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
+  white-space: nowrap; flex-shrink: 0; cursor: pointer; transition: filter .15s;
+}
+.sb-rank-pill .icon { width: 12px; height: 12px; background: #FFC83D; }
+.sb-rank-pill:hover { filter: brightness(1.25); }
+/* TigerSquad windows (invite + rankings) scroll without a visible scrollbar. */
+.squad-invite .tsq-scroll { scrollbar-width: none; }
+.squad-invite .tsq-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+/* Four tabs on one line: each takes the room its label needs. */
+.sqb-tab { flex: 1 1 auto; padding: 0 10px; white-space: nowrap; font-size: 13px; }
+/* Next-level explainer at the top of Achievements: current badge → next badge,
+   a progress bar when the rule is a count, what to do, and the action. */
+.sqb-next { display: flex; gap: 14px; align-items: flex-start; padding: 14px; border-radius: 14px; text-align: left;
+  border: 1px solid color-mix(in srgb, var(--sq-a) 55%, var(--tsq-line)); background: color-mix(in srgb, var(--sq-a) 9%, var(--tsq-card)); }
+.sqb-next-badges { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.sqb-next-badges .icon { background: var(--tsq-muted); }
+.sqb-next-badge { width: 40px; height: 40px; object-fit: contain; }
+.sqb-next-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.sqb-next-body b { font-size: 14.5px; color: var(--sq-a); }
+.sqb-next-body p { margin: 0; font-size: 12.5px; line-height: 1.45; color: #C3CAD8; }
+.sqb-next-alt { color: var(--tsq-muted) !important; font-size: 12px !important; }
+.sqb-next-bar { display: block; height: 8px; border-radius: 999px; background: var(--tsq-bg2); overflow: hidden; }
+.sqb-next-bar i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--sq-b), var(--sq-a)); transition: width .4s ease-out; }
+.sqb-next-count { font-size: 12px; font-weight: 800; color: var(--tsq-text); font-variant-numeric: tabular-nums; }
+.sqb-next-cta { align-self: flex-start; height: 32px; padding: 0 14px; border: none; border-radius: 9px; cursor: pointer;
+  background: linear-gradient(180deg, #FF8A2E, #FF6F12); color: #17120E; font-family: inherit; font-size: 13px; font-weight: 800; }
+.sqb-next.sq-platinum { align-items: center; }

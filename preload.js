@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('td1s', {
   onStatus:     (callback) => ipcRenderer.on('td1s-status', (_, msg)   => callback(msg)),
   onLog:        (callback) => ipcRenderer.on('td1s-log',    (_, entry) => callback(entry)),
   onClear:      (callback) => ipcRenderer.on('td1s-clear',  ()         => callback()),
+  onDevice:     (callback) => ipcRenderer.on('td1s-device', (_, info)  => callback(info)),
   // Tell main process a TD1S-dependent UI opened / closed
   need:    () => ipcRenderer.send('td1s:need'),
   release: () => ipcRenderer.send('td1s:release'),

@@ -430,7 +430,7 @@ function onClick(e) {
   else if (act === "issue" && st.done?.url) ctx.openExternal(st.done.url);
   else if (act === "coffee") ctx.openCoffee?.(a);
   else if (act === "squad") ctx.openSquad?.();
-  else if (act === "squadWall") ctx.openExternal(a.dataset.url);
+  else if (act === "squadWall") (ctx.openSquadBoard ? ctx.openSquadBoard("countries") : ctx.openExternal(a.dataset.url));
   else if (act === "view") { _view = a.dataset.view; _closeAsk = null; render(); if (_view === "mine") syncReports(); }
   else if (act === "mineOpen") { const r = (_mine.list || []).find(x => x.id === a.dataset.id); if (r?.url) ctx.openExternal(r.url); }
   else if (act === "mineClose") { _closeAsk = a.dataset.id; render(); setTimeout(() => { if (_closeAsk === a.dataset.id) { _closeAsk = null; render(); } }, 4000); }
@@ -484,7 +484,16 @@ function squadHTML() {
     ctx.squadMemberCount?.().then(n => {
       _overlay?.querySelectorAll("[data-squad-count]").forEach(el => {
         if (!Number.isFinite(n) || n < 1) return;
-        el.querySelector("b").textContent = t("squadMembers", { n });
+        if (!el.dataset.rank) el.querySelector("b").textContent = t("squadMembers", { n });
+        el.hidden = false;
+      });
+    });
+    // The member's world rank replaces the plain head count once known.
+    ctx.squadRank?.().then(r => {
+      if (!r) return;
+      _overlay?.querySelectorAll("[data-squad-count]").forEach(el => {
+        el.dataset.rank = "1";
+        el.querySelector("b").textContent = t("squadRankLine", { rank: r.rank, total: r.total });
         el.hidden = false;
       });
     });
@@ -495,7 +504,7 @@ function squadHTML() {
         <div class="rep-coffee-title">${esc(t("squadInTitle"))}<span class="rep-squad-tier">${esc(member.label)}</span></div>
         <div class="rep-coffee-sub">${esc(t("squadInBody"))}</div>
         <div class="rep-squad-count" data-squad-count hidden><span class="icon icon-community" aria-hidden="true"></span><b></b></div>
-        <button type="button" class="rep-coffee-cta" data-rep="squadWall" data-url="${esc(member.wall)}">${esc(t("squadLevelsWall"))}</button>
+        <button type="button" class="rep-coffee-cta" data-rep="squadWall" data-url="${esc(member.wall)}">${esc(t("squadBoardOpen"))}</button>
       </div>
     </div>`;
   }
