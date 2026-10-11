@@ -561,6 +561,8 @@ function infoHTML(m) {
     ["settings", "reportInfoOs", m.os],
     ["image", "reportInfoScreen", m.screen],
     ["printer", "reportInfoPrinters", m.printers],
+    ["community", "reportInfoBadge", m.badge],
+    ["star-fill", "reportInfoXp", m.xp],
   ].filter(r => r[2]);
   return `
     <div class="rep-info${st.infoOpen ? " is-open" : ""}">

@@ -1002,7 +1002,7 @@
 .sqb-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
 .sqb-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: var(--tsq-card); border: 1px solid var(--tsq-line); }
 .sqb-row.is-me { border-color: var(--tsq-orange); background: color-mix(in srgb, #FF923F 10%, var(--tsq-card)); box-shadow: 0 0 14px -6px rgba(255, 146, 63, .6); }
-.sqb-rank { width: 26px; flex-shrink: 0; text-align: center; font-size: 15px; font-weight: 800; color: var(--tsq-muted); }
+.sqb-rank { width: 34px; flex-shrink: 0; text-align: center; font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 800; color: var(--tsq-muted); }
 .sqb-medal-1 .sqb-rank { color: #FFD34D; } .sqb-medal-2 .sqb-rank { color: #C9D3E0; } .sqb-medal-3 .sqb-rank { color: #E0965A; }
 .sqb-flag { font-size: 24px; line-height: 1; }
 .sqb-av { flex-shrink: 0; }

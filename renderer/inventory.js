@@ -448,7 +448,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _avatarPhotoTag(url) {
     if (!url) return "";
     return `<img class="sb-avatar-photo" src="${esc(url)}" alt="" ` +
-      `onerror="this.remove();if(this.parentNode)this.parentNode.dataset.avMode='initials'" />`;
+      `referrerpolicy="no-referrer" ` +
+      // Parent first: once removed, the img has no parent to switch to initials.
+      `onerror="if(this.parentNode)this.parentNode.dataset.avMode='initials';this.remove()" />`;
   }
   // Insert/update/remove the `<img class="sb-avatar-photo">` overlay on
   // any avatar container, and keep `data-av-mode` consistent (so direct
@@ -463,6 +465,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         img = document.createElement("img");
         img.className = "sb-avatar-photo";
         img.alt = "";
+        img.referrerPolicy = "no-referrer";
         // On decode-fail: drop the <img> and fall back to initials mode.
         img.addEventListener("error", () => {
           img.remove();
@@ -5034,7 +5037,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (idx >= 0) you.textContent = t("squadBoardYourCountry", { flag: `${_flagOf(mine)} ${cname(mine)}`, rank: idx + 1, total: rows.length });
         list.innerHTML = rows.length ? rows.map((r, i) => `
           <li class="sqb-row${medal(i)}${r.cc === mine ? " is-me" : ""}">
-            <span class="sqb-rank">${i + 1}</span>
+            <span class="sqb-rank">#${i + 1}</span>
             <span class="sqb-flag" aria-hidden="true">${_flagOf(r.cc)}</span>
             <span class="sqb-name"><span class="sqb-n1">${esc(cname(r.cc))}</span><small>${esc(t("squadMembers", { n: r.n }))}</small></span>
             <span class="sqb-xp">${fmt(r.xp)} XP</span>
@@ -5046,7 +5049,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (idx >= 0) you.textContent = t("squadRankLine", { rank: idx + 1, total: rows.length });
         list.innerHTML = rows.map((m, i) => `
           <li class="sqb-row${medal(i)}${m.uid === uid ? " is-me" : ""}">
-            <span class="sqb-rank">${i + 1}</span>
+            <span class="sqb-rank">#${i + 1}</span>
             <span class="sqb-av">${avatarMarkup({ ...m.profile, tigerSquad: true, squadTier: m.tier }, "sqb-avatar")}</span>
             <span class="sqb-name"><span class="sqb-n1">${esc(m.name)}${m.country ? ` <span class="sqb-mini-flag" title="${esc(cname(m.country))}">${_flagOf(m.country)}</span>` : ""}</span>
               <small class="sq-${m.tier}">${esc(squadTierLabel(m.tier))}</small></span>
@@ -22715,6 +22718,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         screen: `${window.innerWidth} × ${window.innerHeight}`,
         lang: state.lang || "",
         printers: Object.entries(brands).map(([b, n]) => n > 1 ? `${b} ×${n}` : b).join(", "),
+        // Shown in "Automatic information" only — the server reads the level and
+        // XP itself from the account (it cannot be told a level by the app).
+        badge: _ownSquadTier() ? squadTierLabel(_ownSquadTier()) : "",
+        xp: typeof state.xpPoints === "number" ? `${state.xpPoints.toLocaleString(state.lang || "en")} XP` : "",
         errors: _errorLog.slice(0, 10).map(e => `${e.context}${e.code ? " · " + e.code : ""}: ${String(e.message || "").slice(0, 240)}`),
       };
     },
