@@ -108,6 +108,7 @@
   "supportClaimError": "Проверка не удалась на нашей стороне. Попробуй чуть позже.",
   "notifSupporterTitle": "Спасибо, спонсор!",
   "notifSupporterText": "Твоя поддержка дошла — благодаря тебе обновления продолжаются. Вступи в TigerSquad из меню «Поддержать», чтобы носить золотое сердце.",
+  "notifXpTitle": "+{{xp}} XP в копилку",
   "sbDownloadBtn": "Загрузки",
   "settingsTitle": "Настройки",
   "stgUpdatesTitle": "Обновления",

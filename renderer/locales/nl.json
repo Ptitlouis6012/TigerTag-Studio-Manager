@@ -108,6 +108,7 @@
   "supportClaimError": "De controle mislukte aan onze kant. Probeer het zo opnieuw.",
   "notifSupporterTitle": "Bedankt, Supporter!",
   "notifSupporterText": "Je steun is net binnen — dankzij jou blijven de updates komen. Word lid van de TigerSquad via het menu Steunen en draag het gouden hartje.",
+  "notifXpTitle": "+{{xp}} XP binnen",
   "sbDownloadBtn": "Downloads",
   "settingsTitle": "Instellingen",
   "stgUpdatesTitle": "Updates",

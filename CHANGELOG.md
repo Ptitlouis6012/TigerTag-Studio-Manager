@@ -5,6 +5,39 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.38.0 — 2026-10-11
+
+### Added
+- **TigerSquad rankings window** (`_openSquadBoard`) with four tabs, opening at its final size (skeleton rows on the first load, last load reused at once and refreshed underneath, no visible scrollbar):
+  - **Countries League** — members' published XP (`userProfiles/{uid}.tigerSquad.xp`) summed per `tigerSquad.country`, member count, own country highlighted ("France is #1 of 3 countries").
+  - **Makers** — every member by XP: avatar with level ring + badge, flag, level, own row highlighted.
+  - **Achievements** — total, a next-level explainer (`_squadNextLevelHTML`: current → next badge, progress bar for counted rules — 20 TigerTag chips for Silver, 50 certified TigerTag+ for Platinum — and the join / coffee action; "Nothing above you but the sky" at Platinum), then every achievement earned (XP + count) or locked (worth + how), discoveries marked "yours for good" (`_renderMyXp`, `XP_ACHIEVEMENTS`).
+  - **History** — gains / losses with date and running total, from `users/{uid}/xpHistory`.
+  - Entry points: account menu ("TigerSquad Ranking" for a member, "Join the TigerSquad" otherwise — both an orange-tinted pill with a bold, light-swept label), a rank chip next to the sidebar XP chip ("#2"), the support menu's member row, the requests card, the XP line in My profile.
+- **World rank** — "#3 worldwide of 9" (1 + members with more `tigerSquad.xp`, Firestore REST `runAggregationQuery` COUNT, cached 10 min — `_squadRank`) in My profile, the support menu and the requests card.
+- **XP achievements (server, `achievementParts` / `storeTotals`)** — state-based (lost again when removed): friend 10 each, social link 5 each, profile photo 10, public profile 5, connected printer 20 each, owning a TigerScale 200 / a TigerSpool 75; one-time discoveries kept in `users/{uid}.xpUnlocked`: phone app 100, TigerPOD (two readers) 50, first RFID reader 20, first TD1S 30, first rack 10, first list 5, and **+5 per sidebar community link opened** (wiki, Discord, GitHub, MakerWorld, shop, support — read from `telemetry/studio.<k>ClickedAt` or `users/{uid}.<k>Seen`, so earlier clicks count). Current split in `users/{uid}.xpBreakdown`; every change logged in `users/{uid}/xpHistory` (server-only, owner-readable); triggers `xpFriends`, `xpScales`, `xpTigerSpools`, `xpRacks`, `xpLists`, `xpTelemetry`, `xpTd1s`, `xpPrinters`, `xpProfile`.
+- **XP and level-up notifications** — server-written: `storeTotals` merges the day's gains into `users/{uid}/notifications/xp-<YYYY-MM-DD>` (`type: xp_gain`, `data.gained` increment, `data.parts` arrayUnion; unread again and moved to the top; skipped on an account's first computation; losses stay in the history); `publishSupporter` adds `type: squad_level` (`data.tier`, `data.from`) when the tier rises (not on joining). Rendered in the notification centre (orange star / the new badge art), click → rankings History / Achievements.
+- **TigerSquad sound and celebration** (Web Audio, no asset files) — a three-note sparkle when the invite appears (`_soundSquadInvite`); joining plays a "legendary" fanfare (falling-sine impact, sawtooth C–E–G–C arpeggio, held chord through a `DynamicsCompressor`, high sparkles — `_soundSquadLegendary`) over a ~3 s celebration (`_squadCelebrate`: badge rising out of a light burst with spinning rays, 28 sparks, "+50 XP", welcome line, level name; static under reduced motion); glassy hover ticks on the perk cards, coffee card and level badges (pitch climbing Bronze → Platinum — `_soundHoverTick`); hovering "Join" plays a rising shimmer (`_soundJoinHover`) and runs a light round the button's edge (conic sweep on `@property --tsq-join-ang`, masked to a 3 px ring).
+- **Level-up window** — climbing a level (Bronze → Silver → Gold → Platinum) opens a window with the celebration and fanfare, old badge → new badge and a line per level, "See the rankings" / "Let's go"; live when it happens, otherwise at the next launch: the last seen level is kept per account in `localStorage` `tigertag.squadSeenTier.<uid>` and compared on the first server-confirmed profile snapshot (`_checkSquadLevelUp`, `_openSquadLevelUp`); never on a downgrade.
+- **TigerSquad flag / Countries League pick** — My profile → TigerSquad: searchable country picker (flag + name in the app language, detected country by default) writing `users/{uid}.squadCountry` (ISO alpha-2, cleared = detected); the server publishes `userProfiles/{uid}.tigerSquad.country` (pick → telemetry country → mobile locale → language) — `_fillSquadCountry`, `_setSquadCountry`, `renderer/tz-country.js` (`COUNTRY_CODES`).
+- **TD1S recorded on the account** — `users/{uid}/td1s/{USB serial}` = { manufacturer, vendorId, productId, firstSeenAt (once), lastSeenAt }; the main process reads the USB identity in `td1sFind` and sends it with "Sensor connected" (`td1s-device` → `td1s.onDevice`).
+
+### Changed
+- TigerSquad members wear their **level badge** (Bronze → Platinum art) on the avatar corner instead of the heart — sidebar, banners, friends' lists (`avatarMarkup`, `renderSupporterBadge`); the sidebar's own avatar shows its level ring (the inline account-colour glow from `paintAvatar` is skipped for `.av-squad`); Platinum ring in its crystals' blue (#6CB8FF → #2F6FE0), softer Silver grey.
+- Friends list in the sidebar: inner room (8 px padding cancelled by a negative margin) so members' rings and badges are not clipped by `overflow-x: hidden`, badge 22 px like the own avatar, and 10 px between friends (was 3 px) so a ring or badge no longer overlaps the friend below.
+- TigerSquad invite timing (`_maybeInviteSquad`): accounts older than 3 days (was 7), 10 s after start-up or after switching account (once per account per session), shown anywhere (even over another window or in a friend's stock); "Maybe later" / ✕ / Esc snooze it to the next local midnight (was 30 days).
+- TigerSquad windows wear a white breathing halo so they stand out from the app.
+- Printers empty screens (no printer yet; a friend's printers) show a six-brand printer line-up (Anycubic Kobra S1, Elegoo CC2, Creality K2 Plus, Bambu Lab X1C, FlashForge AD5X, Snapmaker U1) rising in one after another instead of a lone icon (`_printersLineupHTML`); the first bullet now lists all seven supported brands (Anycubic and Prusa were missing).
+
+### Fixed
+- Sidebar fold / unfold no longer moves anything: the name + XP block does not wrap while it grows from 0 px (was 44 → 58 px, pushing the avatar and friends down), the profile row keeps one height, the rail padding is 12.5 px in both states and the action buttons stay left-anchored while narrowing.
+- The level-up check now listens with `includeMetadataChanges`, so a profile identical to the cached copy still delivers the server-confirmed snapshot it waits for.
+
+### i18n
+- Added: `squadCountryLabel`, `squadRankLine`, `squadBoardMakers`, `squadBoardYourCountry`, `squadBoardEmpty`, `squadBoardOpen`, `acctSquadRanking`, `squadLevelUpKicker`, `squadLevelUpTitle`, `squadLevelUpText_{bronze,silver,gold,platinum}`, `squadLevelUpOk`, `notifXpTitle`, `xpTotalLine`, `xpPerItem`, `xpKeptForGood`, `xpAchievements`, `xpHistory`, `xpHistoryEmpty`, `xpNextTitle`, `xpNextCount`, `xpNextJoin`, `xpNextSilverHow`, `xpNextOrGold`, `xpNextGoldHow`, `xpNextPlatinumHow`, `xpNextTop`, `xpPart_chips`, `xpPart_squad`, `xpChipsHint`, `xpAch_*` / `xpAchHint_*` (14 achievements); changed `printersEmptyBullet1` — 11 locales.
+
+---
+
 ## v2.37.0 — 2026-10-11
 
 ### Added

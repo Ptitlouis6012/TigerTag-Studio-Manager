@@ -108,6 +108,7 @@
   "supportClaimError": "La verifica non è riuscita da parte nostra. Riprova tra un attimo.",
   "notifSupporterTitle": "Grazie, Sostenitore!",
   "notifSupporterText": "Il tuo sostegno è appena arrivato: grazie a te gli aggiornamenti continuano. Entra nella TigerSquad dal menu Sostieni per sfoggiare il cuore dorato.",
+  "notifXpTitle": "+{{xp}} XP in tasca",
   "sbDownloadBtn": "Download",
   "settingsTitle": "Impostazioni",
   "stgUpdatesTitle": "Aggiornamenti",

@@ -108,6 +108,7 @@
   "supportClaimError": "我们这边查询失败了，请稍后再试。",
   "notifSupporterTitle": "谢谢你，支持者！",
   "notifSupporterText": "你的支持已到账——多亏了你，更新还会继续。在“支持”菜单中加入 TigerSquad，戴上金色爱心。",
+  "notifXpTitle": "+{{xp}} XP 入账",
   "sbDownloadBtn": "下载",
   "settingsTitle": "设置",
   "stgUpdatesTitle": "更新",

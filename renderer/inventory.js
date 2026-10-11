@@ -37186,6 +37186,22 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           </div>
         </div>`;
       }
+      // TigerSquad (server-written by the XP engine): the day's XP gains, grouped
+      // in one row, and a level climbed — the badge itself is the icon.
+      if (n.type === "xp_gain" || n.type === "squad_level") {
+        const lvl = n.type === "squad_level", tier = SQUAD_TIERS.includes(n.data?.tier) ? n.data.tier : "gold";
+        const parts = (n.data?.parts || []).map(k => k === "chips" ? t("xpPart_chips") : k === "squad" ? t("xpPart_squad") : t("xpAch_" + k));
+        return `<div class="notif-item${unread} notif-item--clickable" data-id="${esc(n.id)}" data-notif-action="${lvl ? "squadlevel" : "squadxp"}">
+          ${lvl ? `<img class="notif-ic notif-ic--badge" src="${esc(SQUAD_ASSETS[tier])}" alt="">`
+                : `<span class="notif-ic notif-ic--xp"><span class="icon icon-star-fill icon-14"></span></span>`}
+          <div class="fp-friend-main">
+            <div class="notif-title">${esc(lvl ? t("squadLevelUpTitle", { tier: squadTierLabel(tier) })
+                                               : t("notifXpTitle", { xp: Number(n.data?.gained || 0).toLocaleString(state.lang || "en") }))}</div>
+            <div class="notif-text">${esc(lvl ? t("squadLevelUpText_" + tier) : parts.join(" · "))}</div>
+            <div class="fp-friend-date">${esc(when)}</div>
+          </div>
+        </div>`;
+      }
       // A request of mine changed status on GitHub (server-written by `myReports`).
       // Worded HERE, in the user's language — the server only says which status.
       if (n.type === "request_status") {
@@ -37258,6 +37274,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (a === "lowstock") _openLowStockProduct(row.dataset.notifKey);
         else if (a === "report") openReport({ tab: "mine" });
         else if (a === "whatsnew") openWhatsNew(row.dataset.notifVersion || undefined, { manual: true });
+        else if (a === "squadxp") _openSquadBoard("hist");
+        else if (a === "squadlevel") _openSquadBoard("ach");
         else if (COMMUNITY[a]) _openCommunityLink(a);
       }));
   }

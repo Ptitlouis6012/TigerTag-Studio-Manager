@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.37.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.38.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -252,9 +252,12 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 
 ## TigerSquad, XP & support
 
-- **TigerSquad** — a free, opt-in public community with a wall of fame on tigersystem.io; joined from an invitation window (accounts older than 7 days, snoozable), the Support menu, the requests card or My profile; +50 XP on joining (v2.37.0).
-- **Levels** — Bronze (joined), Silver (20+ TigerTag chips), Gold (donated), Platinum (donated + 50 certified TigerTag+), computed server-side and shown as a coloured ring, heart and level pill on avatars and banners, to friends and on the wall (v2.37.0).
+- **TigerSquad** — a free, opt-in public community with a wall of fame on tigersystem.io; joined from an invitation window (accounts older than 3 days, back the next day if closed — v2.38.0), the Support menu, the requests card, the account menu or My profile; +50 XP on joining, with a fanfare and a celebration (v2.37.0, celebration v2.38.0).
+- **Levels** — Bronze (joined), Silver (20+ TigerTag chips), Gold (donated), Platinum (donated + 50 certified TigerTag+), computed server-side and shown as a coloured ring, the level badge and level pill on avatars and banners, to friends and on the wall (v2.37.0, badge instead of heart v2.38.0); climbing a level opens a level-up window — live or at the next launch (v2.38.0).
 - **XP points** — per physical chip: certified TigerTag+ 10, TigerTag+ 2, TigerTag 1, counted once per UID from the chip census and the inventory, kept for good; shown under the name and in My profile (v2.37.0).
+- **XP achievements** — friends, social links, profile photo, public profile, connected printers, TigerScale, TigerSpool (lost again when removed), plus one-time discoveries kept for good: phone app, TigerPOD, RFID reader, TD1S, first rack, first list, and 5 XP per sidebar community link opened; every change logged in an XP history (v2.38.0).
+- **Rankings** — a window with the Countries League (XP per country, picked in My profile), the Makers, your Achievements (with what it takes to reach the next level) and your XP History; world rank ("#3 worldwide of 9") in My profile, the support menu and a sidebar chip (v2.38.0).
+- **XP and level-up notifications** — the day's gains in one row, each level climbed in its own (v2.38.0).
 - **Member card** — members see their level, the head count and a link to the wall in the Support menu and the requests card, swapped live on join / leave (v2.37.0).
 - **Support the project** — Buy Me a Coffee, Ko-fi or PayPal from every coffee button; donations linked to the account by a fixed supporter code, the payer email or a later claim, with a thank-you notification (v2.37.0).
 

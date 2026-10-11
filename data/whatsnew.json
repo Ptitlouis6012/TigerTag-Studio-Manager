@@ -1,4 +1,154 @@
 {
+  "2.38.0": {
+    "date": "2026-10-11",
+    "items": [
+      {
+        "icon": "community",
+        "title": {
+          "en": "The leaderboard is live",
+          "fr": "Le classement est en ligne",
+          "de": "Die Rangliste ist live",
+          "es": "La clasificación ya está aquí",
+          "it": "La classifica è online",
+          "zh": "排行榜上线了",
+          "pt": "O ranking chegou",
+          "pt-pt": "A classificação chegou",
+          "pl": "Ranking wystartował",
+          "ru": "Рейтинг запущен",
+          "nl": "Het klassement is live"
+        },
+        "body": {
+          "en": "Countries League, Makers, your achievements and your XP history — all in one place. Find out where your country stands, who's leading, and exactly what it takes to reach the next level.",
+          "fr": "Countries League, Makers, tes succès et l'historique de tes XP — tout au même endroit. Regarde où en est ton pays, qui mène, et ce qu'il te faut exactement pour passer au niveau suivant.",
+          "de": "Countries League, Maker, deine Erfolge und dein XP-Verlauf — alles an einem Ort. Schau, wo dein Land steht, wer vorne liegt und was genau dir zum nächsten Level fehlt.",
+          "es": "Countries League, Makers, tus logros y tu historial de XP, todo en un sitio. Mira dónde está tu país, quién va en cabeza y qué te falta exactamente para el siguiente nivel.",
+          "it": "Countries League, Maker, i tuoi traguardi e la cronologia dei tuoi XP: tutto in un posto. Scopri dove si trova il tuo paese, chi è in testa e cosa ti serve esattamente per il livello successivo.",
+          "zh": "国家联赛、创客榜、你的成就和 XP 记录——全都在一个地方。看看你的国家排第几、谁领先，以及升到下一级到底还差什么。",
+          "pt": "Countries League, Makers, suas conquistas e seu histórico de XP — tudo num lugar só. Veja onde está seu país, quem lidera e exatamente o que falta pro próximo nível.",
+          "pt-pt": "Countries League, Makers, as tuas conquistas e o teu histórico de XP — tudo no mesmo sítio. Vê onde está o teu país, quem lidera e exatamente o que te falta para o próximo nível.",
+          "pl": "Countries League, Makerzy, twoje osiągnięcia i historia XP — wszystko w jednym miejscu. Zobacz, gdzie jest twój kraj, kto prowadzi i czego dokładnie brakuje ci do kolejnego poziomu.",
+          "ru": "Countries League, мейкеры, твои достижения и история XP — всё в одном месте. Смотри, где твоя страна, кто лидирует и что именно нужно для следующего уровня.",
+          "nl": "Countries League, Makers, je prestaties en je XP-geschiedenis — alles op één plek. Zie waar je land staat, wie er leidt en wat je precies nodig hebt voor het volgende level."
+        }
+      },
+      {
+        "icon": "star-fill",
+        "title": {
+          "en": "XP for more than chips",
+          "fr": "Des XP pas que pour les puces",
+          "de": "XP nicht nur für Chips",
+          "es": "XP no solo por los chips",
+          "it": "XP non solo per i chip",
+          "zh": "不只芯片能拿 XP",
+          "pt": "XP não só pelos chips",
+          "pt-pt": "XP não só pelos chips",
+          "pl": "XP nie tylko za chipy",
+          "ru": "XP не только за чипы",
+          "nl": "XP voor meer dan chips"
+        },
+        "body": {
+          "en": "Friends, a profile photo, connected printers, a TigerScale, the phone app, your first rack… exploring the whole ecosystem now pays. Even clicking the community links in the sidebar is worth a few points.",
+          "fr": "Des amis, une photo de profil, des imprimantes connectées, une TigerScale, l'app mobile, ton premier rack… explorer tout l'écosystème rapporte maintenant. Même cliquer sur les liens de la communauté dans la barre latérale vaut quelques points.",
+          "de": "Freunde, ein Profilfoto, verbundene Drucker, eine TigerScale, die Handy-App, dein erstes Regal… das ganze Ökosystem zu erkunden zahlt sich jetzt aus. Sogar ein Klick auf die Community-Links in der Seitenleiste bringt ein paar Punkte.",
+          "es": "Amigos, una foto de perfil, impresoras conectadas, una TigerScale, la app del móvil, tu primer rack… explorar todo el ecosistema ahora tiene premio. Hasta abrir los enlaces de la comunidad en la barra lateral da unos puntos.",
+          "it": "Amici, una foto profilo, stampanti collegate, una TigerScale, l'app del telefono, il tuo primo rack… esplorare tutto l'ecosistema ora paga. Anche cliccare i link della community nella barra laterale vale qualche punto.",
+          "zh": "好友、头像、已连接的打印机、TigerScale、手机 App、你的第一个料架……探索整个生态现在都有奖励。连点一下侧边栏的社区链接也能拿几分。",
+          "pt": "Amigos, foto de perfil, impressoras conectadas, uma TigerScale, o app do celular, seu primeiro rack… explorar todo o ecossistema agora rende. Até clicar nos links da comunidade na barra lateral vale uns pontos.",
+          "pt-pt": "Amigos, foto de perfil, impressoras ligadas, uma TigerScale, a app do telemóvel, o teu primeiro rack… explorar todo o ecossistema agora compensa. Até clicar nas ligações da comunidade na barra lateral vale uns pontos.",
+          "pl": "Znajomi, zdjęcie profilowe, podłączone drukarki, TigerScale, aplikacja na telefon, twój pierwszy regał… odkrywanie całego ekosystemu teraz się opłaca. Nawet kliknięcie linków społeczności na pasku bocznym daje kilka punktów.",
+          "ru": "Друзья, фото профиля, подключённые принтеры, TigerScale, мобильное приложение, твой первый стеллаж… теперь исследовать всю экосистему выгодно. Даже клик по ссылкам сообщества на боковой панели приносит пару очков.",
+          "nl": "Vrienden, een profielfoto, verbonden printers, een TigerScale, de telefoon-app, je eerste rek… het hele ecosysteem verkennen loont nu. Zelfs op de communitylinks in de zijbalk klikken levert een paar punten op."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Level up like you mean it",
+          "fr": "Monter de niveau, ça se fête",
+          "de": "Level-up mit Pauken und Trompeten",
+          "es": "Subir de nivel se celebra",
+          "it": "Salire di livello si festeggia",
+          "zh": "升级就该有排面",
+          "pt": "Subir de nível tem festa",
+          "pt-pt": "Subir de nível tem festa",
+          "pl": "Awans trzeba uczcić",
+          "ru": "Новый уровень — это праздник",
+          "nl": "Een level omhoog vier je"
+        },
+        "body": {
+          "en": "Join the TigerSquad or climb to Silver, Gold or Platinum and the app throws you a proper party — fanfare, sparks, your new badge front and centre. Missed it? It waits for you next time you open the app.",
+          "fr": "Rejoins la TigerSquad ou grimpe en Silver, Gold ou Platinum, et l'app te fait une vraie fête — fanfare, étincelles, ton nouveau badge en plein milieu. Tu l'as ratée ? Elle t'attend à la prochaine ouverture.",
+          "de": "Tritt der TigerSquad bei oder steig zu Silver, Gold oder Platinum auf, und die App schmeißt dir eine richtige Party — Fanfare, Funken, dein neues Abzeichen mittendrin. Verpasst? Sie wartet beim nächsten Öffnen auf dich.",
+          "es": "Únete a la TigerSquad o sube a Silver, Gold o Platinum y la app te monta una fiesta como Dios manda: fanfarria, chispas y tu nueva insignia en el centro. ¿Te la perdiste? Te espera la próxima vez que abras la app.",
+          "it": "Entra nella TigerSquad o sali a Silver, Gold o Platinum e l'app ti fa una vera festa: fanfara, scintille, il tuo nuovo badge in primo piano. Te la sei persa? Ti aspetta alla prossima apertura.",
+          "zh": "加入 TigerSquad，或升到 Silver、Gold、Platinum，App 会给你办一场像样的庆祝——号角、火花，新徽章 C 位亮相。错过了？下次打开 App 时它还等着你。",
+          "pt": "Entre na TigerSquad ou suba pra Silver, Gold ou Platinum e o app faz uma festa de verdade — fanfarra, faíscas, seu novo selo bem no meio. Perdeu? Ela te espera na próxima vez que abrir o app.",
+          "pt-pt": "Entra na TigerSquad ou sobe a Silver, Gold ou Platinum e a app faz-te uma festa a sério — fanfarra, faíscas, o teu novo selo bem ao centro. Perdeste? Fica à tua espera na próxima vez que abrires a app.",
+          "pl": "Dołącz do TigerSquad albo wskocz na Silver, Gold lub Platinum, a aplikacja urządzi ci porządną imprezę — fanfary, iskry, twoja nowa odznaka na środku. Przegapiłeś? Poczeka na ciebie przy następnym otwarciu.",
+          "ru": "Вступи в TigerSquad или поднимись до Silver, Gold или Platinum — и приложение устроит настоящий праздник: фанфары, искры, твой новый значок в центре. Пропустил? Он подождёт до следующего запуска.",
+          "nl": "Word lid van de TigerSquad of klim naar Silver, Gold of Platinum en de app geeft een echt feestje — fanfare, vonken, je nieuwe badge vooraan. Gemist? Hij wacht op je de volgende keer dat je de app opent."
+        }
+      },
+      {
+        "icon": "bell",
+        "title": {
+          "en": "Your XP, in your notifications",
+          "fr": "Tes XP, dans tes notifications",
+          "de": "Deine XP in den Benachrichtigungen",
+          "es": "Tus XP, en tus notificaciones",
+          "it": "I tuoi XP, nelle notifiche",
+          "zh": "你的 XP，进通知了",
+          "pt": "Seus XP nas notificações",
+          "pt-pt": "Os teus XP nas notificações",
+          "pl": "Twoje XP w powiadomieniach",
+          "ru": "Твои XP — в уведомлениях",
+          "nl": "Je XP in je meldingen"
+        },
+        "body": {
+          "en": "Points earned during the day land in one tidy line in your notifications, and a new level gets its own. Tap it to see where it came from.",
+          "fr": "Les points gagnés dans la journée arrivent sur une seule ligne bien rangée dans tes notifications, et un nouveau niveau a la sienne. Un clic pour voir d'où ils viennent.",
+          "de": "Die Punkte des Tages landen in einer ordentlichen Zeile in deinen Benachrichtigungen, und ein neues Level bekommt seine eigene. Ein Klick zeigt, woher sie kommen.",
+          "es": "Los puntos del día llegan en una sola línea bien ordenada a tus notificaciones, y un nivel nuevo tiene la suya. Un toque y ves de dónde salen.",
+          "it": "I punti guadagnati in giornata arrivano in un'unica riga ordinata nelle notifiche, e un nuovo livello ha la sua. Un clic per vedere da dove vengono.",
+          "zh": "当天赚到的分数在通知里整整齐齐归成一行，升级则单独一条。点一下就知道是怎么来的。",
+          "pt": "Os pontos do dia chegam numa linha só, bem arrumada, nas suas notificações, e um nível novo ganha a sua. Um toque pra ver de onde vieram.",
+          "pt-pt": "Os pontos do dia chegam numa única linha bem arrumada nas tuas notificações, e um nível novo tem a sua. Um clique para veres de onde vieram.",
+          "pl": "Punkty zdobyte w ciągu dnia trafiają do jednej schludnej linijki w powiadomieniach, a nowy poziom dostaje własną. Kliknij, żeby zobaczyć, skąd się wzięły.",
+          "ru": "Очки за день собираются в одну аккуратную строку в уведомлениях, а новый уровень получает свою. Нажми — и увидишь, откуда они.",
+          "nl": "De punten van de dag komen in één nette regel in je meldingen, en een nieuw level krijgt er een eigen. Tik erop om te zien waar ze vandaan komen."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "A warmer welcome for your printers",
+          "fr": "Un meilleur accueil pour tes imprimantes",
+          "de": "Ein schöneres Willkommen für deine Drucker",
+          "es": "Una bienvenida mejor para tus impresoras",
+          "it": "Un'accoglienza migliore per le tue stampanti",
+          "zh": "给你的打印机更好的欢迎",
+          "pt": "Uma recepção melhor pras suas impressoras",
+          "pt-pt": "Uma receção melhor para as tuas impressoras",
+          "pl": "Lepsze powitanie dla twoich drukarek",
+          "ru": "Тёплый приём для твоих принтеров",
+          "nl": "Een warmer welkom voor je printers"
+        },
+        "body": {
+          "en": "No printer yet? The page now shows a line-up of the machines Studio talks to — seven brands, from Bambu Lab to Prusa — so you know yours is welcome.",
+          "fr": "Pas encore d'imprimante ? La page montre maintenant une rangée des machines que Studio sait piloter — sept marques, de Bambu Lab à Prusa — pour que tu saches que la tienne est la bienvenue.",
+          "de": "Noch kein Drucker? Die Seite zeigt jetzt eine Reihe der Maschinen, mit denen Studio spricht — sieben Marken, von Bambu Lab bis Prusa — damit du weißt, dass deiner willkommen ist.",
+          "es": "¿Aún sin impresora? La página ahora muestra una fila de las máquinas con las que habla Studio —siete marcas, de Bambu Lab a Prusa— para que sepas que la tuya es bienvenida.",
+          "it": "Ancora nessuna stampante? La pagina ora mostra una fila delle macchine con cui parla Studio — sette marchi, da Bambu Lab a Prusa — così sai che la tua è la benvenuta.",
+          "zh": "还没有打印机？页面现在会排出 Studio 能连接的机型——从 Bambu Lab 到 Prusa 共七个品牌——让你知道你的也欢迎。",
+          "pt": "Ainda sem impressora? A página agora mostra uma fileira das máquinas com que o Studio conversa — sete marcas, da Bambu Lab à Prusa — pra você saber que a sua é bem-vinda.",
+          "pt-pt": "Ainda sem impressora? A página mostra agora uma fila das máquinas com que o Studio fala — sete marcas, da Bambu Lab à Prusa — para saberes que a tua é bem-vinda.",
+          "pl": "Jeszcze bez drukarki? Strona pokazuje teraz rządek maszyn, z którymi gada Studio — siedem marek, od Bambu Lab po Prusę — żebyś wiedział, że twoja jest mile widziana.",
+          "ru": "Ещё нет принтера? Теперь на странице выстроились машины, с которыми работает Studio — семь брендов, от Bambu Lab до Prusa, — чтобы ты знал: твоему тут рады.",
+          "nl": "Nog geen printer? De pagina toont nu een rij machines waar Studio mee praat — zeven merken, van Bambu Lab tot Prusa — zodat je weet dat de jouwe welkom is."
+        }
+      }
+    ]
+  },
   "2.37.0": {
     "date": "2026-10-11",
     "items": [

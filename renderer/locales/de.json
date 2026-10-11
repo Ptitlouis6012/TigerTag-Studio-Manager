@@ -108,6 +108,7 @@
   "supportClaimError": "Die Prüfung ist bei uns fehlgeschlagen. Gleich nochmal versuchen.",
   "notifSupporterTitle": "Danke, Unterstützer!",
   "notifSupporterText": "Deine Unterstützung ist angekommen — dank dir gehen die Updates weiter. Tritt über das Menü „Unterstützen“ der TigerSquad bei und trag das goldene Herz.",
+  "notifXpTitle": "+{{xp}} XP eingesackt",
   "sbDownloadBtn": "Downloads",
   "settingsTitle": "Einstellungen",
   "stgUpdatesTitle": "Updates",

@@ -108,6 +108,7 @@
   "supportClaimError": "La verificación falló por nuestra parte. Inténtalo de nuevo en un momento.",
   "notifSupporterTitle": "¡Gracias, mecenas!",
   "notifSupporterText": "Tu apoyo acaba de llegar: gracias a ti, las novedades siguen. Únete a la TigerSquad desde el menú Apoyar para lucir el corazón dorado.",
+  "notifXpTitle": "+{{xp}} XP al bolsillo",
   "sbDownloadBtn": "Descargas",
   "settingsTitle": "Ajustes",
   "stgUpdatesTitle": "Actualizaciones",

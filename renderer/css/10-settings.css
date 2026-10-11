@@ -1178,3 +1178,11 @@
 .tsq-join:hover:not(:disabled)::before, .tsq-join:focus-visible::before { opacity: 1; animation: tsq-join-spin 1.6s linear infinite; }
 @keyframes tsq-join-spin { to { --tsq-join-ang: 360deg; } }
 @media (prefers-reduced-motion: reduce) { .tsq-join:hover::before { animation: none; } }
+/* A member's level ring (+ glow) reaches ~4 px past the 40 px avatar and the
+   badge 6 px past its corner: with the list's 3 px gap, neighbours overlapped
+   and a ring cut into the face below. Room enough between chips for both. */
+.sb-friends-list { gap: 10px; }
+/* TigerSquad notifications: XP gained (orange star) and level climbed (the badge art itself). */
+.notif-ic.notif-ic--xp { background: linear-gradient(135deg, #FF8A2E, #FFB463); }
+.notif-ic.notif-ic--xp .icon { background: #fff; }
+img.notif-ic.notif-ic--badge { background: none; border: 0; border-radius: 0; object-fit: contain; padding: 0; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .35)); }

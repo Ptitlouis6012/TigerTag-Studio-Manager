@@ -183,6 +183,8 @@ Organize your filament collection into physical racks — drag spools onto slots
 - Join the TigerSquad for free — the community of makers behind open 3D printing, with a public [wall of fame](https://tigersystem.io/en/tigersquad)
 - Four levels shown as a badge on your avatar: Bronze, Silver (20 TigerTag chips), Gold (a coffee), Platinum (a coffee + 50 certified TigerTag+)
 - XP for every TigerTag chip you own — certified TigerTag+ count the most — to rank the makers
+- XP for exploring the ecosystem too — friends, printers, a TigerScale, the phone app and more
+- Rankings: the Countries League, the Makers, your achievements and your XP history, plus your world rank
 
 ### ⚖ Sensors & Devices
 

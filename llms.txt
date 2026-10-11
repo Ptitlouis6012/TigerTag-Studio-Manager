@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.37.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.38.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -353,6 +353,13 @@ the backend (`functions/supportWebhooks.js`): bronze = joined, silver = 20+ Tige
 (`certifiedPlusCount`, verified with the TigerTag SDK). XP = chip points (certified 10, TigerTag+ 2,
 TigerTag 1) counted once per chip UID (`countedChips/{uid}`, server-only) from the census AND the
 inventory, + 50 while a member. A donation alone gives no badge — the badge comes with joining.
+Since v2.38.0 XP also comes from achievements computed server-side (`achievementParts`): STATE parts
+(friends, social links, photo, public profile, printers, TigerScale, TigerSpool) are lost when removed;
+DISCOVERIES (phone app, TigerPOD, RFID reader, TD1S, first rack, first list, each sidebar community
+link) are kept in `users/{uid}.xpUnlocked`. The split is `users/{uid}.xpBreakdown`, every change is
+logged in `users/{uid}/xpHistory` (server-only), and the server writes `xp_gain` (one per day) and
+`squad_level` notifications. Public ranking data = `userProfiles/{uid}.tigerSquad` { since, tier,
+xp, certified, country } — the Countries League sums `xp` per `country` (`users/{uid}.squadCountry`).
 
 ## Optional docs
 

@@ -108,6 +108,7 @@
   "supportClaimError": "La vérification a échoué de notre côté. Réessaie dans un instant.",
   "notifSupporterTitle": "Merci, Supporter !",
   "notifSupporterText": "Ton soutien vient d’arriver — les mises à jour continuent grâce à toi. Rejoins la TigerSquad depuis le menu Soutenir pour porter le cœur doré.",
+  "notifXpTitle": "+{{xp}} XP dans la poche",
   "sbDownloadBtn": "Téléchargements",
   "settingsTitle": "Paramètres",
   "stgUpdatesTitle": "Mises à jour",

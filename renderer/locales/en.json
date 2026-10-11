@@ -108,6 +108,7 @@
   "supportClaimError": "The check failed on our side. Try again in a moment.",
   "notifSupporterTitle": "Thank you, Supporter!",
   "notifSupporterText": "Your support just landed — the updates keep coming thanks to you. Join the TigerSquad from the Support menu to wear the golden heart.",
+  "notifXpTitle": "+{{xp}} XP in the bag",
   "sbDownloadBtn": "Downloads",
   "settingsTitle": "Settings",
   "stgUpdatesTitle": "Updates",

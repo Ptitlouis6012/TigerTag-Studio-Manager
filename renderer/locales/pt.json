@@ -108,6 +108,7 @@
   "supportClaimError": "A verificação falhou do nosso lado. Tente de novo em instantes.",
   "notifSupporterTitle": "Valeu, Apoiador!",
   "notifSupporterText": "Seu apoio acabou de chegar — as atualizações continuam graças a você. Entre na TigerSquad pelo menu Apoiar para usar o coração dourado.",
+  "notifXpTitle": "+{{xp}} XP no bolso",
   "sbDownloadBtn": "Downloads",
   "settingsTitle": "Configurações",
   "stgUpdatesTitle": "Atualizações",
