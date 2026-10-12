@@ -89,7 +89,7 @@ export async function snapPingPrinter(printer) {
 }
 
 export function snapPingAllPrinters() {
-  for (const p of ctx.getState().printers) {
+  for (const p of ctx.getState().printers || []) {
     if (p.brand === "snapmaker" && p.ip) snapPingPrinter(p);
   }
 }

@@ -150,7 +150,7 @@ export async function ffgPingPrinter(printer) {
 }
 
 export function ffgPingAllPrinters() {
-  for (const p of ctx.getState().printers) {
+  for (const p of ctx.getState().printers || []) {
     if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
   }
 }

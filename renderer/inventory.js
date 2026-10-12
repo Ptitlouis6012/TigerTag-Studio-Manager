@@ -130,6 +130,11 @@ import { jobBar, jobBarFill } from './printers/job-bar.js';
 import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, reportDragState, syncReports, refreshSquadCard } from './report/index.js';
 
   const API_BASE         = "https://cdn.tigertag.io";
+  // True only inside the Electron app. In a browser, renderer/web-bridge.js
+  // defines a partial `electronAPI` (flagged `isWeb`) for the methods a browser
+  // can honour, so "is there an electronAPI" no longer means "is this desktop".
+  // Use this for anything that needs the native side as a whole (RFID readers…).
+  const HAS_NATIVE       = !!window.electronAPI && !window.electronAPI.isWeb;
 
   // ── Firebase helpers — one named app instance per account ────────────────
   // Each account has its own firebase.app(uid) with independent auth session.
@@ -5896,7 +5901,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await firebase.app(uid).auth().updateCurrentUser(result.user);
       setActiveId(uid);
       setupNamedAuth(uid);
-      await firebase.auth().signOut();
+      // Web: the DEFAULT app is the tigersystem.io session the Hub shares —
+      // leave it signed in (desktop keeps only the named instance).
+      if (HAS_NATIVE) await firebase.auth().signOut();
       closeAddAccountModal();
       await handleSignedIn(result.user, uid);   // ← explicit UI refresh
     } catch (err) {
@@ -5995,7 +6002,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         await firebase.app(uid).auth().updateCurrentUser(result.user);
         setActiveId(uid);
         setupNamedAuth(uid);
-        await firebase.auth().signOut();
+        if (HAS_NATIVE) await firebase.auth().signOut();   // web: keep the shared session (see Google flow)
         closeAddAccountModal();
         await handleSignedIn(result.user, uid);
       }
@@ -6062,7 +6069,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     unsubscribeInventory();
     const id = state.activeAccountId;
     if (id) { try { await firebase.app(id).auth().signOut(); } catch (_) {} }
-    try { await firebase.auth().signOut(); } catch (_) {} // clean up DEFAULT too
+    // Clean up DEFAULT too. On the web it is the session shared with the Hub
+    // (tigersystem.io): end it only when it is this same account.
+    try {
+      if (HAS_NATIVE || firebase.auth().currentUser?.uid === id) await firebase.auth().signOut();
+    } catch (_) {}
   }
 
   /* ── UID format migration — decimal big-endian → hex uppercase ─────────
@@ -7062,11 +7073,35 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Restore named instances for all saved accounts (sessions auto-reload from IndexedDB)
     const accounts = getAccounts();
     for (const acc of accounts) setupNamedAuth(acc.id);
+    if (!HAS_NATIVE && accounts.length === 0) _adoptSharedWebSession();
 
     // With no saved account the welcome screen is what the user lands on — it
     // carries the Sign-in button. The login modal is never opened on its own.
   }
 
+
+  // Web build, first visit: someone already signed in on tigersystem.io (the
+  // Hub shares this origin, so its Firebase session sits in the DEFAULT app)
+  // lands signed in instead of on the welcome screen. Same hand-over as the
+  // sign-in flows: copy the user into the account's named instance. Only when
+  // Studio knows no account yet, and only for a verified address (the rule the
+  // email sign-in enforces; Google addresses always are).
+  function _adoptSharedWebSession() {
+    const off = firebase.auth().onAuthStateChanged(async (user) => {
+      off();
+      if (!user || getAccounts().length) return;
+      const google = (user.providerData || []).some(p => p?.providerId === "google.com");
+      if (!user.emailVerified && !google) return;
+      try {
+        const uid = user.uid;
+        ensureFirebaseApp(uid);
+        await firebase.app(uid).auth().updateCurrentUser(user);
+        setActiveId(uid);
+        setupNamedAuth(uid);
+        await handleSignedIn(user, uid);
+      } catch (e) { reportError("auth.webSession", e); }
+    });
+  }
 
   /* ── account section UI ── */
   function getInitials(a) {
@@ -11603,6 +11638,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   /* ── view toggle ── */
   function setViewMode(mode, opts = {}) {
+    // Web build: the printer views need the LAN (not reachable from a browser yet).
+    if (!HAS_NATIVE && _isPrinterMode(mode)) mode = "grid";
     const prevMode = state.viewMode;
     state.viewMode = mode;
     // Changing the top view SEGMENT (Inventory / Favorites / Lists / Printers) resets
@@ -12886,7 +12923,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      migration (doc already exists with the right UID).
      Also clears needUpdateAt on success (chip is now in sync).               */
   async function _burnRfid(r) {
-    if (!window.electronAPI || state.nfcCardPresent.size === 0) return;
+    if (!HAS_NATIVE || state.nfcCardPresent.size === 0) return;
     const cloudDoc = state.inventory[r.spoolId];
     if (!cloudDoc) return;
 
@@ -13012,12 +13049,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const row = state.rows.find(x => x.spoolId === cloudId);
     if (!row) return;
     openDetail(cloudId);
-    if (window.electronAPI && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
+    if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
 
   // Burn offer only — no card change (the caller decides what to reveal).
   async function _offerBurnForCreated(cloudId) {
-    if (!window.electronAPI || !(state.nfcReaderCount > 0)) return;
+    if (!HAS_NATIVE || !(state.nfcReaderCount > 0)) return;
     const t0 = Date.now();
     while (!state.rows.some(x => x.spoolId === cloudId) && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
     const row = state.rows.find(x => x.spoolId === cloudId);
@@ -13025,7 +13062,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   function openEncodeModal(r) {
-    if (!window.electronAPI || !r?.isCloud) return;
+    if (!HAS_NATIVE || !r?.isCloud) return;
     _cemRow = r; _cemMode = "encode"; _cemState = "confirm"; _cemAborted = false;
     _cemChip = new Map(); _cemBlank = new Map(); _cemTargets = [];
     const ow = $("cemOwToggle"); if (ow) ow.checked = false;
@@ -13041,7 +13078,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // tag) reuse the same own-chip gating: the button stays disabled until every
   // chip of this spool sits on a reader and no foreign chip is in the way.
   function openUpdateModal(r, mode = "update") {
-    if (!window.electronAPI || !r || r.isCloud) return;
+    if (!HAS_NATIVE || !r || r.isCloud) return;
     if (state.nfcReaders.size === 0) { openTigerPodModal(); return; }
     _cemRow = r; _cemMode = mode; _cemState = "confirm"; _cemAborted = false;
     _cemChip = new Map(); _cemBlank = new Map(); _cemTargets = [];
@@ -21242,7 +21279,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // Cloud spool — never has a physical chip yet. Show a persistent encode CTA.
       // When a reader with a card is present: primary "Encode →" button.
       // Otherwise: ghost "TigerPOD →" button that links to the product page.
-      const hasCard = window.electronAPI && (state.nfcCardPresent?.size ?? 0) > 0;
+      const hasCard = HAS_NATIVE && (state.nfcCardPresent?.size ?? 0) > 0;
       chipBannerHtml = `
         <div class="chip-update-banner cloud-encode-banner" id="cloudEncodeBanner">
           <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
@@ -21502,7 +21539,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         //                      to functional live).
         //    The `*Locked` id variants carry no real wiring, so the functional
         //    handlers (wired by id) never fire on a greyed row. Skipped in friend view.
-        if (window.electronAPI && !state.friendView) {
+        if (HAS_NATIVE && !state.friendView) {
           // This spool's own chip(s) (uid + twin) currently on a reader.
           const _cardPresent    = state.nfcCardPresent.size > 0;
           const _hasBackup      = state.inventory?.[r.spoolId]?.rfidBackup === true;
@@ -36358,6 +36395,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     window.electronAPI.onDeepLink((url) => { try { _handleFriendDeepLink(url); } catch (e) { console.warn("[deep-link]", e); } });
     window.electronAPI.deepLinkReady();   // tell main to flush any cold-start link
   }
+  // Web build: the same link arrives as `?friend=XXX-YYY` (no custom protocol
+  // in a browser). Dropped from the address afterwards so a reload doesn't
+  // reopen the Add-friend box. Pre-fill only, like the desktop link.
+  if (!HAS_NATIVE) {
+    try {
+      const params = new URLSearchParams(location.search);
+      const friend = params.get("friend");
+      if (friend) {
+        params.delete("friend");
+        const q = params.toString();
+        history.replaceState(null, "", location.pathname + (q ? "?" + q : "") + location.hash);
+        _handleFriendDeepLink(friend);
+      }
+    } catch (e) { console.warn("[deep-link]", e); }
+  }
 
   $("addFriendClose").addEventListener("click", closeAddFriendModal);
   $("adfCancel").addEventListener("click", closeAddFriendModal);
@@ -37124,7 +37176,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         + (label.colorName ? " · " + label.colorName : "")).trim();
       _pushNotif({ type: "low_stock", icon: "package", action: "lowstock",
         title: name || t("notifLowStockTitle"), text: t("notifLowStockText", { n: stock, min }),
-        data: { key: p.key, img: cdnImg(resolvedImg(label.imgUrl), 36) || "" } });
+        // The PUBLIC url, never resolvedImg(): this doc syncs to the account's
+        // other devices and the web app, where a local /img-cache/ path is a 404.
+        data: { key: p.key, img: cdnImg(label.imgUrl, 36) || "" } });
     });
     if (changed) _saveLowStockActive(active);
   }
@@ -37280,7 +37334,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
       // Owner-authored event (low_stock / community / announcement): icon chip +
       // title + text + time, clickable to its action. NO delete (social-style feed).
-      const action = n.action || "", img = n.data?.img;
+      const action = n.action || "";
+      // Older low-stock notices stored the desktop's local /img-cache/ path —
+      // only that same desktop can show it.
+      const img = !HAS_NATIVE && String(n.data?.img || "").startsWith("/img-cache/") ? "" : n.data?.img;
       const brandIc = COMMUNITY[action] ? ` notif-ic--${action}` : (action === "lowstock" ? " notif-ic--lowstock" : "");
       const iconHtml = img
         ? `<span class="notif-ic notif-ic--img"><img src="${esc(img)}" alt="" onerror="this.style.display='none'" /></span>`
@@ -39296,7 +39353,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   });
 
   // ── Electron RFID integration ──
-  if (window.electronAPI) {
+  if (HAS_NATIVE) {
 
     // ── Reader indicator rendering (topbar) ─────────────────────────────────
     // One TigerPod icon (red = no reader · green = connected). The per-reader

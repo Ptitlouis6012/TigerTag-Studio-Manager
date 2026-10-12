@@ -31,7 +31,9 @@
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "oauth:config": "node scripts/gen-oauth-config.mjs",
     "theme:check": "node scripts/check-theme-tokens.mjs",
-    "ffmpeg:prepare": "node scripts/prepare-ffmpeg.mjs"
+    "ffmpeg:prepare": "node scripts/prepare-ffmpeg.mjs",
+    "web:build": "node scripts/build-web.mjs",
+    "web:serve": "node scripts/build-web.mjs && python3 -m http.server 5181 --directory dist-web"
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.4",

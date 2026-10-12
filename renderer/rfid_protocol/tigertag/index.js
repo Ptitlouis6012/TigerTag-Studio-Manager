@@ -155,7 +155,7 @@ export function initRfidTester() {
   });
 
   // Reader connected / disconnected
-  window.electronAPI?.onRfidReaderUpdate(({ name, connected }) => {
+  window.electronAPI?.onRfidReaderUpdate?.(({ name, connected }) => {
     if (connected) {
       _readers.set(name, { connected: true, cardPresent: false, uid: null, rawUid: null });
     } else {
@@ -165,7 +165,7 @@ export function initRfidTester() {
   });
 
   // Card placed / removed
-  window.electronAPI?.onRfidCardPresent(({ readerName, uid, rawUid }) => {
+  window.electronAPI?.onRfidCardPresent?.(({ readerName, uid, rawUid }) => {
     const r = _readers.get(readerName);
     if (r) {
       r.cardPresent = !!uid;

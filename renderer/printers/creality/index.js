@@ -89,7 +89,7 @@ export async function crePingPrinter(printer) {
 }
 
 export function crePingAllPrinters() {
-  for (const p of ctx.getState().printers) {
+  for (const p of ctx.getState().printers || []) {
     if (p.brand === "creality" && p.ip) crePingPrinter(p);
   }
 }
