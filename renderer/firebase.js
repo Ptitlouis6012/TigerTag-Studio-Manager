@@ -2,9 +2,19 @@
 // Must be loaded AFTER firebase-app-compat.js, firebase-auth-compat.js,
 // and firebase-firestore-compat.js (see inventory.html script tags).
 
+// Hosts that proxy Firebase Auth's /__/auth/* handler (TigerTag_Hub →
+// next.config.mjs). Studio Web signs in through its OWN domain there: Google's
+// account picker names it instead of tigertag-connect.firebaseapp.com, and the
+// sign-in stays first-party, which Safari / iOS / installed apps require. The
+// desktop app and any other host keep the default handler domain.
+const AUTH_PROXY_HOSTS = ["studio.tigersystem.io"];
+const AUTH_DOMAIN = window.electronAPI?.isWeb && AUTH_PROXY_HOSTS.includes(location.hostname)
+  ? location.hostname
+  : "tigertag-connect.firebaseapp.com";
+
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyCkxPTs_Cv0KVLqsZj-UKWWqIY0OtfVpnw",
-  authDomain:        "tigertag-connect.firebaseapp.com",
+  authDomain:        AUTH_DOMAIN,
   projectId:         "tigertag-connect",
   storageBucket:     "tigertag-connect.firebasestorage.app",
   messagingSenderId: "298062874545",
