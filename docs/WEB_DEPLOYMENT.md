@@ -42,9 +42,21 @@ TigerTag-Studio-Manager (this repo)            TigerTag_Hub (Next.js on Vercel)
 | Catalogue, product lookup | Auto-update, local AI-assistant (MCP) server |
 | Friends, friend link `?friend=XXX-YYY`, notifications | Native file dialogs (downloads go through the browser) |
 | TigerScale / TigerSpool state (cloud) | |
+| **Install as an app** (PWA): sidebar button on Chrome / Edge / Android, Share → Add to Home Screen on iPhone / iPad | |
 
 Printers are planned for the web too — through the brands' cloud APIs or a relay;
 see the plan.
+
+## Install as an app (PWA)
+
+The build writes `manifest.webmanifest` (name, standalone display, icons from
+`assets/favicon/`) and the iOS home-screen tags into `index.html`. Its scope is the
+served folder **without** the trailing slash (`/studio`), because the page itself
+lives at `/studio`. `web-bridge.js` keeps Chrome's `beforeinstallprompt`; the sidebar
+"Install the app" button (`#sbInstallBtn`, `data-web-only`) replays it, or on iOS
+unfolds the Share → Add to Home Screen hint. There is deliberately **no service
+worker**: Chrome no longer needs one to install, and an offline cache would keep
+serving the previous version after each release.
 
 ## Shared sign-in with the Hub
 

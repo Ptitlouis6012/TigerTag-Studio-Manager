@@ -110,6 +110,8 @@
   "notifSupporterText": "Tu apoyo acaba de llegar: gracias a ti, las novedades siguen. Únete a la TigerSquad desde el menú Apoyar para lucir el corazón dorado.",
   "notifXpTitle": "+{{xp}} XP al bolsillo",
   "sbDownloadBtn": "Descargas",
+  "sbInstallBtn": "Instalar la app",
+  "installIosHint": "Toca Compartir y luego «Añadir a pantalla de inicio». Studio se muda junto a tus otras apps.",
   "settingsTitle": "Ajustes",
   "stgUpdatesTitle": "Actualizaciones",
   "stgThemeRow": "Tema",

@@ -110,6 +110,8 @@
   "notifSupporterText": "Je steun is net binnen — dankzij jou blijven de updates komen. Word lid van de TigerSquad via het menu Steunen en draag het gouden hartje.",
   "notifXpTitle": "+{{xp}} XP binnen",
   "sbDownloadBtn": "Downloads",
+  "sbInstallBtn": "App installeren",
+  "installIosHint": "Tik op Deel en dan op ‘Zet op beginscherm’. Studio trekt in naast je andere apps.",
   "settingsTitle": "Instellingen",
   "stgUpdatesTitle": "Updates",
   "stgThemeRow": "Thema",

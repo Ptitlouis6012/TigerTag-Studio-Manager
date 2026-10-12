@@ -248,3 +248,6 @@
 `stgMcpTitle`, `stgMcpToggleSub` (ⓘ bubble), `eacMcpRow`, `stgMcpAddClaude`, `stgMcpAddCursor`, `stgMcpAddVscode` (aria labels), `stgMcpAddOpened` (`{{app}}`), `stgMcpAddFailed` (`{{app}}`), `stgMcpNewKey`, `stgMcpNewKeyTip`, `stgMcpError` (`{{error}}`)
 
 Online (hosted) connector: `eacMcpWebTitle`, `eacMcpWebSub`, `eacMcpWebHowto`, `eacMcpWebDiff`, `eacMcpGrantsTitle`, `eacMcpGrantsNone`, `eacMcpGrantsLoading`, `eacMcpGrantsErr`, `eacMcpGrantSince` (`{{date}}`), `eacMcpGrantUsed` (`{{ago}}`), `eacMcpGrantUnnamed`, `eacMcpGrantCut`, `eacMcpGrantCutTip`
+
+### Web build (Tiger Studio Web)
+Install as an app (sidebar, web only): `sbInstallBtn`, `installIosHint` (iOS: Share → Add to Home Screen)

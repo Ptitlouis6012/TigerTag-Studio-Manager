@@ -110,6 +110,8 @@
   "notifSupporterText": "Deine Unterstützung ist angekommen — dank dir gehen die Updates weiter. Tritt über das Menü „Unterstützen“ der TigerSquad bei und trag das goldene Herz.",
   "notifXpTitle": "+{{xp}} XP eingesackt",
   "sbDownloadBtn": "Downloads",
+  "sbInstallBtn": "App installieren",
+  "installIosHint": "Tippe auf Teilen, dann auf „Zum Home-Bildschirm“. Studio zieht neben deine anderen Apps.",
   "settingsTitle": "Einstellungen",
   "stgUpdatesTitle": "Updates",
   "stgThemeRow": "Design",

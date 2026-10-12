@@ -110,6 +110,8 @@
   "notifSupporterText": "你的支持已到账——多亏了你，更新还会继续。在“支持”菜单中加入 TigerSquad，戴上金色爱心。",
   "notifXpTitle": "+{{xp}} XP 入账",
   "sbDownloadBtn": "下载",
+  "sbInstallBtn": "安装应用",
+  "installIosHint": "点击“分享”，再选“添加到主屏幕”。Studio 就住进你的其他应用旁边啦。",
   "settingsTitle": "设置",
   "stgUpdatesTitle": "更新",
   "stgThemeRow": "主题",

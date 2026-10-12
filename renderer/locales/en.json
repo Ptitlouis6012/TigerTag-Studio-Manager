@@ -110,6 +110,8 @@
   "notifSupporterText": "Your support just landed — the updates keep coming thanks to you. Join the TigerSquad from the Support menu to wear the golden heart.",
   "notifXpTitle": "+{{xp}} XP in the bag",
   "sbDownloadBtn": "Downloads",
+  "sbInstallBtn": "Install the app",
+  "installIosHint": "Tap Share, then “Add to Home Screen”. Studio moves in next to your other apps.",
   "settingsTitle": "Settings",
   "stgUpdatesTitle": "Updates",
   "stgThemeRow": "Theme",

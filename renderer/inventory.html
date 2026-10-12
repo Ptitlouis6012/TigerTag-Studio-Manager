@@ -107,6 +107,13 @@
         <span class="icon icon-software-download icon-14"></span>
         <span class="label" data-i18n="sbDownloadBtn">Downloads</span>
       </button>
+      <!-- Web build only: install Studio as an app (PWA). Revealed by
+           inventory.js only when this browser can actually install it. -->
+      <button class="sb-download-btn sb-install-btn" id="sbInstallBtn" type="button" data-web-only hidden>
+        <span class="icon icon-home icon-14"></span>
+        <span class="label" data-i18n="sbInstallBtn">Install the app</span>
+      </button>
+      <p class="sb-install-hint" id="sbInstallHint" data-i18n="installIosHint" hidden></p>
       <!-- Documentation wiki (opens in the browser) -->
       <button class="sb-wiki-btn" id="sbWikiBtn">
         <span class="icon icon-book icon-14"></span>

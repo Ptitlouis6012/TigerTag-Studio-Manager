@@ -1063,3 +1063,4 @@
    tagged `data-desktop-only` is removed: RFID readers, USB devices, LAN
    printers, the app updater. The desktop app never gets the class. */
 html.is-web [data-desktop-only] { display: none !important; }
+html:not(.is-web) [data-web-only] { display: none !important; }

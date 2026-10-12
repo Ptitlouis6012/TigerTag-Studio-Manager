@@ -110,6 +110,8 @@
   "notifSupporterText": "O teu apoio acabou de chegar — as atualizações continuam graças a ti. Entra na TigerSquad pelo menu Apoiar para usares o coração dourado.",
   "notifXpTitle": "+{{xp}} XP no bolso",
   "sbDownloadBtn": "Transferências",
+  "sbInstallBtn": "Instalar a app",
+  "installIosHint": "Toca em Partilhar e depois em “Adicionar ao ecrã principal”. O Studio muda-se para junto das tuas outras apps.",
   "settingsTitle": "Definições",
   "stgUpdatesTitle": "Atualizações",
   "stgThemeRow": "Tema",

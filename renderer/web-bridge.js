@@ -21,6 +21,15 @@
   // Hides every `[data-desktop-only]` element (rule in css/00-base.css).
   document.documentElement.classList.add("is-web");
 
+  // Install as an app (PWA): Chrome / Edge / Android announce it once, possibly
+  // before the renderer module has loaded — keep the event for the sidebar's
+  // "Install the app" button (inventory.js) and tell it the moment it lands.
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    window.__studioInstallPrompt = e;
+    document.dispatchEvent(new Event("studio:installable"));
+  });
+
   // Replaced by scripts/build-web.mjs with package.json's version.
   const APP_VERSION = "__STUDIO_WEB_VERSION__";
 

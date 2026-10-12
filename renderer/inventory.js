@@ -22728,6 +22728,35 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   /* ── community buttons ── */
   $("sbWikiBtn").addEventListener("click", () => _clickCommunityBtn("wiki"));
+
+  // ── Install as an app (web build only) ────────────────────────────────────
+  // Chrome / Edge / Android: replay the install prompt web-bridge.js kept.
+  // iOS Safari has no prompt — installing is Share → Add to Home Screen, so the
+  // button unfolds that hint instead. Hidden when already running installed, and
+  // in browsers that can't install (the button only appears once one can).
+  if (!HAS_NATIVE) {
+    const btn = $("sbInstallBtn"), hint = $("sbInstallHint");
+    const installed = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+               || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS reports a Mac
+    if (btn && !installed) {
+      const reveal = () => { btn.hidden = false; };
+      if (isIos || window.__studioInstallPrompt) reveal();
+      document.addEventListener("studio:installable", reveal);
+      window.addEventListener("appinstalled", () => { btn.hidden = true; if (hint) hint.hidden = true; });
+      btn.addEventListener("click", async () => {
+        const prompt = window.__studioInstallPrompt;
+        if (prompt) {
+          window.__studioInstallPrompt = null;
+          prompt.prompt();
+          const { outcome } = await prompt.userChoice.catch(() => ({}));
+          if (outcome === "accepted") btn.hidden = true;
+          return;
+        }
+        if (hint) hint.hidden = !hint.hidden;
+      });
+    }
+  }
   // tigersystem.io serves the downloads page in these languages; others → English.
   $("sbDownloadBtn")?.addEventListener("click", () => {
     const site = ["fr", "en", "de", "es", "it", "zh", "pt", "pl"];
