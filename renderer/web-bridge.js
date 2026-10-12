@@ -32,6 +32,8 @@
 
   // Replaced by scripts/build-web.mjs with package.json's version.
   const APP_VERSION = "__STUDIO_WEB_VERSION__";
+  // Web hotfix number on top of that release (0 = the release itself).
+  const WEB_BUILD = Number("__STUDIO_WEB_BUILD__") || 0;
 
   // No version drift with the desktop app: a tab (or the installed app) left
   // open across a release must not keep running the old code. When the page
@@ -49,9 +51,10 @@
       lastCheck = Date.now();
       try {
         const r = await fetch(new URL("../version.json", document.baseURI), { cache: "no-store" });
-        const live = r.ok ? (await r.json()).version : null;
-        if (live && live !== APP_VERSION && !busy()) location.reload();
-        else if (live && live !== APP_VERSION) lastCheck = 0;   // retry next time
+        const v = r.ok ? await r.json() : null;
+        const changed = v && (v.version !== APP_VERSION || (v.webBuild || 0) !== WEB_BUILD);
+        if (changed && !busy()) location.reload();
+        else if (changed) lastCheck = 0;   // retry next time
       } catch { /* offline: try again later */ }
     };
     document.addEventListener("visibilitychange", check);
@@ -84,7 +87,8 @@
 
     async getAppInfo() {
       return {
-        appVersion: APP_VERSION.startsWith("__") ? "dev" : APP_VERSION,
+        appVersion: APP_VERSION.startsWith("__") ? "dev"
+                  : WEB_BUILD ? `${APP_VERSION} · web ${WEB_BUILD}` : APP_VERSION,
         platform:   "web",
         electron:   "n/a",
         chrome:     navigator.userAgent,

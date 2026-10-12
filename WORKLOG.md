@@ -1,23 +1,14 @@
-# Worklog — v2.39.1 (in progress)
+# Worklog — v2.40.1 (in progress)
 
 ## Added
-- Tiger Studio Web preparation plan (audit of the brief against the code, decisions, step plan) — `docs/STUDIO-WEB-PLAN.md`
-- Tiger Studio Web — browser bridge: a web `electronAPI` (links, app info, product lookup / refresh, full catalogue, image download) loaded only when the Electron preload is absent; `HAS_NATIVE` replaces the "electronAPI exists" desktop checks around RFID — `renderer/web-bridge.js`, `renderer/inventory.html`, `renderer/inventory.js`, `renderer/rfid_protocol/tigertag/index.js`
-- Tiger Studio Web — desktop-only UI hidden in a browser through one `data-desktop-only` attribute + `html.is-web` rule (NFC readers bar and tester, TD1S, updater card / icon / banner, printers views, camera detach); printer view modes fall back to the inventory grid — `renderer/inventory.html`, `renderer/css/00-base.css`, `renderer/inventory.js`
-- Tiger Studio Web — friend link `?friend=XXX-YYY` pre-fills Add-friend (web equivalent of `tigertag://friend/…`) — `renderer/inventory.js`
-- Tiger Studio Web — one sign-in with the Hub: on a first web visit Studio adopts the tigersystem.io Firebase session (verified addresses), signing in to Studio no longer signs the shared DEFAULT session out on the web, and signing out ends it only for the same account — `renderer/inventory.js` (`_adoptSharedWebSession`, sign-in flows, `fbSignOut`)
-- Tiger Studio Web — deployment guide (architecture, what works on the web, Hub/Vercel/DNS/Firebase setup) — `docs/WEB_DEPLOYMENT.md`
-- Tiger Studio Web — static build `npm run web:build` (`--out`, `--base /studio/`) → `dist-web/` with the app page at the root via `<base>`; `npm run web:serve` to try it locally — `scripts/build-web.mjs`, `package.json`, `.gitignore`
-- Tiger Studio Web — installable as an app (PWA): the web build ships a manifest (scope = the served folder, standalone, the app icons) and the home-screen tags iOS reads; an "Install the app" sidebar button appears only when the browser can install it (replays Chrome/Edge/Android's install prompt, unfolds the Share → Add to Home Screen hint on iPhone/iPad), hidden once installed; no service worker on purpose (no stale offline copy after a release) — `scripts/build-web.mjs`, `renderer/web-bridge.js`, `renderer/inventory.js`, `renderer/inventory.html`, `renderer/css/00-base.css` (`data-web-only`), `renderer/css/10-settings.css`
-- Tiger Studio Web — never drifts from the desktop app: `web-sync.yml` (release published → Hub deploy hook → waits for `tigersystem.io/studio/version.json` to match, red run otherwise); an open page or installed app reloads onto a new version when it comes back into view — `.github/workflows/web-sync.yml`, `renderer/web-bridge.js`, `docs/WEB_DEPLOYMENT.md`
+- Tiger Studio Web hotfixes — ship web-only fixes without a desktop build: `npm run web:hotfix` tags the commit `web-vX.Y.Z.N` (X.Y.Z = the latest release, checked against package.json); `web-sync.yml` also runs on those tags (refuses a non-latest base, deploys the Hub, waits for `{version, webBuild}`); the build stamps the web build number (`--web-build`, shown as "X.Y.Z · web N", part of the reload check); the Hub builds the highest hotfix of the latest release — `scripts/web-hotfix.mjs`, `scripts/build-web.mjs`, `renderer/web-bridge.js`, `.github/workflows/web-sync.yml`, `package.json`, `docs/WEB_HOTFIX.md`
 
 ## Changed
+- Studio Web served at the root of `studio.tigersystem.io` (no redirect); `tigersystem.io/studio` redirects there; separate sign-in from the Hub — `docs/WEB_DEPLOYMENT.md`, `docs/STUDIO-WEB-PLAN.md`, `README.md`, `FEATURES.md`, `llms.txt`, `scripts/build-web.mjs` (comments)
 
 ## Fixed
-- FlashForge / Snapmaker / Creality background ping threw every 30 s while signed out (no printer list yet) — `renderer/printers/{flashforge,snapmaker,creality}/index.js`
-- Low-stock notifications stored the desktop's local image-cache path (`/img-cache/…`) in Firestore, so the photo was missing on the account's other devices and on the web; they now store the public image URL, and the web skips the old local paths — `renderer/inventory.js`
+- Tiger Studio Web: the page no longer requests the Agora SDK (Anycubic cloud camera, desktop-only, not in git), which answered 404 on the web (shipped to the web as web-v2.40.0.1) — `scripts/build-web.mjs`
 
 ## Removed
 
 ## i18n
-- Added: `sbInstallBtn`, `installIosHint` — 11 locales

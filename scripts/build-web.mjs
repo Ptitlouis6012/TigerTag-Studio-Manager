@@ -12,8 +12,11 @@
 //     manifest.webmanifest → makes it installable as an app (PWA)
 //     version.json        → { version } for the host / support
 //
-// The Hub (TigerTag_Hub) serves this folder at tigersystem.io/studio/.
-// Usage: npm run web:build  [-- --out <dir>] [--base /studio/]
+// The Hub (TigerTag_Hub) builds this folder into its public/studio/ with
+// --base /studio/ and serves the page at the ROOT of studio.tigersystem.io (the
+// subdomain rewrites "/" to /studio/index.html; tigersystem.io/studio redirects
+// there).
+// Usage: npm run web:build  [-- --out <dir>] [--base /studio/] [--web-build N]
 
 import fs from "node:fs";
 import path from "node:path";
@@ -26,6 +29,11 @@ const OUT = path.resolve(ROOT, outArg > -1 ? process.argv[outArg + 1] : "dist-we
 const baseArg = process.argv.indexOf("--base");
 const BASE = (baseArg > -1 ? process.argv[baseArg + 1] : "/").replace(/\/?$/, "/");
 const VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+// Web hotfix number on top of the desktop release (tag web-vX.Y.Z.N → N; 0 =
+// the release itself). The X.Y.Z never moves without a desktop release — see
+// docs/WEB_HOTFIX.md.
+const wbArg = process.argv.indexOf("--web-build");
+const WEB_BUILD = wbArg > -1 ? Math.max(0, parseInt(process.argv[wbArg + 1], 10) || 0) : 0;
 
 // Top-level folders shipped to the browser.
 const INCLUDE = ["renderer", "data", "assets"];
@@ -63,18 +71,23 @@ for (const dir of INCLUDE) copyTree(dir);
 
 // Stamp the version into the web bridge (shown in Settings → About).
 const bridge = path.join(OUT, "renderer/web-bridge.js");
-fs.writeFileSync(bridge, fs.readFileSync(bridge, "utf8").replace("__STUDIO_WEB_VERSION__", VERSION));
+fs.writeFileSync(bridge, fs.readFileSync(bridge, "utf8")
+  .replace("__STUDIO_WEB_VERSION__", VERSION)
+  .replace("__STUDIO_WEB_BUILD__", String(WEB_BUILD)));
 
-// Entry point: the app page itself, served at the folder's root (e.g.
-// tigersystem.io/studio) so the address stays short. A <base> pointing at
-// renderer/ makes every relative URL of the page — stylesheets, scripts,
-// fetch("../data/…") — resolve exactly as it does from renderer/inventory.html.
-// It must be absolute: "/studio" (no trailing slash) would otherwise resolve
-// "renderer/" against "/". The page has no #anchors, which a <base> would break.
+// Entry point: the app page itself, at the folder's root — on the Hub it is
+// served at "/" of studio.tigersystem.io, an address that is NOT the folder the
+// files live in (/studio/). A <base> pointing at renderer/ makes every relative
+// URL of the page — stylesheets, scripts, fetch("../data/…") — resolve exactly as
+// it does from renderer/inventory.html. It must be absolute for that reason: a
+// relative "renderer/" would resolve against wherever the page is served. The
+// page has no #anchors, which a <base> would break.
 //
 // Installable app (PWA): a web manifest + the home-screen tags iOS reads. Its
-// scope is the folder WITHOUT the trailing slash, because the page itself is
-// served at "/studio" — a "/studio/" scope would leave the page outside it.
+// scope is the folder WITHOUT the trailing slash, so a page served at the bare
+// folder address stays inside it. The Hub then sets id / start_url / scope to
+// "/" after the build (scripts/fetch-studio-web.mjs), because there the
+// installed app lives at the root of studio.tigersystem.io.
 // No service worker: Chrome no longer requires one to install, and an offline
 // cache of a 38k-line app would serve a stale version after every release.
 const SCOPE = BASE === "/" ? "/" : BASE.replace(/\/$/, "");
@@ -104,10 +117,15 @@ const PWA_HEAD = [
   `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`,
 ].map(l => "  " + l).join("\n");
 
-const page = fs.readFileSync(path.join(ROOT, "renderer/inventory.html"), "utf8");
+// The Agora SDK (Anycubic cloud camera — desktop-only) is copied from
+// node_modules at install time and is not in git, so a clean checkout has no
+// file to serve; its <script> would 404. agora-cam.js already copes with a
+// missing `window.AgoraRTC`.
+const page = fs.readFileSync(path.join(ROOT, "renderer/inventory.html"), "utf8")
+  .replace(/^\s*<script src="lib\/agora\/[^"]+"><\/script>\s*\n/m, "");
 if (!/<head>/i.test(page)) throw new Error("inventory.html: no <head> to inject <base> into");
 fs.writeFileSync(path.join(OUT, "index.html"),
   page.replace(/<head>/i, `<head>\n  <base href="${BASE}renderer/">\n${PWA_HEAD}`));
-fs.writeFileSync(path.join(OUT, "version.json"), JSON.stringify({ version: VERSION }) + "\n");
+fs.writeFileSync(path.join(OUT, "version.json"), JSON.stringify({ version: VERSION, webBuild: WEB_BUILD }) + "\n");
 
-console.log(`web build v${VERSION} (base ${BASE}) → ${path.relative(ROOT, OUT) || OUT}/  (${files} files, ${(bytes / 1048576).toFixed(1)} MB)`);
+console.log(`web build v${VERSION}${WEB_BUILD ? ` · web ${WEB_BUILD}` : ""} (base ${BASE}) → ${path.relative(ROOT, OUT) || OUT}/  (${files} files, ${(bytes / 1048576).toFixed(1)} MB)`);

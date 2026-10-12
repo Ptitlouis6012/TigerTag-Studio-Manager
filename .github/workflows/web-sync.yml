@@ -1,13 +1,18 @@
 name: Web sync
 
-# Tiger Studio Web (tigersystem.io/studio) and the desktop app must ALWAYS be on
+# Tiger Studio Web (studio.tigersystem.io) and the desktop app must ALWAYS be on
 # the same version. Both follow the published "latest" GitHub Release: the
 # desktop auto-updater installs it, and the Hub builds it into /studio on every
-# deploy (TigerTag_Hub → scripts/fetch-studio-web.mjs). The moment a release is
-# PUBLISHED (drafts don't count — that is when desktops start updating), this
-# triggers a Hub production deploy, then waits until the live site serves that
-# exact version, and fails loudly if it doesn't — a red run here means desktop
-# and web are out of sync.
+# deploy (TigerTag_Hub → scripts/fetch-studio-web.mjs).
+#
+# Two triggers, one job — deploy the Hub, then wait until the live site serves
+# exactly the expected build, and fail loudly if it doesn't (a red run here means
+# desktop and web are out of sync):
+#   • a release is PUBLISHED (drafts don't count — that is when desktops start
+#     updating) → expect "X.Y.Z", web build 0;
+#   • a web hotfix tag `web-vX.Y.Z.N` is pushed (docs/WEB_HOTFIX.md) → expect
+#     "X.Y.Z · web N", with no desktop build at all. X.Y.Z must be the latest
+#     release, or the tag is refused.
 #
 # Secret: HUB_DEPLOY_HOOK_URL — the Vercel deploy hook "studio-release" of the
 # tiger-tag-hub project (Settings → Git → Deploy Hooks, branch main).
@@ -15,6 +20,9 @@ name: Web sync
 on:
   release:
     types: [published]
+  push:
+    tags:
+      - 'web-v*'
   workflow_dispatch:
 
 jobs:
@@ -22,7 +30,31 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Trigger the Hub deploy (builds this release into /studio)
+      - name: Work out the expected web version
+        id: want
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          latest=$(curl -fsSI "https://github.com/${{ github.repository }}/releases/latest" \
+                   | tr -d '\r' | sed -n 's#^[Ll]ocation: .*/releases/tag/v##p')
+          if [ "$EVENT" = "push" ]; then
+            base="${REF_NAME#web-v}"; build="${base##*.}"; base="${base%.*}"
+            if [ "$base" != "$latest" ]; then
+              echo "::error::$REF_NAME is a hotfix of $base, but the latest release is $latest — the Hub would ignore it"
+              exit 1
+            fi
+          elif [ "$EVENT" = "release" ]; then
+            base="${RELEASE_TAG#v}"; build=0
+          else   # manual run: whatever the Hub should currently serve
+            base="$latest"; build=""
+          fi
+          echo "version=$base" >> "$GITHUB_OUTPUT"
+          echo "build=$build" >> "$GITHUB_OUTPUT"
+          echo "Expecting $base${build:+ · web $build}"
+
+      - name: Trigger the Hub deploy
         env:
           HOOK: ${{ secrets.HUB_DEPLOY_HOOK_URL }}
         run: |
@@ -30,21 +62,20 @@ jobs:
           curl -fsS -X POST "$HOOK" > /dev/null
           echo "Hub deploy triggered"
 
-      - name: Wait until tigersystem.io/studio serves this version
+      - name: Wait until studio.tigersystem.io serves it
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          WANT_VERSION: ${{ steps.want.outputs.version }}
+          WANT_BUILD: ${{ steps.want.outputs.build }}
         run: |
-          if [ -z "$TAG" ]; then   # manual run: the current latest release
-            TAG=$(curl -fsSI "https://github.com/${{ github.repository }}/releases/latest" \
-                  | tr -d '\r' | sed -n 's#^[Ll]ocation: .*/releases/tag/##p')
-          fi
-          want="${TAG#v}"
           for i in $(seq 1 60); do
-            live=$(curl -fsS "https://tigersystem.io/studio/version.json?t=$(date +%s)" 2>/dev/null \
-                   | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p')
-            echo "live=${live:-none}  release=$want"
-            [ "$live" = "$want" ] && { echo "Web and desktop are both on $want"; exit 0; }
+            json=$(curl -fsS "https://studio.tigersystem.io/studio/version.json?t=$(date +%s)" 2>/dev/null || true)
+            live=$(echo "$json" | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p')
+            lb=$(echo "$json" | sed -n 's/.*"webBuild": *\([0-9]*\).*/\1/p'); lb=${lb:-0}
+            echo "live=${live:-none} · web ${lb}   want=$WANT_VERSION${WANT_BUILD:+ · web $WANT_BUILD}"
+            if [ "$live" = "$WANT_VERSION" ] && { [ -z "$WANT_BUILD" ] || [ "$lb" = "$WANT_BUILD" ]; }; then
+              echo "Web is on $live${WANT_BUILD:+ · web $WANT_BUILD}, desktop on $WANT_VERSION"; exit 0
+            fi
             sleep 20
           done
-          echo "::error::tigersystem.io/studio serves ${live:-nothing} but the release is $want — web and desktop are out of sync"
+          echo "::error::studio.tigersystem.io serves ${live:-nothing} · web ${lb}, expected $WANT_VERSION${WANT_BUILD:+ · web $WANT_BUILD} — web and desktop are out of sync"
           exit 1
