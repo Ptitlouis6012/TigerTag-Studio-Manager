@@ -1580,7 +1580,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function printerModelName(brand, modelId) {
     const m = findPrinterModel(brand, modelId);
-    return m ? m.name : (modelId || "—");
+    // A model no longer in the catalogue (e.g. FlashForge "A5", removed in #29):
+    // a bare catalogue number means nothing to the user.
+    return m ? m.name : (modelId && !/^\d+$/.test(String(modelId)) ? modelId : "—");
   }
   function printerModelFeatures(brand, modelId) {
     const m = findPrinterModel(brand, modelId);
@@ -8968,8 +8970,50 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       : `<span class="thumb-color" style="width:${size}px;height:${size}px;background:${colorBg(row)}"><img src="${logoSrc(colorBg(row))}" /></span>`;
     const shopBadge = badges ? _productBadgesHTML(row, { compact: true }) : "";
     // --spool-bg: the spool colour, painted round the photo as a frame (CSS).
-    return `<span class="thumb-wrap" style="--spool-bg:${colorBg(row)}">${inner}${overlay}${tdBadge}${chipBadge}${shopBadge}</span>`;
+    // data-zoom: the sharper rendition the hover preview shows (_wireThumbZoom).
+    const zoom = row.imgUrl ? ` data-zoom="${esc(cdnImg(resolvedImg(row.imgUrl), THUMB_ZOOM_PX))}"` : "";
+    return `<span class="thumb-wrap" style="--spool-bg:${colorBg(row)}"${zoom}>${inner}${overlay}${tdBadge}${chipBadge}${shopBadge}</span>`;
   }
+
+  // Hover a table thumbnail → a larger preview beside it (issue #67), in every
+  // table that uses thumbHTML (inventory, catalogue, lists). One body-level
+  // element, so no table overflow clips it; a short delay so sweeping the mouse
+  // down the column doesn't flash a preview per row.
+  const THUMB_ZOOM_PX = 220;
+  let _thumbZoomEl = null, _thumbZoomTimer = 0, _thumbZoomFor = null;
+  function _hideThumbZoom() {
+    clearTimeout(_thumbZoomTimer); _thumbZoomFor = null;
+    _thumbZoomEl?.classList.remove("is-on");
+  }
+  function _showThumbZoom(wrap) {
+    if (!_thumbZoomEl) {
+      _thumbZoomEl = document.createElement("div");
+      _thumbZoomEl.className = "thumb-zoom";
+      _thumbZoomEl.setAttribute("aria-hidden", "true");
+      _thumbZoomEl.innerHTML = `<img alt="">`;
+      document.body.appendChild(_thumbZoomEl);
+    }
+    const img = _thumbZoomEl.firstChild;
+    if (img.getAttribute("src") !== wrap.dataset.zoom) img.src = wrap.dataset.zoom;
+    _thumbZoomEl.style.setProperty("--spool-bg", wrap.style.getPropertyValue("--spool-bg") || "transparent");
+    const r = wrap.getBoundingClientRect(), size = THUMB_ZOOM_PX + 12, gap = 12;
+    const left = r.right + gap + size < innerWidth ? r.right + gap : Math.max(8, r.left - gap - size);
+    const top = Math.min(Math.max(8, r.top + r.height / 2 - size / 2), innerHeight - size - 8);
+    _thumbZoomEl.style.left = `${left}px`;
+    _thumbZoomEl.style.top = `${top}px`;
+    _thumbZoomEl.classList.add("is-on");
+  }
+  document.addEventListener("mouseover", e => {
+    const wrap = e.target.closest?.("td .thumb-wrap[data-zoom], td .cv-thumb[data-zoom]");
+    if (wrap === _thumbZoomFor) return;
+    _hideThumbZoom();
+    if (!wrap) return;
+    _thumbZoomFor = wrap;
+    _thumbZoomTimer = setTimeout(() => { if (_thumbZoomFor === wrap && wrap.isConnected) _showThumbZoom(wrap); }, 220);
+  });
+  // Scrolling or clicking moves the row away from under the preview.
+  document.addEventListener("scroll", _hideThumbZoom, true);
+  document.addEventListener("mousedown", _hideThumbZoom, true);
 
   // Fill-bar colour by remaining-filament percentage — kept iso with the
   // Flutter mobile app: <20% red, <50% orange, ≥50% green (Material palette).
@@ -14496,7 +14540,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _catThumbHTML(r, size = 50) {
     const bg  = colorBg(r);
     const src = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), size) : null;
-    return `<span class="cv-thumb" style="width:${size}px;height:${size}px;background:${bg}">`
+    // data-zoom: the hover preview, as on the inventory table (_showThumbZoom).
+    const zoom = r.imgUrl ? ` data-zoom="${esc(cdnImg(resolvedImg(r.imgUrl), THUMB_ZOOM_PX))}"` : "";
+    return `<span class="cv-thumb" style="width:${size}px;height:${size}px;background:${bg};--spool-bg:${bg}"${zoom}>`
          + `<img class="cv-thumb-logo" src="${logoSrc(bg)}" alt="" />`
          + (src ? `<img class="cv-thumb-img" data-img-src="${esc(src)}" alt="" />` : "")
          + `</span>`;
@@ -32495,9 +32541,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      after the last wheel notch on it or the last scroll of a results list (each
      new notch / scroll restarts the second). One state, so no source can bring
      the photos back while another is still going. */
-  let _hueDragActive = false, _photoHoldT = 0;
+  let _hueDragActive = false, _photoHoldT = 0, _photoFadeT = 0;
   function _hueHoldSync() {
-    document.body.classList.toggle("photos-held", _hueDragActive || !!_photoHoldT);
+    const held = _hueDragActive || !!_photoHoldT;
+    const was = document.body.classList.contains("photos-held");
+    document.body.classList.toggle("photos-held", held);
+    // Released → the photos fade back in instead of popping (class kept just
+    // for the length of the CSS fade).
+    if (held) { clearTimeout(_photoFadeT); document.body.classList.remove("photos-fade-in"); }
+    else if (was) {
+      document.body.classList.add("photos-fade-in");
+      clearTimeout(_photoFadeT);
+      _photoFadeT = setTimeout(() => document.body.classList.remove("photos-fade-in"), 850);
+    }
   }
   function _photoHold() {
     clearTimeout(_photoHoldT);

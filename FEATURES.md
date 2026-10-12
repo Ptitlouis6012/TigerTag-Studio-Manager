@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.38.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.39.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -39,6 +39,8 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - Grouping of identical spools — table view first (v1.10.15), then grid view + a dedicated group side panel with a live speedometer gauge of combined remaining weight (v1.10.18); grouping includes TigerData spools (v1.10.16) and distinguishes different colours/aspects within the same brand+material (v1.10.31).
 - **Colour-framed spool photos** — every spool photo (grid, lists, wishlist, catalogue, detail and product cards) sits in a frame of the spool's own colour, replacing the separate colour dots; bicolor spools split on the 135° diagonal (v2.30.0; soft two-tone split and Tricolor colour wheel v2.31.0).
 - Grid cards: a name too long for its card scrolls into view on hover (v2.30.0).
+- Table thumbnails (inventory, catalogue, lists): hover for a 220 px preview framed in the spool colour (v2.39.0).
+- Photos fade out and back in around a scroll instead of blinking, the TigerTag logo crossfading with them (v2.39.0).
 - Photos are held back while results scroll or the colour filter moves, and appear already loaded (v2.30.0).
 - **Create → chip in one gesture** — after adding a material (manually or from the catalogue) its own card opens; with an NFC reader plugged in the guided burn follows, making a manual entry a TigerTag and a catalogue one a TigerTag+ (v2.31.0).
 - Add Product live preview — the colour preview is the exact grid card the spool will have, updated as the form is filled (v2.31.0).
@@ -267,6 +269,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **Screenshot editor** — arrows, lines, boxes, circles, pen, highlighter, text, numbered steps and a blur for private details; every mark stays editable until Done, with undo / redo and shortcuts (v2.36.0).
 - **My requests** — status of every request (sent, in progress, done, not planned, closed by you), close your own, and a notification when one changes (v2.36.0).
 - Reply notifications — a team reply on one of your requests raises a notification; JSON attachments accepted (v2.37.0).
+- Reports carry the reporter's TigerSquad badge and XP, read server-side (v2.39.0).
 
 ## "What's New" & release UX
 

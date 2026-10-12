@@ -96,7 +96,6 @@ export function ffgModelIdFromMachineModel(model) {
       s.includes("adventurer 5m pro"))                      return "3";
   if ((s.includes("5m") || s.includes("adventurer 5m")) &&
       !s.includes("pro"))                                   return "2";
-  if (s.includes(" a5") || s.includes("adventurer a5"))     return "4";
   return "0";
 }
 

@@ -1,4 +1,96 @@
 {
+  "2.39.0": {
+    "date": "2026-10-12",
+    "items": [
+      {
+        "icon": "speed",
+        "title": {
+          "en": "Your fans can take a nap",
+          "fr": "Tes ventilateurs peuvent faire la sieste",
+          "de": "Deine Lüfter dürfen ein Nickerchen machen",
+          "es": "Tus ventiladores ya pueden echarse la siesta",
+          "it": "Le tue ventole possono fare un pisolino",
+          "zh": "你的风扇可以歇会儿了",
+          "pt": "Seus ventiladores podem tirar um cochilo",
+          "pt-pt": "As tuas ventoinhas podem dormir uma sesta",
+          "pl": "Twoje wentylatory mogą uciąć sobie drzemkę",
+          "ru": "Твои вентиляторы могут вздремнуть",
+          "nl": "Je ventilatoren mogen een dutje doen"
+        },
+        "body": {
+          "en": "Tiger Studio now barely touches your processor while it sits there doing nothing — about ten times less than before. Quieter machine, cooler laptop, same app.",
+          "fr": "Tiger Studio ne sollicite presque plus ton processeur quand il ne fait rien — environ dix fois moins qu'avant. Machine plus silencieuse, portable plus frais, même appli.",
+          "de": "Tiger Studio beansprucht deinen Prozessor im Leerlauf kaum noch — etwa zehnmal weniger als vorher. Leiserer Rechner, kühlerer Laptop, gleiche App.",
+          "es": "Tiger Studio apenas toca tu procesador mientras está en reposo: unas diez veces menos que antes. Máquina más silenciosa, portátil más fresco, la misma app.",
+          "it": "Tiger Studio ora sfiora appena il processore quando è inattivo: circa dieci volte meno di prima. PC più silenzioso, portatile più fresco, stessa app.",
+          "zh": "Tiger Studio 闲置时几乎不再占用处理器——大约只有之前的十分之一。机器更安静，笔记本更凉快，应用还是那个应用。",
+          "pt": "O Tiger Studio quase não usa mais o processador quando está parado — cerca de dez vezes menos que antes. Máquina mais silenciosa, notebook mais fresco, mesmo app.",
+          "pt-pt": "O Tiger Studio quase não usa o processador quando está parado — cerca de dez vezes menos do que antes. Máquina mais silenciosa, portátil mais fresco, a mesma app.",
+          "pl": "Tiger Studio w bezczynności prawie nie rusza już procesora — mniej więcej dziesięć razy mniej niż wcześniej. Cichszy komputer, chłodniejszy laptop, ta sama aplikacja.",
+          "ru": "В простое Tiger Studio теперь почти не трогает процессор — примерно в десять раз меньше, чем раньше. Тише компьютер, холоднее ноутбук, то же приложение.",
+          "nl": "Tiger Studio raakt je processor nauwelijks nog aan als hij niets doet — zo'n tien keer minder dan eerst. Stillere computer, koelere laptop, dezelfde app."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "Hover a thumbnail, get the big picture",
+          "fr": "Survole une miniature, profite de la vue",
+          "de": "Über ein Vorschaubild fahren, Großansicht bekommen",
+          "es": "Pasa el ratón por una miniatura y mírala en grande",
+          "it": "Passa sopra una miniatura e guardala in grande",
+          "zh": "鼠标停在缩略图上，就能看大图",
+          "pt": "Passe o mouse na miniatura e veja em tamanho grande",
+          "pt-pt": "Passa o rato pela miniatura e vê-a em grande",
+          "pl": "Najedź na miniaturkę i zobacz ją w dużym rozmiarze",
+          "ru": "Наведи на миниатюру — и увидишь её крупно",
+          "nl": "Ga over een miniatuur en zie hem in het groot"
+        },
+        "body": {
+          "en": "In the inventory, catalogue and list tables, rest your mouse on a spool's thumbnail: a bigger, sharper preview pops up next to it, framed in the spool's colour. Squinting is officially optional.",
+          "fr": "Dans les tableaux de l'inventaire, du catalogue et des listes, laisse ta souris sur la miniature d'une bobine : un aperçu plus grand et plus net apparaît juste à côté, encadré de sa couleur. Plisser les yeux devient officiellement facultatif.",
+          "de": "In den Tabellen von Inventar, Katalog und Listen: Maus kurz auf dem Vorschaubild einer Spule lassen, und daneben erscheint eine größere, schärfere Ansicht im Farbrahmen der Spule. Zusammenkneifen der Augen ist offiziell optional.",
+          "es": "En las tablas del inventario, el catálogo y las listas, deja el ratón sobre la miniatura de una bobina: aparece al lado una vista más grande y nítida, enmarcada en su color. Entrecerrar los ojos pasa a ser opcional.",
+          "it": "Nelle tabelle di inventario, catalogo ed elenchi, lascia il mouse sulla miniatura di una bobina: accanto appare un'anteprima più grande e nitida, incorniciata nel suo colore. Strizzare gli occhi diventa ufficialmente facoltativo.",
+          "zh": "在库存、目录和清单的表格中，把鼠标停在线轴的缩略图上：旁边会弹出更大更清晰的预览，还带着线轴的颜色边框。眯眼看图正式成为可选项。",
+          "pt": "Nas tabelas do inventário, do catálogo e das listas, deixe o mouse sobre a miniatura de um carretel: uma prévia maior e mais nítida aparece ao lado, emoldurada na cor dele. Apertar os olhos agora é opcional.",
+          "pt-pt": "Nas tabelas do inventário, do catálogo e das listas, deixa o rato sobre a miniatura de uma bobina: aparece ao lado uma pré-visualização maior e mais nítida, emoldurada na cor dela. Semicerrar os olhos passa a ser opcional.",
+          "pl": "W tabelach inwentarza, katalogu i list zatrzymaj kursor na miniaturce szpuli: obok pojawi się większy, ostrzejszy podgląd w ramce w jej kolorze. Mrużenie oczu oficjalnie nieobowiązkowe.",
+          "ru": "В таблицах инвентаря, каталога и списков задержи мышь на миниатюре катушки: рядом появится крупное и чёткое превью в рамке её цвета. Щуриться официально необязательно.",
+          "nl": "In de tabellen van inventaris, catalogus en lijsten: laat je muis even op de miniatuur van een spoel rusten en er verschijnt een grotere, scherpere voorvertoning ernaast, omlijst in de kleur van de spoel. Turen is officieel optioneel."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Smooth scrolling, no more blinking",
+          "fr": "Défilement tout doux, fini les clignotements",
+          "de": "Sanftes Scrollen, Schluss mit dem Geflacker",
+          "es": "Desplazamiento suave, adiós parpadeos",
+          "it": "Scorrimento morbido, addio sfarfallii",
+          "zh": "滚动更顺滑，告别闪烁",
+          "pt": "Rolagem suave, sem piscadas",
+          "pt-pt": "Deslocamento suave, adeus piscadelas",
+          "pl": "Płynne przewijanie, koniec z miganiem",
+          "ru": "Плавная прокрутка, никакого мигания",
+          "nl": "Soepel scrollen, geen geknipper meer"
+        },
+        "body": {
+          "en": "While you scroll the catalogue or your inventory, photos now fade out and drift back in gently, and the TigerTag logo swaps places with them. Easy on the eyes, even at full scroll speed.",
+          "fr": "Quand tu fais défiler le catalogue ou ton inventaire, les photos s'effacent puis reviennent en douceur, et le logo TigerTag prend le relais entre-temps. Reposant pour les yeux, même en défilant à fond.",
+          "de": "Beim Scrollen durch Katalog oder Inventar blenden die Fotos jetzt sanft aus und wieder ein, und das TigerTag-Logo übernimmt dazwischen. Augenschonend, selbst im Vollgas-Scroll.",
+          "es": "Al desplazarte por el catálogo o tu inventario, las fotos ahora se desvanecen y vuelven con suavidad, y el logo de TigerTag toma el relevo mientras tanto. Descansado para la vista, incluso a toda velocidad.",
+          "it": "Mentre scorri il catalogo o l'inventario, le foto ora sfumano e ricompaiono dolcemente, e nel frattempo il logo TigerTag prende il loro posto. Riposante per gli occhi, anche a tutta velocità.",
+          "zh": "滚动目录或库存时，照片会柔和地淡出再淡入，TigerTag 标志在中间接班。即使飞速滚动，眼睛也很舒服。",
+          "pt": "Ao rolar o catálogo ou o inventário, as fotos agora somem e voltam suavemente, e o logo TigerTag assume o lugar no meio-tempo. Tranquilo para os olhos, mesmo rolando a mil.",
+          "pt-pt": "Ao percorrer o catálogo ou o inventário, as fotos desvanecem e voltam com suavidade, e o logótipo TigerTag ocupa o lugar entretanto. Descansado para os olhos, mesmo a toda a velocidade.",
+          "pl": "Podczas przewijania katalogu lub inwentarza zdjęcia płynnie znikają i wracają, a logo TigerTag w tym czasie zajmuje ich miejsce. Przyjemne dla oczu, nawet przy szybkim przewijaniu.",
+          "ru": "При прокрутке каталога или инвентаря фото теперь мягко исчезают и возвращаются, а логотип TigerTag пока подменяет их. Глазам спокойно, даже на полной скорости.",
+          "nl": "Tijdens het scrollen door de catalogus of je inventaris vervagen de foto's nu zachtjes en komen ze rustig terug, terwijl het TigerTag-logo hun plek even inneemt. Rustig voor de ogen, zelfs op volle snelheid."
+        }
+      }
+    ]
+  },
   "2.38.0": {
     "date": "2026-10-11",
     "items": [

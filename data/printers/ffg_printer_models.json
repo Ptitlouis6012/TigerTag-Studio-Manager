@@ -18,12 +18,6 @@
     "features": ["CFS", "Lidar", "Camera", "Enclosed"]
   },
   {
-    "id": "4",
-    "name": "A5",
-    "image": "assets/images/ffg_printers/a5.png",
-    "features": ["CFS", "Lidar", "Camera", "Enclosed"]
-  },
-  {
     "id": "5",
     "name": "Creator 5",
     "image": "assets/images/ffg_printers/creator_5.png",

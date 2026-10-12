@@ -5,6 +5,30 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.39.0 — 2026-10-12
+
+### Added
+- **Hover preview of table thumbnails** (issue #67) — in the inventory, catalogue and list tables, resting the mouse on a spool's / product's thumbnail shows a 220 px preview beside it: framed in the spool colour (`--spool-bg`), the sharper CDN rendition (`data-zoom` = `cdnImg(…, 220)` on `thumbHTML` / `_catThumbHTML`), one body-level `.thumb-zoom` element (never clipped by the table), shown after 220 ms so sweeping down the column doesn't flash, hidden on scroll / mousedown, placed left when there is no room on the right (`_showThumbZoom`).
+- **TigerSquad badge and XP in reports** — the GitHub issue's *Environment* table carries the reporter's level and XP ("1,282 XP · 19 TigerTag+ Certified · 45 TigerTag chips"), read by `reportIssue` from `userProfiles/{uid}.tigerSquad.tier` and `users/{uid}.xpPoints` / `certifiedPlusCount` / `tigerTagCount` — never taken from the app; the report's "Automatic information" panel shows them before sending.
+
+### Changed
+- **Photos fade while a results list scrolls** — instead of vanishing and popping back, photos fade out (0.35 s) during the scroll hold and back in (0.8 s) one second after it, while the TigerTag logo on the colour square crossfades the other way. The fade exists only around the hold (`body.photos-held` → `body.photos-fade-in`, set for the length of the fade), never on a normal load, so grid rebuilds still don't blink (`_hueHoldSync`).
+- **TigerSquad rankings** — Countries League and Makers ranks read "#1", "#2"… (wider, tabular rank column).
+- **"TigerTag+ Certified"** — the product name (untranslated) replaces "certified TigerTag+" in the TigerSquad texts in every locale.
+- Bundled reference data: brand **IEMAI** (id 50266) added — 137 brands; catalogue unchanged (14,463 products).
+
+### Fixed
+- **High CPU at idle** (issue #66) — looping CSS animations kept the renderer re-compositing the whole window at 60 fps. Measured on a Mac, idle on the inventory **51 % → 5.6 %** renderer CPU, printers view **49.5 % → 20 %** (Linux with software compositing was hit harder). Closed windows and the account menu stay in the page at opacity 0, so their pulses, spinners, rings and light sweep never stopped: everything inside a closed `.modal-overlay` or `.acct-dropdown` is now `animation-play-state: paused` (resumes on open); the TigerSpool / TigerScale "live" ping and the printers' "online" dot pulse 3 times when they come online, then stay lit.
+- **Avatar photos that fail to load** now fall back to the initials: the inline `onerror` removed the image before switching its parent to initials mode, so it found no parent and the avatar stayed blank (rankings, friends' lists…). Photos are also requested with `referrerpolicy="no-referrer"`.
+
+### Removed
+- **FlashForge "Adventurer A5"** (issue #29) — no such model exists in FlashForge's range (Adventurer 5M / 5M Pro / AD5X); the entry was a placeholder with the 5M Pro picture. Removed from `data/printers/ffg_printer_models.json`, the connection tutorial's model picker, the network-scan detection (`probe.js`) and its two images. A printer saved with a model no longer in the catalogue now shows "—" instead of a bare catalogue number (`printerModelName`).
+
+### i18n
+- Added: `reportInfoBadge`, `reportInfoXp`; changed: `squadXpLine`, `squadLevelUpText_platinum`, `xpNextPlatinumHow`, `xpChipsHint`, `squadRule_silver`, `squadRule_platinum`, `squadRuleXp` — 11 locales.
+
+---
+
 ## v2.38.0 — 2026-10-11
 
 ### Added

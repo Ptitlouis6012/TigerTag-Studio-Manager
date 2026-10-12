@@ -1851,11 +1851,27 @@
   .spool-card .card-img--overlay.img-loaded { opacity: 1; }
   /* Photos held back (body.photos-held): while the colour-filter window is
      dragged, and for 1 s after the last wheel notch on it or the last scroll
-     of a results list — the items show only their colour. `visibility`, not
-     `display`, so the images keep loading and are simply there when released. */
+     of a results list — the items show only their colour. Faded out, not
+     `display: none`, so the images keep loading and are simply there when released. */
   body.photos-held .spool-card .card-img--overlay,
   body.photos-held .thumb-wrap > img.thumb,
-  body.photos-held .inv-catalog-view .cv-thumb-img { visibility: hidden; }
+  body.photos-held .inv-catalog-view .cv-thumb-img { opacity: 0; transition: opacity .35s ease; }
+  /* …and they fade back in when released (body.photos-fade-in, set for the
+     length of the fade only). The fade lives on these two states and nowhere
+     else: a fade on every load would blink each card at every grid rebuild. */
+  body.photos-fade-in .spool-card .card-img--overlay,
+  body.photos-fade-in .thumb-wrap > img.thumb,
+  body.photos-fade-in .inv-catalog-view .cv-thumb-img { transition: opacity .8s ease; }
+  /* The TigerTag logo on the colour square is the photo's understudy: it fades
+     out as the illustration fades in, and back when the photos are held — same
+     timing, crossfading instead of showing through the half-transparent photo.
+     Instant on a normal load, like the photo itself. */
+  .spool-card .card-img-color-placeholder:has(> .card-img--overlay.img-loaded) > img:first-child,
+  .inv-catalog-view :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo { opacity: 0; }
+  body.photos-held .spool-card .card-img-color-placeholder:has(> .card-img--overlay.img-loaded) > img:first-child,
+  body.photos-held .inv-catalog-view :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo { opacity: 1; transition: opacity .35s ease; }
+  body.photos-fade-in .spool-card .card-img-color-placeholder > img:first-child,
+  body.photos-fade-in .inv-catalog-view .cv-thumb-logo { transition: opacity .8s ease; }
   /* A product thumb carries its colour ON the <img> (frame = its background),
      so hiding the element would blank the whole tile. Push only the photo out
      of the box instead: the tile stays a full colour swatch, like the grid. */
@@ -4847,3 +4863,15 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
 .cv-empty-cta { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border: 0; border-radius: 10px; background: var(--primary); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer; }
 .cv-empty-cta .icon { background: #fff; }
 .cv-empty-cta:hover { filter: brightness(1.08); }
+
+/* Hover preview of a table thumbnail (issue #67): the photo at 220 px, framed in
+   the spool colour like the thumbnail itself; scales in from its edge. */
+.thumb-zoom {
+  position: fixed; z-index: 9000; pointer-events: none;
+  padding: 6px; border-radius: 16px; background: var(--spool-bg, var(--surface));
+  box-shadow: 0 18px 40px -10px rgba(0, 0, 0, .55), 0 0 0 1px var(--ink-08);
+  opacity: 0; transform: scale(.92); transition: opacity .14s ease, transform .16s cubic-bezier(.2, .8, .2, 1);
+}
+.thumb-zoom.is-on { opacity: 1; transform: none; }
+.thumb-zoom img { display: block; width: 220px; height: 220px; object-fit: cover; border-radius: 11px; background: var(--surface); }
+@media (prefers-reduced-motion: reduce) { .thumb-zoom { transition: none; } }

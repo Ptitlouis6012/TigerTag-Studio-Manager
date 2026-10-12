@@ -140,7 +140,6 @@ function qualityScore(c) {
 | `ad5x` | `"1"` | AD5X |
 | `5m pro`, `5mpro`, `adventurer 5m pro` | `"3"` | 5M Pro |
 | `5m`, `adventurer 5m` (sans "pro") | `"2"` | 5M |
-| `a5`, `adventurer a5` | `"4"` | A5 |
 | (aucun match) | `"0"` | Select Printer |
 
 ### 2.6 Découverte UDP Multicast (anciens modèles — Adventurer 4 era)
@@ -549,7 +548,7 @@ function resolveCameraUrl(printer, detail) {
     || detail.cameraEnabled === true || detail.cameraEnabled === 1
     || detail.camera_enabled === true || detail.camera_enabled === 1;
 
-  // 3. Modèle connu avec caméra (AD5X, 5M, 5M Pro, A5)
+  // 3. Modèle connu avec caméra (AD5X, 5M, 5M Pro)
   const modelHasCamera = ['1','2','3','4'].includes(printer.printerModelId);
 
   if (!hasFlag && !modelHasCamera) return null;
@@ -778,7 +777,7 @@ function handleDetailResponse(resp, state) {
 ## 15. TCP Port 8899 — Protocole complet (anciens modèles)
 
 > **Portée** : Adventurer 4 et modèles antérieurs (Adventurer 3, Finder…).  
-> Les nouveaux modèles (AD5X, 5M, 5M Pro, A5) utilisent HTTP port 8898 (§5).  
+> Les nouveaux modèles (AD5X, 5M, 5M Pro) utilisent HTTP port 8898 (§5).  
 > Le port 8899 reste disponible sur tous les modèles pour la probe identité M115.
 
 ### 15.1 Transport
@@ -913,7 +912,7 @@ async function withControl(socket, fn) {
 - [ ] Probe TCP `:8899 ~M115\r\n` en fallback identité
 - [ ] Parser M115 (lignes `Key: Value`)
 - [ ] Score qualité + tri
-- [ ] Résoudre modèle par tokens (ad5x / 5m pro / 5m / a5)
+- [ ] Résoudre modèle par tokens (ad5x / 5m pro / 5m)
 - [ ] UDP multicast `225.0.0.9:19000` payload `"Hello World!"` — parallèle au scan, probe les IPs répondantes (anciens modèles §2.6)
 
 ### Connexion et polling
@@ -959,5 +958,4 @@ async function withControl(socket, fn) {
 | `"1"` | AD5X | oui | oui |
 | `"2"` | 5M | oui | oui |
 | `"3"` | 5M Pro | oui | oui |
-| `"4"` | A5 | oui | oui |
 | `"0"` | Select Printer | — | — |

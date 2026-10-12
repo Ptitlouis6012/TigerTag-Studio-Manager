@@ -15,7 +15,6 @@
   "models": [
     { "id": "ad5x",  "label": "Adventurer 5X",      "image": "models/ad5x.png",  "series": "ad5x" },
     { "id": "5m",    "label": "Adventurer 5M",      "image": "models/5m.png",    "series": "ad5x" },
-    { "id": "5mpro", "label": "Adventurer 5M Pro",  "image": "models/5mpro.png", "series": "ad5x" },
-    { "id": "a5",    "label": "Adventurer A5",      "image": "models/a5.png",    "series": "ad5x" }
+    { "id": "5mpro", "label": "Adventurer 5M Pro",  "image": "models/5mpro.png", "series": "ad5x" }
   ]
 }
