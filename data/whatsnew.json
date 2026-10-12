@@ -1,4 +1,96 @@
 {
+  "2.40.0": {
+    "date": "2026-10-12",
+    "items": [
+      {
+        "icon": "globe",
+        "title": {
+          "en": "Studio, now in your browser",
+          "fr": "Studio, maintenant dans ton navigateur",
+          "de": "Studio, jetzt im Browser",
+          "es": "Studio, ahora en tu navegador",
+          "it": "Studio, ora nel tuo browser",
+          "zh": "Studio 现在能在浏览器里用了",
+          "pt": "Studio, agora no seu navegador",
+          "pt-pt": "Studio, agora no teu browser",
+          "pl": "Studio, teraz w przeglądarce",
+          "ru": "Studio теперь в браузере",
+          "nl": "Studio, nu in je browser"
+        },
+        "body": {
+          "en": "Open tigersystem.io/studio on any computer or tablet and your whole stock is there — same account, same spools, nothing to install. Already signed in on the site? Studio recognises you. The NFC readers and printers still live in the desktop app, for now.",
+          "fr": "Ouvre tigersystem.io/studio sur n'importe quel ordi ou tablette et tout ton stock est là — même compte, mêmes bobines, rien à installer. Déjà connecté sur le site ? Studio te reconnaît. Les lecteurs NFC et les imprimantes restent dans l'appli de bureau, pour l'instant.",
+          "de": "Öffne tigersystem.io/studio auf jedem Computer oder Tablet und dein ganzer Bestand ist da — gleiches Konto, gleiche Spulen, nichts zu installieren. Schon auf der Website angemeldet? Studio erkennt dich. NFC-Leser und Drucker bleiben vorerst in der Desktop-App.",
+          "es": "Abre tigersystem.io/studio en cualquier ordenador o tableta y todo tu stock está ahí: misma cuenta, mismas bobinas, nada que instalar. ¿Ya has iniciado sesión en la web? Studio te reconoce. Los lectores NFC y las impresoras siguen en la app de escritorio, por ahora.",
+          "it": "Apri tigersystem.io/studio su qualsiasi computer o tablet e tutto il tuo magazzino è lì: stesso account, stesse bobine, niente da installare. Hai già fatto l'accesso al sito? Studio ti riconosce. Lettori NFC e stampanti restano nell'app desktop, per ora.",
+          "zh": "在任何电脑或平板上打开 tigersystem.io/studio，你的全部库存都在——同一个账号、同样的线盘，无需安装。已经在网站上登录了？Studio 直接认出你。NFC 读卡器和打印机暂时还留在桌面版里。",
+          "pt": "Abra tigersystem.io/studio em qualquer computador ou tablet e todo o seu estoque está lá — mesma conta, mesmos carretéis, nada para instalar. Já entrou no site? O Studio reconhece você. Os leitores NFC e as impressoras continuam no app de desktop, por enquanto.",
+          "pt-pt": "Abre tigersystem.io/studio em qualquer computador ou tablet e todo o teu stock está lá — a mesma conta, as mesmas bobinas, nada para instalar. Já tens sessão iniciada no site? O Studio reconhece-te. Os leitores NFC e as impressoras continuam na app de computador, para já.",
+          "pl": "Otwórz tigersystem.io/studio na dowolnym komputerze lub tablecie i cały twój zapas jest na miejscu — to samo konto, te same szpule, nic do instalowania. Jesteś już zalogowany na stronie? Studio cię rozpozna. Czytniki NFC i drukarki na razie zostają w aplikacji desktopowej.",
+          "ru": "Открой tigersystem.io/studio на любом компьютере или планшете — и весь твой запас уже там: тот же аккаунт, те же катушки, ничего не нужно устанавливать. Уже вошёл на сайте? Studio тебя узнает. NFC-считыватели и принтеры пока остаются в настольном приложении.",
+          "nl": "Open tigersystem.io/studio op elke computer of tablet en je hele voorraad staat klaar — zelfde account, zelfde spoelen, niets te installeren. Al ingelogd op de site? Studio herkent je. NFC-lezers en printers blijven voorlopig in de desktop-app."
+        }
+      },
+      {
+        "icon": "download",
+        "title": {
+          "en": "Pin it like a real app",
+          "fr": "Installe-le comme une vraie appli",
+          "de": "Wie eine echte App anheften",
+          "es": "Instálalo como una app de verdad",
+          "it": "Installalo come una vera app",
+          "zh": "像真正的应用一样装上",
+          "pt": "Instale como um app de verdade",
+          "pt-pt": "Instala-o como uma app a sério",
+          "pl": "Zainstaluj jak prawdziwą aplikację",
+          "ru": "Установи как настоящее приложение",
+          "nl": "Installeer het als een echte app"
+        },
+        "body": {
+          "en": "In the browser version, “Install the app” puts Studio on your home screen or desktop, in its own window with its own icon. On iPhone and iPad it shows you the two taps it takes.",
+          "fr": "Dans la version navigateur, « Installer l'app » pose Studio sur ton écran d'accueil ou ton bureau, dans sa propre fenêtre avec sa propre icône. Sur iPhone et iPad, il te montre les deux touches à faire.",
+          "de": "In der Browser-Version legt „App installieren“ Studio auf deinen Startbildschirm oder Desktop — eigenes Fenster, eigenes Symbol. Auf iPhone und iPad zeigt es dir die zwei Tipper, die es braucht.",
+          "es": "En la versión del navegador, «Instalar la app» coloca Studio en tu pantalla de inicio o escritorio, con su propia ventana y su propio icono. En iPhone y iPad te enseña los dos toques que hacen falta.",
+          "it": "Nella versione browser, «Installa l'app» mette Studio sulla schermata Home o sul desktop, con la sua finestra e la sua icona. Su iPhone e iPad ti mostra i due tocchi che servono.",
+          "zh": "在浏览器版中，点「安装应用」就能把 Studio 放到主屏幕或桌面上，有自己的窗口和图标。在 iPhone 和 iPad 上，它会告诉你只需点两下。",
+          "pt": "Na versão do navegador, “Instalar o app” coloca o Studio na sua tela de início ou área de trabalho, com janela e ícone próprios. No iPhone e no iPad, ele mostra os dois toques necessários.",
+          "pt-pt": "Na versão do browser, “Instalar a app” põe o Studio no teu ecrã principal ou ambiente de trabalho, com janela e ícone próprios. No iPhone e no iPad, mostra-te os dois toques que são precisos.",
+          "pl": "W wersji przeglądarkowej „Zainstaluj aplikację” umieszcza Studio na ekranie początkowym lub pulpicie — we własnym oknie, z własną ikoną. Na iPhonie i iPadzie pokaże ci dwa stuknięcia, które wystarczą.",
+          "ru": "В браузерной версии кнопка «Установить приложение» поместит Studio на главный экран или рабочий стол — в своё окно, со своей иконкой. На iPhone и iPad она покажет два касания, которых для этого хватит.",
+          "nl": "In de browserversie zet ‘App installeren’ Studio op je beginscherm of bureaublad, in een eigen venster met een eigen icoon. Op iPhone en iPad laat het je de twee tikken zien die nodig zijn."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "Low-stock alerts bring their photo",
+          "fr": "Les alertes de stock bas ont leur photo",
+          "de": "Bestandswarnungen mit Foto",
+          "es": "Las alertas de stock bajo traen su foto",
+          "it": "Gli avvisi di scorta bassa hanno la loro foto",
+          "zh": "低库存提醒带上照片了",
+          "pt": "Alertas de estoque baixo com foto",
+          "pt-pt": "Alertas de stock baixo com fotografia",
+          "pl": "Alerty o niskim stanie mają zdjęcie",
+          "ru": "У предупреждений о малом запасе есть фото",
+          "nl": "Meldingen over lage voorraad met foto"
+        },
+        "body": {
+          "en": "A “running low” alert now shows the spool's photo on every device you use, not just the computer that raised it.",
+          "fr": "Une alerte « bientôt à court » affiche maintenant la photo de la bobine sur tous tes appareils, pas seulement sur l'ordi qui l'a lancée.",
+          "de": "Eine „wird knapp“-Warnung zeigt jetzt das Foto der Spule auf all deinen Geräten, nicht nur auf dem Computer, der sie ausgelöst hat.",
+          "es": "Una alerta de «se está acabando» muestra ahora la foto de la bobina en todos tus dispositivos, no solo en el ordenador que la lanzó.",
+          "it": "Un avviso di «sta finendo» ora mostra la foto della bobina su tutti i tuoi dispositivi, non solo sul computer che l'ha generato.",
+          "zh": "“快用完了”提醒现在会在你的所有设备上显示线盘照片，而不只是在发出提醒的那台电脑上。",
+          "pt": "Um alerta de “acabando” agora mostra a foto do carretel em todos os seus dispositivos, não só no computador que o gerou.",
+          "pt-pt": "Um alerta de “a acabar” mostra agora a fotografia da bobina em todos os teus dispositivos, não só no computador que o lançou.",
+          "pl": "Alert „kończy się” pokazuje teraz zdjęcie szpuli na wszystkich twoich urządzeniach, nie tylko na komputerze, który go wywołał.",
+          "ru": "Предупреждение «заканчивается» теперь показывает фото катушки на всех твоих устройствах, а не только на компьютере, который его создал.",
+          "nl": "Een ‘bijna op’-melding toont nu de foto van de spoel op al je apparaten, niet alleen op de computer die hem gaf."
+        }
+      }
+    ]
+  },
   "2.39.0": {
     "date": "2026-10-12",
     "items": [

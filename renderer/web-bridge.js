@@ -33,6 +33,31 @@
   // Replaced by scripts/build-web.mjs with package.json's version.
   const APP_VERSION = "__STUDIO_WEB_VERSION__";
 
+  // No version drift with the desktop app: a tab (or the installed app) left
+  // open across a release must not keep running the old code. When the page
+  // comes back into view — at most every 10 min — compare the deployed
+  // version.json (written by scripts/build-web.mjs, next to index.html) with
+  // the version this page was built as, and reload onto the new one. Never in
+  // the middle of something: an open window or a field being typed in defers
+  // it to the next time the page comes back.
+  if (!APP_VERSION.startsWith("__")) {
+    let lastCheck = 0;
+    const busy = () => document.querySelector(".modal-overlay.open")
+      || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
+    const check = async () => {
+      if (document.visibilityState !== "visible" || Date.now() - lastCheck < 10 * 60 * 1000) return;
+      lastCheck = Date.now();
+      try {
+        const r = await fetch(new URL("../version.json", document.baseURI), { cache: "no-store" });
+        const live = r.ok ? (await r.json()).version : null;
+        if (live && live !== APP_VERSION && !busy()) location.reload();
+        else if (live && live !== APP_VERSION) lastCheck = 0;   // retry next time
+      } catch { /* offline: try again later */ }
+    };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+  }
+
   const XANO = "https://api.tigertag.io/api:tigertag";
 
   async function getJson(url, opts = {}, timeoutMs = 7000) {

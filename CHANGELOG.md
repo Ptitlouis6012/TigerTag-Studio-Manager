@@ -5,6 +5,27 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.40.0 — 2026-10-12
+
+### Added
+- **Tiger Studio Web** — the renderer runs in a browser at `https://tigersystem.io/studio` (`studio.tigersystem.io` redirects there), from the same code as the desktop app. No bundler, no fork: `scripts/build-web.mjs` (`npm run web:build` / `web:serve`, `--out`, `--base`) copies `renderer/`, `data/` and a filtered `assets/` into a static folder whose `index.html` is `renderer/inventory.html` with an injected `<base href="<base>renderer/">`, so every relative URL resolves as on desktop. The Hub (TigerTag_Hub, Next.js on Vercel) builds the published latest Studio release into `public/studio/` at `prebuild` and serves it on its own origin. Docs: `docs/WEB_DEPLOYMENT.md`, `docs/STUDIO-WEB-PLAN.md`.
+  - `renderer/web-bridge.js` — a browser `window.electronAPI` (`isWeb: true`) implementing what a browser can: `openExternal` (`window.open`), `getAppInfo` (`platform: "web"`), `lookupProduct` / `refreshApiData` / `fetchCatalogAll` (direct calls to `api.tigertag.io`, which answers CORS; one retry on the catalogue, whose upstream hiccups come back without CORS headers), `downloadImage` (anchor download). Inert in Electron (preload already defined `electronAPI`).
+  - `HAS_NATIVE` (`!!electronAPI && !electronAPI.isWeb`) replaces every "electronAPI exists" desktop check (RFID encode/burn/update modals, chip banners, the toolbox chip block, the RFID listener block). Never test `!!window.electronAPI` for "desktop" any more.
+  - `data-desktop-only` + `html.is-web` rule hide NFC readers bar and tester, TD1S, the updater (card, icon, banner), the printer views (`setViewMode` falls back to `grid` on web) and camera detach; `data-web-only` is the mirror rule.
+  - **One sign-in with the Hub** — Studio and the Hub share the `tigersystem.io` origin and the same Firebase API key, so the DEFAULT app holds the Hub's session: with no Studio account yet, `_adoptSharedWebSession` copies that user (verified address or Google) into the account's named app. On the web the sign-in flows no longer sign the DEFAULT app out, and `fbSignOut` ends it only when it is the same account.
+  - Friend link on the web: `?friend=XXX-YYY` pre-fills Add-friend (then dropped from the address), like `tigertag://friend/…` on desktop.
+- **Installable as an app (PWA)** — the web build writes `manifest.webmanifest` (scope and `start_url` = the served folder without trailing slash, standalone, `assets/favicon/icon-192/512.png`) and the iOS home-screen tags. `web-bridge.js` keeps Chrome's `beforeinstallprompt`; the sidebar **Install the app** button (`#sbInstallBtn`, `data-web-only`, hidden until installable or on iOS) replays it, or on iPhone/iPad unfolds the Share → Add to Home Screen hint; hidden once installed (`display-mode: standalone`). Deliberately no service worker.
+- **No version drift between desktop and web** — both follow the published "latest" GitHub Release. `.github/workflows/web-sync.yml` (on `release: published`) calls the Hub's `studio-release` Vercel deploy hook (`HUB_DEPLOY_HOOK_URL` secret) and waits until `tigersystem.io/studio/version.json` equals the release, failing the run otherwise. The Hub's `fetch-studio-web.mjs` resolves the latest release from github.com's `/releases/latest` redirect, asserts the built version equals the tag and fails the build on any mismatch (the live site keeps its version). An open web page or installed app compares `version.json` with its own version when it comes back into view (≤ every 10 min) and reloads onto the new release, unless a window is open or a field focused.
+
+### Fixed
+- **Low-stock notifications** stored `cdnImg(resolvedImg(url))` — the desktop's local `/img-cache/<md5>` path — in `users/{uid}/notifications`, so the photo was a 404 on the account's other devices and on the web. They now store the public CDN URL; the web skips the old local paths.
+- FlashForge / Snapmaker / Creality background pings (`setInterval` 30 s at module load) threw `ctx.getState().printers is not iterable` while signed out.
+
+### i18n
+- Added: `sbInstallBtn`, `installIosHint` — 11 locales.
+
+---
+
 ## v2.39.0 — 2026-10-12
 
 ### Added

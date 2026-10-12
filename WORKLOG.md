@@ -9,6 +9,7 @@
 - Tiger Studio Web — deployment guide (architecture, what works on the web, Hub/Vercel/DNS/Firebase setup) — `docs/WEB_DEPLOYMENT.md`
 - Tiger Studio Web — static build `npm run web:build` (`--out`, `--base /studio/`) → `dist-web/` with the app page at the root via `<base>`; `npm run web:serve` to try it locally — `scripts/build-web.mjs`, `package.json`, `.gitignore`
 - Tiger Studio Web — installable as an app (PWA): the web build ships a manifest (scope = the served folder, standalone, the app icons) and the home-screen tags iOS reads; an "Install the app" sidebar button appears only when the browser can install it (replays Chrome/Edge/Android's install prompt, unfolds the Share → Add to Home Screen hint on iPhone/iPad), hidden once installed; no service worker on purpose (no stale offline copy after a release) — `scripts/build-web.mjs`, `renderer/web-bridge.js`, `renderer/inventory.js`, `renderer/inventory.html`, `renderer/css/00-base.css` (`data-web-only`), `renderer/css/10-settings.css`
+- Tiger Studio Web — never drifts from the desktop app: `web-sync.yml` (release published → Hub deploy hook → waits for `tigersystem.io/studio/version.json` to match, red run otherwise); an open page or installed app reloads onto a new version when it comes back into view — `.github/workflows/web-sync.yml`, `renderer/web-bridge.js`, `docs/WEB_DEPLOYMENT.md`
 
 ## Changed
 

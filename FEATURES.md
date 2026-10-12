@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.39.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.40.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -284,6 +284,14 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - API tab — last HTTP request/response inspector for `cdn.tigertag.io`.
 - RFID Data debug surface in the Add Product panel, gated to debug-enabled accounts (v1.4.12).
 - Diagnostic report generator (last 50 errors + environment) (v1.4.1).
+
+## Tiger Studio Web
+
+- **Studio in the browser** at `tigersystem.io/studio` (`studio.tigersystem.io` redirects): inventory, racks, favourites, lists, catalogue, friends, notifications and settings from the same code as the desktop app; hardware features (NFC readers, TD1S, USB scale, printers, cameras, updater) stay desktop-only (v2.40.0).
+- **One sign-in with tigersystem.io** — signed in on the site means signed in in Studio Web (v2.40.0).
+- **Installable as an app (PWA)** — "Install the app" in the sidebar (Chrome / Edge / Android), Add-to-Home-Screen hint on iPhone / iPad (v2.40.0).
+- **Always the same version as the desktop app** — the web follows the published release and an open page reloads onto a new one (v2.40.0).
+- Friend links (`?friend=CODE`) pre-fill Add-friend on the web (v2.40.0).
 
 ## Distribution, auto-update & installers
 

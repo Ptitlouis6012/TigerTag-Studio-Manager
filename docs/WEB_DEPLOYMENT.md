@@ -78,32 +78,55 @@ In the Hub repo: `npm run studio:fetch` (runs automatically as `prebuild`).
 
 | Hub env var | Effect |
 |---|---|
-| `STUDIO_WEB_REF` | Studio tag or branch to ship (default: latest GitHub release) |
-| `STUDIO_WEB_REQUIRED=1` | fail the Hub build if Studio can't be built (default: warn, ship the Hub without `/studio`) |
+| `STUDIO_WEB_REF` | Studio tag or branch to ship instead of the latest release (previews / tests only — skips the version check) |
 
-No secret is involved: the Firebase web config is public by design (already in
-`renderer/firebase.js`); security is the Firestore / Storage rules, unchanged.
-No `.env` is needed for the web build.
+No secret is involved in the build: the Firebase web config is public by design
+(already in `renderer/firebase.js`); security is the Firestore / Storage rules,
+unchanged. No `.env` is needed.
+
+## Same version as the desktop app — always
+
+Desktop and web follow **one** source of truth: the **published "latest" GitHub
+Release** (drafts and pre-releases never count). The desktop auto-updater installs
+it; the Hub builds it into `/studio`. Three guards keep them together:
+
+1. **Release publish → Hub deploy.** `.github/workflows/web-sync.yml` runs on
+   `release: published`, calls the Hub's Vercel deploy hook `studio-release`
+   (secret `HUB_DEPLOY_HOOK_URL`), then waits until
+   `https://tigersystem.io/studio/version.json` equals the release — a **red run
+   means desktop and web are out of sync**. Re-run it by hand (*Run workflow*).
+2. **The Hub build refuses to drift.** `fetch-studio-web.mjs` reads the latest
+   release from github.com's own `/releases/latest` redirect (not the rate-limited
+   REST API), builds it, checks the built `version.json` equals the tag, and
+   **fails the build** otherwise — Vercel then keeps the previous deployment live.
+   Only a release older than the web build (≤ v2.39.0) is skipped.
+3. **Open pages follow.** A tab or installed app compares `version.json` with its
+   own version whenever it comes back into view (at most every 10 min) and reloads
+   onto the new release — never while a window is open or a field is focused.
+
+⚠️ **Vercel only deploys a commit whose Git author has access to the team.** The
+Hub's `main` must therefore end on an authorised commit — today a
+`chore: trigger production deploy` empty commit authored by the `TigerTag-Project`
+account follows every personal commit. A deploy hook builds the branch head, so it
+is blocked the same way when the head is a personal commit (web-sync then goes red).
+The permanent fix is to link the personal GitHub account to the Vercel member
+account (Vercel → Account Settings → Authentication).
 
 ## Shipping a new Studio Web version
 
-1. Release Studio as usual (tag `vX.Y.Z`, GitHub Release).
-2. Redeploy the Hub (any push, or *Redeploy* in Vercel) — the build pulls the
-   latest release. A release older than the web build (≤ v2.39.0) is skipped
-   with a warning.
+Nothing extra: release Studio as usual (tag → CI → **publish** the draft as
+latest). Publishing triggers the web deploy; watch the *Web sync* run.
 
-## One-time setup (founder)
+## One-time setup (done 2026-10-12)
 
-1. **Vercel** — Hub project → Settings → Domains → add `studio.tigersystem.io`.
-2. **DNS (OVH)** — `studio` `CNAME` `cname.vercel-dns.com.`
-3. **Firebase Auth** — Authentication → Settings → Authorized domains: make sure
-   `tigersystem.io` is listed (it is the Hub's domain — expected to be there
-   already). `studio.tigersystem.io` does not need to be: it only redirects.
-   Vercel preview URLs (`*.vercel.app`) must be added one by one to test sign-in
-   on a preview.
-4. Optionally set `STUDIO_WEB_REQUIRED=1` on the Production environment once a
-   Studio release with the web build exists, so a broken Studio build can't
-   silently drop `/studio`.
+1. **Vercel** — `studio.tigersystem.io` added to the `tiger-tag-hub` project
+   (team Tiger-Project); deploy hook `studio-release` on `main`.
+2. **DNS (OVH)** — `studio` `CNAME` the project-specific target Vercel shows
+   (`…vercel-dns-016.com.`; the legacy `cname.vercel-dns.com` also works).
+3. **GitHub** — secret `HUB_DEPLOY_HOOK_URL` on this repo.
+4. **Firebase Auth** — `tigersystem.io` is an authorised domain (the Hub's).
+   `studio.tigersystem.io` needs nothing: it only redirects. Vercel preview URLs
+   (`*.vercel.app`) must be added one by one to test sign-in on a preview.
 
 ## Known limits
 

@@ -1,0 +1,50 @@
+name: Web sync
+
+# Tiger Studio Web (tigersystem.io/studio) and the desktop app must ALWAYS be on
+# the same version. Both follow the published "latest" GitHub Release: the
+# desktop auto-updater installs it, and the Hub builds it into /studio on every
+# deploy (TigerTag_Hub → scripts/fetch-studio-web.mjs). The moment a release is
+# PUBLISHED (drafts don't count — that is when desktops start updating), this
+# triggers a Hub production deploy, then waits until the live site serves that
+# exact version, and fails loudly if it doesn't — a red run here means desktop
+# and web are out of sync.
+#
+# Secret: HUB_DEPLOY_HOOK_URL — the Vercel deploy hook "studio-release" of the
+# tiger-tag-hub project (Settings → Git → Deploy Hooks, branch main).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Trigger the Hub deploy (builds this release into /studio)
+        env:
+          HOOK: ${{ secrets.HUB_DEPLOY_HOOK_URL }}
+        run: |
+          test -n "$HOOK" || { echo "::error::HUB_DEPLOY_HOOK_URL secret is missing"; exit 1; }
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Hub deploy triggered"
+
+      - name: Wait until tigersystem.io/studio serves this version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ -z "$TAG" ]; then   # manual run: the current latest release
+            TAG=$(curl -fsSI "https://github.com/${{ github.repository }}/releases/latest" \
+                  | tr -d '\r' | sed -n 's#^[Ll]ocation: .*/releases/tag/##p')
+          fi
+          want="${TAG#v}"
+          for i in $(seq 1 60); do
+            live=$(curl -fsS "https://tigersystem.io/studio/version.json?t=$(date +%s)" 2>/dev/null \
+                   | sed -n 's/.*"version": *"\([^"]*\)".*/\1/p')
+            echo "live=${live:-none}  release=$want"
+            [ "$live" = "$want" ] && { echo "Web and desktop are both on $want"; exit 0; }
+            sleep 20
+          done
+          echo "::error::tigersystem.io/studio serves ${live:-nothing} but the release is $want — web and desktop are out of sync"
+          exit 1
