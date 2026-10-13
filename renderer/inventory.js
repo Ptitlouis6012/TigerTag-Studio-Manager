@@ -6026,12 +6026,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── sidebar collapse toggle ── */
   (function() {
     const sidebar = $("sidebar");
-    // No choice made yet: a narrow window (an iPad in portrait, a small laptop
-    // window) starts with the slim sidebar so the inventory gets the room.
-    const saved = localStorage.getItem("tigertag.sidebar");
-    if (saved === "collapsed" || (!saved && window.innerWidth < 1100)) {
-      sidebar.classList.add("collapsed");
-    }
+    // No choice made yet: the sidebar follows the screen — slim when the window
+    // is taller than wide or under 900 px (an iPad in portrait, a small window),
+    // full in landscape (an iPad on its side has the room). It follows a
+    // rotation too, until the user picks a side with the toggle.
+    const autoSidebar = () => {
+      if (localStorage.getItem("tigertag.sidebar")) return;
+      const slim = window.innerHeight > window.innerWidth || window.innerWidth < 900;
+      if (sidebar.classList.contains("collapsed") === slim) return;
+      sidebar.classList.toggle("collapsed", slim);
+      setTimeout(_positionActiveViewPill, 280);
+    };
+    if (localStorage.getItem("tigertag.sidebar") === "collapsed") sidebar.classList.add("collapsed");
+    else autoSidebar();
+    window.addEventListener("resize", autoSidebar);
     $("btnSidebarToggle").addEventListener("click", () => {
       const collapsed = sidebar.classList.toggle("collapsed");
       localStorage.setItem("tigertag.sidebar", collapsed ? "collapsed" : "expanded");
