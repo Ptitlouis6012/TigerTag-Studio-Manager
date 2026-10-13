@@ -25128,6 +25128,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
        That is the "card teleports somewhere else" — it was never the geometry.
 
        Deferred, not dropped: the rebuild runs once, on release. */
+    _planHealHeld();
     if (!force && _boardHeld.size) { _deferPrinterRender(); return; }
     _printerRenderPending = false;
     /* WHERE THE USER WAS LOOKING survives the rebuild. This function replaces
@@ -26819,6 +26820,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
        landing mid-gesture must never be able to answer "where is this?" with a
        place the user has already moved on from. */
     if (_boardHeld.has(boardId)) {
+      const hp = _planHeldPos.get(boardId);
+      if (hp) return { x: Math.max(0, Math.round(hp.x)), y: Math.max(0, Math.round(hp.y)) };
       const el = document.querySelector(`#invPrinterView [data-board-id="${CSS.escape(boardId)}"]`);
       if (el && el.style.left) {
         return { x: Math.max(0, Math.round(parseFloat(el.style.left) || 0)),
@@ -27079,6 +27082,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (_printerRenderWatchdog) return;
     _printerRenderWatchdog = setTimeout(() => {
       _printerRenderWatchdog = null;
+      // A hand that is still moving is the one thing allowed to hold the
+      // rebuild for longer: its release pays the debt the moment it lands.
+      if (_printerRenderPending && _planG && _planG.moved) { _deferPrinterRender(); return; }
       if (_printerRenderPending) renderPrintersView(true);
     }, 2000);
   }
@@ -27112,9 +27118,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const se = document.scrollingElement;
     if (se) _menuScrollAt.set(se, { x: se.scrollLeft, y: se.scrollTop });
   }
-  // The live drag's own release, so the window can call it without a listener
-  // per render. Replaced each time the board is re-wired.
-  let _printerDragEnd = null;
+  // The window's release listeners are bound once, however often the board is rebuilt.
   let _printerWindowEndWired = false;
   /* What the hand is holding right now. The layout must not touch it, and while
      anything is held nothing rebuilds the board: a live tick would otherwise
@@ -27128,12 +27132,31 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      one had left it. Each hold is now balanced by its own release, and the
      board is free only when the last of them is done. */
   const _boardHeld = new Map();
+  /* Where each held object is DRAWN, kept beside the hold itself. A rebuild in
+     the middle of a gesture gives the board brand-new elements with no position
+     of their own; this is what puts them back under the hand. */
+  const _planHeldPos = new Map();
   const _boardHold = id => _boardHeld.set(id, (_boardHeld.get(id) || 0) + 1);
   const _boardRelease = id => {
     const n = (_boardHeld.get(id) || 0) - 1;
-    if (n > 0) _boardHeld.set(id, n); else _boardHeld.delete(id);
+    if (n > 0) _boardHeld.set(id, n); else { _boardHeld.delete(id); _planHeldPos.delete(id); }
   };
+  /* The gesture in progress, if any — at MODULE level, not in the closure of one
+     board. The board is rebuilt wholesale, and a gesture kept inside a board dies
+     with it: its release never ran, so its objects stayed held for ever. */
+  let _planG = null;
+  let _planDrops = 0;       // drops whose writes have not landed yet
+  /* Nothing can be held without a gesture or a drop behind it. If something is,
+     a release went missing: put the board back in the hands of the layout rather
+     than leave those objects at the origin until the app is reloaded. */
+  function _planHealHeld() {
+    if (_planG || _planDrops || !_boardHeld.size) return;
+    console.warn("[printer-plan] released a hold with no gesture behind it:", _boardHeld.size);
+    _boardHeld.clear();
+    _planHeldPos.clear();
+  }
   function layoutPrintersPlan() {
+    _planHealHeld();
     const container = _printerPlanContainer();
     if (!container) return;
     if (!printerPlanInUse()) { seedPrinterPlan().then(ok => { if (ok) layoutPrintersPlan(); }); return; }
@@ -27146,7 +27169,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
          outline, the rubber band — which are drawn in board coordinates and
          must not be swept up by the layout and given a spot of their own. */
       if (!id) return;
-      if (_boardHeld.has(id)) return;            // in the user's hand — not ours to place
+      if (_boardHeld.has(id)) {                  // in the user's hand — not ours to place…
+        const hp = _planHeldPos.get(id);         // …but never left without a place
+        if (hp) {
+          el.style.position = "absolute";
+          el.style.left = hp.x + "px";
+          el.style.top  = hp.y + "px";
+        }
+        return;
+      }
       const pos = boardPos(id);
       el.style.position = "absolute";
       if (!pos) { orphans.push(el); return; }
@@ -27452,11 +27483,118 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
   }
 
+  const _planElOf = (container, id) =>
+    container ? container.querySelector(`[data-board-id="${CSS.escape(id)}"]`) : null;
+
+  /* The board under a live gesture was REPLACED — a rebuild, or a brand tick
+     that ended in one. The elements the gesture was holding went with it, so
+     they are found again by their ids and picked up where the hand has them.
+     Nothing about the gesture itself is lost: it lives at module level, not in
+     the closure of one board. */
+  function _planRebind(container) {
+    const g = _planG;
+    if (!g || g.container === container) return;
+    g.container = container;
+    const find = id => _planElOf(container, id);
+    const lift = id => {
+      const el = find(id);
+      if (el) { el.style.zIndex = "1000"; el.classList.add("is-plan-dragging"); }
+      return el;
+    };
+    g.card = (g.moved ? lift(g.id) : find(g.id)) || g.card;
+    g.followers.forEach(f => { f.el = (g.moved ? lift(f.id) : find(f.id)) || f.el; });
+    // The capture was on a card that no longer exists.
+    try { g.card.setPointerCapture(g.pointerId); } catch (_) {}
+    g.neighbours = planNeighboursIn(container, "boardId", boardPos, g.id)
+      .filter(o => !_planSel.has(o.id));
+  }
+
+  /* The release of a gesture. MODULE-LEVEL, and it settles whatever gesture is
+     live when it is called — never the one a particular board happened to be
+     wired with. It used to be a closure of the board it was created for: a
+     rebuild during a long gesture wired a fresh one that knew of no gesture, the
+     pointer went up into that, and the release of the real one never ran. The
+     objects stayed held for ever, the layout (which leaves held objects alone)
+     never gave the rebuilt cards a position, and they piled up at the origin
+     until the app was reloaded. */
+  async function _planEnd() {
+    document.body.classList.remove("is-plan-grabbing");
+    const gg = _planG;
+    if (!gg) return;
+    _planG = null;
+    _planDrops++;
+    /* RELEASED ONLY ONCE THE WRITES HAVE LANDED — not when the button comes
+       up. Between the two there is a window of a hundred milliseconds or so,
+       and any brand tick in it would rebuild the board from a record that
+       still holds the old positions: some cards blink back to where they came
+       from and then jump forward. Whatever is still in the air is still held.
+
+       Owed on EVERY way out, including the ones that are not a move and the
+       ones that throw: a press that turned out to be a click still blocked the
+       rebuild while the button was down, and leaving the debt unpaid would
+       freeze the board until the next drag happened to settle it. */
+    let released = false;
+    const release = () => {
+      // Only what THIS gesture took — and only once, however many ways out of
+      // `end` a given release travels through.
+      if (released || !gg.holding) return;
+      released = true;
+      gg.holding = false;
+      _boardRelease(gg.id);
+      gg.followers.forEach(f => _boardRelease(f.id));
+      if (_boardHeld.size || !_printerRenderPending) return;
+      _printerRenderPending = false;
+      renderPrintersView();
+    };
+    try {
+      const container = _printerPlanContainer();
+      [gg.id, ...gg.followers.map(f => f.id)].forEach(id =>
+        _planElOf(container, id)?.classList.remove("is-plan-dragging", "is-plan-overlapping"));
+      document.getElementById("invPrinterView")?.classList.remove("is-plan-moving");
+      planClearGuides(container);
+      if (!gg.moved) { release(); return; }        // a click, not a move
+      // Swallow the click the release is about to fire, so dropping a card does
+      // not also open its panel.
+      _printerJustDragged = true;
+      setTimeout(() => { _printerJustDragged = false; }, 50);
+      const nx = gg.nx ?? gg.ox, ny = gg.ny ?? gg.oy;
+      if (nx === gg.ox && ny === gg.oy) { release(); layoutPrintersPlan(); return; }
+      /* The group is clamped AS ONE. Clamping each card on its own — which is
+         what `Math.max(0, …)` per member did — silently changed the shape: drag a
+         group so its leftmost card would pass the edge and that card stopped at
+         0 while the others kept going, so the spacing you had arranged was lost
+         on release. The whole set is shifted by however much the furthest one
+         overshot, so nothing lands off the board and every gap survives. */
+      const shiftX = Math.max(0, -Math.min(nx, ...gg.followers.map(f => nx + f.dx)));
+      const shiftY = Math.max(0, -Math.min(ny, ...gg.followers.map(f => ny + f.dy)));
+      const bx = nx + shiftX, by = ny + shiftY;
+      const z = nextBoardZ();
+      /* The writes first, THEN any rebuild the machines asked for while you were
+         holding it. Flushing that rebuild here — before the writes land — wiped
+         the board and redrew it from the record, which still held the OLD
+         positions: the cards blinked back to where they came from, vanished with
+         the `innerHTML`, and only reached the drop point once the writes
+         returned. A long gesture is what makes it likely, which is why a group
+         showed it and a single card almost never did.
+
+         The deferred rebuild is owed, not urgent. It waits three lines. */
+      await Promise.all([
+        boardSave(gg.id, bx, by, z),
+        // Each follower keeps the gap it had, so a group moves as one shape.
+        ...gg.followers.map(f => boardSave(f.id, bx + f.dx, by + f.dy, z)),
+      ]);
+      release();        // the writes are in — and with them, any rebuild owed
+      layoutPrintersPlan();
+    } finally {
+      release();
+      _planDrops--;
+    }
+  }
+
   function wirePrinterPlanDrag(host) {
     const container = host.querySelector(".printers-grid");
     if (!container || container._planWired) return;
     container._planWired = true;
-    let g = null;
     container.addEventListener("pointerdown", e => {
       // Left button only. A right-click is the board's menu, and it used to
       // arm a grab on its way past — clearing the selection the menu was
@@ -27490,6 +27628,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         e.preventDefault();
         return;
       }
+      // A gesture still open from an earlier press — its release never came —
+      // is settled before a new one starts, never carried into it.
+      if (_planG) _planEnd();
       /* Grabbing a SELECTED machine takes the whole selection with it, at their
          existing offsets — that is what selecting several was for. Grabbing an
          unselected one drops the selection and moves that one alone, which is
@@ -27527,11 +27668,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const hulls = Array.from(container.querySelectorAll(".plan-cluster"))
         .filter(el => carriedCids.has(el.dataset.cluster))
         .map(el => ({ el, x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0 }));
-      g = { id: bid, card, followers, hulls, sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
-            w: card.offsetWidth, h: card.offsetHeight,
-            neighbours: planNeighboursIn(container, "boardId", boardPos, bid)
-              // An object being carried cannot also be something to snap to.
-              .filter(o => !_planSel.has(o.id)) };
+      _planG = { id: bid, card, followers, hulls, container, pointerId: e.pointerId,
+                 sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
+                 w: card.offsetWidth, h: card.offsetHeight,
+                 neighbours: planNeighboursIn(container, "boardId", boardPos, bid)
+                   // An object being carried cannot also be something to snap to.
+                   .filter(o => !_planSel.has(o.id)) };
       try { card.setPointerCapture(e.pointerId); } catch (_) {}
       // The hand closes on the press. The MOVE still waits for real travel
       // below — but a grab that looks like nothing happened is a grab you
@@ -27540,16 +27682,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       /* NOT dragging yet — pressed. The whole card is the handle, so a press is
          also how you open a machine's panel; the drag only begins once the
          pointer has actually travelled, and until then the click is left alone. */
-      g.moved = false;
+      _planG.moved = false;
     });
     const DRAG_SLOP = 4;   // px — below this, it is a click
     container.addEventListener("pointermove", e => {
+      const g = _planG;
       if (!g) return;
+      // The board this gesture started on may have been replaced since.
+      if (g.container !== container) _planRebind(container);
       /* Leaving the board DROPS what is held, exactly where it last stood — and
          for a group that means the whole group, each card keeping its place
          within it. The drop below is the same one a release performs, so
          nothing about the arrangement depends on how the gesture ended. */
-      if (g.moved && planPointerOffBoard(e, container.closest(".printers-scroll"))) { end(); return; }
+      if (g.moved && planPointerOffBoard(e, container.closest(".printers-scroll"))) { _planEnd(); return; }
       const dx = e.clientX - g.sx, dy = e.clientY - g.sy;
       if (!g.moved) {
         if (Math.abs(dx) < DRAG_SLOP && Math.abs(dy) < DRAG_SLOP) return;
@@ -27562,6 +27707,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         _boardHold(g.id);
         g.followers.forEach(f => _boardHold(f.id));
         g.holding = true;
+        // Where each held object is DRAWN, so a rebuild during the gesture puts
+        // it back under the hand instead of leaving it without a place.
+        _planHeldPos.set(g.id, { x: g.ox, y: g.oy });
+        g.followers.forEach(f => _planHeldPos.set(f.id, { x: g.ox + f.dx, y: g.oy + f.dy }));
         document.getElementById("invPrinterView")?.classList.add("is-plan-moving");
       }
       e.preventDefault();
@@ -27571,6 +27720,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const z = _printerZoom || 1;
       const want = planSnap(g.ox + dx / z, g.oy + dy / z, g.w, g.h, g.neighbours);
       g.nx = want.x; g.ny = want.y;
+      _planHeldPos.set(g.id, { x: want.x, y: want.y });
+      g.followers.forEach(f => _planHeldPos.set(f.id, { x: want.x + f.dx, y: want.y + f.dy }));
       g.card.style.left = want.x + "px";
       g.card.style.top  = want.y + "px";
       /* Overlapping is allowed — it is your plan — but never silent. Each
@@ -27601,71 +27752,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       });
       planDrawGuides(want.guideX, want.guideY, container);
     });
-    const end = async () => {
-      document.body.classList.remove("is-plan-grabbing");
-      if (!g) return;
-      const gg = g; g = null;
-      /* RELEASED ONLY ONCE THE WRITES HAVE LANDED — not when the button comes
-         up. Between the two there is a window of a hundred milliseconds or so,
-         and any brand tick in it would rebuild the board from a record that
-         still holds the old positions: some cards blink back to where they came
-         from and then jump forward. Whatever is still in the air is still held.
-
-         Owed on EVERY way out, including the ones that are not a move: a press
-         that turned out to be a click still blocked the rebuild while the button
-         was down, and leaving the debt unpaid would freeze the board until the
-         next drag happened to settle it. */
-      const release = () => {
-        // Only what THIS gesture took — and only once, however many ways out of
-        // `end` a given release travels through.
-        if (!gg.holding) return;
-        gg.holding = false;
-        _boardRelease(gg.id);
-        gg.followers.forEach(f => _boardRelease(f.id));
-        if (_boardHeld.size || !_printerRenderPending) return;
-        _printerRenderPending = false;
-        renderPrintersView();
-      };
-      gg.card.classList.remove("is-plan-dragging", "is-plan-overlapping");
-      gg.followers.forEach(f => f.el.classList.remove("is-plan-dragging", "is-plan-overlapping"));
-      document.getElementById("invPrinterView")?.classList.remove("is-plan-moving");
-      planClearGuides(container);
-      if (!gg.moved) { release(); return; }        // a click, not a move
-      // Swallow the click the release is about to fire, so dropping a card does
-      // not also open its panel.
-      _printerJustDragged = true;
-      setTimeout(() => { _printerJustDragged = false; }, 50);
-      const nx = gg.nx ?? gg.ox, ny = gg.ny ?? gg.oy;
-      if (nx === gg.ox && ny === gg.oy) { release(); layoutPrintersPlan(); return; }
-      /* The group is clamped AS ONE. Clamping each card on its own — which is
-         what `Math.max(0, …)` per member did — silently changed the shape: drag a
-         group so its leftmost card would pass the edge and that card stopped at
-         0 while the others kept going, so the spacing you had arranged was lost
-         on release. The whole set is shifted by however much the furthest one
-         overshot, so nothing lands off the board and every gap survives. */
-      const shiftX = Math.max(0, -Math.min(nx, ...gg.followers.map(f => nx + f.dx)));
-      const shiftY = Math.max(0, -Math.min(ny, ...gg.followers.map(f => ny + f.dy)));
-      const bx = nx + shiftX, by = ny + shiftY;
-      const z = nextBoardZ();
-      /* The writes first, THEN any rebuild the machines asked for while you were
-         holding it. Flushing that rebuild here — before the writes land — wiped
-         the board and redrew it from the record, which still held the OLD
-         positions: the cards blinked back to where they came from, vanished with
-         the `innerHTML`, and only reached the drop point once the writes
-         returned. A long gesture is what makes it likely, which is why a group
-         showed it and a single card almost never did.
-
-         The deferred rebuild is owed, not urgent. It waits three lines. */
-      await Promise.all([
-        boardSave(gg.id, bx, by, z),
-        // Each follower keeps the gap it had, so a group moves as one shape.
-        ...gg.followers.map(f => boardSave(f.id, bx + f.dx, by + f.dy, z)),
-      ]);
-      release();        // the writes are in — and with them, any rebuild owed
-      layoutPrintersPlan();
-    };
-    container.addEventListener("pointerup", end);
-    container.addEventListener("pointercancel", end);
+    container.addEventListener("pointerup", () => _planEnd());
+    container.addEventListener("pointercancel", () => _planEnd());
     /* A release that lands outside — off the window, on another app, on a second
        screen — never reaches the container, and until now nothing else was
        listening. The cost was not a stuck card: it was a FROZEN BOARD. Anything
@@ -27673,15 +27761,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
        so the plan would stop updating altogether until the next drag happened to
        settle the debt. The window always hears the release.
 
-       Bound ONCE, through a reference. This function runs again on every render
-       of the view, and the container it guards is a new element each time — so
-       attaching to the window here directly would have added another pair of
-       listeners per render, every one of them holding a dead closure. */
-    _printerDragEnd = end;
+       Bound ONCE. This function runs again on every render of the view, and the
+       container it guards is a new element each time — so attaching to the
+       window here directly would have added another set of listeners per
+       render. They need no reference to any board: the gesture is module-level. */
     if (!_printerWindowEndWired) {
       _printerWindowEndWired = true;
-      window.addEventListener("pointerup", () => _printerDragEnd?.());
-      window.addEventListener("blur",      () => _printerDragEnd?.());
+      window.addEventListener("pointerup", () => _planEnd());
+      window.addEventListener("blur",      () => _planEnd());
+      /* A button that is no longer down while the gesture still thinks it is: the
+         release went somewhere nobody heard. Without this the hold would wait for
+         a press that has already happened. */
+      window.addEventListener("pointermove", e => {
+        if (_planG && _planG.moved && e.buttons === 0) _planEnd();
+      }, true);
     }
   }
 
