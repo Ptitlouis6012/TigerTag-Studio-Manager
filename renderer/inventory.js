@@ -27681,9 +27681,33 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const hulls = Array.from(container.querySelectorAll(".plan-cluster"))
         .filter(el => carriedCids.has(el.dataset.cluster))
         .map(el => ({ el, x: parseFloat(el.style.left) || 0, y: parseFloat(el.style.top) || 0 }));
+      /* HOW FAR THE BOARD MAY BE STRETCHED. It grows with whatever is on it, so
+         a card pulled to the edge of the visible board makes room to be pulled
+         further, drop after drop, and nothing ever stopped it: one went to
+         x ≈ 11 000 and was off the screen after a reload. A group may reach one
+         screenful past the furthest object it is NOT carrying — room to spread
+         machines out, not room to lose one. Worked out once, here: whatever is
+         not carried does not move while the hand is down. */
+      const _carried = new Set([bid, ...followers.map(f => f.id)]);
+      let farRight = 0, farBottom = 0;
+      Array.from(container.children).forEach(el => {
+        const oid = el.dataset.boardId;
+        if (!oid || _carried.has(oid) || !el.offsetWidth) return;
+        farRight  = Math.max(farRight,  (parseFloat(el.style.left) || 0) + el.offsetWidth);
+        farBottom = Math.max(farBottom, (parseFloat(el.style.top)  || 0) + el.offsetHeight);
+      });
+      const _scroll = container.closest(".printers-scroll");
+      const _zoomNow = _printerZoom || 1;
+      const viewW = (_scroll ? _scroll.clientWidth  : window.innerWidth)  / _zoomNow;
+      const viewH = (_scroll ? _scroll.clientHeight : window.innerHeight) / _zoomNow;
+      // How far the group's own right / bottom edge sits past its leader's origin.
+      const reachX = Math.max(card.offsetWidth,  ...followers.map(f => f.dx + f.el.offsetWidth));
+      const reachY = Math.max(card.offsetHeight, ...followers.map(f => f.dy + f.el.offsetHeight));
       _planG = { id: bid, card, followers, hulls, container, pointerId: e.pointerId,
                  sx: e.clientX, sy: e.clientY, ox: pos.x, oy: pos.y,
                  w: card.offsetWidth, h: card.offsetHeight,
+                 maxX: Math.max(0, farRight  + viewW - reachX),
+                 maxY: Math.max(0, farBottom + viewH - reachY),
                  neighbours: planNeighboursIn(container, "boardId", boardPos, bid)
                    // An object being carried cannot also be something to snap to.
                    .filter(o => !_planSel.has(o.id)) };
@@ -27732,6 +27756,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
          or the card trails the cursor by exactly the zoom factor. */
       const z = _printerZoom || 1;
       const want = planSnap(g.ox + dx / z, g.oy + dy / z, g.w, g.h, g.neighbours);
+      // The limit wins over a snap: a guide that points past it would lie.
+      if (want.x > g.maxX) { want.x = Math.round(g.maxX); want.guideX = null; }
+      if (want.y > g.maxY) { want.y = Math.round(g.maxY); want.guideY = null; }
       g.nx = want.x; g.ny = want.y;
       _planHeldPos.set(g.id, { x: want.x, y: want.y });
       g.followers.forEach(f => _planHeldPos.set(f.id, { x: want.x + f.dx, y: want.y + f.dy }));
