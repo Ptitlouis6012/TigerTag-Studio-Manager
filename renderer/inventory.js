@@ -920,6 +920,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         btn.classList.remove("is-holding");
         btn.classList.add("is-confirming");
         if (fill) { fill.style.width = "100%"; }
+        // The action usually closes the menu or rebuilds the card this button
+        // sits in, so the pointer never "leaves" it and the bubble would stay up.
+        if (btn.dataset.holdMs) _hideToolInfoTip();
         try { onConfirm(); } finally {
           // Reset visual state shortly after — the modal usually closes anyway
           setTimeout(() => {
@@ -23340,15 +23343,25 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Hold-to-confirm hint. A row can ALSO carry an ⓘ explaining what the action
     // does; hovering that ⓘ must show its own bubble, not this one, so anything
     // inside `.tool-info` is left to the ⓘ's handler.
+    // No `mouseout` ever fires for a node that is gone — the menu closed, or the
+    // card was rebuilt under a still pointer — so the bubble would stay up
+    // forever. Capture phase: runs before any handler that opens another bubble.
+    let holdAnchor = null;
+    document.addEventListener("mouseover", () => {
+      if (holdAnchor && (!holdAnchor.isConnected || !holdAnchor.getClientRects().length)) {
+        holdAnchor = null;
+        _hideToolInfoTip();
+      }
+    }, true);
     document.addEventListener("mouseover", e => {
       if (e.target.closest?.(".tool-info")) return;
       const el = e.target.closest?.("[data-hold-ms]");
-      if (el) _showToolInfoTip(el, _holdTipText(el));
+      if (el) { holdAnchor = el; _showToolInfoTip(el, _holdTipText(el)); }
     });
     document.addEventListener("mouseout", e => {
       if (e.target.closest?.(".tool-info")) return;
       const el = e.target.closest?.("[data-hold-ms]");
-      if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip();
+      if (el && !el.contains(e.relatedTarget)) { holdAnchor = null; _hideToolInfoTip(); }
     });
     document.addEventListener("mouseover", e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el) _showToolInfoTip(el); });
     document.addEventListener("mouseout",  e => { const el = e.target.closest?.(_DOC_TIP_SEL); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
