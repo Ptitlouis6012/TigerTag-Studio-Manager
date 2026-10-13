@@ -4875,3 +4875,18 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
 .thumb-zoom.is-on { opacity: 1; transform: none; }
 .thumb-zoom img { display: block; width: 220px; height: 220px; object-fit: cover; border-radius: 11px; background: var(--surface); }
 @media (prefers-reduced-motion: reduce) { .thumb-zoom { transition: none; } }
+
+/* ── Touch screens (iPad, phones — Tiger Studio Web) ────────────────────────
+   No mouse means no hover: the actions a card only shows under the pointer
+   would stay invisible, so they are simply shown. Mouse-only helpers go away:
+   the panel resize handles (dragged with a mouse) and the ⌥-click hint. */
+@media (hover: none) {
+  .fp-friend-actions,
+  .rp-rack-kebab, .rp-rack-move,
+  .wb-edit-open,
+  .lv-remove,
+  .ro-from-go,
+  .pv-min-edit { opacity: 1; pointer-events: auto; transform: none; }
+  .panel-resize, #dbgRefHint { display: none; }
+  button, a, [role="button"], .spool-card, .cat-card { -webkit-tap-highlight-color: transparent; }
+}

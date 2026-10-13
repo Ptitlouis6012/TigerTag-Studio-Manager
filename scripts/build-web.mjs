@@ -114,7 +114,9 @@ const PWA_HEAD = [
   `<meta name="apple-mobile-web-app-capable" content="yes">`,
   `<meta name="mobile-web-app-capable" content="yes">`,
   `<meta name="apple-mobile-web-app-title" content="Tiger Studio">`,
-  `<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">`,
+  // "black", not "black-translucent": the page keeps its own top edge below
+  // the iPad / iPhone status bar instead of sliding under it.
+  `<meta name="apple-mobile-web-app-status-bar-style" content="black">`,
 ].map(l => "  " + l).join("\n");
 
 // The Agora SDK (Anycubic cloud camera — desktop-only) is copied from

@@ -6026,7 +6026,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── sidebar collapse toggle ── */
   (function() {
     const sidebar = $("sidebar");
-    if (localStorage.getItem("tigertag.sidebar") === "collapsed") {
+    // No choice made yet: a narrow window (an iPad in portrait, a small laptop
+    // window) starts with the slim sidebar so the inventory gets the room.
+    const saved = localStorage.getItem("tigertag.sidebar");
+    if (saved === "collapsed" || (!saved && window.innerWidth < 1100)) {
       sidebar.classList.add("collapsed");
     }
     $("btnSidebarToggle").addEventListener("click", () => {
