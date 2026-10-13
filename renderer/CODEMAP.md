@@ -132,7 +132,7 @@ Wiring (mirrors Bambu): always-on MQTT in `subscribePrinters` (skipCam), auto-co
 
 ---
 
-## Add Product panel — ADP (L2075-3365)
+## Add Product panel — ADP (L2075-3368)
 
 Manual spool creation: full chip-schema editor with bottom-sheets. All helpers prefixed `_adp`.
 
