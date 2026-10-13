@@ -21,6 +21,34 @@
   // Hides every `[data-desktop-only]` element (rule in css/00-base.css).
   document.documentElement.classList.add("is-web");
 
+  // NO LAN FROM THE WEB. Some printer modules talk to the machines straight from
+  // the page (Creality ws://<ip>:9999, Snapmaker http://<ip>:7125 — the other
+  // brands go through the desktop's main process, absent here), and their
+  // background pings start as soon as the printer list loads. From an https page
+  // that is mixed content: Chrome flags the whole site "Not secure" and asks for
+  // local-network access, for something that can't work anyway. So an insecure
+  // WebSocket or fetch is refused right here — the callers already treat a
+  // failure as "printer unreachable". (Printers on the web will come through a
+  // secure relay, never the LAN — docs/STUDIO-WEB-PLAN.md.)
+  if (location.protocol === "https:") {
+    const insecure = (u) => {
+      try { return /^(ws|http):$/.test(new URL(String(u), location.href).protocol); } catch { return false; }
+    };
+    const NativeWS = window.WebSocket;
+    window.WebSocket = function (url, protocols) {
+      if (insecure(url)) throw new DOMException("LAN connections are desktop-only", "SecurityError");
+      return protocols === undefined ? new NativeWS(url) : new NativeWS(url, protocols);
+    };
+    window.WebSocket.prototype = NativeWS.prototype;
+    Object.assign(window.WebSocket, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
+    const nativeFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = input instanceof Request ? input.url : input;
+      if (insecure(url)) return Promise.reject(new TypeError("LAN connections are desktop-only"));
+      return nativeFetch(input, init);
+    };
+  }
+
   // Install as an app (PWA): Chrome / Edge / Android announce it once, possibly
   // before the renderer module has loaded — keep the event for the sidebar's
   // "Install the app" button (inventory.js) and tell it the moment it lands.

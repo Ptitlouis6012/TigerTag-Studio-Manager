@@ -9,7 +9,12 @@
 - Studio Web served at the root of `studio.tigersystem.io` (no redirect); `tigersystem.io/studio` redirects there; separate sign-in from the Hub — `docs/WEB_DEPLOYMENT.md`, `docs/STUDIO-WEB-PLAN.md`, `README.md`, `FEATURES.md`, `llms.txt`, `scripts/build-web.mjs` (comments)
 
 ## Fixed
+- XP history showed some gains twice ("+20 · +20" for one printer, also chips, TigerSquad, friends) while the total counted them once — a server-side race: two recomputations of the same account ran at once and each logged the move. The backend now recomputes XP in a single Firestore transaction (`storeTotals`, TigerTag_Firebase_Backend `functions/supportWebhooks.js`, 12 functions redeployed 2026-10-14), and the 259 duplicate history entries on 42 accounts were removed. No XP total was wrong. To mention in the release note and What's New (user-visible) — no Studio code change
+- Tiger Studio Web was flagged "Not secure" and asked for local-network access: the Creality / Snapmaker modules ping and connect to printers straight from the page (`ws://<ip>:9999`, `http://<ip>:7125`) as soon as the printer list loads — mixed content on an https page. The web bridge now refuses any insecure WebSocket / fetch on https (callers already treat it as "printer unreachable") — `renderer/web-bridge.js`
 - Tiger Studio Web: the page no longer requests the Agora SDK (Anycubic cloud camera, desktop-only, not in git), which answered 404 on the web (shipped to the web as web-v2.40.0.1) — `scripts/build-web.mjs`
+- Hold-to-confirm buttons: the "Hold 1.5 s to confirm" bubble no longer stays on screen after the action closes its menu or rebuilds its card (e.g. deleting a printer) — PR #77 (Ptitlouis6012), `renderer/inventory.js`
+- Printers board: after a long drag (or with printers reporting live) the card and its widgets no longer pile up at the top-left corner with the drop never saved — the gesture and its release are module-level and survive a rebuild, held objects keep their drawn position, a hold with no gesture behind it is cleared — PR #78 (Ptitlouis6012), `renderer/inventory.js`
+- Printers board: a dragged group can no longer be pulled away for ever (one card reached x ≈ 11 000 and vanished off-screen) — it stops one screenful past the furthest object it is not carrying — PR #79 (Ptitlouis6012), `renderer/inventory.js`
 
 ## Removed
 
