@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Vide",
   "ffgCameraAlt": "Flux caméra FlashForge",
   "ffgCamFailMsg": "Échec de connexion — un seul flux vidéo autorisé à la fois.",
+  "elgCamFailMsg": "La caméra ne répond pas — laisse-lui un instant et réessaie.",
+  "elgCameraAlt": "Flux caméra Elegoo",
   "ffgCamRetry": "Réessayer",
   "ffgFilEditTitle": "Changer le filament",
   "elgFilEditTitle": "Changer le filament",

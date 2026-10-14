@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Empty",
   "ffgCameraAlt": "FlashForge camera stream",
   "ffgCamFailMsg": "Camera connection failed — only one viewer is allowed at a time.",
+  "elgCamFailMsg": "The camera isn't answering — give it a moment and try again.",
+  "elgCameraAlt": "Elegoo camera stream",
   "ffgCamRetry": "Retry",
   "ffgFilEditTitle": "Change filament",
   "elgFilEditTitle": "Change filament",

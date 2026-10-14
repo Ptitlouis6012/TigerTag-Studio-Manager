@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Pusty",
   "ffgCameraAlt": "Strumień kamery FlashForge",
   "ffgCamFailMsg": "Błąd połączenia z kamerą — dozwolony jest tylko jeden strumień.",
+  "elgCamFailMsg": "Kamera nie odpowiada — daj jej chwilę i spróbuj ponownie.",
+  "elgCameraAlt": "Strumień kamery Elegoo",
   "ffgCamRetry": "Spróbuj ponownie",
   "ffgFilEditTitle": "Zmień filament",
   "elgFilEditTitle": "Zmień filament",

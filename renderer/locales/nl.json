@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Leeg",
   "ffgCameraAlt": "FlashForge-camerastream",
   "ffgCamFailMsg": "Cameraverbinding mislukt — er mag maar één kijker tegelijk zijn.",
+  "elgCamFailMsg": "De camera reageert niet — geef het even de tijd en probeer het opnieuw.",
+  "elgCameraAlt": "Elegoo-camerastream",
   "ffgCamRetry": "Opnieuw proberen",
   "ffgFilEditTitle": "Filament wijzigen",
   "elgFilEditTitle": "Filament wijzigen",

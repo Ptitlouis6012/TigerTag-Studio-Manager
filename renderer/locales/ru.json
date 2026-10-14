@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Пусто",
   "ffgCameraAlt": "Видеопоток камеры FlashForge",
   "ffgCamFailMsg": "Не удалось подключиться к камере — одновременно разрешён только один зритель.",
+  "elgCamFailMsg": "Камера не отвечает — дай ей немного времени и попробуй снова.",
+  "elgCameraAlt": "Видеопоток камеры Elegoo",
   "ffgCamRetry": "Повторить",
   "ffgFilEditTitle": "Сменить филамент",
   "elgFilEditTitle": "Сменить филамент",

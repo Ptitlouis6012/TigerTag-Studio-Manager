@@ -32,7 +32,7 @@ export function renderElegooCamBanner(p) {
     <div id="elgCamHost" class="pp-cam-full elg-cam-host">
       <img class="elg-camera-img"
            src="${ctx.esc(streamUrl)}"
-           alt="${ctx.esc(ctx.t('ffgCameraAlt') || 'Camera')}"
+           alt="${ctx.esc(ctx.t('elgCameraAlt') || 'Camera')}"
            loading="lazy"
            referrerpolicy="no-referrer"
            onerror="this.closest('.elg-cam-host').querySelector('.elg-cam-fallback')?.style.removeProperty('display');this.style.display='none'"/>
@@ -44,7 +44,7 @@ export function renderElegooCamBanner(p) {
           : `<div class="elg-cam-fallback-img elg-cam-fallback-img--placeholder"></div>`}
         <div class="elg-cam-fallback-overlay">
           <div class="elg-cam-fallback-icon icon icon-warn icon-18" aria-hidden="true"></div>
-          <div class="elg-cam-fallback-msg">${ctx.esc(ctx.t('ffgCamFailMsg') || 'Camera unavailable')}</div>
+          <div class="elg-cam-fallback-msg">${ctx.esc(ctx.t('elgCamFailMsg') || 'Camera unavailable')}</div>
         </div>
       </div>
     </div>`;

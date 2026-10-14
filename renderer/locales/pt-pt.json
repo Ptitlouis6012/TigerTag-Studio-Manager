@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Vazio",
   "ffgCameraAlt": "Transmissão da câmara FlashForge",
   "ffgCamFailMsg": "Falha na ligação da câmara — apenas um fluxo permitido de cada vez.",
+  "elgCamFailMsg": "A câmara não responde — dá-lhe um instante e tenta outra vez.",
+  "elgCameraAlt": "Transmissão da câmara Elegoo",
   "ffgCamRetry": "Tentar novamente",
   "ffgFilEditTitle": "Trocar filamento",
   "elgFilEditTitle": "Trocar filamento",
