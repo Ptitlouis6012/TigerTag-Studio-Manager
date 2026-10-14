@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Leer",
   "ffgCameraAlt": "FlashForge-Kamerastream",
   "ffgCamFailMsg": "Kameraverbindung fehlgeschlagen — nur ein gleichzeitiger Stream erlaubt.",
+  "elgCamFailMsg": "Die Kamera antwortet nicht — gib ihr einen Moment und versuch es noch mal.",
+  "elgCameraAlt": "Elegoo-Kamerastream",
   "ffgCamRetry": "Erneut versuchen",
   "ffgFilEditTitle": "Filament wechseln",
   "elgFilEditTitle": "Filament wechseln",

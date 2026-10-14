@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "Vuoto",
   "ffgCameraAlt": "Stream camera FlashForge",
   "ffgCamFailMsg": "Connessione camera fallita — è ammesso un solo flusso alla volta.",
+  "elgCamFailMsg": "La camera non risponde — dalle un momento e riprova.",
+  "elgCameraAlt": "Stream camera Elegoo",
   "ffgCamRetry": "Riprova",
   "ffgFilEditTitle": "Cambia filamento",
   "elgFilEditTitle": "Cambia filamento",

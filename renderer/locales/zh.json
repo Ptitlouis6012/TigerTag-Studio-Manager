@@ -1352,6 +1352,8 @@
   "ffgSlotEmpty": "空",
   "ffgCameraAlt": "FlashForge 摄像头视频流",
   "ffgCamFailMsg": "摄像头连接失败 — 仅允许一个视频流。",
+  "elgCamFailMsg": "摄像头没有响应 — 稍等片刻后再试一次。",
+  "elgCameraAlt": "Elegoo 摄像头视频流",
   "ffgCamRetry": "重试",
   "ffgFilEditTitle": "更换耗材",
   "elgFilEditTitle": "更换耗材",
