@@ -1,7 +1,10 @@
 # Tiger Studio Web — deployment
 
-Tiger Studio runs in a browser at **`https://tigersystem.io/studio`**, from the
-same code as the desktop app. `https://studio.tigersystem.io` is a redirect to it.
+Tiger Studio runs in a browser at **`https://studio.tigersystem.io`**, from the
+same code as the desktop app — served at the root of that host, the address never
+changes. `https://tigersystem.io/studio` redirects to it.
+Because it is its own origin, Studio Web keeps its own sign-in (one login, then
+remembered) instead of sharing the Hub's.
 Decisions and the audit behind them: [`STUDIO-WEB-PLAN.md`](STUDIO-WEB-PLAN.md).
 
 ## Architecture
@@ -12,9 +15,13 @@ TigerTag-Studio-Manager (this repo)            TigerTag_Hub (Next.js on Vercel)
   scripts/build-web.mjs  ── static folder ──▶      → shallow clone of a Studio tag
                                                    → build-web.mjs --base /studio/
                                                    → public/studio/   (gitignored)
+                                                 middleware.ts (host studio.tigersystem.io)
+                                                   /  (and /studio)   → rewrite to /studio/index.html
+                                                   /studio/…          → the app's files, as is
+                                                   anything else      → redirect to tigersystem.io
                                                  next.config.mjs
-                                                   /studio            → rewrite to /studio/index.html
-                                                   studio.tigersystem.io → redirect to tigersystem.io/studio
+                                                   tigersystem.io/studio → redirect to studio.tigersystem.io
+                                                 fetch-studio-web.mjs: manifest id / start_url / scope → "/"
 ```
 
 - **No bundler, no second codebase.** The renderer is plain ES modules + the
@@ -51,20 +58,21 @@ see the plan.
 
 The build writes `manifest.webmanifest` (name, standalone display, icons from
 `assets/favicon/`) and the iOS home-screen tags into `index.html`. Its scope is the
-served folder **without** the trailing slash (`/studio`), because the page itself
-lives at `/studio`. `web-bridge.js` keeps Chrome's `beforeinstallprompt`; the sidebar
+served folder **without** the trailing slash (`/studio`); the Hub's
+`fetch-studio-web.mjs` then widens `id` / `start_url` / `scope` to `/`, because on
+`studio.tigersystem.io` the page lives at the root. `web-bridge.js` keeps Chrome's `beforeinstallprompt`; the sidebar
 "Install the app" button (`#sbInstallBtn`, `data-web-only`) replays it, or on iOS
 unfolds the Share → Add to Home Screen hint. There is deliberately **no service
 worker**: Chrome no longer needs one to install, and an offline cache would keep
 serving the previous version after each release.
 
-## Shared sign-in with the Hub
+## Sign-in
 
-Studio and the Hub share the origin `tigersystem.io`, therefore one Firebase
-session (same project, same API key — checked). On a first visit with no Studio
-account, Studio adopts the Hub's signed-in user (`_adoptSharedWebSession`, verified
-addresses only). Signing in to Studio leaves the Hub signed in; signing out of
-Studio ends the Hub session only when it is the same account.
+On `studio.tigersystem.io` Studio is its own origin, so it does **not** share the
+Hub's Firebase session: the user signs in once, and the session is remembered.
+`_adoptSharedWebSession` (adopt the Hub's signed-in user on a first visit) only
+fires when both run on the same origin — e.g. `tigersystem.io/studio/…` opened
+directly — and is harmless otherwise.
 
 ## Commands
 
@@ -112,6 +120,20 @@ is blocked the same way when the head is a personal commit (web-sync then goes r
 The permanent fix is to link the personal GitHub account to the Vercel member
 account (Vercel → Account Settings → Authentication).
 
+## No LAN from the web
+
+A browser cannot reach a printer the way the desktop does, and an https page that
+opens `ws://` / `http://` connections is mixed content: Chrome flags the site "Not
+secure" and asks for local-network access. `renderer/web-bridge.js` therefore
+refuses any insecure `WebSocket` / `fetch` on https (the Creality and Snapmaker
+modules talk to printers from the page; they treat the refusal as "printer
+unreachable"). Printers on the web will come through a secure relay.
+
+## Web-only fixes
+
+`npm run web:hotfix` ships a fix to the web as `X.Y.Z · web N` with no desktop
+build — see [`WEB_HOTFIX.md`](WEB_HOTFIX.md).
+
 ## Shipping a new Studio Web version
 
 Nothing extra: release Studio as usual (tag → CI → **publish** the draft as
@@ -124,8 +146,9 @@ latest). Publishing triggers the web deploy; watch the *Web sync* run.
 2. **DNS (OVH)** — `studio` `CNAME` the project-specific target Vercel shows
    (`…vercel-dns-016.com.`; the legacy `cname.vercel-dns.com` also works).
 3. **GitHub** — secret `HUB_DEPLOY_HOOK_URL` on this repo.
-4. **Firebase Auth** — `tigersystem.io` is an authorised domain (the Hub's).
-   `studio.tigersystem.io` needs nothing: it only redirects. Vercel preview URLs
+4. **Firebase Auth** — `studio.tigersystem.io` must be an **authorised domain**
+   (Authentication → Settings → Authorized domains), or the Google sign-in popup
+   is refused there; email / password works regardless. Vercel preview URLs
    (`*.vercel.app`) must be added one by one to test sign-in on a preview.
 
 ## Known limits

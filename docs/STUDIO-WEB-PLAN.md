@@ -68,11 +68,13 @@ preview before production, capability detection instead of crashes.
 ## 4. Decisions needed
 
 - **D1 Hosting topology — DECIDED (2026-10-12):** Studio Web is served by the **Hub**
-  Vercel project at **`tigersystem.io/studio`**, so it shares the Hub's origin and
-  therefore its Firebase sign-in (one login for both). `studio.tigersystem.io` is a
-  **redirect** (308, host-based rule in the Hub's `next.config.mjs`, domain added to the
-  Hub project, OVH `CNAME studio → cname.vercel-dns.com`) — never a rewrite: a rewrite
-  would keep the subdomain origin and lose the shared session. The Hub build clones the
+  Vercel project. **Revised 2026-10-13:** the public address is
+  **`studio.tigersystem.io`**, served at the root of that host by a rewrite (Hub
+  `middleware.ts`); `tigersystem.io/studio` redirects there. Trade-off accepted by the
+  founder: the subdomain is its own origin, so Studio Web no longer shares the Hub's
+  Firebase sign-in (one login per site), and `studio.tigersystem.io` must be a Firebase
+  Auth authorised domain. (First version, 2026-10-12: Studio lived at
+  `tigersystem.io/studio` and the subdomain redirected to it, to share the session.) The Hub build clones the
   latest Studio release and builds it into `public/studio/` — no hand copy
   (implemented: see `WEB_DEPLOYMENT.md`).
   To verify: the Hub (modular v12) and Studio (compat) SDKs read the same persisted

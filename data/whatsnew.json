@@ -1,4 +1,125 @@
 {
+  "2.40.1": {
+    "date": "2026-10-14",
+    "items": [
+      {
+        "icon": "list-check",
+        "title": {
+          "en": "Your XP history, minus the echo",
+          "fr": "Ton historique d'XP, sans l'écho",
+          "de": "Dein XP-Verlauf, ohne Echo",
+          "es": "Tu historial de XP, sin eco",
+          "it": "La tua cronologia XP, senza eco",
+          "zh": "XP 记录不再有回声",
+          "pt": "Seu histórico de XP, sem eco",
+          "pt-pt": "O teu histórico de XP, sem eco",
+          "pl": "Twoja historia XP, bez echa",
+          "ru": "История XP без эха",
+          "nl": "Je XP-geschiedenis, zonder echo"
+        },
+        "body": {
+          "en": "Some gains showed up twice (\"+20, +20\" for one printer). Your total was always right — the doubles are gone and won't come back.",
+          "fr": "Certains gains s'affichaient deux fois (« +20, +20 » pour une seule imprimante). Ton total a toujours été juste — les doublons ont disparu et ne reviendront pas.",
+          "de": "Manche Gewinne tauchten doppelt auf („+20, +20“ für einen Drucker). Deine Summe stimmte immer — die Doppelten sind weg und kommen nicht wieder.",
+          "es": "Algunas ganancias salían dos veces («+20, +20» por una sola impresora). Tu total siempre fue correcto: los duplicados se fueron y no volverán.",
+          "it": "Alcuni guadagni comparivano due volte («+20, +20» per una sola stampante). Il tuo totale è sempre stato giusto: i doppioni sono spariti e non torneranno.",
+          "zh": "有些 XP 会显示两次（一台打印机出现“+20、+20”）。你的总分一直是对的——重复的记录已清除，不会再出现。",
+          "pt": "Alguns ganhos apareciam duas vezes (\"+20, +20\" para uma impressora). Seu total sempre esteve certo — as duplicatas sumiram e não voltam.",
+          "pt-pt": "Alguns ganhos apareciam duas vezes (\"+20, +20\" para uma impressora). O teu total esteve sempre certo — os duplicados desapareceram e não voltam.",
+          "pl": "Niektóre zdobycze pokazywały się dwa razy („+20, +20” za jedną drukarkę). Twój wynik zawsze był dobry — duplikaty zniknęły i nie wrócą.",
+          "ru": "Некоторые начисления показывались дважды («+20, +20» за один принтер). Итог всегда был верным — дубли исчезли и больше не появятся.",
+          "nl": "Sommige winsten verschenen twee keer (\"+20, +20\" voor één printer). Je totaal klopte altijd — de dubbelen zijn weg en komen niet terug."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Your printers board stays put",
+          "fr": "Ton plan d'imprimantes tient en place",
+          "de": "Dein Druckerplan bleibt, wo er hingehört",
+          "es": "Tu plano de impresoras se queda en su sitio",
+          "it": "Il tuo piano stampanti resta al suo posto",
+          "zh": "打印机布局稳稳当当",
+          "pt": "Seu painel de impressoras fica no lugar",
+          "pt-pt": "O teu painel de impressoras fica no sítio",
+          "pl": "Twój plan drukarek trzyma się miejsca",
+          "ru": "План принтеров остаётся на месте",
+          "nl": "Je printerbord blijft op z'n plek"
+        },
+        "body": {
+          "en": "Long drags no longer drop cards in a heap in the corner, and a card can't wander off the board anymore. Thanks Ptitlouis!",
+          "fr": "Les longs glisser-déposer n'empilent plus les cartes dans un coin, et une carte ne peut plus s'enfuir hors du plan. Merci Ptitlouis !",
+          "de": "Lange Ziehgesten stapeln die Karten nicht mehr in einer Ecke, und keine Karte kann mehr vom Plan verschwinden. Danke, Ptitlouis!",
+          "es": "Los arrastres largos ya no amontonan las tarjetas en una esquina, y ninguna puede escaparse del plano. ¡Gracias, Ptitlouis!",
+          "it": "I trascinamenti lunghi non ammucchiano più le schede in un angolo, e nessuna può più scappare dal piano. Grazie Ptitlouis!",
+          "zh": "长时间拖动不会再把卡片堆到角落，卡片也不会再跑出布局。感谢 Ptitlouis！",
+          "pt": "Arrastes longos não empilham mais os cartões num canto, e nenhum cartão foge do painel. Valeu, Ptitlouis!",
+          "pt-pt": "Arrastos longos já não empilham os cartões num canto, e nenhum cartão foge do painel. Obrigado, Ptitlouis!",
+          "pl": "Długie przeciąganie nie zrzuca już kart na stos w rogu, a żadna nie ucieknie z planu. Dzięki, Ptitlouis!",
+          "ru": "Долгое перетаскивание больше не сваливает карточки в угол, и ни одна не убежит с плана. Спасибо, Ptitlouis!",
+          "nl": "Lang slepen gooit kaarten niet meer op een hoop in de hoek, en geen kaart kan nog van het bord weglopen. Dank je, Ptitlouis!"
+        }
+      },
+      {
+        "icon": "grid",
+        "title": {
+          "en": "Studio in the browser, now iPad-friendly",
+          "fr": "Studio dans le navigateur, version iPad",
+          "de": "Studio im Browser, jetzt iPad-tauglich",
+          "es": "Studio en el navegador, ahora a gusto en iPad",
+          "it": "Studio nel browser, ora a misura di iPad",
+          "zh": "浏览器版 Studio，iPad 也顺手了",
+          "pt": "Studio no navegador, agora à vontade no iPad",
+          "pt-pt": "Studio no browser, agora à vontade no iPad",
+          "pl": "Studio w przeglądarce, teraz pod iPada",
+          "ru": "Studio в браузере — теперь и для iPad",
+          "nl": "Studio in de browser, nu iPad-vriendelijk"
+        },
+        "body": {
+          "en": "Turn your tablet and the sidebar follows: slim in portrait, roomy in landscape. Everything your finger needs is right there — no mouse required.",
+          "fr": "Tourne ta tablette et la barre latérale suit : fine en portrait, généreuse en paysage. Tout ce dont ton doigt a besoin est là — pas besoin de souris.",
+          "de": "Dreh dein Tablet und die Seitenleiste dreht mit: schmal im Hochformat, großzügig im Querformat. Alles, was dein Finger braucht, ist da — ganz ohne Maus.",
+          "es": "Gira tu tableta y la barra lateral la sigue: estrecha en vertical, amplia en horizontal. Todo lo que tu dedo necesita está a mano, sin ratón.",
+          "it": "Ruota il tablet e la barra laterale ti segue: sottile in verticale, ampia in orizzontale. Tutto ciò che serve al tuo dito è lì, senza mouse.",
+          "zh": "转动平板，侧边栏会跟着变：竖屏收窄，横屏展开。手指需要的一切都在眼前——不用鼠标。",
+          "pt": "Gire o tablet e a barra lateral acompanha: fina na vertical, espaçosa na horizontal. Tudo o que seu dedo precisa está ali — sem mouse.",
+          "pt-pt": "Roda o tablet e a barra lateral acompanha: fina na vertical, espaçosa na horizontal. Tudo o que o teu dedo precisa está ali — sem rato.",
+          "pl": "Obróć tablet, a pasek boczny pójdzie za nim: wąski w pionie, przestronny w poziomie. Wszystko, czego potrzebuje palec, jest pod ręką — bez myszki.",
+          "ru": "Поверни планшет — боковая панель подстроится: узкая в портрете, просторная в альбоме. Всё нужное для пальца под рукой — мышь не нужна.",
+          "nl": "Draai je tablet en de zijbalk draait mee: smal in staand, ruim in liggend. Alles wat je vinger nodig heeft staat klaar — geen muis nodig."
+        }
+      },
+      {
+        "icon": "globe",
+        "title": {
+          "en": "Studio on the web has its own address",
+          "fr": "Studio sur le web a sa propre adresse",
+          "de": "Studio im Web hat seine eigene Adresse",
+          "es": "Studio en la web tiene su propia dirección",
+          "it": "Studio sul web ha il suo indirizzo",
+          "zh": "网页版 Studio 有了专属网址",
+          "pt": "Studio na web tem endereço próprio",
+          "pt-pt": "O Studio na web tem morada própria",
+          "pl": "Studio w sieci ma własny adres",
+          "ru": "У веб-Studio свой адрес",
+          "nl": "Studio op het web heeft een eigen adres"
+        },
+        "body": {
+          "en": "Head to studio.tigersystem.io: sign in once, it remembers you, and the padlock stays a happy padlock.",
+          "fr": "Rendez-vous sur studio.tigersystem.io : tu te connectes une fois, il s'en souvient, et le cadenas reste un cadenas heureux.",
+          "de": "Ab auf studio.tigersystem.io: einmal anmelden, es merkt sich dich, und das Schloss bleibt ein glückliches Schloss.",
+          "es": "Entra en studio.tigersystem.io: inicias sesión una vez, te recuerda, y el candado sigue siendo un candado feliz.",
+          "it": "Vai su studio.tigersystem.io: accedi una volta, si ricorda di te, e il lucchetto resta un lucchetto felice.",
+          "zh": "打开 studio.tigersystem.io：登录一次就记住你，地址栏的小锁也一直安心。",
+          "pt": "Acesse studio.tigersystem.io: entre uma vez, ele lembra de você, e o cadeado continua um cadeado feliz.",
+          "pt-pt": "Vai a studio.tigersystem.io: inicias sessão uma vez, ele lembra-se de ti, e o cadeado continua um cadeado feliz.",
+          "pl": "Wejdź na studio.tigersystem.io: zaloguj się raz, zapamięta cię, a kłódka zostanie szczęśliwą kłódką.",
+          "ru": "Заходи на studio.tigersystem.io: входишь один раз — он тебя запомнит, а замочек в адресной строке остаётся довольным.",
+          "nl": "Ga naar studio.tigersystem.io: één keer inloggen, het onthoudt je, en het slotje blijft een blij slotje."
+        }
+      }
+    ]
+  },
   "2.40.0": {
     "date": "2026-10-12",
     "items": [

@@ -256,8 +256,9 @@ A QR code to download the mobile app is always accessible in the sidebar.
 - **From the web and your phone too**: Claude.ai, ChatGPT and their mobile apps connect online with one address — no Studio running — and *My profile* lists them with a button to cut access
 
 ### 🌐 Tiger Studio Web
-- The same Studio **in your browser** at **[tigersystem.io/studio](https://tigersystem.io/studio)** — computer, tablet, nothing to install
-- Same account, same data; signed in on tigersystem.io means signed in here
+- The same Studio **in your browser** at **[studio.tigersystem.io](https://studio.tigersystem.io)** — computer, tablet, nothing to install
+- Same account, same data — sign in once, Studio Web remembers you
+- At home on an **iPad**, portrait or landscape — no mouse needed
 - **Install it as an app** from the sidebar (Chrome, Edge, Android) or *Add to Home Screen* on iPhone / iPad
 - Always on the same version as the desktop app; NFC readers, sensors and printers stay desktop-only for now
 

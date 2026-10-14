@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.40.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.40.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -287,8 +287,9 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 
 ## Tiger Studio Web
 
-- **Studio in the browser** at `tigersystem.io/studio` (`studio.tigersystem.io` redirects): inventory, racks, favourites, lists, catalogue, friends, notifications and settings from the same code as the desktop app; hardware features (NFC readers, TD1S, USB scale, printers, cameras, updater) stay desktop-only (v2.40.0).
-- **One sign-in with tigersystem.io** — signed in on the site means signed in in Studio Web (v2.40.0).
+- **Studio in the browser** at `studio.tigersystem.io` (`tigersystem.io/studio` redirects there): inventory, racks, favourites, lists, catalogue, friends, notifications and settings from the same code as the desktop app; hardware features (NFC readers, TD1S, USB scale, printers, cameras, updater) stay desktop-only (v2.40.0).
+- **Sign in once, stay signed in** — Studio Web has its own sign-in (Google or email) on its own domain, remembered afterwards; Google's account picker names tigersystem.io (v2.40.0, own-domain sign-in v2.40.1).
+- **iPad / touch** — the sidebar follows the screen (slim in portrait, full in landscape, follows a rotation), hover-only actions are shown on touch screens and mouse-only helpers hidden (v2.40.1).
 - **Installable as an app (PWA)** — "Install the app" in the sidebar (Chrome / Edge / Android), Add-to-Home-Screen hint on iPhone / iPad (v2.40.0).
 - **Always the same version as the desktop app** — the web follows the published release and an open page reloads onto a new one (v2.40.0).
 - Friend links (`?friend=CODE`) pre-fill Add-friend on the web (v2.40.0).
@@ -326,6 +327,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 
 ## Dev tooling
 
+- **Tiger Studio Web hotfixes** — `npm run web:hotfix` ships a web-only fix as `X.Y.Z · web N` without a desktop build, the version number staying the desktop's; Web sync checks the live site (v2.40.1).
 - CSS modularization — the original monolithic `inventory.css` split into themed files (`00-base.css` → `70-detail-misc.css`) loaded in numeric order (v1.4.9).
 - `renderer/CODEMAP.md` — feature → line-range index for `inventory.js`, kept in sync via `npm run codemap:check` (post-v1.4.9); `CODEMAP-main.md` mirrors it for `main.js`.
 - `npm run whatsnew:add` / `whatsnew:check` / `whatsnew:import` — scaffold, validate, and seed-from-changelog tooling for the "What's New" content pipeline (v2.x era).

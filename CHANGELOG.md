@@ -5,6 +5,27 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.40.1 — 2026-10-14
+
+### Added
+- **Tiger Studio Web hotfixes** — web-only fixes ship without a desktop build while the version number stays the desktop's: `npm run web:hotfix` (`scripts/web-hotfix.mjs`) tags the current commit `web-vX.Y.Z.N` after checking it is on `origin/main` and that `package.json` there is the latest published release; `web-sync.yml` also runs on `web-v*` tags (refuses a base that is not the latest release, triggers the Hub deploy hook, waits for `version.json` = `{ version, webBuild }`); `scripts/build-web.mjs --web-build N` stamps the build number into `version.json` and `web-bridge.js` (About shows "X.Y.Z · web N", the reload check compares both); the Hub builds the highest `web-v<latest>.*` tag (found with `git ls-remote`) and fails on any version / build mismatch. `v*` tags still drive the desktop build. Docs: `docs/WEB_HOTFIX.md`.
+
+### Changed
+- **Studio Web at the root of `studio.tigersystem.io`** — the subdomain serves the app itself (Hub middleware rewrite, no redirect) and `tigersystem.io/studio` redirects there; the installed app's manifest is scoped to `/` (rewritten by the Hub after the build). Own origin, so its own sign-in (no session shared with the Hub any more; `_adoptSharedWebSession` stays but no longer fires).
+- **Studio Web signs in through its own domain** — on `studio.tigersystem.io` Firebase Auth's `authDomain` is the page's host (`AUTH_PROXY_HOSTS` in `renderer/firebase.js`); the Hub proxies `/__/auth/*` to `tigertag-connect.firebaseapp.com` (exempted from `X-Frame-Options`), the Google OAuth web client gained the origin and `/__/auth/handler` redirect, and `studio.tigersystem.io` is a Firebase authorised domain. Google's account picker names tigersystem.io instead of `tigertag-connect.firebaseapp.com`, and sign-in stays first-party for Safari / iOS / installed apps. Desktop and other hosts unchanged.
+- **Studio Web on iPad / touch** — with no saved choice the sidebar follows the screen (slim when taller than wide or under 900 px, full in landscape, follows a rotation); on `hover: none` screens the hover-only actions are shown (weight edit, list remove, rack and friend menus, reorder link, min-stock edit) and mouse-only helpers hidden (panel resize handles, debug ⌥-click hint); the KPI row fades its right edge under 1100 px; the NFC chip banners (encode / update / missing twin) are hidden on the web; the installed app keeps its top edge below the iOS status bar (`apple-mobile-web-app-status-bar-style: black`).
+- Bundled reference data refreshed: brand **Filament 3D** (id 31781) — 138 brands; catalogue 14,463 → **14,642** products.
+
+### Fixed
+- **XP history showed some gains twice** ("+20 · +20" for one printer; also chips, TigerSquad, friends) while the total counted them once — a server-side race: two recomputations of one account (`storeTotals`, e.g. a printer or friend write touching two docs) both read the previous `xpBreakdown` before either wrote, so each logged the move. The backend (TigerTag_Firebase_Backend `functions/supportWebhooks.js`) now reads the split and writes history + daily `xp_gain` notification + totals in ONE Firestore transaction (12 functions redeployed 2026-10-14); the 259 duplicate `users/{uid}/xpHistory` entries on 42 accounts were deleted. No XP total was wrong. No Studio code change.
+- **Studio Web was flagged "Not secure" and asked for local-network access** — the Creality / Snapmaker modules ping and connect to printers from the page (`ws://<ip>:9999`, `http://<ip>:7125`) as soon as the printer list loads: mixed content on an https page. `web-bridge.js` now refuses any insecure `WebSocket` / `fetch` on https (callers already treat it as "printer unreachable").
+- Studio Web no longer requests the Agora SDK (Anycubic cloud camera — desktop-only, copied from `node_modules`, not in git), which answered 404.
+- **Hold-to-confirm bubble** no longer stays on screen after the action closes its menu or rebuilds its card (e.g. deleting a printer): hidden before `onConfirm`, and on the next `mouseover` when its anchor is detached — PR #77 (Ptitlouis6012).
+- **Printers board: cards piled up at the origin after a long drag** — a rebuild forced under a gesture longer than the 2 s watchdog wired a fresh gesture that never saw the release, so the objects stayed held for ever and the layout left the rebuilt cards without `left`/`top`. The gesture and its release (`_planG` / `_planEnd`) are module-level and rebind to a rebuilt board, held objects keep their drawn position (`_planHeldPos`), the watchdog no longer rebuilds under a moving hand, and a hold with no gesture behind it is cleared (`_planHealHeld`) — PR #78 (Ptitlouis6012).
+- **Printers board: a dragged group could be pulled away for ever** (one card reached x ≈ 11 000, off-screen after a reload) — a carried group now stops one screenful (at the current zoom) past the furthest object it is not carrying; the limit beats a snap guide — PR #79 (Ptitlouis6012).
+
+---
+
 ## v2.40.0 — 2026-10-12
 
 ### Added

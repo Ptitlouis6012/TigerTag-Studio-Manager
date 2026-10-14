@@ -648,6 +648,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 232,
+      "color_g": 216,
+      "color_r": 184,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B8D8E8",
+    "color_info": {
+      "colors": [
+        "#B8D8E8"
+      ],
+      "type": "mono"
+    },
+    "id": 5783456,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUNUBWNK",
+    "title": "PLA HD - PLA HD Pastel Cloud Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 56,
       "color_g": 111,
       "color_r": 229,
@@ -2624,6 +2662,44 @@
     "product_type": "Filament",
     "sku": "PLA-Matt-PumpkinYellow",
     "title": "PLA-Matte - Matte Pumpkin Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 217,
+      "color_g": 198,
+      "color_r": 247,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F7C6D9",
+    "color_info": {
+      "colors": [
+        "#F7C6D9"
+      ],
+      "type": "mono"
+    },
+    "id": 23796439,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175ROSALGWNK",
+    "title": "PLA HD - PLA HD Pastel Cotton Candy Pink 1kg"
   },
   {
     "RFID_Data": {
@@ -6208,6 +6284,44 @@
     "product_type": "Filament",
     "sku": "B0F38F6CXG",
     "title": "PLA PRO - Beige"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 165,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFA500FF",
+    "color_info": {
+      "colors": [
+        "#FFA500FF"
+      ],
+      "type": "mono"
+    },
+    "id": 54195562,
+    "img_src": "https://cdn.tigertag.io/img?id=54195562&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-ORANGE-1.75-1000",
+    "title": "PETG Solid Color - PETG Orange"
   },
   {
     "RFID_Data": {
@@ -13666,6 +13780,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 192,
+      "color_g": 213,
+      "color_r": 113,
+      "data1": 56,
+      "data2": 190,
+      "data3": 240,
+      "data4": 55,
+      "data5": 6,
+      "data6": 25,
+      "data7": 65,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58410,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "AzureFilm",
+    "color": "#71D5C0",
+    "color_info": {
+      "colors": [
+        "#71D5C0"
+      ],
+      "type": "mono"
+    },
+    "id": 100436453,
+    "img_src": "https://cdn.tigertag.io/img?id=100436453&v=2",
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "FP171-6027",
+    "title": "PLA Original - Caribbean Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 121,
       "color_g": 166,
       "color_r": 210,
@@ -14962,6 +15114,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 180,
+      "color_g": 130,
+      "color_r": 70,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4682B4",
+    "color_info": {
+      "colors": [
+        "#4682B4"
+      ],
+      "type": "mono"
+    },
+    "id": 108663135,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175AZUACEWNK",
+    "title": "PLA Silk - PLA Silk Steel Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 204,
       "color_g": 197,
       "color_r": 36,
@@ -15034,6 +15224,44 @@
     "product_type": "Filament",
     "sku": "UM-PLA-SILVERMETALLIC",
     "title": "PLA - Silver Metallic"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 201,
+      "color_g": 212,
+      "color_r": 127,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#7FD4C9",
+    "color_info": {
+      "colors": [
+        "#7FD4C9"
+      ],
+      "type": "mono"
+    },
+    "id": 109397255,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUTURWNK",
+    "title": "PLA HD - PLA HD Pastel Turquoise Blue 1kg"
   },
   {
     "RFID_Data": {
@@ -17520,6 +17748,44 @@
     "product_type": "Filament",
     "sku": "PLA+175Y3B1",
     "title": "PLA+ - YELLOW"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 51,
+      "color_g": 115,
+      "color_r": 184,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B87333",
+    "color_info": {
+      "colors": [
+        "#B87333"
+      ],
+      "type": "mono"
+    },
+    "id": 128979098,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175COBCOBWNK",
+    "title": "PLA HD - PLA HD Copper 1kg"
   },
   {
     "RFID_Data": {
@@ -20995,6 +21261,44 @@
     "product_type": "Filament",
     "sku": "B0DPWMSMNQ",
     "title": "High-Speed PLA - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 165,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFA500FF",
+    "color_info": {
+      "colors": [
+        "#FFA500FF"
+      ],
+      "type": "mono"
+    },
+    "id": 158424915,
+    "img_src": "https://cdn.tigertag.io/img?id=158424915&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-ORANGE-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Orange"
   },
   {
     "RFID_Data": {
@@ -25620,6 +25924,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 77,
+      "color_b": 245,
+      "color_g": 245,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 21,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F0F5F54D",
+    "color_info": {
+      "colors": [
+        "#F0F5F54D"
+      ],
+      "type": "mono"
+    },
+    "id": 197045190,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175TRATRAWNK",
+    "title": "PLA HD - PLA HD Transparent 1kg"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 55,
       "color_g": 175,
@@ -27002,6 +27344,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 3,
+      "color_g": 130,
+      "color_r": 86,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#568203",
+    "color_info": {
+      "colors": [
+        "#568203"
+      ],
+      "type": "mono"
+    },
+    "id": 207693758,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175VERAGUWNK",
+    "title": "PLA PRO - PLA PRO Avocado Green 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 122,
       "color_g": 236,
       "color_r": 65,
@@ -27808,6 +28188,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFF00FF",
+    "color_info": {
+      "colors": [
+        "#FFFF00FF"
+      ],
+      "type": "mono"
+    },
+    "id": 213569750,
+    "img_src": "https://cdn.tigertag.io/img?id=213569750&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-YELLOW-1.75-1000",
+    "title": "ABS Solid Color - ABS Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 167,
       "color_g": 182,
       "color_r": 197,
@@ -28184,6 +28602,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5ABSP-MIDNIGHTGREEN-175-1KG",
     "title": "THE K5 ABS P - Midnight Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 55,
+      "color_g": 78,
+      "color_r": 111,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#6F4E37",
+    "color_info": {
+      "colors": [
+        "#6F4E37"
+      ],
+      "type": "mono"
+    },
+    "id": 216595890,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MARACAWNK",
+    "title": "PLA HD - PLA HD Brown Acacia 1kg"
   },
   {
     "RFID_Data": {
@@ -31050,6 +31506,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF0000FF",
+    "color_info": {
+      "colors": [
+        "#FF0000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 235776797,
+    "img_src": "https://cdn.tigertag.io/img?id=235776797&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-RED-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -31388,6 +31882,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PETGM-ETHEREALBLUE-175-1KG",
     "title": "THE K5 PETG M - Ethereal Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 216,
+      "color_g": 191,
+      "color_r": 216,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#D8BFD833",
+    "color_info": {
+      "colors": [
+        "#D8BFD833"
+      ],
+      "type": "mono"
+    },
+    "id": 238306041,
+    "img_src": "https://cdn.tigertag.io/img?id=238306041&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-LIGHTPURPLE-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Light Purple"
   },
   {
     "RFID_Data": {
@@ -33639,6 +34171,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5ABSP-SILVER-285-5KG",
     "title": "THE K5 ABS P - Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 55,
+      "color_g": 175,
+      "color_r": 212,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#D4AF37",
+    "color_info": {
+      "colors": [
+        "#D4AF37"
+      ],
+      "type": "mono"
+    },
+    "id": 253145393,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175OROREYWNK",
+    "title": "PLA Silk - PLA Silk King Gold 1kg"
   },
   {
     "RFID_Data": {
@@ -36577,6 +37147,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 245,
+      "color_g": 245,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5F5F5",
+    "color_info": {
+      "colors": [
+        "#F5F5F5"
+      ],
+      "type": "mono"
+    },
+    "id": 271238703,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175BLANIEWNK",
+    "title": "PLA Silk - PLA Silk Snow White 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 186,
       "color_g": 213,
       "color_r": 168,
@@ -38667,6 +39275,44 @@
     "product_type": "Filament",
     "sku": "3301060031",
     "title": "Hyper PETG-CF - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 210,
+      "color_g": 230,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 220,
+      "data3": 250,
+      "data4": 80,
+      "data5": 6,
+      "data6": 90,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 30884,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1500
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F0E6D2",
+    "color_info": {
+      "colors": [
+        "#F0E6D2"
+      ],
+      "type": "mono"
+    },
+    "id": 291672996,
+    "img_src": null,
+    "material": "PP",
+    "measure": "1500 g",
+    "product_type": "Filament",
+    "sku": "POL01500175NATNATWNK",
+    "title": "Polypropylene - PP Natural 1.5kg"
   },
   {
     "RFID_Data": {
@@ -44753,6 +45399,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 201,
+      "color_g": 169,
+      "color_r": 28,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1CA9C9",
+    "color_info": {
+      "colors": [
+        "#1CA9C9"
+      ],
+      "type": "mono"
+    },
+    "id": 334680445,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUPACWNK",
+    "title": "PLA HD - PLA HD Pacific Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 62,
       "color_g": 140,
       "color_r": 9,
@@ -48536,6 +49220,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 34,
+      "color_g": 90,
+      "color_r": 241,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F15A22FF",
+    "color_info": {
+      "colors": [
+        "#F15A22FF"
+      ],
+      "type": "mono"
+    },
+    "id": 361398931,
+    "img_src": "https://cdn.tigertag.io/img?id=361398931&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-ORANGE-1.75-1000",
+    "title": "PETG Matte - PETG Matte Orange"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 48,
       "color_g": 84,
       "color_r": 155,
@@ -51344,6 +52066,44 @@
     "product_type": "Filament",
     "sku": "RPET-TR",
     "title": "rPETg - Transparent"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": 60,
+      "data5": 4,
+      "data6": 70,
+      "data7": 90,
+      "id_aspect1": 132,
+      "id_aspect2": null,
+      "id_brand": 19961,
+      "id_material": 34944,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": "5907753138941",
+    "brand": "Rosa3D",
+    "color": "#000000",
+    "color_info": {
+      "colors": [
+        "#000000"
+      ],
+      "type": "mono"
+    },
+    "id": 382941703,
+    "img_src": null,
+    "material": "PETG-GF",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PWB-3D-F5024",
+    "title": "PET-G + 30 GF - Black"
   },
   {
     "RFID_Data": {
@@ -56499,6 +57259,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 103,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 216,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FF6700",
+    "color_info": {
+      "colors": [
+        "#FF6700"
+      ],
+      "type": "mono"
+    },
+    "id": 420534911,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PLD01000175NARELEWNK",
+    "title": "PLA HD - PLA HD Fluorescent Electric Orange 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 255,
       "color_g": 255,
       "color_r": 255,
@@ -56785,15 +57583,15 @@
     },
     "barcode": null,
     "brand": "iSANMATE",
-    "color": "#454547FF",
+    "color": "#454547",
     "color_info": {
       "colors": [
-        "#454547FF"
+        "#454547"
       ],
       "type": "mono"
     },
     "id": 424728579,
-    "img_src": null,
+    "img_src": "https://cdn.tigertag.io/img?id=424728579&v=2",
     "material": "PLA",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -57217,6 +58015,44 @@
     "product_type": "Filament",
     "sku": "OVS-VFSYLW11-010136",
     "title": "ASA - Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 132,
+      "color_g": 164,
+      "color_r": 196,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#C4A48433",
+    "color_info": {
+      "colors": [
+        "#C4A48433"
+      ],
+      "type": "mono"
+    },
+    "id": 427315664,
+    "img_src": "https://cdn.tigertag.io/img?id=427315664&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-LIGHTBROWN-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Light Brown"
   },
   {
     "RFID_Data": {
@@ -60802,6 +61638,44 @@
     "product_type": "Filament",
     "sku": "3D WOOD-1KG1.75-BLK",
     "title": "Wood PLA - Wood Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 128,
+      "color_g": 128,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#808080FF",
+    "color_info": {
+      "colors": [
+        "#808080FF"
+      ],
+      "type": "mono"
+    },
+    "id": 455614266,
+    "img_src": "https://cdn.tigertag.io/img?id=455614266&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-GREY-1.75-1000",
+    "title": "PETG Solid Color - PETG Grey"
   },
   {
     "RFID_Data": {
@@ -67141,6 +68015,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 255,
+      "color_b": 176,
+      "color_g": 176,
+      "color_r": 176,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B0B0B0",
+    "color_info": {
+      "colors": [
+        "#B0B0B0"
+      ],
+      "type": "mono"
+    },
+    "id": 502341036,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175PLAMERWNK",
+    "title": "PLA Silk - PLA Silk Mercury Silver 1kg"
+  },
+  {
+    "RFID_Data": {
       "color_a": 128,
       "color_b": 43,
       "color_g": 91,
@@ -67594,6 +68506,44 @@
     "product_type": "Filament",
     "sku": "OT1001076",
     "title": "PLA+ - Chocolate"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 60,
+      "color_g": 220,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F5DC3CFF",
+    "color_info": {
+      "colors": [
+        "#F5DC3CFF"
+      ],
+      "type": "mono"
+    },
+    "id": 505847253,
+    "img_src": "https://cdn.tigertag.io/img?id=505847253&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-SUNLIGHT-YELLOW-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Sunlight Yellow"
   },
   {
     "RFID_Data": {
@@ -68468,6 +69418,44 @@
     "product_type": "Filament",
     "sku": "DLZ-EU-TB-TPU95A-OR-1KG",
     "title": "TPU 95A - Orange"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 66,
+      "color_g": 129,
+      "color_r": 124,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#7C8142FF",
+    "color_info": {
+      "colors": [
+        "#7C8142FF"
+      ],
+      "type": "mono"
+    },
+    "id": 514153894,
+    "img_src": "https://cdn.tigertag.io/img?id=514153894&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-OLIVEGREEN-1.75-1000",
+    "title": "PETG Matte - PETG Matte Olive Green"
   },
   {
     "RFID_Data": {
@@ -69996,6 +70984,53 @@
     "product_type": "Filament",
     "sku": "3760349168485",
     "title": "PLA+ Litho CMYK - Cyan CMYK Litophanie"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 128,
+      "color_b2": 255,
+      "color_b3": 180,
+      "color_g": 0,
+      "color_g2": 255,
+      "color_g3": 105,
+      "color_r": 128,
+      "color_r2": 0,
+      "color_r3": 255,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 145,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#80008033",
+    "color_info": {
+      "colors": [
+        "#80008033",
+        "#00FFFF33",
+        "#FF69B433",
+        "#FFA50033"
+      ],
+      "type": "gradient"
+    },
+    "id": 524172727,
+    "img_src": "https://cdn.tigertag.io/img?id=524172727&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-RAINBOW02-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Rainbow 02"
   },
   {
     "RFID_Data": {
@@ -79321,6 +80356,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 250,
+      "color_g": 247,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5F7FA",
+    "color_info": {
+      "colors": [
+        "#F5F7FA"
+      ],
+      "type": "mono"
+    },
+    "id": 590443198,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175BLAGLAWNK",
+    "title": "PETG Standard - PETG Glacier White 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 55,
       "color_g": 175,
       "color_r": 212,
@@ -80229,6 +81302,44 @@
     "product_type": "Filament",
     "sku": "NBF-ABS-CANBLU",
     "title": "ABS - Candy Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 128,
+      "color_g": 128,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#808080FF",
+    "color_info": {
+      "colors": [
+        "#808080FF"
+      ],
+      "type": "mono"
+    },
+    "id": 597549115,
+    "img_src": "https://cdn.tigertag.io/img?id=597549115&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-GRAY-1.75-1000",
+    "title": "PETG Matte - PETG Matte Gray"
   },
   {
     "RFID_Data": {
@@ -91500,6 +92611,44 @@
     "RFID_Data": {
       "color_a": 255,
       "color_b": 201,
+      "color_g": 169,
+      "color_r": 28,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1CA9C9",
+    "color_info": {
+      "colors": [
+        "#1CA9C9"
+      ],
+      "type": "mono"
+    },
+    "id": 685939241,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175AZUPACWNK",
+    "title": "PLA PRO - PLA PRO Pacific Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 201,
       "color_g": 176,
       "color_r": 239,
       "data1": 56,
@@ -91951,6 +93100,44 @@
     "product_type": "Filament",
     "sku": "ESilk-PLA175S1A",
     "title": "PLA - Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF0000FF",
+    "color_info": {
+      "colors": [
+        "#FF0000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 688811856,
+    "img_src": "https://cdn.tigertag.io/img?id=688811856&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-RED-1.75-1000",
+    "title": "ASA Solid Color - ASA Red"
   },
   {
     "RFID_Data": {
@@ -96027,6 +97214,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 192,
+      "color_g": 192,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C0C0C0",
+    "color_info": {
+      "colors": [
+        "#C0C0C0"
+      ],
+      "type": "mono"
+    },
+    "id": 717461901,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175PLAPLAWNK",
+    "title": "PETG Standard - PETG Silver 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 0,
       "color_r": 0,
@@ -97332,6 +98557,44 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU95A-SILVER-175-3KG",
     "title": "THE K8 TPU 95A - Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 128,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#008000FF",
+    "color_info": {
+      "colors": [
+        "#008000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 726187162,
+    "img_src": "https://cdn.tigertag.io/img?id=726187162&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-GREEN-1.75-1000",
+    "title": "ASA Solid Color - ASA Green"
   },
   {
     "RFID_Data": {
@@ -98970,6 +100233,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 64,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 739341130,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175NEGGALWNK",
+    "title": "PLA HD - PLA HD Glitter Galaxy Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -99080,6 +100381,44 @@
     "product_type": "Filament",
     "sku": "ALIZ-PLAMT-001",
     "title": "PLA Matte - Durian Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 132,
+      "color_g": 132,
+      "color_r": 132,
+      "data1": 56,
+      "data2": 190,
+      "data3": 210,
+      "data4": 50,
+      "data5": 8,
+      "data6": 40,
+      "data7": 60,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#848484",
+    "color_info": {
+      "colors": [
+        "#848484"
+      ],
+      "type": "mono"
+    },
+    "id": 740100926,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PMA00300175GRIHUMWNK",
+    "title": "PLA Matte - PLA Matte Smoke Gray 300g"
   },
   {
     "RFID_Data": {
@@ -100109,6 +101448,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 51,
+      "color_b": 255,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#0000FF33",
+    "color_info": {
+      "colors": [
+        "#0000FF33"
+      ],
+      "type": "mono"
+    },
+    "id": 750313309,
+    "img_src": "https://cdn.tigertag.io/img?id=750313309&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-BLUE-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Blue"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 81,
       "color_g": 99,
@@ -100296,6 +101673,44 @@
     "product_type": "Filament",
     "sku": "ALIZ-PETG-009",
     "title": "PETG - Glitter Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 250,
+      "color_g": 247,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5F7FA",
+    "color_info": {
+      "colors": [
+        "#F5F7FA"
+      ],
+      "type": "mono"
+    },
+    "id": 751559219,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175BLAGLAWNK",
+    "title": "PLA PRO - PLA PRO Glacier White 1kg"
   },
   {
     "RFID_Data": {
@@ -107566,6 +108981,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 110,
+      "color_g": 194,
+      "color_r": 181,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#B5C26EFF",
+    "color_info": {
+      "colors": [
+        "#B5C26EFF"
+      ],
+      "type": "mono"
+    },
+    "id": 810918695,
+    "img_src": "https://cdn.tigertag.io/img?id=810918695&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-OLIVE-GREEN-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Olive Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 142,
       "color_g": 233,
       "color_r": 247,
@@ -109162,6 +110615,44 @@
     "product_type": "Filament",
     "sku": "376034597208",
     "title": "ASA - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 68,
+      "color_g": 154,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#009A44",
+    "color_info": {
+      "colors": [
+        "#009A44"
+      ],
+      "type": "mono"
+    },
+    "id": 823811907,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175VERIRLWNK",
+    "title": "PLA Silk - PLA Silk Irish Green 1kg"
   },
   {
     "RFID_Data": {
@@ -112235,6 +113726,44 @@
     "product_type": "Filament",
     "sku": "EXT-DURAPROABS-WHITE-175-10KG",
     "title": "DuraPro ABS - white"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 75,
+      "color_r": 150,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#964B00FF",
+    "color_info": {
+      "colors": [
+        "#964B00FF"
+      ],
+      "type": "mono"
+    },
+    "id": 846034883,
+    "img_src": "https://cdn.tigertag.io/img?id=846034883&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-BROWN-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Brown"
   },
   {
     "RFID_Data": {
@@ -120077,6 +121606,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 55,
+      "color_g": 175,
+      "color_r": 212,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#D4AF37",
+    "color_info": {
+      "colors": [
+        "#D4AF37"
+      ],
+      "type": "mono"
+    },
+    "id": 915100954,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175OROOROWNK",
+    "title": "PLA HD - PLA HD Gold 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 111,
       "color_g": 134,
       "color_r": 161,
@@ -120765,6 +122332,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 250,
+      "color_g": 247,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5F7FA",
+    "color_info": {
+      "colors": [
+        "#F5F7FA"
+      ],
+      "type": "mono"
+    },
+    "id": 918442651,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175BLAGLAWNK",
+    "title": "PLA HD - PLA HD Glacier White 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 37,
       "color_g": 54,
       "color_r": 87,
@@ -121331,6 +122936,44 @@
     "product_type": "Filament",
     "sku": "3DMA-UTPU95AHF-GREY",
     "title": "Ultra TPU-95A High Flow - Grey"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 173,
+      "color_g": 13,
+      "color_r": 106,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#6A0DAD",
+    "color_info": {
+      "colors": [
+        "#6A0DAD"
+      ],
+      "type": "mono"
+    },
+    "id": 922722742,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MORWINWNK",
+    "title": "PLA HD - PLA HD Purple 1kg"
   },
   {
     "RFID_Data": {
@@ -134879,6 +136522,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 92,
+      "color_g": 92,
+      "color_r": 92,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#5C5C5C",
+    "color_info": {
+      "colors": [
+        "#5C5C5C"
+      ],
+      "type": "mono"
+    },
+    "id": 1027876130,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PTO01000175GRIHIEWNK",
+    "title": "PLA Tough - PLA Tough Iron Gray 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 178,
       "color_g": 153,
       "color_r": 0,
@@ -146561,6 +148242,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#000000FF",
+    "color_info": {
+      "colors": [
+        "#000000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1116042564,
+    "img_src": "https://cdn.tigertag.io/img?id=1116042564&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-BLACK-1.75-1000",
+    "title": "ABS Solid Color - ABS Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 128,
       "color_g": 128,
       "color_r": 128,
@@ -149773,6 +151492,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 178,
+      "color_g": 178,
+      "color_r": 178,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B2B2B2",
+    "color_info": {
+      "colors": [
+        "#B2B2B2"
+      ],
+      "type": "mono"
+    },
+    "id": 1137768567,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175GRICENWNK",
+    "title": "PLA HD - PLA HD Ash Gray 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 115,
       "color_g": 118,
       "color_r": 115,
@@ -149845,6 +151602,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5ABS-YELLOW-175-3KG",
     "title": "THE K5 ABS - Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 178,
+      "color_g": 178,
+      "color_r": 178,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B2B2B2",
+    "color_info": {
+      "colors": [
+        "#B2B2B2"
+      ],
+      "type": "mono"
+    },
+    "id": 1140287778,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175GRICENWNK",
+    "title": "PETG Standard - PETG Ash Gray 1kg"
   },
   {
     "RFID_Data": {
@@ -151483,6 +153278,44 @@
     "product_type": "Filament",
     "sku": "3DMA-UPLAHF-GREEN",
     "title": "Ultra PLA+ High Flow - Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 220,
+      "data3": 250,
+      "data4": 80,
+      "data5": 6,
+      "data6": 90,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 30884,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1500
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 1152848143,
+    "img_src": null,
+    "material": "PP",
+    "measure": "1500 g",
+    "product_type": "Filament",
+    "sku": "POL01500175NEGNEGWNK",
+    "title": "Polypropylene - PP Black 1.5kg"
   },
   {
     "RFID_Data": {
@@ -154970,6 +156803,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 158,
+      "color_g": 131,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F0839EFF",
+    "color_info": {
+      "colors": [
+        "#F0839EFF"
+      ],
+      "type": "mono"
+    },
+    "id": 1175889829,
+    "img_src": "https://cdn.tigertag.io/img?id=1175889829&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-PINK-1.75-1000",
+    "title": "PETG Matte - PETG Matte Pink"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 217,
       "color_g": 198,
       "color_r": 247,
@@ -157752,6 +159623,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 51,
+      "color_g": 64,
+      "color_r": 92,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 126,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#5C4033",
+    "color_info": {
+      "colors": [
+        "#5C4033"
+      ],
+      "type": "mono"
+    },
+    "id": 1197915400,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175BROOSCWNK",
+    "title": "PLA HD - PLA HD Interference Dark Bronze 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -158470,6 +160379,44 @@
     "product_type": "Filament",
     "sku": "PWB-3D-F4701",
     "title": "PLA-CF Home Matt Decor - Carbon Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF0000FF",
+    "color_info": {
+      "colors": [
+        "#FF0000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1205133684,
+    "img_src": "https://cdn.tigertag.io/img?id=1205133684&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-RED-1.75-1000",
+    "title": "ABS Solid Color - ABS Red"
   },
   {
     "RFID_Data": {
@@ -160497,6 +162444,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 50,
+      "color_g": 127,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FF7F32",
+    "color_info": {
+      "colors": [
+        "#FF7F32"
+      ],
+      "type": "mono"
+    },
+    "id": 1225246048,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175NARNEMWNK",
+    "title": "PLA HD - PLA HD Nemo Orange 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 222,
       "color_g": 226,
       "color_r": 197,
@@ -160607,6 +162592,44 @@
     "product_type": "Filament",
     "sku": "B0101050",
     "title": "PLA+ Filament - Orange"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 128,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#008000FF",
+    "color_info": {
+      "colors": [
+        "#008000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1225846091,
+    "img_src": "https://cdn.tigertag.io/img?id=1225846091&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-GREEN-1.75-1000",
+    "title": "ABS Solid Color - ABS Green"
   },
   {
     "RFID_Data": {
@@ -162401,6 +164424,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 1243475544,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-WHITE-1.75-1000",
+    "title": "PETG Matte - PETG Matte White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 240,
       "color_g": 240,
       "color_r": 240,
@@ -162587,6 +164648,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5ASA-WHITE-285-1KG",
     "title": "THE K5 ASA - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 160,
+      "color_g": 200,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F0C8A0",
+    "color_info": {
+      "colors": [
+        "#F0C8A0"
+      ],
+      "type": "mono"
+    },
+    "id": 1245127265,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-SKIN-1.75-1000",
+    "title": "PETG Matte - PETG Matte Skin"
   },
   {
     "RFID_Data": {
@@ -166715,6 +168814,44 @@
     "product_type": "Filament",
     "sku": "G3D-NYLON-BLACK-175-1KG",
     "title": "Nylon - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 217,
+      "color_g": 217,
+      "color_r": 232,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 173,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#E8D9D9",
+    "color_info": {
+      "colors": [
+        "#E8D9D9"
+      ],
+      "type": "mono"
+    },
+    "id": 1280999510,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD010001TRACONWNK",
+    "title": "PLA HD - PLA HD Quartz 1kg"
   },
   {
     "RFID_Data": {
@@ -178500,6 +180637,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 28,
+      "color_g": 28,
+      "color_r": 28,
+      "data1": 56,
+      "data2": 190,
+      "data3": 210,
+      "data4": 50,
+      "data5": 8,
+      "data6": 40,
+      "data7": 60,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1C1C1C",
+    "color_info": {
+      "colors": [
+        "#1C1C1C"
+      ],
+      "type": "mono"
+    },
+    "id": 1372508527,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PMA00300175NEGGRAWNK",
+    "title": "PLA Matte - PLA Matte Graphite Black 300g"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 230,
       "color_g": 183,
       "color_r": 86,
@@ -182127,6 +184302,44 @@
     "product_type": "Filament",
     "sku": "55060",
     "title": "PETG - Noire"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 193,
+      "color_g": 182,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFB6C133",
+    "color_info": {
+      "colors": [
+        "#FFB6C133"
+      ],
+      "type": "mono"
+    },
+    "id": 1398361070,
+    "img_src": "https://cdn.tigertag.io/img?id=1398361070&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-LIGHTPINK-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Light Pink"
   },
   {
     "RFID_Data": {
@@ -190708,6 +192921,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 43,
+      "color_g": 57,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C0392B",
+    "color_info": {
+      "colors": [
+        "#C0392B"
+      ],
+      "type": "mono"
+    },
+    "id": 1461877965,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175ROJDIAWNK",
+    "title": "PETG Standard - PETG Devil Red 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 183,
       "color_g": 127,
       "color_r": 0,
@@ -194833,6 +197084,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 1494472524,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175NEGAZAWNK",
+    "title": "PLA HD - PLA HD Jet Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 136,
       "color_r": 255,
@@ -195365,6 +197654,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5WOOD-YELLOWWOOD-175-3KG",
     "title": "THE K5 WOOD - Yellow Wood"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 135,
+      "color_g": 184,
+      "color_r": 222,
+      "data1": 56,
+      "data2": 190,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 123,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 750
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#DEB887",
+    "color_info": {
+      "colors": [
+        "#DEB887"
+      ],
+      "type": "mono"
+    },
+    "id": 1498823127,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "750 g",
+    "product_type": "Filament",
+    "sku": "PWO00750175PINPINWNK",
+    "title": "PLA Wood - PLA Wood Pine 0.75kg"
   },
   {
     "RFID_Data": {
@@ -196623,6 +198950,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 224,
+      "color_g": 168,
+      "color_r": 201,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#C9A8E0FF",
+    "color_info": {
+      "colors": [
+        "#C9A8E0FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1506395973,
+    "img_src": "https://cdn.tigertag.io/img?id=1506395973&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-TARO-PURPLE-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Taro Purple"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 0,
       "color_r": 0,
@@ -196733,6 +199098,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PETG-LIGHTBROWN-285-3KG",
     "title": "THE K5 PETG - Light Brown"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 138,
+      "color_g": 138,
+      "color_r": 138,
+      "data1": 56,
+      "data2": 190,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#8A8A8A",
+    "color_info": {
+      "colors": [
+        "#8A8A8A"
+      ],
+      "type": "mono"
+    },
+    "id": 1506742716,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PLR01000175COLAZAWNK",
+    "title": "Recycled PLA - Recycled PLA Random Color 1kg"
   },
   {
     "RFID_Data": {
@@ -198151,6 +200554,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 147,
+      "color_g": 20,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 216,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FF1493",
+    "color_info": {
+      "colors": [
+        "#FF1493"
+      ],
+      "type": "mono"
+    },
+    "id": 1518329081,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PLD01000175ROSELEWNK",
+    "title": "PLA HD - PLA HD Fluorescent Electric Pink 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 198,
       "color_g": 179,
       "color_r": 255,
@@ -199224,6 +201665,44 @@
     "product_type": "Filament",
     "sku": "KEX-K9PEBA-OLIVE-175-3KG",
     "title": "THE K9 PEBA - Olive"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 165,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFA500FF",
+    "color_info": {
+      "colors": [
+        "#FFA500FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1525867201,
+    "img_src": "https://cdn.tigertag.io/img?id=1525867201&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-ORANGE-1.75-1000",
+    "title": "ASA Solid Color - ASA Orange"
   },
   {
     "RFID_Data": {
@@ -203368,6 +205847,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 95,
+      "color_g": 17,
+      "color_r": 224,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#E0115F",
+    "color_info": {
+      "colors": [
+        "#E0115F"
+      ],
+      "type": "mono"
+    },
+    "id": 1557095637,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175ROSRUBWNK",
+    "title": "PLA Silk - PLA Silk Ruby Pink 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 245,
       "color_g": 247,
       "color_r": 247,
@@ -203516,6 +206033,44 @@
     "product_type": "Filament",
     "sku": "FPCPTFE660175",
     "title": "PC-PTFE - Noir"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 38,
+      "color_g": 66,
+      "color_r": 107,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#6B4226FF",
+    "color_info": {
+      "colors": [
+        "#6B4226FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1558163440,
+    "img_src": "https://cdn.tigertag.io/img?id=1558163440&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-BROWN-1.75-1000",
+    "title": "PETG Matte - PETG Matte Brown"
   },
   {
     "RFID_Data": {
@@ -204630,6 +207185,44 @@
     "product_type": "Filament",
     "sku": "CA14011",
     "title": "Panchroma™ CoPE - Steel Grey"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 147,
+      "color_g": 58,
+      "color_r": 31,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1F3A93",
+    "color_info": {
+      "colors": [
+        "#1F3A93"
+      ],
+      "type": "mono"
+    },
+    "id": 1567501711,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175AZUROYWNK",
+    "title": "PETG Standard - PETG Royal Blue 1kg"
   },
   {
     "RFID_Data": {
@@ -209454,6 +212047,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#000000FF",
+    "color_info": {
+      "colors": [
+        "#000000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1605813908,
+    "img_src": "https://cdn.tigertag.io/img?id=1605813908&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-BLACK-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 150,
       "color_g": 146,
       "color_r": 141,
@@ -211852,6 +214483,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 178,
+      "color_g": 178,
+      "color_r": 178,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#B2B2B2",
+    "color_info": {
+      "colors": [
+        "#B2B2B2"
+      ],
+      "type": "mono"
+    },
+    "id": 1626204070,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175GRICENWNK",
+    "title": "PLA PRO - PLA PRO Ash Gray 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 183,
       "color_g": 177,
       "color_r": 174,
@@ -212798,6 +215467,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PETGR-GREEN-175-5KG",
     "title": "THE K5 PETG Rapid - Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 210,
+      "color_g": 230,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": 70,
+      "data5": 4,
+      "data6": 70,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F0E6D2",
+    "color_info": {
+      "colors": [
+        "#F0E6D2"
+      ],
+      "type": "mono"
+    },
+    "id": 1635018075,
+    "img_src": null,
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ASA01000175NATNATWNK",
+    "title": "ASA - ASA Natural 1kg"
   },
   {
     "RFID_Data": {
@@ -217509,6 +220216,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 59,
+      "color_g": 74,
+      "color_r": 139,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 173,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#8B4A3B",
+    "color_info": {
+      "colors": [
+        "#8B4A3B"
+      ],
+      "type": "mono"
+    },
+    "id": 1671913561,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD010001LADCOOWNK",
+    "title": "PLA HD - PLA HD Brick 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 243,
       "color_g": 250,
       "color_r": 249,
@@ -219067,6 +221812,44 @@
     "product_type": "Filament",
     "sku": "55155",
     "title": "Durabio - Noire"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 144,
+      "color_g": 128,
+      "color_r": 112,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#70809033",
+    "color_info": {
+      "colors": [
+        "#70809033"
+      ],
+      "type": "mono"
+    },
+    "id": 1683254944,
+    "img_src": "https://cdn.tigertag.io/img?id=1683254944&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-SMOKEGREY-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Smoke Grey"
   },
   {
     "RFID_Data": {
@@ -221807,6 +224590,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 43,
+      "color_g": 57,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C0392B",
+    "color_info": {
+      "colors": [
+        "#C0392B"
+      ],
+      "type": "mono"
+    },
+    "id": 1710185468,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175ROJDIAWNK",
+    "title": "PLA HD - PLA HD Devil Red 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 199,
       "color_g": 110,
       "color_r": 255,
@@ -222145,6 +224966,44 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU80A-GRAY-285-3KG",
     "title": "THE K8 TPU 80A - Gray"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 216,
+      "color_g": 228,
+      "color_r": 232,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 126,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#E8E4D8",
+    "color_info": {
+      "colors": [
+        "#E8E4D8"
+      ],
+      "type": "mono"
+    },
+    "id": 1712251644,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175NACNACWNK",
+    "title": "PLA HD - PLA HD Mother-of-Pearl 1kg"
   },
   {
     "RFID_Data": {
@@ -224509,6 +227368,44 @@
     "product_type": "Filament",
     "sku": "117510260100",
     "title": "PLA Standard - Fluo Yellow RAL 1026"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFF00FF",
+    "color_info": {
+      "colors": [
+        "#FFFF00FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1734789727,
+    "img_src": "https://cdn.tigertag.io/img?id=1734789727&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-YELLOW-1.75-1000",
+    "title": "PETG Solid Color - PETG Yellow"
   },
   {
     "RFID_Data": {
@@ -227274,6 +230171,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLAM-MATTEOLIVEGREEN-175-3KG",
     "title": "THE K5 PLA M - Matte Olive Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#000000FF",
+    "color_info": {
+      "colors": [
+        "#000000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 1753773358,
+    "img_src": "https://cdn.tigertag.io/img?id=1753773358&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-BLACK-1.75-1000",
+    "title": "PETG Matte - PETG Matte Black"
   },
   {
     "RFID_Data": {
@@ -243470,15 +246405,15 @@
     },
     "barcode": null,
     "brand": "iSANMATE",
-    "color": "#B9A89DFF",
+    "color": "#B9A89D",
     "color_info": {
       "colors": [
-        "#B9A89DFF"
+        "#B9A89D"
       ],
       "type": "mono"
     },
     "id": 1884227294,
-    "img_src": null,
+    "img_src": "https://cdn.tigertag.io/img?id=1884227294&v=2",
     "material": "PLA Wood",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -253152,6 +256087,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 216,
+      "color_g": 191,
+      "color_r": 216,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#D8BFD8",
+    "color_info": {
+      "colors": [
+        "#D8BFD8"
+      ],
+      "type": "mono"
+    },
+    "id": 1964185044,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175LILSUAWNK",
+    "title": "PLA HD - PLA HD Pastel Soft Lilac 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 139,
       "color_g": 0,
       "color_r": 0,
@@ -254187,6 +257160,44 @@
     "product_type": "Filament",
     "sku": "MARSWORK-PLAMATTE-DARKBLUE-SPOOL",
     "title": "PLA Matte - Dark Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 164,
+      "color_g": 225,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5E1A4",
+    "color_info": {
+      "colors": [
+        "#F5E1A4"
+      ],
+      "type": "mono"
+    },
+    "id": 1971043691,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AMAPLAWNK",
+    "title": "PLA HD - PLA HD Pastel Banana Yellow 1kg"
   },
   {
     "RFID_Data": {
@@ -260254,6 +263265,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 63,
+      "color_g": 208,
+      "color_r": 244,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F4D03F",
+    "color_info": {
+      "colors": [
+        "#F4D03F"
+      ],
+      "type": "mono"
+    },
+    "id": 2017112820,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175AMALIMWNK",
+    "title": "PETG Standard - PETG Lemon Yellow 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 255,
       "color_g": 255,
       "color_r": 255,
@@ -261052,6 +264101,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 128,
+      "color_g": 128,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#808080FF",
+    "color_info": {
+      "colors": [
+        "#808080FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2023357568,
+    "img_src": "https://cdn.tigertag.io/img?id=2023357568&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-GREY-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Grey"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 165,
       "color_g": 178,
       "color_r": 185,
@@ -261314,6 +264401,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLAP-BRONZE-175-5KG",
     "title": "The K5 PLA P - Bronze"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 74,
+      "color_g": 42,
+      "color_r": 27,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 64,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1B2A4A",
+    "color_info": {
+      "colors": [
+        "#1B2A4A"
+      ],
+      "type": "mono"
+    },
+    "id": 2024770527,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUNOCWNK",
+    "title": "PLA HD - PLA HD Glitter Blue Night 1kg"
   },
   {
     "RFID_Data": {
@@ -263859,15 +266984,15 @@
     },
     "barcode": null,
     "brand": "iSANMATE",
-    "color": "#BB9982FF",
+    "color": "#BB9982",
     "color_info": {
       "colors": [
-        "#BB9982FF"
+        "#BB9982"
       ],
       "type": "mono"
     },
     "id": 2045444692,
-    "img_src": null,
+    "img_src": "https://cdn.tigertag.io/img?id=2045444692&v=2",
     "material": "PLA Wood",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -264912,6 +268037,44 @@
     "product_type": "Filament",
     "sku": "55329",
     "title": "PLA - Gris aluminium"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 153,
+      "color_b": 63,
+      "color_g": 217,
+      "color_r": 168,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#A8D93F99",
+    "color_info": {
+      "colors": [
+        "#A8D93F99"
+      ],
+      "type": "mono"
+    },
+    "id": 2051434835,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175VERLIMWNK",
+    "title": "PETG Translucent - PETG Translucent Lime 1kg"
   },
   {
     "RFID_Data": {
@@ -267018,6 +270181,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 203,
+      "color_g": 192,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFC0CBFF",
+    "color_info": {
+      "colors": [
+        "#FFC0CBFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2066014503,
+    "img_src": "https://cdn.tigertag.io/img?id=2066014503&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-PINK-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Pink"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 0,
       "color_r": 0,
@@ -268428,6 +271629,44 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU75A-BLACK-175-3KG",
     "title": "THE K8 TPU 75A - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#0000FFFF",
+    "color_info": {
+      "colors": [
+        "#0000FFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2077589977,
+    "img_src": "https://cdn.tigertag.io/img?id=2077589977&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-BLUE-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Blue"
   },
   {
     "RFID_Data": {
@@ -269846,6 +273085,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 51,
+      "color_b": 230,
+      "color_g": 216,
+      "color_r": 173,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#ADD8E633",
+    "color_info": {
+      "colors": [
+        "#ADD8E633"
+      ],
+      "type": "mono"
+    },
+    "id": 2089852171,
+    "img_src": "https://cdn.tigertag.io/img?id=2089852171&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-LIGHTBLUE-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Light Blue"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 30,
       "color_b2": 42,
@@ -270840,6 +274117,44 @@
     "product_type": "Filament",
     "sku": "5903175657145",
     "title": "PLA Premium - Silver Star"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 32,
+      "color_g": 83,
+      "color_r": 75,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 64,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4B5320",
+    "color_info": {
+      "colors": [
+        "#4B5320"
+      ],
+      "type": "mono"
+    },
+    "id": 2096799332,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VERMILWNK",
+    "title": "PLA HD - PLA HD Glitter Army Green 1kg"
   },
   {
     "RFID_Data": {
@@ -274766,6 +278081,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 64,
+      "color_g": 105,
+      "color_r": 92,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#5C6940FF",
+    "color_info": {
+      "colors": [
+        "#5C6940FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2125614727,
+    "img_src": "https://cdn.tigertag.io/img?id=2125614727&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-ARMYGREEN-1.75-1000",
+    "title": "PETG Matte - PETG Matte Army Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 78,
       "color_g": 77,
       "color_r": 80,
@@ -276898,6 +280251,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLAP-COFFEEGOLD-285-5KG",
     "title": "The K5 PLA P - Coffee Gold"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 148,
+      "color_g": 156,
+      "color_r": 156,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 173,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#9C9C94",
+    "color_info": {
+      "colors": [
+        "#9C9C94"
+      ],
+      "type": "mono"
+    },
+    "id": 2141652885,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD010001GRICEMWNK",
+    "title": "PLA HD - PLA HD Concrete 1kg"
   },
   {
     "RFID_Data": {
@@ -288649,6 +292040,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2226522433,
+    "img_src": "https://cdn.tigertag.io/img?id=2226522433&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-WHITE-1.75-1000",
+    "title": "ABS Solid Color - ABS White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 39,
       "color_g": 162,
       "color_r": 201,
@@ -292301,6 +295730,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 173,
+      "color_g": 13,
+      "color_r": 106,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 64,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#6A0DAD",
+    "color_info": {
+      "colors": [
+        "#6A0DAD"
+      ],
+      "type": "mono"
+    },
+    "id": 2259153420,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175PURPURWNK",
+    "title": "PLA HD - PLA HD Glitter Purple 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 50,
       "color_g": 50,
       "color_r": 204,
@@ -292795,6 +296262,44 @@
     "product_type": "Filament",
     "sku": "KEX-K3PLA-FORMALGARDEN-285-1KG",
     "title": "THE K3 PLA - Formal Garden"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 57,
+      "color_g": 83,
+      "color_r": 46,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#2E5339",
+    "color_info": {
+      "colors": [
+        "#2E5339"
+      ],
+      "type": "mono"
+    },
+    "id": 2263784772,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175VERPINWNK",
+    "title": "PETG Standard - PETG Pine Green 1kg"
   },
   {
     "RFID_Data": {
@@ -300597,6 +304102,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 79,
+      "color_g": 56,
+      "color_r": 232,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#E8384FFF",
+    "color_info": {
+      "colors": [
+        "#E8384FFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2320574136,
+    "img_src": "https://cdn.tigertag.io/img?id=2320574136&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-BERRY-RED-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Berry Red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 156,
       "color_g": 90,
       "color_r": 0,
@@ -301555,15 +305098,21 @@
   {
     "RFID_Data": {
       "color_a": 255,
-      "color_b": 47,
-      "color_g": 47,
-      "color_r": 211,
+      "color_b": 0,
+      "color_b2": 0,
+      "color_b3": 0,
+      "color_g": 0,
+      "color_g2": 174,
+      "color_g3": 221,
+      "color_r": 255,
+      "color_r2": 255,
+      "color_r3": 255,
       "data1": 56,
-      "data2": 220,
-      "data3": 260,
+      "data2": 210,
+      "data3": 235,
       "data4": 55,
       "data5": 6,
-      "data6": 20,
+      "data6": 40,
       "data7": 60,
       "id_aspect1": 92,
       "id_aspect2": null,
@@ -301575,15 +305124,17 @@
     },
     "barcode": null,
     "brand": "Lotactree",
-    "color": "#D32F2FFF",
+    "color": "#FF0000",
     "color_info": {
       "colors": [
-        "#D32F2FFF"
+        "#FF0000",
+        "#FFAE00",
+        "#FFDD00"
       ],
       "type": "multi"
     },
     "id": 2326747532,
-    "img_src": "https://cdn.tigertag.io/img?id=2326747532&v=1",
+    "img_src": "https://cdn.tigertag.io/img?id=2326747532&v=2",
     "material": "PLA",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -301741,6 +305292,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5ABST-CLEARBLUE-285-1KG",
     "title": "THE K5 ABS T - Clear Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 31,
+      "color_g": 130,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F5821FFF",
+    "color_info": {
+      "colors": [
+        "#F5821FFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2327849376,
+    "img_src": "https://cdn.tigertag.io/img?id=2327849376&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-PUMPKIN-ORANGE-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Pumpkin Orange"
   },
   {
     "RFID_Data": {
@@ -305731,6 +309320,44 @@
     "product_type": "Filament",
     "sku": "HC110",
     "title": "PLA+ - Sky Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 83,
+      "color_g": 200,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#00C85333",
+    "color_info": {
+      "colors": [
+        "#00C85333"
+      ],
+      "type": "mono"
+    },
+    "id": 2368240420,
+    "img_src": "https://cdn.tigertag.io/img?id=2368240420&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-GREEN-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Green"
   },
   {
     "RFID_Data": {
@@ -316210,6 +319837,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 158,
+      "color_g": 58,
+      "color_r": 58,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#3A3A9EFF",
+    "color_info": {
+      "colors": [
+        "#3A3A9EFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2453209787,
+    "img_src": "https://cdn.tigertag.io/img?id=2453209787&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-BLUE-1.75-1000",
+    "title": "PETG Matte - PETG Matte Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 47,
       "color_g": 47,
       "color_r": 211,
@@ -316475,6 +320140,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 153,
+      "color_b": 242,
+      "color_g": 242,
+      "color_r": 242,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F2F2F299",
+    "color_info": {
+      "colors": [
+        "#F2F2F299"
+      ],
+      "type": "mono"
+    },
+    "id": 2455380239,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175TRATRAWNK",
+    "title": "PETG Standard - PETG Transparent 1kg"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 68,
       "color_g": 39,
@@ -316548,6 +320251,44 @@
     "product_type": "Filament",
     "sku": "ISM-WOOD-BOX-1.75-1000",
     "title": "PLA Wood - Box wood"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 200,
+      "color_g": 235,
+      "color_r": 174,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#AEEBC8FF",
+    "color_info": {
+      "colors": [
+        "#AEEBC8FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2456034550,
+    "img_src": "https://cdn.tigertag.io/img?id=2456034550&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-SPRING-GREEN-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Spring Green"
   },
   {
     "RFID_Data": {
@@ -319225,6 +322966,44 @@
     "product_type": "Filament",
     "sku": "S3D-PLA-PST-BLU",
     "title": "PLA Pastel - Pastel Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2474166427,
+    "img_src": "https://cdn.tigertag.io/img?id=2474166427&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-WHITE-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ White"
   },
   {
     "RFID_Data": {
@@ -323117,6 +326896,44 @@
     "product_type": "Filament",
     "sku": "B0FQTPRSCV",
     "title": "PLA Pro - Olive Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 210,
+      "color_g": 230,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F0E6D2",
+    "color_info": {
+      "colors": [
+        "#F0E6D2"
+      ],
+      "type": "mono"
+    },
+    "id": 2510404419,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PTO01000175NATNATWNK",
+    "title": "PLA Tough - PLA Tough Natural 1kg"
   },
   {
     "RFID_Data": {
@@ -327532,6 +331349,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 43,
+      "color_g": 43,
+      "color_r": 43,
+      "data1": 56,
+      "data2": 220,
+      "data3": 260,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 90,
+      "id_aspect1": 238,
+      "id_aspect2": 132,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#2B2B2B",
+    "color_info": {
+      "colors": [
+        "#2B2B2B"
+      ],
+      "type": "mono"
+    },
+    "id": 2544087116,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175NEGCARWNK",
+    "title": "PETG Carbon Fiber - PETG Carbon Fiber Carbon Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 52,
       "color_g": 48,
       "color_r": 50,
@@ -328406,6 +332261,44 @@
     "product_type": "Filament",
     "sku": "RCR-95FOAMY-BLACK",
     "title": "Filaflex 95 Foamy - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 58,
+      "color_g": 74,
+      "color_r": 124,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#7C4A3A",
+    "color_info": {
+      "colors": [
+        "#7C4A3A"
+      ],
+      "type": "mono"
+    },
+    "id": 2552376189,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175COBANTWNK",
+    "title": "PLA Silk - PLA Silk Old Copper 1kg"
   },
   {
     "RFID_Data": {
@@ -329723,6 +333616,44 @@
     "product_type": "Filament",
     "sku": "MARSWORK-PLABASIC-CREAM-REFILL",
     "title": "PLA Basic - Cream"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 204,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#CCFF0033",
+    "color_info": {
+      "colors": [
+        "#CCFF0033"
+      ],
+      "type": "mono"
+    },
+    "id": 2562561474,
+    "img_src": "https://cdn.tigertag.io/img?id=2562561474&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-FLUORESCENTGREEN-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Fluorescent Green"
   },
   {
     "RFID_Data": {
@@ -335299,6 +339230,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 203,
+      "color_g": 192,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFC0CBFF",
+    "color_info": {
+      "colors": [
+        "#FFC0CBFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2605488841,
+    "img_src": "https://cdn.tigertag.io/img?id=2605488841&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-PINK-1.75-1000",
+    "title": "ASA Solid Color - ASA Pink"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 245,
       "color_g": 245,
       "color_r": 245,
@@ -337603,6 +341572,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 61,
+      "color_g": 92,
+      "color_r": 15,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 126,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0F5C3D",
+    "color_info": {
+      "colors": [
+        "#0F5C3D"
+      ],
+      "type": "mono"
+    },
+    "id": 2621669991,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VERESMWNK",
+    "title": "PLA HD - PLA HD Interference Emerald Green 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 229,
       "color_g": 223,
       "color_r": 217,
@@ -337983,6 +341990,44 @@
     "product_type": "Filament",
     "sku": "B0DS4DQZMS",
     "title": "Rapid PETG - Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 0,
+      "color_g": 165,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFA50033",
+    "color_info": {
+      "colors": [
+        "#FFA50033"
+      ],
+      "type": "mono"
+    },
+    "id": 2624000967,
+    "img_src": "https://cdn.tigertag.io/img?id=2624000967&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-ORANGE-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Orange"
   },
   {
     "RFID_Data": {
@@ -341605,6 +345650,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#000000FF",
+    "color_info": {
+      "colors": [
+        "#000000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2650803673,
+    "img_src": "https://cdn.tigertag.io/img?id=2650803673&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-BLACK-1.75-1000",
+    "title": "ASA Solid Color - ASA Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 48,
       "color_g": 59,
       "color_r": 255,
@@ -344559,6 +348642,82 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 48,
+      "color_g": 196,
+      "color_r": 244,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 220,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F4C430",
+    "color_info": {
+      "colors": [
+        "#F4C430"
+      ],
+      "type": "mono"
+    },
+    "id": 2671840612,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AMACURWNK",
+    "title": "PLA HD - PLA HD Pastel Turmeric Yellow 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 147,
+      "color_g": 58,
+      "color_r": 31,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1F3A93",
+    "color_info": {
+      "colors": [
+        "#1F3A93"
+      ],
+      "type": "mono"
+    },
+    "id": 2672083161,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUROYWNK",
+    "title": "PLA HD - PLA HD Royal Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 156,
       "color_g": 90,
       "color_r": 0,
@@ -346087,6 +350246,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLAPRO-ORANGE-175-1KG",
     "title": "THE K5 PLA PRO - Orange"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2681327562,
+    "img_src": "https://cdn.tigertag.io/img?id=2681327562&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-WHITE-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 White"
   },
   {
     "RFID_Data": {
@@ -349345,6 +353542,44 @@
     "product_type": "Filament",
     "sku": "G0102002",
     "title": "PLA+ High-Speed - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 192,
+      "color_g": 192,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#C0C0C0FF",
+    "color_info": {
+      "colors": [
+        "#C0C0C0FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2704083906,
+    "img_src": "https://cdn.tigertag.io/img?id=2704083906&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-SILVER-1.75-1000",
+    "title": "ASA Solid Color - ASA Silver"
   },
   {
     "RFID_Data": {
@@ -352831,15 +357066,15 @@
     },
     "barcode": null,
     "brand": "Smart3DPT",
-    "color": "#F8C8DCFF",
+    "color": "#F8C8DC",
     "color_info": {
       "colors": [
-        "#F8C8DCFF"
+        "#F8C8DC"
       ],
       "type": "mono"
     },
     "id": 2729769477,
-    "img_src": "https://cdn.tigertag.io/img?id=2729769477&v=1",
+    "img_src": "https://cdn.tigertag.io/img?id=2729769477&v=5",
     "material": "PLA",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -357923,6 +362158,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 172,
+      "color_g": 219,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFDBACFF",
+    "color_info": {
+      "colors": [
+        "#FFDBACFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2769316007,
+    "img_src": "https://cdn.tigertag.io/img?id=2769316007&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-SKIN-1.75-1000",
+    "title": "ASA Solid Color - ASA Skin"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 58,
       "color_g": 30,
       "color_r": 196,
@@ -358717,6 +362990,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLAM-MATTETERRACOTTA-285-5KG",
     "title": "THE K5 PLA M - Matte Terracotta"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": 60,
+      "data5": 4,
+      "data6": 70,
+      "data7": 90,
+      "id_aspect1": 132,
+      "id_aspect2": null,
+      "id_brand": 19961,
+      "id_material": 34944,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": "5907753138958",
+    "brand": "Rosa3D",
+    "color": "#FFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 2777529663,
+    "img_src": null,
+    "material": "PETG-GF",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PWB-3D-F5025",
+    "title": "PET-G + 30 GF - White"
   },
   {
     "RFID_Data": {
@@ -360583,6 +364894,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 192,
+      "color_g": 192,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#C0C0C0FF",
+    "color_info": {
+      "colors": [
+        "#C0C0C0FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2790462281,
+    "img_src": "https://cdn.tigertag.io/img?id=2790462281&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-SILVER-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -360693,6 +365042,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5PLASILK-WHITE-285-3KG",
     "title": "THE K5 PLA Silk - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 153,
+      "color_b": 44,
+      "color_g": 138,
+      "color_r": 214,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#D68A2C99",
+    "color_info": {
+      "colors": [
+        "#D68A2C99"
+      ],
+      "type": "mono"
+    },
+    "id": 2790790826,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175NARAMBWNK",
+    "title": "PETG Translucent - PETG Translucent Amber 1kg"
   },
   {
     "RFID_Data": {
@@ -365881,6 +370268,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 205,
+      "color_g": 205,
+      "color_r": 205,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": 60,
+      "data5": 4,
+      "data6": 70,
+      "data7": 90,
+      "id_aspect1": 132,
+      "id_aspect2": null,
+      "id_brand": 19961,
+      "id_material": 34944,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": "5907753138965",
+    "brand": "Rosa3D",
+    "color": "#CDCDCD",
+    "color_info": {
+      "colors": [
+        "#CDCDCD"
+      ],
+      "type": "mono"
+    },
+    "id": 2832455506,
+    "img_src": null,
+    "material": "PETG-GF",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PWB-3D-F5026",
+    "title": "PET-G + 30 GF - Light Gray"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -366033,6 +370458,44 @@
     "product_type": "Filament",
     "sku": "PC1001025",
     "title": "Panchroma™ PLA Refill - Jungle Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 138,
+      "color_g": 138,
+      "color_r": 138,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#8A8A8A",
+    "color_info": {
+      "colors": [
+        "#8A8A8A"
+      ],
+      "type": "mono"
+    },
+    "id": 2833425200,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PER01000175COLAZAWNK",
+    "title": "Recycled PETG - Recycled PETG Random Color 1kg"
   },
   {
     "RFID_Data": {
@@ -368215,6 +372678,44 @@
     "product_type": "Filament",
     "sku": "DLZ-EU-TB-HSPLA-GY-1KG",
     "title": "High Speed PLA - Grey"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 128,
+      "color_g": 0,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#80008033",
+    "color_info": {
+      "colors": [
+        "#80008033"
+      ],
+      "type": "mono"
+    },
+    "id": 2853401477,
+    "img_src": "https://cdn.tigertag.io/img?id=2853401477&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-PURPLE-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Purple"
   },
   {
     "RFID_Data": {
@@ -373540,6 +378041,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 2893189891,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175NEGAZAWNK",
+    "title": "PLA PRO - PLA PRO Jet Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 223,
       "color_g": 237,
       "color_r": 237,
@@ -373992,6 +378531,44 @@
     "product_type": "Filament",
     "sku": "CA19001",
     "title": "Panchroma™ Basic PLA - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 171,
+      "color_g": 71,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 190,
+      "data3": 210,
+      "data4": 50,
+      "data5": 8,
+      "data6": 40,
+      "data7": 60,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0047AB",
+    "color_info": {
+      "colors": [
+        "#0047AB"
+      ],
+      "type": "mono"
+    },
+    "id": 2897245796,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PMA00300175AZUCOBWNK",
+    "title": "PLA Matte - PLA Matte Cobalt Blue 300g"
   },
   {
     "RFID_Data": {
@@ -375301,6 +379878,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF0000FF",
+    "color_info": {
+      "colors": [
+        "#FF0000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2906905885,
+    "img_src": "https://cdn.tigertag.io/img?id=2906905885&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-RED-1.75-1000",
+    "title": "PETG Solid Color - PETG Red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 107,
       "color_g": 154,
       "color_r": 193,
@@ -375867,6 +380482,44 @@
     "product_type": "Filament",
     "sku": "PA02011",
     "title": "PolyLite™ - Natural"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 25,
+      "color_g": 37,
+      "color_r": 59,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#3B2519",
+    "color_info": {
+      "colors": [
+        "#3B2519"
+      ],
+      "type": "mono"
+    },
+    "id": 2911643078,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MAREBAWNK",
+    "title": "PLA HD - PLA HD Ebony Brown 1kg"
   },
   {
     "RFID_Data": {
@@ -377589,6 +382242,44 @@
     "product_type": "Filament",
     "sku": "SL-PLATPRB-RB03-1KG",
     "title": "Transparent Rainbow PLA - Transparent Rainbow 03"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 245,
+      "color_g": 245,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 220,
+      "data3": 250,
+      "data4": 80,
+      "data5": 6,
+      "data6": 90,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 30884,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1500
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5F5F5",
+    "color_info": {
+      "colors": [
+        "#F5F5F5"
+      ],
+      "type": "mono"
+    },
+    "id": 2926325991,
+    "img_src": null,
+    "material": "PP",
+    "measure": "1500 g",
+    "product_type": "Filament",
+    "sku": "POL01500175BLABLAWNK",
+    "title": "Polypropylene - PP White 1.5kg"
   },
   {
     "RFID_Data": {
@@ -383279,6 +387970,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 51,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF000033",
+    "color_info": {
+      "colors": [
+        "#FF000033"
+      ],
+      "type": "mono"
+    },
+    "id": 2967326808,
+    "img_src": "https://cdn.tigertag.io/img?id=2967326808&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-RED-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Red"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 242,
       "color_g": 242,
@@ -386020,6 +390749,44 @@
     "product_type": "Filament",
     "sku": "EXT-PETG-RED-175-25KG-4155",
     "title": "PETG - red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#000000FF",
+    "color_info": {
+      "colors": [
+        "#000000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 2989066656,
+    "img_src": "https://cdn.tigertag.io/img?id=2989066656&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-BLACK-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Black"
   },
   {
     "RFID_Data": {
@@ -389686,6 +394453,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 101,
+      "color_g": 161,
+      "color_r": 200,
+      "data1": 56,
+      "data2": 190,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 123,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 750
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C8A165",
+    "color_info": {
+      "colors": [
+        "#C8A165"
+      ],
+      "type": "mono"
+    },
+    "id": 3022764948,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "750 g",
+    "product_type": "Filament",
+    "sku": "PWO00750175ARCARCWNK",
+    "title": "PLA Wood - PLA Wood Maple 0.75kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 0,
       "color_r": 0,
@@ -389796,6 +394601,44 @@
     "product_type": "Filament",
     "sku": "PLA-GRTRL-SPRING-1000-175",
     "title": "PLA Gradient Translucent Season - Spring"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 211,
+      "color_g": 63,
+      "color_r": 93,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 126,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#5D3FD3",
+    "color_info": {
+      "colors": [
+        "#5D3FD3"
+      ],
+      "type": "mono"
+    },
+    "id": 3023629506,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VIOAGAWNK",
+    "title": "PLA HD - PLA HD Interference Violet Agate 1kg"
   },
   {
     "RFID_Data": {
@@ -390370,6 +395213,44 @@
     "product_type": "Filament",
     "sku": "R3DB1E108NMS",
     "title": "ABS+ - Dark Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 128,
+      "color_g": 0,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#800080FF",
+    "color_info": {
+      "colors": [
+        "#800080FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3027234004,
+    "img_src": "https://cdn.tigertag.io/img?id=3027234004&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-PURPLE-1.75-1000",
+    "title": "ASA Solid Color - ASA Purple"
   },
   {
     "RFID_Data": {
@@ -391176,6 +396057,44 @@
     "product_type": "Filament",
     "sku": "B0381013",
     "title": "PETG Lite - Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 120,
+      "color_g": 168,
+      "color_r": 194,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 173,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C2A878",
+    "color_info": {
+      "colors": [
+        "#C2A878"
+      ],
+      "type": "mono"
+    },
+    "id": 3031971305,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AREAREWNK",
+    "title": "PLA HD - PLA HD Sand 1kg"
   },
   {
     "RFID_Data": {
@@ -392058,6 +396977,44 @@
     "product_type": "Filament",
     "sku": "SL-N-ABS-MAG-1KG-A",
     "title": "ABS - Megenta"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 208,
+      "color_g": 253,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 210,
+      "data4": 50,
+      "data5": 8,
+      "data6": 40,
+      "data7": 60,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FFFDD0",
+    "color_info": {
+      "colors": [
+        "#FFFDD0"
+      ],
+      "type": "mono"
+    },
+    "id": 3043149871,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PMA00300175BLANATWNK",
+    "title": "PLA Matte - PLA Matte Cream White 300g"
   },
   {
     "RFID_Data": {
@@ -393734,6 +398691,44 @@
     "product_type": "Filament",
     "sku": "A01-R3-1.75-1000-splfree",
     "title": "PLA Matte - Plum"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 30,
+      "color_g": 42,
+      "color_r": 78,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4E2A1E",
+    "color_info": {
+      "colors": [
+        "#4E2A1E"
+      ],
+      "type": "mono"
+    },
+    "id": 3052315097,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MARCAOWNK",
+    "title": "PLA HD - PLA HD Mahogany Brown 1kg"
   },
   {
     "RFID_Data": {
@@ -398631,6 +403626,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 62,
+      "color_g": 107,
+      "color_r": 156,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#9C6B3E",
+    "color_info": {
+      "colors": [
+        "#9C6B3E"
+      ],
+      "type": "mono"
+    },
+    "id": 3083572961,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-WOOD-1.75-1000",
+    "title": "PETG Matte - PETG Matte Wood"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 49,
       "color_g": 49,
       "color_r": 255,
@@ -401152,6 +406185,44 @@
     "product_type": "Filament",
     "sku": "PHD00300175AMACURWNK",
     "title": "PLA HD - PLA HD Pastel Turmeric Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 128,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#008000FF",
+    "color_info": {
+      "colors": [
+        "#008000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3102640013,
+    "img_src": "https://cdn.tigertag.io/img?id=3102640013&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-GREEN-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Green"
   },
   {
     "RFID_Data": {
@@ -410318,6 +415389,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 127,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 91,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#7FFF00",
+    "color_info": {
+      "colors": [
+        "#7FFF00"
+      ],
+      "type": "mono"
+    },
+    "id": 3175737265,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VERALIWNK",
+    "title": "PLA HD - PLA HD Glow Alien Green 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 158,
       "color_g": 86,
       "color_r": 61,
@@ -411948,6 +417057,44 @@
     "product_type": "Filament",
     "sku": "PLA+175B1R1",
     "title": "PLA+ - BLACK"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 169,
+      "color_g": 169,
+      "color_r": 169,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#A9A9A9FF",
+    "color_info": {
+      "colors": [
+        "#A9A9A9FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3190165724,
+    "img_src": "https://cdn.tigertag.io/img?id=3190165724&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-GREY-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Grey"
   },
   {
     "RFID_Data": {
@@ -416422,6 +421569,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 239,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FFEF00",
+    "color_info": {
+      "colors": [
+        "#FFEF00"
+      ],
+      "type": "mono"
+    },
+    "id": 3228308287,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175AMACANWNK",
+    "title": "PLA PRO - PLA PRO Canary Yellow 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 163,
       "color_g": 86,
       "color_r": 0,
@@ -419174,6 +424359,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 128,
+      "color_g": 128,
+      "color_r": 128,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#808080FF",
+    "color_info": {
+      "colors": [
+        "#808080FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3249183482,
+    "img_src": "https://cdn.tigertag.io/img?id=3249183482&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-GREY-1.75-1000",
+    "title": "ASA Solid Color - ASA Grey"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 154,
       "color_g": 178,
       "color_r": 194,
@@ -420916,6 +426139,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 106,
+      "color_g": 196,
+      "color_r": 217,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 232,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#D9C46A",
+    "color_info": {
+      "colors": [
+        "#D9C46A"
+      ],
+      "type": "mono"
+    },
+    "id": 3264584528,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD010001AMAMACWNK",
+    "title": "PLA HD - PLA HD Yellow Marble 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 32,
       "color_g": 24,
       "color_r": 16,
@@ -421140,6 +426401,44 @@
     "product_type": "Filament",
     "sku": "SL-N-PETGGLOW-GREEN-1KG-A",
     "title": "PETG Glow in the Dark - Glow in the Dark Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 181,
+      "color_g": 217,
+      "color_r": 232,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#E8D9B5",
+    "color_info": {
+      "colors": [
+        "#E8D9B5"
+      ],
+      "type": "mono"
+    },
+    "id": 3266633416,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175BEIBEIWNK",
+    "title": "PLA HD - PLA HD Beige 1kg"
   },
   {
     "RFID_Data": {
@@ -427325,6 +432624,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 255,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#0000FFFF",
+    "color_info": {
+      "colors": [
+        "#0000FFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 3307922377,
+    "img_src": "https://cdn.tigertag.io/img?id=3307922377&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-BLUE-1.75-1000",
+    "title": "ASA Solid Color - ASA Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 60,
       "color_g": 160,
       "color_r": 60,
@@ -427359,6 +432696,44 @@
     "product_type": "Filament",
     "sku": "3DPLAGNST",
     "title": "PLA Marble - Green Schist"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 20,
+      "color_g": 255,
+      "color_r": 57,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 216,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#39FF14",
+    "color_info": {
+      "colors": [
+        "#39FF14"
+      ],
+      "type": "mono"
+    },
+    "id": 3308641506,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PLD01000175VERELEWNK",
+    "title": "PLA HD - PLA HD Fluorescent Electric Green 1kg"
   },
   {
     "RFID_Data": {
@@ -430035,15 +435410,15 @@
     },
     "barcode": null,
     "brand": "iSANMATE",
-    "color": "#978981FF",
+    "color": "#978981",
     "color_info": {
       "colors": [
-        "#978981FF"
+        "#978981"
       ],
       "type": "mono"
     },
     "id": 3330875016,
-    "img_src": null,
+    "img_src": "https://cdn.tigertag.io/img?id=3330875016&v=2",
     "material": "PLA Wood",
     "measure": "1000 g",
     "product_type": "Filament",
@@ -438504,6 +443879,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 95,
+      "color_g": 58,
+      "color_r": 31,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 126,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1F3A5F",
+    "color_info": {
+      "colors": [
+        "#1F3A5F"
+      ],
+      "type": "mono"
+    },
+    "id": 3398993706,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUGAAWNK",
+    "title": "PLA HD - PLA HD Interference Galaxy Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 107,
       "color_g": 134,
       "color_r": 120,
@@ -439378,6 +444791,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 179,
+      "color_g": 143,
+      "color_r": 247,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F78FB3",
+    "color_info": {
+      "colors": [
+        "#F78FB3"
+      ],
+      "type": "mono"
+    },
+    "id": 3406133297,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175ROSCHIWNK",
+    "title": "PLA HD - PLA HD Pink Bubblegum 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 61,
       "color_g": 102,
       "color_r": 77,
@@ -439571,6 +445022,44 @@
   },
   {
     "RFID_Data": {
+      "color_a": 51,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#00FFFF33",
+    "color_info": {
+      "colors": [
+        "#00FFFF33"
+      ],
+      "type": "mono"
+    },
+    "id": 3407467213,
+    "img_src": "https://cdn.tigertag.io/img?id=3407467213&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-CYAN-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Cyan"
+  },
+  {
+    "RFID_Data": {
       "color_a": 255,
       "color_b": 137,
       "color_g": 135,
@@ -439682,6 +445171,44 @@
     "product_type": "Filament",
     "sku": "PETG-ECO-FluorescentYellow",
     "title": "PETG-ECO - Fluorescent Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 235,
+      "color_g": 206,
+      "color_r": 135,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#87CEEB",
+    "color_info": {
+      "colors": [
+        "#87CEEB"
+      ],
+      "type": "mono"
+    },
+    "id": 3408500323,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AZUCELWNK",
+    "title": "PLA HD - PLA HD Sky Blue 1kg"
   },
   {
     "RFID_Data": {
@@ -442342,6 +447869,44 @@
     "product_type": "Filament",
     "sku": "DLZ-JY-PLA-SV-5kg",
     "title": "Standard PLA - Silver"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 32,
+      "color_g": 83,
+      "color_r": 75,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#4B5320FF",
+    "color_info": {
+      "colors": [
+        "#4B5320FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3430597334,
+    "img_src": "https://cdn.tigertag.io/img?id=3430597334&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-ARMY-GREEN-1.75-1000",
+    "title": "ASA Solid Color - ASA Army Green"
   },
   {
     "RFID_Data": {
@@ -445862,6 +451427,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 3,
+      "color_g": 130,
+      "color_r": 86,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#568203",
+    "color_info": {
+      "colors": [
+        "#568203"
+      ],
+      "type": "mono"
+    },
+    "id": 3455217083,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VERAGUWNK",
+    "title": "PLA HD - PLA HD Avocado Green 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 160,
       "color_g": 161,
       "color_r": 161,
@@ -447615,6 +453218,44 @@
     "product_type": "Filament",
     "sku": "KEX-K5WOOD-WHITE-175-1KG",
     "title": "THE K5 WOOD - White"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 216,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F5FF00",
+    "color_info": {
+      "colors": [
+        "#F5FF00"
+      ],
+      "type": "mono"
+    },
+    "id": 3467647844,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PLD01000175AMAELEWNK",
+    "title": "PLA HD - PLA HD Fluorescent Electric Yellow 1kg"
   },
   {
     "RFID_Data": {
@@ -454482,6 +460123,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 106,
+      "color_g": 90,
+      "color_r": 74,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 173,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4A5A6A",
+    "color_info": {
+      "colors": [
+        "#4A5A6A"
+      ],
+      "type": "mono"
+    },
+    "id": 3517481732,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD010001AZUINDWNK",
+    "title": "PLA HD - PLA HD Blue Granite 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 26,
       "color_g": 26,
       "color_r": 26,
@@ -454592,6 +460271,44 @@
     "product_type": "Filament",
     "sku": "PETGCF-1-GG",
     "title": "PETG-CF - Grass Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 245,
+      "color_g": 245,
+      "color_r": 245,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 21,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F5F5F533",
+    "color_info": {
+      "colors": [
+        "#F5F5F533"
+      ],
+      "type": "mono"
+    },
+    "id": 3518452898,
+    "img_src": "https://cdn.tigertag.io/img?id=3518452898&v=6",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-TRANSPARENT-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent"
   },
   {
     "RFID_Data": {
@@ -455048,6 +460765,44 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU65A-BLACK-285-3KG",
     "title": "THE K8 TPU 65A - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 166,
+      "color_g": 203,
+      "color_r": 220,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#DCCBA6FF",
+    "color_info": {
+      "colors": [
+        "#DCCBA6FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3521222678,
+    "img_src": "https://cdn.tigertag.io/img?id=3521222678&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-BEIGE-1.75-1000",
+    "title": "PETG Matte - PETG Matte Beige"
   },
   {
     "RFID_Data": {
@@ -458447,6 +464202,44 @@
     "product_type": "Filament",
     "sku": "PWB-3D-F4371",
     "title": "ASA - Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 22,
+      "color_g": 214,
+      "color_r": 249,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#F9D616",
+    "color_info": {
+      "colors": [
+        "#F9D616"
+      ],
+      "type": "mono"
+    },
+    "id": 3546729138,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-YELLOW-1.75-1000",
+    "title": "PETG Matte - PETG Matte Yellow"
   },
   {
     "RFID_Data": {
@@ -464293,6 +470086,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFF00FF",
+    "color_info": {
+      "colors": [
+        "#FFFF00FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3599688476,
+    "img_src": "https://cdn.tigertag.io/img?id=3599688476&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-I7-YELLOW-1.75-1000",
+    "title": "PLA i7+ Solid Color - PLA i7+ Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 255,
       "color_g": 255,
       "color_r": 255,
@@ -464631,6 +470462,44 @@
     "product_type": "Filament",
     "sku": "APOX-175NTRL-00750",
     "title": "ApolloX - Natural"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 237,
+      "color_g": 237,
+      "color_r": 237,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 232,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#EDEDED",
+    "color_info": {
+      "colors": [
+        "#EDEDED"
+      ],
+      "type": "mono"
+    },
+    "id": 3603165819,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MARMARWNK",
+    "title": "PLA HD - PLA HD Marble 1kg"
   },
   {
     "RFID_Data": {
@@ -466931,6 +472800,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 66,
+      "color_g": 121,
+      "color_r": 79,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4F7942",
+    "color_info": {
+      "colors": [
+        "#4F7942"
+      ],
+      "type": "mono"
+    },
+    "id": 3617812866,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175VERECOWNK",
+    "title": "PLA HD - PLA HD Ecotisa Green 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 255,
       "color_g": 255,
       "color_r": 255,
@@ -467881,6 +473788,44 @@
     "product_type": "Filament",
     "sku": "G0112003",
     "title": "PETG HS Burnt Titanium - Rose Red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 60,
+      "color_g": 19,
+      "color_r": 196,
+      "data1": 56,
+      "data2": 190,
+      "data3": 210,
+      "data4": 50,
+      "data5": 8,
+      "data6": 40,
+      "data7": 60,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C4133C",
+    "color_info": {
+      "colors": [
+        "#C4133C"
+      ],
+      "type": "mono"
+    },
+    "id": 3622991609,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PMA00300175ROJFRAWNK",
+    "title": "PLA Matte - PLA Matte Raspberry Red 300g"
   },
   {
     "RFID_Data": {
@@ -474956,6 +480901,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 75,
+      "color_r": 150,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#964B00FF",
+    "color_info": {
+      "colors": [
+        "#964B00FF"
+      ],
+      "type": "mono"
+    },
+    "id": 3684858567,
+    "img_src": "https://cdn.tigertag.io/img?id=3684858567&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-BROWN-1.75-1000",
+    "title": "ASA Solid Color - ASA Brown"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 177,
       "color_g": 178,
       "color_r": 176,
@@ -477742,6 +483725,44 @@
     "product_type": "Filament",
     "sku": "B0DKJDFTLK",
     "title": "Rapid PLA Plus - Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 153,
+      "color_b": 95,
+      "color_g": 79,
+      "color_r": 123,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#7B4F5F99",
+    "color_info": {
+      "colors": [
+        "#7B4F5F99"
+      ],
+      "type": "mono"
+    },
+    "id": 3712279267,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175MALOSCWNK",
+    "title": "PETG Translucent - PETG Translucent Deep Mauve 1kg"
   },
   {
     "RFID_Data": {
@@ -482068,6 +488089,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 3745361669,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175NEGAZAWNK",
+    "title": "PETG Standard - PETG Jet Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 150,
       "color_g": 184,
       "color_r": 213,
@@ -486213,6 +492272,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 43,
+      "color_g": 57,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C0392B",
+    "color_info": {
+      "colors": [
+        "#C0392B"
+      ],
+      "type": "mono"
+    },
+    "id": 3776658923,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PPR01000175ROJDIAWNK",
+    "title": "PLA PRO - PLA PRO Devil Red 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 152,
       "color_g": 255,
       "color_r": 152,
@@ -489979,6 +496076,44 @@
     "product_type": "Filament",
     "sku": "PP-CF-MatteBlack",
     "title": "PP-CF - Matte Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 0,
+      "color_g": 239,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FFEF00",
+    "color_info": {
+      "colors": [
+        "#FFEF00"
+      ],
+      "type": "mono"
+    },
+    "id": 3809190533,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175AMACANWNK",
+    "title": "PLA HD - PLA HD Canary Yellow 1kg"
   },
   {
     "RFID_Data": {
@@ -494711,6 +500846,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 97,
+      "color_g": 111,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 64,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#FF6F61",
+    "color_info": {
+      "colors": [
+        "#FF6F61"
+      ],
+      "type": "mono"
+    },
+    "id": 3849240895,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175CORCORWNK",
+    "title": "PLA HD - PLA HD Glitter Coral 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 255,
       "color_g": 255,
       "color_r": 255,
@@ -495855,6 +502028,44 @@
     "product_type": "Filament",
     "sku": "ABS175-71",
     "title": "ABS - Black"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 255,
+      "color_r": 255,
+      "data1": 56,
+      "data2": 240,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 80,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 12844,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FFFFFFFF",
+    "color_info": {
+      "colors": [
+        "#FFFFFFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 3859549521,
+    "img_src": "https://cdn.tigertag.io/img?id=3859549521&v=1",
+    "material": "ASA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ASA-WHITE-1.75-1000",
+    "title": "ASA Solid Color - ASA White"
   },
   {
     "RFID_Data": {
@@ -500043,6 +506254,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 13,
+      "color_g": 13,
+      "color_r": 13,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#0D0D0D",
+    "color_info": {
+      "colors": [
+        "#0D0D0D"
+      ],
+      "type": "mono"
+    },
+    "id": 3895976927,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PTO01000175NEGNEGWNK",
+    "title": "PLA Tough - PLA Tough Black 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 107,
       "color_g": 231,
       "color_r": 232,
@@ -501993,6 +508242,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 248,
+      "color_g": 248,
+      "color_r": 248,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 300
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F8F8F8",
+    "color_info": {
+      "colors": [
+        "#F8F8F8"
+      ],
+      "type": "mono"
+    },
+    "id": 3909748722,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "300 g",
+    "product_type": "Filament",
+    "sku": "PHD00300175BLAFANWNK",
+    "title": "PLA HD - PLA HD Ghost White 300g"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 150,
       "color_g": 193,
       "color_r": 255,
@@ -503678,6 +509965,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 43,
+      "color_g": 43,
+      "color_r": 204,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#CC2B2BFF",
+    "color_info": {
+      "colors": [
+        "#CC2B2BFF"
+      ],
+      "type": "mono"
+    },
+    "id": 3921291230,
+    "img_src": "https://cdn.tigertag.io/img?id=3921291230&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-RED-1.75-1000",
+    "title": "PETG Matte - PETG Matte Red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 213,
       "color_g": 197,
       "color_r": 119,
@@ -504814,6 +511139,44 @@
     "product_type": "Filament",
     "sku": "AMB2526CAR",
     "title": "PLA - Cardovan"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 255,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#0000FFFF",
+    "color_info": {
+      "colors": [
+        "#0000FFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 3929849031,
+    "img_src": "https://cdn.tigertag.io/img?id=3929849031&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-BLUE-1.75-1000",
+    "title": "PETG Solid Color - PETG Blue"
   },
   {
     "RFID_Data": {
@@ -512713,6 +519076,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 255,
+      "color_g": 0,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 200,
+      "data3": 240,
+      "data4": null,
+      "data5": null,
+      "data6": 50,
+      "data7": 50,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#0000FFFF",
+    "color_info": {
+      "colors": [
+        "#0000FFFF"
+      ],
+      "type": "mono"
+    },
+    "id": 3987664783,
+    "img_src": "https://cdn.tigertag.io/img?id=3987664783&v=1",
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-ABS-BLUE-1.75-1000",
+    "title": "ABS Solid Color - ABS Blue"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 0,
       "color_g": 0,
       "color_r": 0,
@@ -518319,6 +524720,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 200,
+      "color_g": 223,
+      "color_r": 232,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#E8DFC8",
+    "color_info": {
+      "colors": [
+        "#E8DFC8"
+      ],
+      "type": "mono"
+    },
+    "id": 4039290916,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175OROBLAWNK",
+    "title": "PLA Silk - PLA Silk White Gold 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 145,
       "color_g": 141,
       "color_r": 138,
@@ -519003,6 +525442,44 @@
     "product_type": "Filament",
     "sku": "SL-Y-PETG-TRAN2-1KG-A",
     "title": "PETG - Transparent Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 213,
+      "color_g": 230,
+      "color_r": 168,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": null,
+      "data5": null,
+      "data6": 25,
+      "data7": 60,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 46591,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#A8E6D5FF",
+    "color_info": {
+      "colors": [
+        "#A8E6D5FF"
+      ],
+      "type": "mono"
+    },
+    "id": 4044358251,
+    "img_src": "https://cdn.tigertag.io/img?id=4044358251&v=1",
+    "material": "PLA+",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PLAI6-ELF-BLUE-1.75-1000",
+    "title": "High Speed PLA+ i6 Solid Color - High Speed PLA+ i6 Elf Blue"
   },
   {
     "RFID_Data": {
@@ -532414,6 +538891,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 109,
+      "color_g": 95,
+      "color_r": 145,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#915F6D",
+    "color_info": {
+      "colors": [
+        "#915F6D"
+      ],
+      "type": "mono"
+    },
+    "id": 4133327688,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175MALMALWNK",
+    "title": "PLA HD - PLA HD Mauve 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 53,
       "color_g": 225,
       "color_r": 255,
@@ -532752,6 +539267,44 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU95A-YELLOW-175-1KG",
     "title": "THE K8 TPU 95A - Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 153,
+      "color_b": 232,
+      "color_g": 216,
+      "color_r": 79,
+      "data1": 56,
+      "data2": 220,
+      "data3": 240,
+      "data4": 65,
+      "data5": 6,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 67,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#4FD8E899",
+    "color_info": {
+      "colors": [
+        "#4FD8E899"
+      ],
+      "type": "mono"
+    },
+    "id": 4139247023,
+    "img_src": null,
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PET01000175AZUAGUWNK",
+    "title": "PETG Translucent - PETG Translucent Aquamarine Blue 1kg"
   },
   {
     "RFID_Data": {
@@ -533436,6 +539989,44 @@
     "product_type": "Filament",
     "sku": "SL-APLA-DG-1KG",
     "title": "APLA - Olive Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 30,
+      "color_g": 17,
+      "color_r": 155,
+      "data1": 56,
+      "data2": 200,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 92,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#9B111E",
+    "color_info": {
+      "colors": [
+        "#9B111E"
+      ],
+      "type": "mono"
+    },
+    "id": 4145011438,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PSI01000175ROJRUBWNK",
+    "title": "PLA Silk - PLA Silk Ruby Red 1kg"
   },
   {
     "RFID_Data": {
@@ -534500,6 +541091,44 @@
     "product_type": "Filament",
     "sku": "R3DA1E104MHS",
     "title": "PLA HS Matte - Matte Terracotta"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 192,
+      "color_g": 192,
+      "color_r": 192,
+      "data1": 56,
+      "data2": 190,
+      "data3": 230,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#C0C0C0",
+    "color_info": {
+      "colors": [
+        "#C0C0C0"
+      ],
+      "type": "mono"
+    },
+    "id": 4157713482,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PHD01000175PLAPLAWNK",
+    "title": "PLA HD - PLA HD Silver 1kg"
   },
   {
     "RFID_Data": {
@@ -536584,6 +543213,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 90,
+      "color_g": 46,
+      "color_r": 26,
+      "data1": 56,
+      "data2": 200,
+      "data3": 220,
+      "data4": 50,
+      "data5": 8,
+      "data6": 50,
+      "data7": 70,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 38219,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#1A2E5A",
+    "color_info": {
+      "colors": [
+        "#1A2E5A"
+      ],
+      "type": "mono"
+    },
+    "id": 4174264165,
+    "img_src": null,
+    "material": "PLA",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "PTO01000175AZUOSCWNK",
+    "title": "PLA Tough - PLA Tough Dark Blue 1kg"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 162,
       "color_g": 153,
       "color_r": 144,
@@ -537796,6 +544463,44 @@
     "product_type": "Filament",
     "sku": "EXT-FLEXMEDIUM-NEONRED-285-075KG",
     "title": "FLEX Medium - neon red"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 210,
+      "color_g": 230,
+      "color_r": 240,
+      "data1": 56,
+      "data2": 230,
+      "data3": 260,
+      "data4": 70,
+      "data5": 4,
+      "data6": 70,
+      "data7": 100,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 37434,
+      "id_material": 20562,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "Winkle",
+    "color": "#F0E6D2",
+    "color_info": {
+      "colors": [
+        "#F0E6D2"
+      ],
+      "type": "mono"
+    },
+    "id": 4183974028,
+    "img_src": null,
+    "material": "ABS",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ABS01000175NATNATWNK",
+    "title": "ABS - ABS Natural 1kg"
   },
   {
     "RFID_Data": {
@@ -545829,6 +552534,44 @@
   {
     "RFID_Data": {
       "color_a": 255,
+      "color_b": 0,
+      "color_g": 128,
+      "color_r": 0,
+      "data1": 56,
+      "data2": 240,
+      "data3": 260,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 80,
+      "id_aspect1": 104,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#008000FF",
+    "color_info": {
+      "colors": [
+        "#008000FF"
+      ],
+      "type": "mono"
+    },
+    "id": 4243535436,
+    "img_src": "https://cdn.tigertag.io/img?id=4243535436&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETG-GREEN-1.75-1000",
+    "title": "PETG Solid Color - PETG Green"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
       "color_b": 46,
       "color_g": 46,
       "color_r": 87,
@@ -546091,6 +552834,53 @@
     "product_type": "Filament",
     "sku": "KEX-K8TPU85A-LEMONYELLOW-285-1KG",
     "title": "THE K8 TPU 85A - Lemon Yellow"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 51,
+      "color_b": 0,
+      "color_b2": 0,
+      "color_b3": 0,
+      "color_g": 0,
+      "color_g2": 255,
+      "color_g3": 255,
+      "color_r": 255,
+      "color_r2": 255,
+      "color_r3": 0,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 145,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#FF000033",
+    "color_info": {
+      "colors": [
+        "#FF000033",
+        "#FFFF0033",
+        "#00FF0033",
+        "#0000FF33"
+      ],
+      "type": "gradient"
+    },
+    "id": 4245365843,
+    "img_src": "https://cdn.tigertag.io/img?id=4245365843&v=2",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGTR-RAINBOW01-1.75-1000",
+    "title": "PETG Transparent - PETG Transparent Rainbow 01"
   },
   {
     "RFID_Data": {
@@ -548337,6 +555127,44 @@
     "product_type": "Filament",
     "sku": "5903175659095",
     "title": "PLA Premium - Signal Violet"
+  },
+  {
+    "RFID_Data": {
+      "color_a": 255,
+      "color_b": 92,
+      "color_g": 65,
+      "color_r": 40,
+      "data1": 56,
+      "data2": 230,
+      "data3": 270,
+      "data4": null,
+      "data5": null,
+      "data6": 60,
+      "data7": 70,
+      "id_aspect1": 247,
+      "id_aspect2": null,
+      "id_brand": 58863,
+      "id_material": 38256,
+      "id_type": 142,
+      "id_unit": 21,
+      "measure": 1000
+    },
+    "barcode": null,
+    "brand": "iSANMATE",
+    "color": "#28415CFF",
+    "color_info": {
+      "colors": [
+        "#28415CFF"
+      ],
+      "type": "mono"
+    },
+    "id": 4261156407,
+    "img_src": "https://cdn.tigertag.io/img?id=4261156407&v=1",
+    "material": "PETG",
+    "measure": "1000 g",
+    "product_type": "Filament",
+    "sku": "ISM-PETGMT-NAVYBLUE-1.75-1000",
+    "title": "PETG Matte - PETG Matte Navy Blue"
   },
   {
     "RFID_Data": {
