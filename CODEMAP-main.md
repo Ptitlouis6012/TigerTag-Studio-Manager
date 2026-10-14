@@ -111,7 +111,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3389-3461 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
 | 3462-3516 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3517-3785)
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3517-4120)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -137,7 +137,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3515-3537 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3538-3645 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L4729-5204)
+## Anycubic cloud — REST + cloud MQTT (L4729-5439)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -147,8 +147,8 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3970-4006 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
 | 4007-4180 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
 
-## App lifecycle (L5205-5270)
+## App lifecycle (L5440-5504)
 
 | L | What |
 |---|---|
-| 5205-5270 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |
+| 5440-5504 | `app.whenReady` (img cache dir, server, window, NFC/TD1S/updater init), `window-all-closed`, `activate` |

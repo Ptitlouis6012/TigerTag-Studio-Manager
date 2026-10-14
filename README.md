@@ -51,7 +51,7 @@ product's real identity. Buy a chip when you want one on the shelf; until then, 
 It works standalone (no reader needed), but unlocks its full potential with:
 - an **ACR122U NFC reader** for automatic spool identification, chip encoding and Cloud-to-chip promotion
 - a **TigerScale** ESP32 scale for live weight tracking
-- one or more **3D printers** from the 6 supported brands
+- one or more **3D printers** from the 7 supported brands — or any Klipper / OctoPrint printer
 
 <img src="assets/img/Hero-TigerSystem-ecosystem.png" width="100%" alt="The TigerTag system — Tiger Studio Manager on desktop, a TigerPOD reader with a tagged spool, and the mobile app" />
 
@@ -70,8 +70,8 @@ Tiger Studio Manager is one piece of **TigerSystem**, the open ecosystem built a
 the TigerTag protocol — and it is deliberately **a laboratory, not the destination**.
 
 Everything you see here is a demonstration of what open, documented technology makes
-possible once a filament spool can identify itself: live printer telemetry across six
-brands, physical rack mapping, sensors, shared wishlists, chipless tracking. Some of it
+possible once a filament spool can identify itself: live printer telemetry across seven
+brands plus Klipper and OctoPrint, physical rack mapping, sensors, shared wishlists, chipless tracking. Some of it
 will mature, some of it exists to prove a point, and all of it is readable, forkable and
 free to copy.
 
@@ -133,7 +133,7 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, the Catalogue and Storage alike
 
 ### 🖨 3D Printer integration
-Live integrations for 7 brands — real-time temperatures, filament per slot, active print job, camera. **Bambu Lab printers can be added by signing in with your Bambu account**: your email, the code they send back, and every machine on the account is offered with its picture — reachable from anywhere, not only from your own network. Accounts on Bambu's **China mainland** platform sign in with their phone number.
+Live integrations for 7 brands, plus **any Klipper printer** and **any Marlin printer behind OctoPrint** *(new in 2.41.0, beta)* — real-time temperatures, filament per slot, active print job, camera. **Bambu Lab printers can be added by signing in with your Bambu account**: your email, the code they send back, and every machine on the account is offered with its picture — reachable from anywhere, not only from your own network. Accounts on Bambu's **China mainland** platform sign in with their phone number.
 
 Every brand at a glance:
 
@@ -146,6 +146,10 @@ Every brand at a glance:
 | **FlashForge** | HTTP polling 8898 + matlStation | ✅ Live |
 | **Prusa** | PrusaLink HTTP 80 (MK4/MK4S, MK3.9, Core One, XL, MINI, MK3S+ via Pi) + MMU + Buddy3D camera | 🧪 Beta |
 | **Snapmaker** | Moonraker WebSocket 7125 | ✅ Live |
+| **Klipper** — any brand | Moonraker HTTP 7125 (Voron, RatRig, Sovol, Qidi, Neptune 4, K1…) + Happy Hare / AFC slots | 🧪 Beta |
+| **OctoPrint** — Marlin printers | OctoPrint REST (OctoPi), no key to copy | 🧪 Beta |
+
+**Can't remember which connection your printer uses? Just type its name** — the Add-a-printer card searches every brand at once, and when a machine can be reached more than one way (a Creality K1: Creality or Klipper) it lets you pick *(new in 2.41.0)*. Bambu Lab printers added from your account switch between **Cloud and LAN** from their settings — and on their own when one way stops answering *(new in 2.41.0)*.
 
 Each brand supports: filament edit per slot, printer discovery (mDNS + port-scan + Add by IP), camera widget. When a scan finds several machines, **tick the ones you want and add them all in one go**. A **FlashForge Creator 5 / 5 Pro** tells you whether it runs the official Cloud + LAN firmware and hands you the latest version for your model *(new in 2.30.0)*.
 

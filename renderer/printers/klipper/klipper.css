@@ -1,0 +1,22 @@
+/* printers/klipper/klipper.css — Klipper plugin styles, injected by the
+   plugin host. Paths are relative to THIS file (the plugin folder). */
+.pba-brand-logo[data-brand="klipper"],
+.pt-thumb-logo[data-brand="klipper"] {
+  background-color: #b12f36;
+  -webkit-mask-image: url('img/logo.svg');
+  mask-image: url('img/logo.svg');
+}
+.klipper-sys-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 14%, transparent);
+  vertical-align: middle;
+}
+.klipper-ctrl--locked .elg-jog-wrap button:disabled { opacity: .35; cursor: not-allowed; }
+.klipper-ctrl-note { margin: 6px 0 2px; font-size: 11px; color: var(--muted); text-align: center; }

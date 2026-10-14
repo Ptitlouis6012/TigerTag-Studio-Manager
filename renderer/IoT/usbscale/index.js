@@ -17,7 +17,8 @@
  *
  * After a write (or a cancel), the session is LATCHED: nothing is written
  * again until the UIDs leave the readers (POD mode) or the scale is emptied
- * (side-card mode). Re-posing re-arms the cycle.
+ * (side-card mode). Re-posing re-arms the cycle — and so does the dock's
+ * "Weigh again" key, without lifting the spool (issue #76).
  *
  * UI — the scale renders INSIDE the open side card's WEIGHT section, in the
  * #usbScaleDock placeholder emitted by buildPanelHTML: a live readout row
@@ -204,6 +205,7 @@ async function _apply(row, grams, mode) {
   _phase = "latched"; _latchMode = mode;
   try {
     await _ctx.doWeightUpdate(row, "raw", grams);
+    _ctx.onScaleUsed?.();   // "last used" on the account (inventory.js, throttled)
     // Just a short "Saved" — the net weight already refreshes in the bar above.
     // Kept as an object so _renderDock's `typeof _note === "object"` still flags
     // the green applied styling.
@@ -233,7 +235,15 @@ function _showConfirm(row, grams, mode) {
 
 function _onDockClick(e) {
   const btn = e.target.closest("[data-usbscale-action]");
-  if (!btn || !_confirm) return;
+  if (!btn) return;
+  // Weigh again: re-arm the latched session as if the spool had just been posed.
+  if (btn.dataset.usbscaleAction === "reweigh") {
+    _resetSession();
+    _note = null;
+    _renderDock();
+    return;
+  }
+  if (!_confirm) return;
   const { state } = _ctx;
   const row = state.rows.find(x => x.spoolId === _confirm.spoolId);
   const action = btn.dataset.usbscaleAction;
@@ -314,10 +324,12 @@ function _renderDock() {
     return;
   }
   const confirmHere = _confirm && _confirm.spoolId === state.selected;
+  // Latched with something still on the scale: offer to weigh it again in place.
+  const canReweigh = _phase === "latched" && _lastGrams >= MIN_GRAMS;
   const applied  = _phase === "latched" && _note && typeof _note === "object";
   const gramsTxt = _lastGrams >= MIN_GRAMS || _lastGrams < 0 ? `${_lastGrams}` : "0";
   const status   = _statusLine();
-  const sig = [applied, status, state.selected,
+  const sig = [applied, status, state.selected, canReweigh,
     confirmHere ? `${_confirm.spoolId}:${_confirm.grams}:${_confirm.mode}` : ""].join("|");
   if (sig === _dockSig && el.firstElementChild) {
     // Structure unchanged → patch the live weight only.
@@ -333,6 +345,7 @@ function _renderDock() {
         <span class="usbscale-grams">${esc(gramsTxt)}<span class="usbscale-unit">g</span></span>
         ${status ? `<span class="usbscale-state">${esc(status)}</span>` : ""}
       </div>
+      ${canReweigh ? `<button type="button" class="usbscale-btn usbscale-reweigh" data-usbscale-action="reweigh">${esc(_ctx.t("usbScaleReweigh"))}</button>` : ""}
     </div>
     ${confirmHere ? _confirmHtml() : ""}`;
 }

@@ -1,4 +1,212 @@
 {
+  "2.41.0": {
+    "date": "2026-10-15",
+    "items": [
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Klipper printers, welcome aboard (beta)",
+          "fr": "Bienvenue aux imprimantes Klipper (bêta)",
+          "de": "Klipper-Drucker an Bord (Beta)",
+          "es": "Bienvenidas, impresoras Klipper (beta)",
+          "it": "Benvenute, stampanti Klipper (beta)",
+          "zh": "欢迎 Klipper 打印机加入（测试版）",
+          "pt": "Impressoras Klipper, bem-vindas (beta)",
+          "pt-pt": "Impressoras Klipper, bem-vindas (beta)",
+          "pl": "Drukarki Klipper na pokładzie (beta)",
+          "ru": "Принтеры на Klipper — добро пожаловать (бета)",
+          "nl": "Klipper-printers, welkom aan boord (bèta)"
+        },
+        "body": {
+          "en": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… if it runs Klipper, it shows up now: live print, camera, temperatures, moves, fan, lights, and the filament slots of Happy Hare and AFC.",
+          "fr": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… si elle tourne sous Klipper, elle répond présent : impression en direct, caméra, températures, déplacements, ventilo, lumières, et les emplacements de filament Happy Hare et AFC.",
+          "de": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… läuft er mit Klipper, ist er jetzt dabei: Druck live, Kamera, Temperaturen, Bewegung, Lüfter, Licht und die Filament-Slots von Happy Hare und AFC.",
+          "es": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… si funciona con Klipper, ya aparece: impresión en directo, cámara, temperaturas, movimientos, ventilador, luces y las ranuras de filamento de Happy Hare y AFC.",
+          "it": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… se gira con Klipper, ora c'è: stampa in diretta, camera, temperature, movimenti, ventola, luci e gli slot filamento di Happy Hare e AFC.",
+          "zh": "Voron、RatRig、Sovol、Qidi、Neptune 4、K1……只要运行 Klipper，现在都能接入：实时打印、摄像头、温度、移动、风扇、灯光，还有 Happy Hare 和 AFC 的料槽。",
+          "pt": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… se roda Klipper, agora aparece: impressão ao vivo, câmera, temperaturas, movimentos, ventoinha, luzes e os slots de filamento do Happy Hare e do AFC.",
+          "pt-pt": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… se corre Klipper, agora aparece: impressão em direto, câmara, temperaturas, movimentos, ventoinha, luzes e as ranhuras de filamento do Happy Hare e do AFC.",
+          "pl": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… jeśli działa na Klipperze, już tu jest: druk na żywo, kamera, temperatury, ruch, wentylator, światła i sloty filamentu Happy Hare i AFC.",
+          "ru": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… если он на Klipper — теперь он здесь: печать вживую, камера, температуры, перемещения, обдув, свет и слоты филамента Happy Hare и AFC.",
+          "nl": "Voron, RatRig, Sovol, Qidi, Neptune 4, K1… draait hij Klipper, dan doet hij nu mee: live printen, camera, temperaturen, bewegen, ventilator, lampen en de filamentslots van Happy Hare en AFC."
+        }
+      },
+      {
+        "icon": "plug",
+        "title": {
+          "en": "Marlin printers join the party (beta)",
+          "fr": "Les imprimantes Marlin rejoignent la fête (bêta)",
+          "de": "Marlin-Drucker feiern mit (Beta)",
+          "es": "Las impresoras Marlin se suman a la fiesta (beta)",
+          "it": "Le stampanti Marlin si uniscono alla festa (beta)",
+          "zh": "Marlin 打印机也来了（测试版）",
+          "pt": "As impressoras Marlin entram na festa (beta)",
+          "pt-pt": "As impressoras Marlin juntam-se à festa (beta)",
+          "pl": "Drukarki Marlin dołączają do zabawy (beta)",
+          "ru": "Принтеры на Marlin присоединяются (бета)",
+          "nl": "Marlin-printers doen mee (bèta)"
+        },
+        "body": {
+          "en": "Got a Marlin printer behind OctoPrint? Add it and say yes in OctoPrint — no key to copy. Live print, camera, temperatures, moves, fan and speed.",
+          "fr": "Une imprimante Marlin derrière OctoPrint ? Ajoute-la et dis oui dans OctoPrint — aucune clé à copier. Impression en direct, caméra, températures, déplacements, ventilo et vitesse.",
+          "de": "Ein Marlin-Drucker hinter OctoPrint? Hinzufügen, in OctoPrint zustimmen — kein Schlüssel zum Kopieren. Druck live, Kamera, Temperaturen, Bewegung, Lüfter und Tempo.",
+          "es": "¿Una impresora Marlin detrás de OctoPrint? Añádela y di que sí en OctoPrint: nada de copiar claves. Impresión en directo, cámara, temperaturas, movimientos, ventilador y velocidad.",
+          "it": "Una stampante Marlin dietro OctoPrint? Aggiungila e di' di sì in OctoPrint: nessuna chiave da copiare. Stampa in diretta, camera, temperature, movimenti, ventola e velocità.",
+          "zh": "OctoPrint 后面有台 Marlin 打印机？添加它，在 OctoPrint 中点同意即可——无需复制密钥。实时打印、摄像头、温度、移动、风扇和速度。",
+          "pt": "Tem uma impressora Marlin atrás do OctoPrint? Adicione e diga sim no OctoPrint — nenhuma chave para copiar. Impressão ao vivo, câmera, temperaturas, movimentos, ventoinha e velocidade.",
+          "pt-pt": "Tens uma impressora Marlin atrás do OctoPrint? Adiciona-a e diz que sim no OctoPrint — nenhuma chave para copiar. Impressão em direto, câmara, temperaturas, movimentos, ventoinha e velocidade.",
+          "pl": "Masz drukarkę Marlin za OctoPrintem? Dodaj ją i zgódź się w OctoPrincie — żadnego klucza do kopiowania. Druk na żywo, kamera, temperatury, ruch, wentylator i prędkość.",
+          "ru": "Принтер на Marlin за OctoPrint? Добавь его и нажми «да» в OctoPrint — ключ копировать не нужно. Печать вживую, камера, температуры, перемещения, обдув и скорость.",
+          "nl": "Een Marlin-printer achter OctoPrint? Voeg hem toe en zeg ja in OctoPrint — geen sleutel om te kopiëren. Live printen, camera, temperaturen, bewegen, ventilator en snelheid."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "Type your printer, we find the way",
+          "fr": "Tape ton imprimante, on trouve le chemin",
+          "de": "Tipp deinen Drucker, wir finden den Weg",
+          "es": "Escribe tu impresora, nosotros buscamos el camino",
+          "it": "Scrivi la tua stampante, la strada la troviamo noi",
+          "zh": "输入打印机，路我们来找",
+          "pt": "Digite sua impressora, a gente acha o caminho",
+          "pt-pt": "Escreve a tua impressora, nós encontramos o caminho",
+          "pl": "Wpisz swoją drukarkę, drogę znajdziemy my",
+          "ru": "Набери свой принтер — дорогу найдём мы",
+          "nl": "Typ je printer, wij vinden de weg"
+        },
+        "body": {
+          "en": "Adding a printer starts with a search across every brand. If there's more than one way to reach it (a K1: Creality or Klipper), you pick — and the model is filled in for you.",
+          "fr": "Ajouter une imprimante commence par une recherche dans toutes les marques. S'il y a plusieurs chemins pour la joindre (une K1 : Creality ou Klipper), tu choisis — et le modèle est déjà rempli.",
+          "de": "Einen Drucker hinzufügen beginnt mit einer Suche über alle Marken. Führen mehrere Wege hin (ein K1: Creality oder Klipper), wählst du — und das Modell ist schon eingetragen.",
+          "es": "Añadir una impresora empieza con una búsqueda en todas las marcas. Si hay varios caminos para llegar (una K1: Creality o Klipper), eliges tú, y el modelo ya viene puesto.",
+          "it": "Aggiungere una stampante parte da una ricerca su tutte le marche. Se ci sono più strade per raggiungerla (una K1: Creality o Klipper), scegli tu, e il modello è già compilato.",
+          "zh": "添加打印机从跨品牌搜索开始。若有多种连接方式（比如 K1：Creality 或 Klipper），由你来选——型号会自动填好。",
+          "pt": "Adicionar uma impressora começa com uma busca em todas as marcas. Se houver mais de um caminho (uma K1: Creality ou Klipper), você escolhe — e o modelo já vem preenchido.",
+          "pt-pt": "Adicionar uma impressora começa com uma pesquisa em todas as marcas. Se houver mais de um caminho (uma K1: Creality ou Klipper), escolhes tu — e o modelo já vem preenchido.",
+          "pl": "Dodawanie drukarki zaczyna się od wyszukiwania we wszystkich markach. Jeśli prowadzi do niej kilka dróg (K1: Creality albo Klipper), wybierasz — a model jest już wpisany.",
+          "ru": "Добавление принтера начинается с поиска по всем маркам. Если к нему ведёт несколько дорог (K1: Creality или Klipper), выбираешь ты — а модель уже подставлена.",
+          "nl": "Een printer toevoegen begint met zoeken over alle merken. Leiden er meerdere wegen naartoe (een K1: Creality of Klipper), dan kies jij — en het model staat er al in."
+        }
+      },
+      {
+        "icon": "swap",
+        "title": {
+          "en": "Bambu Lab: Cloud or LAN, your call — or ours",
+          "fr": "Bambu Lab : Cloud ou LAN, à toi de voir — ou à nous",
+          "de": "Bambu Lab: Cloud oder LAN, du entscheidest — oder wir",
+          "es": "Bambu Lab: Cloud o LAN, tú decides, o nosotros",
+          "it": "Bambu Lab: Cloud o LAN, decidi tu, o noi",
+          "zh": "Bambu Lab：云端还是局域网，你说了算——或者我们来",
+          "pt": "Bambu Lab: Cloud ou LAN, você decide — ou a gente",
+          "pt-pt": "Bambu Lab: Cloud ou LAN, decides tu — ou nós",
+          "pl": "Bambu Lab: Cloud czy LAN, decydujesz ty — albo my",
+          "ru": "Bambu Lab: облако или LAN — решаешь ты, или мы",
+          "nl": "Bambu Lab: Cloud of LAN, jij kiest — of wij"
+        },
+        "body": {
+          "en": "Flip a switch in the settings to go LAN or Cloud. If one goes quiet and the other answers, Tiger Studio switches by itself and tells you. Name and access code stay in sync with your Bambu account.",
+          "fr": "Un interrupteur dans les réglages pour passer en LAN ou en Cloud. Si l'un se tait et que l'autre répond, Tiger Studio bascule tout seul et te prévient. Le nom et le code d'accès restent synchro avec ton compte Bambu.",
+          "de": "Ein Schalter in den Einstellungen für LAN oder Cloud. Wird einer still und der andere antwortet, wechselt Tiger Studio von selbst und sagt Bescheid. Name und Zugangscode bleiben mit deinem Bambu-Konto im Takt.",
+          "es": "Un interruptor en los ajustes para pasar a LAN o a Cloud. Si uno se calla y el otro responde, Tiger Studio cambia solo y te avisa. Nombre y código de acceso siguen sincronizados con tu cuenta Bambu.",
+          "it": "Un interruttore nelle impostazioni per passare a LAN o Cloud. Se uno tace e l'altro risponde, Tiger Studio cambia da solo e te lo dice. Nome e codice di accesso restano allineati al tuo account Bambu.",
+          "zh": "在设置里用开关切换局域网或云端。若一边没响应而另一边能连上，Tiger Studio 会自动切换并通知你。名称和访问码与 Bambu 账户保持同步。",
+          "pt": "Um interruptor nas configurações para ir de LAN ou Cloud. Se um silencia e o outro responde, o Tiger Studio troca sozinho e avisa. Nome e código de acesso ficam sincronizados com sua conta Bambu.",
+          "pt-pt": "Um interruptor nas definições para passar a LAN ou Cloud. Se um se cala e o outro responde, o Tiger Studio troca sozinho e avisa-te. Nome e código de acesso ficam sincronizados com a tua conta Bambu.",
+          "pl": "Przełącznik w ustawieniach: LAN albo Cloud. Gdy jedno milknie, a drugie odpowiada, Tiger Studio przełącza sam i daje znać. Nazwa i kod dostępu zgadzają się z twoim kontem Bambu.",
+          "ru": "Переключатель в настройках: LAN или облако. Если один путь замолчал, а другой отвечает, Tiger Studio переключится сам и скажет. Имя и код доступа синхронны с аккаунтом Bambu.",
+          "nl": "Een schakelaar in de instellingen voor LAN of Cloud. Valt de ene stil en antwoordt de andere, dan schakelt Tiger Studio zelf over en laat het je weten. Naam en toegangscode blijven gelijk met je Bambu-account."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "Your DYMO wakes up — and weighs again",
+          "fr": "Ta DYMO se réveille — et re-pèse",
+          "de": "Deine DYMO wacht auf — und wiegt neu",
+          "es": "Tu DYMO despierta — y vuelve a pesar",
+          "it": "La tua DYMO si sveglia — e ripesa",
+          "zh": "你的 DYMO 醒来了——还能重新称重",
+          "pt": "Sua DYMO acorda — e pesa de novo",
+          "pt-pt": "A tua DYMO acorda — e pesa outra vez",
+          "pl": "Twoja DYMO się budzi — i waży ponownie",
+          "ru": "Твоя DYMO просыпается — и перевзвешивает",
+          "nl": "Je DYMO wordt wakker — en weegt opnieuw"
+        },
+        "body": {
+          "en": "No more unplugging after the scale naps: switch it back on and it's back. And a Weigh again button takes a fresh reading without lifting the spool.",
+          "fr": "Fini de débrancher après la sieste de la balance : rallume-la et elle revient. Et un bouton Re-peser reprend une mesure sans soulever la bobine.",
+          "de": "Kein Ausstecken mehr nach dem Nickerchen der Waage: einschalten, und sie ist zurück. Und ein Knopf Neu wiegen misst frisch, ohne die Spule anzuheben.",
+          "es": "Se acabó desenchufar tras la siesta de la báscula: enciéndela y vuelve. Y un botón Volver a pesar toma una nueva medida sin levantar la bobina.",
+          "it": "Basta staccare la spina dopo il pisolino della bilancia: riaccendila e torna. E un pulsante Ripesa prende una nuova misura senza sollevare la bobina.",
+          "zh": "秤休眠后不用再拔插了：重新打开就能回来。还有“重新称重”按钮，不用拿起料盘就能重新测量。",
+          "pt": "Chega de desconectar depois do cochilo da balança: ligue de novo e ela volta. E um botão Pesar de novo faz uma nova leitura sem levantar o carretel.",
+          "pt-pt": "Acabou desligar o cabo depois da sesta da balança: liga-a outra vez e ela volta. E um botão Pesar outra vez faz uma nova leitura sem levantar a bobine.",
+          "pl": "Koniec z odłączaniem po drzemce wagi: włącz ją i wraca. A przycisk Zważ ponownie robi nowy pomiar bez podnoszenia szpuli.",
+          "ru": "Больше не нужно выдёргивать кабель после сна весов: включи — и они снова на связи. А кнопка «Перевзвесить» снимет новый вес, не поднимая катушку.",
+          "nl": "Geen stekker meer uittrekken na het dutje van de weegschaal: zet hem weer aan en hij is terug. En een knop Opnieuw wegen meet opnieuw zonder de spoel op te tillen."
+        }
+      },
+      {
+        "icon": "star",
+        "title": {
+          "en": "+100 XP for a USB scale",
+          "fr": "+100 XP pour une balance USB",
+          "de": "+100 XP für eine USB-Waage",
+          "es": "+100 XP por una báscula USB",
+          "it": "+100 XP per una bilancia USB",
+          "zh": "接入 USB 秤 +100 XP",
+          "pt": "+100 XP por uma balança USB",
+          "pt-pt": "+100 XP por uma balança USB",
+          "pl": "+100 XP za wagę USB",
+          "ru": "+100 XP за USB-весы",
+          "nl": "+100 XP voor een USB-weegschaal"
+        },
+        "body": {
+          "en": "Plug a USB scale (DYMO) into Tiger Studio once and the achievement is yours, for good.",
+          "fr": "Branche une balance USB (DYMO) sur Tiger Studio une fois, et le succès est à toi, pour de bon.",
+          "de": "Schließ einmal eine USB-Waage (DYMO) an Tiger Studio an, und der Erfolg gehört dir — für immer.",
+          "es": "Conecta una báscula USB (DYMO) a Tiger Studio una vez y el logro es tuyo, para siempre.",
+          "it": "Collega una bilancia USB (DYMO) a Tiger Studio una volta e il traguardo è tuo, per sempre.",
+          "zh": "把 USB 秤（DYMO）接入 Tiger Studio 一次，这个成就就永远归你。",
+          "pt": "Conecte uma balança USB (DYMO) ao Tiger Studio uma vez e a conquista é sua, para sempre.",
+          "pt-pt": "Liga uma balança USB (DYMO) ao Tiger Studio uma vez e a conquista é tua, para sempre.",
+          "pl": "Podłącz raz wagę USB (DYMO) do Tiger Studio, a osiągnięcie jest twoje na zawsze.",
+          "ru": "Подключи USB-весы (DYMO) к Tiger Studio хотя бы раз — и достижение твоё навсегда.",
+          "nl": "Sluit één keer een USB-weegschaal (DYMO) aan op Tiger Studio en de prestatie is voor altijd van jou."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "New faces in the printer list",
+          "fr": "De nouvelles têtes dans la liste des imprimantes",
+          "de": "Neue Gesichter in der Druckerliste",
+          "es": "Caras nuevas en la lista de impresoras",
+          "it": "Volti nuovi nella lista delle stampanti",
+          "zh": "打印机列表来了新面孔",
+          "pt": "Rostos novos na lista de impressoras",
+          "pt-pt": "Caras novas na lista de impressoras",
+          "pl": "Nowe twarze na liście drukarek",
+          "ru": "Новые лица в списке принтеров",
+          "nl": "Nieuwe gezichten in de printerlijst"
+        },
+        "body": {
+          "en": "Elegoo Centauri 2, Centauri 2 Combo and the emoji® Centauri Carbon 2 Combo join the list — and Prusa printers finally show their picture.",
+          "fr": "Elegoo Centauri 2, Centauri 2 Combo et la Centauri Carbon 2 Combo emoji® rejoignent la liste — et les imprimantes Prusa montrent enfin leur bouille.",
+          "de": "Elegoo Centauri 2, Centauri 2 Combo und der emoji® Centauri Carbon 2 Combo sind dabei — und Prusa-Drucker zeigen endlich ihr Bild.",
+          "es": "Elegoo Centauri 2, Centauri 2 Combo y la emoji® Centauri Carbon 2 Combo se unen a la lista, y las impresoras Prusa por fin enseñan su cara.",
+          "it": "Elegoo Centauri 2, Centauri 2 Combo e la emoji® Centauri Carbon 2 Combo entrano in lista, e le stampanti Prusa mostrano finalmente la loro faccia.",
+          "zh": "Elegoo Centauri 2、Centauri 2 Combo 和 emoji® Centauri Carbon 2 Combo 加入列表——Prusa 打印机也终于有了图片。",
+          "pt": "Elegoo Centauri 2, Centauri 2 Combo e a emoji® Centauri Carbon 2 Combo entram na lista — e as impressoras Prusa finalmente mostram a cara.",
+          "pt-pt": "Elegoo Centauri 2, Centauri 2 Combo e a emoji® Centauri Carbon 2 Combo entram na lista — e as impressoras Prusa mostram finalmente a cara.",
+          "pl": "Elegoo Centauri 2, Centauri 2 Combo i emoji® Centauri Carbon 2 Combo dołączają do listy — a drukarki Prusa wreszcie pokazują swoją twarz.",
+          "ru": "Elegoo Centauri 2, Centauri 2 Combo и emoji® Centauri Carbon 2 Combo теперь в списке — а принтеры Prusa наконец показывают своё лицо.",
+          "nl": "Elegoo Centauri 2, Centauri 2 Combo en de emoji® Centauri Carbon 2 Combo staan erbij — en Prusa-printers laten eindelijk hun gezicht zien."
+        }
+      }
+    ]
+  },
   "2.40.1": {
     "date": "2026-10-14",
     "items": [

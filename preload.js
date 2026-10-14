@@ -28,6 +28,18 @@ contextBridge.exposeInMainWorld('mcpBridge', {
 });
 
 // Prusa — PrusaLink HTTP (digest auth, path-allowlisted in main) + Buddy3D RTSP camera.
+// Printer plugins — ONE generic bridge for every self-contained integration
+// (renderer/printers/<id>/main.cjs registers `printer:<id>:<name>` handlers in
+// main). Only that channel shape is forwarded; a plugin cannot reach any other
+// IPC through it.
+contextBridge.exposeInMainWorld('printerPlugin', {
+  invoke: (id, name, ...args) => {
+    if (!/^[a-z0-9-]+$/.test(String(id)) || !/^[a-zA-Z0-9-]+$/.test(String(name))) {
+      return Promise.reject(new Error('invalid plugin channel'));
+    }
+    return ipcRenderer.invoke(`printer:${id}:${name}`, ...args);
+  },
+});
 contextBridge.exposeInMainWorld('prusa', {
   http:         (opts)           => ipcRenderer.invoke('prusa:http', opts),
   probe:        (host, timeout)  => ipcRenderer.invoke('prusa:probe', host, timeout),

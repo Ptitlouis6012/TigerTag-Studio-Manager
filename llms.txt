@@ -2,7 +2,7 @@
 
 > Desktop companion for the TigerTag RFID filament-tracking ecosystem. Electron app — Vanilla JS + Firebase + NFC.
 
-Tiger Studio Manager is an Electron desktop application for managing 3D-printing filament spools tagged with TigerTag RFID chips. It provides real-time Firestore inventory sync, live 3D printer integration for 7 brands, NFC chip read/write, hardware sensors (color sensor, scale), rack storage management, shareable wishlists and a friends system — all in a single window without a build step (no bundler).
+Tiger Studio Manager is an Electron desktop application for managing 3D-printing filament spools tagged with TigerTag RFID chips. It provides real-time Firestore inventory sync, live 3D printer integration for 7 brands plus Klipper and OctoPrint plugins, NFC chip read/write, hardware sensors (color sensor, scale), rack storage management, shareable wishlists and a friends system — all in a single window without a build step (no bundler).
 
 **Positioning:** this app is one piece of the wider **TigerSystem** ecosystem, and deliberately a laboratory rather
 than the destination — a demonstration of what open, documented technology allows once a spool can identify itself.
@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.40.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.41.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -19,7 +19,7 @@ Current version: **2.40.1** — macOS (Intel + Apple Silicon, signed & notarized
 - **Preload bridge**: `preload.js` — exposes IPC handlers to renderer via `window.electronAPI`
 - **Web target (Tiger Studio Web, v2.40.0)**: the same renderer runs in a browser at `studio.tigersystem.io` (`tigersystem.io/studio` redirects there; own origin, so its own sign-in). `renderer/web-bridge.js` defines a partial browser `electronAPI` (`isWeb: true`) when preload is absent; `HAS_NATIVE` in `inventory.js` is the only "is this desktop" test (never `!!window.electronAPI`); `data-desktop-only` / `data-web-only` attributes hide UI per target (`html.is-web`). `scripts/build-web.mjs` makes the static build (app page at the folder root via `<base>`, PWA manifest, `version.json`); the Hub (TigerTag_Hub) builds the published latest release into `/studio` and `.github/workflows/web-sync.yml` keeps web and desktop on the same version; web-only fixes ship as `X.Y.Z · web N` via `npm run web:hotfix` (`docs/WEB_HOTFIX.md`). On https the bridge refuses insecure `ws:`/`http:` connections (no LAN from the web). Full guide: `docs/WEB_DEPLOYMENT.md`.
 - **NFC**: `services/nfc-process.js` runs as a `utilityProcess` (not a Worker Thread) to avoid SIGABRT on macOS; communicates via IPC
-- **Printer integrations**: `renderer/printers/<brand>/index.js` — one file per brand, loaded dynamically
+- **Printer integrations**: `renderer/printers/<brand>/index.js` — the seven historical brands, wired by hand in `inventory.js`. **Printer plugins** (v2.41.0): a self-contained folder `renderer/printers/<id>/` with `plugin.js` (`registerPrinterPlugin`, host `renderer/printers/plugins.js`) and an optional `main.cjs` loaded by `main.js` (IPC `printer:<id>:<name>`, preload bridge `window.printerPlugin.invoke`); a plugin imports host services only, never another brand's files, and `inventory.js` dispatches to it generically. Klipper and OctoPrint are plugins. Contract: `docs/PRINTER-PLUGINS.md`. "Find your printer" (`renderer/printers/model-finder.js`) searches every catalogue at once.
 - **IoT sensors**: `renderer/IoT/td1s/` (TD1S color sensor), `renderer/IoT/tigerscale/` (TigerScale ESP32), `renderer/IoT/tigerspool/` (TigerSpool printer reader)
 - **In-app requests**: `renderer/report/` — `index.js` (the *Improvements & suggestions* side card: topics, form, attachments, My requests) + `annotator.js` (screenshot editor). Requests become public GitHub issues through the backend functions `reportIssue` / `myReports` (TigerTag_Firebase_Backend `functions/reportIssue.js`); the private trace lives in the server-only `bugReports/{id}` collection; status changes arrive as `users/{uid}/notifications` of type `request_status`.
 - **CSS**: `renderer/css/00-base.css` → `70-detail-misc.css` (10 files, loaded in numeric order via `<link>` tags)
@@ -258,6 +258,8 @@ Each brand has `renderer/printers/<brand>/PROTOCOL.md` (self-contained spec) and
 | Anycubic | MQTTS TLS 1.2 (LAN) + signed REST / cloud MQTT | 9883 |
 | Prusa | PrusaLink HTTP poll (Digest auth) + Buddy3D RTSP camera — beta | 80 |
 
+Plugins (`renderer/printers/<id>/plugin.js`, own `PROTOCOL.md` + `main.cjs`; not counted as brands): **Klipper** — Moonraker HTTP poll, any Klipper printer, Happy Hare / AFC slots (beta, 7125); **OctoPrint** — OctoPrint REST, Marlin printers behind OctoPi, API key via Application Keys, no filament slots (beta, 80). Mocks: `npm run moonraker:mock`, `npm run octoprint:mock`. Bambu Lab cloud printers switch Cloud ⇄ LAN from their settings and fail over automatically (`bambulab/mode-switch.js`, `bambulab/failover.js`).
+
 All brands: printer discovery (mDNS + port scan + manual IP), camera widget; filament edit per slot except Prusa (PrusaLink reports no loaded filament — slots show what the running job expects).
 
 ## Sensors
@@ -265,7 +267,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 - **TD1S** (`renderer/IoT/td1s/`) — USB color + TD sensor. `window.td1s.onStatus(cb)` supports multiple listeners (IPC `on`, not `once`). Scan color (1–3 slots) and TD value independently or together.
 - **TigerSpool** (`renderer/IoT/tigerspool/`) — ESP32-S3 printer-side RFID reader that writes a spool's filament into a printer slot. Studio reads `users/{uid}/tigerspools/{mac}`: header glyphs, side card per box (its printers, matched by doc id), launch card when none.
 - **TigerScale** (`renderer/IoT/tigerscale/`) — ESP32 scale over WebSocket. Live weight, container/filament split, TARE (hold-to-confirm), twin UID grid.
-- **USB scale (Dymo M-series)** (`renderer/IoT/usbscale/`) — HID scale opened in the main process (`node-hid`, vid `0x0922`, usage page `0x8D`), streamed over IPC (`usb-scale-update` / `usb-scale-data`). One-write-per-pose state machine: POD mode saves silently when reader chip UIDs identify the spool; side-card mode offers an inline confirm. Live UI in the open spool's WEIGHT section (`#usbScaleDock`).
+- **USB scale (Dymo M-series)** (`renderer/IoT/usbscale/`) — HID scale opened in the main process (`node-hid`, vid `0x0922`, usage page `0x8D`), streamed over IPC (`usb-scale-update` / `usb-scale-data`). One-write-per-pose state machine: POD mode saves silently when reader chip UIDs identify the spool; side-card mode offers an inline confirm. Live UI in the open spool's WEIGHT section (`#usbScaleDock`), with a "Weigh again" key. 5 s without a frame closes the handle and resumes polling (the M-series can sleep without leaving the bus). The scale's model / product id / firmware and first / last use are written to `telemetry/studio` (`usbScale*`, `firstUsbScaleAt` → 100 XP discovery).
 
 ## i18n system
 

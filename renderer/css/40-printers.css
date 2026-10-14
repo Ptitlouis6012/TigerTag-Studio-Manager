@@ -1189,6 +1189,24 @@
     display: flex; flex-direction: column; gap: 2px;
   }
   .pba-mp-list[hidden] { display: none; }
+  /* Scrolls without a visible bar — the list is short-lived and the search field
+     is the fast way through a long catalogue. */
+  .pba-mp-list { scrollbar-width: none; }
+  .pba-mp-list::-webkit-scrollbar { display: none; }
+  .pba-mp-search-row {
+    position: sticky; top: -4px; z-index: 1; margin: -4px -4px 2px; padding: 8px 10px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+  }
+  .pba-mp-search-row .icon { background: var(--muted); flex-shrink: 0; }
+  .pba-mp-search-row .pba-mp-search {
+    flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+    color: var(--text); font-size: 13px; padding: 2px 0;
+  }
+  .pba-mp-search-row .pba-mp-search:focus,
+  .pba-mp-search-row .pba-mp-search:hover { border: none; background: transparent; box-shadow: none; outline: none; }
+  .pba-mp-opt[hidden] { display: none; }
+  .pba-mp-empty { padding: 12px 10px; font-size: 12px; color: var(--muted); text-align: center; }
   .pba-mp-opt {
     width: 100%;
     height: 44px;
@@ -3350,12 +3368,60 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary);
   font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
 }
-/* The beta notice at the top of a beta printer's live block (Prusa, Elegoo CC1). */
-/* Doubled class: beats .ffg-error-banner (50-snapmaker.css loads after this file),
-   so a beta notice reads as information, not as an error. */
-.ffg-error-banner.printer-beta-note {
-  background: color-mix(in srgb, var(--primary) 9%, transparent);
-  border-color: color-mix(in srgb, var(--primary) 35%, transparent);
-  color: var(--text);
+/* The Beta mark at the top of a beta printer's live block (printers/beta-badge.js):
+   the tag + an ⓘ whose hover bubble carries the explanation. */
+.printer-beta-row { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; }
+.printer-beta-row .pba-beta-tag { margin-left: 0; }
+.pba-brand-label .printer-beta-info { margin-left: 4px; vertical-align: middle; }
+.printer-beta-info { display: inline-flex; align-items: center; cursor: help; border: none; background: none; padding: 0; }
+.printer-beta-info .icon { background: var(--faint); transition: background .15s; }
+.printer-beta-info:hover .icon, .printer-beta-info:focus-visible .icon { background: var(--primary); }
+
+/* ── Brand picker: "Find your printer" across every connector (printers/model-finder.js) ── */
+.pba-find {
+  display: flex; align-items: center; gap: 8px;
+  margin: 2px 14px 0; padding: 8px 12px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2);
 }
-.ffg-error-banner.printer-beta-note .icon { background-color: var(--primary); }
+.pba-find:focus-within { border-color: var(--primary); }
+.pba-find .icon { background: var(--muted); flex-shrink: 0; }
+.pba-find .pba-find-input {
+  flex: 1; min-width: 0; border: none; outline: none; background: transparent;
+  color: var(--text); font-size: 13px; padding: 0;
+}
+.pba-find .pba-find-input:focus,
+.pba-find .pba-find-input:hover { border: none; background: transparent; box-shadow: none; outline: none; }
+.pba-find-results[hidden], .pba-brands[hidden] { display: none; }
+.pba-find-item { display: flex; flex-direction: column; gap: 4px; }
+.pba-find-thumb {
+  width: 60px; height: 60px; flex-shrink: 0; border-radius: 10px; overflow: hidden;
+  background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+}
+.pba-find-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.pba-find-conns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+.pba-find-conn {
+  font-size: 10.5px; font-weight: 600; padding: 1px 7px; border-radius: 999px;
+  color: var(--muted); background: color-mix(in srgb, var(--muted) 14%, transparent);
+}
+.pba-find-conns { align-items: center; }
+/* A connector and its Beta tag stay together on one line. */
+.pba-find-connset { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.pba-find-connset .pba-beta-tag { margin-left: 0; padding: 0 5px; font-size: 9px; line-height: 15px; }
+/* A result card sizes to its content (name may wrap + connector chips), with air
+   top and bottom; the hidden choice below it must not take room (display:flex
+   would override [hidden]). */
+.pba-find-results .pba-find-row { height: auto; min-height: 56px; padding: 8px 14px 8px 8px; }
+.pba-find-choice[hidden] { display: none; }
+.pba-find-choice { display: flex; flex-direction: column; gap: 4px; padding: 2px 0 6px 18px; }
+.pba-find-how { margin: 2px 0 2px; font-size: 12px; color: var(--muted); }
+.pba-find-pick {
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 8px 10px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text);
+}
+.pba-find-pick:hover { border-color: var(--primary); }
+.pba-find-pick .pba-brand-logo { width: 22px; height: 22px; }
+.pba-find-empty { margin: 8px 2px; font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+/* The picker's lists scroll without a visible bar (same as the model picker). */
+#printerBrandPickerPanel .pba-brands { scrollbar-width: none; }
+#printerBrandPickerPanel .pba-brands::-webkit-scrollbar { display: none; }

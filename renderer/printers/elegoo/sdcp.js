@@ -22,6 +22,7 @@
  * exported entry point here when `printer.protocol === "sdcp"`.
  */
 import { ctx } from '../context.js';
+import { betaBadgeHtml } from '../beta-badge.js';
 import { jobBar, jobBarFill } from '../job-bar.js';
 
 const WS_PORT = 3030;
@@ -371,7 +372,7 @@ function fansHtml(conn) {
 export function sdcpLiveInner(p) {
   const conn = _conns.get(sdcpKey(p));
   if (!conn) return `<div class="snap-empty"><span class="icon icon-cloud icon-18"></span><span>${ctx.esc(ctx.t('snapNoConnection'))}</span></div>`;
-  const beta = `<div class="ffg-error-banner printer-beta-note"><span class="icon icon-info icon-14"></span><span>${ctx.esc(ctx.t('printerBetaNote'))}</span></div>`;
+  const beta = betaBadgeHtml();
   if (conn.status !== 'connected') return beta;
   return `${beta}${jobHtml(p, conn)}${fansHtml(conn)}${sdcpTempHtml(conn)}`;
 }

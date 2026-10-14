@@ -23,6 +23,7 @@ import {
 } from './cards.js';
 import { schemaWidget } from '../modal-helpers.js';
 import { ensurePrinterIdentity } from '../identity.js';
+import { betaBadgeHtml } from '../beta-badge.js';
 
 const $ = id => document.getElementById(id);
 const POLL_MS = 2000;
@@ -469,7 +470,7 @@ export function renderPrusaLiveInner(p) {
     return `<div class="ffg-error-banner"><span class="icon icon-info icon-14"></span><span>${ctx.esc(key ? ctx.t(key) : String(conn.lastError || ""))}</span></div>`;
   }
   const b = brands.get("prusa");
-  const betaNote = `<div class="ffg-error-banner printer-beta-note"><span class="icon icon-info icon-14"></span><span>${ctx.esc(ctx.t("printerBetaNote"))}</span></div>`;
+  const betaNote = betaBadgeHtml();
   const msg = conn.data.statusMessage || (conn.data.printState === "attention" ? ctx.t("prusaAttention") : "");
   const banner = msg ? `<div class="ffg-error-banner"><span class="icon icon-alert icon-14"></span><span>${ctx.esc(msg)}</span></div>` : "";
   return `

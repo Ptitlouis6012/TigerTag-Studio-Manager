@@ -20,6 +20,7 @@ import { renderBambuJobCard, renderBambuTempCard, renderBambuFilamentCard, rende
 import { schemaWidget } from '../modal-helpers.js';
 import { morphInner } from '../dom-morph.js';
 import { bambuModelIdFromCode } from './probe.js';
+import { renderBambuModeSwitch, readBambuModeSwitch } from './mode-switch.js';
 
 const $ = id => document.getElementById(id);
 
@@ -1055,7 +1056,11 @@ export function renderBambuLiveInner(p) {
   // H2D 8, H2D Pro 9, H2C 11, X2D 12 → chamber pill becomes an editable setpoint.
   // Passive-chamber models (X1C…) stay read-only.
   const heatedChamber = [6, 7, 8, 9, 11, 12].includes(bambuModelId(p));
+  // The account no longer holds this machine (LAN-only mode unbinds it): say how to fix it.
+  const unbound = conn.cloud && bambuCloudUnbound(conn.key)
+    ? `<div class="ffg-error-banner"><span class="icon icon-alert icon-14"></span><span>${ctx.esc(ctx.t("bblCloudUnbound", { name: p.printerName || p.name || "Bambu Lab" }))}</span></div>` : "";
   return `
+    ${unbound}
     ${renderBambuJobCard(p, conn)}
     ${renderBambuControlCard(p, conn)}
     ${renderBambuTempCard(conn, heatedChamber)}
@@ -1451,6 +1456,8 @@ registerBrand('bambulab', {
      offer job controls ask before drawing them. Optional on a brand: a driver
      that never says so is treated as controllable, which every LAN one is. */
   isReadOnly:           bambuIsReadOnly,
+  // Cloud ⇄ LAN in the settings form, for a machine added through the account.
+  connModeSwitch:       { render: renderBambuModeSwitch, read: readBambuModeSwitch },
   getTempHtml:          bambuGetTempHtml,
   getUnits:             bambuGetUnits,
   getSlots:             bambuGetSlots,
@@ -1460,3 +1467,6 @@ registerBrand('bambulab', {
   renderFilamentCard:   renderBambuFilamentCard,
   renderSettingsWidget: schemaWidget(schema),
 });
+
+// Cloud ⇄ LAN failover watcher (side effect: starts its timer).
+import { bambuCloudUnbound } from './failover.js';

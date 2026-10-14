@@ -443,6 +443,10 @@ function _docForChip(doc) {
 async function _sdkPayload(tag, readerName = null) {
   const raw = tag.toRawDict();
   if (readerName) raw._readerName = readerName;
+  // A TigerTag+ whose factory signature checks out — the exact test the backend
+  // uses to certify a chip (functions/supportWebhooks.js chipValue). Lets the
+  // renderer count certified chips apart in its creation counters.
+  try { raw._certified = !!tag.isPlus && tag.verify().ok === true; } catch (_) { raw._certified = false; }
   if (tag.apiUrl) {
     try {
       const api = await tag.rawApi();
@@ -763,10 +767,20 @@ function initNFC() {
 // [reportId, status, unit, signed exponent, weight LSB, weight MSB].
 // node-hid has no hot-plug events, so we poll the device list every 5 s while
 // disconnected and rely on the read-error callback to detect unplug.
+//
+// SLEEP: an M-series powers itself off after a few idle minutes WITHOUT leaving
+// the USB bus on every machine — the handle stays open, no error ever fires, and
+// once the scale is switched back on it talks on a fresh handle we never opened
+// (issues #74 / #76: "unplug and replug to get it back"). So a scale is only
+// announced connected on its first REAL frame, and a silence longer than
+// SCALE_SILENCE_MS closes the handle and goes back to polling.
 
 let _scaleDev       = null;
 let _scalePollTimer = null;
-let _scaleInfo      = null;   // { product } while connected
+let _scaleInfo      = null;   // { product } while connected (= frames are flowing)
+let _scaleLastFrame = 0;      // ms of the last data report
+let _scaleWatchdog  = null;
+const SCALE_SILENCE_MS = 5000; // the scale reports ~1/s while awake
 
 const SCALE_VENDOR_DYMO = 0x0922;
 const SCALE_STATUS = { 1:'fault', 2:'zero', 3:'motion', 4:'stable', 5:'negative', 6:'over' };
@@ -792,6 +806,7 @@ function _scaleDecode(buf) {
 }
 
 function _scaleDisconnected() {
+  clearInterval(_scaleWatchdog); _scaleWatchdog = null;
   try { _scaleDev?.close(); } catch (_) { /* already gone */ }
   _scaleDev = null;
   if (_scaleInfo) {
@@ -847,14 +862,32 @@ async function _tryOpenScale() {
     return;
   }
   clearInterval(_scalePollTimer); _scalePollTimer = null;
-  _scaleInfo = { product: info.product || 'USB scale' };
-  console.log(`[Scale] Connected: ${_scaleInfo.product}`);
-  _scaleBroadcast('usb-scale-update', { connected: true, product: _scaleInfo.product });
+  const product = info.product || 'USB scale';
+  // What the scale says about itself (no serial number on the M-series): maker,
+  // USB product id (the reliable model key), firmware release as "1.00".
+  const details = {
+    manufacturer: info.manufacturer || null,
+    productId: Number.isFinite(info.productId) ? `0x${info.productId.toString(16).padStart(4, '0')}` : null,
+    firmware: Number.isFinite(info.release) ? `${info.release >> 8}.${String(info.release & 0xff).padStart(2, '0')}` : null,
+  };
+  _scaleLastFrame = Date.now();
   _scaleDev.on('data', (buf) => {
+    _scaleLastFrame = Date.now();
+    // Announced on the first real frame — an open handle on a sleeping scale is not a scale.
+    if (!_scaleInfo) {
+      _scaleInfo = { product, ...details };
+      console.log(`[Scale] Connected: ${product} (${details.productId}, fw ${details.firmware})`);
+      _scaleBroadcast('usb-scale-update', { connected: true, ..._scaleInfo });
+    }
     const frame = _scaleDecode(buf);
     if (frame) _scaleBroadcast('usb-scale-data', frame);
   });
   _scaleDev.on('error', () => _scaleDisconnected()); // unplug or read failure
+  // Silence = asleep or replugged elsewhere: drop the handle, poll again.
+  clearInterval(_scaleWatchdog);
+  _scaleWatchdog = setInterval(() => {
+    if (_scaleDev && Date.now() - _scaleLastFrame > SCALE_SILENCE_MS) _scaleDisconnected();
+  }, 1000);
 }
 
 function initUsbScale() {
@@ -864,8 +897,11 @@ function initUsbScale() {
 
 // Renderer seeds its state on startup (events may have fired before it loaded).
 ipcMain.handle('usb-scale:state', () => ({
-  connected: !!_scaleDev,
+  connected: !!_scaleInfo,
   product: _scaleInfo?.product || null,
+  manufacturer: _scaleInfo?.manufacturer || null,
+  productId: _scaleInfo?.productId || null,
+  firmware: _scaleInfo?.firmware || null,
 }));
 
 // On-demand card read — called by renderer "Read" button in RFID tester.
@@ -3328,6 +3364,31 @@ ipcMain.handle('prusa:probe', async (_evt, host, timeoutMs) => {
   } finally { clearTimeout(tm); }
 });
 
+// ── Printer plugins (main-process side) ───────────────────────────────────
+// A printer integration is a self-contained folder, renderer/printers/<id>/
+// (docs/PRINTER-PLUGINS.md). When it needs the main process — LAN requests
+// without CORS, a credential in a header — it ships a `main.cjs` exporting
+// register({ ipcMain, channel }). Every such file is loaded here at start-up;
+// `channel(name)` namespaces its handlers as `printer:<id>:<name>`, which is
+// the only shape preload's generic bridge (window.printerPlugin.invoke) will
+// forward. A plugin that fails to load is logged and skipped — never fatal.
+(function loadPrinterPlugins() {
+  const dir = path.join(__dirname, 'renderer', 'printers');
+  let ids = [];
+  try { ids = fs.readdirSync(dir, { withFileTypes: true }).filter(d => d.isDirectory()).map(d => d.name); } catch (_) {}
+  for (const id of ids) {
+    if (!/^[a-z0-9-]+$/.test(id)) continue;
+    const file = path.join(dir, id, 'main.cjs');
+    if (!fs.existsSync(file)) continue;
+    try {
+      require(file).register({ ipcMain, channel: name => `printer:${id}:${name}` });
+      log.info(`[printer-plugin] ${id} — main side loaded`);
+    } catch (e) {
+      log.warn(`[printer-plugin] ${id} failed to load: ${e?.message || e}`);
+    }
+  }
+})();
+
 // ── Creality Moonraker HTTP IPC (port 7125) ───────────────────────────────────
 // The K-series runs Klipper + Moonraker, which sends NO CORS headers. A renderer
 // fetch() is therefore blocked: a JSON-body / non-GET request triggers a preflight
@@ -3831,6 +3892,13 @@ let _ffmpegBin = null;
 
   const _bambuClients    = new Map(); // key → { client, wc }
   const _bambuCamSockets = new Map(); // key → net.Socket
+  /* One generation number per camera key, bumped by every start and stop. A retry
+     waits on a timer while no socket/process is alive, so a stop (or a newer
+     start) could not reach it — it then woke up and ran a SECOND loop beside the
+     new one, and the two kept kicking each other off a printer that serves one
+     camera client. A loop whose generation is stale now simply ends. */
+  const _bambuCamGen = new Map();   // key → number (JPEG + RTSP share it)
+  const _bambuCamNextGen = key => { const g = (_bambuCamGen.get(key) || 0) + 1; _bambuCamGen.set(key, g); return g; };
 
   // ── MQTT ──────────────────────────────────────────────────────────────
   ipcMain.on('bambulab:connect', (event, { key, ip, serial, password }) => {
@@ -3897,12 +3965,13 @@ let _ffmpegBin = null;
     // doesn't fire a retry while we open a fresh one for the same key.
     const prev = _bambuCamSockets.get(key);
     if (prev) { prev._stopped = true; try { prev.destroy(); } catch (_) {} _bambuCamSockets.delete(key); }
+    const gen = _bambuCamNextGen(key);
 
     let restarts = 0;
     const MAX_RESTARTS = 10;
 
     const launch = () => {
-      if (event.sender.isDestroyed()) return;
+      if (event.sender.isDestroyed() || _bambuCamGen.get(key) !== gen) return;
 
       // Explicit 10 s connect timeout: a filtered/closed port 6000 would
       // otherwise hang on the OS TCP timeout (30–75 s) with the loading
@@ -3947,7 +4016,7 @@ let _ffmpegBin = null;
       sock.on('error', () => {});
       sock.on('close', () => {
         if (_bambuCamSockets.get(key) === sock) _bambuCamSockets.delete(key);
-        if (sock._stopped) return;
+        if (sock._stopped || _bambuCamGen.get(key) !== gen) return;
         if (restarts < MAX_RESTARTS) {
           restarts++;
           const delay = Math.min(1500 * restarts, 12000); // 1.5 s → 12 s backoff
@@ -3963,6 +4032,7 @@ let _ffmpegBin = null;
   });
 
   ipcMain.on('bambulab:cam-stop', (_evt, key) => {
+    _bambuCamNextGen(key);   // cancels a retry waiting on its timer
     const s = _bambuCamSockets.get(key);
     if (s) { s._stopped = true; try { s.destroy(); } catch (_) {} _bambuCamSockets.delete(key); }
   });
@@ -3984,6 +4054,7 @@ let _ffmpegBin = null;
     // Kill any existing process for this key (mark as intentionally stopped)
     const prev = _bambuRtspProcs.get(key);
     if (prev) { prev._stopped = true; try { prev.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); }
+    const gen = _bambuCamNextGen(key);
 
     if (!_ffmpegBin) {
       console.warn('[bambu-rtsp] ffmpeg not found — RTSP camera disabled');
@@ -3994,7 +4065,7 @@ let _ffmpegBin = null;
     const MAX_RESTARTS = 10;
 
     const launch = () => {
-      if (event.sender.isDestroyed()) return;
+      if (event.sender.isDestroyed() || _bambuCamGen.get(key) !== gen) return;
 
       // Never URL-encode the access code — Bambu codes are alphanumeric hex.
       // encodeURIComponent can corrupt them when ffmpeg parses the URL.
@@ -4072,7 +4143,7 @@ let _ffmpegBin = null;
 
       proc.on('close', (code) => {
         if (_bambuRtspProcs.get(key) === proc) _bambuRtspProcs.delete(key);
-        if (proc._stopped) return; // intentional stop — do not restart
+        if (proc._stopped || _bambuCamGen.get(key) !== gen) return; // intentional stop — do not restart
         if (restarts < MAX_RESTARTS) {
           restarts++;
           const delay = Math.min(1500 * restarts, 12000); // 1.5 s → 12 s backoff
@@ -4093,6 +4164,7 @@ let _ffmpegBin = null;
   });
 
   ipcMain.on('bambulab:cam-stop-rtsp', (_evt, key) => {
+    _bambuCamNextGen(key);   // cancels a retry waiting on its timer
     const p = _bambuRtspProcs.get(key);
     if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); }
   });

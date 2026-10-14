@@ -132,7 +132,7 @@ Wiring (mirrors Bambu): always-on MQTT in `subscribePrinters` (skipCam), auto-co
 
 ---
 
-## Add Product panel — ADP (L2075-3368)
+## Add Product panel — ADP (L2075-3540)
 
 Manual spool creation: full chip-schema editor with bottom-sheets. All helpers prefixed `_adp`.
 
@@ -259,7 +259,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Panels / debug / auto-update (L20992-23069)
+## Panels / debug / auto-update (L20992-23300)
 | L | What | Anchors |
 |---|---|---|
 | 8256-8329 | Resizable panels (detail + debug) — drag handle, persisted width | `makePanelResizable`, `openDebug` |
@@ -271,7 +271,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Friends rendering (L22581-23674)
+## Friends rendering (L22581-23900)
 | L | What | Anchors |
 |---|---|---|
 | 8768-8852 | Sidebar friends quick-list + hover tooltip | `renderSidebarFriends`, `showSbFriendTip` |
@@ -280,7 +280,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Racks + printers subscriptions (L23376-24026)
+## Racks + printers subscriptions (L23376-24250)
 | L | What | Anchors |
 |---|---|---|
 | 9064-9106 | Racks subscription | `subscribeRacks`, `unsubscribeRacks` |
@@ -290,7 +290,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printers views (L23669-27988)
+## Printers views (L23669-28220)
 | L | What | Anchors |
 |---|---|---|
 | 9271-9441 | **Job status helpers** + surgical grid patches (job card, online badge, grid signature) | `_getPrinterJob`, `_patchGridJobs`, `_jobCardHtml`, `_isPrinterOnline`, `_patchGridStatus` |
@@ -306,7 +306,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Printer detail side panel (L25937-30837)
+## Printer detail side panel (L25937-31100)
 | L | What | Anchors |
 |---|---|---|
 | 10196-10758 | Open/close lifecycle (connect/disconnect per brand), conn button, refresh | `openPrinterDetail`, `closePrinterDetail`, `refreshOpenPrinterDetail` |
@@ -316,7 +316,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Add-printer flow (L28401-31321)
+## Add-printer flow (L28401-31650)
 Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.js` owns the shell.
 
 | L | What | Anchors |
@@ -328,7 +328,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Racks CRUD + slots (L29220-33952)
+## Racks CRUD + slots (L29220-34500)
 | L | What | Anchors |
 |---|---|---|
 | 12535-12700 | Rack create / update / delete / empty + orphan ref cleanup | `createRack`, `updateRack`, `deleteRack`, `emptyRack` |
@@ -340,7 +340,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Storage view render + DnD (L31568-35731)
+## Storage view render + DnD (L31568-36250)
 | L | What | Anchors |
 |---|---|---|
 | 13420-14065 | **`renderRackView()`** — biggest function in the file: stats bar + filter chips, two-column layout, masonry, kebab menus, live search, read-only friend mode, rack reorder DnD | `renderRackView` |
@@ -350,7 +350,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Friend view (L33287-36481)
+## Friend view (L33287-37000)
 | L | What | Anchors |
 |---|---|---|
 | 14510-14591 | Friend inventory open/close (one-shot read, no live updates) | `openFriendInventory`, `closeFriendInventory` |
@@ -360,7 +360,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Display name + friend requests (L34069-37638)
+## Display name + friend requests (L34069-38150)
 | L | What | Anchors |
 |---|---|---|
 | 14979-15022 | **Display-name setup modal** (first-login pseudo picker) | `openDisplayNameSetup` |
@@ -369,7 +369,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Keys + profile sync (L34926-37758)
+## Keys + profile sync (L34926-38280)
 | L | What | Anchors |
 |---|---|---|
 | 15176-15220 | **`claimPublicKey(uid, oldKey)`** atomic transaction (10 retries) + regenerate + send friend request | `claimPublicKey`, `sendFriendRequest` |
@@ -377,7 +377,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Custom avatar (L35154-38199)
+## Custom avatar (L35154-38720)
 | L | What | Anchors |
 |---|---|---|
 | 15783-15957 | File pick, image decode, alpha detection, resize to blob, upload, remove | `uploadCustomAvatar`, `removeCustomAvatar` |
@@ -385,7 +385,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## User doc sync + telemetry + bootstrap (L35469-39343)
+## User doc sync + telemetry + bootstrap (L35469-39860)
 | L | What | Anchors |
 |---|---|---|
 | 16436-16851 | **`syncUserDoc(uid)`** — displayName/roles/Debug/keys/isPublic + **client telemetry** (studio* fields + `telemetry/studio` aggregates, fire-and-forget) | `syncUserDoc`, `hydrateUserDocCache` |
@@ -395,7 +395,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Electron RFID integration (L36613-39681)
+## Electron RFID integration (L36613-40200)
 | L | What | Anchors |
 |---|---|---|
 | 30262-30349 | Reader indicator (topbar), reader connect/disconnect, card present/removed badge | `renderRfidReaderBadges` |
@@ -407,7 +407,7 @@ Per-brand scan/manual flows live in `printers/<brand>/add-flow.js`; `inventory.j
 
 ---
 
-## Local MCP server — tools + Settings card (L39205-40363)
+## Local MCP server — tools + Settings card (L39205-40900)
 | L | What | Anchors |
 |---|---|---|
 | 37891-38351 | **Read-only MCP tools** + whole-account read (`data_guide` notice, decoder, `firestore_get` / `firestore_query`, friends, wishlists, history, devices; credential masking `MCP_SECRET_FIELD`, scope `_mcpCheckPath`) — definitions (`search_inventory`, `get_spool`, `inventory_summary`, `list_racks`, `list_printers`), row serialiser, handlers, `mcp:call` → `mcp:result` relay. Server itself: `services/mcpServer.js` | `MCP_TOOLS`, `MCP_HANDLERS`, `_mcpRows`, `_mcpSpool` |

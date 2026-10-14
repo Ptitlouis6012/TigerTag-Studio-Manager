@@ -1926,7 +1926,10 @@
     border-top-left-radius: 14px; border-bottom-left-radius: 14px;
     box-shadow: none;
     z-index: 101; transform: translateX(100%); transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, right .25s cubic-bezier(.4,0,.2,1);
-    display: flex; flex-direction: column; overflow: hidden;
+    /* clip, not hidden: a hidden box can still be scrolled by script, focus or
+       scroll anchoring, and an off-screen bottom sheet inside it (the Snapmaker
+       file sheet) leaves room to do so — the header then slid half out of view. */
+    display: flex; flex-direction: column; overflow: hidden; overflow: clip;
   }
   .detail-panel.open { transform: translateX(0); box-shadow: -8px 0 32px rgba(0,0,0,.12); }
   /* ── 3-layer side-panel stacking (back → front) ──────────────────────────

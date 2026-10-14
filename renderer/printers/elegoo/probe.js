@@ -27,10 +27,13 @@ export function getLastElgScanEnv() { return _elgScanLastEnv; }
 
 // ── Model resolution ────────────────────────────────────────────────────────
 // Catalog (data/printers/eleg_printer_models.json): "1" Centauri Carbon 2
-// (MQTT), "2" Centauri Carbon (SDCP, beta), "0" placeholder. The PROTOCOL the
-// printer answered on decides it: both report "Centauri Carbon" as a name, so
-// a name match alone would call a CC1 a CC2 (issue #41).
-export const ELEGOO_MODEL_ID = { CC2: '1', CC1: '2' };
+// (MQTT), "2" Centauri Carbon (SDCP, beta), "3" Centauri 2 and "4" Centauri 2
+// Combo (MQTT — a CC2 without the front door and lid, same protocol), "5" the
+// ELEGOO × emoji® CC2 Combo (a themed CC2 — reported as a CC2, picked by hand), "0"
+// placeholder. The PROTOCOL the printer answered on decides CC1 vs the MQTT
+// family: both report "Centauri Carbon" as a name, so a name match alone would
+// call a CC1 a CC2 (issue #41). Within MQTT, "carbon" in the name is a CC2.
+export const ELEGOO_MODEL_ID = { CC2: '1', CC1: '2', C2: '3', C2_COMBO: '4' };
 
 /**
  * @param {string|null} model    - model name from the discovery reply.
@@ -40,7 +43,11 @@ export const ELEGOO_MODEL_ID = { CC2: '1', CC1: '2' };
 export function elegooModelIdFromMachineModel(model, protocol = 'mqtt') {
   const m = String(model || '').toLowerCase();
   if (protocol === 'sdcp') return m.includes('centauri') ? ELEGOO_MODEL_ID.CC1 : '0';
-  if (m.includes('centauri') || m.includes('centaury')) return ELEGOO_MODEL_ID.CC2;
+  if (!m.includes('centauri') && !m.includes('centaury')) return '0';
+  if (m.includes('carbon')) return ELEGOO_MODEL_ID.CC2;
+  // "Centauri 2" with no "Carbon": the door-less, lid-less sibling (Combo = with the CANVAS box).
+  if (/\b2\b/.test(m)) return m.includes('combo') ? ELEGOO_MODEL_ID.C2_COMBO : ELEGOO_MODEL_ID.C2;
+  return ELEGOO_MODEL_ID.CC2;
   return '0';
 }
 

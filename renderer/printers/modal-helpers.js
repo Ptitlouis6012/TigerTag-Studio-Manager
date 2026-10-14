@@ -111,7 +111,14 @@ export function modelPickerHtml(models, defaultModel, { t, esc, printerImageUrl 
         </button>
         <input type="hidden" name="printerModelId" id="pbaMpValue" value="${esc(defaultModelId)}" />
         <div class="pba-mp-list" id="pbaMpList" role="listbox" hidden>
+          ${models.length > 8 ? `
+          <div class="pba-mp-search-row">
+            <span class="icon icon-search icon-13" aria-hidden="true"></span>
+            <input type="text" class="pba-mp-search" id="pbaMpSearch" placeholder="${esc(t("printerModelSearchPh"))}"
+                   aria-label="${esc(t("printerModelSearchPh"))}" autocomplete="off" spellcheck="false"/>
+          </div>` : ""}
           ${optionsHtml}
+          <div class="pba-mp-empty" id="pbaMpEmpty" hidden>${esc(t("printerModelSearchEmpty"))}</div>
         </div>
       </div>
     </div>`;
@@ -132,7 +139,31 @@ export function wireModelPicker(bodyEl, models, { esc, printerImageUrl }) {
   const thumb   = bodyEl.querySelector("#pbaMpTriggerThumb");
   if (!trigger || !list) return;
 
-  const open  = () => { list.hidden = false; trigger.setAttribute("aria-expanded", "true");  trigger.classList.add("pba-mp-trigger--open"); };
+  const search = list.querySelector("#pbaMpSearch");
+  const empty  = list.querySelector("#pbaMpEmpty");
+  const opts   = [...list.querySelectorAll(".pba-mp-opt")];
+  // Every word typed must appear in the name, in any order ("v2 ender" finds "Ender-3 V2").
+  const norm = v => String(v || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ");
+  const filter = () => {
+    const words = norm(search?.value).split(" ").filter(Boolean);
+    let shown = 0;
+    for (const o of opts) {
+      const hit = !words.length || words.every(w => norm(o.dataset.name).includes(w));
+      o.hidden = !hit;
+      if (hit) shown++;
+    }
+    if (empty) empty.hidden = shown > 0;
+  };
+  search?.addEventListener("input", filter);
+  search?.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); opts.find(o => !o.hidden)?.click(); }
+    else if (e.key === "Escape") { e.stopPropagation(); close(); trigger.focus(); }
+  });
+
+  const open  = () => {
+    list.hidden = false; trigger.setAttribute("aria-expanded", "true"); trigger.classList.add("pba-mp-trigger--open");
+    if (search) { search.value = ""; filter(); list.scrollTop = 0; setTimeout(() => search.focus(), 0); }
+  };
   const close = () => { list.hidden = true;  trigger.setAttribute("aria-expanded", "false"); trigger.classList.remove("pba-mp-trigger--open"); };
 
   trigger.addEventListener("click", e => { e.stopPropagation(); list.hidden ? open() : close(); });

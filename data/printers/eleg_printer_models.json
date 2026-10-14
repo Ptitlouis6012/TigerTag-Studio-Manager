@@ -9,9 +9,36 @@
     "open_firmware": ""
   },
   {
+    "id": "5",
+    "name": "Centauri Carbon 2 Combo emoji®",
+    "image": "assets/images/eleg_printers/cc2_combo_emoji.png",
+    "features": [
+      "Camera"
+    ],
+    "open_firmware": ""
+  },
+  {
+    "id": "3",
+    "name": "Centauri 2",
+    "image": "assets/images/eleg_printers/centauri_2.png",
+    "features": [
+      "Camera"
+    ],
+    "open_firmware": ""
+  },
+  {
+    "id": "4",
+    "name": "Centauri 2 Combo",
+    "image": "assets/images/eleg_printers/centauri_2_combo.png",
+    "features": [
+      "Camera"
+    ],
+    "open_firmware": ""
+  },
+  {
     "id": "2",
     "name": "Centauri Carbon (Beta)",
-    "image": "assets/images/eleg_printers/no_printer.png",
+    "image": "assets/images/eleg_printers/centauri_carbon.png",
     "features": [
       "Camera"
     ],

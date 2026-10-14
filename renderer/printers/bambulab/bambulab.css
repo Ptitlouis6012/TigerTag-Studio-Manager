@@ -207,3 +207,23 @@
 .elg-fan-icon-btn--static:hover .icon { background-color: var(--muted); }
 .elg-fan-icon-btn--static.elg-fan-icon-btn--on:hover { background: color-mix(in srgb, var(--success) 10%, transparent); }
 .elg-fan-icon-btn--static.elg-fan-icon-btn--on:hover .icon { background-color: var(--success); }
+
+/* Cloud ⇄ LAN switch in the settings form (mode-switch.js): a two-option pill
+   whose knob slides under the active side. */
+.bbl-mode-switch { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bbl-mode-switch .pba-tuto-pill { margin: 0; }
+.bbl-mode-switch > .bbl-mode-pill:only-child { margin-left: auto; }
+.bbl-mode-pill {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr; isolation: isolate;
+  min-width: 132px; padding: 3px; border-radius: 999px; cursor: pointer;
+  background: var(--surface-2); border: 1px solid var(--border);
+}
+.bbl-mode-knob {
+  position: absolute; z-index: -1; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px);
+  border-radius: 999px; background: var(--primary);
+  transition: transform .22s cubic-bezier(.4, 0, .2, 1);
+}
+.bbl-mode-pill[aria-checked="true"] .bbl-mode-knob { transform: translateX(100%); }
+.bbl-mode-opt { padding: 5px 12px; font-size: 12px; font-weight: 700; text-align: center; color: var(--muted); transition: color .2s; }
+.bbl-mode-pill[aria-checked="false"] [data-bbl-side="cloud"],
+.bbl-mode-pill[aria-checked="true"]  [data-bbl-side="lan"] { color: var(--on-accent); }

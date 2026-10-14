@@ -1,0 +1,1327 @@
+[
+  {
+    "id": "1",
+    "name": "Generic Marlin printer",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "2",
+    "name": "Anker M5",
+    "image": "img/anker-m5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "3",
+    "name": "Anker M5 All-Metal Hot End",
+    "image": "img/anker-m5-all-metal-hot-end.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "4",
+    "name": "Anker M5C",
+    "image": "img/anker-m5c.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "5",
+    "name": "Anycubic 4Max Pro",
+    "image": "img/anycubic-4max-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "6",
+    "name": "Anycubic 4Max Pro 2",
+    "image": "img/anycubic-4max-pro-2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "7",
+    "name": "Anycubic Chiron",
+    "image": "img/anycubic-chiron.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "8",
+    "name": "Anycubic i3 Mega S",
+    "image": "img/anycubic-i3-mega-s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "9",
+    "name": "Anycubic Kobra",
+    "image": "img/anycubic-kobra.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "10",
+    "name": "Anycubic Kobra 2",
+    "image": "img/anycubic-kobra-2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "11",
+    "name": "Anycubic Kobra 2 Neo",
+    "image": "img/anycubic-kobra-2-neo.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "12",
+    "name": "Anycubic Kobra Max",
+    "image": "img/anycubic-kobra-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "13",
+    "name": "Anycubic Kobra Neo",
+    "image": "img/anycubic-kobra-neo.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "14",
+    "name": "Anycubic Kobra Plus",
+    "image": "img/anycubic-kobra-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "15",
+    "name": "Anycubic Predator",
+    "image": "img/anycubic-predator.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "16",
+    "name": "Anycubic Vyper",
+    "image": "img/anycubic-vyper.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "17",
+    "name": "Artillery Genius",
+    "image": "img/artillery-genius.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "18",
+    "name": "Artillery Genius Pro",
+    "image": "img/artillery-genius-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "19",
+    "name": "Artillery Hornet",
+    "image": "img/artillery-hornet.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "20",
+    "name": "Artillery Sidewinder X1",
+    "image": "img/artillery-sidewinder-x1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "21",
+    "name": "Artillery Sidewinder X2",
+    "image": "img/artillery-sidewinder-x2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "22",
+    "name": "Artillery Sidewinder X3 Plus",
+    "image": "img/artillery-sidewinder-x3-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "23",
+    "name": "Artillery Sidewinder X3 Pro",
+    "image": "img/artillery-sidewinder-x3-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "24",
+    "name": "BIQU B1",
+    "image": "img/biqu-b1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "25",
+    "name": "BIQU BX",
+    "image": "img/biqu-bx.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "26",
+    "name": "CoLiDo 160 V2",
+    "image": "img/colido-160-v2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "27",
+    "name": "CoLiDo X16",
+    "image": "img/colido-x16.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "28",
+    "name": "Creality CR-10",
+    "image": "img/creality-cr-10.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "29",
+    "name": "Creality CR-10 Max",
+    "image": "img/creality-cr-10-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "30",
+    "name": "Creality CR-10 Smart",
+    "image": "img/creality-cr-10-smart.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "31",
+    "name": "Creality CR-10 Smart Pro",
+    "image": "img/creality-cr-10-smart-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "32",
+    "name": "Creality CR-10 V2",
+    "image": "img/creality-cr-10-v2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "33",
+    "name": "Creality CR-10 V3",
+    "image": "img/creality-cr-10-v3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "34",
+    "name": "Creality CR-10S Pro V2",
+    "image": "img/creality-cr-10s-pro-v2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "35",
+    "name": "Creality CR-20 Pro",
+    "image": "img/creality-cr-20-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "36",
+    "name": "Creality CR-6 Max",
+    "image": "img/creality-cr-6-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "37",
+    "name": "Creality CR-6 SE",
+    "image": "img/creality-cr-6-se.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "38",
+    "name": "Creality CR-M4",
+    "image": "img/creality-cr-m4.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "39",
+    "name": "Creality Ender-2 Pro",
+    "image": "img/creality-ender-2-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "40",
+    "name": "Creality Ender-3",
+    "image": "img/creality-ender-3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "41",
+    "name": "Creality Ender-3 Max",
+    "image": "img/creality-ender-3-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "42",
+    "name": "Creality Ender-3 Max Neo",
+    "image": "img/creality-ender-3-max-neo.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "43",
+    "name": "Creality Ender-3 Neo",
+    "image": "img/creality-ender-3-neo.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "44",
+    "name": "Creality Ender-3 Pro",
+    "image": "img/creality-ender-3-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "45",
+    "name": "Creality Ender-3 S1",
+    "image": "img/creality-ender-3-s1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "46",
+    "name": "Creality Ender-3 S1 Plus",
+    "image": "img/creality-ender-3-s1-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "47",
+    "name": "Creality Ender-3 S1 Pro",
+    "image": "img/creality-ender-3-s1-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "48",
+    "name": "Creality Ender-3 V2",
+    "image": "img/creality-ender-3-v2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "49",
+    "name": "Creality Ender-3 V2 Neo",
+    "image": "img/creality-ender-3-v2-neo.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "50",
+    "name": "Creality Ender-3 V3 SE",
+    "image": "img/creality-ender-3-v3-se.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "51",
+    "name": "Creality Ender-5",
+    "image": "img/creality-ender-5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "52",
+    "name": "Creality Ender-5 Plus",
+    "image": "img/creality-ender-5-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "53",
+    "name": "Creality Ender-5 Pro (2019)",
+    "image": "img/creality-ender-5-pro-2019.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "54",
+    "name": "Creality Ender-5 S1",
+    "image": "img/creality-ender-5-s1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "55",
+    "name": "Creality Ender-5S",
+    "image": "img/creality-ender-5s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "56",
+    "name": "Creality Ender-6",
+    "image": "img/creality-ender-6.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "57",
+    "name": "Creality Sermoon D3",
+    "image": "img/creality-sermoon-d3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "58",
+    "name": "Creality Sermoon D3 Pro",
+    "image": "img/creality-sermoon-d3-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "59",
+    "name": "Creality Sermoon V1",
+    "image": "img/creality-sermoon-v1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "60",
+    "name": "Creality Sermoon V1 Pro",
+    "image": "img/creality-sermoon-v1-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "61",
+    "name": "Dremel 3D20",
+    "image": "img/dremel-3d20.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "62",
+    "name": "Dremel 3D40",
+    "image": "img/dremel-3d40.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "63",
+    "name": "Dremel 3D45",
+    "image": "img/dremel-3d45.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "64",
+    "name": "Flashforge Adventurer 3 Series",
+    "image": "img/flashforge-adventurer-3-series.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "65",
+    "name": "Flashforge Adventurer 4 Series",
+    "image": "img/flashforge-adventurer-4-series.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "66",
+    "name": "Flashforge Artemis",
+    "image": "img/flashforge-artemis.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "67",
+    "name": "Flashforge Guider 2s",
+    "image": "img/flashforge-guider-2s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "68",
+    "name": "FLSun Q5",
+    "image": "img/flsun-q5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "69",
+    "name": "FLSun QQ-S Pro",
+    "image": "img/flsun-qq-s-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "70",
+    "name": "FLSun Super Racer (SR)",
+    "image": "img/flsun-super-racer-sr.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "71",
+    "name": "FlyingBear Ghost 6",
+    "image": "img/flyingbear-ghost-6.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "72",
+    "name": "Folgertech FT-5",
+    "image": "img/folgertech-ft-5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "73",
+    "name": "Folgertech FT-6",
+    "image": "img/folgertech-ft-6.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "74",
+    "name": "Folgertech i3",
+    "image": "img/folgertech-i3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "75",
+    "name": "Geeetech A10 M",
+    "image": "img/geeetech-a10-m.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "76",
+    "name": "Geeetech A10 Pro",
+    "image": "img/geeetech-a10-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "77",
+    "name": "Geeetech A10 T",
+    "image": "img/geeetech-a10-t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "78",
+    "name": "Geeetech A20",
+    "image": "img/geeetech-a20.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "79",
+    "name": "Geeetech A20 M",
+    "image": "img/geeetech-a20-m.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "80",
+    "name": "Geeetech A20 T",
+    "image": "img/geeetech-a20-t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "81",
+    "name": "Geeetech A30 M",
+    "image": "img/geeetech-a30-m.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "82",
+    "name": "Geeetech A30 Pro",
+    "image": "img/geeetech-a30-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "83",
+    "name": "Geeetech A30 T",
+    "image": "img/geeetech-a30-t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "84",
+    "name": "Geeetech M1",
+    "image": "img/geeetech-m1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "85",
+    "name": "Geeetech Mizar",
+    "image": "img/geeetech-mizar.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "86",
+    "name": "Geeetech Mizar M",
+    "image": "img/geeetech-mizar-m.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "87",
+    "name": "Geeetech Mizar Max",
+    "image": "img/geeetech-mizar-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "88",
+    "name": "Geeetech Mizar Pro",
+    "image": "img/geeetech-mizar-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "89",
+    "name": "Geeetech Mizar S",
+    "image": "img/geeetech-mizar-s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "90",
+    "name": "Geeetech Thunder",
+    "image": "img/geeetech-thunder.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "91",
+    "name": "iQ TiQ2",
+    "image": "img/iq-tiq2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "92",
+    "name": "iQ TiQ8",
+    "image": "img/iq-tiq8.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "93",
+    "name": "Kingroon KP3S 3.0",
+    "image": "img/kingroon-kp3s-3-0.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "94",
+    "name": "Kingroon KP3S PRO S1",
+    "image": "img/kingroon-kp3s-pro-s1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "95",
+    "name": "Lulzbot Mini 1",
+    "image": "img/lulzbot-mini-1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "96",
+    "name": "Lulzbot Taz 4 or 5",
+    "image": "img/lulzbot-taz-4-or-5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "97",
+    "name": "Lulzbot Taz 6",
+    "image": "img/lulzbot-taz-6.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "98",
+    "name": "Lulzbot Taz Pro Dual",
+    "image": "img/lulzbot-taz-pro-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "99",
+    "name": "Lulzbot Taz Pro S",
+    "image": "img/lulzbot-taz-pro-s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "100",
+    "name": "MagicMaker MM hqs hj",
+    "image": "img/magicmaker-mm-hqs-hj.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "101",
+    "name": "MagicMaker MM hqs SF",
+    "image": "img/magicmaker-mm-hqs-sf.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "102",
+    "name": "MagicMaker MM slb",
+    "image": "img/magicmaker-mm-slb.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "103",
+    "name": "Prusa CORE One",
+    "image": "img/prusa-core-one.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "104",
+    "name": "Prusa CORE One HF",
+    "image": "img/prusa-core-one-hf.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "105",
+    "name": "Prusa CORE One INDX 4T",
+    "image": "img/prusa-core-one-indx-4t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "106",
+    "name": "Prusa CORE One INDX 8T",
+    "image": "img/prusa-core-one-indx-8t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "107",
+    "name": "Prusa CORE One L",
+    "image": "img/prusa-core-one-l.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "108",
+    "name": "Prusa CORE One L HF",
+    "image": "img/prusa-core-one-l-hf.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "109",
+    "name": "Prusa CORE One MMU3",
+    "image": "img/prusa-core-one-mmu3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "110",
+    "name": "Prusa MINI",
+    "image": "img/prusa-mini.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "111",
+    "name": "Prusa MINI IS",
+    "image": "img/prusa-mini-is.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "112",
+    "name": "Prusa MK3.5",
+    "image": "img/prusa-mk3-5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "113",
+    "name": "Prusa MK3S",
+    "image": "img/prusa-mk3s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "114",
+    "name": "Prusa MK4",
+    "image": "img/prusa-mk4.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "115",
+    "name": "Prusa MK4 MMU3",
+    "image": "img/prusa-mk4-mmu3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "116",
+    "name": "Prusa MK4 MMU3 HF",
+    "image": "img/prusa-mk4-mmu3-hf.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "117",
+    "name": "Prusa MK4S",
+    "image": "img/prusa-mk4s.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "118",
+    "name": "Prusa MK4S HF",
+    "image": "img/prusa-mk4s-hf.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "119",
+    "name": "Prusa XL",
+    "image": "img/prusa-xl.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "120",
+    "name": "Prusa XL 5T",
+    "image": "img/prusa-xl-5t.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "121",
+    "name": "Qidi X-CF Pro",
+    "image": "img/qidi-x-cf-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "122",
+    "name": "Qidi X-Max",
+    "image": "img/qidi-x-max.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "123",
+    "name": "Qidi X-Plus",
+    "image": "img/qidi-x-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "124",
+    "name": "Raise3D Pro3",
+    "image": "img/raise3d-pro3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "125",
+    "name": "Raise3D Pro3 Plus",
+    "image": "img/raise3d-pro3-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "126",
+    "name": "Snapmaker A250",
+    "image": "img/snapmaker-a250.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "127",
+    "name": "Snapmaker A250 BKit",
+    "image": "img/snapmaker-a250-bkit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "128",
+    "name": "Snapmaker A250 Dual",
+    "image": "img/snapmaker-a250-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "129",
+    "name": "Snapmaker A250 Dual BKit",
+    "image": "img/snapmaker-a250-dual-bkit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "130",
+    "name": "Snapmaker A250 Dual QS+B Kit",
+    "image": "img/snapmaker-a250-dual-qs-b-kit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "131",
+    "name": "Snapmaker A250 Dual QSKit",
+    "image": "img/snapmaker-a250-dual-qskit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "132",
+    "name": "Snapmaker A250 QS+B Kit",
+    "image": "img/snapmaker-a250-qs-b-kit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "133",
+    "name": "Snapmaker A250 QSKit",
+    "image": "img/snapmaker-a250-qskit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "134",
+    "name": "Snapmaker A350",
+    "image": "img/snapmaker-a350.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "135",
+    "name": "Snapmaker A350 BKit",
+    "image": "img/snapmaker-a350-bkit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "136",
+    "name": "Snapmaker A350 Dual",
+    "image": "img/snapmaker-a350-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "137",
+    "name": "Snapmaker A350 Dual BKit",
+    "image": "img/snapmaker-a350-dual-bkit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "138",
+    "name": "Snapmaker A350 Dual QS+B Kit",
+    "image": "img/snapmaker-a350-dual-qs-b-kit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "139",
+    "name": "Snapmaker A350 Dual QSKit",
+    "image": "img/snapmaker-a350-dual-qskit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "140",
+    "name": "Snapmaker A350 QS+B Kit",
+    "image": "img/snapmaker-a350-qs-b-kit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "141",
+    "name": "Snapmaker A350 QSKit",
+    "image": "img/snapmaker-a350-qskit.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "142",
+    "name": "Snapmaker Artisan",
+    "image": "img/snapmaker-artisan.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "143",
+    "name": "Snapmaker J1",
+    "image": "img/snapmaker-j1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "144",
+    "name": "Sovol SV01",
+    "image": "img/sovol-sv01.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "145",
+    "name": "Sovol SV01 Pro",
+    "image": "img/sovol-sv01-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "146",
+    "name": "Sovol SV02",
+    "image": "img/sovol-sv02.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "147",
+    "name": "Sovol SV05",
+    "image": "img/sovol-sv05.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "148",
+    "name": "Sovol SV06",
+    "image": "img/sovol-sv06.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "149",
+    "name": "Sovol SV06 Plus",
+    "image": "img/sovol-sv06-plus.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "150",
+    "name": "Sovol SV07",
+    "image": "img/sovol-sv07.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "151",
+    "name": "Tronxy X5SA 400 Marlin Firmware",
+    "image": "img/tronxy-x5sa-400-marlin-firmware.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "152",
+    "name": "UltiMaker 2",
+    "image": "img/ultimaker-2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "153",
+    "name": "UltiMaker 2 extended+",
+    "image": "img/ultimaker-2-extended.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "154",
+    "name": "UltiMaker S5",
+    "image": "img/ultimaker-s5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "155",
+    "name": "Volumic EXO42",
+    "image": "img/volumic-exo42.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "156",
+    "name": "Volumic EXO65",
+    "image": "img/volumic-exo65.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "157",
+    "name": "Volumic SH65",
+    "image": "img/volumic-sh65.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "158",
+    "name": "Volumic VS20MK2",
+    "image": "img/volumic-vs20mk2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "159",
+    "name": "Volumic VS30MK2",
+    "image": "img/volumic-vs30mk2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "160",
+    "name": "Volumic VS30MK3",
+    "image": "img/volumic-vs30mk3.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "161",
+    "name": "Volumic VS30SC",
+    "image": "img/volumic-vs30sc.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "162",
+    "name": "Volumic VS30SC2",
+    "image": "img/volumic-vs30sc2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "163",
+    "name": "Volumic VS30ULTRA",
+    "image": "img/volumic-vs30ultra.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "164",
+    "name": "Voxelab Aquila X2",
+    "image": "img/voxelab-aquila-x2.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "165",
+    "name": "Wanhao D12 230 PRO M2 DIRECT",
+    "image": "img/wanhao-d12-230-pro-m2-direct.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "166",
+    "name": "Wanhao D12 230 PRO M2 MONO DUAL",
+    "image": "img/wanhao-d12-230-pro-m2-mono-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "167",
+    "name": "Wanhao D12 230 PRO M2 MONO DUAL PoopTool",
+    "image": "img/wanhao-d12-230-pro-m2-mono-dual-pooptool.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "168",
+    "name": "Wanhao D12 300 PRO M2 DIRECT",
+    "image": "img/wanhao-d12-300-pro-m2-direct.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "169",
+    "name": "Wanhao D12 300 PRO M2 MONO DUAL",
+    "image": "img/wanhao-d12-300-pro-m2-mono-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "170",
+    "name": "Wanhao D12 300 PRO M2 MONO DUAL PoopTool",
+    "image": "img/wanhao-d12-300-pro-m2-mono-dual-pooptool.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "171",
+    "name": "Wanhao D12 500 PRO M2 MONO DUAL",
+    "image": "img/wanhao-d12-500-pro-m2-mono-dual.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "172",
+    "name": "Wanhao D12 500 PRO M2 MONO DUAL PoopTool",
+    "image": "img/wanhao-d12-500-pro-m2-mono-dual-pooptool.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "173",
+    "name": "Wanhao D12 500 PRO SMARTPAD DIRECT",
+    "image": "img/wanhao-d12-500-pro-smartpad-direct.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "174",
+    "name": "Wanhao D12-300",
+    "image": "img/wanhao-d12-300.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "177",
+    "name": "Wanhao D9-300 MK1",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "178",
+    "name": "Wanhao D9-300 MK1 BLTouch kit",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "179",
+    "name": "Wanhao D9-300 MK2",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "180",
+    "name": "Wanhao D9-300 MK3",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "181",
+    "name": "Wanhao D9-400 MK1",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "182",
+    "name": "Wanhao D9-400 MK1 BLTouch kit",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "183",
+    "name": "Wanhao D9-400 MK2",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "184",
+    "name": "Wanhao D9-400 MK3",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "185",
+    "name": "Wanhao D9-500 MK1",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "186",
+    "name": "Wanhao D9-500 MK1 BLTouch kit",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "187",
+    "name": "Wanhao D9-500 MK2",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "188",
+    "name": "Wanhao D9-500 MK3",
+    "image": "img/generic-marlin-printer.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "175",
+    "name": "WEMAKE3D PhoenixProV1",
+    "image": "img/wemake3d-phoenixprov1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "176",
+    "name": "WEMAKE3D TinyBotV1",
+    "image": "img/wemake3d-tinybotv1.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "0",
+    "name": "Select Printer",
+    "image": "img/no_printer.png",
+    "tools": 1,
+    "features": [
+      "No"
+    ]
+  }
+]

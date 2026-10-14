@@ -60,6 +60,10 @@ starts from the master here rather than from an already-compressed file.
 | `img/hero-TigerPOD-MirrorEffect-Rainbow-9.png` | 1672×941, 1.4 MB | — not loaded by the app (shop / Hub / social / press) |
 | `img/TigerScale_V3.png` | 1254², 1.4 MB | `assets/img/TigerScale_V3.png` — 512², 78 KB (scale card 56 px, empty state 216 px, README 480 px) |
 | `img/TigerScale_Photo.png` | 960², 930 KB | — no longer loaded by the app (the pre-V3 prototype photo, replaced by `TigerScale_V3.png`) |
+| `img/printer_library/<vendor>/<model>.png` | 442 machine pictures, 70 vendors, 240², supplied by the manufacturers (same layout as OrcaSlicer's `resources/profiles/<Vendor>/<Model>_cover.png`) | picked per catalogue: `assets/img/prusa_printers/*.png`, `assets/img/eleg_printers/centauri_carbon.png`, `renderer/printers/klipper/img/*.png` — shipped as-is (already 240²) |
+| `img/prusa_printers/*.png`, `img/eleg_printers/centauri_carbon.png`, `img/eleg_printers/centauri_2.png` | 240² | same name under `assets/img/` |
+| `img/eleg_printers/cc2_combo_emoji.jpg` | 1024², Elegoo's official photo of the ELEGOO × emoji® Centauri Carbon 2 Combo (fr.elegoo.com), white background + caption | `assets/img/eleg_printers/cc2_combo_emoji.png` — 1080², caption cropped off, background cut out with a stricter white threshold and no island pass (the printer itself is white) |
+| `img/eleg_printers/centauri_2_combo.jpg` | 1024², Elegoo's official product photo (us.elegoo.com, "Model Front"), white background | `assets/img/eleg_printers/centauri_2_combo.png` — 1080², background cut out (border flood-fill + enclosed white islands), trimmed and squared |
 
 ### Missing masters
 

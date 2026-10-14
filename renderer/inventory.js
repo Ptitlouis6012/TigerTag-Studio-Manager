@@ -71,6 +71,10 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
+// Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
+import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
+import { betaBadgeInlineHtml } from './printers/beta-badge.js';
+import { buildModelIndex, searchModels } from './printers/model-finder.js';
 import { schemaWidget } from './printers/modal-helpers.js';
 import { openCreAddFlow }  from './printers/creality/add-flow.js';
 import { openBblAddFlow }  from './printers/bambulab/add-flow.js';
@@ -1483,6 +1487,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (r.ok) state.i18n[lang] = await r.json();
       } catch {}
     }));
+    mergePluginStrings(state.i18n);   // each printer plugin ships its own strings
   }
 
   async function loadLookups() {
@@ -1551,6 +1556,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           else state.db.printerModels[brand] = [];
         } catch { state.db.printerModels[brand] = []; }
       }));
+      // A printer plugin keeps its catalogue (and pictures) in its own folder.
+      await Promise.all(printerPlugins().filter(pl => pl.models).map(async pl => {
+        try {
+          const r = await fetch(pl.models);
+          const list = r.ok ? await r.json() : [];
+          state.db.printerModels[pl.id] = list.map(m => ({ ...m, imageUrl: m.image ? new URL(m.image, pl.models).href : null }));
+        } catch { state.db.printerModels[pl.id] = []; }
+      }));
     } catch {}
     // Renderer path — needed to build the file:// preload URL for the Creality
     // camera <webview>. Fetched once here so renderPrinterDetail() can use it
@@ -1579,6 +1592,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // gap. Renderer paths are relative to renderer/inventory.html so we
   // prepend "../" for the file:// fetch.
   function printerImageUrl(model) {
+    if (model?.imageUrl) return model.imageUrl;   // printer plugin: already resolved
     if (!model || !model.image) return null;
     return "../" + String(model.image).replace(/^assets\/images\//, "assets/img/");
   }
@@ -1852,6 +1866,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── connected state ── */
   function setConnected(displayName, email) {
     state.displayName = displayName; // raw value — empty if not yet chosen by user
+    try { _usbScaleOnSignIn(); } catch (_) {}   // USB scale on this account (telemetry)
     _mcpSyncAccount(state.activeAccountId);   // MCP follows the signed-in profile's choice
     const shown = _shortName(displayName, email);
     // One-time migration: older builds of onAuthStateChanged
@@ -4138,6 +4153,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     doWeightUpdate,
     openContainerPicker,
     openDetail,
+    onScaleUsed: () => _recordUsbScale(),
   });
 
   $("btnStgExport").addEventListener("click", () => {
@@ -4330,7 +4346,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     el.textContent = msg;
     el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
     clearTimeout(_flashMsgT);
-    _flashMsgT = setTimeout(() => el.classList.remove("show"), 1800);
+    // Long enough to read: ~55 ms a character, 1.8 s minimum, 7 s at most.
+    _flashMsgT = setTimeout(() => el.classList.remove("show"), Math.max(1800, Math.min(7000, String(msg).length * 55)));
   }
   /* ── modal: disconnect account ── */
   /* ── modal: edit account ── */
@@ -5117,6 +5134,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const XP_ACHIEVEMENTS = [
     { id: "tigerScale", xp: 200 }, { id: "mobileApp", xp: 100, once: true }, { id: "tigerSpool", xp: 75 },
     { id: "tigerPod", xp: 50, once: true }, { id: "td1s", xp: 30, once: true }, { id: "printer", per: 20 },
+    { id: "usbScale", xp: 100, once: true },
     { id: "rfidReader", xp: 20, once: true }, { id: "friend", per: 10 }, { id: "photo", xp: 10 },
     { id: "firstRack", xp: 10, once: true }, { id: "social", per: 5 }, { id: "publicProfile", xp: 5 },
     { id: "firstList", xp: 5, once: true }, { id: "link", per: 5, once: true },
@@ -10881,6 +10899,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .find(it => it.type === "group" && it.key === key);
     if (!g) { _groupPanelKeepSingletons = false; return; }
     closeNotifs();   // opening a side card takes over the right — dismiss notifs
+    _closeAddPrinterFlow();
     _groupPanelKey = key;
     _renderGroupPanelContents(_deckWithSameProduct(g));   // sets _groupPanelMembers
     // If a detail card is open for a spool that doesn't belong to this group,
@@ -16910,6 +16929,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _openPbaCard() {
     return document.querySelector(".modal-overlay.open > .modal-card.pba-card");
   }
+  /* The add-printer flow (brand picker + any brand's choice / scan / manual /
+     approve card) is a stack of its own. Opening any OTHER side card must end
+     it: left open, its cards sat on top of the new one and hid it. */
+  function _closeAddPrinterFlow() {
+    const pickerOpen = $("printerBrandPickerPanel")?.classList.contains("open");
+    const cardOpen = !!document.querySelector(".modal-overlay.open > .modal-card.pba-card");
+    if (!pickerOpen && !cardOpen) return;
+    _closeOpenPbaCard();
+    closePrinterBrandPicker();
+  }
   function _closeOpenPbaCard() {
     document.querySelectorAll(".modal-overlay.open").forEach(o => {
       if (o.querySelector(":scope > .modal-card.pba-card")) o.classList.remove("open");
@@ -18037,6 +18066,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function openDetail(spoolId, opts = {}) {
     closeNotifs();   // opening a spool takes over the right side — dismiss notifs
+    _closeAddPrinterFlow();
     // Switching to a different spool → close the container picker (it was
     // anchored to the previous spool). The Product-info card FOLLOWS the material:
     // keep it open and re-target it to the new spool's product (never close it on
@@ -18707,6 +18737,48 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .set(fields, { merge: true })
       .catch(() => {});
   }
+
+  /* USB scale (DYMO M-series) on the account — telemetry/studio:
+       usbScaleModel    the scale's USB product name ("M25 25 lb Digital Scale")
+       usbScaleMaker / usbScaleProductId ("0x8009", the reliable model key) /
+       usbScaleFirmware ("1.00") — what the scale reports; it has no serial number
+       firstUsbScaleAt  first time one was connected (stamped once, never moved)
+       lastUsbScaleAt   last connect or weighing — refreshed at most every 10 min
+     firstUsbScaleAt is what the server turns into the "USB scale" discovery
+     (100 XP, functions/supportWebhooks.js); lastUsbScaleAt answers "who still
+     uses one". Written on connect and after each weighing it applies. */
+  // `var`: setConnected (far above) may call _usbScaleOnSignIn before this line runs.
+  var _usbScaleModel = null, _usbScaleStampAt = 0, _usbScaleFirstDone = null;
+  async function _recordUsbScale(info) {
+    const uid = state.activeAccountId;
+    if (!uid) return;
+    if (info?.product) _usbScaleModel = info;
+    const now = Date.now();
+    if (now - _usbScaleStampAt < 600_000 && _usbScaleFirstDone === uid) return;
+    _usbScaleStampAt = now;
+    const FV = firebase.firestore.FieldValue;
+    const fields = { lastUsbScaleAt: FV.serverTimestamp() };
+    const m = _usbScaleModel || {}, clip = v => String(v).slice(0, 80);
+    if (m.product)      fields.usbScaleModel     = clip(m.product);
+    if (m.manufacturer) fields.usbScaleMaker     = clip(m.manufacturer);
+    if (m.productId)    fields.usbScaleProductId = clip(m.productId);
+    if (m.firmware)     fields.usbScaleFirmware  = clip(m.firmware);
+    if (_usbScaleFirstDone !== uid) {
+      try {
+        const ref = fbDb(uid).collection("users").doc(uid).collection("telemetry").doc("studio");
+        if (!(await ref.get()).data()?.firstUsbScaleAt) fields.firstUsbScaleAt = FV.serverTimestamp();
+        _usbScaleFirstDone = uid;
+      } catch (_) { return; }
+    }
+    _recordUsage(fields);
+  }
+  // Already connected before sign-in, or another account signed in: stamp that account.
+  function _usbScaleOnSignIn() {
+    _usbScaleFirstDone = null; _usbScaleStampAt = 0;
+    window.electronAPI?.getUsbScaleState?.()
+      .then(d => { if (d?.connected) _recordUsbScale(d); }).catch(() => {});
+  }
+  window.electronAPI?.onUsbScaleUpdate?.(d => { if (d?.connected) _recordUsbScale(d); });
 
   // Track TD1s first-ever use
   if (window.td1s) {
@@ -21920,6 +21992,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ($("fseRawPanel")?.classList.contains("open"))      closeFsRaw();
     if ($("fseExplorerPanel")?.classList.contains("open")) closeFsExplorer();
     if ($("settingsPanel")?.classList.contains("open"))   closeSettings();
+    _closeAddPrinterFlow();
   }
   // Each `»` close tab: a quick click closes its own panel (existing handlers);
   // a long press (HOLD_MS) closes ALL side cards, with a vertical fill animation
@@ -21968,6 +22041,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── debug panel (API inspector) ── */
   function openDebug() {
     closeNotifs();       // opening a side card takes over the right — dismiss notifs
+    _closeAddPrinterFlow();
     closeFsExplorer();   // the two secondary side cards are mutually exclusive
     $("debugPanel").classList.add("open");
     // No extra backdrop when opened from Settings — Settings' overlay already
@@ -21984,6 +22058,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── Firebase Explorer (dedicated Firestore browser) ── */
   function openFsExplorer() {
     closeNotifs();       // opening a side card takes over the right — dismiss notifs
+    _closeAddPrinterFlow();
     closeDebug();        // the two secondary side cards are mutually exclusive
     closeSettings();     // the Explorer takes over from Settings (it opened from there)
     $("fseExplorerPanel").classList.add("open");
@@ -23034,7 +23109,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _DBG_BRAND_PREFIX = {
     acu: ["Anycubic", "anycubic"], bbl: ["Bambu Lab", "bambulab"], cre: ["Creality", "creality"],
     elg: ["Elegoo", "elegoo"], ffg: ["FlashForge", "flashforge"], snap: ["Snapmaker", "snapmaker"],
-    prusa: ["Prusa", "prusa"],
+    prusa: ["Prusa", "prusa"], klipper: ["Klipper", "klipper"],
   };
   function _dbgSurface(id) {
     if (!id) return null;
@@ -23967,7 +24042,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      mergeBrandSnap callback so a snapshot for any brand updates only that
      brand's slice while preserving the others.
      See docs/03-data-model.md → users/{uid}/printers/{brand}/devices.       */
-  const PRINTER_BRANDS = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa"];
+  const PRINTER_BRANDS = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa", ...printerPluginIds()];
 
   function subscribePrinters(uid) {
     unsubscribePrinters();
@@ -24171,6 +24246,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       try { prusaDisconnect(prusaKey(p)); } catch (_) {}
     });
     try { prusaCamStopAll(); } catch (_) {}
+    for (const pl of printerPlugins()) { try { pl.stopAll?.(); } catch (_) {} }
     (state.printers || []).filter(p => p.brand === 'creality').forEach(p => {
       try { creDisconnect(creKey(p)); if (p.ip) stopCreCam(p.ip); } catch (_) {}
     });
@@ -24212,6 +24288,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _DONE_STATES = new Set(["finished", "complete", "completed"]);
 
   function _getPrinterJob(p) {
+    const _pl = printerPlugin(p);
+    if (_pl) {
+      // A plugin hands back the normalized job itself; the host adds the rest.
+      const j = _pl.job?.(p);
+      if (!j) return null;
+      const state = String(j.state || "idle").toLowerCase();
+      const isActive = _ACTIVE_STATES.has(state), isDone = _DONE_STATES.has(state);
+      const pct = Math.min(100, Math.max(0, Math.round(j.pct || 0)));
+      return { state, pct, isActive, isDone, paused: !!j.paused || state === "paused",
+               filename: j.filename || null, remainSec: j.remainSec ?? null,
+               thumbUrl: isActive || isDone ? (j.thumbUrl || null) : null, bar: jobBar(j.conn, state, pct),
+               layer: Number(j.layer) || 0, layerTotal: Number(j.layerTotal) || 0 };
+    }
     let d = null, conn = null;
     if (p.brand === "snapmaker")  conn = snapGetConn(snapKey(p));
     if (p.brand === "flashforge") conn = ffgGetConn(ffgKey(p));
@@ -24613,7 +24702,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      right on a view that draws one per machine.) */
   const _boardCamHtml = p =>
     p.brand === "flashforge" ? renderFfgCamWallBanner(p)
-    : p.brand === "prusa"    ? renderPrusaCamWallBanner(p) : renderCamBanner(p);
+    : p.brand === "prusa"    ? renderPrusaCamWallBanner(p)
+    : printerPlugin(p)       ? (printerPlugin(p).renderCamBanner?.(p, true) || "") : renderCamBanner(p);
   /* CAN a camera be asked for on this machine, even though none runs yet? The
      banner above cannot say: a cloud Anycubic's banner is empty until its camera
      has been requested (it sits on the hero photo), so the card never offered
@@ -24653,6 +24743,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
+      printerPlugin(p)?.connect?.(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -25076,6 +25167,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
     if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
     if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
+    if (printerPlugin(p))         return printerPlugin(p).isOnline?.(p) === true;
     if (p.brand === "creality")   return creIsOnline(p)    === true;
     if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
     if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -25249,6 +25341,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
+      printerPlugin(p)?.connect?.(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -25285,6 +25378,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // Same for FlashForge — fires a 2.5s POST /detail probe.
       if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
       if (p.brand === "prusa" && p.ip)      prusaPingPrinter(p);
+      printerPlugin(p)?.ping?.(p);
       // Same for Creality — opens a brief WS to port 9999.
       if (p.brand === "creality"   && p.ip) crePingPrinter(p);
       /* A MINIMAL card: the machine, its name, and a dot saying whether it is
@@ -25355,7 +25449,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                 <button class="rp-menu-item" data-paction="settings"><span class="icon icon-settings icon-14"></span><span>${esc(t("printerCardSettings"))}</span></button>
                 <div class="rp-menu-sep"></div>
                 <div class="rp-menu-head">${esc(t("boardWidgets"))}</div>
-                ${BOARD_WIDGETS.map(w => {
+                ${BOARD_WIDGETS.filter(w => !(w.kind === "units" && brands.get(p.brand)?.noFilament)).map(w => {
                   const on = widgetOn(p, w.kind);
                   return `
                   <button class="rp-menu-item rp-menu-item--toggle${on ? " is-on" : ""}"
@@ -25571,7 +25665,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // ── Printer table sub-view ───────────────────────────────────────────────
   // Brands that ship a logo SVG (assets/svg/icons/logo_<brand>.svg) → the Brand
   // column shows the tinted logo; any other brand falls back to the text pill.
-  const _BRAND_HAS_LOGO = new Set(["anycubic", "bambulab", "creality", "elegoo", "flashforge", "snapmaker", "prusa"]);
+  const _BRAND_HAS_LOGO = new Set(["anycubic", "bambulab", "creality", "elegoo", "flashforge", "snapmaker", "prusa",
+    ...printerPlugins().filter(pl => pl.logo).map(pl => pl.id)]);
   // When each printer was last seen online (key `brand:id` → ms timestamp).
   // Used by the "Last seen" column. Backed by Firestore (see below) so it
   // survives reloads/restarts; updated live in-memory by the heartbeat + renders.
@@ -25620,6 +25715,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
+      printerPlugin(p)?.connect?.(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p, { skipCam: true });
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -25630,6 +25726,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
       if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
       if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
+      if (printerPlugin(p))         return printerPlugin(p).isOnline?.(p) === true;
+    if (printerPlugin(p))         return printerPlugin(p).isOnline?.(p) === true;
       if (p.brand === "creality")   return creIsOnline(p)    === true;
       if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
       if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -25842,6 +25940,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
+      printerPlugin(p)?.connect?.(p);
       if (p.brand === "creality"   && p.ip)               creConnect(p);
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo" && !_ppForcedOfflineKeys.has(elegooKey(p))) elegooConnect(p);
@@ -25853,6 +25952,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker")  return snapIsOnline(p)   === true;
       if (p.brand === "flashforge") return ffgIsOnline(p)    === true;
       if (p.brand === "prusa")      return prusaIsOnline(p)  === true;
+      if (printerPlugin(p))         return printerPlugin(p).isOnline?.(p) === true;
+    if (printerPlugin(p))         return printerPlugin(p).isOnline?.(p) === true;
       if (p.brand === "creality")   return creIsOnline(p)    === true;
       if (p.brand === "elegoo")     return elegooIsOnline(p) === true;
       if (p.brand === "bambulab")   return bambuIsOnline(p)  === true;
@@ -26690,6 +26791,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _widgetJustSet = new Map();
   const _widgetPin = (p, kind) => `${_printerKey(p)}:${kind}`;
   const widgetOn = (p, kind) => {
+    // A brand that knows nothing of the loaded filament (OctoPrint) has no storage widget at all.
+    if (kind === "units" && brands.get(p?.brand)?.noFilament) return false;
     const pinned = _widgetJustSet.get(_widgetPin(p, kind));
     if (pinned !== undefined) return pinned;
     const v = p?.widgets?.[kind];
@@ -28188,6 +28291,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       return;
     }
     closeNotifs();   // opening a printer takes over the right side — dismiss notifs
+    _closeAddPrinterFlow();
     // Switching from one open printer card to another → slide-swap (ghost of the
     // outgoing card, new one slides in on top). Same transition as the spool
     // detail panel. Must run before _activePrinter / renderPrinterDetail change.
@@ -28219,7 +28323,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                    : printer.brand === "bambulab"   ? bambuKey(printer)
                    : printer.brand === "anycubic"   ? acuKey(printer)
                    : printer.brand === "prusa"      ? prusaKey(printer)
-                   : printer.brand === "elegoo"     ? elegooKey(printer) : null;
+                   : printer.brand === "elegoo"     ? elegooKey(printer)
+                   : printerPlugin(printer)?.key?.(printer) ?? null;
     if (_openKey) _ppForcedOfflineKeys.delete(_openKey);
     renderPrinterDetail();
     // Non-modal: don't dim/block the grid behind it — clicking another printer
@@ -28246,6 +28351,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     // Prusa — PrusaLink 2 s poll; the camera feed starts with its banner.
     if (printer.brand === "prusa" && printer.ip) prusaConnect(printer);
+    printerPlugin(printer)?.connect?.(printer);
     // Creality — open the WebSocket on port 9999 and start 2 s polling.
     if (printer.brand === "creality" && printer.ip) {
       creConnect(printer);
@@ -28750,6 +28856,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (p.brand === "elegoo")     connStatus = elegooGetConn(elegooKey(p))?.status ?? null;
     if (p.brand === "anycubic")   connStatus = acuGetConn(acuKey(p))?.status       ?? null;
     if (p.brand === "prusa")      connStatus = prusaGetConn(prusaKey(p))?.status   ?? null;
+    if (printerPlugin(p))         connStatus = printerPlugin(p).status?.(p) ?? null;
     const active    = connStatus === "connected" || connStatus === "connecting";
     const labelKey  = active ? "printerDisconnect" : "printerConnect";
     btn.title       = t(labelKey);
@@ -28780,7 +28887,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                  : p.brand === "bambulab"   ? bambuKey(p)
                  : p.brand === "anycubic"   ? acuKey(p)
                  : p.brand === "prusa"      ? prusaKey(p)
-                 : p.brand === "elegoo"     ? elegooKey(p) : null;
+                 : p.brand === "elegoo"     ? elegooKey(p)
+                 : printerPlugin(p)?.key?.(p) ?? null;
     if (active) {
       // Mark as explicitly offline BEFORE disconnecting so that any
       // badge refresh callbacks triggered during teardown show "Offline".
@@ -28792,12 +28900,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "elegoo")     elegooDisconnect(elegooKey(p));
       if (p.brand === "anycubic")   acuDisconnect(acuKey(p));
       if (p.brand === "prusa")      prusaDisconnect(prusaKey(p));
+      printerPlugin(p)?.disconnect?.(p);
     } else {
       // Clear forced-offline so isOnline() falls back to live conn status.
       if (_brKey) _ppForcedOfflineKeys.delete(_brKey);
       if (p.brand === "snapmaker"  && p.ip)               snapConnect(p);
       if (p.brand === "flashforge" && p.ip)               ffgConnect(p);
       if (p.brand === "prusa" && p.ip)                    prusaConnect(p);
+      printerPlugin(p)?.connect?.(p);
       if (p.brand === "creality"   && p.ip)               { creDisconnect(creKey(p)); creConnect(p); }
       if (p.brand === "bambulab"   && (p.broker || p.ip || p.mode === "cloud")) bambuConnect(p);
       if (p.brand === "elegoo")                           elegooConnect(p);
@@ -28841,7 +28951,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // _printerCtx at call time (not at import time), so this is always ready.
   Object.assign(_printerCtx, {
     esc, t,
-    toast: (msg, type) => toast(msg, type),
+    // toast() wants a host element first; the printer modules only have a message.
+    toast: (msg, _type) => _flashMessage(String(msg || "")),
     isForcedOffline: (key) => _ppForcedOfflineKeys.has(key),
     snapFmtTempPair, snapFmtDuration, snapTextColor,
     // One reading of the live job for both surfaces. The cards used to derive
@@ -29048,6 +29159,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   };
 
   _printerCtx.savePrinterField = (brand, id, field, value) => savePrinterField(brand, id, field, value);
+  // Several fields in one write (Bambu: what the cloud account reports on connect).
+  _printerCtx.savePrinterFields = async (brand, id, patch) => {
+    const uid = state.activeAccountId;
+    if (!uid || !id || !patch || !Object.keys(patch).length) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand)
+        .collection("devices").doc(id)
+        .update({ ...patch, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    } catch (e) {
+      console.warn(`[${brand}] savePrinterFields failed:`, e?.code, e?.message);
+    }
+  };
   // Re-find a LAN printer after a DHCP IP change (printers/refind.js): brand
   // modules ask for it when they give up; it rescans, matches on the printer's
   // stable identity, saves the new IP and comes back here to reconnect + tell.
@@ -29062,6 +29185,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "elegoo")     { elegooDisconnect(elegooKey(p)); elegooConnect(p); }
       if (p.brand === "anycubic")   { acuDisconnect(acuKey(p)); acuConnect(p); }
       if (p.brand === "prusa")      { prusaDisconnect(prusaKey(p)); prusaConnect(p); }
+      printerPlugin(p)?.reconnect?.(p);
     } catch (e) { console.warn("[refind] reconnect failed:", e?.message || e); }
   };
   _printerCtx.onPrinterRefound = (p, _oldIp, newIp) => {
@@ -29079,6 +29203,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         .update({ broker: String(ip) });
     } catch (e) {
       console.warn("[bambulab] saveBambuLanAddress failed:", e?.code, e?.message);
+    }
+  };
+
+  // Cloud ⇄ LAN failover (printers/bambulab/failover.js) records the way that answered.
+  _printerCtx.saveBambuMode = async (printer, mode) => {
+    const uid = state.activeAccountId;
+    if (!uid || !printer?.id || (mode !== "cloud" && mode !== "lan")) return;
+    try {
+      await fbDb(uid).collection("users").doc(uid)
+        .collection("printers").doc("bambulab")
+        .collection("devices").doc(printer.id)
+        .update({ mode, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    } catch (e) {
+      console.warn("[bambulab] saveBambuMode failed:", e?.code, e?.message);
     }
   };
 
@@ -29231,7 +29369,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       case "bambulab":   return renderBambuCamBanner(p);
       case "anycubic":   return renderAcuCamBanner(p);
       case "prusa":      return renderPrusaCamBanner(p);
-      default: return "";
+      default: return printerPlugin(p)?.renderCamBanner?.(p, false) || "";
     }
   }
 
@@ -29336,6 +29474,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // `prusaLive` for the module's rAF-coalesced partial re-renders.
     const prusaLiveHtml = (p.brand === "prusa")
       ? `<div id="prusaLive" class="snap-live-host">${renderPrusaLiveInner(p)}</div>`
+      : "";
+    // A printer plugin's live block + request log — host ids `<id>Live` / `<id>Log`.
+    const _ppl = printerPlugin(p);
+    const pluginLiveHtml = _ppl?.renderLive
+      ? `<div id="${esc(_ppl.id)}Live" class="snap-live-host">${_ppl.renderLive(p)}</div>` : "";
+    const pluginLogHtml = _ppl?.renderLog && state.debugEnabled
+      ? `<section class="pp-section pp-section--collapsible snap-log-section" data-collapsed="true">
+           <button class="pp-section-head pp-section-head--btn" type="button">
+             <span>${esc(t("snapLogTitle"))}
+                   <span class="snap-log-count" id="${esc(_ppl.id)}LogCount">${_ppl.logCount?.(p) || 0}</span></span>
+             <span class="pp-chev icon icon-chevron-r icon-14"></span>
+           </button>
+           <div class="pp-section-body"><div id="${esc(_ppl.id)}Log">${_ppl.renderLog(p)}</div></div>
+         </section>`
       : "";
     // Its request log — debug mode only (every PrusaLink call + the answer),
     // the first thing to read when a beta printer misbehaves.
@@ -29602,6 +29754,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (p.brand === "snapmaker" && p.ip) snapPingPrinter(p);
     if (p.brand === "flashforge" && p.ip) ffgPingPrinter(p);
     if (p.brand === "prusa" && p.ip)      prusaPingPrinter(p);
+    printerPlugin(p)?.ping?.(p);
     if (p.brand === "creality"   && p.ip) crePingPrinter(p);
 
     // Unregister the previous sidecard img from the MJPEG mux before wiping
@@ -29651,6 +29804,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       ${snapLiveHtml}
       ${ffgLiveHtml}
       ${prusaLiveHtml}
+      ${pluginLiveHtml}
       ${creLiveHtml}
       ${elgLiveHtml}
       ${bblLiveHtml}
@@ -29680,12 +29834,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       ${snapLogHtml}
       ${ffgLogHtml}
       ${prusaLogHtml}
+      ${pluginLogHtml}
       ${creLogHtml}
       ${bblLogHtml}
       ${acuLogHtml}` : ""}`;
 
     // Prusa — the job keys are hold-to-confirm, wired on every full render.
     if (p.brand === "prusa") prusaWireLive($("prusaLive"), p);
+    if (_ppl?.wireLive) _ppl.wireLive($(`${_ppl.id}Live`), p);
     if (p.brand === "elegoo") sdcpWireLive($("elgLive"), p);   // CC1 (SDCP) job keys; no-op for a CC2
 
     // Creality camera — register the sidecard's <video> as a stream consumer,
@@ -30954,9 +31110,98 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   let _printerAddDiscovery = null;
   let _printerAddSchema = null;      // the field set the open form shows (brand variant, see _printerSchemaFor)
 
+  /* ── "Find your printer" — search every connector's catalogue at once ──────
+     Picking a machine instead of a protocol: one connector reaches it → straight
+     into that connector's add flow; several (Creality K1: Creality or Klipper) →
+     the row opens the choice. The model rides along in `_pendingAddModel` and is
+     preselected by openPrinterAddForm, whatever path the flow takes to get there. */
+  let _pendingAddModel = null;      // { brand, modelId } picked in the finder
+  let _modelIndex = null, _modelIndexOf = null;
+  function _printerModelIndex() {
+    // Keyed on the model COUNT, not the object: the catalogues fill in place while
+    // they load, and an index built too early would stay empty.
+    const pm = state.db.printerModels || {};
+    const sig = Object.values(pm).reduce((n, l) => n + (Array.isArray(l) ? l.length : 0), 0);
+    if (_modelIndex && _modelIndexOf === sig) return _modelIndex;
+    _modelIndexOf = sig;
+    _modelIndex = buildModelIndex(state.db.printerModels, PRINTER_BRANDS,
+      b => PRINTER_BRAND_META[b] || null, b => !!printerPlugin(b));
+    return _modelIndex;
+  }
+  function _startAddWith(brand, modelId, name) {
+    $("printerBrandPickerList")?.querySelector(`.pba-brand[data-brand="${CSS.escape(brand)}"]`)?.click();
+    _pendingAddModel = { brand, modelId, name };   // after the click: the brand handler clears it
+  }
+  function _renderModelFind() {
+    const input = $("printerModelFind"), res = $("printerModelFindResults"), list = $("printerBrandPickerList");
+    if (!input || !res || !list) return;
+    const q = input.value.trim();
+    res.hidden = !q; list.hidden = !!q;
+    if (!q) { res.innerHTML = ""; return; }
+    const hits = searchModels(_printerModelIndex(), q);
+    if (!hits.length) { res.innerHTML = `<p class="pba-find-empty">${esc(t("printerFindEmpty"))}</p>`; return; }
+    res.innerHTML = hits.map((it, i) => {
+      const img = printerImageUrl(it.model);
+      // A connector still in beta says so right on the result, not only once picked.
+      const conns = it.entries.map(e => {
+        const m = PRINTER_BRAND_META[e.brand] || {};
+        return `<span class="pba-find-connset"><span class="pba-find-conn">${esc(m.label || e.brand)}</span>${m.beta ? `<span class="pba-beta-tag">${esc(t("betaTag"))}</span>` : ""}</span>`;
+      }).join("");
+      return `
+        <div class="pba-find-item" data-find-idx="${i}">
+          <button type="button" class="pba-brand pba-find-row" data-find-idx="${i}">
+            <span class="pba-find-thumb">${img ? `<img src="${esc(img)}" alt="" onerror="this.style.opacity='.15'"/>` : ""}</span>
+            <span class="pba-brand-text">
+              <span class="pba-brand-label">${esc(it.name)}</span>
+              <span class="pba-find-conns">${conns}</span>
+            </span>
+            <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
+          </button>
+          <div class="pba-find-choice" hidden></div>
+        </div>`;
+    }).join("");
+    res._hits = hits;
+  }
+  function _onModelFindClick(e) {
+    const res = $("printerModelFindResults");
+    const pick = e.target.closest("[data-find-brand]");
+    if (pick) { _startAddWith(pick.dataset.findBrand, pick.dataset.findModel, pick.dataset.findName); return; }
+    const row = e.target.closest(".pba-find-row");
+    if (!row || !res?._hits) return;
+    const it = res._hits[Number(row.dataset.findIdx)];
+    if (!it) return;
+    if (it.entries.length === 1) { _startAddWith(it.entries[0].brand, it.entries[0].modelId, it.name); return; }
+    // Several ways to reach it: say so, and let the user choose.
+    const box = row.parentElement.querySelector(".pba-find-choice");
+    const open = box.hidden;
+    res.querySelectorAll(".pba-find-choice").forEach(b => { b.hidden = true; });
+    res.querySelectorAll(".pba-find-row.pba-brand--selected").forEach(b => b.classList.remove("pba-brand--selected"));
+    if (!open) return;
+    row.classList.add("pba-brand--selected");
+    box.innerHTML = `<p class="pba-find-how">${esc(t("printerFindHow", { name: it.name }))}</p>` + it.entries.map(en => {
+      const meta = PRINTER_BRAND_META[en.brand] || {};
+      return `<button type="button" class="pba-find-pick" data-find-brand="${esc(en.brand)}" data-find-model="${esc(en.modelId)}" data-find-name="${esc(it.name)}">
+          <span class="pba-brand-logo" data-brand="${esc(en.brand)}"></span>
+          <span class="pba-brand-text">
+            <span class="pba-brand-label">${esc(meta.label || en.brand)}${meta.beta ? ` ${betaBadgeInlineHtml()}` : ""}</span>
+            <span class="pba-brand-conn">${esc(meta.connection || "")}</span>
+          </span>
+          <span class="icon icon-chevron-r icon-13 pba-brand-chev"></span>
+        </button>`;
+    }).join("");
+    box.hidden = false;
+  }
+  $("printerModelFind")?.addEventListener("input", _renderModelFind);
+  $("printerModelFind")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); $("printerModelFindResults")?.querySelector(".pba-find-row")?.click(); }
+    else if (e.key === "Escape" && e.target.value) { e.stopPropagation(); e.target.value = ""; _renderModelFind(); }
+  });
+  $("printerModelFindResults")?.addEventListener("click", _onModelFindClick);
+
   function openPrinterBrandPicker() {
     const list = $("printerBrandPickerList");
     if (!list) return;
+    { const f = $("printerModelFind"); if (f) f.value = ""; _renderModelFind(); }
     // Close the printer side-card stack first. The picker is laid out by
     // _syncPrinterAddPanels(), which knows nothing of that stack (_syncPanels()
     // owns it), so a picker opened over an existing printer's panel docks at the
@@ -30977,7 +31222,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <button type="button" class="pba-brand" data-brand="${esc(brand)}">
           <span class="pba-brand-logo" data-brand="${esc(brand)}"></span>
           <span class="pba-brand-text">
-            <span class="pba-brand-label">${esc(meta.label)}${meta.beta ? ` <span class="pba-beta-tag">${esc(t("betaTag"))}</span>` : ""}</span>
+            <span class="pba-brand-label">${esc(meta.label)}${meta.beta ? ` ${betaBadgeInlineHtml()}` : ""}</span>
             <span class="pba-brand-conn">${esc(meta.connection)}</span>
           </span>
           <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
@@ -30986,6 +31231,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     list.querySelectorAll(".pba-brand").forEach(btn => {
       btn.addEventListener("click", () => {
         const brand = btn.dataset.brand;
+        _pendingAddModel = null;   // a brand picked by hand carries no model
         // Highlight the picked brand in the picker (cleared by _syncPrinterAddPanels
         // once no add-card is open).
         list.querySelectorAll(".pba-brand--selected").forEach(b => b.classList.remove("pba-brand--selected"));
@@ -31011,6 +31257,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           openAcuAddFlow();
         } else if (brand === "prusa") {
           openPrusaAddFlow();
+        } else if (printerPlugin(brand)?.openAddFlow) {
+          printerPlugin(brand).openAddFlow();
         } else {
           openPrinterAddForm(brand);
         }
@@ -31079,8 +31327,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const otherModels      = allModels.filter(m => String(m.id) !== "0");
     const models           = placeholderModel ? [placeholderModel, ...otherModels] : otherModels;
 
-    const prefillModel = (!isEdit && prefill?.modelId)
-      ? findPrinterModel(brand, prefill.modelId) : null;
+    // A model picked in "Find your printer" wins over the flow's placeholder ("0").
+    const pendingPick = (!isEdit && _pendingAddModel?.brand === brand) ? _pendingAddModel : null;
+    const pending = pendingPick?.modelId || null;
+    if (!isEdit) _pendingAddModel = null;
+    // …and its name replaces the flow's "<Brand> <ip>" placeholder name.
+    if (pendingPick?.name) prefill = { ...(prefill || {}), printerName: pendingPick.name };
+    const wantModel = (prefill?.modelId && String(prefill.modelId) !== "0") ? prefill.modelId : (pending || prefill?.modelId);
+    const prefillModel = (!isEdit && wantModel)
+      ? findPrinterModel(brand, wantModel) : null;
     const editModel    = isEdit
       ? findPrinterModel(brand, editPrinter.printerModelId) : null;
     const defaultModel = editModel || prefillModel || placeholderModel || models[0] || null;
@@ -31094,6 +31349,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const bodyEl = $("printerAddBody");
     (_printerAddSchema === brandEntry.schema ? brandEntry.renderSettingsWidget : schemaWidget(_printerAddSchema))
       (editPrinter, bodyEl, widgetCtx);
+    // A brand may offer to change how an existing printer is reached (Bambu: Cloud ⇄ LAN).
+    if (isEdit) brandEntry.connModeSwitch?.render(editPrinter, bodyEl, widgetCtx);
 
     // ── Open + initial focus ─────────────────────────────────────────────────
     // Non-modal, like the spool sidecard: no dimming overlay so the list and the
@@ -31402,6 +31659,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return null;
   }
 
+  /* After a Cloud ⇄ LAN switch: drop the old link, wait for the snapshot to carry
+     the new mode, then connect again — over the other broker. */
+  async function _reconnectAfterModeSwitch(brand, id, mode) {
+    if (brand !== "bambulab") return;
+    const old = state.printers.find(p => p.brand === brand && p.id === id);
+    if (old) { try { bambuDisconnect(bambuKey(old)); } catch (_) {} }
+    const start = Date.now();
+    let fresh = null;
+    while (Date.now() - start < 3000) {
+      fresh = state.printers.find(p => p.brand === brand && p.id === id);
+      if (fresh && (fresh.mode === "cloud") === (mode === "cloud")) break;
+      await new Promise(r => setTimeout(r, 50));
+    }
+    if (!fresh) return;
+    _ppForcedOfflineKeys.delete(bambuKey(fresh));
+    bambuConnect(fresh);
+    if (_activePrinter && _activePrinter.brand === brand && _activePrinter.id === id) {
+      _activePrinter = fresh;
+      try { renderPrinterDetail(); } catch (_) {}
+    }
+  }
+
   async function submitPrinterAdd() {
     const brand = _printerAddBrand;
     if (!brand) return;
@@ -31422,17 +31701,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // else. Re-provisioning (Add cloud printer) is how the token is refreshed.
     const _editingPrinter = isEdit
       ? state.printers.find(p => p.brand === brand && p.id === _printerEditContext.deviceId) : null;
-    if (isEdit && _editingPrinter?.mode === "cloud") {
+    // Cloud ⇄ LAN switch (Bambu): "lan" takes the normal path below, with the LAN
+    // fields required; "cloud" keeps the cloud guard and writes the mode back.
+    const _chosenMode = isEdit ? brands.get(brand)?.connModeSwitch?.read(body) ?? null : null;
+    const _modeChanged = !!_chosenMode && (_editingPrinter?.mode === "cloud" ? "cloud" : "lan") !== _chosenMode;
+    if (isEdit && (_chosenMode ? _chosenMode === "cloud" : _editingPrinter?.mode === "cloud")) {
       const nm = (body.querySelector("input[name=printerName]")?.value || "").trim();
       if (!nm) { err.textContent = t("printerAddErrName"); err.hidden = false; return; }
       const mi = body.querySelector("input[name=printerModelId]");
       const patch = { printerName: nm, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
       if (mi && mi.value) patch.printerModelId = mi.value.trim();
+      if (_chosenMode === "cloud") patch.mode = "cloud";
       const sb = $("printerAddSave"); sb.classList.add("loading"); sb.disabled = true;
       try {
         await fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand)
           .collection("devices").doc(_printerEditContext.deviceId).update(patch);
+        const _id = _printerEditContext.deviceId;
         closePrinterAddForm();
+        if (_modeChanged) _reconnectAfterModeSwitch(brand, _id, "cloud");
       } catch (e) {
         err.textContent = (e?.message || "Save failed"); err.hidden = false;
       } finally { sb.classList.remove("loading"); sb.disabled = false; }
@@ -31455,6 +31741,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       data[f.key] = v;
     }));
     Object.assign(data, schema.fixed || {});
+    if (_chosenMode === "lan") data.mode = "lan";
 
     if (!data.printerName) {
       err.textContent = t("printerAddErrName");
@@ -31488,6 +31775,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ...data,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+        if (_modeChanged) _reconnectAfterModeSwitch(brand, editId, _chosenMode);
         // Reconnect Snapmaker live channel after a settings edit.
         // The user may have changed the IP (or any other connection
         // field) — the existing WebSocket is still wired to the OLD
@@ -38522,7 +38810,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   //   cloudAddedTotal  — TigerCloud spools created (Add Product / duplicate)
   //   tagAddedTotal    — DIY physical tags that arrived already-written
   //                      (factory/mobile), counted on first scan
-  //   plusAddedTotal   — TigerTag+ tags that arrived already-written
+  //   plusAddedTotal   — TigerTag+ tags that arrived already-written (not certified)
+  //   certifiedAddedTotal — certified TigerTag+ (factory signature verified) that
+  //                      arrived already-written
+  //   cloudPlusAddedTotal — TigerData+ spools created (catalogue product, no chip)
   //   cloudToTagTotal  — TigerCloud burned to a physical chip (_cemMigrate)
   //   cloudToPlusTotal — TigerCloud converted to TigerTag+ (_convertToPlus)
   //   tagToPlusTotal   — DIY TigerTag converted to TigerTag+ (_convertToPlus)
@@ -39770,7 +40061,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           // increments → a freshly-scanned twin pair counts as one spool.
           if (!existing.exists && (!twinUid || String(uid) < String(twinUid))) {
             const isPlusChip = versionName(tagData.id_tigertag) === "TigerTag+";
-            bumpStudioCounters(isPlusChip ? { plusAddedTotal: 1 } : { tagAddedTotal: 1 });
+            // Certified (signature verified in main, _sdkPayload) counts apart from
+            // plain TigerTag+ — one counter per chip, never both.
+            bumpStudioCounters(isPlusChip ? (tagData._certified ? { certifiedAddedTotal: 1 } : { plusAddedTotal: 1 })
+                                          : { tagAddedTotal: 1 });
           }
         } catch (e) {
           console.error('[RFID] upsert failed for', uid, ':', e);
@@ -40342,7 +40636,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       "users/{uid}/racks/{rackId}": "storage racks: name, level = number of shelves, position = slots per shelf",
       "users/{uid}/products/{keyHash}": "per-product info shared by identical spools: buy link, price (buyPriceHt = tax-free), min stock, favourite / liked, note",
       "users/{uid}/lists/{listId}": "wishlists / shopping lists and their items",
-      "users/{uid}/printers/{brand}/devices/{id}": "3D printers (brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic | prusa); credentials live in a secrets subtree that is never shared",
+      "users/{uid}/printers/{brand}/devices/{id}": "3D printers (brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic | prusa | klipper); credentials live in a secrets subtree that is never shared",
       "users/{uid}/scales/{mac}": "TigerScale devices (heartbeats)",
       "users/{uid}/rfidList/{UID}": "every physical chip ever used (first/last seen, TigerTag+ backup present)",
       "users/{uid}/friends/{friendUid}": "accepted friends; friendRequests / blacklist likewise",
@@ -40428,7 +40722,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     async list_devices() {
       const me = _mcpMe(), u = fbDb(me).collection("users").doc(me);
       const scales = await u.collection("scales").get().catch(() => null);
-      const brands = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa"];
+      const brands = ["bambulab", "creality", "elegoo", "flashforge", "snapmaker", "anycubic", "prusa", ...printerPluginIds()];
       const printers = [];
       await Promise.all(brands.map(async b => {
         const s = await u.collection("printers").doc(b).collection("devices").get().catch(() => null);

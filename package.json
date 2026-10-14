@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.40.1",
+  "version": "2.41.0",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -34,7 +34,9 @@
     "ffmpeg:prepare": "node scripts/prepare-ffmpeg.mjs",
     "web:build": "node scripts/build-web.mjs",
     "web:serve": "node scripts/build-web.mjs && python3 -m http.server 5181 --directory dist-web",
-    "web:hotfix": "node scripts/web-hotfix.mjs"
+    "web:hotfix": "node scripts/web-hotfix.mjs",
+    "moonraker:mock": "node scripts/moonraker-mock.mjs",
+    "octoprint:mock": "node scripts/octoprint-mock.mjs"
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.4",

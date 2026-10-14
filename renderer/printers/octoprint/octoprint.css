@@ -1,0 +1,21 @@
+/* printers/octoprint/octoprint.css — OctoPrint plugin styles, injected by the
+   plugin host. Paths are relative to THIS file (the plugin folder). */
+.pba-brand-logo[data-brand="octoprint"],
+.pt-thumb-logo[data-brand="octoprint"] {
+  background-color: #13c100;
+  -webkit-mask-image: url('img/logo.svg');
+  mask-image: url('img/logo.svg');
+}
+.octo-ctrl--locked .elg-jog-wrap button:disabled { opacity: .35; cursor: not-allowed; }
+.octo-ctrl-note { margin: 6px 0 2px; font-size: 11px; color: var(--muted); text-align: center; }
+.octo-link-btn { margin: 8px 0 4px; }
+/* Approve step of the add flow (Application Keys). */
+.octo-approve-state { display: flex; align-items: center; gap: 10px; font-size: 13px; line-height: 1.45; color: var(--text); }
+.octo-approve-spin {
+  flex-shrink: 0; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--primary) 30%, transparent); border-top-color: var(--primary);
+  animation: octo-spin .8s linear infinite;
+}
+.octo-approve-state.is-error { color: var(--danger); }
+.octo-approve-state.is-error .octo-approve-spin { display: none; }
+@keyframes octo-spin { to { transform: rotate(360deg); } }

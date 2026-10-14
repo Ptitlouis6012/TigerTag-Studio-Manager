@@ -80,6 +80,11 @@ const IDENTITY = {
   },
 };
 
+/** A printer plugin declares how it is identified (printers/plugins.js). */
+export function registerPrinterIdentity(brand, spec) {
+  if (brand && spec && !IDENTITY[brand]) IDENTITY[brand] = spec;
+}
+
 // Once per printer per session — a printer that does not report an identifier
 // (older firmware) is not probed again on every reconnect.
 const _checked = new Set();
