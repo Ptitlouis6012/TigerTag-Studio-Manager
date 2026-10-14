@@ -2064,9 +2064,10 @@ Replies on `sdcp/response/<id>` (`Data.Data.Ack`, correlate on `Data.RequestID`)
 pushes on `sdcp/status/<id>` (~2 s), `sdcp/attributes/<id>`, `sdcp/error/…`, `sdcp/notice/…`.
 
 **Commands used** — `0` status (also every 5 s), `1` attributes, `386`
-`{Enable:1}` camera → `VideoUrl` (`http://<ip>:3031/video`, MJPEG), `129` pause,
-`131` resume, `130` stop. ⚠️ 129/130/131/386 are from the OpenCentauri API doc
-(firmware 1.1.x) and **not yet confirmed on 1.4.x**.
+`{Enable:1}` camera → `VideoUrl` (MJPEG, **returned without a scheme**:
+`<ip>:3031/video`, seen live on a CC1 V1.4.49 with `Ack` 0 — the driver prepends
+`http://`), `129` pause, `131` resume, `130` stop. ⚠️ 129/130/131 are from the
+OpenCentauri API doc (firmware 1.1.x) and **not yet confirmed on 1.4.x**; 386 is.
 
 **Status mapping** — `CurrentStatus` [0 idle, 1 printing, 2 file transfer,
 3 calibrating, 4 device test]; `PrintInfo.Status` 5/6 pausing/paused, 7 stopping,

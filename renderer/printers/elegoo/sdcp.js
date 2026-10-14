@@ -38,6 +38,25 @@ export function sdcpKey(p) { return `${p.brand}:${p.id}`; }
 export function sdcpGetConn(key) { return _conns.get(key) ?? null; }
 export function sdcpOwns(key) { return _conns.has(key); }
 
+/* The printer answers Cmd 386 with a bare "host:port/path" — no scheme (seen on a
+   CC1 V1.4.49: "<ip>:3031/video"). Put into an <img>, that reads as a path
+   relative to the app and never loads, so the camera failed with the printer
+   perfectly healthy. Give it the scheme it lacks, and never trust a host the
+   printer cannot know about: an empty / 0.0.0.0 / loopback host means "the
+   address you reached me on". Anything that is not http(s) is refused — the
+   result ends up in a `src`. Returns null when nothing usable is left. */
+export function sdcpVideoUrl(raw, printerIp) {
+  let u = String(raw ?? '').trim();
+  if (!u) return null;
+  if (!/^[a-z][a-z0-9+.-]*:\/\//i.test(u)) u = 'http://' + u.replace(/^\/+/, '');
+  try {
+    const url = new URL(u);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
+    if (printerIp && ['', '0.0.0.0', 'localhost', '127.0.0.1'].includes(url.hostname)) url.hostname = printerIp;
+    return url.toString();
+  } catch (_) { return null; }
+}
+
 const uuid = () => (crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : String(Math.random()).slice(2));
 
 // ── Debug request log (shown in debug mode) ──────────────────────────────
@@ -183,7 +202,10 @@ function onMessage(conn, raw) {
     if (mac && conn.printer && !conn.printer.macAddress) ctx.savePrinterField?.('elegoo', conn.printer.id, 'macAddress', String(mac).toUpperCase());
   } else if (topic.startsWith('sdcp/response/')) {
     const d = m.Data || {};
-    if (d.Cmd === 386 && d.Data?.VideoUrl) conn.data.cameraUrl = d.Data.VideoUrl;
+    if (d.Cmd === 386 && d.Data?.VideoUrl) {
+      const u = sdcpVideoUrl(d.Data.VideoUrl, conn.ip);
+      if (u) conn.data.cameraUrl = u;   // else keep the default built from the address we reached it on
+    }
     if (d.Cmd !== 0) logPush(conn, '←', m, `Cmd ${d.Cmd} · Ack ${d.Data?.Ack ?? '?'}`);
     if ([129, 130, 131].includes(d.Cmd) && d.Data?.Ack !== 0) {
       try { ctx.toast(ctx.t('elgSdcpCmdRefused'), 'error'); } catch (_) {}
