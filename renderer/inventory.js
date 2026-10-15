@@ -25464,11 +25464,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
               </div>
             </div>
           </div>
-          ${imgSrc || _camLive ? `<div class="printer-card-thumb">${
+          ${imgSrc || _camLive || _camMaybe || brands.get(p.brand)?.renderLogo ? `<div class="printer-card-thumb">${
               _camLive
                 ? _camLive
-                : `<img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>`
-            }${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge"><span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span></span>` : ""}${
+                : imgSrc ? `<img src="${esc(imgSrc)}" alt="${esc(modelName)}" onerror="this.style.opacity='.15'"/>` : ""
+            }${_BRAND_HAS_LOGO.has(p.brand) ? `<span class="pt-thumb-badge">${_printerLogoHtml(p)}</span>` : ""}${
               _camWait
                 ? _camWaitHtml
                 : (!_camLive && _camMaybe
@@ -25667,6 +25667,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // column shows the tinted logo; any other brand falls back to the text pill.
   const _BRAND_HAS_LOGO = new Set(["anycubic", "bambulab", "creality", "elegoo", "flashforge", "snapmaker", "prusa",
     ...printerPlugins().filter(pl => pl.logo).map(pl => pl.id)]);
+  function _printerLogoHtml(p) {
+    const custom = brands.get(p.brand)?.renderLogo?.(p);
+    if (custom) return custom;
+    const label = PRINTER_BRAND_META[p.brand]?.label || p.brand;
+    return _BRAND_HAS_LOGO.has(p.brand)
+      ? `<span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(label)}" aria-label="${esc(label)}"></span>` : "";
+  }
   // When each printer was last seen online (key `brand:id` → ms timestamp).
   // Used by the "Last seen" column. Backed by Firestore (see below) so it
   // survives reloads/restarts; updated live in-memory by the heartbeat + renders.
@@ -25777,9 +25784,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const lastSeen = online ? t("agoNow") : (_ls ? timeAgo(_ls) : "—");
       const brandCell = `<span class="printer-brand-pill" style="--brand-accent:${esc(meta.accent)}">${esc(meta.label)}</span>`;
       // Brand logo in its own column (before the printer image), when we have one.
-      const brandLogoCell = _BRAND_HAS_LOGO.has(p.brand)
-        ? `<span class="pt-thumb-logo" data-brand="${esc(p.brand)}" title="${esc(meta.label)}" aria-label="${esc(meta.label)}"></span>`
-        : "";
+      const brandLogoCell = _printerLogoHtml(p);
       const imgSrc  = printerImageUrlFor(p.brand, p.printerModelId)
                    || printerImageUrl(findPrinterModel(p.brand, "0"))
                    || "";
