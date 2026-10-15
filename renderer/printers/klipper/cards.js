@@ -89,11 +89,12 @@ export function renderKlipperTempCard(conn) {
     .map(x => pill(tools.length > 1 ? x.label : "E1", ctx.SNAP_ICON_NOZZLE, x.cur, x.tgt));
   if (typeof t.bed === "number") pills.push(pill("BED", ctx.SNAP_ICON_BED, t.bed, t.bedTarget, " snap-temp--bed"));
   if (typeof t.chamber === "number") pills.push(pill("CASE", ctx.SNAP_ICON_CHAMBER, t.chamber, t.chamberTarget, " snap-temp--chamber"));
+  for (const sensor of t.sensors || []) pills.push(pill(sensor.label, "", sensor.cur, sensor.tgt));
   if (!pills.length) return "";
   return `
     <section class="snap-block">
       <h4 class="snap-block-title">${ctx.esc(ctx.t("snapTemperatureTitle"))}</h4>
-      <div class="snap-temps">${pills.join("")}</div>
+      <div class="snap-temps klipper-temps">${pills.join("")}</div>
     </section>`;
 }
 

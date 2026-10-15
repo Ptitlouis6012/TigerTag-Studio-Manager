@@ -55,6 +55,7 @@ registerPrinterPlugin({
   css:    new URL('x.css', import.meta.url).href,
   models: new URL('models.json', import.meta.url).href,
   logo:   true,                        // the CSS defines .pt-thumb-logo / .pba-brand-logo [data-brand=id]
+  renderLogo(p),                      // optional per-printer logo HTML for cards/table, with its own image-error fallback
   i18n:   { key: { en, fr, de, es, it, zh, pt, "pt-pt", pl, ru, nl } },
   identity: { field, fromDiscovery, probe },   // see identity.js
 
