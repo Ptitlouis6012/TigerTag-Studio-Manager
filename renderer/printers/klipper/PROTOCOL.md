@@ -1,5 +1,19 @@
 # Klipper — Moonraker protocol (agent skill)
 
+## Display additions
+
+The temperature card includes discovered `temperature_sensor`, `temperature_fan`
+and `heater_generic` objects, excluding the chamber already shown separately.
+Each sensor occupies one vertical row in the board and side panel.
+
+Printer cards and the table try `GET /server/files/config/.theme/sidebar-logo.png`
+on the configured Moonraker port. The bundled Klipper logo remains the fallback
+when the image is missing or requires authentication. API keys are never put in
+image URLs; no personal logo asset is bundled or persisted. The optional plugin
+`renderLogo(p)` hook keeps this behavior out of the host's brand-specific logic.
+
+Run `node --test scripts/test-klipper-display.mjs` for display regression checks.
+
 Self-contained reference for a **generic** Klipper integration in Tiger Studio
 Manager: any printer running Klipper + Moonraker (Mainsail / Fluidd are only web
 UIs on top of Moonraker).

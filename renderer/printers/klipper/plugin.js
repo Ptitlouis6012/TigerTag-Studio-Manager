@@ -21,6 +21,7 @@ import {
 } from './cards.js';
 import { renderKlipperCamBanner, renderKlipperCamWallBanner, klipperCamStopAll, klipperHasCamera } from './camera.js';
 import { openKlipperAddFlow } from './add-flow.js';
+import { renderKlipperLogo } from './logo.js';
 import { renderControlCard, patchControlCard, controlSig, wireControl } from './control.js';
 
 const HERE = new URL('./', import.meta.url).href;
@@ -364,6 +365,7 @@ registerPrinterPlugin({
   css: new URL('klipper.css', HERE).href,
   models: new URL('models.json', HERE).href,
   logo: true,
+  renderLogo: renderKlipperLogo,
   i18n,
   // ARP MAC only (a Pi has no printer serial worth matching); see identity.js.
   identity: { field: "macAddress", fromDiscovery: () => null, probe: async () => null },

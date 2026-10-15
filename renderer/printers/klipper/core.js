@@ -21,6 +21,7 @@
  */
 import { ctx } from '../context.js';
 import { ensurePrinterIdentity } from '../identity.js';
+import { extraTemperatureObjects, readTemperatureSensors } from './temperature-sensors.js';
 
 export const BRAND = "klipper";
 const POLL_MS = 2000;
@@ -198,6 +199,7 @@ async function detect(conn) {
   f.chamber = ["heater_generic chamber", "temperature_sensor chamber"].find(n => names.includes(n))
            || names.find(n => /^(heater_generic|temperature_sensor) .*chamber/i.test(n)) || null;
   f.sensors = names.filter(n => /^filament_(switch|motion)_sensor /.test(n));
+  f.temperatureSensors = extraTemperatureObjects(names, f.chamber);
   // Lights: an LED chain (led / neopixel / dotstar / pca9632…), or a plain pin
   // whose name says it is one (caselight, chamber_light, lamp…).
   f.lights = names.filter(n => /^(led|neopixel|dotstar|pca9533|pca9632) \S+$/.test(n)
@@ -240,6 +242,7 @@ function queryObjects(conn) {
   };
   for (const e of f.extruders) o[e] = ["temperature", "target"];
   if (f.chamber) o[f.chamber] = ["temperature", "target"];
+  for (const name of f.temperatureSensors || []) o[name] = name.startsWith("temperature_sensor ") ? ["temperature"] : ["temperature", "target"];
   for (const l of f.lights) o[l.obj] = l.kind === "pin" ? ["value"] : ["color_data"];
   if (f.mmu) o.mmu = ["num_gates", "gate", "tool", "gate_status", "gate_material", "gate_color", "gate_spool_id", "ttg_map"];
   if (f.afcLanes.length) {
@@ -326,6 +329,7 @@ function merge(conn, s) {
     bed: num(s.heater_bed?.temperature), bedTarget: num(s.heater_bed?.target),
     chamber: f.chamber ? num(s[f.chamber]?.temperature) : null,
     chamberTarget: f.chamber ? num(s[f.chamber]?.target) : null,
+    sensors: readTemperatureSensors(f.temperatureSensors || [], s),
   };
   d.fanPct = num(s.fan?.speed) != null ? Math.round(s.fan.speed * 100) : null;
   d.speedPct = num(s.gcode_move?.speed_factor) != null ? Math.round(s.gcode_move.speed_factor * 100) : null;
