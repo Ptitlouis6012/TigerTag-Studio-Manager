@@ -140,6 +140,44 @@ function statusLabel(cs) {
 
 /** Header glyph + hover. With no box: one grey glyph, and the hover says the
  * click is a way to discover it. */
+/* For a Tiger … report: each device and the printers it follows, so the issue
+   says what the box saw. No address, no code, no MAC — the issue is public. */
+const _BRAND = { bambulab: "Bambu Lab", creality: "Creality", elegoo: "Elegoo", flashforge: "FlashForge", snapmaker: "Snapmaker",
+  anycubic: "Anycubic", prusa: "Prusa", klipper: "Klipper", octoprint: "OctoPrint" };
+function _reportDevices(list, connStateOf) {
+  const { state } = _ctx;
+  return list.map(s => {
+    const cs = connStateOf(s);
+    const ids = Array.isArray(s.printer_ids) ? s.printer_ids : [];
+    const seen = cs !== "offline" && Array.isArray(s.printers_online) ? s.printers_online : null;
+    return {
+      name: s.display_name || "", fw: s.fw_version || "", status: cs,
+      wifi: typeof s.wifi_signal_dbm === "number" ? `${s.wifi_signal_dbm} dBm` : "",
+      demo: s.demo === true,
+      printers: s.demo === true ? [] : ids.slice(0, 30).map(id => {
+        const p = state.printers.find(x => x.id === id);
+        if (!p) return { name: "(removed from the account)", model: "", device: seen ? (seen.includes(id) ? "online" : "offline") : "unknown", studio: "" };
+        let studio = "";
+        try { studio = _ctx.isPrinterOnline?.(p) ? "online" : "offline"; } catch (_) {}
+        return {
+          name: p.printerName || "", model: [_BRAND[p.brand] || p.brand, _ctx.printerModelName?.(p.brand, p.printerModelId)].filter(Boolean).join(" "),
+          device: seen ? (seen.includes(id) ? "online" : "offline") : "unknown", studio,
+        };
+      }),
+    };
+  });
+}
+export function spoolReportDevices() { return _ctx ? _reportDevices(_ctx.state.tigerspools, spoolConnState) : []; }
+
+/* For the report card: the boxes a screen picture can be taken from right now
+   (online, with an address). Its `GET /screen.bmp` needs no code. */
+export function spoolsReady() {
+  if (!_ctx || typeof window.tigerspool?.screenshot !== "function") return [];
+  return _ctx.state.tigerspools
+    .filter(s => s.ip_address && spoolConnState(s) !== "offline")
+    .map(s => ({ mac: s.mac, name: s.display_name || "Tiger Spool", ip: s.ip_address }));
+}
+
 export function renderTigerSpoolHealth() {
   const el = document.getElementById("tigerspoolHealth");
   if (!el || !_ctx) return;
@@ -147,7 +185,7 @@ export function renderTigerSpoolHealth() {
   const list = sortedSpools();
 
   // Rebuild only when something visible changes, so the ping isn't restarted.
-  const sig = _ctx.state.lang + "#" + list.map(({ s, cs }) => [s.mac, cs, s.display_name, s.printers_active,
+  const sig = _ctx.state.lang + "#" + t("tigerspoolHealthNone") + "#" + list.map(({ s, cs }) => [s.mac, cs, s.display_name, s.printers_active,
     s.battery_present, s.battery_percent, s.is_charging].join("/")).join("|");
   if (sig === _healthSig) return;
   _healthSig = sig;

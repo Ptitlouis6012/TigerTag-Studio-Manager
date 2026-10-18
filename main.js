@@ -3883,6 +3883,217 @@ let _ffmpegBin = null;
   else console.warn(`[ffmpeg] NOT FOUND — checked: ${candidates.join(' · ')}`);
 })();
 
+// ── Tiger Touch — the screen's picture and its live view ────────────────────
+// A Tiger Touch (Panda Touch / K-Touch running the Tiger Touch firmware) serves
+// its own screen on the local network behind a six-character code
+// (Tiger-Touch docs/LAN-MODE.md): GET /screen.ver?c=CODE is a frame counter,
+// GET /screen.bmp?c=CODE the 800×480 picture, POST /api/tap and /api/swipe a
+// finger. The firmware serves no page of its own, so Studio draws the live view
+// (renderer/IoT/tigertouch/panel.js) and main does the fetching — the renderer
+// cannot reach a LAN device across origins, and BMP → PNG/JPEG happens here.
+{
+  const { nativeImage } = require('electron');
+  // Only addresses on the local network (and loopback, for tests) — this is a
+  // screen on the user's network, not a door to the Internet.
+  const isLocalHost = h => /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h) || /\.local$/i.test(h);
+  const localAddr = a => typeof a === 'string' && /^[\w.\-]+(:\d{1,5})?$/.test(a) && isLocalHost(a.split(':')[0]);
+
+  /** 24- or 32-bit uncompressed BMP (bottom-up or top-down) → PNG buffer. */
+  function bmpToPng(buf) {
+    if (buf.length < 54 || buf.toString('ascii', 0, 2) !== 'BM') throw new Error('not a BMP');
+    const off = buf.readUInt32LE(10), w = buf.readInt32LE(18), hRaw = buf.readInt32LE(22);
+    const bpp = buf.readUInt16LE(28), comp = buf.readUInt32LE(30);
+    if (![24, 32].includes(bpp) || ![0, 3].includes(comp)) throw new Error(`BMP ${bpp} bpp / compression ${comp} not handled`);
+    const h = Math.abs(hRaw), topDown = hRaw < 0, stride = Math.ceil(bpp * w / 32) * 4, px = bpp / 8;
+    const out = Buffer.alloc(w * h * 4);   // BGRA, what nativeImage takes
+    for (let y = 0; y < h; y++) {
+      const row = off + (topDown ? y : h - 1 - y) * stride;
+      for (let x = 0; x < w; x++) {
+        const s = row + x * px, d = (y * w + x) * 4;
+        out[d] = buf[s]; out[d + 1] = buf[s + 1]; out[d + 2] = buf[s + 2]; out[d + 3] = 255;
+      }
+    }
+    return { img: nativeImage.createFromBitmap(out, { width: w, height: h }), width: w, height: h };
+  }
+
+  const validCode = c => /^[A-Za-z0-9]{4,12}$/.test(String(c || ''));
+  /** One request to the screen, with its error mapped to what the UI says. */
+  async function screenFetch(ip, pathAndQuery, { method = 'GET', timeout = 10000 } = {}) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), timeout);
+    try {
+      const res = await fetch(`http://${ip}${pathAndQuery}`, { method, signal: ctl.signal, cache: 'no-store' });
+      if (res.status === 403) return { ok: false, error: 'code' };
+      if (res.status === 429) return { ok: false, error: 'locked' };
+      if (!res.ok) return { ok: false, error: `http ${res.status}` };
+      return { ok: true, res };
+    } catch (e) {
+      return { ok: false, error: e?.name === 'AbortError' || e?.cause?.code ? 'unreachable' : (e?.message || 'error') };
+    } finally { clearTimeout(timer); }
+  }
+
+  ipcMain.handle('tigertouch:screenshot', async (_e, { ip, code } = {}) => {
+    if (!localAddr(ip)) return { ok: false, error: 'address' };
+    if (!validCode(code)) return { ok: false, error: 'code' };
+    const r = await screenFetch(ip, `/screen.bmp?c=${encodeURIComponent(code)}`);
+    if (!r.ok) return r;
+    try {
+      const { img, width, height } = bmpToPng(Buffer.from(await r.res.arrayBuffer()));
+      return { ok: true, dataUrl: `data:image/png;base64,${img.toPNG().toString('base64')}`, width, height };
+    } catch (e) { return { ok: false, error: e?.message || 'error' }; }
+  });
+
+  // Live view and touches for a firmware from before rle565 (no CORS, BMP only):
+  // the renderer talks to a current firmware directly (IoT/tigertouch/screen.js)
+  // and falls back here. The counter first, the 1.1 MB picture only when it moved.
+  ipcMain.handle('tigertouch:frame', async (_e, { ip, code, since } = {}) => {
+    if (!localAddr(ip)) return { ok: false, error: 'address' };
+    if (!validCode(code)) return { ok: false, error: 'code' };
+    const q = `c=${encodeURIComponent(code)}`;
+    const v = await screenFetch(ip, `/screen.ver?${q}`, { timeout: 4000 });
+    if (!v.ok) return v;
+    const ver = (await v.res.text()).trim();
+    if (since != null && ver === String(since)) return { ok: true, ver, same: true };
+    const b = await screenFetch(ip, `/screen.bmp?${q}`);
+    if (!b.ok) return b;
+    try {
+      const { img } = bmpToPng(Buffer.from(await b.res.arrayBuffer()));
+      return { ok: true, ver, dataUrl: `data:image/jpeg;base64,${img.toJPEG(85).toString('base64')}` };
+    } catch (e) { return { ok: false, error: e?.message || 'error' }; }
+  });
+
+  // A finger on the screen: a tap, or a swipe over `ms` (the firmware clamps it).
+  ipcMain.handle('tigertouch:touch', async (_e, { ip, code, x, y, x2, y2, ms } = {}) => {
+    if (!localAddr(ip)) return { ok: false, error: 'address' };
+    if (!validCode(code)) return { ok: false, error: 'code' };
+    const n = (v, max) => Math.max(0, Math.min(max, Math.round(Number(v) || 0)));
+    const q = `c=${encodeURIComponent(code)}`;
+    const path = x2 == null
+      ? `/api/tap?${q}&x=${n(x, 799)}&y=${n(y, 479)}`
+      : `/api/swipe?${q}&x1=${n(x, 799)}&y1=${n(y, 479)}&x2=${n(x2, 799)}&y2=${n(y2, 479)}&ms=${Math.max(60, Math.min(2000, Math.round(Number(ms) || 200)))}`;
+    const r = await screenFetch(ip, path, { method: 'POST', timeout: 4000 });
+    return r.ok ? { ok: true } : r;
+  });
+
+  // ── TigerScale V3 — one picture of its screen (for a report) ──────────────
+  // Its live view (Tiger-Scale-V3 docs/TELEMETRY.md § LAN live view) is a raw
+  // stream at `{lan_url}/stream?c=CODE` (lan_url = "http://<ip>:81"; the code is
+  // case-sensitive, sent as stored): [u8 kind][payload] messages — 1 HELLO
+  // (u16 w, h, bandCols), 2 FRAME_BEGIN, 5 BAND (u8 index, u16 len, rle565),
+  // 4 FRAME_END, 3 PING. A new viewer gets every band in its first frame, so
+  // one FRAME_END after a FRAME_BEGIN is the whole screen: read it, hang up —
+  // the scale serves two viewers at most. A screen asleep is black: one tap in
+  // the middle wakes it (a press on a dark screen is swallowed, it opens
+  // nothing), then ~1.5 s before reading.
+  // Within a band, memory runs down a column and columns run right to left.
+  ipcMain.handle('tigerscale:screenshot', async (_e, { url, code, wake } = {}) => {
+    let u; try { u = new URL(String(url)); } catch { return { ok: false, error: 'address' }; }
+    if (u.protocol !== 'http:' || !localAddr(u.host)) return { ok: false, error: 'address' };
+    if (!/^[A-Za-z0-9]{6}$/.test(String(code || ''))) return { ok: false, error: 'code' };
+    const q = `c=${encodeURIComponent(code)}`;
+    if (wake) {
+      const r = await screenFetch(u.host, `/tap?${q}&x=240&y=160`, { method: 'POST', timeout: 4000 });
+      if (!r.ok) return r;
+      await new Promise(res => setTimeout(res, 1500));
+    }
+    return readScaleFrame(u.hostname, Number(u.port) || 80, q);
+  });
+  const readScaleFrame = (host, port, q) => new Promise(resolve => {
+    const http = require('http');
+    let done = false, req = null;
+    const finish = r => { if (done) return; done = true; clearTimeout(timer); try { req?.destroy(); } catch (_) {} resolve(r); };
+    const timer = setTimeout(() => finish({ ok: false, error: 'unreachable' }), 10000);
+    req = http.get({ host, port, path: `/stream?${q}`, agent: false }, res => {
+      if (res.statusCode === 403) return finish({ ok: false, error: 'code' });
+      if (res.statusCode !== 200) return finish({ ok: false, error: `http ${res.statusCode}` });
+      let W = 480, H = 320, BC = 16, out = null, begun = false, buf = Buffer.alloc(0);
+      const alloc = () => { out = Buffer.alloc(W * H * 4); for (let i = 3; i < out.length; i += 4) out[i] = 255; };
+      const band = (idx, rle) => {
+        // pixel i of band `idx` → column (idx*BC + BC-1 - floor(i/H)), row i % H
+        let p = 0, i = 0;
+        const put = v => {
+          const r = Math.floor(i / H), y = i % H, x = idx * BC + (BC - 1 - r);
+          i++;
+          if (x >= W) return;
+          const o = (y * W + x) * 4;   // BGRA for nativeImage
+          out[o + 2] = Math.round(((v >> 11) & 31) * 255 / 31);
+          out[o + 1] = Math.round(((v >> 5) & 63) * 255 / 63);
+          out[o]     = Math.round((v & 31) * 255 / 31);
+        };
+        while (p < rle.length) {
+          const t = rle[p++];
+          if (t < 0x80) { for (let k = 0; k <= t; k++, p += 2) put(rle[p] | (rle[p + 1] << 8)); }
+          else {
+            let n;
+            if (t < 0xFF) n = t - 0x80 + 2; else { n = rle[p] | (rle[p + 1] << 8); p += 2; }
+            const v = rle[p] | (rle[p + 1] << 8); p += 2;
+            for (let k = 0; k < n; k++) put(v);
+          }
+        }
+      };
+      alloc();
+      res.on('data', chunk => {
+        buf = Buffer.concat([buf, chunk]);
+        for (;;) {
+          if (!buf.length) break;
+          const k = buf[0];
+          if (k === 3) { buf = buf.subarray(1); continue; }
+          if (k === 1) { if (buf.length < 7) break; W = buf.readUInt16LE(1); H = buf.readUInt16LE(3); BC = buf.readUInt16LE(5); alloc(); buf = buf.subarray(7); continue; }
+          if (k === 2) { begun = true; buf = buf.subarray(1); continue; }
+          if (k === 5) {
+            if (buf.length < 4) break;
+            const l = buf.readUInt16LE(2);
+            if (buf.length < 4 + l) break;
+            band(buf[1], buf.subarray(4, 4 + l)); buf = buf.subarray(4 + l); continue;
+          }
+          if (k === 4) {
+            buf = buf.subarray(1);
+            if (!begun) continue;
+            const png = nativeImage.createFromBitmap(out, { width: W, height: H }).toPNG();
+            return finish({ ok: true, dataUrl: `data:image/png;base64,${png.toString('base64')}`, width: W, height: H });
+          }
+          return finish({ ok: false, error: 'stream' });   // out of step
+        }
+      });
+      res.on('end', () => finish({ ok: false, error: 'unreachable' }));
+    });
+    req.on('error', () => finish({ ok: false, error: 'unreachable' }));
+  });
+
+  // ── TigerSpool — one picture of its screen (for a report) ─────────────────
+  // `GET /screen.bmp`, no code: the panel as is, 240×320 24-bit BMP (~225 KB).
+  ipcMain.handle('tigerspool:screenshot', async (_e, { ip } = {}) => {
+    if (!localAddr(ip)) return { ok: false, error: 'address' };
+    const r = await screenFetch(ip, '/screen.bmp');
+    if (!r.ok) return r;
+    try {
+      const { img, width, height } = bmpToPng(Buffer.from(await r.res.arrayBuffer()));
+      return { ok: true, dataUrl: `data:image/png;base64,${img.toPNG().toString('base64')}`, width, height };
+    } catch (e) { return { ok: false, error: e?.message || 'error' }; }
+  });
+
+  ipcMain.handle('tigertouch:save-png', async (_e, dataUrl, suggestedName) => {
+    if (!String(dataUrl || '').startsWith('data:image/png;base64,')) return { ok: false, reason: 'data' };
+    const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
+      title: 'Tiger Touch',
+      defaultPath: path.join(app.getPath('downloads'), String(suggestedName || 'tiger-touch.png').replace(/[\\/:*?"<>|]/g, '-')),
+      filters: [{ name: 'PNG Image', extensions: ['png'] }],
+    });
+    if (canceled || !filePath) return { ok: false, reason: 'cancelled' };
+    try { fs.writeFileSync(filePath, Buffer.from(String(dataUrl).split(',')[1], 'base64')); return { ok: true, path: filePath }; }
+    catch (e) { return { ok: false, reason: e?.message || 'error' }; }
+  });
+}
+
+// ── Demo mode — the printer simulator (docs/DEMO-MODE.md) ───────────────────
+// Answers each brand's protocol on local addresses for the account's demo
+// printers, so the drivers connect to them exactly as to real ones. Idle until
+// the renderer syncs a demo record; stopped with the app.
+{
+  const demo = require('./services/demo').register({ ipcMain, ffmpegPath: _ffmpegBin, log: m => log.info(m) });
+  app.on('will-quit', () => { demo.stopAll(); });
+}
+
 // ── Bambu Lab MQTT (TLS mqtts port 8883) + JPEG-TCP camera (port 6000)
 //    + RTSP camera (X1C / X1E / P2S / H2x — port 322) via ffmpeg
 {

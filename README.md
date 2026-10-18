@@ -51,7 +51,8 @@ product's real identity. Buy a chip when you want one on the shelf; until then, 
 It works standalone (no reader needed), but unlocks its full potential with:
 - an **ACR122U NFC reader** for automatic spool identification, chip encoding and Cloud-to-chip promotion
 - a **TigerScale** ESP32 scale for live weight tracking
-- one or more **3D printers** from the 7 supported brands — or any Klipper / OctoPrint printer
+- one or more **3D printers** — **about 380 models** with their picture: 7 brands connected natively (Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker, Anycubic, Prusa) plus any **Klipper** or **OctoPrint** (Marlin) printer
+- soon, a **[Tiger Touch](#-tiger-touch--every-printer-on-a-7-screen-coming-soon)** screen next to your printers
 
 <img src="assets/img/Hero-TigerSystem-ecosystem.png" width="100%" alt="The TigerTag system — Tiger Studio Manager on desktop, a TigerPOD reader with a tagged spool, and the mobile app" />
 
@@ -98,6 +99,7 @@ Everything around TigerTag is open — the hardware, the firmware, the SDK, and 
 | **[TigerTag SDK for Python](https://github.com/TigerTag-Project/TigerTag-SDK-Python)** | Parse, verify, and encode TigerTag NFC chips in Python — for scripts, tools, and automation | Apache-2.0 |
 | **[TigerScale V3](https://github.com/TigerTag-Project/Tiger-Scale-V3)** | ESP32-S3 firmware + hardware for the open-source filament scale — 3.5" touchscreen, dual NFC readers, battery | MIT |
 | **[TigerSpool](https://github.com/TigerTag-Project/TigerSpool-RFID)** | Open-source RFID reader that sends a spool's filament to any printer's slot — ESP32-S3, NFC reader, 3D-printed case | MIT |
+| **[Tiger Touch](https://github.com/TigerTag-Project/Tiger-Touch)** | Open firmware for the BIGTREETECH Panda Touch / K-Touch 7" screen — every printer of your TigerTag account, live, without a computer | MIT |
 | **[TigerPOD](https://github.com/TigerTag-Project/TigerPOD)** | Open-source dual NFC reader/writer stand for spools — 3D-printable shell + two USB readers (free STL on MakerWorld: [Standard](https://makerworld.com/en/models/1289152-tigerpod-for-openspool-tigertag-rfid-filament#profileId-1318958) · [Mini](https://makerworld.com/en/models/3190348-tigerpod-mini-for-openspool-tigertag-rfid-filament#profileId-3609236)) | CC BY 4.0 |
 
 The **TigerTag SDK** is the low-level library that handles all NFC chip operations — reading the 144-byte NTAG payload, verifying the TigerTag format, and encoding new chip data. It is published as an npm package (`tigertag`) and can be used independently to build custom TigerTag-compatible tools.
@@ -133,7 +135,11 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, the Catalogue and Storage alike
 
 ### 🖨 3D Printer integration
+**About 380 printer models** in the catalogue, each with its picture — Bambu Lab X1C, P1S, P2S, A1, H2D; Creality K1, K1 Max, K2 Plus, Ender-3 V4; Elegoo Centauri Carbon and Centauri 2; Prusa MK4S, Core One, XL; FlashForge AD5X, Creator 5; Snapmaker U1; Anycubic Kobra 3; and through Klipper or OctoPrint, Voron, RatRig, Sovol SV08, Qidi, Neptune 4, Ender-3 and hundreds more.
+
 Live integrations for 7 brands, plus **any Klipper printer** and **any Marlin printer behind OctoPrint** *(new in 2.41.0, beta)* — real-time temperatures, filament per slot, active print job, camera. **Bambu Lab printers can be added by signing in with your Bambu account**: your email, the code they send back, and every machine on the account is offered with its picture — reachable from anywhere, not only from your own network. Accounts on Bambu's **China mainland** platform sign in with their phone number.
+
+**No printer yet? Try a demo one** *(new in 2.42.0)* — pick any of the ~400 models and Tiger Studio simulates it on its brand's real connection: it prints on its own, with temperatures, filament slots, camera, pause and stop. Each demo matches its model (an A1 mini has no AMS, an H2D two nozzles, a Prusa XL five heads).
 
 Every brand at a glance:
 
@@ -242,6 +248,16 @@ The [TigerScale](https://github.com/TigerTag-Project/Tiger-Scale-V3) is an open-
 
 Plug in a **Dymo USB scale** and your spool weights fill themselves in — no typing. Set a spool on the scale and, with a chip on the reader, its weight is saved automatically (gross → net, twin synced); with a spool's card open, a quick confirm does it. The live reading appears right inside the spool's weight panel, and a dimmed "asleep — tap to wake" hint shows when the scale powers itself down.
 
+### 🖥 Tiger Touch — every printer on a 7" screen
+**Tiger Touch** is a new open-source firmware (MIT) for the **BIGTREETECH Panda Touch / K-Touch**, the 7" ESP32-S3 touchscreen. It signs in to your TigerTag account, reads every printer you declared in Tiger Studio and talks to each one directly over its own protocol — Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker, Prusa, Anycubic, and any Klipper or OctoPrint printer. No computer, no bridge, no server in between: just Wi-Fi.
+
+- **A live card per printer** — state, progress, file, layer, time left and the finish time, nozzles, bed, chamber.
+- **A full view per printer** with its filament units: AMS, AMS HT, CFS, external spool, up to four tool heads.
+- **Pause, resume, stop and the light**, from the card or the full view.
+- **Installed from the browser, updated over the air**, in 11 languages.
+
+Add your printers once in Tiger Studio; they show up on the screen by themselves. In Tiger Studio, the screen gets its own card: the printers it follows, a live view you can touch with the mouse, and a screenshot ready to share or attach to a bug report. **Available now** — [install it from your browser](https://tigertag-project.github.io/Tiger-Touch/) (USB, no tools), source on [GitHub](https://github.com/TigerTag-Project/Tiger-Touch).
+
 ### 📱 TigerTag RFID Connect — mobile app
 Tiger Studio Manager is the desktop companion to **TigerTag RFID Connect**, the iOS/Android mobile app. Both apps share the same Firebase backend (Firestore inventory, friends, racks) so changes made on one device appear immediately on the other.
 
@@ -252,6 +268,7 @@ A QR code to download the mobile app is always accessible in the sidebar.
 ### 💬 Feedback, straight from the app
 
 - **Improvements & suggestions** *(new in 2.36.0)* — report a problem, suggest an idea, fix a catalogue product or suggest a missing brand without leaving the app (and without a GitHub account): annotate a screenshot of the window — arrows, steps, a blur for anything private — attach images or PDFs, and follow every request in *My requests*, with a notification when it moves
+- **Requests by product** *(new in 2.42.0)* — say what it's about (Tiger Studio, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool or the mobile app) and it is filed on that project; a Tiger Touch, Tiger Scale or Tiger Spool screen joins the report in one click, with the printers the device follows.
 
 ### 🤖 AI assistants
 - Ask **Claude, Cursor or VS Code** about your stock — "what PLA am I low on?", "what does my friend have in black PETG?"
@@ -453,6 +470,23 @@ TigerTag-Studio-Manager/
 ```
 
 ---
+
+## FAQ
+
+**Which 3D printers does Tiger Studio Manager support?**
+About 380 models. Bambu Lab, Creality, Elegoo, FlashForge, Snapmaker, Anycubic and Prusa are connected natively over the local network (Bambu Lab and Anycubic also through their cloud). Any printer running **Klipper** (Moonraker) or **Marlin behind OctoPrint** works too — Voron, RatRig, Sovol, Qidi, Elegoo Neptune 4, Creality Ender-3 and many more. Type the printer's name in the Add-a-printer card and it finds the right connection.
+
+**Do I need TigerTag RFID chips to use it?**
+No. Any spool can be added from the official catalogue (14 000+ products) or by hand. Chips add automatic identification: scan the spool and its page opens.
+
+**Is it free and open source?**
+Yes — MIT licensed, for macOS, Windows and Linux, and also usable in the browser at [studio.tigersystem.io](https://studio.tigersystem.io).
+
+**Can I see my printers without a computer?**
+Soon: **Tiger Touch** turns a BIGTREETECH Panda Touch / K-Touch screen into a live monitor for every printer of your account. The **TigerTag RFID Connect** mobile app already shows your inventory on the go.
+
+**What does it do with filament on the printer?**
+It shows the filament loaded in every slot (AMS, CFS, Canvas, ACE, MMU, Happy Hare, AFC…), lets you edit it, and — with a TigerSpool reader — fills a slot from a TigerTag spool like a native reader.
 
 ## Contributing
 

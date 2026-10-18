@@ -1,0 +1,22 @@
+{
+  "name": "planter.gcode",
+  "durationReal": 5700,
+  "layersTotal": 380,
+  "nozzleTemp": 220,
+  "bedTemp": 65,
+  "slots": [
+    {
+      "material": "PLA",
+      "color": "#F2F0EA"
+    },
+    {
+      "material": "PLA",
+      "color": "#2E7D32"
+    }
+  ],
+  "slotStarts": [
+    0,
+    0.82
+  ],
+  "videoMode": "progress"
+}

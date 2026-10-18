@@ -15,7 +15,7 @@
 const HTTP_TIMEOUT_MS = 6000;
 const ALLOWED = [
   /^\/api\/(version|connection|printer|job|settings|printerprofiles)$/,
-  /^\/api\/printer\/(printhead|command|tool|bed)$/,
+  /^\/api\/printer\/(printhead|command|tool|bed|chamber)$/,
   /^\/api\/files\/(local|sdcard)\/[^?#]+$/,
   /^\/plugin\/appkeys\/(probe|request)$/,
   /^\/plugin\/appkeys\/request\/[A-Za-z0-9_-]+$/,

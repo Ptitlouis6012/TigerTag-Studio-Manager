@@ -14,8 +14,10 @@ import { schemaWidget } from '../modal-helpers.js';
 import { betaBadgeHtml } from '../beta-badge.js';
 import {
   BRAND, opKey, opGetConn, opIsOnline, opPing, opConnect, opDisconnect, opDisconnectAll,
-  opJobControl, opConnectSerial, onOpChange, opRemainingSec,
+  opJobControl, opConnectSerial, onOpChange, opRemainingSec, opSetTemp,
 } from './core.js';
+import { wireTempEdit } from '../temp-edit.js';
+import { morphInner } from '../dom-morph.js';
 import { renderOpJobCard, renderOpTempCard, renderOpFilamentCard } from './cards.js';
 import { renderOpControlCard, patchOpControlCard, opControlSig, wireOpControl } from './control.js';
 import { renderOpCamBanner, renderOpCamWallBanner, opCamStopAll, opHasCamera } from './camera.js';
@@ -77,7 +79,7 @@ function refreshLive(live, p) {
     live.innerHTML = renderLiveInner(p); wireLive(live, p); return;
   }
   top.innerHTML = renderTop(p, conn);
-  live.querySelector('[data-op-part="bottom"]').innerHTML = renderBottom(p, conn);
+  morphInner(live.querySelector('[data-op-part="bottom"]'), renderBottom(p, conn));   // keeps an open temperature editor
   const sig = opControlSig(conn);
   if (ctrl.dataset.sig !== sig) { ctrl.dataset.sig = sig; ctrl.innerHTML = renderOpControlCard(p, conn); }
   else patchOpControlCard(ctrl, conn);
@@ -109,6 +111,7 @@ function renderLogInner(p) {
 function wireLive(root, p) {
   if (!root || !p) return;
   wireOpControl(root, () => ctx.getActivePrinter());
+  wireTempEdit(root, (heater, v) => { const ap = ctx.getActivePrinter(); if (ap) opSetTemp(ap, heater, v); });
   root.querySelectorAll("[data-op-job]").forEach(btn => {
     if (btn.dataset.wired) return;
     btn.dataset.wired = "1";

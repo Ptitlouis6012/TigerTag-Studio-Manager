@@ -19,8 +19,20 @@
 //   GET  /server/spoolman/status            (with --spoolman)
 // A print runs for ~3 minutes once started (or on its own with --auto-print);
 // temperatures follow their targets. Every request is logged.
+//
+// Scenario control for UI tests (no API key needed — it is the TEST BENCH
+// talking, not a client; docs/PRINTER-MOCKS.md):
+//   GET /mock/state                                   the whole simulated state
+//   GET /mock/set?print=printing|paused|complete|cancelled|error|standby
+//                 &progress=0..100 &file=name.gcode &message=text
+//                 &klippy=ready|startup|shutdown|error   (Klippy itself)
+//                 &tool=215 &bed=60                        (targets, °C)
+//   GET /mock/print?file=name.gcode                   start a fresh 3-minute print
+// Camera URLs are built from the address the client used (the Host header), so a
+// device on the LAN gets a camera address that works from where it stands.
 
 import http from "node:http";
+import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -51,6 +63,13 @@ const S = {
   "filament_switch_sensor runout": { filament_detected: true, enabled: true },
   "output_pin caselight": { value: 0 },             // a light on a plain pin (SET_PIN)
   "led chamber_led": { color_data: [[0, 0, 0, 0]] }, // an LED chain (SET_LED)
+  // Extra temperatures a real Klipper box reports — Studio shows them in its
+  // collapsible Sensors card (PR #93): plain sensors, a regulated fan, a
+  // generic heater that takes SET_HEATER_TEMPERATURE.
+  "temperature_sensor mcu_temp": { temperature: 38.2 },
+  "temperature_sensor raspberry_pi": { temperature: 46.5 },
+  "temperature_fan chamber_fan": { temperature: 27.1, target: 35, speed: 0 },
+  "heater_generic dryer": { temperature: 24.0, target: 0, power: 0 },
 };
 const BOUNDS = { x: [0, 300], y: [0, 300], z: [0, 250] };
 let relative = false;
@@ -110,11 +129,18 @@ function startPrint(filename) {
   }, 1000);
 }
 setInterval(() => {   // heaters converge to their target
-  for (const h of [S.extruder, S.heater_bed]) {
+  for (const h of [S.extruder, S.heater_bed, S["heater_generic dryer"]]) {
     const goal = h.target > 0 ? h.target : 23;
     h.temperature = +(h.temperature + (goal - h.temperature) * 0.15 + (Math.random() - 0.5) * 0.3).toFixed(2);
     h.power = h.target > 0 ? 0.6 : 0;
   }
+  // Host / MCU temperatures drift a little; they warm up while printing.
+  const busy = S.print_stats.state === "printing" ? 1 : 0;
+  S["temperature_sensor mcu_temp"].temperature = +(38 + busy * 4 + (Math.random() - 0.5)).toFixed(1);
+  S["temperature_sensor raspberry_pi"].temperature = +(46 + busy * 3 + (Math.random() - 0.5)).toFixed(1);
+  const fan = S["temperature_fan chamber_fan"];
+  fan.temperature = +(fan.temperature + ((busy ? 33 : 25) - fan.temperature) * 0.05).toFixed(1);
+  fan.speed = fan.temperature > fan.target ? 1 : 0;
 }, 1000);
 if (AUTO_PRINT) startPrint("benchy.gcode");
 
@@ -151,6 +177,12 @@ function runGcode(script) {
       if (cmd === "SET_MAP") lane.map = p.MAP;
     } else if (cmd === "M104" || cmd === "M109") S.extruder.target = Number(p.S ?? line.match(/S(\d+)/)?.[1] ?? 0);
     else if (cmd === "M140" || cmd === "M190") S.heater_bed.target = Number(line.match(/S(\d+)/)?.[1] ?? 0);
+    else if (cmd === "SET_HEATER_TEMPERATURE") {
+      // Klipper names a generic heater by its short name (HEATER=dryer).
+      const h = S[String(p.HEATER || "")] || S[`heater_generic ${p.HEATER}`];
+      if (!h || !("target" in h)) throw new Error(`Unknown heater ${p.HEATER}`);
+      h.target = Number(p.TARGET ?? 0);
+    }
     else if (cmd === "G28") {
       const axes = ["X", "Y", "Z"].filter(a => line.toUpperCase().includes(a));
       for (const a of axes.length ? axes : ["X", "Y", "Z"]) {
@@ -218,10 +250,36 @@ function readBody(req) {
   return new Promise(r => { let b = ""; req.on("data", c => (b += c)); req.on("end", () => { try { r(b ? JSON.parse(b) : {}); } catch { r({}); } }); });
 }
 
+// ── Scenario control (/mock/…) ──────────────────────────────────────────────
+function mockControl(res, p, u) {
+  const q = k => u.searchParams.get(k);
+  if (p === "/mock/print") { startPrint(q("file") || "benchy.gcode"); return json(res, 200, { ok: true, print_stats: S.print_stats }); }
+  if (p === "/mock/set") {
+    const ps = q("print");
+    if (ps) {
+      S.print_stats.state = ps;
+      S.virtual_sdcard.is_active = ps === "printing";
+      if (ps === "error") S.print_stats.message = q("message") || "Move out of range: 0.000 -12.000 0.200 [0.000]";
+      if (ps === "complete") { S.virtual_sdcard.progress = 1; S.display_status.progress = 1; }
+      if (ps === "standby") { S.print_stats.filename = ""; S.virtual_sdcard.progress = 0; S.display_status.progress = 0; }
+    }
+    if (q("progress") != null) { const v = Math.max(0, Math.min(100, Number(q("progress")))) / 100; S.virtual_sdcard.progress = v; S.display_status.progress = v;
+      if (S.print_stats.info) S.print_stats.info.current_layer = Math.max(1, Math.round((S.print_stats.info.total_layer || 240) * v)); }
+    if (q("file")) S.print_stats.filename = q("file");
+    if (q("klippy")) Object.assign(S.webhooks, { state: q("klippy"), state_message: q("message") || (q("klippy") === "ready" ? "Printer is ready" : `Klipper reports: ${q("klippy")}`) });
+    if (q("tool") != null) S.extruder.target = Number(q("tool"));
+    if (q("bed") != null) S.heater_bed.target = Number(q("bed"));
+    return json(res, 200, { ok: true, print_stats: S.print_stats, webhooks: S.webhooks });
+  }
+  if (p === "/mock/state") return json(res, 200, S);
+  return json(res, 404, { error: "unknown mock command" });
+}
+
 const server = http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://${req.headers.host}`);
   const p = u.pathname;
   console.log(`${new Date().toISOString().slice(11, 19)} ${req.method} ${p}${u.search}`);
+  if (p.startsWith("/mock/")) return mockControl(res, p, u);
   if (API_KEY && !p.startsWith("/webcam") && req.headers["x-api-key"] !== API_KEY) return err(res, 401, "Unauthorized");
   const body = req.method === "POST" ? await readBody(req) : {};
 
@@ -263,7 +321,7 @@ const server = http.createServer(async (req, res) => {
   }
   if (p === "/server/webcams/list") return ok(res, { webcams: [{
     name: "Nozzle cam", service: "mjpegstreamer", enabled: true, icon: "mdiWebcam", target_fps: 2,
-    stream_url: `http://127.0.0.1:${PORT}/webcam/?action=stream`, snapshot_url: `http://127.0.0.1:${PORT}/webcam/?action=snapshot`,
+    stream_url: `http://${req.headers.host}/webcam/?action=stream`, snapshot_url: `http://${req.headers.host}/webcam/?action=snapshot`,
     flip_horizontal: false, flip_vertical: false, rotation: 0, aspect_ratio: "4:3", source: "config", uid: "mock-cam-1",
   }] });
   if (p === "/webcam/" || p === "/webcam") {
@@ -299,5 +357,8 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Moonraker mock — profile "${PROFILE}" on http://127.0.0.1:${PORT}` +
     `${API_KEY ? " (API key required)" : ""}${SPOOLMAN ? " + Spoolman" : ""}`);
+  // The addresses another device on the network reaches this mock at.
+  const lan = Object.values(os.networkInterfaces()).flat().filter(a => a && a.family === "IPv4" && !a.internal).map(a => `${a.address}:${PORT}`);
+  if (lan.length) console.log(`From another device on the LAN: ${lan.join("  ")}`);
   console.log(`Objects: ${Object.keys(S).join(", ")}`);
 });

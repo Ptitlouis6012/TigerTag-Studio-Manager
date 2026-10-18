@@ -22,6 +22,10 @@
 
 import { openAnnotator } from "./annotator.js";
 import { repliesSince, seenAll } from "./replies.js";
+import { tigerTouchScreensReady, captureTigerTouch } from "../IoT/tigertouch/panel.js";
+import { scalesReady } from "../IoT/tigerscale/index.js";
+import { spoolsReady, spoolReportDevices } from "../IoT/tigerspool/index.js";
+import { touchReportDevices } from "../IoT/tigertouch/index.js";
 
 const ENDPOINT = "https://us-central1-tigertag-connect.cloudfunctions.net/reportIssue";
 const MINE_ENDPOINT = "https://us-central1-tigertag-connect.cloudfunctions.net/myReports";
@@ -54,6 +58,21 @@ const KINDS = [
            titleLabel: `reportTitleLabel_${k.id}`, title: `reportTitlePh${K}`, body: `reportBodyPh${K}`, send: `reportSend_${k.id}` };
 });
 const kindOf = id => KINDS.find(k => k.id === id) || null;
+// Which product the request is about — it lands as an issue in THAT product's
+// repo (backend: TARGETS in reportIssue.js, a closed list). Catalogue fixes and
+// new brands are always Studio's, so the choice is not offered for them.
+const TARGETS = [
+  { id: "studio",     label: "Tiger Studio", icon: "icon_tigerstudio.svg" },   // the app icon's tiger head
+  { id: "tigertouch", label: "Tiger Touch",  icon: "icon_tigertouch_3d.svg" },
+  { id: "tigerpod",   label: "Tiger POD",    icon: "Icon_tigerpod_3d.svg" },
+  { id: "tigerscale", label: "Tiger Scale",  icon: "icon_tigerscale_3d.svg" },
+  { id: "tigerspool", label: "Tiger Spool",  icon: "icon_tigerspool_3d.svg" },
+  // The mobile app's repo is private: its requests are seen by the team only.
+  { id: "mobile",     label: "TigerTag RFID Connect", icon: "icon_mobile_app.svg", private: true },
+];
+const targetable = kind => kind && kind !== "catalog" && kind !== "brand";
+// A product's artwork, tinted (resolved against report.css, where var() is used).
+const targetIco = x => `<span class="rep-target-ico" style="--ico:url('../../assets/svg/icons/${x.icon}')"></span>`;
 const MAX_IMAGES = 5;          // images + PDFs + JSON files together
 const MAX_PDF_BYTES = 5 * 1024 * 1024;
 const MAX_JSON_BYTES = 2 * 1024 * 1024;
@@ -75,7 +94,7 @@ const t = (k, p) => ctx.t(k, p);
 const esc = s => ctx.esc(String(s == null ? "" : s));
 
 function freshState() {
-  return { kind: null, title: "", body: "", images: [], pdfs: [], jsons: [], consent: false, withErrors: false,
+  return { kind: null, target: "studio", targetPicked: false, title: "", body: "", images: [], pdfs: [], jsons: [], consent: false, withErrors: false,
            product: null, pq: "", brandName: "", brandSite: "",
            sending: false, phase: 0, error: "", done: null, meta: null, infoOpen: false };
 }
@@ -144,6 +163,54 @@ async function captureWindow() {
   const before = st.images.length;
   await addImage(shot);
   if (st.images.length > before) annotate(st.images.length - 1);
+}
+
+/* A Tiger Touch request: its screen, as it is right now, straight into the
+   editor like a window capture. */
+async function captureTouchScreen(mac) {
+  if (st.ttBusy) return;
+  st.ttBusy = true; render();
+  let res;
+  try { res = await captureTigerTouch(mac); } catch (_) { res = { ok: false }; }
+  st.ttBusy = false;
+  if (!res?.ok) { st.error = t("reportCaptureTigerTouchFail"); render(); return; }
+  const before = st.images.length;
+  await addImage(res.dataUrl);
+  if (st.images.length > before) annotate(st.images.length - 1);
+  else render();
+}
+
+/* A Tiger Spool request: its screen, one plain GET /screen.bmp away. */
+async function captureSpoolScreen(mac) {
+  if (st.ttBusy) return;
+  const sp = spoolsReady().find(x => x.mac === mac);
+  if (!sp) return;
+  st.ttBusy = true; render();
+  let res;
+  try { res = await window.tigerspool.screenshot(sp.ip); } catch (_) { res = { ok: false }; }
+  st.ttBusy = false;
+  if (!res?.ok) { st.error = t("reportCaptureTigerSpoolFail"); render(); return; }
+  const before = st.images.length;
+  await addImage(res.dataUrl);
+  if (st.images.length > before) annotate(st.images.length - 1);
+  else render();
+}
+
+/* A Tiger Scale request: one picture of its screen, read from its live view
+   with the code the scale publishes in the account. */
+async function captureScaleScreen(mac) {
+  if (st.ttBusy) return;
+  const sc = scalesReady().find(x => x.mac === mac);
+  if (!sc) return;
+  st.ttBusy = true; render();
+  let res;
+  try { res = await window.tigerscale.screenshot(sc.url, sc.code, sc.asleep); } catch (_) { res = { ok: false }; }
+  st.ttBusy = false;
+  if (!res?.ok) { st.error = t("reportCaptureTigerScaleFail"); render(); return; }
+  const before = st.images.length;
+  await addImage(res.dataUrl);
+  if (st.images.length > before) annotate(st.images.length - 1);
+  else render();
 }
 
 // ── Side card ─────────────────────────────────────────────────────────────────
@@ -319,11 +386,15 @@ export function toggleReport() { isReportOpen() ? closeReport() : openReport(); 
 // swap just that card, the rest of the panel (a draft, the scroll) stays put.
 export function refreshSquadCard() {
   const old = _overlay?.querySelector(".rep-squad"); const coffee = _overlay?.querySelector(".rep-coffee:not(.rep-squad)");
-  if (!old && !coffee) return;
-  const tmp = document.createElement("div"); tmp.innerHTML = squadHTML();
-  const next = tmp.firstElementChild;
-  if (old) next ? old.replaceWith(next) : old.remove();
-  else if (next) coffee.after(next);
+  if (old || coffee) {
+    const tmp = document.createElement("div"); tmp.innerHTML = squadHTML();
+    const next = tmp.firstElementChild;
+    if (old) next ? old.replaceWith(next) : old.remove();
+    else if (next) coffee.after(next);
+  }
+  // …and the form's send gate with it: joining unlocks "Send" at once.
+  const gate = _overlay?.querySelector(".rep-squad-gate");
+  if (gate) { const g = document.createElement("div"); g.innerHTML = squadGateHTML(); gate.replaceWith(g.firstElementChild); syncSend(); }
 }
 
 export async function openReport(opts = {}) {
@@ -334,6 +405,11 @@ export async function openReport(opts = {}) {
   const dz = _overlay.querySelector(".rep-drop");
   dz.innerHTML = `<span class="icon icon-download icon-32"></span><span class="rep-drop-title">${esc(t("reportDropHere"))}</span><span class="rep-drop-sub">${esc(t("reportDropSub", { n: MAX_IMAGES }))}</span>`;
   if (!st || st.done) st = freshState();   // after a send, the next open starts clean
+  // Opened from a device (e.g. a Tiger Touch screen capture): its product, a
+  // kind and a picture already in place.
+  if (opts.target && TARGETS.some(x => x.id === opts.target)) { st.target = opts.target; st.targetPicked = true; }
+  if (opts.kind && kindOf(opts.kind)) { st.kind = opts.kind; _view = "new"; }
+  for (const src of opts.images || []) addImage(src);
   // Refreshed on every open: the view and the printers may have changed since.
   try { st.meta = await ctx.getMeta(); } catch (_) { st.meta = st.meta || {}; }
   _pinToSidebar();
@@ -362,7 +438,7 @@ function onInput(e) {
   const el = e.target;
   if (el.id === "repTitle") st.title = el.value;
   else if (el.id === "repBody") st.body = el.value;
-  else if (el.id === "repConsent") { st.consent = el.checked; syncSend(); }
+  else if (el.id === "repConsent") { st.consent = el.checked; syncSend(); if (el.checked) _overlay.querySelector(".rep-bubble")?.remove(); }
   else if (el.id === "repErrors") st.withErrors = el.checked;
   else if (el.id === "repFile") { addFiles(el.files); el.value = ""; }
   else if (el.id === "repBrandName") st.brandName = el.value;
@@ -371,12 +447,16 @@ function onInput(e) {
   if (["repTitle", "repBody", "repBrandName", "repBrandSite"].includes(el.id)) syncSend();
 }
 const _validSite = u => { try { const x = new URL(/^https?:\/\//i.test(u) ? u : `https://${u}`); return /\./.test(x.hostname); } catch { return false; } };
-function canSend() {
+// Sending is for TigerSquad members (free to join) — the server checks it too.
+const inSquad = () => !!ctx.squadMember?.();
+// The form itself is complete (fields + consent), membership aside.
+function formReady() {
   if (st.sending || !kindOf(st.kind) || !st.consent) return false;
   if (st.kind === "brand") return st.brandName.trim().length >= 2 && _validSite(st.brandSite.trim());
   if (st.kind === "catalog" && !st.product) return false;
   return st.title.trim().length >= 3 && st.body.trim().length >= 3;
 }
+const canSend = () => formReady() && inSquad();
 
 // ── Catalogue product picker (catalogue corrections) ──
 // Only the results list is repainted while typing — the field keeps its focus.
@@ -407,7 +487,48 @@ function productCardHTML(p) {
       <button type="button" class="rep-prod-x" data-rep="unpick" aria-label="${esc(t("reportProdChange"))}"><span class="icon icon-close icon-12"></span></button>
     </div>`;
 }
-function syncSend() { const b = _overlay.querySelector("#repSend"); if (b) b.disabled = !canSend(); }
+// Not a member yet: Send stays clickable (dimmed) and opens the squad's
+// presentation instead of sending; a member gets the usual enabled/disabled.
+const sendLocked = () => !inSquad();
+function syncSend() {
+  const b = _overlay.querySelector("#repSend");
+  if (!b) return;
+  // Never truly disabled (except while sending): a click on an incomplete form
+  // shows what is missing instead of doing nothing.
+  b.disabled = !!st.sending;
+  b.classList.toggle("is-locked", sendLocked() || !canSend());
+}
+
+/* "Send" on an incomplete form: point at the first thing missing — the empty
+   field (focused, outlined) or the consent box (a bubble over it). */
+function showMissing() {
+  const field = id => _overlay.querySelector(`#${id}`);
+  let target = null;
+  if (st.kind === "brand") {
+    if (st.brandName.trim().length < 2) target = field("repBrandName");
+    else if (!_validSite(st.brandSite.trim())) target = field("repBrandSite");
+  } else {
+    if (st.kind === "catalog" && !st.product) target = field("repProdQ");
+    else if (st.title.trim().length < 3) target = field("repTitle");
+    else if (st.body.trim().length < 3) target = field("repBody");
+  }
+  if (target) {
+    target.focus();
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+    target.classList.remove("rep-miss"); void target.offsetWidth; target.classList.add("rep-miss");
+    setTimeout(() => target.classList.remove("rep-miss"), 1600);
+    return;
+  }
+  if (!st.consent) {
+    const box = _overlay.querySelector(".rep-check--public");
+    if (!box) return;
+    box.scrollIntoView({ block: "center", behavior: "smooth" });
+    box.querySelector(".rep-bubble")?.remove();
+    box.insertAdjacentHTML("beforeend", `<span class="rep-bubble" role="alert">${esc(t("reportConsentBubble"))}</span>`);
+    clearTimeout(showMissing._t);
+    showMissing._t = setTimeout(() => box.querySelector(".rep-bubble")?.remove(), 3500);
+  }
+}
 
 function onClick(e) {
   const a = e.target.closest("[data-rep]");
@@ -416,9 +537,19 @@ function onClick(e) {
   if (act === "close") closeReport();
   else if (act === "kind") { st.kind = a.dataset.kind; _view = "new"; render(); setTimeout(() => _overlay.querySelector("#repTitle, #repBrandName, #repProdQ")?.focus(), 220); }
   else if (act === "kindReset") { st.kind = null; render(); }
+  // Step 1 is the product; catalogue fixes and new brands exist for Studio only.
+  else if (act === "target") {
+    st.target = a.dataset.target; st.targetPicked = true;
+    if (st.target !== "studio" && !targetable(st.kind)) st.kind = null;
+    render();
+  }
+  else if (act === "targetReset") { st.targetPicked = false; st.kind = null; render(); }
   // Cancel = the request is dropped: draft cleared, card closed, no parked tab.
   else if (act === "cancel") { const meta = st.meta; st = freshState(); st.meta = meta; render(); closeReport(); }
   else if (act === "capture") captureWindow();
+  else if (act === "ttshot") captureTouchScreen(a.dataset.mac);
+  else if (act === "scaleshot") captureScaleScreen(a.dataset.mac);
+  else if (act === "spoolshot") captureSpoolScreen(a.dataset.mac);
   else if (act === "file") _overlay.querySelector("#repFile")?.click();
   else if (act === "remove") { st.images.splice(Number(a.dataset.i), 1); render(); }
   else if (act === "removePdf") { st.pdfs.splice(Number(a.dataset.i), 1); render(); }
@@ -426,7 +557,7 @@ function onClick(e) {
   else if (act === "pick") { const h = _overlay.querySelector("#repProdResults")?._hits?.[Number(a.dataset.i)]; if (h) { st.product = h; render(); setTimeout(() => _overlay.querySelector("#repTitle")?.focus(), 50); } }
   else if (act === "unpick") { st.product = null; render(); setTimeout(() => { _overlay.querySelector("#repProdQ")?.focus(); searchProducts(); }, 50); }
   else if (act === "annotate") annotate(Number(a.dataset.i));
-  else if (act === "send") send();
+  else if (act === "send") { if (!formReady()) showMissing(); else if (sendLocked()) ctx.openSquad?.(); else send(); }
   else if (act === "issue" && st.done?.url) ctx.openExternal(st.done.url);
   else if (act === "coffee") ctx.openCoffee?.(a);
   else if (act === "squad") ctx.openSquad?.();
@@ -518,6 +649,18 @@ function squadHTML() {
         <button type="button" class="rep-coffee-cta" data-rep="squad">${esc(t("squadReqCta"))}<span class="icon icon-arrow-r icon-12"></span></button>
       </div>
     </div>`;
+}
+
+/* Not in the TigerSquad yet: the send button stays locked, and this opens the
+   squad's presentation to join (free). Swapped live by refreshSquadCard. */
+function squadGateHTML() {
+  if (inSquad()) return `<div class="rep-squad-gate" hidden></div>`;
+  return `
+      <div class="rep-squad-gate">
+        <img src="../assets/img/tigersquad/tigersquad-gold.webp" alt="" aria-hidden="true">
+        <div class="rep-squad-gate-txt"><b>${esc(t("reportSquadGateTitle"))}</b><span>${esc(t("reportSquadGateSub"))}</span></div>
+        <button type="button" class="rep-coffee-cta" data-rep="squad">${esc(t("squadReqCta"))}<span class="icon icon-arrow-r icon-12"></span></button>
+      </div>`;
 }
 
 function mineHTML() {
@@ -672,11 +815,37 @@ function render() {
           <button type="button" class="rep-view${_view === "mine" ? " is-on" : ""}" data-rep="view" data-view="mine" role="tab" aria-selected="${_view === "mine"}"><span class="icon icon-clock icon-14"></span>${esc(t("reportTabMine"))}${openN ? `<span class="rep-view-count">${openN}</span>` : ""}</button>
         </div>`;
     if (_view === "mine") { paint("list", `<div class="rep-card">${head}${mineHTML()}</div>`); return; }
+    // 1a — Which part of the ecosystem (each lands in its own GitHub repo).
+    if (!st.targetPicked) {
+      paint("list", `
+      <div class="rep-card">
+        ${head}
+        <div class="rep-step-title">${esc(t("reportTargetPickTitle"))}</div>
+        <div class="rep-kind-list">
+          ${TARGETS.map(x => `
+          <button type="button" class="rep-kind-card rep-kind-card--product" data-rep="target" data-target="${x.id}">
+            <span class="rep-kind-ico">${targetIco(x)}</span>
+            <span class="rep-kind-txt"><span class="rep-kind-name">${esc(x.label)}</span><span class="rep-kind-hint">${esc(t(`reportTargetHint_${x.id}`))}</span></span>
+            <span class="icon icon-chevron-r icon-12 rep-kind-chev"></span>
+          </button>`).join("")}
+        </div>
+        ${coffeeHTML()}
+        ${squadHTML()}
+      </div>`);
+      return;
+    }
+    // 1b — What kind of request, for that product.
+    const tg = TARGETS.find(x => x.id === st.target) || TARGETS[0];
     paint("list", `
       <div class="rep-card">
         ${head}
+        <button type="button" class="rep-picked" data-rep="targetReset">
+          <span class="icon icon-chevron-l icon-14"></span>
+          ${targetIco(tg)}
+          <span class="rep-picked-name">${esc(tg.label)}</span>
+        </button>
         <div class="rep-kind-list">
-          ${KINDS.map(k => `
+          ${KINDS.filter(k => st.target === "studio" || targetable(k.id)).map(k => `
           <button type="button" class="rep-kind-card" style="--kc:${k.c};--kt:${k.tile};--ki:${k.ink}" data-rep="kind" data-kind="${k.id}">
             <span class="rep-kind-ico"><span class="icon icon-${k.icon} icon-20"></span></span>
             <span class="rep-kind-txt"><span class="rep-kind-name">${esc(t(k.label))}</span><span class="rep-kind-hint">${esc(t(k.hint))}</span></span>
@@ -746,6 +915,15 @@ function render() {
             <div>${esc(t("reportDropLine1"))}</div>
             <button type="button" class="rep-dz-browse" data-rep="file">${esc(t("reportDropBrowse"))}</button>
             <button type="button" class="rep-dz-capture" data-rep="capture"><span class="icon icon-camera icon-14"></span>${esc(t("reportCaptureNow"))}</button>
+            ${st.target === "tigertouch" ? tigerTouchScreensReady().map((x, _i, all) => `
+            <button type="button" class="rep-dz-capture rep-dz-capture--ttc" data-rep="ttshot" data-mac="${esc(x.mac)}"${st.ttBusy ? " disabled" : ""}>
+              <span class="rep-ttc-ico"></span>${esc(all.length > 1 ? t("reportCaptureTigerTouchNamed", { name: x.name }) : t("reportCaptureTigerTouch"))}</button>`).join("") : ""}
+            ${st.target === "tigerscale" ? scalesReady().map((x, _i, all) => `
+            <button type="button" class="rep-dz-capture rep-dz-capture--ttc rep-dz-capture--scale" data-rep="scaleshot" data-mac="${esc(x.mac)}"${st.ttBusy ? " disabled" : ""}>
+              <span class="rep-ttc-ico"></span>${esc(all.length > 1 ? t("reportCaptureTigerTouchNamed", { name: x.name }) : t("reportCaptureTigerScale"))}</button>`).join("") : ""}
+            ${st.target === "tigerspool" ? spoolsReady().map((x, _i, all) => `
+            <button type="button" class="rep-dz-capture rep-dz-capture--ttc rep-dz-capture--spool" data-rep="spoolshot" data-mac="${esc(x.mac)}"${st.ttBusy ? " disabled" : ""}>
+              <span class="rep-ttc-ico"></span>${esc(all.length > 1 ? t("reportCaptureTigerTouchNamed", { name: x.name }) : t("reportCaptureTigerSpool"))}</button>`).join("") : ""}
           </div>
         </div>` : ""}
         <input id="repFile" type="file" accept="image/*,application/pdf,application/json,.json" multiple hidden>
@@ -753,11 +931,12 @@ function render() {
       <div class="rep-formats">${esc(t("reportFormats", { n: MAX_IMAGES }))}</div>
       ${infoHTML(st.meta || {})}
       ${errs.length ? `<label class="rep-check"><input type="checkbox" id="repErrors"${st.withErrors ? " checked" : ""}><span>${esc(t("reportAttachErrors", { n: errs.length }))}</span></label>` : ""}
-      <label class="rep-check rep-check--public"><input type="checkbox" id="repConsent"${st.consent ? " checked" : ""}><span>${esc(t("reportPublicConsent"))}</span></label>
+      <label class="rep-check rep-check--public"><input type="checkbox" id="repConsent"${st.consent ? " checked" : ""}><span>${esc(t(TARGETS.find(x => x.id === st.target)?.private && targetable(st.kind) ? "reportPrivateConsent" : "reportPublicConsent"))}</span></label>
       ${st.error ? `<div class="rep-error">${esc(st.error)}</div>` : ""}
+      ${squadGateHTML()}
       <div class="rep-foot">
         <button type="button" class="rep-btn rep-btn--ghost" data-rep="cancel">${esc(t("btnCancel"))}</button>
-        <button type="button" class="rep-btn rep-btn--send" id="repSend" data-rep="send"${canSend() ? "" : " disabled"}><span class="icon icon-send icon-14"></span>${esc(t(kind.send))}</button>
+        <button type="button" class="rep-btn rep-btn--send${sendLocked() || !canSend() ? " is-locked" : ""}" id="repSend" data-rep="send"${st.sending ? " disabled" : ""}><span class="icon icon-send icon-14"></span>${esc(t(kind.send))}</button>
       </div>
       <div class="rep-anon"><span class="icon icon-lock icon-12"></span>${esc(t("reportAnon"))}</div>
     </div>`);
@@ -782,14 +961,17 @@ async function send() {
     // 3 — the request itself
     next = await step(3);
     const j = await authedPost(ENDPOINT, {
-      kind: st.kind, publicConsent: true, title, body: st.body.trim(),
+      kind: st.kind, target: targetable(st.kind) ? st.target : undefined, publicConsent: true, title, body: st.body.trim(),
       images: st.images,
       pdfs: st.pdfs.map(f => ({ name: f.name, data: f.data })),
       jsons: (st.jsons || []).map(f => ({ name: f.name, text: f.text })),
       product: st.kind === "catalog" && st.product ? st.product : undefined,
       brand: st.kind === "brand" ? { name: st.brandName.trim(), website: st.brandSite.trim() } : undefined,
       meta: { appVersion: m.appVersion, os: m.os, view: m.view, page: m.page, screen: m.screen, lang: m.lang, printers: m.printers,
-              errors: st.withErrors ? (m.errors || []) : [] },
+              errors: st.withErrors ? (m.errors || []) : [],
+              // The devices of this product and the printers each one follows.
+              devices: targetable(st.kind) && st.target === "tigerspool" ? spoolReportDevices()
+                     : targetable(st.kind) && st.target === "tigertouch" ? touchReportDevices() : undefined },
     });
     await next();
     // 4 — wrap up
@@ -797,7 +979,7 @@ async function send() {
     st.done = { number: j.number, url: j.url };
     syncReports();   // the new one shows up in "My requests"
   } catch (e) {
-    st.error = t(e.code === "RATE_LIMITED" ? "reportErrLimit" : e.code === "UNAUTHENTICATED" ? "reportNeedLogin" : "reportErrSend");
+    st.error = t(e.code === "RATE_LIMITED" ? "reportErrLimit" : e.code === "UNAUTHENTICATED" ? "reportNeedLogin" : e.code === "SQUAD_REQUIRED" ? "reportSquadGateTitle" : "reportErrSend");
   }
   st.sending = false;
   render();

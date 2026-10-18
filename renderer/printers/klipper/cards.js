@@ -6,6 +6,7 @@
  * call time — never destructured at module scope.
  */
 import { ctx } from '../context.js';
+import { tempEditAttrs } from '../temp-edit.js';
 import { jobBar, jobBarFill } from '../job-bar.js';
 import { remainingSec } from './core.js';
 
@@ -76,26 +77,66 @@ export function renderKlipperJobCard(p, conn) {
 export function renderKlipperTempCard(conn) {
   if (!conn?.ready) return "";
   const t = conn.data?.temps || {};
-  const pill = (label, icon, cur, tgt, cls = "") => {
+  // heater = the Klipper heater the pill sets (SET_HEATER_TEMPERATURE); none → read-only.
+  const pill = (label, icon, cur, tgt, cls = "", heater = null, max = 300) => {
     const heating = typeof tgt === "number" && tgt > 0 && typeof cur === "number" && cur < tgt - 1;
     return `
-      <div class="snap-temp${cls}${heating ? " snap-temp--heating" : ""}">
+      <div class="snap-temp${cls}${heater ? " snap-temp--editable" : ""}${heating ? " snap-temp--heating" : ""}"${heater ? tempEditAttrs(heater, tgt, max) : ""}>
         <span class="snap-temp-label">${ctx.esc(label)}</span>${icon}
         <span class="snap-temp-val">${ctx.esc(fmtTempPair(cur, tgt))}</span>
       </div>`;
   };
   const tools = t.tools || [];
   const pills = tools.filter(x => typeof x.cur === "number")
-    .map(x => pill(tools.length > 1 ? x.label : "E1", ctx.SNAP_ICON_NOZZLE, x.cur, x.tgt));
-  if (typeof t.bed === "number") pills.push(pill("BED", ctx.SNAP_ICON_BED, t.bed, t.bedTarget, " snap-temp--bed"));
-  if (typeof t.chamber === "number") pills.push(pill("CASE", ctx.SNAP_ICON_CHAMBER, t.chamber, t.chamberTarget, " snap-temp--chamber"));
-  for (const sensor of t.sensors || []) pills.push(pill(sensor.label, "", sensor.cur, sensor.tgt));
+    .map(x => pill(tools.length > 1 ? x.label : "E1", ctx.SNAP_ICON_NOZZLE, x.cur, x.tgt, "", x.name, 300));
+  if (typeof t.bed === "number") pills.push(pill("BED", ctx.SNAP_ICON_BED, t.bed, t.bedTarget, " snap-temp--bed", "heater_bed", 120));
+  // A chamber is settable only when it is a heater (heater_generic), not a bare sensor.
+  const chamberHeater = /^heater_generic /.test(conn.features?.chamber || "") ? conn.features.chamber.slice(15) : null;
+  if (typeof t.chamber === "number") pills.push(pill("CASE", ctx.SNAP_ICON_CHAMBER, t.chamber, t.chamberTarget, " snap-temp--chamber", chamberHeater, 70));
   if (!pills.length) return "";
   return `
     <section class="snap-block">
       <h4 class="snap-block-title">${ctx.esc(ctx.t("snapTemperatureTitle"))}</h4>
-      <div class="snap-temps klipper-temps">${pills.join("")}</div>
+      <div class="snap-temps">${pills.join("")}</div>
     </section>`;
+}
+
+/* Every other temperature the printer reports — MCU, host, temperature fans,
+   generic heaters such as a dryer (discovered since PR #93) — folded in a card
+   of its own under Temperature, so that one stays identical to the other
+   brands'. Closed by default; open / closed is kept per printer for the session.
+   A generic heater takes a new target on click, like the pills above. */
+const _sensorsOpen = new Set();
+export function renderKlipperSensorsCard(conn) {
+  const list = conn?.ready ? (conn.data?.temps?.sensors || []) : [];
+  if (!list.length) return "";
+  const rows = list.map(x => {
+    const heater = x.name.startsWith("heater_generic ") ? x.name.slice(15) : null;
+    return `
+      <div class="klipper-sensor${heater ? " snap-temp--editable" : ""}"${heater ? tempEditAttrs(heater, x.tgt, 120) : ""}>
+        <span class="klipper-sensor-name">${ctx.esc(x.label)}</span>
+        <span class="snap-temp-val">${ctx.esc(fmtTempPair(x.cur, x.tgt))}</span>
+      </div>`;
+  }).join("");
+  return `
+    <details class="snap-block klipper-sensors" data-klp-sensors="${ctx.esc(conn.key)}"${_sensorsOpen.has(conn.key) ? " open" : ""}>
+      <summary class="klipper-sensors-head">
+        <span class="snap-block-title">${ctx.esc(ctx.t("klipperSensorsTitle"))}</span>
+        <span class="klipper-sensors-count">${list.length}</span>
+        <span class="icon icon-chevron-r icon-12 klipper-sensors-chev" aria-hidden="true"></span>
+      </summary>
+      <div class="klipper-sensors-list">${rows}</div>
+    </details>`;
+}
+/** Remember the card's open state (delegated on the live block, once). */
+export function wireKlipperSensors(root) {
+  if (!root || root.dataset.klpSensorsWired) return;
+  root.dataset.klpSensorsWired = "1";
+  root.addEventListener("toggle", e => {
+    const d = e.target;
+    if (!d?.dataset?.klpSensors) return;
+    if (d.open) _sensorsOpen.add(d.dataset.klpSensors); else _sensorsOpen.delete(d.dataset.klpSensors);
+  }, true);   // toggle does not bubble
 }
 
 const SYSTEM_TAG = { mmu: "Happy Hare", afc: "AFC" };

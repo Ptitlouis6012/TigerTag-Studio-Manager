@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="css/70-detail-misc.css" />
 <link rel="stylesheet" href="IoT/tigerscale/tigerscale.css" />
 <link rel="stylesheet" href="IoT/tigerspool/tigerspool.css" />
+<link rel="stylesheet" href="IoT/tigertouch/tigertouch.css" />
 <link rel="stylesheet" href="IoT/usbscale/usbscale.css" />
 <link rel="stylesheet" href="IoT/td1s/td1s.css" />
 <link rel="stylesheet" href="report/report.css" />
@@ -190,6 +191,7 @@
         <div id="rfidReadersBar" class="rfid-readers-bar" data-desktop-only></div>
         <div class="health scale-health" id="scaleHealth"><span class="scale-glyphs"><span class="scale-glyph"><span class="scale-health-icon"></span></span></span></div>
         <div class="health scale-health tsp-health" id="tigerspoolHealth"></div>
+        <div class="health scale-health ttc-health" id="tigertouchHealth"></div>
         <!-- Backend health — hidden while all is well; only shown on a network problem (offline / cache). -->
         <div class="health hidden" id="health" data-tooltip="Backend: idle"><span class="icon icon-cloud-3d icon-20"></span></div>
         <div class="health update-health hidden" id="updateStatusIcon" data-tooltip="" data-desktop-only><span class="update-health-icon"></span></div>
@@ -715,6 +717,49 @@
       <button class="panel-close" id="tigerspoolDiscoverClose">✕</button>
     </div>
     <div class="tsp-discover-body" id="tigerspoolDiscoverBody"></div>
+  </div>
+</div>
+
+<!-- Tiger Touch side card (header glyph → users/{uid}/tigertouchs) — IoT/tigertouch/panel.js -->
+<div class="panel-overlay" id="tigertouchOverlay"></div>
+<div class="detail-panel scales-panel ttc-panel" id="tigertouchPanel">
+  <div class="panel-header">
+    <span class="panel-title">Tiger Touch</span>
+    <button class="panel-close" id="tigertouchPanelClose">✕</button>
+  </div>
+  <div class="panel-body" id="tigertouchPanelBody"></div>
+</div>
+
+<!-- Tiger Touch discovery modal — opened by the glyph while the account has no screen -->
+<div class="modal-overlay" id="tigertouchDiscoverOverlay">
+  <div class="modal-card tsp-discover-card">
+    <div class="modal-header">
+      <span class="modal-title">Tiger Touch</span>
+      <button class="panel-close" id="tigertouchDiscoverClose">✕</button>
+    </div>
+    <div class="tsp-discover-body" id="tigertouchDiscoverBody"></div>
+  </div>
+</div>
+
+<!-- Tiger Touch live view — drawn by Studio from the screen's frames (panel.js) -->
+<div class="modal-overlay" id="tigertouchLiveOverlay">
+  <div class="modal-card ttc-shot-card">
+    <div class="modal-header">
+      <span class="modal-title" id="tigertouchLiveTitle">Tiger Touch</span>
+      <button class="panel-close" id="tigertouchLiveClose">✕</button>
+    </div>
+    <div class="ttc-shot-body" id="tigertouchLiveBody"></div>
+  </div>
+</div>
+
+<!-- Tiger Touch screenshot preview -->
+<div class="modal-overlay" id="tigertouchShotOverlay">
+  <div class="modal-card ttc-shot-card">
+    <div class="modal-header">
+      <span class="modal-title" data-i18n="tigertouchScreenshot">Screenshot</span>
+      <button class="panel-close" id="tigertouchShotClose">✕</button>
+    </div>
+    <div class="ttc-shot-body" id="tigertouchShotBody"></div>
   </div>
 </div>
 

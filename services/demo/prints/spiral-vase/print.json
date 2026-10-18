@@ -1,0 +1,17 @@
+{
+  "name": "spiral_vase.gcode",
+  "durationReal": 7800,
+  "layersTotal": 750,
+  "nozzleTemp": 240,
+  "bedTemp": 80,
+  "slots": [
+    {
+      "material": "PETG",
+      "color": "#16A39A"
+    }
+  ],
+  "slotStarts": [
+    0
+  ],
+  "videoMode": "progress"
+}

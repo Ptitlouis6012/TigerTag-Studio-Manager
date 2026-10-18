@@ -1,6 +1,6 @@
 {
   "name": "tigertag-inventory",
-  "version": "2.41.0",
+  "version": "2.42.0",
   "description": "Tiger Studio Manager — desktop app",
   "main": "main.js",
   "engines": {
@@ -36,9 +36,12 @@
     "web:serve": "node scripts/build-web.mjs && python3 -m http.server 5181 --directory dist-web",
     "web:hotfix": "node scripts/web-hotfix.mjs",
     "moonraker:mock": "node scripts/moonraker-mock.mjs",
-    "octoprint:mock": "node scripts/octoprint-mock.mjs"
+    "octoprint:mock": "node scripts/octoprint-mock.mjs",
+    "demo:add-print": "node scripts/demo-add-print.mjs",
+    "demo:render-prints": "node scripts/demo-render-prints.mjs"
   },
   "dependencies": {
+    "aedes": "^1.2.0",
     "agora-rtc-sdk-ng": "^4.24.4",
     "basic-ftp": "^6.0.1",
     "bonjour-service": "^1.3.0",
@@ -51,6 +54,7 @@
     "qrcode-generator": "^2.0.4",
     "serialport": "^13.0.0",
     "tigertag": "^1.2.0",
+    "ws": "^8.21.3",
     "yauzl": "^3.4.0"
   },
   "devDependencies": {
@@ -81,7 +85,8 @@
       "oauth-config.json"
     ],
     "asarUnpack": [
-      "**/node_modules/ffmpeg-static/**"
+      "**/node_modules/ffmpeg-static/**",
+      "services/demo/prints/**"
     ],
     "win": {
       "target": [

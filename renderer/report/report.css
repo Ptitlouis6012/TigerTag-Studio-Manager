@@ -154,13 +154,27 @@
 
 /* ── Annotator (annotator.js) ── */
 .rep-anno {
-  position: fixed; inset: 0; z-index: 10050; display: flex; flex-direction: column;
-  background: rgba(8,10,18,.94);
+  position: fixed; inset: 0; z-index: 10050; display: flex; align-items: center; justify-content: center;
+  padding: 28px; background: rgba(8,10,18,.62); backdrop-filter: blur(6px);
+  animation: rep-anno-fade .18s ease-out;
 }
+.rep-anno-card {
+  position: relative; display: flex; flex-direction: column;
+  width: min(1180px, 100%); max-height: 100%; overflow: hidden;
+  background: #11131a; border: 1px solid rgba(255,255,255,.1); border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(0,0,0,.55);
+  animation: rep-anno-pop .22s cubic-bezier(.2,.9,.3,1.2);
+}
+.rep-anno-head { display: flex; flex-direction: column; gap: 2px; padding: 14px 18px 10px; }
+.rep-anno-title { font-size: 16px; font-weight: 800; color: #fff; }
+.rep-anno-sub { font-size: 12.5px; color: #9aa0b4; }
 .rep-anno-bar {
   display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex-wrap: wrap;
-  background: #15171f; border-bottom: 1px solid rgba(255,255,255,.08);
+  background: #15171f; border-top: 1px solid rgba(255,255,255,.06); border-bottom: 1px solid rgba(255,255,255,.08);
 }
+@keyframes rep-anno-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rep-anno-pop { from { opacity: 0; transform: translateY(8px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rep-anno, .rep-anno-card { animation: none; } }
 .rep-anno-group { display: flex; align-items: center; gap: 3px; }
 .rep-anno-tool {
   position: relative; width: 36px; height: 36px; padding: 0;
@@ -188,7 +202,7 @@
 .rep-anno-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 18px; }
 .rep-anno-canvas-wrap { position: relative; max-width: 100%; max-height: 100%; display: flex; }
 .rep-anno-stage canvas {
-  max-width: 100%; max-height: calc(100vh - 110px); touch-action: none; display: block;
+  max-width: 100%; max-height: calc(100vh - 56px - 170px); touch-action: none; display: block;
   border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,.5);
 }
 /* Inline text box, placed over the canvas where the text goes. */
@@ -370,6 +384,23 @@
 .rep-topbar .rep-x { position: static; }
 .rep-back { margin: 0; height: 30px; font-size: 13px; color: var(--text); }
 .rep-form-head { display: flex; gap: 14px; align-items: flex-start; }
+/* Which product the request is about (its issue lands in that product's repo). */
+.rep-targets { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 4px; }
+.rep-target {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px 8px;
+  border-radius: 12px; border: 1px solid var(--border); background: transparent;
+  color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s;
+}
+/* Doubled class: the global button rule fixes a height that squashed the tile. */
+.rep-target.rep-target { height: auto; }
+.rep-target:hover { background: var(--surface-2); color: var(--text); }
+.rep-target.is-on { background: color-mix(in srgb, var(--kc, var(--primary)) 16%, transparent); border-color: var(--kc, var(--primary)); color: var(--text); }
+.rep-target-ico {
+  width: 34px; height: 34px; background-color: currentColor;
+  -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat;
+}
+.rep-target.is-on .rep-target-ico { background-color: var(--kc, var(--primary)); }
 .rep-kind-ico--big { width: 54px; height: 54px; border-radius: 14px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, var(--kc), color-mix(in srgb, var(--kc) 60%, #000)); }
 .rep-kind-ico--big .icon { background: #fff; }
@@ -533,3 +564,66 @@
 .rep-squad-count .icon { width: 15px; height: 15px; background: var(--sq-a, #FF923F); }
 .rep-squad--in .rep-coffee-cta.rep-coffee-cta { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .rep-squad--in .rep-coffee-cta.rep-coffee-cta:hover { background: var(--surface-2); filter: none; }
+
+/* Step 1 — which part of the ecosystem: the topic cards, in the brand orange,
+   each with the product's own artwork. */
+.rep-step-title { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 4px 2px -2px; }
+.rep-kind-card--product { --ki: var(--primary); --kt: color-mix(in srgb, var(--primary) 14%, var(--surface-2)); }
+.rep-kind-card--product .rep-target-ico { width: 36px; height: 36px; background-color: var(--primary); transition: transform 180ms; }
+.rep-kind-card--product:hover .rep-target-ico { transform: scale(1.06); }
+/* Step 2 — the product picked, as a way back. */
+.rep-picked.rep-picked {
+  display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; height: auto;
+  padding: 6px 12px 6px 8px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.rep-picked:hover { border-color: var(--primary); }
+.rep-picked .icon { background: var(--muted); }
+.rep-picked .rep-target-ico { width: 22px; height: 22px; background-color: var(--primary); }
+/* "Capture the Tiger Touch screen" — the screen's own artwork, in the brand orange. */
+.rep-dz-capture--ttc .rep-ttc-ico {
+  width: 18px; height: 18px; flex: none; background-color: var(--primary);
+  -webkit-mask: url('../../assets/svg/icons/icon_tigertouch_3d.svg') center / contain no-repeat;
+          mask: url('../../assets/svg/icons/icon_tigertouch_3d.svg') center / contain no-repeat;
+}
+.rep-dz-capture--ttc:hover { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.rep-dz-capture--ttc:disabled { opacity: .5; cursor: progress; }
+.rep-dz-capture--scale .rep-ttc-ico {
+  -webkit-mask-image: url('../../assets/svg/icons/icon_tigerscale_3d.svg'); mask-image: url('../../assets/svg/icons/icon_tigerscale_3d.svg');
+}
+/* "Join the TigerSquad to send" — the only way to unlock Send. */
+.rep-squad-gate {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #f5b301 45%, transparent);
+  background: color-mix(in srgb, #f5b301 9%, var(--surface-2));
+}
+.rep-squad-gate[hidden] { display: none; }
+.rep-squad-gate img { width: 38px; height: 38px; object-fit: contain; flex: none; }
+.rep-squad-gate-txt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; font-size: 12px; color: var(--muted); }
+.rep-squad-gate-txt b { font-size: 13px; color: var(--text); }
+.rep-squad-gate .rep-coffee-cta { margin: 0; flex: none; }
+/* Not a member yet: looks unavailable, but a click opens the squad's presentation. */
+.rep-btn.is-locked { opacity: .45; filter: none; cursor: pointer; }
+/* What "Send" points at on an incomplete form. */
+.rep-miss { animation: rep-miss 1.4s ease; }
+@keyframes rep-miss {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  15%, 70% { box-shadow: 0 0 0 2px var(--primary); }
+}
+.rep-check--public { position: relative; }
+.rep-bubble {
+  position: absolute; left: 4px; bottom: calc(100% + 8px); z-index: 2;
+  padding: 7px 11px; border-radius: 8px; background: var(--primary); color: #fff;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap; pointer-events: none;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35); animation: rep-bubble-in .2s ease-out;
+}
+.rep-bubble::after {
+  content: ""; position: absolute; left: 14px; top: 100%;
+  border: 6px solid transparent; border-top-color: var(--primary);
+}
+@keyframes rep-bubble-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.rep-check--public:has(.rep-bubble) input { outline: 2px solid var(--primary); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .rep-miss, .rep-bubble { animation: none; } }
+.rep-dz-capture--spool .rep-ttc-ico {
+  -webkit-mask-image: url('../../assets/svg/icons/icon_tigerspool_3d.svg'); mask-image: url('../../assets/svg/icons/icon_tigerspool_3d.svg');
+}

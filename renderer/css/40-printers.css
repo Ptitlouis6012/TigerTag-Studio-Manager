@@ -1207,6 +1207,30 @@
   .pba-mp-search-row .pba-mp-search:hover { border: none; background: transparent; box-shadow: none; outline: none; }
   .pba-mp-opt[hidden] { display: none; }
   .pba-mp-empty { padding: 12px 10px; font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* "Which printer is it?" — a connector's models embedded in its add-flow choice
+     card (printers/model-list.js, Klipper + OctoPrint). Takes the room left
+     between the choices and the footer; the list scrolls, the search stays put. */
+  .pba-models { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0 14px 8px; }
+  .pba-card:has(.pba-models:not(:empty)) .pba-brands { flex-shrink: 0; padding-bottom: 6px; }
+  .pba-models:empty { display: none; }
+  .pba-models-head { display: flex; flex-direction: column; gap: 2px; margin: 6px 2px 8px; }
+  .pba-models-title { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .pba-models-hint { font-size: 12px; color: var(--faint); }
+  .pba-models .pba-models-search {
+    position: static; margin: 0 0 6px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-2);
+  }
+  .pba-models .pba-models-search .pba-mp-search { background: transparent; min-height: 0; height: 30px; }
+  .pba-models-list {
+    flex: 1; min-height: 120px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px;
+    scrollbar-width: none;
+  }
+  .pba-models-list::-webkit-scrollbar { display: none; }
+  .pba-models-check { margin-left: auto; background: var(--primary); opacity: 0; transition: opacity .15s; flex-shrink: 0; }
+  .pba-mp-opt--selected { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+  .pba-mp-opt--selected:hover { background: color-mix(in srgb, var(--primary) 16%, transparent); }
+  .pba-mp-opt--selected .pba-models-check { opacity: 1; }
   .pba-mp-opt {
     width: 100%;
     height: 44px;
@@ -3373,6 +3397,21 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .printer-beta-row { display: flex; align-items: center; gap: 4px; margin: 0 0 8px; }
 .printer-beta-row .pba-beta-tag { margin-left: 0; }
 .pba-brand-label .printer-beta-info { margin-left: 4px; vertical-align: middle; }
+/* The Demo mark of a demo printer (printers/demo-badge.js, docs/DEMO-MODE.md):
+   same shape as the Beta tag, in the info colour so the two never read alike. */
+.printer-demo-tag {
+  display: inline-flex; align-items: center; padding: 1px 7px; border-radius: 999px; vertical-align: middle;
+  background: color-mix(in srgb, var(--info) 16%, transparent); color: var(--info);
+  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+}
+.pba-brand-label .printer-demo-tag { margin-left: 6px; }
+.printer-demo-info { margin-left: 4px; vertical-align: middle; }
+.printer-demo-info:hover .icon, .printer-demo-info:focus-visible .icon { background: var(--info); }
+.printer-card-demo, .pp-demo-mark { display: inline-flex; align-items: center; flex-shrink: 0; }
+.pba-demo-head {
+  margin: 14px 4px 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--muted);
+}
 .printer-beta-info { display: inline-flex; align-items: center; cursor: help; border: none; background: none; padding: 0; }
 .printer-beta-info .icon { background: var(--faint); transition: background .15s; }
 .printer-beta-info:hover .icon, .printer-beta-info:focus-visible .icon { background: var(--primary); }
@@ -3425,3 +3464,20 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 /* The picker's lists scroll without a visible bar (same as the model picker). */
 #printerBrandPickerPanel .pba-brands { scrollbar-width: none; }
 #printerBrandPickerPanel .pba-brands::-webkit-scrollbar { display: none; }
+
+/* ── Demo printer picker (debug mode): every model of every brand the simulator plays ── */
+.pba-demo-logo { width: 26px; height: 26px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+.pba-demo-logo .icon { background-color: var(--info); }
+.pba-demo-group {
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 4px 4px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+}
+.pba-demo-group:first-child { margin-top: 2px; }
+.pba-demo-group[hidden] { display: none; }
+.pba-demo-group .pba-brand-logo { width: 20px; height: 20px; }
+.pba-demo-group-text { display: flex; flex-direction: column; line-height: 1.2; }
+.pba-demo-group-text b { font-size: 13px; }
+.pba-demo-group-text span { font-size: 11px; color: var(--muted); }
+.pba-mp-opt .pba-demo-add { margin-left: auto; background-color: var(--muted); transition: background-color .15s; }
+.pba-mp-opt:hover .pba-demo-add { background-color: var(--primary); }
+.pba-mp-opt.loading { opacity: .5; pointer-events: none; }

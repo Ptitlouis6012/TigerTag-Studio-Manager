@@ -1,0 +1,17 @@
+{
+  "name": "calibration_cube.gcode",
+  "durationReal": 1500,
+  "layersTotal": 100,
+  "nozzleTemp": 215,
+  "bedTemp": 60,
+  "slots": [
+    {
+      "material": "PLA",
+      "color": "#E8452C"
+    }
+  ],
+  "slotStarts": [
+    0
+  ],
+  "videoMode": "progress"
+}

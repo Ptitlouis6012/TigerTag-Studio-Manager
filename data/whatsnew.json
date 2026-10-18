@@ -1,4 +1,183 @@
 {
+  "2.42.0": {
+    "date": "2026-10-18",
+    "items": [
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Tiger Touch has entered the chat",
+          "fr": "Tiger Touch débarque",
+          "de": "Tiger Touch ist da",
+          "es": "Llega Tiger Touch",
+          "it": "Arriva Tiger Touch",
+          "zh": "Tiger Touch 来了",
+          "pt": "Chegou o Tiger Touch",
+          "pt-pt": "Chegou o Tiger Touch",
+          "pl": "Tiger Touch wjeżdża",
+          "ru": "Tiger Touch на месте",
+          "nl": "Tiger Touch is er"
+        },
+        "body": {
+          "en": "Your desk screen gets its own card: the printers it follows, its screen live — click to tap, drag to swipe — and a screenshot in one click. No screen yet? One button to install it.",
+          "fr": "Ton écran de bureau a sa propre carte : les imprimantes qu’il suit, son écran en direct — clique pour toucher, glisse pour balayer — et une capture en un clic. Pas encore d’écran ? Un bouton pour l’installer.",
+          "de": "Dein Schreibtisch-Bildschirm bekommt eine eigene Karte: die Drucker, denen er folgt, sein Bild live — klicken zum Tippen, ziehen zum Wischen — und ein Screenshot mit einem Klick. Noch keiner? Ein Knopf zum Installieren.",
+          "es": "Tu pantalla de escritorio tiene su propia tarjeta: las impresoras que sigue, su pantalla en directo — clic para tocar, arrastra para deslizar — y una captura en un clic. ¿Aún no la tienes? Un botón para instalarla.",
+          "it": "Il tuo schermo da scrivania ha la sua scheda: le stampanti che segue, lo schermo dal vivo — clicca per toccare, trascina per scorrere — e uno screenshot in un clic. Non ce l’hai ancora? Un pulsante per installarlo.",
+          "zh": "桌面屏幕有了自己的卡片：它关注的打印机、实时画面——点击即触摸、拖动即滑动——一键截图。还没有屏幕？一个按钮就能安装。",
+          "pt": "Sua tela de mesa ganhou um cartão próprio: as impressoras que ela acompanha, a tela ao vivo — clique para tocar, arraste para deslizar — e uma captura em um clique. Ainda não tem? Um botão para instalar.",
+          "pt-pt": "O teu ecrã de secretária tem o seu próprio cartão: as impressoras que segue, o ecrã em direto — clica para tocar, arrasta para deslizar — e uma captura num clique. Ainda não tens? Um botão para instalar.",
+          "pl": "Twój ekran na biurko ma własną kartę: drukarki, które śledzi, obraz na żywo — kliknij, by dotknąć, przeciągnij, by przesunąć — i zrzut jednym kliknięciem. Nie masz jeszcze? Jeden przycisk, by zainstalować.",
+          "ru": "У настольного экрана своя карточка: принтеры, за которыми он следит, его экран вживую — клик для касания, перетаскивание для свайпа — и скриншот в один клик. Экрана ещё нет? Одна кнопка — и он установлен.",
+          "nl": "Je bureauscherm krijgt een eigen kaart: de printers die het volgt, het scherm live — klik om te tikken, sleep om te vegen — en een screenshot in één klik. Nog geen scherm? Eén knop om het te installeren."
+        }
+      },
+      {
+        "icon": "play",
+        "title": {
+          "en": "Demo printers: no printer, no problem",
+          "fr": "Imprimantes démo : pas d’imprimante, pas de souci",
+          "de": "Demo-Drucker: kein Drucker, kein Problem",
+          "es": "Impresoras demo: sin impresora, sin problema",
+          "it": "Stampanti demo: niente stampante, nessun problema",
+          "zh": "演示打印机：没有打印机也没关系",
+          "pt": "Impressoras demo: sem impressora, sem problema",
+          "pt-pt": "Impressoras demo: sem impressora, sem problema",
+          "pl": "Drukarki demo: nie masz drukarki? Żaden problem",
+          "ru": "Демо-принтеры: нет принтера — не беда",
+          "nl": "Demoprinters: geen printer, geen probleem"
+        },
+        "body": {
+          "en": "Pick any of about 400 models and it prints on its own — temperatures, filament, camera, pause and stop. An A1 mini comes without AMS, an H2D with two nozzles: it really is that machine.",
+          "fr": "Choisis l’un des quelque 400 modèles et il imprime tout seul — températures, filament, caméra, pause et stop. Une A1 mini arrive sans AMS, une H2D avec deux buses : c’est vraiment cette machine.",
+          "de": "Wähl eins von rund 400 Modellen und es druckt von selbst — Temperaturen, Filament, Kamera, Pause und Stopp. Ein A1 mini kommt ohne AMS, ein H2D mit zwei Düsen: es ist wirklich genau diese Maschine.",
+          "es": "Elige uno de unos 400 modelos y imprime solo — temperaturas, filamento, cámara, pausa y parada. Una A1 mini viene sin AMS, una H2D con dos boquillas: es de verdad esa máquina.",
+          "it": "Scegli uno dei circa 400 modelli e stampa da solo — temperature, filamento, videocamera, pausa e stop. Una A1 mini arriva senza AMS, una H2D con due ugelli: è proprio quella macchina.",
+          "zh": "从约 400 个型号里挑一个，它会自己打印——温度、耗材、摄像头、暂停和停止全都有。A1 mini 没有 AMS，H2D 有两个喷嘴：就是那台机器本尊。",
+          "pt": "Escolha um dos cerca de 400 modelos e ele imprime sozinho — temperaturas, filamento, câmera, pausa e parar. Uma A1 mini vem sem AMS, uma H2D com dois bicos: é mesmo aquela máquina.",
+          "pt-pt": "Escolhe um dos cerca de 400 modelos e imprime sozinho — temperaturas, filamento, câmara, pausa e parar. Uma A1 mini vem sem AMS, uma H2D com dois bicos: é mesmo aquela máquina.",
+          "pl": "Wybierz jeden z około 400 modeli, a sam zacznie drukować — temperatury, filament, kamera, pauza i stop. A1 mini bez AMS, H2D z dwiema dyszami: to naprawdę ta maszyna.",
+          "ru": "Выбери любую из примерно 400 моделей — и она печатает сама: температуры, филамент, камера, пауза и стоп. A1 mini без AMS, H2D с двумя соплами: это правда та самая машина.",
+          "nl": "Kies een van zo’n 400 modellen en hij print vanzelf — temperaturen, filament, camera, pauze en stop. Een A1 mini zonder AMS, een H2D met twee nozzles: het is echt die machine."
+        }
+      },
+      {
+        "icon": "camera",
+        "title": {
+          "en": "Your Tiger devices, on screen",
+          "fr": "Tes appareils Tiger, à l’écran",
+          "de": "Deine Tiger-Geräte auf dem Bildschirm",
+          "es": "Tus dispositivos Tiger, en pantalla",
+          "it": "I tuoi dispositivi Tiger, sullo schermo",
+          "zh": "你的 Tiger 设备，尽收眼底",
+          "pt": "Seus dispositivos Tiger, na tela",
+          "pt-pt": "Os teus dispositivos Tiger, no ecrã",
+          "pl": "Twoje urządzenia Tiger na ekranie",
+          "ru": "Твои устройства Tiger — на экране",
+          "nl": "Je Tiger-apparaten op je scherm"
+        },
+        "body": {
+          "en": "Tiger Scale V3: its screen live from its card — click to use it. Tiger Spool and Tiger Scale: a screenshot in one click, to save, copy or show off.",
+          "fr": "Tiger Scale V3 : son écran en direct depuis sa carte — clique pour t’en servir. Tiger Spool et Tiger Scale : une capture en un clic, à enregistrer, copier ou frimer.",
+          "de": "Tiger Scale V3: ihr Bildschirm live von ihrer Karte aus — klicken zum Bedienen. Tiger Spool und Tiger Scale: ein Screenshot mit einem Klick, zum Speichern, Kopieren oder Angeben.",
+          "es": "Tiger Scale V3: su pantalla en directo desde su tarjeta — haz clic para usarla. Tiger Spool y Tiger Scale: una captura en un clic, para guardar, copiar o presumir.",
+          "it": "Tiger Scale V3: il suo schermo dal vivo dalla scheda — clicca per usarlo. Tiger Spool e Tiger Scale: uno screenshot in un clic, da salvare, copiare o sfoggiare.",
+          "zh": "Tiger Scale V3：在卡片里实时看它的屏幕——点击即可操作。Tiger Spool 和 Tiger Scale：一键截图，保存、复制或炫耀都行。",
+          "pt": "Tiger Scale V3: a tela dela ao vivo no cartão — clique para usar. Tiger Spool e Tiger Scale: uma captura em um clique, para salvar, copiar ou se exibir.",
+          "pt-pt": "Tiger Scale V3: o ecrã dela em direto a partir do cartão — clica para a usar. Tiger Spool e Tiger Scale: uma captura num clique, para guardar, copiar ou exibir.",
+          "pl": "Tiger Scale V3: jej ekran na żywo z karty — kliknij, by go używać. Tiger Spool i Tiger Scale: zrzut jednym kliknięciem, do zapisania, skopiowania albo pochwalenia się.",
+          "ru": "Tiger Scale V3: её экран вживую прямо из карточки — кликай, чтобы пользоваться. Tiger Spool и Tiger Scale: скриншот в один клик — сохранить, скопировать или похвастаться.",
+          "nl": "Tiger Scale V3: haar scherm live vanaf haar kaart — klik om haar te bedienen. Tiger Spool en Tiger Scale: een screenshot in één klik, om op te slaan, te kopiëren of mee te pronken."
+        }
+      },
+      {
+        "icon": "chat",
+        "title": {
+          "en": "Your requests go straight to the right desk",
+          "fr": "Tes demandes vont direct au bon guichet",
+          "de": "Deine Anfragen landen direkt am richtigen Schalter",
+          "es": "Tus peticiones van directas a la ventanilla correcta",
+          "it": "Le tue richieste vanno dritte allo sportello giusto",
+          "zh": "你的请求直达对的窗口",
+          "pt": "Seus pedidos vão direto ao balcão certo",
+          "pt-pt": "Os teus pedidos vão direto ao balcão certo",
+          "pl": "Twoje zgłoszenia trafiają prosto do właściwego okienka",
+          "ru": "Твои запросы — сразу в нужное окошко",
+          "nl": "Je verzoeken gaan rechtstreeks naar het juiste loket"
+        },
+        "body": {
+          "en": "Say what it’s about — the app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool or the phone app — and it lands with the right people. A device’s screen joins the report in one click.",
+          "fr": "Dis de quoi ça parle — l’app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool ou l’app mobile — et ça arrive chez les bonnes personnes. L’écran d’un appareil s’ajoute au signalement en un clic.",
+          "de": "Sag, worum es geht — die App, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool oder die Handy-App — und es landet bei den richtigen Leuten. Der Bildschirm eines Geräts kommt mit einem Klick dazu.",
+          "es": "Di de qué va — la app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool o la app del móvil — y llega a la gente adecuada. La pantalla de un dispositivo se añade en un clic.",
+          "it": "Di’ di cosa si tratta — l’app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool o l’app per telefono — e arriva alle persone giuste. Lo schermo di un dispositivo si aggiunge in un clic.",
+          "zh": "说清楚是关于什么——应用、Tiger Touch、Tiger POD、Tiger Scale、Tiger Spool 还是手机应用——它就会送到对的人手上。设备屏幕一键附上。",
+          "pt": "Diga do que se trata — o app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool ou o app do celular — e chega às pessoas certas. A tela de um dispositivo entra no relato em um clique.",
+          "pt-pt": "Diz do que se trata — a app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool ou a app do telemóvel — e chega às pessoas certas. O ecrã de um dispositivo junta-se ao relatório num clique.",
+          "pl": "Powiedz, czego to dotyczy — aplikacji, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool czy aplikacji na telefon — i trafi do właściwych osób. Ekran urządzenia dołączysz jednym kliknięciem.",
+          "ru": "Скажи, о чём речь — о приложении, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool или мобильном приложении — и запрос попадёт к нужным людям. Экран устройства прикрепляется в один клик.",
+          "nl": "Zeg waar het over gaat — de app, Tiger Touch, Tiger POD, Tiger Scale, Tiger Spool of de telefoon-app — en het komt bij de juiste mensen. Het scherm van een apparaat voeg je met één klik toe."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Klipper: every sensor, your own logo",
+          "fr": "Klipper : tous les capteurs, ton propre logo",
+          "de": "Klipper: jeder Sensor, dein eigenes Logo",
+          "es": "Klipper: todos los sensores, tu propio logo",
+          "it": "Klipper: tutti i sensori, il tuo logo",
+          "zh": "Klipper：所有传感器，外加你的 Logo",
+          "pt": "Klipper: todos os sensores, seu próprio logo",
+          "pt-pt": "Klipper: todos os sensores, o teu próprio logótipo",
+          "pl": "Klipper: każdy czujnik i twoje własne logo",
+          "ru": "Klipper: все датчики и твой логотип",
+          "nl": "Klipper: elke sensor, je eigen logo"
+        },
+        "body": {
+          "en": "Chamber, electronics, dryer… every temperature your printer reports, tucked in a Sensors section. Your Mainsail theme logo shows up too. Klipper and OctoPrint temperatures are now set with a click. Thanks @storm8488!",
+          "fr": "Enceinte, électronique, sécheur… chaque température que ton imprimante remonte, rangée dans une section Capteurs. Le logo de ton thème Mainsail s’affiche aussi. Et les températures Klipper et OctoPrint se règlent d’un clic. Merci @storm8488 !",
+          "de": "Bauraum, Elektronik, Trockner… jede Temperatur, die dein Drucker meldet, ordentlich im Bereich Sensoren. Auch dein Mainsail-Theme-Logo erscheint. Klipper- und OctoPrint-Temperaturen stellst du jetzt per Klick ein. Danke @storm8488!",
+          "es": "Cámara, electrónica, secador… cada temperatura que reporta tu impresora, ordenada en una sección Sensores. También aparece el logo de tu tema Mainsail. Y las temperaturas de Klipper y OctoPrint se ajustan con un clic. ¡Gracias @storm8488!",
+          "it": "Camera di stampa, elettronica, essiccatore… ogni temperatura che la stampante riporta, raccolta in una sezione Sensori. Compare anche il logo del tuo tema Mainsail. E le temperature Klipper e OctoPrint si impostano con un clic. Grazie @storm8488!",
+          "zh": "腔体、电子元件、烘干机……打印机上报的每个温度都整齐放进「传感器」区域。你的 Mainsail 主题 Logo 也会显示。Klipper 和 OctoPrint 的温度现在点一下就能设置。感谢 @storm8488！",
+          "pt": "Câmara, eletrônica, secador… cada temperatura que a impressora informa, guardada numa seção Sensores. O logo do seu tema Mainsail também aparece. E as temperaturas do Klipper e do OctoPrint se ajustam com um clique. Valeu, @storm8488!",
+          "pt-pt": "Câmara, eletrónica, secador… cada temperatura que a impressora reporta, arrumada numa secção Sensores. O logótipo do teu tema Mainsail também aparece. E as temperaturas Klipper e OctoPrint ajustam-se com um clique. Obrigado @storm8488!",
+          "pl": "Komora, elektronika, suszarka… każda temperatura, którą zgłasza drukarka, w sekcji Czujniki. Pojawia się też logo twojego motywu Mainsail. A temperatury Klippera i OctoPrinta ustawisz jednym kliknięciem. Dzięki @storm8488!",
+          "ru": "Камера, электроника, сушилка… каждая температура, которую сообщает принтер, — в разделе «Датчики». Появляется и логотип твоей темы Mainsail. А температуры Klipper и OctoPrint задаются одним кликом. Спасибо, @storm8488!",
+          "nl": "Behuizing, elektronica, droger… elke temperatuur die je printer doorgeeft, netjes in een sectie Sensoren. Ook het logo van je Mainsail-thema verschijnt. En Klipper- en OctoPrint-temperaturen stel je nu in met één klik. Bedankt @storm8488!"
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "How many metres are left?",
+          "fr": "Combien de mètres il reste ?",
+          "de": "Wie viele Meter sind noch drauf?",
+          "es": "¿Cuántos metros quedan?",
+          "it": "Quanti metri restano?",
+          "zh": "还剩多少米？",
+          "pt": "Quantos metros sobraram?",
+          "pt-pt": "Quantos metros restam?",
+          "pl": "Ile metrów zostało?",
+          "ru": "Сколько метров осталось?",
+          "nl": "Hoeveel meter is er nog?"
+        },
+        "body": {
+          "en": "Next to a spool’s weight, its remaining length: 353 g ≈ 141 m. Handy before launching that 12-hour print.",
+          "fr": "À côté du poids d’une bobine, sa longueur restante : 353 g ≈ 141 m. Pratique avant de lancer l’impression de 12 heures.",
+          "de": "Neben dem Gewicht einer Spule ihre Restlänge: 353 g ≈ 141 m. Praktisch, bevor der 12-Stunden-Druck startet.",
+          "es": "Junto al peso de una bobina, su longitud restante: 353 g ≈ 141 m. Útil antes de lanzar esa impresión de 12 horas.",
+          "it": "Accanto al peso di una bobina, la lunghezza rimasta: 353 g ≈ 141 m. Comodo prima di lanciare quella stampa da 12 ore.",
+          "zh": "料盘重量旁边显示剩余长度：353 g ≈ 141 m。开始那台 12 小时的打印前看一眼正好。",
+          "pt": "Ao lado do peso de um carretel, o comprimento que sobra: 353 g ≈ 141 m. Útil antes de mandar aquela impressão de 12 horas.",
+          "pt-pt": "Ao lado do peso de uma bobina, o comprimento que resta: 353 g ≈ 141 m. Útil antes de lançar aquela impressão de 12 horas.",
+          "pl": "Obok wagi szpuli jej pozostała długość: 353 g ≈ 141 m. Przydatne przed odpaleniem tego 12-godzinnego wydruku.",
+          "ru": "Рядом с весом катушки — оставшаяся длина: 353 г ≈ 141 м. Удобно перед запуском той самой 12-часовой печати.",
+          "nl": "Naast het gewicht van een spoel de resterende lengte: 353 g ≈ 141 m. Handig voordat je die print van 12 uur start."
+        }
+      }
+    ]
+  },
   "2.41.0": {
     "date": "2026-10-15",
     "items": [

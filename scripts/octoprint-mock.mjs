@@ -11,14 +11,25 @@
  *   GET  /plugin/appkeys/request/<token>       202 pending → 200 { api_key } after --approve-after s
  *   GET  /api/version /api/connection /api/printer /api/job /api/settings /api/printerprofiles
  *   POST /api/connection /api/job /api/printer/printhead /api/printer/command
+ *        /api/printer/tool /api/printer/bed   { command: "target" }
  *   GET  /api/files/local/<path>               { thumbnail }
  *   GET  /plugin/prusaslicerthumbnails/thumbnail/<file>.png
  *   GET  /webcam/?action=stream|snapshot       MJPEG / PNG
  *
  * --closed starts with the serial link down (GET /api/printer → 409) until a
  * POST /api/connection { command: "connect" }. Every /api call needs X-Api-Key.
+ *
+ * Scenario control for UI tests (no key — the test bench, not a client;
+ * docs/PRINTER-MOCKS.md):
+ *   GET /mock/state
+ *   GET /mock/set?print=printing|paused|cancelling|error|idle|complete
+ *                 &progress=0..100 &file=name.gcode &link=Operational|Closed|Offline|"Error: …"
+ *                 &tool=210 &bed=60
+ *   GET /mock/print?file=name.gcode        start a fresh 3-minute print
+ * The snapshot URL is built from the address the client used (Host header).
  */
 import http from "node:http";
+import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -99,6 +110,27 @@ http.createServer(async (req, res) => {
     return Date.now() - at < APPROVE_AFTER ? send(res, 202, { app_token: tm[1] }) : send(res, 200, { api_key: API_KEY });
   }
   if (/^\/plugin\/prusaslicerthumbnails\/thumbnail\//.test(p)) return send(res, 200, IMG, "image/png");
+  if (p.startsWith("/mock/")) {
+    const q = k => u.searchParams.get(k);
+    if (p === "/mock/print") { startPrint(q("file") || "benchy.gcode"); return send(res, 200, { ok: true }); }
+    if (p === "/mock/set") {
+      const ps = q("print");
+      if (ps) {
+        Object.assign(S.flags, { printing: ps === "printing", paused: ps === "paused", pausing: false, cancelling: ps === "cancelling", error: ps === "error" });
+        if (ps === "idle") { S.job = null; S.completion = null; }
+        if (ps === "complete") { S.completion = 100; S.flags.printing = false; }
+        if (ps !== "idle" && !S.job) S.job = { name: q("file") || "benchy.gcode", path: q("file") || "benchy.gcode", origin: "local", estimatedPrintTime: 180 };
+      }
+      if (q("progress") != null) S.completion = Math.max(0, Math.min(100, Number(q("progress"))));
+      if (q("file") && S.job) { S.job.name = S.job.path = q("file"); }
+      if (q("link")) S.link = q("link");
+      if (q("tool") != null) S.temps.tool0.target = Number(q("tool"));
+      if (q("bed") != null) S.temps.bed.target = Number(q("bed"));
+      return send(res, 200, { ok: true, state: stateText(), flags: S.flags, completion: S.completion, link: S.link });
+    }
+    if (p === "/mock/state") return send(res, 200, S);
+    return send(res, 404, { error: "unknown mock command" });
+  }
   if (!p.startsWith("/api/")) return send(res, 404, "not found", "text/plain");
   if (req.headers["x-api-key"] !== API_KEY) return send(res, 403, { error: "Forbidden" });
   const body = m === "POST" ? await readBody(req) : {};
@@ -122,7 +154,7 @@ http.createServer(async (req, res) => {
     return send(res, 200, { job: { file: S.job ? { name: S.job.name, path: S.job.path, origin: "local" } : { name: null }, estimatedPrintTime: S.job?.estimatedPrintTime ?? null },
       progress: { completion: S.completion, printTime: S.job ? S.printTime : null, printTimeLeft: S.job && S.completion < 100 ? Math.round(180 - S.printTime) : null }, state: stateText() });
   }
-  if (p === "/api/settings") return send(res, 200, { webcam: { webcamEnabled: true, streamUrl: "/webcam/?action=stream", snapshotUrl: `http://127.0.0.1:${PORT}/webcam/?action=snapshot`, flipH: false, flipV: false, rotate90: false } });
+  if (p === "/api/settings") return send(res, 200, { webcam: { webcamEnabled: true, streamUrl: "/webcam/?action=stream", snapshotUrl: `http://${req.headers.host}/webcam/?action=snapshot`, flipH: false, flipV: false, rotate90: false } });
   if (p === "/api/printerprofiles") return send(res, 200, { profiles: { _default: { id: "_default", name: "Mock Marlin", current: true, default: true, heatedBed: true, heatedChamber: false, extruder: { count: TOOLS } } } });
   if (p === "/api/printer/printhead" && m === "POST") {
     if (S.link !== "Operational") return send(res, 409, { error: "Printer is not operational" });
@@ -137,8 +169,18 @@ http.createServer(async (req, res) => {
     }
     return send(res, 400, { error: "unknown command" });
   }
+  if (p === "/api/printer/tool" && m === "POST" && body.command === "target") {
+    for (const [k, v] of Object.entries(body.targets || {})) { if (!S.temps[k]) return send(res, 400, { error: `Unknown tool ${k}` }); S.temps[k].target = Number(v) || 0; }
+    console.log(`  target → ${JSON.stringify(body.targets)}`);
+    return send(res, 204, "");
+  }
+  if (p === "/api/printer/bed" && m === "POST" && body.command === "target") { S.temps.bed.target = Number(body.target) || 0; console.log(`  bed target → ${S.temps.bed.target}`); return send(res, 204, ""); }
   if (p === "/api/printer/command" && m === "POST") { (body.commands || [body.command]).filter(Boolean).forEach(gcode); return send(res, 204, ""); }
   const fm = p.match(/^\/api\/files\/local\/(.+)$/);
   if (fm) return send(res, 200, { name: decodeURIComponent(fm[1]), path: decodeURIComponent(fm[1]), thumbnail: `plugin/prusaslicerthumbnails/thumbnail/${encodeURIComponent(fm[1])}.png?20240101` });
   return send(res, 404, { error: "not found" });
-}).listen(PORT, () => console.log(`OctoPrint mock on http://127.0.0.1:${PORT}  api key: ${API_KEY}  tools: ${TOOLS}`));
+}).listen(PORT, "0.0.0.0", () => {
+  console.log(`OctoPrint mock on http://127.0.0.1:${PORT}  api key: ${API_KEY}  tools: ${TOOLS}`);
+  const lan = Object.values(os.networkInterfaces()).flat().filter(a => a && a.family === "IPv4" && !a.internal).map(a => `${a.address}:${PORT}`);
+  if (lan.length) console.log(`From another device on the LAN: ${lan.join("  ")}`);
+});

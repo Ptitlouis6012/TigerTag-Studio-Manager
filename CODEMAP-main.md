@@ -111,7 +111,11 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3389-3461 | Elegoo MQTT 1883 bridge (`elegoo:connect` / `disconnect` / `publish`) | — |
 | 3462-3516 | Shared `ffmpeg` binary detection (Bambu RTSP + Anycubic FLV cameras) — each candidate is PROBED, not just stat'ed | — |
 
-## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3517-4120)
+## Demo mode — printer simulator (L3886-3894)
+
+Registers `services/demo` (`demo:faces`, `demo:allocate`, `demo:sync`, `demo:state`, `demo:set`) with the detected ffmpeg; stops every face on `will-quit`. The simulator itself lives in `services/demo/` — see `docs/DEMO-MODE.md`.
+
+## Bambu Lab — MQTT + JPEG-TCP/RTSP cameras (L3895-4250)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -120,7 +124,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3668-3785 | RTSP camera via ffmpeg, port 322 (`bambulab:cam-start-rtsp` / `cam-stop-rtsp`) — 30 fps + low-latency flags; the spawn is guarded (it throws synchronously on a bad CPU type) | — |
 | 4010-4077 | Prusa Buddy3D camera — plain RTSP `rtsp://<camera-ip>/live` via the same ffmpeg pipeline, 15 fps (`prusa:cam-start-rtsp` / `prusa:cam-stop-rtsp`, frames on `prusa:cam-frame`) | — |
 
-## Bambu Lab cloud — REST + shared cloud MQTT (L3786-4401)
+## Bambu Lab cloud — REST + shared cloud MQTT (L4251-4670)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -128,7 +132,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3879-4002 | Auth: `cloud-send-code`, `cloud-login` (code / password, `verifyCode` + `tfa` branches), `cloud-tfa` (token arrives in a COOKIE), `cloud-uid` (token is NOT a JWT), `cloud-bind` (machines + their LAN access codes), `cloud-device-version` | — |
 | 4003-4172 | ONE cloud-MQTT client per ACCOUNT: `cloud-connect` (us→eu fallback), `cloud-subscribe` (+ `pushall`), `cloud-publish`, `cloud-unsubscribe`, `cloud-disconnect`. Telemetry is emitted on the LAN `bambulab:message` channel — same payload, same parser | `_bblCloudOpen`, `_bblCloudPushAll` |
 
-## Anycubic LAN — MQTT, provisioning, FLV camera (L4392-4728)
+## Anycubic LAN — MQTT, provisioning, FLV camera (L4671-5007)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -137,7 +141,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3515-3537 | Slicer on-disk credential reader (`anycubic:read-slicer-config`) — keyless deobfuscation | `_acuDeobfuscate`, `_acuConfCandidates` |
 | 3538-3645 | LAN scan: TCP probe (`anycubic:tcp-probe`), FLV liveness (`anycubic:flv-probe`, accepts 200/206), `/info` (`anycubic:http-info`) | — |
 
-## Anycubic cloud — REST + cloud MQTT (L4729-5439)
+## Anycubic cloud — REST + cloud MQTT (L5008-5483)
 
 | L | What | Anchors / IPC |
 |---|---|---|
@@ -147,7 +151,7 @@ L3922-3982   App lifecycle (whenReady, window-all-closed, activate)
 | 3970-4006 | Cloud-uploaded files (§9c): `cloud-files-list` (POST `/work/index/files`), `cloud-file-delete` (POST `/work/index/delFiles`); print reuses `cloud-send-order` order 1 | — |
 | 4007-4180 | Shared cloud-MQTT client (one per user): `cloud-connect` / `subscribe` / `publish` / `unsubscribe`; RSA-encrypted token login | `_buildCloudLogin`, `_routeCloudMessage`, `_ensureCloudClient` |
 
-## App lifecycle (L5440-5504)
+## App lifecycle (L5484-5549)
 
 | L | What |
 |---|---|

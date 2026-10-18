@@ -26,6 +26,9 @@
  */
 
 // ── Module-level context (injected by initTigerScale) ─────────────────────
+import { openScaleLive, scaleLiveAvailable } from "./live.js";
+import { showScreenshot } from "../tigertouch/panel.js";
+
 let _ctx = null;
 
 /** Must be called once before any other export. */
@@ -74,6 +77,26 @@ let _scaleTareAbortCtrl = null;
  * Subscribe to real-time Firestore updates for all scales belonging to uid.
  * Renders the panel and health icon on every snapshot.
  */
+/* The raw document for the debug block, minus the live view's secrets: the
+   code (and the URL next to it) control the screen for anyone on the network,
+   and a debug view ends up in screenshots and bug reports. */
+const _DEBUG_SECRET = ["lan_access_code", "lan_url"];
+function _debugDoc(s) {
+  const out = { ...s };
+  for (const k of _DEBUG_SECRET) if (out[k] != null) out[k] = "•••";
+  return out;
+}
+
+/* For the report card: the scales a screen picture can be taken from right now —
+   online, live view on, its code published in the account (`lan_live`,
+   `lan_access_code`, `lan_url` — firmware after 3.9.0). Never asked of the user. */
+export function scalesReady() {
+  if (!_ctx || typeof window.tigerscale?.screenshot !== "function") return [];
+  return _ctx.state.scales
+    .filter(s => s.lan_live === true && typeof s.lan_url === "string" && s.lan_access_code && scaleConnState(s) !== "offline")
+    .map(s => ({ mac: s.mac, name: s.display_name || "Tiger Scale", url: s.lan_url, code: s.lan_access_code, asleep: scaleConnState(s) === "standby" }));
+}
+
 export function subscribeScales(uid) {
   unsubscribeScales();
   const { state, fbDb } = _ctx;
@@ -123,6 +146,16 @@ export function unsubscribeScales() {
 function _wirePanelHandlers() {
   const { $ } = _ctx;
   $("scaleHealth")?.addEventListener("click", openScalesPanel);
+  // Live view / Screenshot — delegated on the panel, so a surgical card refresh
+  // swapping the buttons underneath needs no re-wiring.
+  $("scalesPanel")?.addEventListener("click", e => {
+    const b = e.target.closest("[data-scale-lan]");
+    if (!b || b.disabled) return;
+    const s = _ctx.state.scales.find(x => x.mac === b.dataset.mac);
+    if (!s) return;
+    if (b.dataset.scaleLan === "shot") return _scaleShot(s);
+    openScaleLive(s, { t: _ctx.t, esc: _ctx.esc, getDoc: mac => _ctx.state.scales.find(x => x.mac === mac), onShot: _scaleShot });
+  });
   $("scalesPanelClose")?.addEventListener("click", closeScalesPanel);
   $("scalesOverlay")?.addEventListener("click", closeScalesPanel);
 }
@@ -312,7 +345,7 @@ function _buildScaleCardHtml(s) {
   const debugJson = state.debugEnabled
     ? `<details class="scale-debug" data-debug-mac="${esc(s.mac)}"${debugOpen}>
          <summary class="scale-debug-summary">Raw JSON (debug)</summary>
-         <pre class="json scale-debug-pre">${_ctx.highlight(JSON.stringify(s, null, 2))}</pre>
+         <pre class="json scale-debug-pre">${_ctx.highlight(JSON.stringify(_debugDoc(s), null, 2))}</pre>
        </details>`
     : "";
 
@@ -344,6 +377,7 @@ function _buildScaleCardHtml(s) {
         </div>
       </div>
       <div class="scale-card-chips">${_buildScaleChipsHtml(s)}</div>
+      <div class="scale-lan">${_buildScaleLanHtml(s)}</div>
     </div>
     <div class="sc2-live-card">
       <div class="scale-card-local" data-local-mac="${esc(s.mac)}">${_buildScaleLocalBlockHtml(s.mac)}</div>
@@ -364,6 +398,31 @@ function _buildScaleCardHtml(s) {
 }
 
 // Build the chips strip inner HTML (without the wrapper div).
+/* Live view + Screenshot of the scale's own screen — when it publishes its LAN
+   live view (firmware after 3.9.0: lan_live, lan_url, lan_access_code), it is
+   online, and this is the desktop app. The code itself is never drawn. */
+function _buildScaleLanHtml(s) {
+  const { esc, t } = _ctx;
+  if (typeof window.tigerscale?.screenshot !== "function" || !scaleLiveAvailable(s)) return "";
+  const off = scaleConnState(s) === "offline" ? " disabled" : "";
+  return `<button type="button" class="ttc-btn ttc-btn--primary" data-scale-lan="live" data-mac="${esc(s.mac)}"${off}>`
+    + `<span class="icon icon-eye-on icon-14"></span><span>${esc(t("tigertouchLiveView"))}</span></button>`
+    + `<button type="button" class="ttc-btn" data-scale-lan="shot" data-mac="${esc(s.mac)}"${off}>`
+    + `<span class="icon icon-camera icon-14"></span><span>${esc(t("tigertouchScreenshot"))}</span></button>`;
+}
+
+/* The scale's screenshot, in the shared preview (Save / Copy / Report / Retake). */
+function _scaleShot(s) {
+  showScreenshot({
+    key: s.mac, name: s.display_name || "Tiger Scale", target: "tigerscale", prefix: "tiger-scale",
+    aspect: "480 / 320", closeHost: closeScalesPanel,
+    capture: () => {
+      const d = _ctx.state.scales.find(x => x.mac === s.mac) || s;
+      return window.tigerscale.screenshot(d.lan_url, d.lan_access_code, scaleConnState(d) === "standby");
+    },
+  });
+}
+
 function _buildScaleChipsHtml(s) {
   const { esc, t } = _ctx;
   const online     = isScaleOnline(s);
@@ -433,6 +492,12 @@ function _buildScaleChipsHtml(s) {
     </span>`);
   }
 
+  // Live view switched off on the scale itself (firmware after 3.9.0 says so;
+  // absent = a firmware that has no live view to report).
+  if (s.lan_live === false) {
+    chips.push(`<span class="scale-chip scale-chip--lan-off"><span class="icon icon-eye-off icon-12"></span>`
+      + `<span class="scale-chip-text">${esc(t("scaleLiveOff"))}</span></span>`);
+  }
   return chips.join("");
 }
 
@@ -859,6 +924,8 @@ function _patchScaleCardInPlace(card, s) {
   // Chips strip
   const chipsHost = card.querySelector(".scale-card-chips");
   if (chipsHost) chipsHost.innerHTML = _buildScaleChipsHtml(s);
+  const lanHost = card.querySelector(".scale-lan");
+  if (lanHost) { const html = _buildScaleLanHtml(s); if (lanHost.innerHTML !== html) lanHost.innerHTML = html; }
 
   // Live gradient block — refresh on every heartbeat too
   _refreshScaleLocalBlock(s.mac);
@@ -866,7 +933,7 @@ function _patchScaleCardInPlace(card, s) {
   // Debug JSON — update only the <pre> so the <details> open state survives
   if (state.debugEnabled) {
     const debugPre = card.querySelector(".scale-debug-pre");
-    if (debugPre) debugPre.innerHTML = _ctx.highlight(JSON.stringify(s, null, 2));
+    if (debugPre) debugPre.innerHTML = _ctx.highlight(JSON.stringify(_debugDoc(s), null, 2));
   }
 
   // Reconnect when ip_address changes (but not if user manually disconnected)

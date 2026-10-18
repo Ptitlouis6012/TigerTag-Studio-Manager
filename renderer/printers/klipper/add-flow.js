@@ -13,6 +13,7 @@
  *
  * Entry point: openKlipperAddFlow() — the plugin's `openAddFlow` hook.
  */
+import { mountModelList } from '../model-list.js';
 import { ctx } from '../context.js';
 import { createScanPicker } from '../scan-pick.js';
 import * as extraSubnets from '../extra-subnets.js';
@@ -45,8 +46,10 @@ function cardHtml(c) {
     </div>`;
 }
 
+// The model picked in the choice card (optional) — carried into the settings form.
+let _model = null;
 function prefillFor(c) {
-  return { ip: c.ip, printerName: `Klipper ${c.ip}`, modelId: "0", discovery: klipperDiscoveryRecord(c) };
+  return { ip: c.ip, printerName: _model?.name || `Klipper ${c.ip}`, modelId: _model?.id || "0", discovery: klipperDiscoveryRecord(c) };
 }
 function continueWith(c) { ctx.openPrinterSettings("klipper", null, prefillFor(c)); }
 
@@ -97,6 +100,7 @@ function ensureDOM() {
       ${choice("klipperChoiceScan", "snapAddChoiceScan", "Scan network", "snapAddChoiceScanHint", "Auto-discover printers on your LAN")}
       ${choice("klipperChoiceManual", "snapAddChoiceManual", "Enter IP address", "snapAddChoiceManualHint", "Manually enter the printer's local IP")}
     </div>
+    <div class="pba-models" id="klipperChoiceModels"></div>
     <div class="pba-footer">${back("klipperChoiceBack")}</div>
   </div>
 </div>
@@ -262,7 +266,11 @@ function openManualPanel() {
   setTimeout(() => input?.focus(), 80);
 }
 
+let _modelList = null;
 export function openKlipperAddFlow() {
   ensureDOM();
+  // Built on first open (the catalogues are loaded by then), cleared on every open.
+  if (!_modelList) _modelList = mountModelList(document.getElementById("klipperChoiceModels"), "klipper", m => { _model = m; });
+  _modelList.reset();
   openPanel("klipperChoiceOverlay");
 }

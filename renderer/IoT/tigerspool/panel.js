@@ -14,6 +14,8 @@
  * (.scale-card*, .scale-chip*) so the two devices' cards read as siblings.
  */
 
+import { showScreenshot } from "../tigertouch/panel.js";
+
 const WIKI = "https://wiki.tigersystem.io";
 const GITHUB = "https://github.com/TigerTag-Project/TigerSpool-RFID";
 // The desktop stand comes in two mirror versions — the spool sits left or right of the box.
@@ -53,6 +55,20 @@ export function initTigerSpoolPanel(ctx, helpers) {
         copy.classList.add("pp-copy--ok");
         setTimeout(() => copy.classList.remove("pp-copy--ok"), 900);
       } catch (_) { /* clipboard refused: nothing to undo */ }
+      return;
+    }
+    // Screenshot of the box's own screen (GET /screen.bmp through main), in the
+    // shared preview: save, copy, or straight into a Tiger Spool report.
+    const shot = e.target.closest("[data-tsp-shot]");
+    if (shot) {
+      e.preventDefault(); e.stopPropagation();
+      const doc = _ctx.state.tigerspools.find(x => x.mac === shot.dataset.tspShot);
+      if (!doc?.ip_address) return;
+      showScreenshot({
+        key: doc.mac, name: doc.display_name || "Tiger Spool", target: "tigerspool", prefix: "tiger-spool",
+        aspect: "240 / 320", closeHost: closeTigerSpoolPanel,
+        capture: () => window.tigerspool.screenshot(doc.ip_address),
+      });
       return;
     }
     const row = e.target.closest("[data-tsp-printer]");
@@ -161,6 +177,14 @@ function wireRemoveButtons(body) {
       } catch (e) { reportError?.("tigerspool.delete", e); }
     });
   });
+}
+
+/* Screenshot button — desktop only (main fetches the box), while it is online. */
+function shotHtml(s, cs) {
+  const { t, esc } = _ctx;
+  if (typeof window.tigerspool?.screenshot !== "function" || !s.ip_address) return "";
+  return `<div class="tsp-shot-row"><button type="button" class="ttc-btn" data-tsp-shot="${esc(s.mac)}"${cs === "offline" ? " disabled" : ""}>
+      <span class="icon icon-camera icon-14"></span><span>${esc(t("tigertouchScreenshot"))}</span></button></div>`;
 }
 
 function formatMac(raw) {
@@ -284,6 +308,7 @@ function cardHtml(s) {
         </div>
       </div>
       <div class="scale-card-chips">${chipsHtml(s, cs)}</div>
+      ${shotHtml(s, cs)}
       <div class="tsp-printers">
         <div class="tsp-printers-title">${esc(t("tigerspoolPrintersTitle", { n: ids.length }))}</div>
         ${printers}

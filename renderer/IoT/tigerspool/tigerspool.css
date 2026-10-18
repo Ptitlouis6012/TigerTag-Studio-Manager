@@ -233,3 +233,7 @@ a.tsp-tile:hover .tsp-tile-go .icon { background: var(--primary); transform: tra
    above the first line of the document. */
 .tsp-entry .scale-debug { margin-top: 2px; }
 .tsp-raw-wrap .scale-debug-pre { padding-top: 36px; }
+
+/* Screenshot of the box's screen (shared preview: IoT/tigertouch). */
+.tsp-shot-row { display: flex; }
+.tsp-shot-row .ttc-btn { flex: 1; }

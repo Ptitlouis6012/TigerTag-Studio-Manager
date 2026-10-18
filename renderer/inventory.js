@@ -14,7 +14,8 @@ import {
 } from './IoT/tigerscale/index.js';
 
 // ── TigerSpool presence (header glyph only) ───────────────────────────────
-import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel } from './IoT/tigerspool/index.js';
+import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
+import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
 import { initUsbScale, usbScaleRefreshDock } from './IoT/usbscale/index.js';
@@ -74,6 +75,7 @@ import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
 // Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
 import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
 import { betaBadgeInlineHtml } from './printers/beta-badge.js';
+import { demoTagHtml, syncDemoPrinters, demoRecords, repointLanDemos } from './printers/demo-badge.js';
 import { buildModelIndex, searchModels } from './printers/model-finder.js';
 import { schemaWidget } from './printers/modal-helpers.js';
 import { openCreAddFlow }  from './printers/creality/add-flow.js';
@@ -729,6 +731,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     unsubScales: null,       // Firestore unsubscribe handle for scales
     tigerspools: [],         // [{ mac, display_name, last_heartbeat_at, power_state, printers_active, ... }] — users/{uid}/tigerspools
     unsubTigerspools: null,  // Firestore unsubscribe handle for tigerspools
+    tigertouchs: [],         // [{ mac, display_name, last_heartbeat_at, power_state, printer_ids, lan_*, ... }] — users/{uid}/tigertouchs
+    unsubTigertouchs: null,  // Firestore unsubscribe handle for tigertouchs
     printers: [],            // [{ id, brand, printerName, printerModelId, isActive, updatedAt, sortIndex, ... }]
     unsubPrinters: [],       // array of Firestore unsubscribe handles (one per brand subcollection)
     containerOverrides: {},  // catalogue container id → { containerWeight?, favorite? } — the account's own
@@ -787,6 +791,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function applyTranslations() {
     document.documentElement.lang = state.lang;
+    // The device glyphs' hover text is drawn in JS — redraw it in the new
+    // language (and once the locales have loaded at all: the first draw can
+    // happen before, and would keep showing the raw key).
+    try { renderTigerSpoolHealth(); renderTigerTouchHealth(); } catch (_) {}
     document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
     // data-i18n-title — used for icon-only buttons that need a localised
@@ -1611,6 +1619,26 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return Array.isArray(m?.features) ? m.features.filter(f => f && f !== "No") : [];
   }
   function dbFind(key, id) { return state.db[key].find(x => x.id === id) || null; }
+
+  // Remaining filament LENGTH, estimated from the weight: mass / (density ×
+  // cross-section). Filament only (id_type 142) — a length means nothing for a
+  // resin bottle, an accessory or a spare part. Needs the material's density
+  // (g/cm³) and the diameter (data1 → id_diameter, "1.75"); null otherwise.
+  const TYPE_ID_FILAMENT = 142;
+  function filamentLengthM(r, grams = r?.weightAvailable) {
+    if (Number(r?.raw?.id_type) !== TYPE_ID_FILAMENT) return null;
+    const rho = Number(r.materialData?.density);
+    const dMm = parseFloat(dbFind("diameter", Number(r.raw?.data1))?.label);
+    const g = Number(grams);
+    if (!(rho > 0) || !(dMm > 0) || grams == null || !(g >= 0)) return null;
+    const areaCm2 = Math.PI * (dMm / 20) ** 2;   // radius in cm = d(mm) / 20
+    return g / rho / areaCm2 / 100;               // cm → m
+  }
+  /** "≈ 312 m" (or "" when no length applies). */
+  function filamentLengthText(r, grams) {
+    const m = filamentLengthM(r, grams);
+    return m == null ? "" : `≈ ${m >= 100 ? Math.round(m) : m.toFixed(1)} m`;
+  }
   // A container's empty weight, with the account's own correction applied when it has
   // one. The bundled catalogue (data/container_spool/spools_filament.json) carries
   // manufacturer values; a user who weighs theirs can store a correction in
@@ -4140,7 +4168,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   // ── TigerSpool presence (header glyph + hover) ─────────────────────────
   // Printer renames/removals reach the side card through its 10 s tick.
-  initTigerSpool({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, setupHoldToConfirm, reportError });
+  initTigerSpool({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError });
+  initTigerTouch({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError, openReport });
 
   // ── USB scale (Dymo) module init ───────────────────────────────────────
   // One weight write per pose: POD mode applies silently (UID = certainty),
@@ -5133,6 +5162,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // `per` = XP per item (lost when removed), `once` = a discovery kept for good.
   const XP_ACHIEVEMENTS = [
     { id: "tigerScale", xp: 200 }, { id: "mobileApp", xp: 100, once: true }, { id: "tigerSpool", xp: 75 },
+    { id: "tigerTouch", xp: 100 },
     { id: "tigerPod", xp: 50, once: true }, { id: "td1s", xp: 30, once: true }, { id: "printer", per: 20 },
     { id: "usbScale", xp: 100, once: true },
     { id: "rfidReader", xp: 20, once: true }, { id: "friend", per: 10 }, { id: "photo", xp: 10 },
@@ -5790,6 +5820,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       try { renderPrinterDetail(); } catch (_) {}
     }
     try { refreshTigerSpoolPanel(); } catch (_) {}
+    try { refreshTigerTouchPanel(); } catch (_) {}
     const uid = state.activeAccountId; if (!uid) return;
     try {
       await fbDb().collection("users").doc(uid).set({ Debug: enabled }, { merge: true });
@@ -6946,7 +6977,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Common handler called when a named-instance user session becomes active.
   // uid must equal user.uid and be the current active account.
   async function handleSignedIn(user, uid) {
-    unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+    unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribeTigerTouchs(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
     // CRITICAL — drop the previous account's racks immediately. `state.racks`
     // is derived per-account state that (unlike the inventory/racks SNAPSHOTS,
     // which are account-guarded) leaks across an account switch: it keeps the
@@ -7069,6 +7100,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
     subscribeTigerSpools(uid);// live-sync the user's TigerSpool heartbeats (header glyph)
+    subscribeTigerTouchs(uid);// live-sync the user's Tiger Touch heartbeats (header glyph)
     subscribePrinters(uid);// live-sync the user's 3D printers across all 5 brand subcollections
     subscribeProducts(uid);// live-sync per-product buy links + reorder thresholds
     subscribeContainerOverrides(uid);  // the account's own container-weight corrections
@@ -7089,11 +7121,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (uid === getActiveId()) await handleSignedIn(user, uid);
       } else if (uid === getActiveId()) {
         // Active account's session expired → show login
-        unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+        unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribeTigerTouchs(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
         state.inventory = null; state.rows = [];
         state.isAdmin = false; state.debugEnabled = false; state.supporter = false; renderSupporterBadge();
         state.publicKey = null; state.privateKey = null;
-        state.friends = []; state.friendRequests = []; state.notifications = []; state.blacklist = []; state.racks = []; state.printers = [];
+        state.friends = []; state.friendRequests = []; state.notifications = []; state.blacklist = []; state.racks = []; state.printers = []; syncDemoPrinters([]);
         applyDebugMode(); renderStats(); renderInventory();
         renderAccountDropdown();
         setDisconnected();
@@ -7374,11 +7406,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Sign out the named instance so its IndexedDB session is cleared
     try { firebase.app(id).auth().signOut(); } catch (_) {}
     if (wasActive) {
-      unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
+      unsubscribeInventory(); unsubscribeFriendRequests(); unsubscribeFriends(); unsubscribeNotifications(); unsubscribeRacks(); unsubscribeScales(); unsubscribeTigerSpools(); unsubscribeTigerTouchs(); unsubscribePrinters(); unsubscribeProducts(); unsubscribeFriendProducts(); unsubscribeLists(); unsubscribeFriendLists(); unsubscribeContainerOverrides();
       state.inventory = null; state.rows = [];
       state.isAdmin = false; state.debugEnabled = false; state.supporter = false; renderSupporterBadge();
       state.publicKey = null; state.privateKey = null;
-      state.friends = []; state.friendRequests = []; state.blacklist = []; state.racks = []; state.printers = [];
+      state.friends = []; state.friendRequests = []; state.blacklist = []; state.racks = []; state.printers = []; syncDemoPrinters([]);
       applyDebugMode(); renderStats(); renderInventory();
       setDisconnected();
       // Switch to another account if available, otherwise show login
@@ -16775,6 +16807,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
     }
 
+    const lenEl = $("wbLen");
+    if (lenEl) { const lt = filamentLengthText(r, curW); if (lenEl.textContent !== lt) lenEl.textContent = lt; }
+
     const fill = $("wbFill");
     if (fill && fill.style.width !== pctW) fill.style.width = pctW;
     if (fill) { const c = fillBarColor(pct); if (fill.style.background !== c) fill.style.background = c; }
@@ -18241,6 +18276,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       fill.style.width = wpct + "%";
       fill.style.background = fillBarColor(wpct);
       display.innerHTML = `${w}<span>g</span>`;
+      const lenEl = $("wbLen");
+      if (lenEl) lenEl.textContent = filamentLengthText(r, w);
       _patchGroupMemberWeight(r.spoolId, w, cap); // live-track in the group panel
       // Keep inline input in sync if open
       const inp = $("wbInlineInput");
@@ -21034,6 +21071,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <div class="wb-labels">
             <div class="wb-val-group">
               <div class="wb-val">${curW}<span>g</span></div>
+              ${filamentLengthText(r, curW) ? `<span class="wb-len" id="wbLen">${filamentLengthText(r, curW)}</span>` : ""}
             </div>
             <div class="wb-cap">${cap >= 1000 ? (cap/1000).toFixed(cap % 1000 === 0 ? 0 : 1) + ' kg' : cap + ' g'} total</div>
           </div>
@@ -21054,6 +21092,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <div class="wb-labels">
             <div class="wb-val-group">
               <div class="wb-val" id="sliderDisplay">${curW}<span>g</span></div>
+              ${filamentLengthText(r, curW) ? `<span class="wb-len" id="wbLen">${filamentLengthText(r, curW)}</span>` : ""}
               <button id="wbEditOpen" class="wb-edit-open" title="${t("btnEditManually")}">
                 <span class="icon icon-edit icon-13"></span>
               </button>
@@ -22452,6 +22491,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // plus `printers_active`, `printer_ids` and `last_used_at`. The collection
     // is PLURAL: an account can own several boxes.
     { label: "TigerSpools", path: "users/{uid}/tigerspools" },
+    { label: "TigerTouchs", path: "users/{uid}/tigertouchs" },
     { label: "Racks",      path: "users/{uid}/racks" },
     { label: "Lists",      path: "users/{uid}/lists" },
     // Server-written stats (read-only for the client — the Cloud Functions own them):
@@ -24118,6 +24158,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             return String(a.printerName || "").localeCompare(String(b.printerName || ""));
           });
           state.printers = all;
+          // Demo printers: the simulator in main starts / stops their faces to match;
+          // the ones served on the network follow this computer's address.
+          syncDemoPrinters(all);
+          repointLanDemos(all, (p, fields) => fbDb(uid).collection("users").doc(uid).collection("printers").doc(p.brand)
+            .collection("devices").doc(p.id).update({ ...fields, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }));
           // Anycubic cloud printers added before the TLS-identity fields existed.
           _backfillAnycubicCloudCerts().catch(e => console.warn("[anycubic] cloud cert backfill:", e?.message));
           // The machines have just arrived — their units can now be recorded.
@@ -25439,6 +25484,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
               <div class="printer-card-name">
                 <span class="printer-card-name-dot${online ? " is-online" : ""}${p.mode === "cloud" ? " is-cloud" : ""}"${p.mode === "cloud" ? ` role="img" aria-label="${esc(t("printerCloudMode"))}"` : ' aria-hidden="true"'}></span>
                 <span class="printer-card-name-txt">${safeName}</span>
+                ${p.demo ? `<span class="printer-card-demo">${demoTagHtml()}</span>` : ""}
               </div>
             </div>
             <div class="rp-rack-actions">
@@ -28973,6 +29019,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     getState:              () => state,
     onFullRender: () => {
       renderPrinterDetail();
+      // FlashForge: its camera URL arrives with the first /detail answer, AFTER
+      // the side card opened (a printer just added, or opened before its first
+      // poll). Hand the freshly rendered picture to the MJPEG mux then, instead
+      // of leaving it blank until the card is reopened.
+      if (_activePrinter?.brand === "flashforge") {
+        const url = ffgCamBaseUrl(_activePrinter), img = document.getElementById("ffgCamSideImg");
+        if (url && img) { const key = ffgKey(_activePrinter); ffgMuxStart(key, url); ffgMuxRegister(key, img); }
+      }
       // Re-partition the printer grid (CONNECTED / OFFLINE sections) whenever
       // a brand status change triggers a full render — keeps the card position
       // in sync with the live connection state without waiting for a Firestore
@@ -29745,6 +29799,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const titlePillsHtml = `
       <span class="pp-brand-pill pp-brand-pill--sm" style="--brand-accent:${meta.accent}">${esc(meta.label)}</span>
       ${modelName && modelName !== "—" ? `<span class="pp-model-pill pp-model-pill--sm">${esc(modelName)}</span>` : ""}
+      ${p.demo ? `<span class="pp-demo-mark">${demoTagHtml()}</span>` : ""}
     `;
     $("printerPanelPills").innerHTML = titlePillsHtml;
     // Online status is shown as a coloured dot before the title (see
@@ -31233,7 +31288,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
         </button>`;
     }).join("");
-    list.querySelectorAll(".pba-brand").forEach(btn => {
+    _renderDemoPrinterRows(list);
+    list.querySelectorAll(".pba-brand[data-brand]").forEach(btn => {
       btn.addEventListener("click", () => {
         const brand = btn.dataset.brand;
         _pendingAddModel = null;   // a brand picked by hand carries no model
@@ -31272,6 +31328,150 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("printerBrandPickerOverlay").classList.add("open");
     $("printerBrandPickerPanel").classList.add("open");
   }
+  // ── Demo printers (every user, desktop) — docs/DEMO-MODE.md ─────────────────────────
+  // A pretend printer, answered by the simulator in main: one click writes a
+  // normal printer record (flagged demo: true) on a local address, and the
+  // brand's own driver connects to it like to a real machine.
+  // The model a new demo printer starts as (editable afterwards in its settings).
+  const DEMO_MODEL = {
+    klipper: "2" /* Voron 2.4 */, octoprint: "45" /* Creality Ender-3 S1 */,
+    flashforge: "1" /* AD5X */, prusa: "5" /* CORE One */,
+    creality: "2" /* K2 Plus */, snapmaker: "1" /* U1 */,
+  };
+  let _demoFaces = null;   // brands the simulator can play, from main
+  // One "Select a demo printer" row in the brand picker; it opens a side card
+  // with EVERY model of every brand the simulator plays, so any machine can be
+  // simulated on its own protocol (a Voron on Klipper, an X2D on Bambu LAN…).
+  async function _renderDemoPrinterRows(list) {
+    if (!window.demoMode) return;   // desktop only: the simulator runs in main
+    if (!_demoFaces) { try { _demoFaces = await window.demoMode.faces(); } catch { _demoFaces = []; } }
+    if (!_demoBrands().length || list.querySelector(".pba-demo-head")) return;
+    list.insertAdjacentHTML("beforeend", `
+      <div class="pba-demo-head">${esc(t("demoPrintersTitle"))}</div>
+      <button type="button" class="pba-brand pba-brand--demo" id="pbaDemoPick">
+        <span class="pba-demo-logo"><span class="icon icon-printer icon-20"></span></span>
+        <span class="pba-brand-text">
+          <span class="pba-brand-label">${esc(t("demoPickTitle"))}</span>
+        </span>
+        <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
+      </button>`);
+    list.querySelector("#pbaDemoPick")?.addEventListener("click", e => {
+      list.querySelectorAll(".pba-brand--selected").forEach(b => b.classList.remove("pba-brand--selected"));
+      e.currentTarget.classList.add("pba-brand--selected");
+      _closeOpenPbaCard?.();
+      openDemoPicker();
+    });
+  }
+  // Brands the simulator plays, in the picker's order.
+  function _demoBrands() {
+    const played = new Set((_demoFaces || []).map(f => f.brand));
+    return PRINTER_BRANDS.filter(b => played.has(b) && PRINTER_BRAND_META[b]);
+  }
+  // A face that plays several machines picks its variant from the model.
+  const DEMO_VARIANT_FOR = { elegoo: id => (String(id) === "2" ? "cc1" : "cc2") };
+
+  function _ensureDemoPickerDOM() {
+    if ($("demoPickOverlay")) return;
+    document.body.insertAdjacentHTML("beforeend", `
+      <div class="modal-overlay" id="demoPickOverlay" role="dialog" aria-modal="true">
+        <div class="modal-card pba-card">
+          <div class="pba-header">
+            <div class="pba-header-text">
+              <div class="pba-title">${esc(t("demoPickTitle"))}</div>
+              <div class="pba-sub">${esc(t("demoPickSub"))}</div>
+            </div>
+            <button class="modal-close" id="demoPickClose">✕</button>
+          </div>
+          <div class="pba-models">
+            <div class="pba-mp-search-row pba-models-search">
+              <span class="icon icon-search icon-13" aria-hidden="true"></span>
+              <input type="text" class="pba-mp-search" id="demoPickSearch" autocomplete="off" spellcheck="false"/>
+            </div>
+            <div class="pba-models-list" id="demoPickList" role="listbox"></div>
+          </div>
+        </div>
+      </div>`);
+    const close = () => { $("demoPickOverlay")?.classList.remove("open"); _syncPrinterAddPanels(); };
+    $("demoPickClose").addEventListener("click", close);
+    $("demoPickSearch").addEventListener("input", _filterDemoPicker);
+    $("demoPickList").addEventListener("click", e => {
+      const opt = e.target.closest(".pba-mp-opt[data-brand]");
+      if (!opt) return;
+      const { brand, id } = opt.dataset;
+      addDemoPrinter(brand, opt, DEMO_VARIANT_FOR[brand]?.(id), id);
+    });
+  }
+
+  function openDemoPicker() {
+    _ensureDemoPickerDOM();
+    const models = b => (state.db?.printerModels?.[b] || []).filter(m => String(m.id) !== "0");
+    $("demoPickList").innerHTML = _demoBrands().map(brand => {
+      const meta = PRINTER_BRAND_META[brand];
+      return `<div class="pba-demo-group" data-group="${esc(brand)}">
+          <span class="pba-brand-logo" data-brand="${esc(brand)}"></span>
+          <span class="pba-demo-group-text"><b>${esc(meta.label)}</b><span>${esc(meta.connection)}</span></span>
+        </div>` + models(brand).map(m => {
+          const img = printerImageUrlFor(brand, m.id);
+          return `<button type="button" class="pba-mp-opt" data-brand="${esc(brand)}" data-id="${esc(m.id)}"
+              data-search="${esc(`${meta.label} ${m.name}`)}">
+            <span class="pba-mp-thumb">${img ? `<img src="${esc(img)}" alt="" loading="lazy" onerror="this.style.opacity='.15'"/>` : ""}</span>
+            <span class="pba-mp-name">${esc(m.name)}</span>
+            <span class="icon icon-plus icon-13 pba-demo-add" aria-hidden="true"></span>
+          </button>`;
+        }).join("");
+    }).join("") + `<div class="pba-mp-empty" hidden>${esc(t("printerModelSearchEmpty"))}</div>`;
+    const search = $("demoPickSearch");
+    search.value = "";
+    search.placeholder = t("printerModelSearchPh");
+    _filterDemoPicker();
+    $("demoPickOverlay").classList.add("open");
+    _syncPrinterAddPanels();
+    setTimeout(() => search.focus(), 260);
+  }
+
+  function _filterDemoPicker() {
+    const norm = v => String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ");
+    const words = norm($("demoPickSearch").value).split(" ").filter(Boolean);
+    const list = $("demoPickList");
+    let shown = 0;
+    const hitBrands = new Set();
+    list.querySelectorAll(".pba-mp-opt").forEach(o => {
+      const hit = !words.length || words.every(w => norm(o.dataset.search).includes(w));
+      o.hidden = !hit;
+      if (hit) { shown++; hitBrands.add(o.dataset.brand); }
+    });
+    list.querySelectorAll(".pba-demo-group").forEach(g => { g.hidden = !hitBrands.has(g.dataset.group); });
+    list.querySelector(".pba-mp-empty").hidden = shown > 0;
+  }
+  async function addDemoPrinter(brand, btn, variant, pickedModelId) {
+    const uid = state.activeAccountId;
+    if (!uid || !window.demoMode || btn?.disabled) return;
+    if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+    try {
+      // The simulator hands out the address (and any credential) of the new one.
+      const fields = await window.demoMode.allocate(brand, demoRecords(state.printers), variant, pickedModelId);
+      if (!fields) throw new Error("no free local address");
+      const modelId = pickedModelId || fields.printerModelId || DEMO_MODEL[brand] || "";
+      const model = findPrinterModel(brand, modelId);
+      const n = state.printers.filter(p => p.demo && p.brand === brand).length + 1;
+      const ref = fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand).collection("devices").doc();
+      const data = {
+        ...fields, printerModelId: modelId, id: ref.id, demo: true,
+        // The Demo badge already says what it is; the name is just the model.
+        printerName: `${model?.name || PRINTER_BRAND_META[brand]?.label || brand}${n > 1 ? ` ${n}` : ""}`,
+        isActive: false, sortIndex: state.printers.length,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      await ref.set(data);
+      _finishPrinterAdd(brand, ref.id);
+    } catch (e) {
+      console.warn("[demo] add failed:", e?.message);
+      _flashMessage(t("demoAddFailed"));
+    } finally {
+      if (btn) { btn.disabled = false; btn.classList.remove("loading"); }
+    }
+  }
+
   function closePrinterBrandPicker() {
     $("printerBrandPickerOverlay")?.classList.remove("open");
     $("printerBrandPickerPanel")?.classList.remove("open");
@@ -40481,7 +40681,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // subtrees are refused and any field that looks like a credential is masked.
   // Credentials (printer access / check codes, cloud logins, tokens, keys, certs)
   // and the identity the app never displays (Google real name, e-mail).
-  const MCP_SECRET_FIELD = /password|passwd|token|secret|privatekey|accesscode|checkcode|apikey|credential|pem$|cert|^key$|^keys$|username|e?mail$|^googlename$|^firstname$|^lastname$/i;
+  const MCP_SECRET_FIELD = /password|passwd|token|secret|private_?key|access_?code|check_?code|api_?key|^lan_url$|credential|pem$|cert|^key$|^keys$|username|e?mail$|^googlename$|^firstname$|^lastname$/i;
   const MCP_FRIEND_READABLE = new Set(["inventory", "racks", "products", "lists"]);
   const MCP_ID_PRODUCT_NONE = 4294967295;
 

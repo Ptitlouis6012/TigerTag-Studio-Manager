@@ -6,6 +6,7 @@
  * call time — never destructured at module scope.
  */
 import { ctx } from '../context.js';
+import { tempEditAttrs } from '../temp-edit.js';
 import { jobBar, jobBarFill } from '../job-bar.js';
 import { opRemainingSec as remainingSec } from './core.js';
 
@@ -76,19 +77,20 @@ export function renderOpJobCard(p, conn) {
 export function renderOpTempCard(conn) {
   if (!conn?.ready || !conn.data.linkUp) return "";
   const t = conn.data?.temps || {};
-  const pill = (label, icon, cur, tgt, cls = "") => {
+  // heater = OctoPrint's heater id (tool0…, bed, chamber) the pill sets.
+  const pill = (label, icon, cur, tgt, cls = "", heater = null, max = 300) => {
     const heating = typeof tgt === "number" && tgt > 0 && typeof cur === "number" && cur < tgt - 1;
     return `
-      <div class="snap-temp${cls}${heating ? " snap-temp--heating" : ""}">
+      <div class="snap-temp${cls}${heater ? " snap-temp--editable" : ""}${heating ? " snap-temp--heating" : ""}"${heater ? tempEditAttrs(heater, tgt, max) : ""}>
         <span class="snap-temp-label">${ctx.esc(label)}</span>${icon}
         <span class="snap-temp-val">${ctx.esc(fmtTempPair(cur, tgt))}</span>
       </div>`;
   };
   const tools = t.tools || [];
   const pills = tools.filter(x => typeof x.cur === "number")
-    .map(x => pill(tools.length > 1 ? x.label : "E1", ctx.SNAP_ICON_NOZZLE, x.cur, x.tgt));
-  if (typeof t.bed === "number") pills.push(pill("BED", ctx.SNAP_ICON_BED, t.bed, t.bedTarget, " snap-temp--bed"));
-  if (typeof t.chamber === "number") pills.push(pill("CASE", ctx.SNAP_ICON_CHAMBER, t.chamber, t.chamberTarget, " snap-temp--chamber"));
+    .map(x => pill(tools.length > 1 ? x.label : "E1", ctx.SNAP_ICON_NOZZLE, x.cur, x.tgt, "", x.name, 300));
+  if (typeof t.bed === "number") pills.push(pill("BED", ctx.SNAP_ICON_BED, t.bed, t.bedTarget, " snap-temp--bed", "bed", 120));
+  if (typeof t.chamber === "number") pills.push(pill("CASE", ctx.SNAP_ICON_CHAMBER, t.chamber, t.chamberTarget, " snap-temp--chamber", "chamber", 70));
   if (!pills.length) return "";
   return `
     <section class="snap-block">

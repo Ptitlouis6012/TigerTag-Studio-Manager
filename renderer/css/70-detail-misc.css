@@ -2616,6 +2616,8 @@
   .weight-bar-wrap .wb-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .weight-bar-wrap .wb-val span { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 2px; }
   .weight-bar-wrap .wb-cap { font-size: 12px; color: var(--muted); }
+  /* Remaining length of a filament spool, estimated from the weight (filamentLengthM). */
+  .weight-bar-wrap .wb-len { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
   .weight-bar-wrap .wb-track {
     position: relative; height: 10px;
     background: var(--surface-2); border-radius: 5px; overflow: visible;

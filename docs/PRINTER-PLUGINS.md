@@ -41,6 +41,8 @@ renderer/printers/<id>/
 | `../job-bar.js` | `jobBar`, `jobBarFill` — the shared progress bar memory |
 | `../identity.js` | `ensurePrinterIdentity` — ARP MAC for a re-find after a DHCP change |
 | `../beta-badge.js` | `betaBadgeHtml()` — the Beta tag + ⓘ bubble at the top of a beta printer's live block |
+| `../model-list.js` | `mountModelList(el, brand, onChange)` — the connector's models with pictures + search, for the add-flow choice card ("Which printer is it?"); feed the pick into the prefill as `modelId` + `printerName` |
+| `../temp-edit.js` | `tempEditAttrs(id, target, max)` + `wireTempEdit(root, onSet)` — click a temperature to type a new target (the inline editor of the built-in brands) |
 
 Shared CSS classes (`snap-*`, `pba-*`, `pp-*`, `ffg-chip`, `cre-action-btn`) are
 the host's card vocabulary; use them so every printer reads the same.
@@ -101,7 +103,7 @@ logged or sent during discovery.
 1. Create the folder and its `PROTOCOL.md`.
 2. Write `plugin.js` (+ `main.cjs` if the printer needs the main process).
 3. Add **one** import line at the bottom of `renderer/printers/plugins.js`.
-4. Test without hardware when you can (a mock like `scripts/moonraker-mock.mjs`).
+4. Test without hardware when you can (a mock like `scripts/moonraker-mock.mjs` — see `docs/PRINTER-MOCKS.md`).
 5. Backend: add the id to `PRINTER_BRANDS` in the backend repo's functions
    (printer XP achievement, community stats) and deploy.
 

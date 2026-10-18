@@ -42,7 +42,7 @@ test('theme image has a bundled-logo fallback and no credential exposure', () =>
   assert.ok(!renderKlipperLogo({ ip: '' }).includes('<img'));
 });
 
-test('plugin polls and renders seven discovered temperatures', async () => {
+test('plugin polls seven temperatures: three pills, four in the Sensors card', async () => {
   const timers = [];
   const original = globalThis.setInterval;
   globalThis.setInterval = (...args) => { const timer = original(...args); timers.push(timer); return timer; };
@@ -74,12 +74,17 @@ test('plugin polls and renders seven discovered temperatures', async () => {
     assert.deepEqual(query['temperature_sensor mcu_temp'], ['temperature']);
     assert.deepEqual(query['temperature_fan chamber_fan'], ['temperature', 'target']);
     assert.equal(core.klipperGetConn(printer).data.temps.sensors.length, 4);
-    const { renderKlipperTempCard } = await import('../renderer/printers/klipper/cards.js');
+    const { renderKlipperTempCard, renderKlipperSensorsCard } = await import('../renderer/printers/klipper/cards.js');
     ctx.t = key => key;
+    // Temperature stays the same card as every brand: nozzle, bed, chamber pills.
     const html = renderKlipperTempCard(core.klipperGetConn(printer));
-    assert.match(html, /snap-temps klipper-temps/);
-    assert.equal((html.match(/class="snap-temp(?: |")/g) || []).length, 7);
-    assert.match(html, /Raspberry Pi/);
+    assert.equal((html.match(/class="snap-temp(?: |")/g) || []).length, 3);
+    assert.ok(!html.includes('Raspberry Pi'));
+    // The four extra temperatures live in the collapsible Sensors card.
+    const sensors = renderKlipperSensorsCard(core.klipperGetConn(printer));
+    assert.match(sensors, /<details class="snap-block klipper-sensors"/);
+    assert.equal((sensors.match(/class="klipper-sensor(?: |")/g) || []).length, 4);
+    assert.match(sensors, /Raspberry Pi/);
   } finally {
     core.klipperDisconnect(printer);
     for (const timer of timers) clearInterval(timer);

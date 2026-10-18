@@ -12,6 +12,7 @@
  * Ends on the Printer Settings form, the API key prefilled when approved.
  * Entry point: openOctoAddFlow() — the plugin's `openAddFlow` hook.
  */
+import { mountModelList } from '../model-list.js';
 import { ctx } from '../context.js';
 import { createScanPicker } from '../scan-pick.js';
 import * as extraSubnets from '../extra-subnets.js';
@@ -45,8 +46,10 @@ function cardHtml(c) {
     </div>`;
 }
 
+// The model picked in the choice card (optional) — carried into the settings form.
+let _model = null;
 function prefillFor(c) {
-  return { ip: c.ip, printerName: `OctoPrint ${c.ip}`, modelId: "0", discovery: opDiscoveryRecord(c) };
+  return { ip: c.ip, printerName: _model?.name || `OctoPrint ${c.ip}`, modelId: _model?.id || "0", discovery: opDiscoveryRecord(c) };
 }
 function continueWith(c) {
   if (c.appKeys) openApprove(c);
@@ -101,6 +104,7 @@ function ensureDOM() {
       ${choice("octoChoiceScan", "snapAddChoiceScan", "Scan network", "snapAddChoiceScanHint", "Auto-discover printers on your LAN")}
       ${choice("octoChoiceManual", "snapAddChoiceManual", "Enter IP address", "snapAddChoiceManualHint", "Manually enter the printer's local IP")}
     </div>
+    <div class="pba-models" id="octoChoiceModels"></div>
     <div class="pba-footer">${back("octoChoiceBack")}</div>
   </div>
 </div>
@@ -318,7 +322,11 @@ async function openApprove(c) {
   if (msg) msg.textContent = ctx.t(r.error === "denied" ? "octoApproveDenied" : "octoApproveTimeout");
 }
 
+let _modelList = null;
 export function openOctoAddFlow() {
   ensureDOM();
+  // Built on first open (the catalogues are loaded by then), cleared on every open.
+  if (!_modelList) _modelList = mountModelList(document.getElementById("octoChoiceModels"), "octoprint", m => { _model = m; });
+  _modelList.reset();
   openPanel("octoChoiceOverlay");
 }

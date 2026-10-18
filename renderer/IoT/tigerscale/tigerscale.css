@@ -672,3 +672,7 @@
   margin-right: 6px;
   font-size: 9px;
 }
+
+/* Live view + Screenshot of the scale's own screen (buttons from tigertouch.css). */
+.scale-lan { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.scale-lan:empty { display: none; }

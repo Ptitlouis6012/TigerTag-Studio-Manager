@@ -14,10 +14,13 @@ import { betaBadgeHtml } from '../beta-badge.js';
 import {
   BRAND, klipperKey, klipperGetConn, klipperIsOnline, klipperPing, klipperConnect,
   klipperDisconnect, klipperDisconnectAll, klipperJobControl, klipperWriteSlot,
-  onKlipperChange, remainingSec,
+  onKlipperChange, remainingSec, klipperSetTemp,
 } from './core.js';
+import { wireTempEdit } from '../temp-edit.js';
+import { morphInner } from '../dom-morph.js';
 import {
   renderKlipperJobCard, renderKlipperTempCard, renderKlipperFilamentCard,
+  renderKlipperSensorsCard, wireKlipperSensors,
 } from './cards.js';
 import { renderKlipperCamBanner, renderKlipperCamWallBanner, klipperCamStopAll, klipperHasCamera } from './camera.js';
 import { openKlipperAddFlow } from './add-flow.js';
@@ -78,7 +81,7 @@ function renderTop(p, conn) {
 }
 
 // Same order as every other brand: job · control · temperature · filament.
-const renderBottom = (p, conn) => `${renderKlipperTempCard(conn)}${renderKlipperFilamentCard(p, conn)}`;
+const renderBottom = (p, conn) => `${renderKlipperTempCard(conn)}${renderKlipperSensorsCard(conn)}${renderKlipperFilamentCard(p, conn)}`;
 
 /** Poll refresh: top + bottom re-rendered, the control card patched in place. */
 function refreshLive(live, p) {
@@ -88,7 +91,7 @@ function refreshLive(live, p) {
     live.innerHTML = renderLiveInner(p); wireLive(live, p); return;
   }
   top.innerHTML = renderTop(p, conn);
-  live.querySelector('[data-klp-part="bottom"]').innerHTML = renderBottom(p, conn);
+  morphInner(live.querySelector('[data-klp-part="bottom"]'), renderBottom(p, conn));   // keeps an open temperature editor
   const sig = controlSig(conn);
   if (ctrl.dataset.sig !== sig) { ctrl.dataset.sig = sig; ctrl.innerHTML = renderControlCard(p, conn); }
   else patchControlCard(ctrl, conn);
@@ -120,6 +123,8 @@ function renderLogInner(p) {
 function wireLive(root, p) {
   if (!root || !p) return;
   wireControl(root, () => ctx.getActivePrinter());
+  wireTempEdit(root, (heater, v) => { const ap = ctx.getActivePrinter(); if (ap) klipperSetTemp(ap, heater, v); });
+  wireKlipperSensors(root);
   root.querySelectorAll("[data-klipper-job]").forEach(btn => {
     if (btn.dataset.wired) return;
     btn.dataset.wired = "1";

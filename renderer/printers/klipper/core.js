@@ -493,6 +493,9 @@ export const klipperSetFan = (p, pct) => {
   const v = Math.round(Math.max(0, Math.min(100, Number(pct) || 0)) * 2.55);
   return klipperGcode(p, v > 0 ? `M106 S${v}` : "M107");
 };
+/** Target temperature of one heater (extruder, extruder1, heater_bed, a heater_generic); 0 = off. */
+export const klipperSetTemp = (p, heater, value) =>
+  klipperGcode(p, `SET_HEATER_TEMPERATURE HEATER=${gv(heater)} TARGET=${Math.max(0, Math.round(Number(value) || 0))}`);
 /** Speed factor, percent (M220). */
 export const klipperSetSpeed = (p, pct) => klipperGcode(p, `M220 S${Math.round(Math.max(10, Math.min(300, Number(pct) || 100)))}`);
 export function klipperSetLight(p, light, on) {

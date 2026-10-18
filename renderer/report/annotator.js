@@ -73,7 +73,14 @@ function run(img, t, esc, resolve) {
   const wrap = document.createElement("div");
   wrap.className = "rep-anno";
   const btn = (attrs, inner, label) => `<button type="button" class="rep-anno-tool" ${attrs} aria-label="${esc(label)}">${inner}</button>`;
+  // A modal over the app (not full screen): a titled card, so it reads as "a
+  // step of my request", with the app dimmed behind it.
   wrap.innerHTML = `
+   <div class="rep-anno-card" role="dialog" aria-modal="true" aria-label="${esc(t("reportAnnoTitle"))}">
+    <div class="rep-anno-head">
+      <span class="rep-anno-title">${esc(t("reportAnnoTitle"))}</span>
+      <span class="rep-anno-sub">${esc(t("reportAnnoSub"))}</span>
+    </div>
     <div class="rep-anno-bar">
       <div class="rep-anno-group">${TOOLS.map(([id, icon, key, k]) => btn(`data-tool="${id}"`, `<span class="icon icon-${icon} icon-16"></span><kbd>${k.toUpperCase()}</kbd>`, `${t(key)} (${k.toUpperCase()})`)).join("")}</div>
       <span class="rep-anno-sep"></span>
@@ -92,7 +99,8 @@ function run(img, t, esc, resolve) {
       <button type="button" class="rep-btn rep-btn--primary" data-act="done">${esc(t("reportAnnoDone"))}</button>
     </div>
     <div class="rep-anno-stage"><div class="rep-anno-canvas-wrap"><canvas></canvas></div></div>
-    <div class="rep-anno-tip"></div>`;
+    <div class="rep-anno-tip"></div>
+   </div>`;
   document.body.appendChild(wrap);
   const canvas = wrap.querySelector("canvas");
   const holder = wrap.querySelector(".rep-anno-canvas-wrap");

@@ -339,5 +339,12 @@ export function opSetSpeed(p, pct) {
   if (conn) conn.sent.speedPct = v;
   return command(p, "/api/printer/command", { commands: [`M220 S${v}`] });
 }
+/** Target temperature; heater "tool0".."toolN" | "bed" | "chamber"; 0 = off. */
+export function opSetTemp(p, heater, value) {
+  const v = Math.max(0, Math.round(Number(value) || 0));
+  if (/^tool\d+$/.test(heater)) return command(p, "/api/printer/tool", { command: "target", targets: { [heater]: v } });
+  if (heater === "bed" || heater === "chamber") return command(p, `/api/printer/${heater}`, { command: "target", target: v });
+  return Promise.resolve({ ok: false });
+}
 /** Open the serial link to the printer (OctoPrint up, printer not connected). */
 export const opConnectSerial = p => command(p, "/api/connection", { command: "connect" });

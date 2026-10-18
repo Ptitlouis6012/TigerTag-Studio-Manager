@@ -40,6 +40,31 @@ contextBridge.exposeInMainWorld('printerPlugin', {
     return ipcRenderer.invoke(`printer:${id}:${name}`, ...args);
   },
 });
+// Tiger Touch — its screen's picture, live frames and touches, all fetched by
+// main (renderer/IoT/tigertouch draws the live view; the firmware serves no page).
+// TigerSpool — one picture of its screen (GET /screen.bmp, no code), fetched by main.
+contextBridge.exposeInMainWorld('tigerspool', {
+  screenshot: ip => ipcRenderer.invoke('tigerspool:screenshot', { ip }),
+});
+// TigerScale V3 — one picture of its screen, read from its :81 live stream by main.
+contextBridge.exposeInMainWorld('tigerscale', {
+  screenshot: (url, code, wake) => ipcRenderer.invoke('tigerscale:screenshot', { url, code, wake }),
+});
+contextBridge.exposeInMainWorld('tigertouch', {
+  screenshot: (ip, code)          => ipcRenderer.invoke('tigertouch:screenshot', { ip, code }),
+  frame:      (ip, code, since)   => ipcRenderer.invoke('tigertouch:frame', { ip, code, since }),
+  touch:      (ip, code, t)       => ipcRenderer.invoke('tigertouch:touch', { ip, code, ...t }),
+  savePng:    (dataUrl, name)     => ipcRenderer.invoke('tigertouch:save-png', dataUrl, name),
+});
+// Demo mode — the printer simulator in main (services/demo, docs/DEMO-MODE.md).
+contextBridge.exposeInMainWorld('demoMode', {
+  faces:    ()           => ipcRenderer.invoke('demo:faces'),
+  allocate: (brand, records, variant, modelId) => ipcRenderer.invoke('demo:allocate', brand, records, variant, modelId),
+  sync:     (records)    => ipcRenderer.invoke('demo:sync', records),
+  state:    (id)         => ipcRenderer.invoke('demo:state', id),
+  set:      (id, o)      => ipcRenderer.invoke('demo:set', id, o),
+  lanHost:  ()           => ipcRenderer.invoke('demo:lan-host'),
+});
 contextBridge.exposeInMainWorld('prusa', {
   http:         (opts)           => ipcRenderer.invoke('prusa:http', opts),
   probe:        (host, timeout)  => ipcRenderer.invoke('prusa:probe', host, timeout),
