@@ -111,7 +111,7 @@ export function klipperConnect(printer) {
     status: "connecting",            // connecting | connected | offline | error
     lastError: null, retry: 0, retryTimer: null, intervalId: null,
     ready: false,                    // feature detection done
-    features: { extruders: ["extruder"], mmu: false, afcLanes: [], afcPrefix: null, chamber: null, sensors: [], lights: [], spoolman: false },
+    features: { extruders: ["extruder"], mmu: false, afcLanes: [], afcPrefix: null, chamber: null, sensors: [], lights: [], spoolman: false, fanMaxPower: 1 },
     camera: null,
     metaFor: null, thumbFor: null,
     log: [],
@@ -212,6 +212,11 @@ async function detect(conn) {
     stream: absUrl(conn, cam.stream_url), snapshot: absUrl(conn, cam.snapshot_url),
     flipH: !!cam.flip_horizontal, flipV: !!cam.flip_vertical, rotation: Number(cam.rotation) || 0,
   } : null;
+  // Klipper reports `fan.speed` AFTER the `[fan] max_power` ceiling (M106 S255 with max_power 0.8 reads 0.8);
+  // Mainsail shows it as a share of that ceiling, and so does the panel. No readable ceiling = 1.
+  const cfg = await call(conn, "POST", "/printer/objects/query", { body: { objects: { configfile: ["settings"] } } });
+  const ceiling = Number(cfg.result?.status?.configfile?.settings?.fan?.max_power);
+  f.fanMaxPower = ceiling > 0 && ceiling <= 1 ? ceiling : 1;
   // Stable identity (ARP MAC) for a re-find after a DHCP change (printers/refind.js).
   d.serial = sys.result?.system_info?.cpu_info?.serial_number || null;
   try { ensurePrinterIdentity(BRAND, conn.key, String(conn.host || "").replace(/:\d+$/, "")); } catch (_) {}
@@ -331,7 +336,7 @@ function merge(conn, s) {
     chamberTarget: f.chamber ? num(s[f.chamber]?.target) : null,
     sensors: readTemperatureSensors(f.temperatureSensors || [], s),
   };
-  d.fanPct = num(s.fan?.speed) != null ? Math.round(s.fan.speed * 100) : null;
+  d.fanPct = num(s.fan?.speed) != null ? Math.min(100, Math.round(s.fan.speed / f.fanMaxPower * 100)) : null;
   d.speedPct = num(s.gcode_move?.speed_factor) != null ? Math.round(s.gcode_move.speed_factor * 100) : null;
   d.activeTool = s.toolhead?.extruder || null;
   if (Array.isArray(s.toolhead?.position)) d.pos = s.toolhead.position.slice(0, 3);
