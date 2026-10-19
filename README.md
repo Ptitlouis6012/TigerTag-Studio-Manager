@@ -389,7 +389,7 @@ UI strings live in `renderer/locales/<lang>.json`. Never edit the 11 locale file
 ```bash
 # Add a new key across all 11 locales
 npm run i18n:add -- myKey en="Hello" fr="Bonjour" de="Hallo" \
-  es="Hola" it="Ciao" zh="你好" pt="Olá" pt-pt="Olá" pl="Cześć" ru="Привет"
+  es="Hola" it="Ciao" zh="你好" pt="Olá" pt-pt="Olá" pl="Cześć" ru="Привет" nl="Hallo"
 
 # Insert after an existing key (keeps related keys grouped)
 npm run i18n:add -- myKey --after toolboxTitle en="Hello" ...

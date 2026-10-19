@@ -1,4 +1,4 @@
-# AGENT.md — TigerTag Inventory Web Page
+# Inventory web page — spec (historical; not instructions for the Electron app)
 
 ## Goal
 

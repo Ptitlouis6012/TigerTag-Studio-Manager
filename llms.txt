@@ -15,7 +15,7 @@ Current version: **2.42.1** — macOS (Intel + Apple Silicon, signed & notarized
 ## Architecture
 
 - **Entry point**: `main.js` (Electron main process)
-- **Renderer**: `renderer/inventory.html` + `renderer/inventory.js` (a single ES module, ~36 500 lines, already importing ~29 sub-modules) + modular CSS in `renderer/css/`
+- **Renderer**: `renderer/inventory.html` + `renderer/inventory.js` (a single ES module, ~41 000 lines, already importing ~29 sub-modules) + modular CSS in `renderer/css/`
 - **Preload bridge**: `preload.js` — exposes IPC handlers to renderer via `window.electronAPI`
 - **Web target (Tiger Studio Web, v2.40.0)**: the same renderer runs in a browser at `studio.tigersystem.io` (`tigersystem.io/studio` redirects there; own origin, so its own sign-in). `renderer/web-bridge.js` defines a partial browser `electronAPI` (`isWeb: true`) when preload is absent; `HAS_NATIVE` in `inventory.js` is the only "is this desktop" test (never `!!window.electronAPI`); `data-desktop-only` / `data-web-only` attributes hide UI per target (`html.is-web`). `scripts/build-web.mjs` makes the static build (app page at the folder root via `<base>`, PWA manifest, `version.json`); the Hub (TigerTag_Hub) builds the published latest release into `/studio` and `.github/workflows/web-sync.yml` keeps web and desktop on the same version; web-only fixes ship as `X.Y.Z · web N` via `npm run web:hotfix` (`docs/WEB_HOTFIX.md`). On https the bridge refuses insecure `ws:`/`http:` connections (no LAN from the web). Full guide: `docs/WEB_DEPLOYMENT.md`.
 - **NFC**: `services/nfc-process.js` runs as a `utilityProcess` (not a Worker Thread) to avoid SIGABRT on macOS; communicates via IPC
@@ -279,7 +279,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 
 **Never edit locale JSON files by hand.** Use:
 ```bash
-npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..."
+npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..." nl="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
 2036 keys × 11 locales as of v2.42.2
@@ -313,7 +313,7 @@ npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 
 - Firebase Auth (Google OAuth loopback PKCE + email/password)
 - `displayName` always from Firestore `users/{uid}.displayName` (pseudo), never from Firebase Auth `user.displayName` (Google real name)
-- `roles`, `tier` and `Debug` fields writable only via Firebase Admin SDK / Cloud Function — never by client
+- `roles` and `tier` fields writable only via Firebase Admin SDK / Cloud Function — never by client; `Debug` is a user preference the client writes on its own doc (any account can enable debug mode)
   (`tier` gates the attachment cap: free 1 / plus 2 / premium 5, enforced server-side)
 - Firestore Security Rules enforce owner-only access; friends granted read on `inventory`, `racks`, `products` and
   `lists` via presence in the owner's `friends/` subcollection. **The rules live in a separate repo**
@@ -323,7 +323,7 @@ npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 
 ## LocalStorage keys
 
-`tigertag.accounts` · `tigertag.activeAccount` · `tigertag.inv.<id>` · `tigertag.view` · `tigertag.lang` · `tigertag.sidebar` · `tigertag.panelWidth.detail` · `tigertag.panelWidth.debug · `tigertag.theme`
+`tigertag.accounts` · `tigertag.activeAccount` · `tigertag.inv.<id>` · `tigertag.view` · `tigertag.lang` · `tigertag.sidebar` · `tigertag.panelWidth.detail` · `tigertag.panelWidth.debug` · `tigertag.theme`
 
 ## Build & release
 

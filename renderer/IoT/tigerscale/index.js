@@ -538,7 +538,7 @@ function _scaleLocalStatusText(status) {
  *  orange=remove-spool, red=error. Text goes through t() — idle/ready/
  *  scanning/stable/send/success reuse the existing scaleStatus* keys, the
  *  other three (countdown/error/remove-spool) have their own scaleBadge*
- *  keys, all 9 locales. */
+ *  keys, all 11 locales. */
 function _scaleStatusBadgeInfo(status, t) {
   if (!status) return null;
   const GREEN = "rgba(59,165,93,0.30)", ACCENT = "rgba(47,127,255,0.30)",

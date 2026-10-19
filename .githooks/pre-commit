@@ -66,11 +66,14 @@ fi
 # the app was at v2.12.0 / 28.5k / 6. Also flags doc references to paths
 # that no longer exist. Only derivable facts are checked, never prose.
 # Runs whenever a doc or one of the files it describes is staged.
-if git diff --cached --name-only | grep -qE '^(llms\.txt|README\.md|FEATURES\.md|CLAUDE\.md|AGENT\.md|package\.json|renderer/(inventory\.js|locales/en\.json)|renderer/(css|printers)/)'; then
+if git diff --cached --name-only | grep -qE '^(llms\.txt|README\.md|FEATURES\.md|CLAUDE\.md|AGENTS\.md|package\.json|renderer/(inventory\.js|locales/en\.json)|renderer/(css|printers)/)'; then
   node scripts/check-docs-drift.mjs
 fi
 
-# Add more checks here. Examples:
-#   • lint
-#   • formatter
-#   • typecheck
+# ── Agent rules ───────────────────────────────────────────────────────
+# One rule = one file in .agents/rules/, indexed in the CLAUDE.md "Rules"
+# section. Fails when a rule file is not indexed, the index cites a missing
+# file, a path cited in CLAUDE.md / AGENTS.md / a rule file does not exist,
+# or a printer-plugin string table misses one of the 11 locales. Unused
+# en.json keys are only a warning. Always on (~100 ms).
+node scripts/check-agent-rules.mjs

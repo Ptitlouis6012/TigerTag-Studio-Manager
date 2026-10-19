@@ -23148,7 +23148,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   // Read language preference from Firestore and apply if different from local
-  // ── Debug: precise view / side-card reference (admin debug mode) ───────────
+  // ── Debug: precise view / side-card reference (debug mode, any account) ───────────
   // In debug mode, ⌥(Alt)-click any card/panel → copies a paste-ready descriptor
   // (which view, which render function + DOM id + file, and the data ids in scope)
   // so the exact surface can be pointed at without guessing. Admin-only tool, kept
@@ -37283,7 +37283,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   });
 
   /* ── First-connection onboarding — 2 steps (language → profile) ────────── */
-  // Step 1: a compact dropdown of the 9 supported locales (flag + NATIVE name —
+  // Step 1: a compact dropdown of the 11 supported locales (flag + NATIVE name —
   // a native speaker always finds their own); picking one applies the language
   // IMMEDIATELY (the modal re-translates live) and persists it like the Settings
   // selector (saveAccountLang). Step 2: display name + avatar. The avatar is

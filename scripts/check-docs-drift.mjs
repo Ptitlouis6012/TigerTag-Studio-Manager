@@ -133,7 +133,7 @@ for (const file of ["README.md", "FEATURES.md", "ROADMAP.md"]) {
 // ── Docs must not point at paths that no longer exist ───────────────────
 // A renamed or deleted folder leaves dangling references behind (the `brand/`
 // removal is the live example). Only checks explicit repo-root paths.
-for (const file of ["README.md", "llms.txt", "CLAUDE.md", "AGENT.md"]) {
+for (const file of ["README.md", "llms.txt", "CLAUDE.md", "AGENTS.md"]) {
   if (!existsSync(join(root, file))) continue;
   const body = read(file);
   const seen = new Set();

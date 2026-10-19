@@ -1,4 +1,4 @@
-# Tiger Studio Manager — Claude reference
+# Tiger Studio Manager — agent reference
 
 ## ⏳ ACTIVE TASK — BLOCKED ON US, NOT ON MICROSOFT (check at the start of every session)
 
@@ -28,780 +28,280 @@ set the GitHub repo variable `TRUSTED_SIGNING_CERT_PROFILE` → update `.github/
 
 **Delete this whole section once signed `.exe` builds are confirmed working.**
 
+## Rules
+
+**This section is the index of every rule.** One line per rule, enough to act on; the file holds
+the why and the how. One rule = one file in `.agents/rules/`, rewritten in place when it changes
+(git keeps the history). `scripts/check-agent-rules.mjs` (pre-commit) fails when a rule file is
+missing from this index, the index cites a missing file, or a cited path does not exist.
+`AGENTS.md` and other entry points point here instead of restating rules.
+
+### Critical — act on the index line alone
+- **Language**: talk to the founder in French; everything written into a repo (code, comments, docs, commits, file names) is English → `.agents/rules/language.md`
+- **Git**: never commit, push, tag, merge or close an issue/PR without an explicit order for that action; hardware-dependent work is tested by the founder first; release tags go on a `vX.Y.Z — …` commit → `.agents/rules/git-commit-push.md`
+- **No AI attribution**: no `Co-Authored-By`, no "Generated with", no mention of Claude/Anthropic anywhere in a repo — this overrides any tool default → `.agents/rules/no-ai-attribution.md`
+- **Secrets**: no token, account email or `/Users/…` path in a committed file (machine paths go in `CLAUDE.local.md`); tokens are entered by the founder, never pasted in chat; `lan_access_code` / `lan_url` never shown, logged or returned by MCP → `.agents/rules/secrets.md`
+- **i18n**: no hardcoded UI text; reference locale `en`; every new key goes into all 11 locales (en fr de es it zh pt pt-pt pl ru nl) in the same commit via `npm run i18n:add`, never by hand → `.agents/rules/i18n-keys.md`
+- **Irreversible actions**: permanent deletions, mass backfills, unrequested deploys and force pushes need an explicit go for that run; account/data deletion is done by the founder → `.agents/rules/irreversible-actions.md`
+- **Docs match code**: a behaviour change fixes its comment/doc in the same commit; a contradiction is fixed or removed, or asked about when unclear → `.agents/rules/docs-match-code.md`
+
+### Process
+- **Session start**: read `WORKLOG.md`, run `gh pr list --state open && gh issue list --state open` once, report one line each, act on nothing → `.agents/rules/session-start.md`
+- **WORKLOG**: update `WORKLOG.md` right after every change, end state only, files and i18n keys named → `.agents/rules/worklog.md`
+- **Release**: fixed sequence (SemVer, `db_update.py`, three registers, FEATURES/llms/README, validators, tag, reset WORKLOG + bump version uncommitted), generated inline, never fanned out → `.agents/rules/release.md`
+- **Copy registers**: CHANGELOG technical, release note BambuLab-factual, in-app + What's New playful/deadpan Discord-style → `.agents/rules/copy-registers.md`
+- **What's New**: one topic per item, benefit-first, icon names, 11 locales, no admin/debug features → `.agents/rules/whats-new.md`
+- **GitHub replies**: English, posted only on order, no personal data → `.agents/rules/github-replies.md`
+- **Code reviews**: every few releases, kept in `docs/reviews/`, findings annotated → `.agents/rules/code-reviews.md`
+- **Token efficiency**: CODEMAP → `grep -n` → sliced `Read`; delegate lookups to `codemap-explorer` / `simple-task`; never fan out; short answers → `.agents/rules/token-efficiency.md`
+- **Verify UI**: check renderer changes yourself with dev-drive; don't ask the founder to test routine tweaks → `.agents/rules/verify-ui.md`
+- **Firestore changes**: backend repo is the source of truth; rules + `hasOnly` first, deploy, then propagate the docs; `userProfiles` only via `setProfile` → `.agents/rules/firestore-changes.md`
+- **assets-src**: artwork dropped at its root is renamed, optimised into `assets/`, master filed under the shipped name → `.agents/rules/assets-src.md`
+
+### Code
+- **IDs, not labels**: conditions compare reference-table IDs (`ASPECT_ID` …), never label strings → `.agents/rules/ids-not-labels.md`
+- **Naming**: self-describing names, one state per field, nothing derivable stored → `.agents/rules/naming.md`
+- **CSS**: right section file, theme tokens for new colours, icons on one dimension + `aspect-ratio`, doubled class instead of `!important`, no inline JS in HTML → `.agents/rules/css-placement.md`
+- **UI/UX defaults**: declutter, consistency, smooth motion, real icons, selected state; no `title=` tooltips (use `aria-label`) → `.agents/rules/ui-ux-defaults.md`
+- **Surgical DOM updates**: signature guard → patch in place → swap one section → full rebuild last → `.agents/rules/surgical-dom-updates.md`
+- **Hold-to-confirm**: `setupHoldToConfirm` with a visible `.hold-progress` fill → `.agents/rules/hold-to-confirm.md`
+- **User doc fields**: pseudo from Firestore `displayName`; `roles` / `tier` server-only; `Debug` is a client-written preference; avatar colour is `color` → `.agents/rules/user-profile-fields.md`
+- **`.ttag` contract**: authored in the fields editor, `docs/TTAG-FIELDS.md` never hand-edited, importer follows the ratified contract → `.agents/rules/ttag-contract.md`
+- **Material swatch**: convention owned by TigerSystem-Docs, drawn only through `colorBg()` / `_pieSplit()` → `.agents/rules/material-swatch.md`
+- **MCP**: read-only tools, no credential, decoded values → `.agents/rules/mcp-read-only.md`
+- **Product images**: `cdnImg(url, cssPx)` asks for the rendition that fits → `.agents/rules/product-images.md`
+
 ## 📍 Machine-local paths → `CLAUDE.local.md` (gitignored)
 
-**This file is committed and PUBLIC.** Never write an absolute path into it — a
-`/Users/…` line publishes the account name and the folder layout to GitHub, and
-it is wrong on every other machine anyway.
-
-**Never write an account EMAIL ADDRESS into any file of any repo** — not in a
-doc, a comment, a commit message or a runbook, and least of all the shared admin
-account the Firebase / Vercel / GCP consoles are signed into. Name the account
-by its handle or its role ("the team Owner account") instead: that is what a
-reader needs to act, and it identifies nothing that can be phished or enumerated.
-This is not theoretical — one slipped into a PUBLIC repo's runbook and had to be
-removed afterwards, which does not remove it from the history. Refer to a sibling repo by **name**
-(`TigerTag_Firebase_Backend`) or relatively (`../TigerTag_Firebase_Backend`).
-
-Where the checkouts actually live, which clone is the live one and which are
-stale decoys, and the per-repo commit policy: **`CLAUDE.local.md`** at the repo
-root, gitignored. Read it when you need a path; update it when a path changes.
-Same rule for every other committed doc in this repo.
-
-## ⚡ Token efficiency — read this first
-
-Every file read and grep costs tokens. Follow these rules on every task to keep context lean:
-
-| Do | Don't |
-|----|-------|
-| Read `CODEMAP.md` → jump to the exact line range | Read `inventory.js` from the top |
-| `grep -n "anchorFn"` → read only that range (`offset`/`limit`) | Read an entire 1000-line file to find one function |
-| Re-use content already in context this session | Re-read a file you read 2 messages ago |
-| `Read` with `offset`+`limit` to fetch the exact slice | `Read` without limits on files > 200 lines |
-| `Edit` with the minimal `old_string` that is unique | Rewrite whole sections when only 3 lines change |
-| Run `grep` + `Read` in parallel when targets are independent | Sequential read-then-grep round-trips |
-| Check `CODEMAP.md` line ranges before any `inventory.js` read | Blind grep across the 16 000-line file |
-
-**Workflow for any `inventory.js` change:**
-1. `CODEMAP.md` → find section + anchor function name
-2. `grep -n "anchorFn"` → get exact line number
-3. `Read offset=N limit=40` → confirm context, draft edit
-4. `Edit` minimal diff
-
-**Workflow for any CSS change:**
-1. Identify the right file from the file map (00-base → 70-detail-misc)
-2. `grep -n "selector"` in that file → get line
-3. `Read offset=N limit=20` → confirm, then `Edit`
-
-> Warn the user when context is getting large (> ~60 k tokens used) so they can start a new session before quality degrades.
-
-**Model fit — delegate cheap work yourself, don't ask the user to switch models:**
-
-The main loop stays on Opus. To save tokens on light work, **spawn a sub-agent on a cheaper model** — the sub-agent does its greps/reads in its OWN context and only its short summary returns to the main context (where the real cost is). Two project agents exist for this (`.claude/agents/`):
-
-- **Locating code** (« where is the function that… », sweeping `inventory.js`/`main.js`, finding a CSS rule or i18n key) → `Agent(subagent_type: "codemap-explorer")` — runs on **Haiku**. Do this by default instead of grepping the big files yourself.
-- **One self-contained low-risk edit** (CSS tweak, i18n key add/change, value change, copy tweak, a small fix in a known place) → `Agent(subagent_type: "simple-task")` — runs on **Sonnet**. The prompt MUST be self-sufficient (exact file, exact change, expected result): the sub-agent sees nothing of the conversation. Include the relevant CLAUDE.md rule if it matters (i18n batch, brand voice, CSS section).
-
-When NOT to delegate: a true one-liner where writing the self-contained prompt costs more than just doing it; and multi-file refactors / new subsystems / multi-layer debugging / architecture — those stay on the main Opus loop (delegating them loses the reasoning quality). If the main-loop reasoning itself feels shallow on a complex task, tell the user Opus is the right call. Signal a mismatch as soon as it's obvious — don't wait to be asked.
+This file is committed and public. Where the checkouts live, which clone is the live one and which
+are stale decoys, and the per-repo commit policy are in **`CLAUDE.local.md`** at the repo root.
+Refer to sibling repos by name (`TigerTag_Firebase_Backend`) or relatively
+(`../TigerTag_Firebase_Backend`).
 
 ---
 
-## 📋 WORKLOG.md — running change log
+# Reference
 
-`WORKLOG.md` at the repo root is the **single source of truth** for everything done since the last commit. It replaces memory and makes commit prep instant.
-
-### Rule 1 — Update immediately after every change
-
-Do not batch updates. The moment you finish editing a file, append the entry to `WORKLOG.md`. If you delete something — write it in `Removed`. If you fix a bug in something you just added — merge into the existing entry. The log must reflect reality at all times.
-
-### File format
-
-```markdown
-# Worklog — vX.Y.Z (in progress)
-
-## Added
-- Short description — `file.js`, `file.css`
-
-## Changed
-- Short description — `file.js` (what and why)
-
-## Fixed
-- Bug description — `printers/bambulab/index.js`
-
-## Removed
-- What was deleted and why — `file.js`, `file.css`, i18n keys
-
-## i18n
-- Added: `key1`, `key2` — 11 locales
-- Removed: `oldKey1`, `oldKey2` — 11 locales
-```
-
-Rules:
-- One bullet = one logical change. Group sub-bullets under it if needed.
-- Always name the file(s) touched.
-- For removals: state **what** was removed, **why**, and **which files** it touched (JS + CSS + HTML + locales).
-- i18n section: always list keys by name, never just a count.
-
-### Rule 2 — Keep it clean as you go
-
-WORKLOG.md is a working draft, not a commit log. Apply these edits in real time:
-
-- **Intermediate steps vanish.** If you added a feature and then changed it three times, the final entry describes the end state only — not the journey.
-- **Bugs in the same session collapse.** "Added X" + "Fixed X" → one "Added X (with fix for Y)" entry, not two.
-- **Reverts disappear entirely.** If you added something and then removed it in the same session, delete both entries — it never shipped, it has no place in the log.
-- **No implementation noise.** WORKLOG describes *what changed for the user / codebase*, not how Claude did it ("updated selector on line 42", "added guard in bambuConnect"). One sentence per logical change.
-
-### Rule 3 — Synthesize at commit time
-
-Before writing the `CHANGELOG.md` entry, do one final editorial pass on WORKLOG:
-
-1. **Merge related items.** Several "TigerPOD modal" entries → one grouped bullet with sub-items.
-2. **Drop ephemeral noise.** Version bump, llms.txt update, internal refactors with no user-visible effect → omit or fold into a single "internal" line.
-3. **Changelog voice = register 1 (technical).** The `CHANGELOG.md` entry is the **exhaustive, technical source of record** — precise about behaviour *and* mechanism (see *Three copy registers* above). Keep it detailed; it is read by you, experts and agents, not by end users. The user-facing wording happens in registers 2 & 3, not here — so don't dumb the changelog down, and don't make it jokey.
-   - **Sections** `### Added`, `### Changed`, `### Fixed`, `### Removed`.
-   - One logical change per bullet; name the subsystem / brand / view; internal identifiers are allowed here (this is the one register where they belong).
-4. **Verify i18n delta.** Run `npm run i18n:check` — confirm key count matches WORKLOG before writing the CHANGELOG line.
-
-### Choosing the version number (SemVer — decide it yourself)
-
-Pick the release version **automatically from what `WORKLOG.md` contains** — don't ask, except for MAJOR. `MAJOR.MINOR.PATCH`:
-
-- **PATCH → `X.Y.(Z+1)`** — the default. The cycle is only **Fixed** / **Removed** / small **Changed** tweaks / i18n / internal work — **no new user-facing capability**. (e.g. `2.0.0 → 2.0.1`)
-- **MINOR → `X.(Y+1).0`** (resets patch to 0) — **Added** holds a genuine new feature / capability, or a **Changed** entry introduces a notable new behaviour the user can act on. (e.g. `2.0.3 → 2.1.0`)
-- **MAJOR → `(X+1).0.0`** — a deliberate milestone or a breaking change (data-model / storage-format / dropped support). **Never auto-pick — always confirm with the human.** (e.g. `1.10.32 → 2.0.0`)
-
-Rule of thumb: *would a user notice a new thing they can now do?* → **MINOR**. *Only "it works right/better now"?* → **PATCH**. When Added has one real feature among fixes, that still makes it a **MINOR**.
-
-**The placeholder bump from step 6 is a PATCH guess.** At release time, re-evaluate against the real WORKLOG and, if it disagrees, **correct the version everywhere before committing**: `package.json`, the `CHANGELOG.md` heading, the `data/release-notes/vX.Y.Z.md` filename, the `whatsnew` key, the `FEATURES.md` version tags for this release (+ its "current as of" line), and the tag. Example: pre-bumped to `2.0.1` but the cycle shipped real features → the release is `2.1.0`; fix all of the above to `2.1.0`.
-
-### At commit time (in order)
-
-0. **Decide the version** (policy above) and set `package.json` to it — correcting the placeholder if the WORKLOG warrants a MINOR/MAJOR (confirm MAJOR with the human first).
-
-   **Then refresh the bundled reference data — before EVERY build, no exception:** `cd assets/db/tigertag && python3 db_update.py`. It re-downloads the `id_*.json` tables and the product catalogue `id_catalog.json` (+ `last_update.json`) when the API has newer ones, so the app ships with the latest brands, materials and catalogue on first launch and offline. Commit whatever it changed with the release. (Skipped once: v2.37.0 was about to ship a catalogue a month old — 13,906 products instead of 14,463.)
-
-1. **Synthesize `WORKLOG.md`** (Rule 3 above) → write the new `CHANGELOG.md` entry (register 1 — technical).
-2. **Write the release note** (register 2 — BambuLab style) → `data/release-notes/vX.Y.Z.md`. Rewrite the changelog into factual, jargon-free bullets (`Fixed an issue where …`, no internal code names); end with the standard footer (copy it from the previous version's file). This file becomes the **GitHub Release page body** verbatim via `scripts/extract-changelog.mjs`. Skipping it means the release page falls back to the raw changelog — avoid that.
-3. **Write the "What's New" entry** (register 3 — Discord/app voice) for the version → `data/whatsnew.json`. Run `npm run whatsnew:add -- <x.y.z> [--items N] [--date YYYY-MM-DD]` to scaffold an empty **11-locale** block, then fill each item's `icon` (an icon-name → `.icon-<name>` mask, e.g. `list-check`, `cart`, `user`, `link`, `swap`, `bell`; **not** a literal emoji) + vulgarised `title`/`body` for **all 11 locales** (history is kept — never delete old versions). Verify with `npm run whatsnew:check` (must pass — no empty locale). This drives the in-app "What's New" modal shown once per version (and re-openable from Settings → About).
-   - **One item = ONE topic.** Never cram two distinct changes into a single entry — if a release ships two unrelated things (e.g. "friends' lists now show" AND "buy buttons no longer overflow"), that's **two items**, each with its own icon/title/body. A crammed two-subject item is confusing in the modal.
-   - **Benefit-first, no confusing technical examples.** Say what it does FOR the user, not the mechanism; drop concrete tech examples (don't write `adieu 'eu.store.bambulab.com'` — say "the shop name shows cleanly, without overflowing"). Still playful/deadpan (register 3) in every locale.
-   - **Consumer-facing only — NEVER surface a non-public feature in the What's New.** Admin/dev/internal features (debug tools, telemetry plumbing, anything gated to admin/debug mode, internal refactors, dev-only utilities) are **excluded** from the What's New — and from the release note (register 2). They live in the `CHANGELOG.md` (register 1) only. Litmus test: *would a normal end-user notice or use it?* If no (it's for the maintainer, or hidden behind debug mode), omit it from registers 2 & 3. When a WORKLOG entry is flagged internal/admin-only, skip it at steps 2 and 3.
-4. **Update `FEATURES.md`** — the single consolidated feature catalogue (grouped by domain, one bullet per shipped feature, each tagged with the version it landed). For every genuinely NEW capability in this release (the `## Added` items, and any `## Changed` that introduces a new user-facing behaviour), add/adjust its bullet in the right domain and tag it `(vX.Y.Z)`; for an enhancement to an existing feature, append the version to that bullet (e.g. `(v2.7.0, per-item quantities v2.9.0)`). Pure fixes / internal changes do NOT get an entry (it's a *feature* catalogue, not a changelog). Keep the intro line's "current as of vX.Y.Z" accurate. This keeps the catalogue from re-rotting the way README/ROADMAP did. Source of truth = the `CHANGELOG.md` entry you just wrote.
-5. **Update `llms.txt` if the release changed the data model, the architecture or the vocabulary.** It is the file an AI agent reads FIRST to understand this repo, so a stale one mis-teaches every future session. `docs:check` guards the derivable parts (version, line/brand/CSS/i18n counts, and — since v2.13.1 — that every Firestore collection the renderer writes is documented), but it cannot judge prose: a new subsystem, a renamed user-facing term, or a changed pattern is on you. Litmus test: *would an agent starting cold get this wrong by reading only llms.txt?*
-6. **Update `README.md` if the release adds a capability a visitor should see.** It is the shop window — the first thing a newcomer, a journalist or a partner reads — and it is the doc most easily forgotten, because nothing breaks when it lags. Only genuinely new user-facing capabilities go in (the `## Added` items), in the matching `### ` section of `## Features`; fixes and internal work do not. `npm run docs:check` cannot catch this — completeness of prose is not derivable — so it is on you. Litmus test: *would someone deciding whether to download the app want to know this exists?*
-7. **Include `WORKLOG.md` in the commit** — it is part of the repo history (future sessions can read it via `git show`)
-8. **Reset `WORKLOG.md` AND bump `package.json` to the NEXT PATCH** immediately after committing — both left **uncommitted** (they ship with the next release). This next-patch number is a **placeholder** (we don't yet know what the next cycle will contain); it's corrected to a MINOR/MAJOR at the next release if the WORKLOG warrants it (step 0 above). Bumping `package.json` here (not only at release time) means the **dev build shows an in-progress version number** (`#sbVersion`) instead of the previous release's — so while working on the next version the app reads it, not the shipped one. Replace `WORKLOG.md` with the blank template for the next version (bump the header too):
-
-```markdown
-# Worklog — vX.Y.Z (in progress)
-
-## Added
-
-## Changed
-
-## Fixed
-
-## Removed
-
-## i18n
-```
-
-**The old data is not lost** — it exists in two permanent places:
-- `git show HEAD:WORKLOG.md` — the raw working log, forever in git history
-- `CHANGELOG.md` — the synthesized release entry, human-readable
-
-The working file is wiped so it stays clean and unambiguous: whatever is in `WORKLOG.md` right now is *only* what has been done since the last commit, nothing older.
-
-### Release generation — do it INLINE by default; if you must delegate, use ONE agent, never fan out
-
-**Token AND wall-clock cost are a priority — without degrading quality.** A prior release fanned the generation out to **3 parallel Sonnet agents** and burned **~190k tokens / ~10 min** — 93 % of it in the agents. That recipe was wrong: parallel sub-agents optimise *main-context leanness* + wall-clock, but they **multiply the TOTAL bill** — each carries its own system prompt AND independently **re-reads the big files** (`data/whatsnew.json` alone is ~391 items × 9 locales; reading it dominated the cost). For a founder paying per token, that fan-out cost MORE, not less.
-
-**Default: generate everything INLINE on the main loop.** At release time you already hold the WORKLOG + the `CHANGELOG.md` entry in context, so writing the other registers here reads each file **once**, with **zero** agent overhead — the cheapest option in total tokens and the simplest. Do, in order:
-1. **`CHANGELOG.md` entry (register 1)** — the SOURCE the others derive from. Write it inline (you hold the WORKLOG).
-2. **Release note (register 2)** → `data/release-notes/vX.Y.Z.md` (BambuLab style; copy the footer from the previous version's file).
-3. **What's New (register 3), 11 locales** → `data/whatsnew.json` (`npm run whatsnew:add` to scaffold; playful/deadpan, one topic per item, icon-NAMES, **exclude non-public/admin features**).
-4. **`FEATURES.md`** → add the genuinely new capabilities, tag `(vX.Y.Z)`.
-5. **`README.md`** → only if a visitor should see the new capability; it is the shop window and the doc most easily forgotten.
-6. **CODEMAP re-sync** only if `inventory.js`/`main.js` moved a lot → fix ranges until `npm run codemap:check` passes.
-
-**Only if the main context is genuinely too large** to hold this generation: delegate the WHOLE block to **exactly ONE** `general-purpose` agent (Sonnet) that writes note + What's New + FEATURES in a single pass — it reads each big file once and carries one system prompt. **Never spawn a second release agent, never fan out.** The agent prompt must be self-sufficient: paste the *Three copy registers* rules + the exact `CHANGELOG.md` entry as the source + the version.
-
-**Always keep on the main loop (never delegate):** the version decision (SemVer), all validators (`npm run i18n:check`, `whatsnew:check`, `codemap:check`, `node --check`), the final consistency read-through, and all git/gh (commit, tag, push, publish-latest, build watch).
-
-**Order of operations:** decide version → refresh bundled data (`db_update.py`) → write CHANGELOG → note + What's New + FEATURES + README + codemap (inline) → run ALL validators + one consistency read-through → commit → tag → push → watch build → publish latest → reset WORKLOG + bump `package.json`.
-
-**Separately, keep `data/whatsnew.json` from bloating** (it's re-read on every release): when its history grows large, propose archiving the oldest versions out of the loaded file so each release stops paying to read the full back-catalogue.
-
-### Before starting any task
-
-`Read WORKLOG.md` at the start of a new session — it tells you exactly what has been done since the last commit, without relying on the conversation summary.
-
-**Then look at what is waiting on GitHub — without being asked.** Open issues and
-pull requests are work the project has already been handed. Nobody is notified by
-the repo, so an unread PR from a contributor sits for days, and a bug someone
-already reported gets re-discovered from scratch.
-
-```bash
-gh pr list --state open && gh issue list --state open
-```
-
-Run it ONCE at the start of a session and report what is there in one line each
-(`PR #24 open — Wiki button, 16 files` / `issue #23 — Canada + CAD, from a user`).
-Say when something is new since the last session.
-
-**Reporting is not acting.** Do not review, fix, merge or close anything on your
-own initiative — a PR is reviewed when the user asks for it, and merging is an
-order like any commit (the *never commit without explicit instruction* rule covers
-merges and closes too). The point is only that the user hears about them from you
-rather than the other way round.
-
----
-
-## 🔍 Code reviews — run them regularly, keep every one
-
-Full project reviews live in **`docs/reviews/`**, one file per review, kept permanently
-(`YYYY-MM-DD-<scope>.md`; see that folder's `README.md` for the convention and the history table).
-
-**Run one at least every few releases**, and always before a release that changes the data model,
-the security rules, or anything a third party integrates against. A targeted review — one axis, one
-subsystem — is cheaper and worth running more often than a full pass.
-
-To run one, point the reviewer at **`docs/REVIEW-BRIEF.md`**: it carries the standing scope (the
-repos, the six axes — security, bugs, performance, first-try UI, velocity/token cost, brand &
-certification), the read-only constraint, and the output format. It is a standing brief, not a
-one-off prompt — keep it current when the ecosystem or the priorities change.
-
-**Why they are kept, not just read once.** A review is only worth the hour it costs if the next one
-can see what the last one found. After working a report, annotate it: mark each finding **fixed**,
-**deferred** (with the reason), or **rejected** (wrong call). An unannotated report reads to the next
-reviewer as though nothing was ever done about it, and the same findings get re-litigated from
-scratch. The *Quick wins* table is ranked and scoped to about an hour per item — start there.
-
----
-
-## ✍️ Three copy registers — Changelog ≠ Release note ≠ What's New
-
-Every release ships the **same changes described three times**, at three altitudes, for three audiences. Each has its own file and its own voice. **Writing one in another's voice is a bug** — don't blur them, and don't auto-copy one into another verbatim.
-
-| # | Register | Lives in | Audience | Voice |
-|---|----------|----------|----------|-------|
-| **1** | **Changelog** | `CHANGELOG.md` | You, experts, **AI / agents reading the repo** | **Exhaustive & technical — the source of record.** Precise about *behaviour AND mechanism*; may name subsystems, protocols, config keys, Firestore paths, magic values. Nothing is "too technical" here — this is the deepest of the three. English, one logical change per bullet. (Synthesized from `WORKLOG.md` at commit time.) |
-| **2** | **Release note** | `data/release-notes/vX.Y.Z.md` → **GitHub Release page** | Power users, integrators browsing releases | **BambuLab style** — factual & specific but **jargon-free**. Name the real feature / view / **printer brand**; `Fixed an issue where …` for fixes; one line per change; **NO internal code names** (no file / function / class / IPC names, no line numbers, no key counts). Higher-level and terser than the changelog. See [BambuLab releases](https://github.com/bambulab/BambuStudio/releases). |
-| **3** | **What's New + all in-app copy** | `data/whatsnew.json` **and every string in the app** (UI, buttons, empty states, errors, nudges) | Everyone, inside the app | **Playful, deadpan, Discord-style** — benefit-first, no jargon, never describes what doesn't exist. **11 locales.** (Full rule: memory `feedback-copy-tone` + the *Brand voice* rule below.) |
-
-**The same fix, three ways** (Elegoo progress bug):
-- **Changelog (1):** *"Elegoo `_mergeStatus`: `machine_status.progress` (0-100, pushed ~2 s) is now the authoritative progress source and locks out the 1005 time-estimate; kills the 100 %↔10 % spikes from `api_status` pushes that carry `print_duration` but no `remaining_time_sec`."*
-- **Release note (2):** *"Fixed an issue where an Elegoo print's progress jumped erratically (e.g. 100 % → 10 % → 31 %) instead of climbing steadily."*
-- **What's New (3):** *"Your Elegoo prints finally count up like they mean it — no more panic-jumping from 100 % back to 10 %."*
-
-**Plumbing & pitfalls:**
-- The GitHub Release body is built by `scripts/extract-changelog.mjs` (called by the `prepare-release` job in `.github/workflows/build.yml`). It prints `data/release-notes/vX.Y.Z.md` **verbatim** when present (that file already carries its footer), and only **falls back** to the `CHANGELOG.md` section — with a footer appended — when no dedicated note exists. So **register 2 is authored by hand**, it is *not* derived from the changelog.
-- `npm run whatsnew:import` (`whatsnew-import-changelog.mjs`) seeds the What's New EN baseline from `CHANGELOG.md` — treat its output as a **rough draft to rewrite into register 3**, never ship it verbatim (it'll be far too technical).
-- When in doubt which register you're editing: *who reads this file?* Repo/agent → 1. GitHub release page → 2. Inside the app → 3.
-
----
-
-## 📐 `.ttag` field contract — the source of truth, edited via a dev tool
-
-The `.ttag` interchange format (export/import — see the *`.ttag`* entries in the CODEMAP and
-`docs/TTAG-EXPORT-BRIEF.md`) has a **field-level contract**: for every field, its wire **type**,
-whether it is written **on the chip**, and whether it is **Required / Optional / N-A** — and that
-last axis is **per product type** (`id_type`: 142 Filament, 116 Accessories, 41 Spare Part, 173
-Resin, more to come). The three axes are independent (e.g. `color_name` is on-chip yet optional).
-
-**The contract is NOT hand-edited in Markdown. It is authored in a dedicated dev tool:**
-
-> **`playground/ttag-fields-editor/index.html`** — a standalone, dependency-free page (open it in a
-> browser, no server). The founder toggles each field's on-chip flag and per-type contract, annotates
-> a per-type "Why" note (e.g. the meaning of `data1`–`data7`, which differs per type), and clicks
-> **Download** to regenerate **`docs/TTAG-FIELDS.md`** verbatim. This is the deliberate,
-> everyone-agrees workflow for evolving the contract — when an anomaly is found, or a new product
-> type needs its rules.
-
-**`docs/TTAG-FIELDS.md` is the generated source of truth** (chip byte layout comes from
-`renderer/rfid_protocol/tigertag/parser.js` + the `saveAddProduct` schema; don't invent ranges — read
-them there). **Studio's importer must match it**: the record validation
-(`_ttagRecordValid` / `_ttagMaterialValid` / `TTAG_REQUIRED_NUM` in `renderer/inventory.js`) enforces
-the ratified **Filament (142)** required set, and the importer currently **accepts only `id_type ==
-142`** (other types are drafts). When the founder hands back an updated `TTAG-FIELDS.md`:
-
-1. **Re-align the importer** to the new contract (required set, per-type gates), keeping the
-   "refuse-and-count, never silently import bad data" behaviour.
-2. **Drop the regenerated `docs/TTAG-FIELDS.md`** into the repo.
-3. **Propagate** the format changes to TigerSystem-Docs (`ttag-format` spec) and the mobile app as
-   relevant (same reflex as the Firestore-schema propagation rule).
-
-Never change the importer's contract on your own initiative — the tool + `docs/TTAG-FIELDS.md` are
-the authority; a code change follows a founder-ratified contract, not the reverse.
-
----
-
-## 🎨 The material swatch — one convention, owned by another repo
-
-**A Tricolor aspect is a smooth conic sweep (`_conicSweep`, unless it is also Rainbow); other two or three colours make a 135° soft split (solid colours, 20 % blended seam — `SPLIT_BLEND`), four or more make a camembert, and
-every ramp is at 135°** (convention v1.2 — bicolor and tricolor blend, first
-colour top-left; a hard edge read as separate bars in the frame round a photo). It is the *material*
-swatch, not the spool swatch — the same rule serves filament, accessories,
-spare parts and resin alike; nothing in it reads `id_type`.
-
-The convention is **NOT defined in this repo** — its canonical home is
-**TigerSystem-Docs → `docs/developers/material-swatch.md`**, which the Hub, the
-mobile app and third parties implement too. Amend it there first, then re-align
-Studio.
-
-In Studio it lives in `renderer/inventory.js`: `_pieSplit()`, `RAMP_ANGLE`,
-`colorBg()`, `isColorDark()` → `logoSrc()`. **Never open-code a gradient
-anywhere else** — that is exactly how the Add-Product preview ended up drawing
-a bicolor mirrored relative to the inventory. Check any change against
-`playground/material-swatch/index.html` (17 cases × 11 surfaces, real sizes,
-live pickers). Details + the known gaps: `docs/MATERIAL-SWATCH.md`.
-
----
-
-## 🧪 Verify UI changes yourself — dev-drive
-
-Don't ask the founder to check a renderer change: drive the dev app.
-
-```bash
-npm run start:drive          # dev app + DevTools protocol on 127.0.0.1:9339 (never in a packaged build)
-npm run drive -- wait  "#invGrid .spool-card" 15000
-npm run drive -- eval  "document.title"            # any JS in the renderer (awaits promises)
-npm run drive -- click "#adpColorCountRow [data-mode='tri']"
-npm run drive -- type  "#adpColorName" "Sunset"
-npm run drive -- shot  <scratchpad>/x.png ".adp-color-section"   # window, or one element
-npm run drive -- logs  5                            # console + uncaught errors for 5 s
-npm run drive -- reload
-```
-
-Renderer functions are module-scoped (not on `window`): reach a view by clicking
-its real controls, then `shot` the element and read the PNG. Screenshots go to the
-scratchpad, never into the repo. Source: `scripts/devdrive.mjs`.
-
-## 🤖 AI assistants — the local MCP server
-
-Studio serves the Model Context Protocol so Claude Desktop / Claude Code / Cursor / VS Code
-can READ the account (inventory, friends' shared stock, wishlists, racks, printers,
-devices, history). **`docs/MCP.md` is the reference — read it before touching any `mcp`
-code.** Non-negotiables: tools are **read-only**; **no credential ever leaves**
-(`secrets` / `apiKeys` refused, `MCP_SECRET_FIELD` masks the rest); return **decoded,
-named values**, never raw ids; keep the notice (`MCP_DATA_GUIDE`) true whenever a
-Firestore field or collection changes.
+Everything below describes the codebase. It is not a rule list; when it disagrees with the code,
+the code wins and this text is fixed (`.agents/rules/docs-match-code.md`).
 
 ## Stack
-Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js`. Renderer: `renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js`. Preload bridge: `preload.js`.
+Electron (no bundler) + vanilla HTML/CSS/JS. Entry: `main.js` (main process, ~6k lines). Renderer:
+`renderer/inventory.html` + modular CSS in `renderer/css/` + `renderer/inventory.js` (~41k lines)
+and its ES-module satellites (`renderer/printers/`, `renderer/IoT/`, `renderer/report/`,
+`renderer/rfid_protocol/`). Preload bridge: `preload.js`. Node-side services: `services/`.
 
-> **`renderer/CODEMAP.md`** maps every feature in the ~16k-line `inventory.js` to a line range and key function names. **`CODEMAP-main.md`** (repo root) does the same for the ~3k-line `main.js` (Electron main process — IPC handlers, printer transports, cameras). Read the relevant map BEFORE searching the file — it's faster, cheaper, and less error-prone than grepping. Keep them in sync when you move sections — `npm run codemap:check` (run by the pre-commit hook whenever `inventory.js`, `main.js`, or either CODEMAP is staged) validates both and fails the commit on major drift.
+> **`renderer/CODEMAP.md`** maps every feature of `inventory.js` to a line range and key function
+> names; **`CODEMAP-main.md`** does the same for `main.js`. Read the map before searching either
+> file. `npm run codemap:check` (pre-commit when either file or map is staged) fails on drift.
 >
-> **`ROADMAP.md`** at the repo root holds the "what's done / next / backlog" picture grouped by domain. Read it BEFORE proposing new features — chances are it's already there with a sizing and risk note. Update it when you ship or pick up an item.
+> **`ROADMAP.md`** holds the done / next / backlog picture by domain — read it before proposing a
+> feature. **`FEATURES.md`** is the shipped-feature catalogue. **`llms.txt`** is the first file an
+> agent reads to understand the repo.
 
 ## File map
 ```
 renderer/
-  inventory.html   — pure markup + modals
-  inventory.js     — core renderer logic (ES module, ~16k lines) — see CODEMAP.md for line ranges
-  CODEMAP.md       — feature → line range index for inventory.js (read first, grep last)
-  css/             — split inventory styles, loaded in order via 10 <link> tags
+  inventory.html   — markup + modals (no inline JS)
+  inventory.js     — core renderer logic (ES module) — see CODEMAP.md
+  CODEMAP.md       — feature → line range index for inventory.js
+  css/             — inventory styles, loaded in numeric order
     00-base.css         — root vars, reset, sidebar, header, app-layout
     10-settings.css     — Settings panel
     20-friends.css      — Friends slide-in panel
-    30-racks.css        — Storage / rack inventory view + drag-drop + unranked panel
-    40-printers.css     — Printers list view + add/scan/manual modals + side panel
-    50-snapmaker.css    — Snapmaker live block + filament edit bottom-sheet
-    55-creality.css     — Creality camera (WebRTC video)
+    30-racks.css        — Storage / rack view + drag-drop + unranked panel
+    40-printers.css     — Printers views, add/scan/manual flows, side panel, camera capture
+    50-snapmaker.css    — Snapmaker live block + filament edit sheet
+    55-creality.css     — Creality camera (WebRTC)
     57-elegoo.css       — Elegoo live block
-    60-modals.css       — Rack-edit / friend / account / login / alert modals
-    70-detail-misc.css  — icons, stats, table/grid, detail panel, debug, twin-link, toolbox, TD edit, TD1S, display-name
-  locales/         — en.json fr.json de.json es.json it.json zh.json pt.json pt-pt.json pl.json ru.json
-  IoT/             — extracted device modules (own CSS inside each folder)
-    tigerscale/    — TigerScale: Firestore subscription, panel render, health tick
-    td1s/          — TD1S sensor engine + TD/Color edit modals
-  rfid_protocol/
-    tigertag/      — RFID TigerTag tester modal + chip parser
-  printers/        — one sub-folder per brand (PROTOCOL.md + index.js + add-flow.js +
-                     probe.js + widget_camera.js + settings.js + tutorial.json …)
-                     plus shared: registry.js, context.js, cam_manager.js,
-                     modal-helpers.js, extra-subnets.js
-    bambulab/
-      PROTOCOL.md  — agent skill: MQTTS port 8883, AMS, SSDP+TLS discovery, camera JPEG/RTSP
-      index.js     — live integration (implemented — MQTTS via main-process IPC)
-    creality/
-      PROTOCOL.md  — agent skill: WS port 9999, heartbeat, CFS boxsInfo, WebRTC camera
-      RETRO.md     — live SSH observations on real Ender-3 V4 hardware (reference)
-      index.js     — live integration (implemented)
-    elegoo/
-      PROTOCOL.md  — agent skill: MQTT port 1883, UDP discovery port 52700
-      index.js     — live integration (implemented)
-    flashforge/
-      PROTOCOL.md  — agent skill: HTTP port 8898, TCP 8899, UDP multicast discovery, MJPEG camera
-      index.js     — live integration (implemented)
-    snapmaker/
-      PROTOCOL.md  — agent skill: WS port 7125 (Moonraker), JSON-RPC, HTTP discovery
-      index.js     — live integration (implemented)
-    anycubic/
-      PROTOCOL.md  — agent skill: MQTTS port 9883 (TLS 1.2), multiColorBox ACE slots,
-                     print/tempature report telemetry, FLV camera 18088,
-                     slicer-config credential import, /info discovery port 18910
-      index.js     — live integration (implemented — ACE slots + job/temps + camera)
-assets/db/tigertag/           — TigerTag reference data (unified in v1.7.0, served via tigertagDbService IPC)
-  id_brand.json id_material.json id_aspect.json id_type.json
-  id_diameter.json id_measure_unit.json id_version.json
-  last_update.json              — bundled data age (used to skip unnecessary downloads on first launch)
-data/                           — non-migrated static assets (loaded via direct fetch in renderer)
-  container_spool/spools_filament.json
-  rack-presets.json
-  whatsnew.json                 — "What's New" modal content (register 3 — playful/Discord), keyed by version, 11 locales inline (full history, browsable via the in-modal version picker). `npm run whatsnew:import` seeds an EN baseline from CHANGELOG (register 1) — a **rough draft to rewrite into register 3**, never shipped verbatim; recent versions hand-localised. Scaffold `npm run whatsnew:add`, validate `npm run whatsnew:check` (EN mandatory; entries are EN-only or fully localised — a locale that shipped later, like `ru` and `nl` from v2.28.0, is not required on older entries)
-  release-notes/                — one `vX.Y.Z.md` per version: the BambuLab-style **release note** (register 2), pushed verbatim to the GitHub Release page by `scripts/extract-changelog.mjs`. See *Three copy registers*.
-  printers/                     — per-brand printer model catalogs (bbl/cre/eleg/ffg/snap)
-assets/svg/
-  tigertag_logo.svg  tigertag_logo_contouring.svg
+    60-modals.css       — rack-edit / friend / account / login / alert modals
+    70-detail-misc.css  — icons, stats, table/grid, detail panel, debug, toolbox, TD1S …
+  locales/         — en fr de es it zh pt pt-pt pl ru nl (.json, reference: en)
+  IoT/             — devices, each with its own CSS
+    tigerscale/  tigertouch/  tigerspool/  td1s/  usbscale/
+  report/          — in-app reports (target picker, annotator, replies)
+  rfid_protocol/tigertag/ — RFID tester modal + chip parser
+  printers/        — one folder per brand (PROTOCOL.md + index.js + add-flow.js + probe.js …)
+                     plus plugins (klipper/, octoprint/: plugin.js + main.cjs) registered via
+                     plugins.js, and shared: registry.js, context.js, cam_manager.js,
+                     cam-snapshot.js, modal-helpers.js, model-list.js, scan-pick.js, extra-subnets.js
+services/          — tigertagDbService, MCP server + stdio bridge, NFC process, demo/ (printer simulator)
+assets/db/tigertag/ — reference tables id_*.json + id_catalog.json + last_update.json (db_update.py)
+data/              — static assets fetched by the renderer
+  container_spool/spools_filament.json, rack-presets.json, printers/ (model catalogues)
+  whatsnew.json    — What's New, keyed by version, 11 locales
+  release-notes/   — one vX.Y.Z.md per version (GitHub Release body)
+.agents/rules/     — one file per agent rule (indexed above)
+docs/              — design docs, firestore-schema.md, i18n-keys.md, MCP.md, reviews/ …
 ```
 
 ## Printer agent skills
 
-Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a **self-contained agent skill** — a complete reference that lets an AI implement the integration without reading Flutter source. Read the relevant `PROTOCOL.md` **before** touching any `index.js` in that folder.
+Each brand under `renderer/printers/<brand>/PROTOCOL.md` is a self-contained reference for that
+integration. Read it before touching that brand's `index.js`.
 
-| Brand | PROTOCOL.md highlights | index.js status |
-|-------|------------------------|-----------------|
-| **Bambu Lab** | LAN: MQTTS 8883 TLS, AMS 16-slot, SSDP+TLS scan, JPEG TCP 6000 / RTSP 322. Cloud (§17): REST behind Cloudflare — needs Electron's `net` — + one account MQTT broker; same `push_status`, so the LAN parser is reused | ✅ implemented (LAN + cloud) |
-| **Creality** | WS 9999, heartbeat `"ok"`, CFS boxsInfo type 0/1, WebRTC port 8000 | ✅ implemented |
-| **Elegoo** | CC2: MQTT 1883, UDP spray port 52700, filament 4 slots canvas/tray. CC1 (§25): SDCP v3 — `M99999` UDP 3000, WebSocket 3030 no auth, `elegoo/sdcp.js` | ✅ implemented (CC1 🧪 beta) |
-| **FlashForge** | HTTP poll 8898, TCP M-codes 8899, UDP multicast 225.0.0.9:19000 | ✅ implemented |
-| **Snapmaker** | WS 7125 Moonraker + proprietary, RRGGBBAA color, HTTP scan | ✅ implemented |
-| **Prusa** | PrusaLink HTTP 80 (Digest auth, via main `prusa:http`), status poll 2 s, MMU 5 slots / XL tools from the model catalog, camera = Buddy3D RTSP (own IP) or PrusaLink `/cameras/snap`, HTTP `/api/version` sweep scan | 🧪 beta (LAN) |
-| **Anycubic** | LAN: MQTTS 9883 TLS 1.2 direct, ACE slots + print/temp telemetry, FLV cam 18088 via ffmpeg, creds from slicer config, /info scan 18910. Cloud: signed REST + cloud-MQTT (bundled cert), token via attach-only CDP from bridge-mode slicer | ✅ implemented (LAN + cloud) |
+| Brand | PROTOCOL.md highlights | Status |
+|-------|------------------------|--------|
+| **Bambu Lab** | LAN: MQTTS 8883 TLS, AMS 16-slot, SSDP+TLS scan, JPEG TCP 6000 / RTSP 322. Cloud (§17): REST behind Cloudflare (Electron `net`) + one account MQTT broker, same `push_status` parser | ✅ LAN + cloud |
+| **Creality** | WS 9999, heartbeat `"ok"`, CFS boxsInfo type 0/1, WebRTC port 8000 | ✅ |
+| **Elegoo** | CC2: MQTT 1883, UDP 52700, 4 canvas slots. CC1 (§25): SDCP v3 — `M99999` UDP 3000, WebSocket 3030 | ✅ (CC1 🧪 beta) |
+| **FlashForge** | HTTP poll 8898, TCP M-codes 8899, UDP multicast 225.0.0.9:19000 | ✅ |
+| **Snapmaker** | WS 7125 Moonraker + proprietary, RRGGBBAA colour, HTTP scan | ✅ |
+| **Prusa** | PrusaLink HTTP 80 (Digest via main `prusa:http`), MMU 5 slots / XL tools, Buddy3D RTSP or `/cameras/snap` | 🧪 beta |
+| **Anycubic** | LAN: MQTTS 9883 TLS 1.2, ACE slots, FLV cam 18088 via ffmpeg, creds from slicer config. Cloud: signed REST + cloud MQTT | ✅ LAN + cloud |
 
-> **RETRO.md** (Creality only) — raw live-hardware SSH observations; PROTOCOL.md is the authoritative merge.
+Plugins (`klipper`, `octoprint`) follow `docs/PRINTER-PLUGINS.md`. Klipper stores its address as
+ONE `ip` field, `host` or `host:port` (the form Studio and the Tiger Touch firmware read).
 
 ## LocalStorage keys
 | Key | Content |
 |-----|---------|
 | `tigertag.accounts` | `Account[]` JSON array |
-| `tigertag.activeAccount` | active account id string |
+| `tigertag.activeAccount` | active account id |
 | `tigertag.inv.<id>` | cached inventory JSON for that account |
 | `tigertag.view` | `"table"` \| `"grid"` |
-| `tigertag.lang` | `"en"` \| `"fr"` \| `"de"` \| `"es"` \| `"it"` \| `"zh"` \| `"pt"` \| `"pt-pt"` \| `"pl"` \| `"ru"` |
+| `tigertag.lang` | one of the 11 locale codes |
 | `tigertag.sidebar` | `"collapsed"` \| `"expanded"` |
-| `tigertag.panelWidth.detail` | detail panel width in px (user-resized) |
-| `tigertag.panelWidth.debug` | debug panel width in px (user-resized) |
-| `tigertag.sort.inv` | inventory table sort `{col,dir}` (default `brand`/`asc`) |
-| `tigertag.sort.printer` | printers table sort `{col,dir}` (default `status`/`desc`) |
+| `tigertag.panelWidth.detail` / `.debug` | panel widths in px |
+| `tigertag.sort.inv` / `tigertag.sort.printer` | table sort `{col,dir}` |
+| `tigertag.theme`, `tigertag.catalog` | theme and catalogue view preferences |
 
 ## Account object shape
 ```js
-{ id: uid, email, displayName, photoURL, lang, color?, customColor? }
+{ id: uid, email, displayName, photoURL, lang, color }
 ```
-- `displayName` — user's chosen pseudo (from Firestore `users/{uid}.displayName`), never the Google real name
-- `lang` — per-account language preference, synced with Firestore `users/{uid}/prefs/app.lang`
+`displayName` is the Firestore pseudo, never the Google name; `lang` is synced with
+`users/{uid}/prefs/app.lang`; `color` is `#rrggbb` (legacy `customColor` read only).
 
 ## API base
-`https://cdn.tigertag.io` — endpoints: `/healthz/`, `/setSpoolWeightByRfid?ApiKey=&uid=&weight=`
+`https://cdn.tigertag.io` — `/healthz/`, `/setSpoolWeightByRfid?ApiKey=&uid=&weight=`, `/img`.
 
 ### Product images — ask for the size you are going to paint
-
-`/img?id=<productId>[&v=<n>][&size=<name>]` serves **seven square renditions** of
-every product photo. Source of truth: the `SIZES` map in the backend repo's
-`functions/index.js`.
-
-**The byte figures below are JPEG.** The proxy negotiates on the `Accept` header
-and serves **AVIF** to Chromium — measured, 25 requests out of 25 — so the real
-transfer is smaller. The ratios between rungs still hold; treat the absolute
-numbers as an upper bound.
+`/img?id=<productId>[&v=<n>][&size=<name>]` serves seven square renditions (`SIZES` in the backend
+repo's `functions/index.js`). Byte figures are JPEG; Chromium is served AVIF, so they are an upper bound.
 
 | size | px | bytes | typical use |
 |---|---|---|---|
 | `icon` | 16 | 429 B | |
 | `thumb` | 32 | 663 B | |
 | `small` | 64 | 1.4 kB | list / table chips (28 px) |
-| `compact` | 128 | 3.4 kB | catalogue + reorder thumbs (50-64 px) |
+| `compact` | 128 | 3.4 kB | catalogue + reorder thumbs |
 | `medium` | 256 | 9.7 kB | |
-| `large` | 512 | 33 kB | **the default** — grid cards (163 px) |
-| `master` | 1024 | 101 kB | zoom / lightbox, **on demand only** |
+| `large` | 512 | 33 kB | the default — grid cards |
+| `master` | 1024 | 101 kB | zoom / lightbox, on demand only |
 
-**The endpoint defaults to `large`, so omitting `size` costs 33 kB every time** —
-that is how 28 px table chips came to download 512 px images. In the renderer,
-`cdnImg(url, cssPx)` picks the first rendition that covers the slot at the
-screen's pixel density, rounding UP (oversized is invisible, undersized is
-visibly soft); `_cdnSizeFor` holds the ladder. It rewrites ONLY
-`cdn.tigertag.io/img` links — a user's uploaded photo is any URL at all, and
-`resolvedImg` may hand back a `data:` URI.
+- `cdnImg(url, cssPx)` picks the first rendition covering the slot (ladder in `_cdnSizeFor`); it
+  only rewrites `cdn.tigertag.io/img` links.
+- Every image is two requests (`/img` → 302 to Firebase Storage, `immutable, max-age=1y`).
+- Chromium's HTTP cache serves repeat visits (measured: 25/25 disk-cache hits); the app's own
+  `preCacheImages` → `img_cache/` only warms the inventory.
+- The CDN speaks HTTP/2; the renderer caps concurrency itself (IntersectionObserver + six in
+  flight). An unknown `size` returns 400.
 
-Two properties worth knowing before optimising anything here:
-
-- **Every image is two requests.** `/img` answers **302** to Firebase Storage.
-  The redirect is `immutable, max-age=1y`, so it is a cold-start cost — but it
-  doubles the request count exactly when a list first paints.
-- **Chromium's HTTP cache already does the heavy lifting.** The images are
-  `immutable, max-age=1y`, so a second visit costs nothing — measured on a cold
-  reload of the catalogue: 25 images, 25 disk-cache hits, 0 bytes, the 302 not
-  even replayed. The app's OWN cache (`preCacheImages` → `img_cache/`) only
-  warms the INVENTORY; the difference is that ours is permanent and the
-  browser's evicts. Do not describe the catalogue as "uncached".
-- **The CDN speaks HTTP/2**, so the browser's six-connections-per-origin cap
-  does NOT throttle a burst; all requests become concurrent streams on one
-  connection. The renderer puts the ceiling back itself (IntersectionObserver +
-  a six-in-flight queue, see the *Product images* block in `inventory.js`).
-  An unknown `size` returns **400**, and `Accept: image/avif` is honoured.
-
----
-
-## Firebase integration
+## Firebase
 
 ### SDK config (public)
-```
-https://tigertag-cdn.web.app/__/firebase/init.json
-```
-Third-party apps can fetch this URL to get the Firebase project config and call `firebase.initializeApp(config)`. Authentication is required — users must sign in with their TigerTag account. The config is intentionally public (standard Firebase pattern); security is enforced server-side via Firestore Security Rules.
+`https://tigertag-cdn.web.app/__/firebase/init.json` — public by design; security is enforced by
+the Firestore Security Rules.
 
-### Firestore Security Rules — where & how (read this before touching rules)
+### Security Rules
+Rules live in the backend repo **`TigerTag_Firebase_Backend`** (`firestore.rules`, `storage.rules`,
+`functions/`), project `tigertag-connect`. Model:
+- `users/{uid}/**` is owner-only by default.
+- `userProfiles/{uid}` is readable by signed-in users and **written only by the `setProfile`
+  Cloud Function** (pseudo 2-40 chars, colour, photo, links, visibility, friend code).
+- `inventory` + `racks` are readable by the owner, when `isPublic`, or by an accepted friend.
+- Cross-user writes need an existing relationship: `friendRequests` (requester creates its own),
+  `friends` (acceptee writes IFF a request exists), `notifications` (friends only, whitelisted
+  `type` and fields).
+- Whitelisted collections reject unlisted fields silently → update `hasOnly([...])` and redeploy
+  (`.agents/rules/firestore-changes.md`).
 
-Rules are **NOT in this repo**. They live in the **separate backend repo**, already mounted as an additional working dir:
-
-- **File**: `firestore.rules` in the **`TigerTag_Firebase_Backend`** repo (checked out beside this one — see `CLAUDE.local.md` for this machine's paths) (single file, self-documented — its header has the **REFLEX** field-whitelist warning; read that before editing).
-- **Project**: `tigertag-connect` (`.firebaserc` default). Storage rules: `storage.rules` in the same repo.
-- **Deploy**: `cd ../TigerTag_Firebase_Backend && firebase deploy --only firestore:rules --project tigertag-connect` (CLI is installed + authenticated; compiles server-side before release). Then commit `firestore.rules` on `main` and push.
-
-**Model (so you usually don't need to open the file):**
-- Everything under `users/{uid}/**` is **owner-only** (`isOwner()`) by default.
-- **Public reads**: `userProfiles/{uid}` (auth'd) ; `inventory` + `racks` readable by owner / `isPublic` / accepted friend (presence of `users/{uid}/friends/{reader}`).
-- **Cross-user writes** are gated by a prior relationship, never open:
-  - `friendRequests/{requester}` — requester creates their own (unless blacklisted).
-  - `friends/{friendId}` — acceptee writes their entry IFF a `friendRequest` from the owner exists; either party can delete themselves.
-  - `notifications/{id}` — create only if **already a friend** of the recipient, `fromUid == auth.uid`, `type` in a whitelist, fields `hasOnly([...])`. Owner reads/updates(read flag)/deletes.
-- **Field-whitelisted collections** (`telemetry`, `notifications`, …) reject any unlisted field **silently** on the client → when adding a field, add it to the `hasOnly([...])` list and redeploy (see REFLEX header).
-
-When a feature needs a new cross-user write or field, edit + deploy that file; mirror the existing "relationship must already exist" pattern.
-
-### Firestore data structure
-The full collection/field map (publicKeys, userProfiles, users/{uid} + telemetry/inventory/friends/friendRequests/blacklist/prefs) **and** a third-party connect example live in **`docs/firestore-schema.md`** — read it on demand when changing the data model; do not reproduce it here. Security rules live in the backend repo (see *Firestore Security Rules* above).
-
-> **Keep the two data-model docs in sync.** Whenever you change `docs/firestore-schema.md` (add/rename/remove a collection or field, change its shape or a write convention), also update the **public backend repo** doc so third-party integrators + the mobile app stay aligned: `README.md` in the **`TigerTag_Firebase_Backend`** repo → section **🧠 Firestore Data Structure** (the `users/{uid}` tree + any per-field subsection). This README is the public integration reference. Doc-only change — no deploy needed; commit it on `main` in the backend repo when the user asks (same as `firestore.rules`). Mention the cross-app impact (mobile/third-party) when relevant.
-
----
+### Data structure
+Full collection/field map and a third-party connect example: **`docs/firestore-schema.md`**. Keep it
+in sync with the backend `README.md` (Firestore Data Structure).
 
 ## Debug mode
-
-Debug mode gives access to the **Debug panel** (Firestore explorer + API inspector). It is off by default and **every account can turn it on** — it is a preference, not a privilege.
-
-### Activating debug mode
-1. The user opens their account modal (click avatar → edit)
-2. Flip the **Debug mode** toggle ON
-3. The toggle writes `Debug: true` to `users/{uid}` in Firestore
-4. The `⌥ Open debug panel` button appears in the sidebar immediately
-
-It used to be gated on `roles: "admin"`. That bought nothing: the panel reads the signed-in user's OWN documents, and it is the Security Rules — not a hidden checkbox — that keep it there. Gating it only meant the people reporting bugs could not produce the one thing that makes a report useful. `roles` still gates the **Admin** badge, and nothing else in this modal.
-
-### Deactivating debug mode
-Same toggle → OFF, or set `users/{uid}.Debug = false` directly in Firestore.
-
-### What debug mode exposes
-- **API tab** — last HTTP request & response to `cdn.tigertag.io`
-- **Firestore tab** — path explorer: type any Firestore path, click Fetch, copy JSON result to clipboard. Quick-access chips for `user doc`, `prefs`, `inventory`, `printers`, `tags`
-
-### Security note
-`roles` is a PRIVILEGE and must only ever be written via the Firebase Admin SDK / a Cloud Function — never by the client. `Debug` is a user PREFERENCE, written by the client on the user's own document like any other setting. The panel it opens reads nothing the account could not already read: every path goes through the same Security Rules as the rest of the app. *(Rules live in the backend repo — see [Firestore Security Rules](#firestore-security-rules--where--how-read-this-before-touching-rules) above.)*
-
----
+Opens the Debug panel (Firestore explorer + API inspector). Off by default; **any account can
+turn it on** from its account modal — it writes `Debug: true` on `users/{uid}` (a client-written
+preference, not a privilege). The panel reads only what the account could already read, through
+the same Security Rules. `roles` (Admin badge) stays server-written.
 
 ## Key JS patterns
 
 ### i18n
-`t(key, params?)` — looks up `state.i18n[state.lang][key]`, falls back to `en`, then key itself.
-Supports: plain string, `{{param}}` interpolation, `["array"]` random pick, `{"one":"…","other":"…"}` plurals (`params.n`).
-`applyTranslations()` — applies `[data-i18n]`, `[data-i18n-placeholder]`, `.lang-btn.active`.
+`t(key, params?)` looks up `state.i18n[state.lang][key]`, falls back to `en`, then to the key.
+Supports plain strings, `{{param}}`, `["array"]` random pick, `{"one","other"}` plurals (`params.n`).
+`applyTranslations()` applies `[data-i18n]`, `[data-i18n-placeholder]`, `.lang-btn.active`.
+Key reference by category: `docs/i18n-keys.md`.
 
 ### Modals
-All modals: `.modal-overlay` + `.modal-card`, toggled via `.open` class. Backdrop blur + spring animation.
-- `#addAccountModalOverlay` — login / create account (Firebase Auth)
-- `#editAccountModalOverlay` — edit active account (openEditAccountModal / closeEditAccountModal)
-- `#containerPickerOverlay` — pick a spool container (openContainerPicker / closeContainerPicker)
-- `#profilesModalOverlay` — manage multiple accounts
-- `#friendsPanel` + `#friendsOverlay` — dedicated Friends slide-in panel (openFriends / closeFriends)
-- `#addFriendOverlay` — add friend by code (split field `[XXX]—[XXX]`, auto-advance on 3 chars)
-- `#friendRequestOverlay` — incoming request modal (accept / refuse / block)
+`.modal-overlay` + `.modal-card`, toggled with `.open`. Main ones: `#addAccountModalOverlay`,
+`#editAccountModalOverlay`, `#containerPickerOverlay`, `#profilesModalOverlay`, `#friendsPanel`,
+`#addFriendOverlay`, `#friendRequestOverlay`. Printer add flows are right side-cards (`.pba-card`).
 
 ### Resizable panels
-Both `#detailPanel` and `#debugPanel` are resizable via a drag handle on their left edge.
-`makePanelResizable(panelEl, handleEl, storageKey)` — handles drag + localStorage persistence.
-Width is restored on page load. Min: 280 px, max: 85 vw.
+`makePanelResizable(panelEl, handleEl, storageKey)` on `#detailPanel` and `#debugPanel`; width
+persisted, min 280 px, max 85 vw.
 
 ### Health indicator
-`#health` cloud icon in the sidebar. State driven by Firestore `{ includeMetadataChanges: true }`:
-- `snapshot.metadata.fromCache === false` → green (live)
-- `snapshot.metadata.fromCache === true` → red (offline / cache)
-- Disconnected → neutral (idle)
-
-Lazy ping: on `mouseenter`, fires one `fetch` to `/healthz/` and updates the tooltip with measured RTT (`Backend: ok — 47 ms`). Zero background polling.
+`#health` follows Firestore `includeMetadataChanges` (`fromCache` false → green, true → red);
+hovering pings `/healthz/` once and shows the RTT. No background polling.
 
 ### Weight slider auto-save
-The weight slider in the detail panel debounces writes to Firestore: after **500 ms of inactivity** the value is committed automatically. The fill bar pulses (`.wb-saving` class) during the debounce window. Clicking "Update" cancels the pending debounce and saves immediately. Closing the panel cancels any pending save.
-
-### Surgical DOM updates — patch the smallest unit, never rebuild the world
-**Default reflex when something changes: re-render only the sub-element that actually changed, not the whole panel / modal / view.** Blowing away a container's `innerHTML` to reflect a small change is the recurring bug source here — it **reloads `<img>`/`<video>` (media flashes / restarts), drops scroll + focus + text selection, cancels an in-progress hold-to-confirm or inline edit, and re-runs every wiring**. If only the toolbox buttons flip, only the toolbox should update.
-
-**Decision procedure (cheapest first):**
-1. **Guard with a signature** — compute a small string/tuple of *what the render depends on*; bail early when it's unchanged so nothing re-renders on a no-op event. (`_rowSignature`, `_detailStructuralSig`, `_panelCardSig`.)
-2. **Patch in place** when a scalar/class changed — set `textContent`/`style`/`classList` on the exact node, no HTML rebuild. (`_patchDetailWeight`, `_patchCamWall`.)
-3. **Swap one section** when a whole sub-block changed — regenerate the panel HTML *off-DOM* (`const tmp = document.createElement('div'); tmp.innerHTML = buildPanelHTML(r)`), lift out just that section (`tmp.querySelector('.panel-section--toolbox')`), `replaceWith` it into the live DOM, then re-wire **only** that section.
-4. **Full rebuild** (`innerHTML = buildX()`) is the LAST resort — only when the structural signature genuinely changed; even then preserve live media (`_rebuildDetailKeepVideo`).
-
-**To make a section independently swappable, split its render from its wiring** into paired functions and call the wirer from both the initial render and the surgical refresh (canonical example: `buildPanelHTML` renders the `.panel-section--toolbox`, `_wireToolbox(r)` wires it; `openDetail` calls both, `_maybeRefreshPanelForCard` swaps just the toolbox node + calls `_wireToolbox`). Keep delegated handlers on the stable parent (`#panelBody`) so children swapped underneath keep working without re-wiring (the ⓘ tips via `_wireToolInfoTips`).
-
-**Smell test before a rebuild:** does this change touch media, scroll, focus, an in-progress gesture, or 90% unchanged markup? If yes, find the smallest node that changed and patch/swap that instead.
+Debounced 500 ms write to Firestore (`.wb-saving` pulse); "Update" saves immediately; closing the
+panel cancels a pending save.
 
 ### State
 ```js
 state = {
-  inventory,        // raw Firestore docs { [spoolId]: data }
-  rows,             // normalizeRow() output array
-  selected,         // open detail panel spoolId
-  keyValid,
-  displayName,      // user's pseudo
-  showDeleted,
-  search,
-  viewMode,         // "table" | "grid"
-  lang,
-  sortCol, sortDir,
-  activeAccountId,
-  i18n,
-  imgCache,
-  invLoading,       // true while waiting for first Firestore snapshot
-  isAdmin,          // from users/{uid}.roles === "admin"
-  debugEnabled,     // from users/{uid}.Debug (admin only)
-  publicKey,        // user's discovery code XXX-XXX (from users/{uid}.publicKey)
-  privateKey,       // user's 40-char hex access token (from users/{uid}.privateKey)
-  isPublic,         // whether inventory is publicly visible (from users/{uid}.isPublic)
-  friends,          // [{ uid, displayName, addedAt, key }]
-  friendRequests,   // [{ uid, displayName, requestedAt, key }]
-  db                // { brand, material, aspect, type, diameter, unit, version, containers }
+  inventory, rows, selected, keyValid, displayName, showDeleted, search,
+  viewMode,       // "table" | "grid"
+  lang, sortCol, sortDir, activeAccountId, i18n, imgCache,
+  invLoading,     // true until the first Firestore snapshot
+  isAdmin,        // users/{uid}.roles === "admin"
+  debugEnabled,   // users/{uid}.Debug (any account)
+  publicKey,      // friend code XXX-XXX
+  privateKey,     // 40-char hex access token
+  isPublic, friends, friendRequests,
+  db              // { brand, material, aspect, type, diameter, unit, version, containers }
 }
 ```
 
 ### Auth flow
-`onAuthStateChanged` → `setConnected()` → load localStorage cache → `subscribeInventory(uid)` → `syncLangFromFirestore(uid)` → `syncUserDoc(uid)`
+`onAuthStateChanged` → `setConnected()` → local cache → `subscribeInventory(uid)` →
+`syncLangFromFirestore(uid)` → `syncUserDoc(uid)`, which applies `displayName`, `roles`, `Debug`,
+`publicKey` / `privateKey` (claimed via `claimPublicKey` on first login) and `isPublic`. When the
+pseudo, a valid language or an avatar is missing, the account-setup modal reopens. The Google name
+is stored as `googleName` / `firstName` / `lastName` for admin reference, never displayed.
 
-`syncUserDoc(uid)` reads `users/{uid}`, applies:
-- `displayName` (pseudo) → sidebar, localStorage (priority over Google Auth name)
-- `roles` → `state.isAdmin`
-- `Debug` → `state.debugEnabled` → shows/hides `#btnDebug`
-- `publicKey` / `privateKey` → `state.publicKey` / `state.privateKey` (generated via `claimPublicKey` on first login if missing)
-- `isPublic` → `state.isPublic`
-
-Google real name (`user.displayName` from Firebase Auth) is saved to Firestore as `googleName` / `firstName` / `lastName` for admin reference but **never displayed in the UI**.
-
-### Friends system
-- **`publicKey`** (`XXX-XXX` format) — discovery code shared with friends. Stored in both `users/{uid}.publicKey` and `publicKeys/{key}.uid`. Lookup is O(1) by document ID.
-- **`privateKey`** (40-char hex) — access token. Stored in `users/{uid}.privateKey` and copied into each friend's `friends/{uid}.key`. Firestore rules grant inventory read access if `friends/{uid}.key == users/{uid}.privateKey`.
-- **`claimPublicKey(uid, oldKey)`** — atomic transaction: generates `XXX-XXX`, checks `publicKeys/{candidate}` doesn't exist, writes it. Retries up to 10 times. Deletes `oldKey` after success.
-- **Bidirectional friendship**: when Alice accepts Bob's request, a batch writes to both `users/alice/friends/bob` (key=alice.privateKey) and `users/bob/friends/alice` (key=bob.privateKey from request doc). Removal also deletes from both sides.
-- **`openFriends()`** — auto-generates a publicKey if `state.publicKey` is null before opening the panel.
-- **Shareable friend links (deep link).** The Friends panel "Share link" button copies `https://tigersystem.io/friend/<code>`. That landing page (`public/friend.html` in the **backend repo** `TigerTag_Firebase_Backend`, served via a `/friend/**` Hosting rewrite) redirects to the custom protocol **`tigertag://friend/<CODE>`**. The app registers that scheme in `main.js` (`setAsDefaultProtocolClient('tigertag')`; macOS `open-url`, Win/Linux argv + `second-instance`, cold-start queued and flushed on `deep-link:ready`), forwards it to the renderer (`electronAPI.onDeepLink`), which **pre-fills** the Add-friend search via `_handleFriendDeepLink` → `_openAddFriendWithCode` (queued in `_pendingFriendCode` and replayed by `setConnected` if not signed in yet). It only PRE-FILLS — the user still presses "Send request" (a link can never auto-add/auto-accept). The landing page is desktop-only-aware (mobile shows a "copy the code" note, no doomed deep link). The page itself is documented in the backend repo (`public/friend.html` header + README → *Static Hosting Pages*).
+### Friends
+- `publicKey` (`XXX-XXX`) is the discovery code, mirrored in `publicKeys/{key}.uid` (O(1) lookup)
+  and published to `userProfiles` through `setProfile`.
+- `privateKey` (40-char hex) is copied into each friend's `friends/{uid}.key`; rules grant
+  inventory reads when it matches.
+- `claimPublicKey(uid, oldKey)`: transaction, up to 10 retries, deletes the old key after success.
+- Friendship is bidirectional (batch writes both sides; removal deletes both).
+- Share link `https://tigersystem.io/friend/<code>` → `tigertag://friend/<CODE>` deep link
+  (`setAsDefaultProtocolClient`, `_handleFriendDeepLink`) only PRE-FILLS the add-friend search;
+  the user still sends the request. The landing page is `public/friend.html` in the backend repo.
 
 ### Container picker
-`openContainerPicker(r)` — opens `#containerPickerOverlay` with all 46 containers from `data/container_spool/spools_filament.json`, filtered by search. Selecting one writes `container_id` + `container_weight` to Firestore `users/{uid}/inventory/{spoolId}`. onSnapshot propagates the change automatically.
+`openContainerPicker(r)` lists `data/container_spool/spools_filament.json`; picking writes
+`container_id` + `container_weight` on the spool doc.
 
----
-
-## i18n — workflow & key reference
-All **11 locales** (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl) share the same key set. **Don't re-read the locale JSON files** — the full key list is in `docs/i18n-keys.md` (pointer below). The workflow (add keys, consistency check) stays here.
-
-### Adding new keys — use the helper script
-**Never edit the 11 locale files by hand.** Use `npm run i18n:add` instead — it writes every locale in one shot, validates JSON, and falls back to the EN value when a translation is missing.
-
-```bash
-# Append at end of every locale file
-npm run i18n:add -- myKey en="Hello" fr="Bonjour" de="Hallo" es="Hola" it="Ciao" zh="你好" pt="Olá" pt-pt="Olá" pl="Cześć" ru="Привет"
-
-# Insert just after an existing key (keeps related keys grouped)
-npm run i18n:add -- myKey --after toolboxTitle en="Hello" fr="Bonjour" ...
-
-# JSON payload form (handy for programmatic use)
-npm run i18n:add -- myKey --json '{"en":"Hello","fr":"Bonjour"}'
-```
-
-Behaviour:
-- Updates the value in-place if the key already exists (preserves order).
-- Missing locales fall back to the EN value with a stderr warning.
-- Re-parses every file after write — aborts the entire run if any output isn't valid JSON.
-- Source: `scripts/i18n-add.mjs`.
-
-### Docs that restate the code — kept honest by `npm run docs:check`
-
-Several docs repeat numbers that actually live in the code: the version, the
-renderer's line count, how many printer brands ship, how many i18n keys exist,
-paths to folders. Nothing breaks when they drift, so nobody notices — `llms.txt`
-(the file an AI agent reads FIRST to understand this repo) once claimed **v1.8.2 /
-~12 000 lines / 5 brands** while the app was at **v2.12.0 / 28 500 lines / 6
-brands**, with Anycubic missing from its protocol table entirely.
-
-`scripts/check-docs-drift.mjs` compares each stated fact against its source of
-truth and fails the commit on a mismatch. The **pre-commit hook runs it** whenever
-a doc — or a file it describes — is staged. Run it by hand with `npm run docs:check`.
-
-| Checked | Source of truth | Tolerance |
-|---|---|---|
-| `llms.txt` "Current version" | `package.json` | current, or the patch it was bumped from |
-| `llms.txt` "~N lines" | `renderer/inventory.js` | 15 % |
-| `llms.txt` CSS file count | `renderer/css/*.css` | exact |
-| `llms.txt` brand count **+ protocol table rows** | `renderer/printers/*/index.js` | exact |
-| `llms.txt` "N keys × 11 locales" | `renderer/locales/en.json` | 2 % |
-| `FEATURES.md` "current as of vX.Y.Z" | `package.json` | current, or previous patch |
-| Paths in README / llms.txt / CLAUDE.md / AGENT.md | the filesystem | must exist (templates + globs skipped) |
-| `llms.txt` Firestore map | `.collection("…")` calls in `renderer/inventory.js` | every collection written must be documented |
-| Image paths in README / FEATURES / ROADMAP | the filesystem | must exist |
-
-It only checks facts it can derive — it never reviews prose. When a check fires,
-fix the doc rather than bypassing: the numbers are read by humans **and** agents.
-Add a new check here whenever a doc starts restating something the code owns.
-
-### Consistency check (auto-run on every commit)
-A pre-commit hook runs `npm run i18n:check` automatically — the commit is blocked if the 11 locale files drift apart. Activated by the `prepare` npm script which sets `core.hooksPath=.githooks/`. To run manually:
-
-```bash
-npm run i18n:check
-# → "OK — 11 locales × N keys, all consistent." (exit 0)
-# or a per-file list of missing/extra/empty/type-mismatch issues (exit 1)
-```
-
-What it checks:
-- Every locale file parses as valid JSON.
-- Same key set as `en.json` (no missing, no extras).
-- Same value type per key (plural objects stay plural objects, etc.).
-- No empty string values.
-
-To bypass once (don't): `git commit --no-verify`.
-Source: `scripts/check-i18n-consistency.mjs` + `.githooks/pre-commit`.
-
-### Key reference table → `docs/i18n-keys.md`
-The full per-category key list (App/status, Settings, Account, Login, Credentials, Inventory, Stats, Weight, Friends, Detail rows, Time-ago, …) lives in **`docs/i18n-keys.md`** — read it on demand instead of re-reading the locale JSON. When you add keys via `npm run i18n:add`, append them to that doc too.
-
----
-
-## Rules
-- **UI/UX — be autonomous, apply these by default (don't wait to be told each tweak):** (1) **Declutter** — cut redundant chrome (a `»` tab AND an ✕; titles repeating visible context; obvious subtitles). (2) **Context over labels** — if a state is already visible (selected item highlighted), don't repeat it. (3) **Consistency** — matching components look/size/behave identically (same size collapsed vs expanded; side-cards stack + get `»` tabs like group/material; collapse animation mirrors expand). (4) **Smooth motion, never jumpy** — elements stay put and the container resizes around them (no `justify-content:center` snap); slide don't pop; on a swap the incoming card covers before the outgoing closes; animate labels (max-width/opacity), not `display:none`. (5) **Real icons sized with presence** — masked SVGs over dots/glyphs, consistent sizes, centred on both axes (mind flex `min-width:auto` + top-heavy SVGs). (6) **Show the active/selected state.** (7) **Help/secondary actions in context + light.** (8) **Tighten space** — kill dead gaps, stacked paddings, useless separators. (9) Prefer **shared/generic** CSS-JS over per-file repetition. Propose refinements proactively with a one-line rationale. *(Full version: memory `feedback-ui-ux-autonomy`.)*
-- **Language**: Conversation with the user is in French. All project content — code comments, commit messages, documentation, instructions — must be written in English.
-- **Brand voice (all user-facing copy)**: every string a user reads — UI labels, buttons, empty states, prompts, nudges, error messages, modals, AND the "What's New" notes (`data/whatsnew.json`) — uses a **playful, deadpan, second-degree voice, Discord-style** (witty, self-aware, talks to you like a mate) — **NOT** Burger-King-style (no aggressive/provocative/troll edge). Lead with the **user benefit** in plain words; **no technical jargon** (avoid "modal", "toggle", "side panel", "header", class names, "TestFlight"…); **never describe what doesn't exist** or our process ("no emoji", "we removed X", "fixed bug Y"). Keep the tone natural in **every locale**. This playful voice is **register 3** — for **in-app copy + What's New (`data/whatsnew.json`) ONLY**. It is one of **three distinct copy registers** (see [*Three copy registers*](#️-three-copy-registers--changelog--release-note--whats-new)): the **release note** (`data/release-notes/`, register 2) is BambuLab-style factual, and the **`CHANGELOG.md`** (register 1) is exhaustive & technical. Same change, three voices — never blur them, and never ship the technical changelog wording where the playful or the Bambu one belongs. *(Same rule applies to the mobile app — see its CLAUDE.md.)*
-- **i18n**: always add all **11** translations (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl) in the same edit batch. **Use `npm run i18n:add` — do NOT hand-edit the locale JSON files.** See the *Adding new keys* section above for syntax.
-- **Commits**: no `Co-Authored-By` line. **Never commit without explicit user instruction** — make the change, then stop and wait for the order to commit.
-- **Naming — clear human semantics first**: every name you introduce (Firestore collection/field, function, variable, CSS class, IPC channel, config key) must read plainly to a human and say what it *is*, so the meaning is obvious without chasing the code. Prefer a self-describing name over a clever/encoded one — e.g. a collection `rfidList` over `rfidChips`, a boolean `rfidListed`/`rfidBackup` over a multi-state `rfidChip: 1|2`. **Avoid encoding several states into one cryptic value** (magic numbers, packed flags): split into separate, well-named booleans/fields. **Don't store what you can derive** — drop redundant fields when an existing one already implies the answer (e.g. no `startState`/type field when the presence of a `backup` already means "TigerTag+"). When a name turns out unclear, rename it (and its doc/schema) rather than letting it stand. Clear semantics now prevent compounding complexity later.
-- **Conditions key on protocol IDs — NEVER on label strings (critical).** Whenever code decides something from a value of the protocol's reference tables (`assets/db/tigertag/id_*.json` — `id_aspect`, `id_brand`, `id_material`, `id_type`, `id_diameter`, `id_measure_unit`, `id_version` …), the condition compares the **numeric ID**, never its label turned into a string (`label.toLowerCase().includes('bicolor')` is a bug). **A label is display text, not data**: it is translated, it can be renamed or corrected in the reference DB, and the same spool reads differently per locale — **an ID never changes.** So: carry the ID on the row next to the label (`aspect1Id` / `aspect2Id` pattern), name the IDs you branch on in a constant map (`ASPECT_ID = { TRICOLOR: 24, RAINBOW: 145, BICOLOR: 252 }`), and use labels for rendering only. Applies to filters, sorting keys, rendering branches, imports, validators, playgrounds and doc examples alike. Reference: `colorBg()` in `renderer/inventory.js`.
-- **JS**: all logic lives in `inventory.js`. Do not inline JS in `inventory.html`.
-- **CSS**: split across `renderer/css/00-base.css … 70-detail-misc.css` (loaded in numeric order). Add new rules in the section file that matches the feature — e.g. Snapmaker tweaks go in `50-snapmaker.css`, modal tweaks in `60-modals.css`. Asset URLs use `url('../../assets/svg/icons/…')` (two `..` because we're in `renderer/css/`). Scoped IDs (`#editAccountModalOverlay`, `#addAccountModalOverlay`, etc.) still apply where needed.
-- **displayName**: always read from Firestore `users/{uid}.displayName` (pseudo). Never use Firebase Auth `user.displayName` for UI display — it contains the Google real name.
-- **Admin fields**: `roles` and `Debug` in `users/{uid}` must only be written via Firebase Admin SDK / Cloud Function. The client toggle is a UX convenience for admins already authenticated.
-
-## CSS coding standards
-
-### SVG icons via `-webkit-mask-image`
-Always constrain **one dimension only** and derive the other from the SVG's intrinsic `viewBox` ratio using `aspect-ratio`. Never hard-code both `width` and `height` — doing so silently distorts the icon if the SVG is ever edited.
-
-```css
-/* ✅ correct — only height forced, width auto-derived */
-.my-icon {
-  height: 18px;
-  aspect-ratio: 52 / 22; /* viewBox="0 0 52 22" */
-  background-color: var(--muted);
-  -webkit-mask-image: url('../../assets/svg/icons/icon_foo.svg');
-  -webkit-mask-size: contain;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-}
-
-/* ❌ wrong — both dimensions hard-coded, ratio broken if SVG changes */
-.my-icon { width: 40px; height: 18px; … }
-```
-
-To find the ratio: `head -1 assets/svg/icons/icon_foo.svg` → read `viewBox="0 0 W H"` → use `aspect-ratio: W / H`.
-
-### CSS specificity
-When a global rule (e.g. `input[type="text"]` — specificity 0,1,1) overrides a class rule (0,1,0), **double the class selector** to reach 0,2,0 rather than adding `!important`:
-```css
-/* beats input[type="text"] without !important */
-.my-sheet .my-input { background: transparent; }
-```
-
-### Hold-to-confirm buttons
-Use `setupHoldToConfirm(el, durationMs, callback)`. The element must contain a `<span class="hold-progress"></span>` child. Duration guideline: 1200 ms for reversible actions, 1500 ms for hard-destructive (delete/unlink).
-
-**The fill animation is mandatory and must be VISIBLE — never ship a hold button whose progress you can't see.** A hold-to-confirm button with no visible fill reads as "broken" (the user clicks, nothing appears to happen, they give up before the hold completes). So on every hold button, verify BOTH:
-1. The `<span class="hold-progress"></span>` child is present (without it `setupHoldToConfirm`'s `fill` is `null` → the action still fires after the hold but with zero visual feedback).
-2. The fill **contrasts with the button's own background**. The base `.hold-progress` is `var(--danger)` (red) at `opacity:.35` — on an already-red/danger button that's red-on-red = invisible. In that case override it with a contrasting sweep, e.g. `.my-danger-btn .hold-progress { background: rgba(0,0,0,.34); opacity: 1; }` (dark sweep) or a `--primary` variant. Same reflex for any coloured button: pick a fill that visibly stands out against that specific background.
+## Tools
+- **dev-drive** (`scripts/devdrive.mjs`): `npm run start:drive`, then
+  `npm run drive -- wait|eval|click|type|shot|logs|reload …` (CDP on 127.0.0.1:9339, dev only).
+- **i18n**: `npm run i18n:add -- key [--after k] en="…" fr="…" …` (`scripts/i18n-add.mjs`),
+  `npm run i18n:check` (`scripts/check-i18n-consistency.mjs`).
+- **Docs**: `npm run docs:check` (`scripts/check-docs-drift.mjs`) — version, line count, brands,
+  CSS files, key count, Firestore collections and paths stated in the docs vs the code.
+- **CODEMAPs**: `npm run codemap:check` (`scripts/check-codemap.mjs`).
+- **What's New**: `npm run whatsnew:add`, `npm run whatsnew:check`.
+- **Theme**: `npm run theme:check` (raw colours outside tokens).
+- **Agent rules**: `node scripts/check-agent-rules.mjs` (index ↔ rule files, cited paths, plugin
+  string tables).
+- **Pre-commit** (`.githooks/pre-commit`, enabled by `npm prepare`): i18n, syntax, ESLint
+  `no-undef`, CODEMAP, docs drift, agent rules.
+- **MCP**: local Model Context Protocol server, reference `docs/MCP.md`.
