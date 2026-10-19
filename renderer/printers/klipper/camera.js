@@ -10,10 +10,12 @@
  * Mirrors and rotation from the camera's Moonraker settings are applied.
  */
 import { ctx } from '../context.js';
+import { installCamImgRecovery } from '../cam-img-recovery.js';
 import { klipperKey, klipperGetConn } from './core.js';
 
 const SNAP_MS = 2000;
 const _snapTimers = new Map();   // key → interval (snapshot mode only)
+installCamImgRecovery("img.klipper-camera-img");
 
 const imgsFor = key => document.querySelectorAll(`img[data-klipper-cam="${CSS.escape(key)}"]`);
 
@@ -50,9 +52,8 @@ function bannerHtml(p, withId) {
   const tf = [cam.rotation ? `rotate(${cam.rotation}deg)` : "", cam.flipH ? "scaleX(-1)" : "", cam.flipV ? "scaleY(-1)" : ""].filter(Boolean).join(" ");
   return `
     <div${withId ? ` id="klipperCamHost"` : ""} class="pp-cam-full klipper-cam-host">
-      <img class="klipper-camera-img" data-klipper-cam="${ctx.esc(key)}" src="${ctx.esc(src)}"
-           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}
-           onerror="this.style.opacity='.15'"/>
+      <img class="klipper-camera-img" data-klipper-cam="${ctx.esc(key)}" src="${ctx.esc(src)}" data-cam-src="${ctx.esc(src)}"
+           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}/>
     </div>`;
 }
 
