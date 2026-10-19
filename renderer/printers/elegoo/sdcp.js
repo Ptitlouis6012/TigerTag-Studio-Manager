@@ -31,7 +31,11 @@ import { CMD_GET_CANVAS_STATUS, sdcpCanvasPresent, sdcpParseCanvas, sdcpCanvasSl
 const WS_PORT = 3030;
 const STATUS_EVERY_MS = 5000;     // the printer also pushes on its own (~2 s)
 const PING_EVERY_MS = 10000;
-const CANVAS_EVERY_MS = 30000;    // the Canvas changes when a spool does: no need to ask more often
+// A spool is swapped between jobs, and nothing pushed says it happened: the slots are asked for at
+// connection, when the Canvas gets plugged in and when a job ends; this slow round only catches
+// the rest (a spool changed while the printer sat idle).
+const CANVAS_EVERY_MS = 60000;
+const CANVAS_MIN_GAP_MS = 5000;   // two event-driven questions never closer than this
 const MAX_FAILS_BEFORE_REFIND = 3;
 
 const _conns = new Map();          // `${brand}:${id}` → conn
@@ -239,6 +243,7 @@ function onMessage(conn, raw) {
 // Filename, so "a job" is decided from CurrentStatus + Filename, never the totals.
 function mergeStatus(conn, st) {
   const d = conn.data;
+  const wasBusy = d.printState === 'printing' || d.printState === 'paused' || d.printState === 'busy';
   const cur = Array.isArray(st.CurrentStatus) ? st.CurrentStatus : [st.CurrentStatus];
   const pi = st.PrintInfo || {};
   const sub = Number(pi.Status);
@@ -268,10 +273,16 @@ function mergeStatus(conn, st) {
   d.fanModel = num(f.ModelFan); d.fanAux = num(f.AuxiliaryFan); d.fanBox = num(f.BoxFan);
   d.speedPct = num(pi.PrintSpeedPct) ?? num(pi.PrintSpeed);
   // The status push says whether a Canvas is plugged in (when it says). Unless it says "none"
-  // or the firmware refused the command, the slots are asked for again now and then.
+  // or the firmware refused the command, the slots are asked for when they may have changed
+  // (Canvas plugged in, a job just ended) and, slowly, in between.
   const hub = sdcpCanvasPresent(st);
+  const plugged = hub === true && d.canvasPresent === false;
   if (hub !== null) { d.canvasPresent = hub; if (!hub) d.canvas = null; }
-  if (d.canvasPresent !== false && !d.canvasRefused && Date.now() - d.canvasAskedAt >= CANVAS_EVERY_MS) askCanvas(conn);
+  if (d.canvasPresent !== false && !d.canvasRefused) {
+    const since = Date.now() - d.canvasAskedAt;
+    const mayHaveChanged = plugged || (wasBusy && !(running || state === 'busy'));
+    if (since >= CANVAS_EVERY_MS || (mayHaveChanged && since >= CANVAS_MIN_GAP_MS)) askCanvas(conn);
+  }
 }
 
 function askCanvas(conn) {
@@ -398,12 +409,44 @@ function fansHtml(conn) {
   return chips.length ? `<section class="snap-block ffg-status-block"><div class="ffg-status-row">${chips.join('')}</div></section>` : '';
 }
 
+// The Canvas hub's trays, same card as the CC2's (cards.js) but read-only: no write command is
+// known over SDCP, so no edit sheet. Without a Canvas — or until it has answered — the lone
+// external arm is one "Ext." square, empty because SDCP does not say what it holds (same as the board).
+function filamentHtml(conn) {
+  const slots = sdcpCanvasSlots(conn.data.canvas);
+  if (!slots.length) {
+    return `<section class="snap-block"><h4 class="snap-block-title">${ctx.esc(ctx.t('snapFilamentTitle'))}</h4><div class="snap-fil-grid snap-fil-grid--mono">
+      <div class="snap-fil">
+        <div class="snap-fil-tag">Ext.</div>
+        <div class="snap-fil-square snap-fil-square--empty"><span class="snap-fil-main">—</span></div>
+        <div class="snap-fil-meta"></div>
+      </div></div></section>`;
+  }
+  const trays = conn.data.canvas.trays;
+  const cards = slots.map((s, i) => {
+    const filled = !!s.color;
+    const style = filled ? ` style="background:${ctx.esc(s.color)};color:${ctx.esc(ctx.snapTextColor(s.color))};"` : '';
+    return `
+      <div class="snap-fil${trays[i]?.active ? ' snap-fil--active' : ''}">
+        <div class="snap-fil-tag">S${i + 1}</div>
+        <div class="snap-fil-square snap-fil-square--${filled ? 'filled' : 'empty'}"${style}>
+          <span class="snap-fil-main">${ctx.esc(s.material || ctx.t('snapNoFilament'))}</span>
+        </div>
+        <div class="snap-fil-meta">
+          ${s.vendor ? `<div class="snap-fil-vendor">${ctx.esc(s.vendor)}</div>` : ''}
+          ${s.detail ? `<div class="snap-fil-sub">${ctx.esc(s.detail)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
+  return `<section class="snap-block"><h4 class="snap-block-title">${ctx.esc(ctx.t('snapFilamentTitle'))}</h4><div class="snap-fil-grid">${cards}</div></section>`;
+}
+
 export function sdcpLiveInner(p) {
   const conn = _conns.get(sdcpKey(p));
   if (!conn) return `<div class="snap-empty"><span class="icon icon-cloud icon-18"></span><span>${ctx.esc(ctx.t('snapNoConnection'))}</span></div>`;
   const beta = betaBadgeHtml();
   if (conn.status !== 'connected') return beta;
-  return `${beta}${jobHtml(p, conn)}${fansHtml(conn)}${sdcpTempHtml(conn)}`;
+  return `${beta}${jobHtml(p, conn)}${fansHtml(conn)}${sdcpTempHtml(conn)}${filamentHtml(conn)}`;
 }
 
 export function sdcpLogInner(p) {
