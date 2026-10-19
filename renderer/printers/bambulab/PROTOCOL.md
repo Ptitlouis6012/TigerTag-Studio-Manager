@@ -243,7 +243,7 @@ température, ventilo et home utilisent la commande générique `gcode_line`.
   "led_on_time": 500, "led_off_time": 500, "loop_times": 0, "interval_time": 0 } }
 ```
 `led_node` = `chamber_light` (X1C/P1S) ou `work_light` (lumière de tête A1).
-`led_mode` = `on` | `off` (`flashing` également supporté). L'état réel revient en
+`led_node` = aussi `chamber_light2` (second ruban des H2 / X2D : le bouton envoie les deux, §16.7). `led_mode` = `on` | `off` (`flashing` également supporté). L'état réel revient en
 push dans `print.lights_report` = `[{ "node": "chamber_light", "mode": "on" }]`.
 
 **Jog d'un axe** (mouvement relatif encadré par G91/G90 pour ne pas laisser
@@ -1279,7 +1279,7 @@ caisson, **P10** aux. secondaire. Lecture : `cooling_fan_speed` (P1),
 ### 16.7 Autres structurées H2 (référence)
 
 - **Buzzer** (H2D) : `{ "print":{"command":"buzzer_ctrl","mode":0|1|2,"reason":""} }` (0 silent, 1 alarm, 2 beep).
-- **Lumières** : `ledctrl` (topic system) — `chamber_light`, plus `chamber_light2` + `heatbed_light` sur H2.
+- **Lumières** : `ledctrl` (topic system) — `chamber_light`, plus `chamber_light2` + `heatbed_light` sur H2. **Deux rubans de caisson** (H2S, H2D, H2D Pro, H2C, X2D — ids catalogue 7, 8, 9, 11, 12) : le bouton lumière de Studio envoie `ledctrl` aux DEUX nœuds `chamber_light` et `chamber_light2` (`lights.js`), et la lumière est « allumée » si l'un des deux l'est ; un `lights_report` qui nomme `chamber_light2` suffit aussi à les piloter tous les deux. Le `heatbed_light` reste un interrupteur à part, non piloté. Même approche que ha-bambulab (MIT). ⚠️ Constaté sur une H2C (un seul ruban s'éteignait), **jamais vu sur une vraie H2 côté correctif**.
 - **Son d'invite** : `{ "print":{"command":"print_option","sound_enable":true|false} }`.
 - **AMS séchage** : `{ "print":{"command":"ams_filament_drying","ams_id":N,"temp":…,"cooling_temp":…,"duration":…,"humidity":…,"mode":0,"rotate_tray":false} }` (AMS 2 Pro / HT ; H2C ≥ fw 01.01.50.00).
 
@@ -1292,7 +1292,8 @@ caisson, **P10** aux. secondaire. Lecture : `cooling_fan_speed` (P1),
 | Ventilos P1/P2/P3 + jog/home/play-pause-stop/vitesse | ✅ implémenté (g-code) |
 | **Double-tête** (afficher les 2 buses droite/gauche) | ✅ implémenté — 2 pastilles R/L, buse active surlignée, consigne par tête (`M104 T{id}`) |
 | **Râtelier de buses** (UI type T1-T… avec type/diamètre/usure) | ⏳ TODO |
-| Airduct UI / buzzer / lumières H2 (chamber_light2, heatbed_light) | ⏳ backlog |
+| Lumière H2 : les deux rubans (`chamber_light` + `chamber_light2`) | ✅ implémenté — **non vu sur une vraie H2** |
+| Airduct UI / buzzer / `heatbed_light` H2 | ⏳ backlog |
 
 ---
 
