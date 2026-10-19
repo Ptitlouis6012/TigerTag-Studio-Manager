@@ -14,7 +14,7 @@
 .ttc-icon {
   display: inline-block;
   height: 34px; margin: 5px 0;               /* 34 px of ink in the 44 px row, like its neighbours */
-  aspect-ratio: 4833 / 3692;                  /* viewBox 600 412 4833 3692: the screen in 3/4 view */
+  aspect-ratio: 1774 / 1648;                  /* viewBox 0 0 1774 1648: the screen in 3/4 view */
   background-color: var(--neutral);
   -webkit-mask-image: url('../../../assets/svg/icons/icon_tigertouch_3d.svg');
   -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
