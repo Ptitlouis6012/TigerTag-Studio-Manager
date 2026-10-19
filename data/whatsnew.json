@@ -1,4 +1,96 @@
 {
+  "2.42.1": {
+    "date": "2026-10-19",
+    "items": [
+      {
+        "icon": "user",
+        "title": {
+          "en": "Your profile, saved for real",
+          "fr": "Ton profil, enregistré pour de vrai",
+          "de": "Dein Profil, wirklich gespeichert",
+          "es": "Tu perfil, guardado de verdad",
+          "it": "Il tuo profilo, salvato davvero",
+          "zh": "你的资料，真正保存了",
+          "pt": "Seu perfil, salvo de verdade",
+          "pt-pt": "O teu perfil, guardado a sério",
+          "pl": "Twój profil, zapisany naprawdę",
+          "ru": "Твой профиль — теперь точно сохраняется",
+          "nl": "Je profiel, echt opgeslagen"
+        },
+        "body": {
+          "en": "Pseudo, colour, photo, links: the server now checks and keeps them — and if it says no, you’ll know why. Pseudos: 2 to 40 characters, no links, three changes a day.",
+          "fr": "Pseudo, couleur, photo, liens : le serveur les vérifie et les garde — et s’il dit non, tu sais pourquoi. Pseudo : 2 à 40 caractères, pas de lien, trois changements par jour.",
+          "de": "Name, Farbe, Foto, Links: Der Server prüft und speichert sie — und wenn er Nein sagt, erfährst du warum. Namen: 2 bis 40 Zeichen, keine Links, drei Änderungen pro Tag.",
+          "es": "Apodo, color, foto, enlaces: el servidor los comprueba y los guarda — y si dice que no, sabrás por qué. Apodos: de 2 a 40 caracteres, sin enlaces, tres cambios al día.",
+          "it": "Nickname, colore, foto, link: il server li controlla e li conserva — e se dice di no, saprai perché. Nickname: da 2 a 40 caratteri, niente link, tre cambi al giorno.",
+          "zh": "昵称、颜色、照片、链接：现在由服务器检查并保存——被拒绝时你会知道原因。昵称：2 到 40 个字符，不能有链接，每天最多改三次。",
+          "pt": "Apelido, cor, foto, links: o servidor confere e guarda — e se disser não, você fica sabendo o porquê. Apelidos: de 2 a 40 caracteres, sem links, três mudanças por dia.",
+          "pt-pt": "Nome, cor, foto, links: o servidor verifica e guarda — e se disser que não, ficas a saber porquê. Nomes: 2 a 40 caracteres, sem links, três alterações por dia.",
+          "pl": "Pseudonim, kolor, zdjęcie, linki: serwer je sprawdza i zapisuje — a jeśli odmówi, dowiesz się dlaczego. Pseudonimy: 2–40 znaków, bez linków, trzy zmiany dziennie.",
+          "ru": "Псевдоним, цвет, фото, ссылки: сервер их проверяет и хранит — а если отказывает, ты узнаешь почему. Псевдоним: от 2 до 40 символов, без ссылок, три смены в день.",
+          "nl": "Naam, kleur, foto, links: de server controleert en bewaart ze — en zegt hij nee, dan weet je waarom. Namen: 2 tot 40 tekens, geen links, drie wijzigingen per dag."
+        }
+      },
+      {
+        "icon": "printer",
+        "title": {
+          "en": "Centauri Carbon: the Canvas shows up",
+          "fr": "Centauri Carbon : le Canvas s’affiche",
+          "de": "Centauri Carbon: der Canvas ist sichtbar",
+          "es": "Centauri Carbon: el Canvas aparece",
+          "it": "Centauri Carbon: il Canvas si vede",
+          "zh": "Centauri Carbon：Canvas 现身了",
+          "pt": "Centauri Carbon: o Canvas aparece",
+          "pt-pt": "Centauri Carbon: o Canvas aparece",
+          "pl": "Centauri Carbon: Canvas wreszcie widać",
+          "ru": "Centauri Carbon: Canvas наконец виден",
+          "nl": "Centauri Carbon: de Canvas is zichtbaar"
+        },
+        "body": {
+          "en": "Your Elegoo Centauri Carbon now shows the four spools of its Canvas, colours and materials included, instead of one mystery slot. Thanks @Ptitlouis6012!",
+          "fr": "Ton Elegoo Centauri Carbon affiche maintenant les quatre bobines de son Canvas, couleurs et matières comprises, au lieu d’un emplacement mystère. Merci @Ptitlouis6012 !",
+          "de": "Dein Elegoo Centauri Carbon zeigt jetzt die vier Spulen seines Canvas, samt Farben und Materialien, statt eines rätselhaften Slots. Danke @Ptitlouis6012!",
+          "es": "Tu Elegoo Centauri Carbon muestra ahora las cuatro bobinas de su Canvas, con colores y materiales, en lugar de una ranura misteriosa. ¡Gracias @Ptitlouis6012!",
+          "it": "La tua Elegoo Centauri Carbon ora mostra le quattro bobine del Canvas, con colori e materiali, invece di uno slot misterioso. Grazie @Ptitlouis6012!",
+          "zh": "你的 Elegoo Centauri Carbon 现在会显示 Canvas 的四个料盘，颜色和材料都有，不再是一个神秘槽位。感谢 @Ptitlouis6012！",
+          "pt": "Sua Elegoo Centauri Carbon agora mostra os quatro carretéis do Canvas, com cores e materiais, em vez de um slot misterioso. Valeu, @Ptitlouis6012!",
+          "pt-pt": "A tua Elegoo Centauri Carbon mostra agora as quatro bobinas do Canvas, com cores e materiais, em vez de um espaço misterioso. Obrigado @Ptitlouis6012!",
+          "pl": "Twoja Elegoo Centauri Carbon pokazuje teraz cztery szpule Canvasa, z kolorami i materiałami, zamiast tajemniczego slotu. Dzięki @Ptitlouis6012!",
+          "ru": "Твой Elegoo Centauri Carbon теперь показывает четыре катушки Canvas — с цветами и материалами — вместо загадочного слота. Спасибо, @Ptitlouis6012!",
+          "nl": "Je Elegoo Centauri Carbon toont nu de vier spoelen van zijn Canvas, met kleuren en materialen, in plaats van één mysterieus slot. Bedankt @Ptitlouis6012!"
+        }
+      },
+      {
+        "icon": "eye-on",
+        "title": {
+          "en": "Tiger Touch drives your Anycubic too",
+          "fr": "Tiger Touch pilote aussi ton Anycubic",
+          "de": "Tiger Touch steuert auch deinen Anycubic",
+          "es": "Tiger Touch también maneja tu Anycubic",
+          "it": "Tiger Touch comanda anche la tua Anycubic",
+          "zh": "Tiger Touch 也能操控你的 Anycubic",
+          "pt": "O Tiger Touch também controla sua Anycubic",
+          "pt-pt": "O Tiger Touch também comanda a tua Anycubic",
+          "pl": "Tiger Touch steruje też twoim Anycubikiem",
+          "ru": "Tiger Touch управляет и твоим Anycubic",
+          "nl": "Tiger Touch bestuurt ook je Anycubic"
+        },
+        "body": {
+          "en": "Anycubic printers connected through the Anycubic cloud can now be paused, resumed, stopped and lit from your Tiger Touch. Plus a shiny new Tiger Touch icon up top.",
+          "fr": "Les imprimantes Anycubic connectées via le cloud Anycubic se mettent maintenant en pause, reprennent, s’arrêtent et s’éclairent depuis ta Tiger Touch. Et une toute nouvelle icône Tiger Touch en haut.",
+          "de": "Über die Anycubic-Cloud verbundene Drucker lassen sich jetzt von deinem Tiger Touch pausieren, fortsetzen, stoppen und beleuchten. Dazu ein neues Tiger-Touch-Symbol oben.",
+          "es": "Las impresoras Anycubic conectadas por la nube de Anycubic ya se pausan, reanudan, detienen e iluminan desde tu Tiger Touch. Y un icono nuevo de Tiger Touch arriba.",
+          "it": "Le stampanti Anycubic collegate tramite il cloud Anycubic ora si mettono in pausa, riprendono, si fermano e si illuminano dal tuo Tiger Touch. E una nuova icona Tiger Touch in alto.",
+          "zh": "通过 Anycubic 云连接的 Anycubic 打印机，现在可以在 Tiger Touch 上暂停、继续、停止和开关灯。顶部还有全新的 Tiger Touch 图标。",
+          "pt": "Impressoras Anycubic conectadas pela nuvem da Anycubic agora pausam, retomam, param e acendem a luz pelo seu Tiger Touch. E um ícone novinho do Tiger Touch lá em cima.",
+          "pt-pt": "As impressoras Anycubic ligadas pela nuvem Anycubic já se pausam, retomam, param e acendem a luz a partir do teu Tiger Touch. E um ícone novo do Tiger Touch lá em cima.",
+          "pl": "Drukarki Anycubic połączone przez chmurę Anycubic można teraz pauzować, wznawiać, zatrzymywać i oświetlać z Tiger Touch. Do tego nowa ikona Tiger Touch na górze.",
+          "ru": "Принтеры Anycubic, подключённые через облако Anycubic, теперь можно ставить на паузу, продолжать, останавливать и подсвечивать с Tiger Touch. А наверху — новая иконка Tiger Touch.",
+          "nl": "Anycubic-printers die via de Anycubic-cloud verbonden zijn, pauzeer, hervat, stop en verlicht je nu vanaf je Tiger Touch. Plus een gloednieuw Tiger Touch-icoon bovenaan."
+        }
+      }
+    ]
+  },
   "2.42.0": {
     "date": "2026-10-18",
     "items": [

@@ -5473,6 +5473,11 @@ let _ffmpegBin = null;
     caDerB64:      certs.CA_DER_B64,
     clientCertPem: certs.CLIENT_CERT_PEM,
     clientKeyPem:  certs.CLIENT_KEY_PEM,
+    // The slicer's app id, secret and version that sign a REST call (_cloudHeaders):
+    // a Tiger Touch sends pause / resume / stop / light with them (sendOrder).
+    appId:         AID,
+    appSecret:     SEC,
+    appVersion:    VER,
   }));
 
   ipcMain.handle('anycubic:cloud-verify', async (_evt, token) => {

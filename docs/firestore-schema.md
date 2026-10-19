@@ -9,11 +9,18 @@ publicKeys/
     claimedAt   timestamp   — when claimed
 
 userProfiles/
-  {uid}/                    — public profile, readable by all authenticated users
+  {uid}/                    — public profile, readable by all authenticated users.
+                              SERVER-WRITTEN ONLY: the rule refuses every client create/update;
+                              apps call the `setProfile` Cloud Function (TigerTag_Firebase_Backend
+                              functions/setProfile.js), which validates and also mirrors
+                              displayName / isPublic / socials / publicKey into users/{uid}
     publicKey   string      — same as publicKeys entry (denormalised for display)
-    displayName string      — user's chosen pseudo
+    displayName string      — user's chosen pseudo (2-40 chars, no link / e-mail, 3 changes / 24 h)
     isPublic    boolean     — whether inventory is publicly visible
-    (color fields for avatar)
+    color, customColor      — avatar colour (#rrggbb)
+    photoURL    string?     — custom avatar, from Storage avatars/{uid} (photoFromStorage / photoRemove)
+    socials     string[]    — https profile links, max 8
+    friendsCount number     — maintained by the backend
     tigerSquad  map?        — { since, tier: "bronze"|"silver"|"gold"|"platinum", certified, xp, country? } TigerSquad member (wall of fame; certified = SDK-verified TigerTag+ count, xp = chip points that rank the makers): SERVER-ONLY, set by publishSupporter when users/{uid}.supportPublicly is true (gold if they gave, bronze otherwise); refused from clients
 
 users/

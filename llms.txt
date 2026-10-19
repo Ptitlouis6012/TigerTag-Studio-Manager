@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.42.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.42.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -69,8 +69,9 @@ lists its connected assistants via `mcp:hosted-grants` (main-process IPC → Hub
 
 ```
 publicKeys/{key}           → { uid, claimedAt }
-userProfiles/{uid}         → { publicKey, displayName, isPublic, color_*,
-                               tigerSquad: { since, tier, certified, xp } }   ← SERVER-ONLY (publishSupporter); present = TigerSquad member
+userProfiles/{uid}         → { publicKey, displayName, isPublic, color, photoURL, socials, friendsCount,
+                               tigerSquad: { since, tier, certified, xp } }   ← SERVER-WRITTEN ONLY: Studio calls
+                             the `setProfile` Cloud Function (renderer setProfile()), never writes it; tigerSquad from publishSupporter
 publicLists/{token}        → world-readable snapshot of a list shared by web link (unguessable
                              token); written by the owner when a list's visibility is "public"
 users/{uid}                → { displayName, email, publicKey, privateKey, isPublic,

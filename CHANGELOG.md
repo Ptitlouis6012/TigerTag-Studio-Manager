@@ -5,6 +5,21 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.42.1 — 2026-10-19
+
+### Changed
+- Anycubic cloud printers: the printer record now also keeps the slicer's app id / secret / version (`acuCloudAppId`, `acuCloudAppSecret`, `acuCloudAppVersion`, returned by main's cloud-certs IPC next to the client certificate) so a Tiger Touch can sign the REST calls it sends (pause / resume / stop / light); a record without them is re-imported once. Owner-only document; masked in MCP output (`secret`) — `main.js`, `renderer/inventory.js`
+- Tiger Touch header icon: the founder's 3/4-view artwork of the screen with its TIGER TOUCH wordmark (vector trace, 24 KB; the 1.3 MB embedded bitmap of the source dropped), sized to the neighbours' ink — `assets/svg/icons/icon_tigertouch_3d.svg`, `renderer/IoT/tigertouch/tigertouch.css`
+- The account setup (language → pseudo + avatar) opens at sign-in whenever the account is incomplete: no pseudo on the account (`users/{uid}.displayName`, checked on the server after a 1 s grace — a name left in localStorage no longer counts, is no longer written back unvalidated, and only pre-fills the setup), no valid language (`users/{uid}/prefs/app.lang` not one of the 11), or no avatar (neither a photo nor a #rrggbb colour on the public profile); finishing it always saves the language shown, even if kept as proposed (`_accountSetupIncomplete`) — `renderer/inventory.js`
+- Avatar colour on the public profile = ONE field, `color: "#rrggbb"` (any colour the user picks). Backend: `setProfile` writes only `color` (no longer `color: "custom"` + `customColor`); the 5 profiles still saying `color: "custom"` got their `customColor` copied into `color` by the admin-only one-off `migrateProfileColor` (nothing deleted — `customColor` stays for older app versions, nobody writes it any more). Studio reads both shapes (`profileColor`, the setup's avatar check) — without it, a friend whose profile said "custom" got no avatar colour — `renderer/inventory.js`, backend `functions/{setProfile,migrateProfileColor,index}.js`
+- Public profile (`userProfiles/{uid}`) is now written only by the backend's `setProfile` Cloud Function — the Firestore rule refuses client writes, so Studio's own writes were being silently lost. Pseudo (account card + onboarding), avatar colour, photo (upload to `avatars/{uid}` then `photoFromStorage`, removal via `photoRemove`), social links, public visibility and a regenerated friend code (still claimed client-side on `publicKeys/{code}`) all go through `setProfile` (`renderer/inventory.js` `setProfile()` / `profileErrorText()`); its refusals are shown to the user instead of swallowed; the sign-in no longer republishes the profile (never a Google first name or e-mail prefix as a pseudo) and the friends-count write is gone (the backend keeps it). Pseudo rules aligned with the server: 2-40 characters (inputs and onboarding), no link or e-mail, 3 changes a day — `renderer/inventory.js`, `renderer/inventory.html`, `docs/firestore-schema.md`, `llms.txt`
+
+### Fixed
+- Elegoo Centauri Carbon (CC1, SDCP): the Canvas hub's four trays now show on the board (colour, material, name, brand) instead of a single "Ext." slot — SDCP command 324 asked at connection then every 30 s unless the status push says no Canvas (`AmsConnectStatus`) or the firmware refuses it; read-only. Format from the Home Assistant integration, checked against the CC1 demo printer, not yet on a real CC1 + Canvas (contributed by @Ptitlouis6012, PR #100, fixes #98) — `renderer/printers/elegoo/{sdcp,canvas}.js`, `renderer/printers/elegoo/PROTOCOL.md`, `scripts/test-elegoo-canvas.mjs`
+- Internal: bundled product catalogue refreshed (`id_catalog`).
+
+---
+
 ## v2.42.0 — 2026-10-18
 
 ### Added

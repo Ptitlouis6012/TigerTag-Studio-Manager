@@ -4451,11 +4451,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const cleaned = _cleanSocials([...document.querySelectorAll("#eacSocials .eac-social-input")].map(i => i.value));
     state.socials = cleaned;
     renderFriendBanner();   // reflect on my own banner immediately
-    try {
-      const db = fbDb(uid);
-      db.collection("users").doc(uid).set({ socials: cleaned }, { merge: true }).catch(() => {});
-      syncUserProfile(uid, { socials: cleaned });   // public mirror (friends / web read this)
-    } catch (_) {}
+    // setProfile writes the public profile AND mirrors socials into users/{uid};
+    // refused (not https, more than 8…) → back to what was saved, and say why.
+    setProfile(uid, { socials: cleaned }).catch(e => {
+      state.socials = prev ? prev.split("\n") : [];
+      renderFriendBanner();
+      _flashMessage(profileErrorText(e));
+    });
     // Re-render only once focus has fully left the editor, so tabbing between
     // rows isn't interrupted.
     const box = $("eacSocials");
@@ -4568,7 +4570,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // Photo set → retire the nudge (notification + modal) immediately.
       _clearLocalNotif("avatar");
       _closeAvatarPrompt();
-    } catch (e) { console.warn("[avatar.upload]", e); }
+    } catch (e) {
+      console.warn("[avatar.upload]", e);
+      _flashMessage(e?.code ? profileErrorText(e) : t(e?.message === "too-large" ? "avatarTooLarge" : "avatarUploadFailed"));
+    }
   }
 
   /* ── "Add an avatar" fun nudge ──────────────────────────────────────────
@@ -5615,7 +5620,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   // Persist avatar colour as RGB integers in users/{uid} so any surface can read it,
-  // and sync the single hex field to userProfiles/{uid} so friends see it immediately.
+  // and publish the single hex field through setProfile so friends see it immediately.
   function saveColorToFirestore(acc) {
     try {
       const user = fbAuth().currentUser;
@@ -5626,7 +5631,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const g = parseInt(hex.slice(2,4), 16);
       const b = parseInt(hex.slice(4,6), 16);
       fbDb(user.uid).collection("users").doc(user.uid).set({ color_r: r, color_g: g, color_b: b }, { merge: true });
-      syncUserProfile(user.uid, { color: primaryHex });
+      setProfile(user.uid, { avatarColor: primaryHex.toLowerCase() }).catch(e => _flashMessage(profileErrorText(e)));
     } catch (e) { /* non-blocking */ }
   }
 
@@ -5712,7 +5717,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     } catch (e) {
       console.warn("[avatar.upload]", e);
       res.style.color = "var(--danger)";
-      res.textContent = t(e.message === "too-large" ? "avatarTooLarge" : "avatarUploadFailed");
+      res.textContent = e?.code ? profileErrorText(e) : t(e.message === "too-large" ? "avatarTooLarge" : "avatarUploadFailed");
     }
   });
   $("avatarMenuRemove")?.addEventListener("click", async e => {
@@ -5727,7 +5732,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       setTimeout(() => { res.textContent = ""; }, 2000);
     } catch (e) {
       console.warn("[avatar.remove]", e);
-      res.style.color = "var(--danger)"; res.textContent = t("avatarRemoveFailed");
+      res.style.color = "var(--danger)"; res.textContent = e?.code ? profileErrorText(e) : t("avatarRemoveFailed");
     }
   });
 
@@ -5772,18 +5777,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     res.textContent = ""; _flashNameSave("busy");
     try {
-      // 1. Firebase Auth profile
-      const user = fbAuth().currentUser;
-      if (user) await user.updateProfile({ displayName: newName });
-      // 2. Firestore users/{uid}
-      if (user) await fbDb().collection("users").doc(user.uid).set({ displayName: newName }, { merge: true });
-      // 3. localStorage account
+      // 1. The server validates the pseudo (2-40 chars, no link / e-mail, 3 changes
+      //    a day), publishes it, and mirrors it into users/{uid} and the Auth
+      //    profile. Refused → nothing is written anywhere, and the reason is shown.
+      await setProfile(_editingAccount.id, { displayName: newName });
+      // 2. localStorage account
       const accounts = getAccounts();
       const idx = accounts.findIndex(a => a.id === _editingAccount.id);
       if (idx >= 0) { accounts[idx].displayName = newName; saveAccounts(accounts); _editingAccount = accounts[idx]; }
-      // 4. Sync public profile so friends see the new name immediately
-      if (user) syncUserProfile(user.uid, { displayName: newName });
-      // 5. Refresh UI through the centralised avatar pipeline so
+      // 3. Refresh UI through the centralised avatar pipeline so
       //    gradient + initials + photo overlay stay in sync.
       $("eacName").textContent = newName; $("eacName").style.display = "";
       paintAvatar($("eacAvatar"), _editingAccount);
@@ -5796,7 +5798,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       renderAccountDropdown();
       res.textContent = ""; _flashNameSave("ok");
     } catch (e) {
-      res.style.color = "var(--danger)"; res.textContent = e.message || "Error";
+      res.style.color = "var(--danger)"; res.textContent = profileErrorText(e);
       _flashNameSave("err");
     }
   }
@@ -23758,9 +23760,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
   }
 
-  // Extract avatar color from a userProfiles document (single `color` hex field).
+  // Avatar colour of a userProfiles document: `color` = "#rrggbb" (any colour the
+  // user picks; setProfile writes only this field). The old pair
+  // { color: "custom", customColor: "#rrggbb" } is still read — customColor is
+  // kept on old profiles for older app versions, never written any more.
+  // Only a real colour comes back.
   function profileColor(data) {
-    return data.color || null;
+    const c = data?.color === "custom" ? data.customColor : data?.color;
+    return /^#[0-9a-f]{6}$/i.test(String(c || "")) ? c : null;
   }
   // Fallback color when no profile color is available.
   function friendColorFallback(uid) {
@@ -23957,20 +23964,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         _cacheFriends(uid, state.friends);
         _renderFriendsEverywhere();
         _reconcileFriendProfileSubs(uid);
-        _syncFriendsCountToProfile(uid);   // publish the count so others can see it
       }, err => console.warn("[friends:sub]", err?.message));
   }
-  // Publish my friends count to my public userProfiles doc so a visitor can see
-  // "X friends" on my profile. Friendship is bidirectional, so this count == the
-  // number of people who have me as a friend. Only written when it changes.
-  let _friendsCountWritten = -1;
-  function _syncFriendsCountToProfile(uid) {
-    if (!uid || state.friendView) return;
-    const n = (state.friends || []).length;
-    if (n === _friendsCountWritten) return;
-    _friendsCountWritten = n;
-    fbDb(uid).collection("userProfiles").doc(uid).set({ friendsCount: n }, { merge: true }).catch(() => {});
-  }
+  // The profile's friends count is maintained by the backend (userProfiles is
+  // server-written only) — nothing to publish from here.
 
   function unsubscribeFriends() {
     if (state.unsubFriends) { try { state.unsubFriends(); } catch (_) {} state.unsubFriends = null; }
@@ -29332,6 +29329,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           acuCloudCaDerB64:      String(c.caDerB64),
           acuCloudClientCertPem: String(c.clientCertPem),
           acuCloudClientKeyPem:  String(c.clientKeyPem),
+          // What signs a REST order: a Tiger Touch sends pause / resume / stop / light with it.
+          ...(c.appId && c.appSecret && c.appVersion ? {
+            acuCloudAppId:      String(c.appId),
+            acuCloudAppSecret:  String(c.appSecret),
+            acuCloudAppVersion: String(c.appVersion),
+          } : {}),
         } : null)
         .catch(() => null);
       _acuCertFieldsP.then(f => { if (!f) _acuCertFieldsP = null; });   // retry next time
@@ -29348,7 +29351,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!uid) return;
     const missing = (state.printers || []).filter(p => p.brand === "anycubic" && p.mode === "cloud"
       && !_acuCertBackfillTried.has(p.id)
-      && !(p.acuCloudCaDerB64 && p.acuCloudClientCertPem && p.acuCloudClientKeyPem));
+      && !(p.acuCloudCaDerB64 && p.acuCloudClientCertPem && p.acuCloudClientKeyPem && p.acuCloudAppId));
     if (!missing.length) return;
     const fields = await _acuCloudCertFields();
     if (!fields) return;                                   // main process not ready — next snapshot retries
@@ -29381,7 +29384,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         printerModelId: String(rec.printerModelId || "0"),
         isActive:       existing ? !!existing.isActive : false,
         sortIndex:      existing && Number.isFinite(existing.sortIndex) ? existing.sortIndex : state.printers.length,
-        ...certFields,  // acuCloudCaDerB64 / acuCloudClientCertPem / acuCloudClientKeyPem
+        ...certFields,  // acuCloudCaDerB64 / acuCloudClientCertPem / acuCloudClientKeyPem / acuCloudApp*
         updatedAt:      firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
       return { ok: true, id: ref.id };
@@ -37231,13 +37234,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.isPublic = isPublic;
     const user = fbAuth().currentUser;
     if (!user) return;
-    await fbDb().collection("users").doc(user.uid).set({ isPublic }, { merge: true });
-    await syncUserProfile(user.uid, { isPublic });
-    // Flipping public: publish the current friend/follower count NOW (force a
-    // write even if unchanged) so the "X followers" badge is populated the first
-    // time. Repaint my banner (public badge + amis→abonnés label).
-    _friendsCountWritten = -1;
-    _syncFriendsCountToProfile(user.uid);
+    // Published (and mirrored into users/{uid}) by the server; the friends /
+    // followers count on the profile is kept by the backend too.
+    try { await setProfile(user.uid, { isPublic }); }
+    catch (e) {
+      state.isPublic = !isPublic; $("stgPublicToggle").checked = !isPublic;
+      _flashMessage(profileErrorText(e));
+      return;
+    }
+    // Repaint my banner (public badge + amis→abonnés label).
     renderFriendBanner();
   });
 
@@ -37270,8 +37275,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // shared root doc); onboarding triggers whenever it's below this constant —
   // bump the number to re-run everyone on a future onboarding revamp.
   const ONBOARDING_VERSION = 1;
-  const DNS_NAME_MIN = 3;             // display-name length bounds (shown next to the label,
-  const DNS_NAME_MAX = 20;            // and enforced by the inputs' maxlength too)
+  const DNS_NAME_MIN = 2;             // display-name length bounds — the server's (setProfile):
+  const DNS_NAME_MAX = 40;            // shown next to the label, enforced by the inputs' maxlength too
 
   function _dnsFillLangSelect() {
     const sel = $("dnsLangSelect");
@@ -37397,15 +37402,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     try {
       const user = fbAuth().currentUser;
       if (!user) throw new Error("not signed in");
-      await fbDb(user.uid).collection("users").doc(user.uid)
-        .set({ displayName: name }, { merge: true });
+      // Validated and published by the server (mirrored into users/{uid} too).
+      await setProfile(user.uid, { displayName: name });
+      // The language shown in step 1 is saved even if it was kept as proposed —
+      // otherwise an account with no language would get the setup again.
+      saveAccountLang($("dnsLangSelect")?.value || state.lang);
       // Mark the current onboarding done in the Studio APP-STATE doc
       // (users/{uid}/apps/studio — segmented per app), NOT the shared root doc.
       fbDb(user.uid).collection("users").doc(user.uid)
         .collection("apps").doc("studio")
         .set({ onboardingVersion: ONBOARDING_VERSION }, { merge: true })
         .catch(e => console.warn("[onboarding] flag write failed:", e.code));
-      syncUserProfile(user.uid, { displayName: name }); // make visible to friends immediately
       // Update local state (+ persist the generated avatar colour as a HEX
       // custom colour — kept even if a photo is used, as the fallback for when
       // the photo is later removed).
@@ -37428,7 +37435,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       renderAccountDropdown();
       closeDisplayNameSetup();
     } catch (err) {
-      $("dnsResult").textContent = "⚠ " + (err.message || t("networkError"));
+      $("dnsResult").textContent = "⚠ " + (err?.code ? profileErrorText(err) : (err.message || t("networkError")));
     } finally {
       $("dnsSave").disabled = false;
     }
@@ -38312,9 +38319,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (el)  { el.textContent = ""; el.classList.add("pkey-loading"); }
     if (btn) btn.disabled = true;
     try {
+      // The code is claimed client-side (transaction on publicKeys/{code}), then
+      // published by the server, which checks it is ours and mirrors it into users/{uid}.
       const newKey = await claimPublicKey(user.uid, state.publicKey);
-      await fbDb().collection("users").doc(user.uid).update({ publicKey: newKey });
-      await syncUserProfile(user.uid, { publicKey: newKey });
+      try { await setProfile(user.uid, { publicKey: newKey }); }
+      catch (e) { _flashMessage(profileErrorText(e)); throw e; }
       state.publicKey = newKey;
       if (el) el.textContent = newKey;
     } finally {
@@ -38360,13 +38369,45 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .map(b => b.toString(16).padStart(2, "0")).join("");
   }
 
-  // Write safe public fields to userProfiles/{uid} (readable by all authenticated users)
-  async function syncUserProfile(uid, fields) {
+  // ── Public profile — written ONLY by the backend's `setProfile` function ──
+  // userProfiles/{uid} is world-readable and server-validated: the Firestore
+  // rule refuses every client create/update. setProfile checks the fields
+  // (pseudo 2-40 chars, no link / e-mail, 3 changes a day; #rrggbb colour;
+  // https socials, max 8; the friend code must be the caller's), writes the
+  // profile, and mirrors displayName / isPublic / socials / publicKey into
+  // users/{uid} and displayName into the Auth profile. Studio READS the profile
+  // (live listener on userProfiles/{uid}) and never republishes it.
+  // Contract: TigerTag_Firebase_Backend functions/setProfile.js.
+  const SET_PROFILE_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/setProfile";
+  /**
+   * body ⊂ { displayName, avatarColor, photoFromStorage, photoRemove, socials,
+   * isPublic, publicKey }. Resolves with the server's profile; throws an Error
+   * whose `code` is the server's (DISPLAYNAME_TOO_SHORT, …) — never swallowed.
+   */
+  async function setProfile(uid, body) {
+    const user = fbAuth(uid).currentUser;
+    if (!user || user.uid !== uid) throw Object.assign(new Error("UNAUTHENTICATED"), { code: "UNAUTHENTICATED" });
+    let res, out = {};
     try {
-      // Use fbDb(uid) — named instance — to avoid writing to the wrong project
-      // if the active account changes while this async call is in flight.
-      await fbDb(uid).collection("userProfiles").doc(uid).set(fields, { merge: true });
-    } catch (e) { console.warn("[userProfiles] write:", e.message); }
+      res = await fetch(SET_PROFILE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+        body: JSON.stringify(body),
+      });
+      out = await res.json().catch(() => ({}));
+    } catch (e) { throw Object.assign(new Error("NETWORK"), { code: "NETWORK" }); }
+    if (!res.ok) {
+      const code = out.error || (res.status === 401 ? "UNAUTHENTICATED" : `HTTP_${res.status}`);
+      if (code === "NOTHING_TO_DO") return out.profile || {};   // already the case: not an error
+      throw Object.assign(new Error(code), { code });
+    }
+    return out.profile || {};
+  }
+  /** The user-facing text for a setProfile error code. */
+  function profileErrorText(e) {
+    const key = `profileErr_${e?.code || ""}`;
+    const txt = t(key);
+    return txt && txt !== key ? txt : t("profileErr_generic");
   }
 
   // ══════════════════════════════════════════════════════════════════
@@ -38530,11 +38571,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const snap = await ref.put(blob, { contentType });
     const url = await snap.ref.getDownloadURL();
 
-    // Mirror in Firestore so friends see it without a Storage probe.
-    await syncUserProfile(user.uid, { photoURL: url });
+    // The server checks the file at avatars/{uid} and publishes its URL.
+    const profile = await setProfile(user.uid, { photoFromStorage: true });
 
     // Reflect locally + re-render the sidebar avatar.
-    state.photoURL = url;
+    state.photoURL = profile.photoURL || url;
     applyAvatarStyle(activeAccount());
     renderFriendBanner();   // header chip variant
     renderAccountDropdown();
@@ -38560,7 +38601,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         console.warn("[avatar.remove] storage delete:", e.message);
       }
     }
-    await syncUserProfile(user.uid, { photoURL: firebase.firestore.FieldValue.delete() });
+    await setProfile(user.uid, { photoRemove: true });
 
     state.photoURL = null;
     applyAvatarStyle(activeAccount());
@@ -38809,8 +38850,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const ref = fbStorage(user.uid).ref().child(`avatars/${user.uid}`);
     const snap = await ref.put(blob, { contentType });
     const url = await snap.ref.getDownloadURL();
-    await syncUserProfile(user.uid, { photoURL: url });
-    state.photoURL = url;
+    const profile = await setProfile(user.uid, { photoFromStorage: true });   // checked + published by the server
+    state.photoURL = profile.photoURL || url;
     applyAvatarStyle(activeAccount());
     renderFriendBanner();
     renderAccountDropdown();
@@ -39547,6 +39588,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
   }
 
+  /* A named account still redoes the account setup when the rest of it is
+     missing: no valid language (users/{uid}/prefs/app.lang, the cross-app pref)
+     or no avatar at all (neither a photo nor a colour on the public profile).
+     Read from the server; offline or unreadable → false (never nag on a doubt). */
+  async function _accountSetupIncomplete(uid) {
+    const db = fbDb(uid);
+    try {
+      const [prefs, prof] = await Promise.all([
+        db.collection("users").doc(uid).collection("prefs").doc("app").get({ source: "server" }),
+        db.collection("userProfiles").doc(uid).get({ source: "server" }),
+      ]);
+      const lang = prefs.exists ? prefs.data().lang : null;
+      const p = prof.exists ? prof.data() : {};
+      const langOk = !!lang && !!state.i18n[lang];
+      // `color` is the colour (#rrggbb, what setProfile writes); a profile not yet
+      // migrated may still say color: "custom" with the hex in customColor.
+      const hex = p.color === "custom" ? p.customColor : p.color;
+      const avatarOk = !!p.photoURL || /^#[0-9a-f]{6}$/i.test(String(hex || ""));
+      return !langOk || !avatarOk;
+    } catch (_) { return false; }
+  }
+
   async function syncUserDoc(uid) {
     // Always use the named Firestore instance for this specific uid,
     // never fbDb() without parameter — that depends on state.activeAccountId
@@ -39582,6 +39645,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (Object.keys(keysUpdate).length) {
         await db.collection("users").doc(uid).set(keysUpdate, { merge: true });
         Object.assign(data, keysUpdate);
+        if (keysUpdate.publicKey) setProfile(uid, { publicKey: keysUpdate.publicKey }).catch(e => console.warn("[profile] publicKey:", e.code));
       }
       // Store keys + public flag in state for easy access
       state.publicKey  = data.publicKey;
@@ -39691,10 +39755,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const acc = accounts.find(a => a.id === uid);
       let localDirty = false;
 
-      // Resolve display name: Firestore is authoritative, localStorage is fallback
-      const firestoreName = data.displayName || "";
-      const localName     = acc?.displayName  || "";
-      const resolvedName  = firestoreName || localName;
+      // Resolve display name: the account's own (users/{uid}.displayName, mirrored
+      // there by the server's setProfile) is the only one that counts. A name
+      // left in localStorage is NOT a pseudo — no name on the account → the
+      // pseudo setup opens (pre-filled with that local name as a suggestion),
+      // so it goes through the server's rules like any pseudo.
+      const firestoreName = (data.displayName || "").trim();
+      const resolvedName  = firestoreName;
 
       if (resolvedName) {
         // We have a name — apply it everywhere
@@ -39709,10 +39776,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // were showing.
         paintAvatar($("sbAvatar"), acc);
         renderFriendBanner(); // refresh header chip with authoritative Firestore name
-        // If Firestore was missing the name but localStorage had it, write it back
-        if (!firestoreName && localName) {
-          db.collection("users").doc(uid).set({ displayName: localName }, { merge: true }).catch(() => {});
-        }
         // Even a NAMED account must run the current onboarding once. The flag
         // lives in the Studio app-state doc users/{uid}/apps/studio (segmented
         // per app), so read it before deciding. Bump ONBOARDING_VERSION to
@@ -39723,7 +39786,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             const s = await db.collection("users").doc(uid).collection("apps").doc("studio").get();
             onbV = Number(s.data()?.onboardingVersion) || 0;
           } catch (_) {}
-          if (onbV < ONBOARDING_VERSION && uid === state.activeAccountId
+          if ((onbV < ONBOARDING_VERSION || await _accountSetupIncomplete(uid))
+              && uid === state.activeAccountId
               && !$("displayNameSetupOverlay").classList.contains("open")) {
             openDisplayNameSetup();
           }
@@ -39735,8 +39799,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // server STILL says the name is empty.
         setTimeout(async () => {
           if (uid !== state.activeAccountId) return;
-          // If anything has set the name in the meantime, bail out
-          if (state.displayName) return;
+          // Decided from the SERVER only: state.displayName may hold a name left
+          // in localStorage (setConnected), which is not a pseudo on the account.
           try {
             const fresh = await db.collection("users").doc(uid).get({ source: "server" });
             if (fresh.exists && fresh.data().displayName) {
@@ -39753,8 +39817,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
               return;
             }
           } catch (_) {}
-          // Truly nothing — prompt the user
-          if (uid === state.activeAccountId && !state.displayName) {
+          // Truly nothing — prompt the user (once).
+          if (uid === state.activeAccountId && !$("displayNameSetupOverlay").classList.contains("open")) {
             openDisplayNameSetup();
           }
         }, 1000);
@@ -39830,17 +39894,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _maybePromptAvatar();
       _maybeNudgeCommunity();
 
-      // Keep userProfiles in sync with latest public info.
-      // profileName is never empty: fall back to Google first name then email
-      // prefix so friends always see something meaningful even before the user
-      // has chosen a display name.
-      const profileName = resolvedName || (acc?.email || "").split("@")[0];
-      syncUserProfile(uid, {
-        publicKey:   data.publicKey,
-        displayName: profileName,
-        isPublic:    data.isPublic || false,
-        color:       accPrimaryHex(acc),  // single hex field — simpler than color_r/g/b
-      });
+      // The public profile is NOT republished at sign-in: it is written only by
+      // the server (setProfile) and read live from userProfiles/{uid}. Never
+      // publish a Google first name or an e-mail prefix as a pseudo.
 
       // ── Client telemetry (fire-and-forget, non-critical) ──────────────────
       const info = await loadAppInfo();
