@@ -43,12 +43,27 @@ const schema = {
     { titleKey: "printerSecConnection", fields: [
       { key: "ip", labelKey: "printerLblIP", hintKey: "printerHintKlipperIP",
         placeholder: "192.168.1.50", mono: true, required: true },
+      { key: "port", labelKey: "klipperManualPortLabel", hintKey: "klipperManualPortHint",
+        placeholder: "7125", mono: true, toggleKey: "klipperCustomPort", toggleDefault: "7125" },
     ]},
     { fields: [
       { key: "apiKey", labelKey: "printerLblKlipperApiKey", hintKey: "printerHintKlipperApiKey",
         placeholder: "••••••••", mono: true, required: false, secret: true },
     ]},
   ],
+  // The port is shown in its own box but STORED inside `ip` ("host:port") —
+  // the one field Studio and the Tiger Touch firmware both read.
+  toForm: d => {
+    const m = /^(.*?):(\d{1,5})$/.exec(String(d.ip || "").trim());
+    return m ? { ...d, ip: m[1], port: m[2] } : d;
+  },
+  fromForm: d => {
+    const { port: raw = "", ...rest } = d;
+    const host = String(rest.ip || "").trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+    const port = String(raw).trim();
+    if (port && !(/^\d{1,5}$/.test(port) && +port >= 1 && +port <= 65535)) throw new Error("klipperManualPortInvalid");
+    return { ...rest, ip: port && +port !== 7125 && !/:\d+$/.test(host) ? `${host}:${port}` : host };
+  },
 };
 
 const helper = { titleKey: "printerHelperKlipperTitle", bulletsKey: "printerHelperKlipperBullets" };
@@ -228,6 +243,34 @@ const i18n = {
     pl: "Ani śladu Klippera — czy Moonraker działa na porcie 7125?",
     ru: "Klipper не видно — Moonraker запущен на порту 7125?",
     nl: "Geen Klipper te zien — draait Moonraker op poort 7125?",
+  },
+  klipperCustomPort: { en: "Custom port", fr: "Port personnalisé", de: "Eigener Port", es: "Puerto personalizado", it: "Porta personalizzata", zh: "自定义端口", pt: "Porta personalizada", "pt-pt": "Porta personalizada", pl: "Własny port", ru: "Свой порт", nl: "Eigen poort" },
+  klipperManualPortLabel: { en: "Port", fr: "Port", de: "Port", es: "Puerto", it: "Porta", zh: "端口", pt: "Porta", "pt-pt": "Porta", pl: "Port", ru: "Порт", nl: "Poort" },
+  klipperManualPortHint: {
+    en: "7125 is Moonraker's usual. Behind Mainsail or Fluidd on its own? Often 80.",
+    fr: "7125, c'est le port habituel de Moonraker. Derrière Mainsail ou Fluidd tout seul ? Souvent 80.",
+    de: "7125 ist Moonrakers Standard. Hinter Mainsail oder Fluidd allein? Oft 80.",
+    es: "7125 es el de siempre de Moonraker. ¿Detrás de Mainsail o Fluidd solo? Suele ser 80.",
+    it: "7125 è la solita di Moonraker. Dietro Mainsail o Fluidd da solo? Spesso 80.",
+    zh: "7125 是 Moonraker 的默认端口。单独藏在 Mainsail 或 Fluidd 后面?通常是 80。",
+    pt: "7125 é a de sempre do Moonraker. Atrás do Mainsail ou Fluidd sozinho? Muitas vezes é 80.",
+    "pt-pt": "7125 é a habitual do Moonraker. Atrás do Mainsail ou Fluidd sozinho? Muitas vezes é 80.",
+    pl: "7125 to zwykły port Moonrakera. Schowany za samym Mainsailem lub Fluiddem? Często 80.",
+    ru: "7125 — обычный порт Moonraker. Спрятан за Mainsail или Fluidd? Часто это 80.",
+    nl: "7125 is de gewone van Moonraker. Zit hij alleen achter Mainsail of Fluidd? Vaak 80.",
+  },
+  klipperManualPortInvalid: {
+    en: "A port is a number between 1 and 65535 — that one isn't.",
+    fr: "Un port, c'est un nombre entre 1 et 65535 — celui-là n'en est pas un.",
+    de: "Ein Port ist eine Zahl zwischen 1 und 65535 — der hier nicht.",
+    es: "Un puerto es un número entre 1 y 65535, y este no lo es.",
+    it: "Una porta è un numero tra 1 e 65535: questo no.",
+    zh: "端口是 1 到 65535 之间的数字 —— 这个不是。",
+    pt: "Uma porta é um número entre 1 e 65535 — essa não é.",
+    "pt-pt": "Uma porta é um número entre 1 e 65535 — essa não é.",
+    pl: "Port to liczba od 1 do 65535 — ta nią nie jest.",
+    ru: "Порт — это число от 1 до 65535, а это не оно.",
+    nl: "Een poort is een getal tussen 1 en 65535 — deze niet.",
   },
   klipperManualNoReply: {
     en: "Nobody answered at {{ip}}. Check the address — Moonraker listens on port 7125 unless told otherwise.",

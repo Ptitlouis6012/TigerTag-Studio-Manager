@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "Sensores",
   "printerModelPickTitle": "Qual é a impressora?",
   "printerModelPickHint": "Opcional — escolhe-a aqui e nós preenchemos por ti",
+  "printerModelSkip": "Não está na lista",
   "tigertouchHealthNone": "Ainda sem Tiger Touch — clica para o conhecer",
   "tigertouchDemoShort": "modo demo",
   "tigertouchDemoNote": "Modo demo ligado: o ecrã está a exibir impressoras inventadas, não as tuas.",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "Esse código de amigo é de outra pessoa. Gera um novo.",
   "profileErr_UNAUTHENTICATED": "A tua sessão expirou — inicia sessão de novo.",
   "profileErr_NETWORK": "Não foi possível contactar o servidor. Verifica a ligação e tenta de novo.",
-  "profileErr_generic": "Não foi possível guardar o teu perfil. Tenta daqui a pouco."
+  "profileErr_generic": "Não foi possível guardar o teu perfil. Tenta daqui a pouco.",
+  "camSnapshot": "Tirar uma fotografia",
+  "camOpenFolder": "Todas as minhas capturas",
+  "camRecStart": "Gravar um vídeo",
+  "camRecStop": "Parar a gravação",
+  "camPhotoSaved": "Fotografia guardada no álbum desta impressora 📸",
+  "camVideoSaved": "Vídeo guardado no álbum desta impressora 🎬",
+  "camRecFailed": "Esta câmara não se deixou gravar. Tenta daqui a pouco."
 }

@@ -4085,6 +4085,168 @@ let _ffmpegBin = null;
   });
 }
 
+// ── Camera captures — photos and videos, filed per printer ──────────────────
+// Pictures/Tiger Studio/<brand>_<hardware id>/YYYYMMDD-HHMMSS.<ext>, the hardware
+// id being the printer's MAC, else its serial, else its record id — so a
+// printer keeps its history whatever its IP or name becomes. printer.json in
+// each folder records who it is and every name / IP / model it has had.
+// Videos are taken from the SOURCE, never from what the page displays:
+//   url    — ffmpeg reads the camera itself and copies its stream untouched
+//            (rtsp/rtsps H.264 → .mp4, http MJPEG → .mov)
+//   frames — original JPEG frames pushed one by one, muxed untouched at their
+//            real timing (.mov, MJPEG)
+//   blob   — a recording made in the renderer from a MediaStream (WebRTC / FLV)
+{
+  const { shell } = require('electron');
+  const { spawn } = require('child_process');
+  // Pictures/Tiger Studio/Captures/<printer>/{Photos,Videos}/
+  const capRoot = () => path.join(app.getPath('pictures'), 'Tiger Studio', 'Captures');
+  const sub = (dir, kind) => { const d = path.join(dir, kind); fs.mkdirSync(d, { recursive: true }); return d; };
+  const safe = v => String(v || '').replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+  const stamp = () => { const d = new Date(), p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; };
+  /** The printer's folder (created) + its printer.json kept up to date. */
+  function capDir(pr = {}, { capture = true } = {}) {
+    // A placeholder MAC (all zeros / all FF, sent by some firmwares) names nothing.
+    if (pr.mac && /^(0{1,2}[:-]?){5}0{1,2}$|^(ff[:-]?){5}ff$/i.test(String(pr.mac))) pr.mac = null;
+    const hw = pr.mac ? safe(String(pr.mac).toUpperCase().replace(/:/g, '-')) : pr.serial ? safe(pr.serial) : `id-${safe(pr.id)}`;
+    const dir = path.join(capRoot(), `${safe(pr.brand) || 'printer'}_${hw || 'unknown'}`);
+    fs.mkdirSync(dir, { recursive: true });
+    const f = path.join(dir, 'printer.json');
+    let info = {};
+    try { info = JSON.parse(fs.readFileSync(f, 'utf8')); } catch (_) {}
+    const seen = (list, v) => (v && !(list || []).includes(v) ? [...(list || []), v] : (list || []));
+    info = { brand: pr.brand || info.brand, mac: pr.mac || info.mac || null, serial: pr.serial || info.serial || null, id: pr.id || info.id,
+      name: pr.name || info.name, model: pr.model || info.model,
+      names: seen(info.names, pr.name), ips: seen(info.ips, pr.ip), models: seen(info.models, pr.model),
+      lastCaptureAt: capture ? new Date().toISOString() : (info.lastCaptureAt || null) };
+    fs.writeFileSync(f, JSON.stringify(info, null, 2));
+    return dir;
+  }
+  const okUrl = u => { try { const x = new URL(u); return /^(rtsps?|https?):$/.test(x.protocol) && /^(10\.|127\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)|\.local$/i.test(x.hostname); } catch { return false; } };
+  const recs = new Map();   // id → { proc?, dir, file, frames? }
+
+  ipcMain.handle('cam:save-image', (_e, { printer, dataUrl } = {}) => {
+    const m = /^data:image\/(png|jpeg);base64,/.exec(String(dataUrl || ''));
+    if (!m) return { ok: false, error: 'data' };
+    const dir = capDir(printer);
+    const file = path.join(sub(dir, 'Photos'), `${stamp()}.${m[1] === 'jpeg' ? 'jpg' : 'png'}`);
+    fs.writeFileSync(file, Buffer.from(dataUrl.slice(m[0].length), 'base64'));
+    return { ok: true, file, dir };
+  });
+
+  // url: ffmpeg copies the camera's own stream.
+  ipcMain.handle('cam:rec-url-start', (_e, { id, printer, url } = {}) => {
+    if (!_ffmpegBin) return { ok: false, error: 'ffmpeg' };
+    if (!okUrl(url) || recs.has(id)) return { ok: false, error: 'url' };
+    const rtsp = /^rtsps?:/.test(url);
+    const dir = capDir(printer), file = path.join(sub(dir, 'Videos'), `${stamp()}.${rtsp ? 'mp4' : 'mov'}`);
+    const args = rtsp
+      ? ['-hide_banner', '-loglevel', 'error', '-rtsp_transport', 'tcp', '-i', url, '-map', '0:v', '-c', 'copy', '-movflags', '+faststart', '-y', file]
+      : ['-hide_banner', '-loglevel', 'error', '-use_wallclock_as_timestamps', '1', '-f', 'mjpeg', '-i', url, '-c', 'copy', '-y', file];
+    const proc = spawn(_ffmpegBin, args, { stdio: ['pipe', 'ignore', 'pipe'] });
+    let err = '';
+    proc.stderr.on('data', d => { err += d; });
+    proc.on('error', () => {});
+    recs.set(id, { proc, dir, file, err: () => err });
+    return { ok: true };
+  });
+
+  // frames: original JPEGs, written as they come, muxed at their real timing.
+  ipcMain.handle('cam:rec-frames-start', (_e, { id, printer } = {}) => {
+    if (recs.has(id)) return { ok: false, error: 'busy' };
+    const dir = capDir(printer), tmp = fs.mkdtempSync(path.join(app.getPath('temp'), 'tt-rec-'));
+    recs.set(id, { dir, tmp, frames: [], file: path.join(sub(dir, 'Videos'), `${stamp()}.mov`) });
+    return { ok: true };
+  });
+  ipcMain.handle('cam:rec-frame', (_e, { id, t, data } = {}) => {
+    const r = recs.get(id);
+    if (!r?.frames || !data) return false;
+    const f = path.join(r.tmp, `f${String(r.frames.length).padStart(6, '0')}.jpg`);
+    fs.writeFileSync(f, Buffer.from(data));
+    r.frames.push([f, t]);
+    return true;
+  });
+
+  // poll: a camera that only serves refreshed stills (Snapmaker U1 stock
+  // firmware, monitor.jpg) — read here as fast as it refreshes, each new frame
+  // kept untouched with its real time (what the page shows is slower).
+  ipcMain.handle('cam:rec-poll-start', (_e, { id, printer, url } = {}) => {
+    if (!okUrl(url) || !/^https?:/.test(url) || recs.has(id)) return { ok: false, error: 'url' };
+    const dir = capDir(printer), tmp = fs.mkdtempSync(path.join(app.getPath('temp'), 'tt-rec-'));
+    const r = { dir, tmp, frames: [], file: path.join(sub(dir, 'Videos'), `${stamp()}.mov`), polling: true };
+    recs.set(id, r);
+    const t0 = Date.now();
+    let last = '';
+    (async () => {
+      while (r.polling) {
+        try {
+          const ctl = new AbortController(); const k = setTimeout(() => ctl.abort(), 4000);
+          const buf = Buffer.from(await (await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`, { signal: ctl.signal })).arrayBuffer());
+          clearTimeout(k);
+          const h = require('crypto').createHash('md5').update(buf).digest('hex');
+          if (h !== last && buf.length > 1000) {
+            last = h;
+            const f = path.join(tmp, `f${String(r.frames.length).padStart(6, '0')}.jpg`);
+            fs.writeFileSync(f, buf);
+            r.frames.push([f, (Date.now() - t0) / 1000]);
+          }
+        } catch (_) { await new Promise(res => setTimeout(res, 200)); }
+      }
+    })();
+    return { ok: true };
+  });
+
+  // blob: a MediaRecorder file from the renderer.
+  ipcMain.handle('cam:save-recording', (_e, { printer, data, ext } = {}) => {
+    if (!data || !/^(mp4|webm)$/.test(ext)) return { ok: false, error: 'data' };
+    const dir = capDir(printer), file = path.join(sub(dir, 'Videos'), `${stamp()}.${ext}`);
+    fs.writeFileSync(file, Buffer.from(data));
+    return { ok: true, file, dir };
+  });
+
+  ipcMain.handle('cam:rec-stop', async (_e, { id } = {}) => {
+    const r = recs.get(id);
+    if (!r) return { ok: false, error: 'none' };
+    recs.delete(id);
+    if (r.polling) { r.polling = false; await new Promise(res => setTimeout(res, 300)); }
+    if (r.proc) {
+      try { r.proc.stdin.write('q'); } catch (_) {}
+      await new Promise(res => { const k = setTimeout(() => { try { r.proc.kill('SIGINT'); } catch (_) {} res(); }, 6000); r.proc.on('close', () => { clearTimeout(k); res(); }); });
+      const ok = fs.existsSync(r.file) && fs.statSync(r.file).size > 1000;
+      if (!ok) { try { fs.unlinkSync(r.file); } catch (_) {} return { ok: false, error: (r.err() || 'empty').slice(0, 200) }; }
+      return { ok: true, file: r.file, dir: r.dir };
+    }
+    // frames → concat list with each frame's real duration → MJPEG copied into .mov
+    if (!r.frames.length) { fs.rmSync(r.tmp, { recursive: true, force: true }); return { ok: false, error: 'empty' }; }
+    const end = r.frames.at(-1)[1] + 0.2;
+    const lines = [];
+    r.frames.forEach(([f, t], i) => { lines.push(`file '${f.replace(/'/g, "'\\''")}'`); lines.push(`duration ${Math.max(0.01, (r.frames[i + 1]?.[1] ?? end) - t).toFixed(3)}`); });
+    lines.push(`file '${r.frames.at(-1)[0].replace(/'/g, "'\\''")}'`);
+    const list = path.join(r.tmp, 'list.txt');
+    fs.writeFileSync(list, lines.join('\n'));
+    const run = args => new Promise(res => { const p = spawn(_ffmpegBin, args, { stdio: 'ignore' }); p.on('close', c => res(c)); p.on('error', () => res(-1)); });
+    let code = await run(['-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c', 'copy', '-y', r.file]);
+    if (code !== 0) code = await run(['-hide_banner', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', list, '-c:v', 'libx264', '-crf', '12', '-pix_fmt', 'yuv420p', '-y', r.file.replace(/\.mov$/, '.mp4')]);
+    fs.rmSync(r.tmp, { recursive: true, force: true });
+    const file = fs.existsSync(r.file) ? r.file : r.file.replace(/\.mov$/, '.mp4');
+    return code === 0 && fs.existsSync(file) ? { ok: true, file, dir: r.dir, frames: r.frames.length } : { ok: false, error: 'mux' };
+  });
+
+  // The printer's own captures folder, opened in the file manager.
+  ipcMain.handle('cam:open-folder', async (_e, { printer } = {}) => {
+    if (!printer) return false;
+    return (await shell.openPath(capDir(printer, { capture: false }))) === '';
+  });
+  ipcMain.handle('cam:show', (_e, { file } = {}) => {
+    const root = capRoot();
+    if (typeof file !== 'string' || !path.resolve(file).startsWith(root)) return false;
+    shell.showItemInFolder(file);
+    return true;
+  });
+  app.on('will-quit', () => { for (const r of recs.values()) { try { r.proc?.kill('SIGINT'); } catch (_) {} } });
+}
+
 // ── Demo mode — the printer simulator (docs/DEMO-MODE.md) ───────────────────
 // Answers each brand's protocol on local addresses for the account's demo
 // printers, so the drivers connect to them exactly as to real ones. Idle until

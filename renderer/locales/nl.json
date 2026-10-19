@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "Sensoren",
   "printerModelPickTitle": "Welke printer is het?",
   "printerModelPickHint": "Optioneel — kies hem hier, wij vullen hem voor je in",
+  "printerModelSkip": "Staat er niet bij",
   "tigertouchHealthNone": "Nog geen Tiger Touch — klik om kennis te maken",
   "tigertouchDemoShort": "demomodus",
   "tigertouchDemoNote": "Demomodus staat aan: het scherm pronkt met verzonnen printers, niet met de jouwe.",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "Die vriendcode is van iemand anders. Maak een nieuwe aan.",
   "profileErr_UNAUTHENTICATED": "Je sessie is verlopen — log opnieuw in.",
   "profileErr_NETWORK": "De server is niet bereikbaar. Controleer je verbinding en probeer opnieuw.",
-  "profileErr_generic": "Je profiel kon niet worden opgeslagen. Probeer het zo opnieuw."
+  "profileErr_generic": "Je profiel kon niet worden opgeslagen. Probeer het zo opnieuw.",
+  "camSnapshot": "Foto maken",
+  "camOpenFolder": "Al mijn opnames",
+  "camRecStart": "Video opnemen",
+  "camRecStop": "Opname stoppen",
+  "camPhotoSaved": "Foto opgeslagen in het album van deze printer 📸",
+  "camVideoSaved": "Video opgeslagen in het album van deze printer 🎬",
+  "camRecFailed": "Deze camera liet zich niet filmen. Probeer het zo opnieuw."
 }

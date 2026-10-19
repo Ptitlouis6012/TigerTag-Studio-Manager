@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "Датчики",
   "printerModelPickTitle": "Какой это принтер?",
   "printerModelPickHint": "По желанию — выбери здесь, а мы подставим её за тебя",
+  "printerModelSkip": "Нет в списке",
   "tigertouchHealthNone": "Tiger Touch пока нет — нажми, чтобы познакомиться",
   "tigertouchDemoShort": "демо-режим",
   "tigertouchDemoNote": "Демо-режим включён: экран красуется выдуманными принтерами, а не твоими.",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "Этот код друга принадлежит кому-то другому. Создай новый.",
   "profileErr_UNAUTHENTICATED": "Сессия истекла — войди снова.",
   "profileErr_NETWORK": "Сервер недоступен. Проверь подключение и попробуй снова.",
-  "profileErr_generic": "Не удалось сохранить профиль. Попробуй чуть позже."
+  "profileErr_generic": "Не удалось сохранить профиль. Попробуй чуть позже.",
+  "camSnapshot": "Сделать фото",
+  "camOpenFolder": "Все мои снимки",
+  "camRecStart": "Записать видео",
+  "camRecStop": "Остановить запись",
+  "camPhotoSaved": "Фото сохранено в альбом этого принтера 📸",
+  "camVideoSaved": "Видео сохранено в альбом этого принтера 🎬",
+  "camRecFailed": "Эта камера не далась записать. Попробуй чуть позже."
 }

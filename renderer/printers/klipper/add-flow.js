@@ -4,7 +4,7 @@
  *   1. Choice   — scan the network, or type the address.
  *   2. Scan     — Moonraker sweep of the local /24s (+ the shared extra subnets),
  *                 results tickable like every other brand (scan-pick.js).
- *   3. Manual   — one address (IP or hostname, optional :port), probed, then
+ *   3. Manual   — address + optional Port box, merged into ONE `ip` ("host:port"), probed, then
  *                 the settings form.
  *
  * Either way the user lands on the Printer Settings form (optional API key).
@@ -13,7 +13,8 @@
  *
  * Entry point: openKlipperAddFlow() — the plugin's `openAddFlow` hook.
  */
-import { mountModelList } from '../model-list.js';
+import { mountModelList, pickedModelHtml } from '../model-list.js';
+import { renderField, wireFieldToggles } from '../modal-helpers.js';
 import { ctx } from '../context.js';
 import { createScanPicker } from '../scan-pick.js';
 import * as extraSubnets from '../extra-subnets.js';
@@ -46,8 +47,11 @@ function cardHtml(c) {
     </div>`;
 }
 
-// The model picked in the choice card (optional) — carried into the settings form.
+// The model picked in the choice card (optional) — carried into the settings
+// form, and shown at the top of the scan / manual steps.
 let _model = null;
+const showPicked = id => { const el = document.getElementById(id); if (el) el.innerHTML = pickedModelHtml("klipper", _model, "Klipper"); };
+const portInput = () => document.querySelector('#klipperManualOverlay input[name="port"]');
 function prefillFor(c) {
   return { ip: c.ip, printerName: _model?.name || `Klipper ${c.ip}`, modelId: _model?.id || "0", discovery: klipperDiscoveryRecord(c) };
 }
@@ -64,7 +68,7 @@ function openPanel(id)  { document.getElementById(id)?.classList.add("open"); }
 function closePanel(id) { document.getElementById(id)?.classList.remove("open"); }
 function closeAll() {
   abortScan();
-  ["klipperChoiceOverlay", "klipperScanOverlay", "klipperManualOverlay"].forEach(closePanel);
+  ["klipperModelOverlay", "klipperChoiceOverlay", "klipperScanOverlay", "klipperManualOverlay"].forEach(closePanel);
 }
 
 let _domReady = false;
@@ -87,6 +91,25 @@ function ensureDOM() {
   const root = document.createElement("div");
   root.id = "klipperAddFlowRoot";
   root.innerHTML = `
+<div class="modal-overlay" id="klipperModelOverlay" role="dialog" aria-modal="true">
+  <div class="modal-card pba-card">
+    <div class="pba-header">
+      <div class="pba-header-text">
+        <div class="pba-title" data-i18n="klipperAddChoiceTitle">${ctx.esc(ctx.t("klipperAddChoiceTitle"))}</div>
+        <div class="pba-sub"   data-i18n="printerModelPickTitle">Which printer is it?</div>
+      </div>
+      <button class="modal-close" id="klipperModelClose">✕</button>
+    </div>
+    <div class="pba-models" id="klipperChoiceModels"></div>
+    <div class="pba-footer">
+      ${back("klipperModelBack")}
+      <button class="adf-btn adf-btn--secondary" id="klipperModelSkip">
+        <span data-i18n="printerModelSkip">Not in the list</span><span class="icon icon-chevron-r icon-13"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="klipperChoiceOverlay" role="dialog" aria-modal="true">
   <div class="modal-card pba-card">
     <div class="pba-header">
@@ -96,11 +119,11 @@ function ensureDOM() {
       </div>
       <button class="modal-close" id="klipperChoiceClose">✕</button>
     </div>
+    <div class="pba-picked-slot" id="klipperChoicePicked"></div>
     <div class="pba-brands">
       ${choice("klipperChoiceScan", "snapAddChoiceScan", "Scan network", "snapAddChoiceScanHint", "Auto-discover printers on your LAN")}
       ${choice("klipperChoiceManual", "snapAddChoiceManual", "Enter IP address", "snapAddChoiceManualHint", "Manually enter the printer's local IP")}
     </div>
-    <div class="pba-models" id="klipperChoiceModels"></div>
     <div class="pba-footer">${back("klipperChoiceBack")}</div>
   </div>
 </div>
@@ -115,6 +138,7 @@ function ensureDOM() {
       <button class="modal-close" id="klipperScanClose">✕</button>
     </div>
     <div class="snap-scan-body">
+      <div id="klipperScanPicked"></div>
       <div class="snap-scan-progress">
         <div class="snap-scan-bar"><span id="klipperScanBar"></span></div>
         <div class="snap-scan-stats" id="klipperScanStats">0 / 0</div>
@@ -156,11 +180,14 @@ function ensureDOM() {
       <button class="modal-close" id="klipperManualClose">✕</button>
     </div>
     <div class="pba-body">
+      <div id="klipperManualPicked"></div>
       <div class="pba-field">
         <span class="pba-field-label" data-i18n="printerLblIP">IP address</span>
         <input type="text" id="klipperManualIpInput" class="pba-input pba-input--mono" placeholder="192.168.1.50" maxlength="64" spellcheck="false" autocomplete="off" autocapitalize="off"/>
-        <div class="pba-error" id="klipperManualIpError" hidden></div>
       </div>
+      ${renderField({ key: "port", labelKey: "klipperManualPortLabel", hintKey: "klipperManualPortHint",
+                      placeholder: "7125", mono: true, toggleKey: "klipperCustomPort", toggleDefault: "7125" }, ctx)}
+      <div class="pba-error" id="klipperManualIpError" hidden></div>
     </div>
     <div class="pba-footer">
       ${back("klipperManualBack")}
@@ -179,11 +206,14 @@ function ensureDOM() {
 
 function wireDOM() {
   const $ = id => document.getElementById(id);
-  for (const id of ["klipperChoiceOverlay", "klipperScanOverlay", "klipperManualOverlay"]) {
+  for (const id of ["klipperModelOverlay", "klipperChoiceOverlay", "klipperScanOverlay", "klipperManualOverlay"]) {
     $(id)?.addEventListener("click", e => { if (e.target.id === id) closeAll(); });
   }
   $("klipperChoiceClose")?.addEventListener("click", closeAll);
-  $("klipperChoiceBack")?.addEventListener("click", () => { closePanel("klipperChoiceOverlay"); ctx.openBrandPicker(); });
+  $("klipperChoiceBack")?.addEventListener("click", () => { closePanel("klipperChoiceOverlay"); openPanel("klipperModelOverlay"); });
+  $("klipperModelClose")?.addEventListener("click", closeAll);
+  $("klipperModelBack")?.addEventListener("click", () => { closePanel("klipperModelOverlay"); ctx.openBrandPicker(); });
+  $("klipperModelSkip")?.addEventListener("click", () => { _modelList?.reset(); _model = null; goChoice(); });
   $("klipperChoiceScan")?.addEventListener("click", () => { closePanel("klipperChoiceOverlay"); openScanPanel(); });
   $("klipperChoiceManual")?.addEventListener("click", () => { closePanel("klipperChoiceOverlay"); openManualPanel(); });
   $("klipperScanClose")?.addEventListener("click", closeAll);
@@ -198,6 +228,17 @@ function wireDOM() {
   $("klipperManualBack")?.addEventListener("click", () => { closePanel("klipperManualOverlay"); openPanel("klipperChoiceOverlay"); });
   $("klipperManualProbeBtn")?.addEventListener("click", handleManualProbe);
   $("klipperManualIpInput")?.addEventListener("keydown", e => { if (e.key === "Enter") handleManualProbe(); });
+  portInput()?.addEventListener("keydown", e => { if (e.key === "Enter") handleManualProbe(); });
+  // "host:port" typed (or pasted) in the address box moves its port to the Port box.
+  $("klipperManualIpInput")?.addEventListener("input", e => {
+    const m = /^([^:]+):(\d{1,5})$/.exec(e.target.value.trim());
+    const port = portInput();
+    if (m && port) {
+      e.target.value = m[1]; port.value = m[2];
+      const sw = document.querySelector('#klipperManualOverlay input[data-toggle-field="port"]');
+      if (sw && !sw.checked) { sw.checked = true; sw.closest(".pba-toggled")?.classList.add("is-on"); }
+    }
+  });
 }
 
 function openScanPanel() {
@@ -211,6 +252,7 @@ function openScanPanel() {
   if (bar) bar.style.width = "0%";
   if (sub) sub.textContent = ctx.t("snapScanStarting") || "Starting scan…";
   renderExtraSubnetChips();
+  showPicked("klipperScanPicked");
   openPanel("klipperScanOverlay");
   _scanCtl = new AbortController();
   const signal = _scanCtl.signal;
@@ -242,7 +284,17 @@ async function handleManualProbe() {
   const errEl = document.getElementById("klipperManualIpError");
   const btn = document.getElementById("klipperManualProbeBtn");
   if (!input) return;
-  const ip = input.value.trim();
+  // Stored as ONE field, "host" or "host:port" — the form Studio and Tiger Touch
+  // both read (a separate port field would be ignored by the Tiger Touch firmware).
+  const host = input.value.trim().replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  const portRaw = (portInput()?.value || "").trim();
+  const port = Number(portRaw);
+  if (portRaw && !(/^\d{1,5}$/.test(portRaw) && port >= 1 && port <= 65535)) {
+    if (errEl) { errEl.textContent = ctx.t("klipperManualPortInvalid"); errEl.hidden = false; }
+    portInput()?.focus();
+    return;
+  }
+  const ip = portRaw && port !== 7125 && !/:\d+$/.test(host) ? `${host}:${port}` : host;
   if (!ADDR_RX.test(ip)) {
     if (errEl) { errEl.textContent = ctx.t("snapAddByIpInvalid") || "Invalid IP address format"; errEl.hidden = false; }
     input.focus();
@@ -261,6 +313,10 @@ function openManualPanel() {
   const input = document.getElementById("klipperManualIpInput");
   const errEl = document.getElementById("klipperManualIpError");
   if (input) input.value = "";
+  const port = portInput();
+  if (port) port.value = "";
+  wireFieldToggles(document.getElementById("klipperManualOverlay"));
+  showPicked("klipperManualPicked");
   if (errEl) errEl.hidden = true;
   openPanel("klipperManualOverlay");
   setTimeout(() => input?.focus(), 80);
@@ -270,7 +326,15 @@ let _modelList = null;
 export function openKlipperAddFlow() {
   ensureDOM();
   // Built on first open (the catalogues are loaded by then), cleared on every open.
-  if (!_modelList) _modelList = mountModelList(document.getElementById("klipperChoiceModels"), "klipper", m => { _model = m; });
+  if (!_modelList) _modelList = mountModelList(document.getElementById("klipperChoiceModels"), "klipper",
+    m => { _model = m; }, { onPick: m => { _model = m; goChoice(); } });
   _modelList.reset();
+  openPanel("klipperModelOverlay");
+}
+
+// Step 2 → 3: the model is settled (or skipped); how to find the printer.
+function goChoice() {
+  showPicked("klipperChoicePicked");
   openPanel("klipperChoiceOverlay");
+  closePanel("klipperModelOverlay");
 }

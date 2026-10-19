@@ -40,9 +40,9 @@ export function renderField(f, { t, esc }) {
         ${hint}
       </label>`;
   }
-  return `
+  const plain = `
     <label class="pba-field">
-      <span class="pba-field-label">${labelHtml} ${reqMark}</span>
+      ${f.toggleKey ? "" : `<span class="pba-field-label">${labelHtml} ${reqMark}</span>`}
       <input type="text"
              class="pba-input${f.mono ? " pba-input--mono" : ""}"
              name="${esc(f.key)}"
@@ -51,6 +51,42 @@ export function renderField(f, { t, esc }) {
              ${f.required ? "required" : ""}/>
       ${hint}
     </label>`;
+  // `toggleKey`: a rarely-needed field kept behind a switch (Klipper's port).
+  // Off = empty; it opens by itself when the field already holds a value.
+  if (!f.toggleKey) return plain;
+  return `
+    <div class="pba-toggled">
+      <label class="pba-toggle-row">
+        <span class="pba-field-label">${esc(t(f.toggleKey))}</span>
+        <span class="eac-toggle">
+          <input type="checkbox" data-toggle-field="${esc(f.key)}" data-toggle-default="${esc(f.toggleDefault ?? "")}"/>
+          <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+        </span>
+      </label>
+      <div class="pba-toggle-body"><div class="pba-toggle-inner">${plain}</div></div>
+    </div>`;
+}
+
+/** Wire every `toggleKey` field under root: open when it holds a value. */
+export function wireFieldToggles(root) {
+  root.querySelectorAll("input[data-toggle-field]").forEach(cb => {
+    const box = cb.closest(".pba-toggled");
+    const input = box.querySelector(`input[name="${cb.dataset.toggleField}"]`);
+    const sync = () => box.classList.toggle("is-on", cb.checked);
+    cb.checked = !!input?.value.trim();
+    sync();
+    if (cb._wired) return;
+    cb._wired = true;
+    cb.addEventListener("change", () => {
+      sync();
+      // Switching on starts from the usual value, ready to be typed over.
+      if (cb.checked) {
+        if (input && !input.value.trim() && cb.dataset.toggleDefault) input.value = cb.dataset.toggleDefault;
+        setTimeout(() => { input?.focus(); input?.select(); }, 120);
+      }
+      else if (input) input.value = "";
+    });
+  });
 }
 
 /** Render one schema section (optional small-caps header + fields).
@@ -308,7 +344,7 @@ export function schemaWidget(schema) {
       schema.sections.forEach(sec =>
         sec.fields.forEach(f => { data[f.key] = printer[f.key]; })
       );
-      prefillFields(bodyEl, data);
+      prefillFields(bodyEl, schema.toForm ? schema.toForm(data) : data);
     } else if (prefill) {
       const data = {};
       if (prefill.printerName) data.printerName = prefill.printerName;
@@ -322,7 +358,8 @@ export function schemaWidget(schema) {
       // Back-compat: legacy flows pass `ip` even when the schema's IP field
       // uses a different key (e.g. Bambu's `broker`). Map it onto the field.
       if (prefill.ip && data.ip == null && data.broker == null) data.ip = prefill.ip;
-      prefillFields(bodyEl, data);
+      prefillFields(bodyEl, schema.toForm ? schema.toForm(data) : data);
     }
+    wireFieldToggles(bodyEl);
   };
 }

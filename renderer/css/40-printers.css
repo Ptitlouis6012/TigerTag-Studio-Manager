@@ -3481,3 +3481,54 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pba-mp-opt .pba-demo-add { margin-left: auto; background-color: var(--muted); transition: background-color .15s; }
 .pba-mp-opt:hover .pba-demo-add { background-color: var(--primary); }
 .pba-mp-opt.loading { opacity: .5; pointer-events: none; }
+
+/* ── Camera photo / video (printers/cam-snapshot.js) — on every .pp-cam-full ── */
+.pp-cam-full { position: relative; }
+.cam-cap-bar {
+  position: absolute; right: 12px; bottom: 12px; z-index: 5;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; pointer-events: none;
+}
+.pp-cam-full:hover > .cam-cap-bar, .pp-cam-full.cam-recording > .cam-cap-bar { opacity: 1; transform: none; pointer-events: auto; }
+.pp-cam-full.cam-snap-hide > .cam-cap-bar { opacity: 0 !important; }
+/* The camera wall is drawn at full size then scaled (--plan-z): undo it so the
+   buttons keep their real on-screen size at any zoom. */
+.cam-wall--plan .cam-cap-bar { zoom: calc(1 / var(--plan-z, 1)); }
+.cam-cap-btn.cam-cap-btn {
+  width: 46px; height: 46px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(10,12,16,.62); backdrop-filter: blur(6px); transition: background .15s, transform .15s;
+}
+.cam-cap-btn:hover { background: rgba(10,12,16,.82); transform: scale(1.06); }
+.cam-cap-btn .icon { background-color: #fff; width: 22px; height: 22px; }
+.cam-rec-dot { width: 18px; height: 18px; border-radius: 50%; background: #ff3b30; transition: border-radius .15s, transform .15s; }
+.cam-rec-btn.is-on .cam-rec-dot { border-radius: 3px; transform: scale(.85); animation: cam-rec-pulse 1.2s ease-in-out infinite; }
+.cam-rec-time {
+  padding: 6px 12px; border-radius: 999px; background: #ff3b30; color: #fff;
+  font: 700 14px/1 ui-monospace, "SF Mono", Menlo, monospace;
+}
+.cam-rec-time[hidden] { display: none; }
+@keyframes cam-rec-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .cam-rec-btn.is-on .cam-rec-dot { animation: none; } }
+
+/* ── Add flow: the model being added, recalled on the scan / manual steps ── */
+.pba-picked {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+  padding: 8px 12px 8px 8px; border-radius: 12px;
+  background: var(--surface-2, rgba(255,255,255,.04)); border: 1px solid var(--border);
+}
+.pba-picked .pba-mp-thumb { width: 48px; height: 48px; flex-shrink: 0; }
+.pba-picked-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pba-picked-name { font-weight: 600; font-size: 14px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pba-picked-sub { font-size: 12px; color: var(--muted); }
+.snap-scan-body > div:first-child:empty, .pba-body > div:first-child:empty, .pba-picked-slot:empty { display: none; }
+.pba-picked-slot { padding: 4px 14px 0; }
+.pba-picked-slot .pba-picked { margin-bottom: 4px; }
+
+/* ── A rarely-needed field behind a switch (schema `toggleKey`) ── */
+.pba-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; cursor: pointer; padding: 4px 0; }
+.pba-toggle-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .2s ease, opacity .2s ease; }
+.pba-toggled.is-on .pba-toggle-body { grid-template-rows: 1fr; opacity: 1; }
+.pba-toggle-inner { overflow: hidden; min-height: 0; }
+.pba-toggle-inner > .pba-field { padding-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .pba-toggle-body { transition: none; } }

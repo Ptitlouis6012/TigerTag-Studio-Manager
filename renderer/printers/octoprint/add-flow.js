@@ -12,7 +12,7 @@
  * Ends on the Printer Settings form, the API key prefilled when approved.
  * Entry point: openOctoAddFlow() — the plugin's `openAddFlow` hook.
  */
-import { mountModelList } from '../model-list.js';
+import { mountModelList, pickedModelHtml } from '../model-list.js';
 import { ctx } from '../context.js';
 import { createScanPicker } from '../scan-pick.js';
 import * as extraSubnets from '../extra-subnets.js';
@@ -48,6 +48,7 @@ function cardHtml(c) {
 
 // The model picked in the choice card (optional) — carried into the settings form.
 let _model = null;
+const showPicked = id => { const el = document.getElementById(id); if (el) el.innerHTML = pickedModelHtml("octoprint", _model, "OctoPrint"); };
 function prefillFor(c) {
   return { ip: c.ip, printerName: _model?.name || `OctoPrint ${c.ip}`, modelId: _model?.id || "0", discovery: opDiscoveryRecord(c) };
 }
@@ -68,7 +69,7 @@ function closePanel(id) { document.getElementById(id)?.classList.remove("open");
 function closeAll() {
   abortScan();
   abortApprove();
-  ["octoChoiceOverlay", "octoScanOverlay", "octoManualOverlay", "octoApproveOverlay"].forEach(closePanel);
+  ["octoModelOverlay", "octoChoiceOverlay", "octoScanOverlay", "octoManualOverlay", "octoApproveOverlay"].forEach(closePanel);
 }
 
 let _domReady = false;
@@ -91,6 +92,25 @@ function ensureDOM() {
   const root = document.createElement("div");
   root.id = "octoAddFlowRoot";
   root.innerHTML = `
+<div class="modal-overlay" id="octoModelOverlay" role="dialog" aria-modal="true">
+  <div class="modal-card pba-card">
+    <div class="pba-header">
+      <div class="pba-header-text">
+        <div class="pba-title" data-i18n="octoAddChoiceTitle">${ctx.esc(ctx.t("octoAddChoiceTitle"))}</div>
+        <div class="pba-sub"   data-i18n="printerModelPickTitle">Which printer is it?</div>
+      </div>
+      <button class="modal-close" id="octoModelClose">✕</button>
+    </div>
+    <div class="pba-models" id="octoChoiceModels"></div>
+    <div class="pba-footer">
+      ${back("octoModelBack")}
+      <button class="adf-btn adf-btn--secondary" id="octoModelSkip">
+        <span data-i18n="printerModelSkip">Not in the list</span><span class="icon icon-chevron-r icon-13"></span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="octoChoiceOverlay" role="dialog" aria-modal="true">
   <div class="modal-card pba-card">
     <div class="pba-header">
@@ -100,11 +120,11 @@ function ensureDOM() {
       </div>
       <button class="modal-close" id="octoChoiceClose">✕</button>
     </div>
+    <div class="pba-picked-slot" id="octoChoicePicked"></div>
     <div class="pba-brands">
       ${choice("octoChoiceScan", "snapAddChoiceScan", "Scan network", "snapAddChoiceScanHint", "Auto-discover printers on your LAN")}
       ${choice("octoChoiceManual", "snapAddChoiceManual", "Enter IP address", "snapAddChoiceManualHint", "Manually enter the printer's local IP")}
     </div>
-    <div class="pba-models" id="octoChoiceModels"></div>
     <div class="pba-footer">${back("octoChoiceBack")}</div>
   </div>
 </div>
@@ -119,6 +139,7 @@ function ensureDOM() {
       <button class="modal-close" id="octoScanClose">✕</button>
     </div>
     <div class="snap-scan-body">
+      <div id="octoScanPicked"></div>
       <div class="snap-scan-progress">
         <div class="snap-scan-bar"><span id="octoScanBar"></span></div>
         <div class="snap-scan-stats" id="octoScanStats">0 / 0</div>
@@ -160,6 +181,7 @@ function ensureDOM() {
       <button class="modal-close" id="octoManualClose">✕</button>
     </div>
     <div class="pba-body">
+      <div id="octoManualPicked"></div>
       <div class="pba-field">
         <span class="pba-field-label" data-i18n="printerLblIP">IP address</span>
         <input type="text" id="octoManualIpInput" class="pba-input pba-input--mono" placeholder="192.168.1.50" maxlength="64" spellcheck="false" autocomplete="off" autocapitalize="off"/>
@@ -202,11 +224,14 @@ function ensureDOM() {
 
 function wireDOM() {
   const $ = id => document.getElementById(id);
-  for (const id of ["octoChoiceOverlay", "octoScanOverlay", "octoManualOverlay", "octoApproveOverlay"]) {
+  for (const id of ["octoModelOverlay", "octoChoiceOverlay", "octoScanOverlay", "octoManualOverlay", "octoApproveOverlay"]) {
     $(id)?.addEventListener("click", e => { if (e.target.id === id) closeAll(); });
   }
   $("octoChoiceClose")?.addEventListener("click", closeAll);
-  $("octoChoiceBack")?.addEventListener("click", () => { closePanel("octoChoiceOverlay"); ctx.openBrandPicker(); });
+  $("octoChoiceBack")?.addEventListener("click", () => { closePanel("octoChoiceOverlay"); openPanel("octoModelOverlay"); });
+  $("octoModelClose")?.addEventListener("click", closeAll);
+  $("octoModelBack")?.addEventListener("click", () => { closePanel("octoModelOverlay"); ctx.openBrandPicker(); });
+  $("octoModelSkip")?.addEventListener("click", () => { _modelList?.reset(); _model = null; goChoice(); });
   $("octoChoiceScan")?.addEventListener("click", () => { closePanel("octoChoiceOverlay"); openScanPanel(); });
   $("octoChoiceManual")?.addEventListener("click", () => { closePanel("octoChoiceOverlay"); openManualPanel(); });
   $("octoScanClose")?.addEventListener("click", closeAll);
@@ -240,6 +265,7 @@ function openScanPanel() {
   if (bar) bar.style.width = "0%";
   if (sub) sub.textContent = ctx.t("snapScanStarting") || "Starting scan…";
   renderExtraSubnetChips();
+  showPicked("octoScanPicked");
   openPanel("octoScanOverlay");
   _scanCtl = new AbortController();
   const signal = _scanCtl.signal;
@@ -291,6 +317,7 @@ function openManualPanel() {
   const errEl = document.getElementById("octoManualIpError");
   if (input) input.value = "";
   if (errEl) errEl.hidden = true;
+  showPicked("octoManualPicked");
   openPanel("octoManualOverlay");
   setTimeout(() => input?.focus(), 80);
 }
@@ -326,7 +353,15 @@ let _modelList = null;
 export function openOctoAddFlow() {
   ensureDOM();
   // Built on first open (the catalogues are loaded by then), cleared on every open.
-  if (!_modelList) _modelList = mountModelList(document.getElementById("octoChoiceModels"), "octoprint", m => { _model = m; });
+  if (!_modelList) _modelList = mountModelList(document.getElementById("octoChoiceModels"), "octoprint",
+    m => { _model = m; }, { onPick: m => { _model = m; goChoice(); } });
   _modelList.reset();
+  openPanel("octoModelOverlay");
+}
+
+// Step 2 → 3: the model is settled (or skipped); how to find the printer.
+function goChoice() {
+  showPicked("octoChoicePicked");
   openPanel("octoChoiceOverlay");
+  closePanel("octoModelOverlay");
 }

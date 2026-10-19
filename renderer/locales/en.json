@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "Sensors",
   "printerModelPickTitle": "Which printer is it?",
   "printerModelPickHint": "Optional — pick it now and we'll fill it in for you",
+  "printerModelSkip": "Not in the list",
   "tigertouchHealthNone": "No Tiger Touch yet — click to meet it",
   "tigertouchDemoShort": "demo mode",
   "tigertouchDemoNote": "Demo mode is on: the screen is showing off made-up printers, not yours.",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "That friend code belongs to someone else. Generate a new one.",
   "profileErr_UNAUTHENTICATED": "Your session has expired — sign in again.",
   "profileErr_NETWORK": "Couldn’t reach the server. Check your connection and try again.",
-  "profileErr_generic": "Your profile couldn’t be saved. Try again in a moment."
+  "profileErr_generic": "Your profile couldn’t be saved. Try again in a moment.",
+  "camSnapshot": "Take a photo",
+  "camOpenFolder": "All my captures",
+  "camRecStart": "Record a video",
+  "camRecStop": "Stop recording",
+  "camPhotoSaved": "Photo saved in this printer’s album 📸",
+  "camVideoSaved": "Video saved in this printer’s album 🎬",
+  "camRecFailed": "This camera didn’t let itself be filmed. Try again in a moment."
 }

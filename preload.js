@@ -42,6 +42,19 @@ contextBridge.exposeInMainWorld('printerPlugin', {
 });
 // Tiger Touch — its screen's picture, live frames and touches, all fetched by
 // main (renderer/IoT/tigertouch draws the live view; the firmware serves no page).
+// Printer camera captures — photos and source-quality videos, filed per printer
+// (Pictures/Tiger Studio/<brand>_<MAC|serial|id>/), see main.js "Camera captures".
+contextBridge.exposeInMainWorld('camCapture', {
+  saveImage:     (printer, dataUrl)       => ipcRenderer.invoke('cam:save-image', { printer, dataUrl }),
+  recUrlStart:   (id, printer, url)       => ipcRenderer.invoke('cam:rec-url-start', { id, printer, url }),
+  recFramesStart:(id, printer)            => ipcRenderer.invoke('cam:rec-frames-start', { id, printer }),
+  recPollStart:  (id, printer, url)       => ipcRenderer.invoke('cam:rec-poll-start', { id, printer, url }),
+  recFrame:      (id, t, data)            => ipcRenderer.invoke('cam:rec-frame', { id, t, data }),
+  recStop:       (id)                     => ipcRenderer.invoke('cam:rec-stop', { id }),
+  saveRecording: (printer, data, ext)     => ipcRenderer.invoke('cam:save-recording', { printer, data, ext }),
+  show:          (file)                   => ipcRenderer.invoke('cam:show', { file }),
+  openFolder:    (printer)                => ipcRenderer.invoke('cam:open-folder', { printer }),
+});
 // TigerSpool — one picture of its screen (GET /screen.bmp, no code), fetched by main.
 contextBridge.exposeInMainWorld('tigerspool', {
   screenshot: ip => ipcRenderer.invoke('tigerspool:screenshot', { ip }),

@@ -16,6 +16,7 @@ import {
 // ── TigerSpool presence (header glyph only) ───────────────────────────────
 import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
+import { initCamSnapshot } from './printers/cam-snapshot.js';
 
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
 import { initUsbScale, usbScaleRefreshDock } from './IoT/usbscale/index.js';
@@ -4170,6 +4171,35 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Printer renames/removals reach the side card through its 10 s tick.
   initTigerSpool({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError });
   initTigerTouch({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError, openReport });
+  // Photo + source-quality video on every printer camera, filed per printer by its
+  // hardware id (MAC, else serial) — printers/cam-snapshot.js, main.js "Camera captures".
+  initCamSnapshot({
+    t, toast: msg => _flashMessage(msg),
+    printerForHost: host => {
+      const key = host.closest("[data-cam-key]")?.dataset.camKey;
+      const [brand, id] = key ? key.split(":") : [_activePrinter?.brand, _activePrinter?.id];
+      return state.printers.find(p => p.brand === brand && p.id === id) || null;
+    },
+    printerInfo: p => ({
+      brand: p.brand, id: p.id, name: p.printerName || "",
+      model: printerModelName(p.brand, p.printerModelId) || "",
+      ip: String(p.ip || p.broker || p.discovery?.ip || "").replace(/^https?:\/\//, ""),
+      mac: p.macAddress || p.discovery?.macAddress || null,
+      serial: p.serialNumber || p.sn || p.mainboardId || p.discovery?.serialNumber || p.discovery?.serial || null,
+    }),
+    // The camera's own stream, when ffmpeg can read it directly: Bambu Lab's RTSPS
+    // (X1 / X2D / H2 / P2S), or an http MJPEG the page shows as is (Elegoo).
+    sourceUrl: (p, media) => {
+      if (p.brand === "bambulab" && findPrinterModel("bambulab", p.printerModelId)?.camera_transport === "rtsp"
+          && p.broker && (p.password || p.accessCode) && !String(p.broker).includes(":"))
+        return `rtsps://bblp:${p.password || p.accessCode}@${p.broker}:322/streaming/live/1`;
+      // Snapmaker on stock firmware: refreshed stills — read at the camera's own pace.
+      if (p.brand === "snapmaker" && media?.tagName === "IMG" && p.ip)
+        return `poll:http://${String(p.ip).replace(/^https?:\/\//, "").replace(/\/.*$/, "")}:7125/server/files/camera/monitor.jpg`;
+      const src = media?.tagName === "IMG" ? (media.currentSrc || media.src || "") : "";
+      return /^https?:\/\//.test(src) && /action=stream|\.mjpe?g|\/stream/i.test(src) ? src : null;
+    },
+  });
 
   // ── USB scale (Dymo) module init ───────────────────────────────────────
   // One weight write per pose: POD mode applies silently (UID = certainty),
@@ -29107,6 +29137,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const fields = schema.sections.flatMap(s => s.fields);
       for (const f of fields) data[f.key] = String(pf[f.key] ?? "").trim();
       Object.assign(data, schema.fixed || {});
+      if (schema.fromForm) { try { const out = schema.fromForm(data); for (const k of Object.keys(data)) delete data[k]; Object.assign(data, out); } catch (_) { return { ok: false, error: "invalid-port", index: i }; } }
       if (!data.printerName || fields.some(f => f.required && !data[f.key])) {
         return { ok: false, error: "missing-fields", index: i };
       }
@@ -31950,6 +31981,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }));
     Object.assign(data, schema.fixed || {});
     if (_chosenMode === "lan") data.mode = "lan";
+    // A schema may show one stored field as several boxes (Klipper: ip + port → "ip").
+    if (schema.fromForm) {
+      try { const out = schema.fromForm(data); for (const k of Object.keys(data)) delete data[k]; Object.assign(data, out); }
+      catch (e) { err.textContent = t(e.message); err.hidden = false; return; }
+    }
 
     if (!data.printerName) {
       err.textContent = t("printerAddErrName");

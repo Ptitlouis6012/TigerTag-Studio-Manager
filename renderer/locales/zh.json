@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "传感器",
   "printerModelPickTitle": "是哪台打印机？",
   "printerModelPickHint": "可选——在这里选好，我们帮你填",
+  "printerModelSkip": "列表里没有",
   "tigertouchHealthNone": "还没有 Tiger Touch — 点击认识一下",
   "tigertouchDemoShort": "演示模式",
   "tigertouchDemoNote": "演示模式已开启：屏幕上炫耀的是虚构的打印机，不是你的。",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "这个好友码属于别人。重新生成一个吧。",
   "profileErr_UNAUTHENTICATED": "会话已过期——请重新登录。",
   "profileErr_NETWORK": "连不上服务器。检查网络后再试。",
-  "profileErr_generic": "个人资料没能保存。稍后再试。"
+  "profileErr_generic": "个人资料没能保存。稍后再试。",
+  "camSnapshot": "拍照",
+  "camOpenFolder": "我的全部截图与录像",
+  "camRecStart": "录制视频",
+  "camRecStop": "停止录制",
+  "camPhotoSaved": "照片已存入这台打印机的相册 📸",
+  "camVideoSaved": "视频已存入这台打印机的相册 🎬",
+  "camRecFailed": "这个摄像头不肯被录。稍后再试。"
 }

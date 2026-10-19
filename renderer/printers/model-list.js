@@ -6,14 +6,31 @@
  * flow's prefill. Host service, same look as the settings model picker
  * (.pba-mp-*), same word search ("v2 ender" finds "Ender-3 V2").
  *
- *   mountModelList(container, brand, onChange)  → { reset() }
+ *   mountModelList(container, brand, onChange, { onPick })  → { reset() }
  *   onChange({ id, name } | null)
+ *   onPick({ id, name })  — set when the list is its own step: a click picks
+ *     and moves on (no un-pick)
+ *   pickedModelHtml(brand, model | null, label)  → the strip that reminds the
+ *     next steps (scan, manual address) which printer is being added
  */
 import { ctx } from './context.js';
 
 const norm = v => String(v || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ");
 
-export function mountModelList(container, brand, onChange) {
+export function pickedModelHtml(brand, model, label) {
+  const m = (model && ctx.findPrinterModel(brand, model.id)) || ctx.findPrinterModel(brand, "0");
+  const url = m ? ctx.printerImageUrl(m) : "";
+  return `
+    <div class="pba-picked">
+      <span class="pba-mp-thumb">${url ? `<img src="${ctx.esc(url)}" alt="" onerror="this.style.opacity='.15'"/>` : ""}</span>
+      <span class="pba-picked-text">
+        <span class="pba-picked-name">${ctx.esc(model?.name || label)}</span>
+        <span class="pba-picked-sub">${ctx.esc(label)}</span>
+      </span>
+    </div>`;
+}
+
+export function mountModelList(container, brand, onChange, { onPick = null } = {}) {
   if (!container) return { reset() {} };
   const models = (ctx.getState().db?.printerModels?.[brand] || []).filter(m => String(m.id) !== "0");
   const thumb = m => {
@@ -68,7 +85,9 @@ export function mountModelList(container, brand, onChange) {
   // Click picks; clicking the picked one again lets it go (the pick is optional).
   container.querySelector(".pba-models-list").addEventListener("click", e => {
     const opt = e.target.closest(".pba-mp-opt");
-    if (opt) select(opt.classList.contains("pba-mp-opt--selected") ? null : opt);
+    if (!opt) return;
+    if (onPick) { select(opt); onPick({ id: opt.dataset.id, name: opt.dataset.name }); }
+    else select(opt.classList.contains("pba-mp-opt--selected") ? null : opt);
   });
 
   return {

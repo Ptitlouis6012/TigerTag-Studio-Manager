@@ -2072,6 +2072,7 @@
   "klipperSensorsTitle": "Capteurs",
   "printerModelPickTitle": "C'est quelle imprimante ?",
   "printerModelPickHint": "Facultatif — choisis-la ici, on la remplit pour toi",
+  "printerModelSkip": "Pas dans la liste",
   "tigertouchHealthNone": "Pas encore de Tiger Touch — clique pour faire connaissance",
   "tigertouchDemoShort": "mode démo",
   "tigertouchDemoNote": "Mode démo activé : l'écran frime avec des imprimantes imaginaires, pas les tiennes.",
@@ -2121,5 +2122,12 @@
   "profileErr_PUBLICKEY_NOT_YOURS": "Ce code ami appartient à quelqu’un d’autre. Génères-en un nouveau.",
   "profileErr_UNAUTHENTICATED": "Ta session a expiré — reconnecte-toi.",
   "profileErr_NETWORK": "Impossible de joindre le serveur. Vérifie ta connexion et réessaie.",
-  "profileErr_generic": "Ton profil n’a pas pu être enregistré. Réessaie dans un instant."
+  "profileErr_generic": "Ton profil n’a pas pu être enregistré. Réessaie dans un instant.",
+  "camSnapshot": "Prendre une photo",
+  "camOpenFolder": "Toutes mes captures",
+  "camRecStart": "Filmer",
+  "camRecStop": "Arrêter de filmer",
+  "camPhotoSaved": "Photo rangée dans l’album de cette imprimante 📸",
+  "camVideoSaved": "Vidéo rangée dans l’album de cette imprimante 🎬",
+  "camRecFailed": "Cette caméra ne s’est pas laissé filmer. Réessaie dans un instant."
 }
