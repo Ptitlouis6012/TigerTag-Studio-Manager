@@ -6,6 +6,7 @@
 
 **How.**
 - App strings: `renderer/locales/<locale>.json`. Add with `npm run i18n:add -- key [--after existingKey] en="…" fr="…" …` (all 11 values).
+- Remove keys the same way, never by hand: `node scripts/i18n-remove.mjs key1 key2 …` (or `--file keys.txt`); it aborts if any other key would change. `node scripts/check-agent-rules.mjs --orphans` lists keys no code references.
 - Printer plugin strings live inline in the plugin (`const i18n` in `renderer/printers/klipper/plugin.js`, `s11(...)` in `renderer/printers/octoprint/plugin.js`), merged at runtime by `mergePluginStrings`; every key carries all 11 locales.
 - `npm run i18n:check` (pre-commit) fails on a missing, extra, empty or type-mismatched key. `scripts/check-agent-rules.mjs` checks the plugin tables.
 - If a translation cannot be written now, add the key in every locale anyway with the English value and say so in `WORKLOG.md` — never leave a locale without the key.

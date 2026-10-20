@@ -98,12 +98,16 @@ const codeFiles = [];
     const p = `${d}/${n}`;
     if (n === "lib" || n === "locales" || n === "node_modules") continue;
     if (statSync(join(root, p)).isDirectory()) walk(p);
-    else if (/\.(js|mjs|cjs|html)$/.test(n)) codeFiles.push(p);
+    else if (/\.(js|mjs|cjs|html|json)$/.test(n)) codeFiles.push(p);   // json: tutorial.json step keys
   }
 })("renderer");
 const corpus = [...codeFiles, "main.js", "preload.js"].filter(f => existsSync(join(root, f))).map(read).join("\n")
   + (existsSync(join(root, "data")) ? readdirSync(join(root, "data")).filter(n => n.endsWith(".json")).map(n => read(`data/${n}`)).join("\n") : "");
-const dynPrefixes = [...corpus.matchAll(/`([A-Za-z][\w-]*?)\$\{/g)].map(m => m[1]).filter(p => p.length >= 3);
+// Keys built at run time: t(`prefix${x}`) and t("prefix" + x).
+const dynPrefixes = [
+  ...[...corpus.matchAll(/`([A-Za-z][\w-]*?)\$\{/g)].map(m => m[1]),
+  ...[...corpus.matchAll(/["']([A-Za-z][\w-]*?)["']\s*\+\s*[\w(]/g)].map(m => m[1]),
+].filter(p => p.length >= 3);
 const orphans = Object.keys(en).filter(k => !corpus.includes(k) && !dynPrefixes.some(p => k.startsWith(p)));
 if (orphans.length) {
   warnings.push(`${orphans.length} en.json key(s) look unused (upper bound — keys may be built dynamically). Run with --orphans to list them.`);

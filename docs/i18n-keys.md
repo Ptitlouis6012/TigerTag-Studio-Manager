@@ -1,19 +1,15 @@
 # i18n keys — complete reference (TigerTag Studio)
 
-> Extracted from `CLAUDE.md` to keep the always-loaded instructions lean. **Read this on demand instead of re-reading the locale JSON files.** All **11 locales** (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl) have every key below. To add/change keys use `npm run i18n:add` (never hand-edit the locale files) — see CLAUDE.md → *i18n — workflow*.
+> Extracted from `CLAUDE.md` to keep the always-loaded instructions lean. **Read this on demand instead of re-reading the locale JSON files.** All **11 locales** (en/fr/de/es/it/zh/pt/pt-pt/pl/ru/nl) have every key below. To add/change keys use `npm run i18n:add` (never hand-edit the locale files) — see `.agents/rules/i18n-keys.md`.
 
 ### App / status
 | Key | Purpose |
 |-----|---------|
-| `appSubtitle` | Header subtitle |
 | `backendIdle` | Health tooltip idle |
 | `backendOk` | Health tooltip ok (also used with `— N ms` suffix) |
 | `backendErr` | Health tooltip error `{{n}}` |
 | `backendOffline` | Health tooltip offline |
-| `rfidConnected` | RFID label `{{name}}` |
 | `rfidNoReader` | RFID no reader |
-| `rfidScanned` | RFID scanned `{{uid}}` |
-| `rfidNotFound` | RFID unknown UID `{{uid}}` |
 
 ### Community / links
 | Key | Purpose |
@@ -22,19 +18,13 @@
 | `discordBtn` | Discord button |
 | `shopBtn` | Sidebar goodies-shop button label |
 | `mobileApp` | QR label |
-| `mobileScan` | QR sub-label |
 
 ### Settings panel
 | Key | Purpose |
 |-----|---------|
 | `settingsOpenBtn` | Settings button label |
 | `settingsTitle` | Panel title |
-| `settingsAccount` | Account tab label |
-| `settingsData` | Data & Export tab label |
 | `settingsLang` | Language section label |
-| `settingsDebug` | Debug tab label |
-| `settingsSave` | Save & reload button |
-| `settingsApiLink` | Export URL field label |
 | `settingsExport` | Download JSON button |
 | `settingsCopied` | Copy confirmation |
 | `debugOpenBtn` | Open debug panel button |
@@ -42,7 +32,6 @@
 | `sectionTags` | Detail-panel Tags/Balises section label |
 | `tagAdd` | Tag input placeholder ("Add a tag…") |
 | `tagRemove` | Remove-tag button tooltip |
-| `tagMax` | Max-tags-per-spool notice (reserved; `{{n}}` count) |
 | `sortBy` | Grid-view sort dropdown title |
 | `sortDir` | Grid-view sort direction toggle title |
 | `filterAllTags` | Tag filter dropdown — "All tags" default |
@@ -60,25 +49,13 @@
 | Key | Purpose |
 |-----|---------|
 | `addAccountLabel` | Add account button / modal title |
-| `addAccountSave` | Add & load (legacy, kept) |
 | `addAccountAuthError` | Friendly error for invalid email/API key |
-| `editAccountTitle` | Edit account modal title |
 | `btnSignIn` | Sign in button |
-| `btnEditAccount` | Edit account button |
 | `btnDisconnect` | Disconnect button |
 | `btnRefresh` | Refresh button |
 | `btnSwitchAccount` | Switch account button |
 | `noAccounts` | Empty accounts message |
 | `accountActive` | "Active" badge |
-| `btnActivate` | Switch button for other accounts |
-| `btnDeleteAccount` | Trash button tooltip |
-| `btnEditApiKey` | Edit API key (legacy) |
-| `btnUpdateApiKey` | Update button in edit-account modal |
-| `cancelAddAccount` | Cancel label |
-| `otherAccounts` | "Other accounts" heading |
-| `confirmDeleteAccount` | (legacy) |
-| `delModalTitle` | Disconnect modal title |
-| `delModalWarn` | Disconnect modal warning |
 | `cancelLabel` | Cancel button in modals |
 | `displayNameLabel` | Display name field label in edit-account modal |
 
@@ -102,32 +79,17 @@
 | `loginResetSent` | Password reset email sent confirmation |
 | `loginPasswordMismatch` | Passwords don't match error |
 | `loginPasswordTooShort` | Password too short error |
-| `loginAccountCreated` | Account created confirmation |
 | `loginEmailInUse` | Email already registered error |
 
 ### Credentials card
 | Key | Purpose |
 |-----|---------|
-| `credTitle` | Section title |
-| `credEmail` | Email label |
-| `credApiKey` | API Key label |
-| `credStatus` | Status label |
-| `statusUntested` | Badge: untested |
-| `statusValid` | Badge: valid |
-| `statusInvalid` | Badge: invalid |
-| `statusChecking` | Badge: checking… |
-| `btnLoadInv` | Load inventory button |
-| `btnTestKey` | Test API key button |
-| `btnClearSaved` | Clear saved data button |
 
 ### Inventory / filters
 | Key | Purpose |
 |-----|---------|
-| `invTitle` | Section title |
 | `btnViewTable` | Table view button |
 | `btnViewGrid` | Grid view button |
-| `btnShowDeleted` | Show deleted toggle |
-| `btnHideDeleted` | Hide deleted toggle |
 | `btnExport` | Export JSON button |
 | `searchPlaceholder` | Search input placeholder |
 | `searchPlaceholderPrinter` | Search input placeholder in the printer view |
@@ -153,7 +115,6 @@
 | Key | Purpose |
 |-----|---------|
 | `debugLabel` | Panel title |
-| `debugSubtitle` | Panel subtitle |
 | `debugNoReqs` | Empty state |
 
 ### Detail panel — sections
@@ -165,17 +126,10 @@
 ### Weight section
 | Key | Purpose |
 |-----|---------|
-| `weightTotal` | Total capacity `{{cap}}` |
-| `weightContainer` | Container weight `{{cw}}` (also used as change-container trigger label) |
 | `weightOk` | Success result `{{wa}} {{w}} {{cw}}` |
 | `weightOkTwin` | Twin updated suffix |
-| `weightErr` | Error result `{{r}}` |
-| `weightErrComputed` | Computed weight suffix `{{c}}` |
-| `rawScaleLabel` | Raw scale input label |
-| `rawScaleHint` | Raw scale hint text |
 | `btnUpdate` | Update weight button |
 | `btnEditManually` | Toggle manual input |
-| `btnCloseManual` | Close manual input |
 | `enterNumeric` | Validation error |
 
 ### Container picker
@@ -188,7 +142,6 @@
 | Key | Purpose |
 |-----|---------|
 | `loadedSpools` | Plural `{{n}}` |
-| `invError` | Inventory load error `{{r}}` |
 | `invalidKey` | Key validation error `{{r}}` |
 | `networkError` | Generic network error |
 
@@ -234,7 +187,6 @@
 | `friendNotFound` | Preview state: no user found |
 | `friendSelf` | Preview state: own code entered |
 | `friendRequestSent` | Success message after sending |
-| `friendRegenConfirm` | (kept in locales, no longer used in UI — reserved) |
 
 ### Notification center (local notices)
 | Key | Purpose |
