@@ -9,10 +9,12 @@
  * flipH / flipV / rotate90 from OctoPrint's settings are applied.
  */
 import { ctx } from '../context.js';
+import { installCamImgRecovery } from '../cam-img-recovery.js';
 import { opKey, opGetConn } from './core.js';
 
 const SNAP_MS = 2000;
 const _snapTimers = new Map();   // key → interval (snapshot mode only)
+installCamImgRecovery("img.octo-camera-img");
 
 const imgsFor = key => document.querySelectorAll(`img[data-op-cam="${CSS.escape(key)}"]`);
 
@@ -49,9 +51,8 @@ function bannerHtml(p, withId) {
   const tf = [cam.rotate90 ? "rotate(-90deg)" : "", cam.flipH ? "scaleX(-1)" : "", cam.flipV ? "scaleY(-1)" : ""].filter(Boolean).join(" ");
   return `
     <div${withId ? ` id="octoCamHost"` : ""} class="pp-cam-full octo-cam-host">
-      <img class="octo-camera-img" data-op-cam="${ctx.esc(key)}" src="${ctx.esc(src)}"
-           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}
-           onerror="this.style.opacity='.15'"/>
+      <img class="octo-camera-img" data-op-cam="${ctx.esc(key)}" src="${ctx.esc(src)}" data-cam-src="${ctx.esc(src)}"
+           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}/>
     </div>`;
 }
 

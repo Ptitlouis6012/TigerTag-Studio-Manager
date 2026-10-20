@@ -10,23 +10,31 @@
  * Mirrors and rotation from the camera's Moonraker settings are applied.
  */
 import { ctx } from '../context.js';
+import { installCamImgRecovery } from '../cam-img-recovery.js';
 import { klipperKey, klipperGetConn } from './core.js';
 
 const SNAP_MS = 2000;
 const _snapTimers = new Map();   // key → interval (snapshot mode only)
+installCamImgRecovery("img.klipper-camera-img");
 
 const imgsFor = key => document.querySelectorAll(`img[data-klipper-cam="${CSS.escape(key)}"]`);
 
-function isMjpeg(cam) { return /mjpeg|ustreamer/i.test(cam.service || "") || /action=stream/.test(cam.stream || ""); }
+// "mjpegstreamer-adaptive": Mainsail never opens its stream URL, it asks the snapshot URL again and
+// again at the camera's target FPS. Same here, with a snapshot URL to ask: at most two pictures a
+// second, whatever the target. Every other service keeps the way it was drawn.
+const isAdaptive = cam => /adaptive/i.test(cam.service || "") && !!cam.snapshot;
+const snapMsFor = cam => isAdaptive(cam) ? Math.min(SNAP_MS, Math.max(500, Math.round(1000 / (cam.fps || 10)))) : SNAP_MS;
 
-function ensureSnapTimer(key, url) {
+function isMjpeg(cam) { return !isAdaptive(cam) && (/mjpeg|ustreamer/i.test(cam.service || "") || /action=stream/.test(cam.stream || "")); }
+
+function ensureSnapTimer(key, url, ms) {
   if (_snapTimers.has(key)) return;
   _snapTimers.set(key, setInterval(() => {
     const imgs = imgsFor(key);
     if (!imgs.length) { clearInterval(_snapTimers.get(key)); _snapTimers.delete(key); return; }
     const u = `${url}${url.includes("?") ? "&" : "?"}_t=${Date.now()}`;
     imgs.forEach(img => { img.src = u; });
-  }, SNAP_MS));
+  }, ms));
 }
 
 export function klipperCamStopAll() {
@@ -46,13 +54,12 @@ function bannerHtml(p, withId) {
   const conn = klipperGetConn(p), cam = conn.camera, key = klipperKey(p);
   const stream = isMjpeg(cam) && cam.stream;
   const src = stream || cam.snapshot || cam.stream;
-  if (!stream && cam.snapshot) queueMicrotask(() => ensureSnapTimer(key, cam.snapshot));
+  if (!stream && cam.snapshot) queueMicrotask(() => ensureSnapTimer(key, cam.snapshot, snapMsFor(cam)));
   const tf = [cam.rotation ? `rotate(${cam.rotation}deg)` : "", cam.flipH ? "scaleX(-1)" : "", cam.flipV ? "scaleY(-1)" : ""].filter(Boolean).join(" ");
   return `
     <div${withId ? ` id="klipperCamHost"` : ""} class="pp-cam-full klipper-cam-host">
-      <img class="klipper-camera-img" data-klipper-cam="${ctx.esc(key)}" src="${ctx.esc(src)}"
-           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}
-           onerror="this.style.opacity='.15'"/>
+      <img class="klipper-camera-img" data-klipper-cam="${ctx.esc(key)}" src="${ctx.esc(src)}" data-cam-src="${ctx.esc(src)}"
+           alt="${ctx.esc(ctx.t("ffgCameraAlt"))}"${tf ? ` style="transform:${tf}"` : ""}/>
     </div>`;
 }
 

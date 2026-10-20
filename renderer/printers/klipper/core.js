@@ -211,6 +211,7 @@ async function detect(conn) {
     name: cam.name || "", service: cam.service || "",
     stream: absUrl(conn, cam.stream_url), snapshot: absUrl(conn, cam.snapshot_url),
     flipH: !!cam.flip_horizontal, flipV: !!cam.flip_vertical, rotation: Number(cam.rotation) || 0,
+    fps: Number(cam.target_fps) || 0,
   } : null;
   // Klipper reports `fan.speed` AFTER the `[fan] max_power` ceiling (M106 S255 with max_power 0.8 reads 0.8);
   // Mainsail shows it as a share of that ceiling, and so does the panel. No readable ceiling = 1.

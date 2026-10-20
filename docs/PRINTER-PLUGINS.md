@@ -43,6 +43,7 @@ renderer/printers/<id>/
 | `../beta-badge.js` | `betaBadgeHtml()` — the Beta tag + ⓘ bubble at the top of a beta printer's live block |
 | `../model-list.js` | `mountModelList(el, brand, onChange)` — the connector's models with pictures + search, for the add-flow choice card ("Which printer is it?"); feed the pick into the prefill as `modelId` + `printerName` |
 | `../temp-edit.js` | `tempEditAttrs(id, target, max)` + `wireTempEdit(root, onSet)` — click a temperature to type a new target (the inline editor of the built-in brands) |
+| `../cam-img-recovery.js` | `installCamImgRecovery(selector)` — a camera `<img>` that fails is dimmed, then asks for its `data-cam-src` again (3 s, doubling up to 30 s) and comes back when a picture loads; call it once at module load with the image's selector |
 
 Shared CSS classes (`snap-*`, `pba-*`, `pp-*`, `ffg-chip`, `cre-action-btn`) are
 the host's card vocabulary; use them so every printer reads the same.
