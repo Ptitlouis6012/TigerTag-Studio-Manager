@@ -2079,10 +2079,13 @@ connected, tray_list: [{ tray_id, brand, filament_type, filament_name, filament_
 filament_color, min_nozzle_temp, max_nozzle_temp, status }] }] }` — the same
 vocabulary as the CC2's `canvas_info` (§8). `connected: 0` = no hub; an empty tray
 has empty strings. The driver (`canvas.js`, pure functions, tested by
-`scripts/test-elegoo-canvas.mjs` on hand-written frames) asks once at connection,
-then every 30 s unless the status says there is no Canvas or the printer refuses
-the command (`Ack` ≠ 0, then it stops asking). Read-only: loading / unloading is not
-implemented over SDCP.
+`scripts/test-elegoo-canvas.mjs` on hand-written frames) asks once at connection, again
+when the status says a Canvas was just plugged in (`AmsConnectStatus` 0 → 1) and when a
+job ends (a spool is swapped between jobs), and every 60 s in between — nothing pushed
+says a spool changed, so the slow round catches the rest. It stops asking when the
+status says there is no Canvas or the printer refuses the command (`Ack` ≠ 0). Read-only:
+loading / unloading is not implemented over SDCP. The trays show on the board and in the
+printer's side panel (Filament card: S1–S4, or one "Ext." square without a Canvas).
 
 **Status mapping** — `CurrentStatus` [0 idle, 1 printing, 2 file transfer,
 3 calibrating, 4 device test]; `PrintInfo.Status` 5/6 pausing/paused, 7 stopping,
