@@ -131,6 +131,13 @@ instead of subscribing; we subscribe, it is cheaper and live.
 Missing objects are **silently omitted** from query / subscribe replies — never
 treat absence as an error.
 
+The part fan's `fan.speed` is reported **after** the `[fan] max_power` ceiling
+(`M106 S255` with `max_power: 0.8` reads `0.8`; Klipper `fan.py`, `get_status`
+returns the scaled value). Mainsail shows it as a share of that ceiling
+(`speed / max_power`), and so does the panel: `max_power` is read once at
+detection (`printer.objects.query {configfile: ["settings"]}` →
+`settings.fan.max_power`, 1 when unreadable) and the percentage is capped at 100.
+
 Progress: prefer `virtual_sdcard.progress` (file position) while printing,
 `display_status.progress` when a slicer sets M73. Remaining time = estimate from
 `print_duration` and progress, or the file's `estimated_time` metadata.
