@@ -6,6 +6,7 @@
  * Protocol ported from creality_websocket_page.dart.
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { jobBar, jobBarFill } from '../job-bar.js';
 import { ensurePrinterIdentity } from '../identity.js';
@@ -1659,6 +1660,7 @@ document.getElementById("creFilEditSave")?.addEventListener("click", async () =>
     if (!conn?.ws || conn.ws.readyState !== WebSocket.OPEN) throw new Error("ws not open");
     creLogPush(conn, "→", cmd);
     conn.ws.send(cmd);
+    questBump("slotAssign");
     closeCreFilamentEdit();
   } catch (err) {
     console.warn("[cre] filament edit send failed:", err?.message);

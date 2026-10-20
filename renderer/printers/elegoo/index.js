@@ -7,6 +7,7 @@
  * State groups and method dispatch are documented inline.
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { registerBrand, brands } from '../registry.js';
 // Centauri Carbon 1 & other SDCP printers — a second transport under the same
@@ -1272,6 +1273,7 @@ $('elgFilEditSave')?.addEventListener('click', async () => {
       _elgPublish(c, isMono ? 1061 : 2005, {});
     }, 1000);
 
+    questBump("slotAssign");
     closeElegooFilamentEdit();
   } catch (e) {
     console.warn('[elg] filament edit failed:', e?.message);

@@ -13,6 +13,7 @@
  *
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { registerBrand } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
@@ -1334,6 +1335,7 @@ $('bblFilEditSave')?.addEventListener('click', () => {
   // reads `.color`); repairing that mechanism was the wrong call — the mechanism
   // should not exist.
 
+  questBump("slotAssign");
   closeBambuFilamentEdit();
 });
 

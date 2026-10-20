@@ -2,7 +2,8 @@
 
 Status: **design validated by the founder (2026-10-20). Phase 1 (backend) written in
 `TigerTag_Firebase_Backend` (`functions/quests.js` + `storeTotals`, rules, unit tests), not deployed
-yet; phase 2 (Studio) not started.** Presentation page shared with
+and deployed; phase 2 (Studio) built: counters at every action site, `dailyQuest` check-in, sidebar pill,
+Quests window (Today / Journey) and celebrations — `renderer/quests/`.** Presentation page shared with
 the TigerSquad: https://claude.ai/artifact/J2mDb8rv39G8axF8hWLydy (the numbers below are the source
 of truth; the page is an illustration).
 

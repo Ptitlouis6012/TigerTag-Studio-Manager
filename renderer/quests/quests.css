@@ -1,0 +1,142 @@
+/* Tiger Quests (renderer/quests/index.js) — the sidebar pill, the Quests window
+   (built on the TigerSquad window: .squad-invite + its --tsq-* palette) and the
+   celebrations. Motion 160–400 ms, none under reduced motion. */
+
+/* ── Sidebar pill, next to the XP chip ─────────────────────────────────── */
+.sb-quest-pill {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text); cursor: pointer;
+  font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
+  transition: background .15s;
+}
+.sb-quest-pill .icon { background: var(--primary); }
+.sb-quest-pill:hover { background: color-mix(in srgb, var(--primary) 26%, transparent); }
+.sb-quest-pill.is-complete { background: color-mix(in srgb, var(--success, #22c55e) 20%, transparent); }
+.sb-quest-pill.is-complete .icon { background: var(--success, #22c55e); }
+
+/* ── Window ────────────────────────────────────────────────────────────── */
+.quest-board { --qst-green: #3DDC84; --qst-gold: #FFD166; text-align: left; }
+.quest-board .tsq-title { text-align: center; }
+.qst-where { margin: -10px 0 0; text-align: center; font-size: 13px; font-weight: 700; color: var(--tsq-muted); }
+.quest-board .sqb-tabs { justify-content: center; }
+.qst-body { display: flex; flex-direction: column; gap: 14px; }
+
+.qst-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.qst-row {
+  display: grid; grid-template-columns: 22px 1fr auto auto; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: 10px; background: var(--tsq-card); border: 1px solid var(--tsq-line);
+  transition: border-color .2s, background .2s;
+}
+.qst-row.is-done { border-color: color-mix(in srgb, var(--qst-green) 45%, var(--tsq-line)); background: color-mix(in srgb, var(--qst-green) 8%, var(--tsq-card)); }
+.qst-check {
+  width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--tsq-line);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.qst-row.is-done .qst-check { border-color: var(--qst-green); background: var(--qst-green); }
+.qst-row.is-done .qst-check .icon { background: #0b0d12; }
+.qst-label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--tsq-text); min-width: 0; }
+.qst-row.is-done .qst-label { color: var(--tsq-muted); }
+.qst-count { font-size: 12px; font-weight: 700; color: var(--tsq-muted); font-variant-numeric: tabular-nums; }
+.qst-xp { font-size: 12px; font-weight: 800; color: var(--tsq-orange); font-variant-numeric: tabular-nums; }
+.qst-xp::after { content: " XP"; font-weight: 700; opacity: .75; }
+.qst-row.is-done .qst-xp { color: var(--qst-green); }
+
+.qst-bar { display: block; height: 6px; border-radius: 999px; background: var(--tsq-line); overflow: hidden; }
+.qst-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #FF923F, #FFD166); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+.qst-row.is-done .qst-bar i, .qst-set.is-done .qst-bar i { background: var(--qst-green); }
+
+.qst-set {
+  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--tsq-orange) 50%, var(--tsq-line));
+}
+.qst-set.is-done { border-style: solid; border-color: var(--qst-green); }
+.qst-set-name { font-size: 13px; font-weight: 800; color: var(--tsq-text); }
+.qst-foot { margin: 0; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--tsq-muted); }
+
+/* Journey: one chip per rank, then the rank's levels. */
+.qst-ranks { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.qst-rank {
+  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--tsq-line); background: var(--tsq-card);
+  font-size: 17px; line-height: 1; cursor: pointer; transition: border-color .15s, transform .15s;
+}
+.qst-rank:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--tsq-orange); }
+.qst-rank.is-on { border-color: var(--tsq-orange); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tsq-orange) 35%, transparent); }
+.qst-rank.is-soon { cursor: default; filter: grayscale(1); opacity: .35; }
+.qst-rank-title { margin: 2px 0 0; text-align: center; font-size: 17px; font-weight: 800; color: var(--tsq-text); }
+.qst-rank-title small { display: block; font-size: 12px; font-weight: 600; color: var(--tsq-muted); }
+
+.qst-level { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--tsq-bg2); border: 1px solid var(--tsq-line); }
+.qst-level--won { border-color: color-mix(in srgb, var(--qst-green) 50%, var(--tsq-line)); }
+.qst-level--locked .qst-list, .qst-level--waiting .qst-list { opacity: .8; }
+.qst-level-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qst-level-name { flex: 1; font-size: 14px; font-weight: 800; color: var(--tsq-text); }
+.qst-state {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; background: var(--tsq-card); color: var(--tsq-muted);
+}
+.qst-state .icon { background: var(--tsq-muted); }
+.qst-level--won .qst-state { background: color-mix(in srgb, var(--qst-green) 18%, transparent); color: var(--qst-green); }
+.qst-bonus { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: var(--qst-gold); }
+.qst-bonus .icon { background: var(--qst-gold); }
+.qst-bonus::after { content: " XP"; font-weight: 700; opacity: .75; }
+
+/* ── Celebration: a card dropping in at the top, a burst, the XP ───────── */
+.qst-cel {
+  position: fixed; z-index: 10070; top: 18px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px; padding: 12px 18px 12px 14px; border-radius: 14px;
+  background: #151922; color: #F1F3F8; border: 1px solid #303543; box-shadow: 0 16px 40px rgba(0, 0, 0, .45);
+  animation: qst-cel-in .32s cubic-bezier(.2, .9, .25, 1.2) both; pointer-events: none;
+}
+.qst-cel--fullSet, .qst-cel--level { border-color: #FFD166; box-shadow: 0 0 0 1px rgba(255, 209, 102, .4), 0 0 36px rgba(255, 209, 102, .35), 0 16px 40px rgba(0, 0, 0, .45); }
+.qst-cel.is-out { animation: qst-cel-out .24s ease-in forwards; }
+.qst-cel-xp { font-size: 20px; font-weight: 900; background: linear-gradient(90deg, #FF923F, #FFD166); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.qst-cel-txt { display: flex; flex-direction: column; font-size: 13px; }
+.qst-cel-txt small { font-size: 12px; color: #AAB3C5; }
+.qst-cel-burst { position: absolute; left: 34px; top: 50%; width: 0; height: 0; }
+.qst-cel-burst i {
+  position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #FFD166; opacity: 0;
+  animation: qst-spark .7s ease-out .1s forwards;
+}
+.qst-cel-burst i:nth-child(even) { background: #FF923F; }
+.qst-cel-burst i:nth-child(1)  { --dx: 34px;  --dy: -18px; }
+.qst-cel-burst i:nth-child(2)  { --dx: -30px; --dy: -22px; }
+.qst-cel-burst i:nth-child(3)  { --dx: 26px;  --dy: 24px; }
+.qst-cel-burst i:nth-child(4)  { --dx: -24px; --dy: 26px; }
+.qst-cel-burst i:nth-child(5)  { --dx: 4px;   --dy: -34px; }
+.qst-cel-burst i:nth-child(6)  { --dx: -6px;  --dy: 32px; }
+.qst-cel-burst i:nth-child(7)  { --dx: 40px;  --dy: 4px; }
+.qst-cel-burst i:nth-child(8)  { --dx: -38px; --dy: 2px; }
+.qst-cel-burst i:nth-child(9)  { --dx: 18px;  --dy: -30px; }
+.qst-cel-burst i:nth-child(10) { --dx: -16px; --dy: -32px; }
+@keyframes qst-spark { 0% { opacity: 1; transform: translate(0, 0) scale(1); } 100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(.4); } }
+@keyframes qst-cel-in { from { opacity: 0; transform: translate(-50%, -14px) scale(.94); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes qst-cel-out { to { opacity: 0; transform: translate(-50%, -10px); } }
+@media (prefers-reduced-motion: reduce) {
+  .qst-cel, .qst-cel.is-out, .qst-cel-burst i { animation: none; }
+  .qst-cel-burst { display: none; }
+  .qst-bar i, .qst-rank { transition: none; }
+}
+
+/* ── View bar: today's quests, journey level, TigerSquad (_renderProgressChips) ── */
+.vtg-chips { display: flex; align-items: center; gap: 6px; height: 36px; }
+.vtg-chip {
+  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 6px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text);
+  font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; overflow: hidden;
+  transition: border-color .15s, background .15s;
+}
+.vtg-chip[hidden] { display: none; }
+.vtg-chip:hover { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); background: var(--surface-hover); }
+.vtg-chip b { font-weight: 800; }
+.vtg-chip .icon { background: var(--primary); }
+.vtg-chip-emoji { font-size: 14px; line-height: 1; }
+.vtg-chip-n { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.vtg-chip-rank { font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
+.vtg-chip-bar { position: absolute; left: 10px; right: 10px; bottom: 6px; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.vtg-chip-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #FF923F, #FFD166); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+.vtg-chip.is-done { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
+.vtg-chip.is-done .vtg-chip-bar i { background: var(--success); }
+.vtg-chip.is-done .icon { background: var(--success); }
+.vtg-chip-tier { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, var(--sq-a, var(--primary)), var(--sq-b, var(--primary))); box-shadow: 0 0 6px color-mix(in srgb, var(--sq-a, var(--primary)) 60%, transparent); }
+#vtgSquadChip { padding-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .vtg-chip-bar i { transition: none; } }

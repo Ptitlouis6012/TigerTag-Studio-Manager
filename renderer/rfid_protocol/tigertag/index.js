@@ -2,6 +2,8 @@
 // Handles: reader slots UI, card-present state, on-demand read + result display.
 // No i18n — all strings are English (internal diagnostic tool).
 
+import { questBump } from "../../quests/index.js";
+
 // ── State ─────────────────────────────────────────────────────────────────────
 // Map of readerName → { connected: bool, cardPresent: bool, uid, rawUid }
 const _readers = new Map();
@@ -152,6 +154,7 @@ export function initRfidTester() {
     btn.disabled    = false;
     btn.textContent = 'Read';
     _renderResult(result, readerName);
+    if (result && !result.error) questBump("nfcTesterRead");
   });
 
   // Reader connected / disconnected

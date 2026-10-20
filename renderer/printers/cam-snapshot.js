@@ -32,6 +32,7 @@
  *                     sourceUrl(p, media) → string | null, toast(msg) })
  */
 import { showScreenshot } from "../IoT/tigertouch/panel.js";
+import { questBump } from "../quests/index.js";
 
 let _ctx = null;
 const _recs = new Map();   // host → recording state
@@ -80,7 +81,7 @@ async function takePhoto(host) {
   const p = _ctx.printerForHost(host);
   const info = p ? _ctx.printerInfo(p) : { brand: "printer", id: "unknown" };
   const first = await grab(host);
-  if (first.ok) window.camCapture.saveImage(info, first.dataUrl).then(r => r?.ok && _ctx.toast?.(_ctx.t("camPhotoSaved")));
+  if (first.ok) window.camCapture.saveImage(info, first.dataUrl).then(r => { if (r?.ok) { _ctx.toast?.(_ctx.t("camPhotoSaved")); questBump("cameraPhoto"); } });
   showScreenshot({
     key: `${info.brand}:${info.id}:cam`, name: info.name || "Printer", target: "studio",
     prefix: `camera-${String(info.name || "printer").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "printer"}`,
@@ -184,6 +185,7 @@ async function stopRec(host) {
   const r = await rec.stop();
   if (r?.ok) {
     _ctx.toast?.(_ctx.t("camVideoSaved"));
+    questBump("cameraVideo");
     window.camCapture.show(r.file);
   } else _ctx.toast?.(_ctx.t("camRecFailed"));
 }

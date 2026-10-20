@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="IoT/usbscale/usbscale.css" />
 <link rel="stylesheet" href="IoT/td1s/td1s.css" />
 <link rel="stylesheet" href="report/report.css" />
+<link rel="stylesheet" href="quests/quests.css" />
 </head>
 <body>
 <div class="app-layout">
@@ -87,6 +88,7 @@
       </div>
       <div class="sb-actions">
         <button id="btnOpenNotifs" class="ghost sb-notifs-btn"><span class="icon icon-bell icon-13"></span><span class="label" data-i18n="notifsTitle">Notifications</span><span id="notifBadge" class="friends-badge hidden"></span></button>
+        <button id="btnOpenQuests" class="ghost sb-notifs-btn sb-quests-btn"><span class="icon icon-list-check icon-13"></span><span class="label" data-i18n="questsTitle">Tiger Quests</span><span id="questsBadge" class="friends-badge hidden"></span></button>
         <!-- Quick-access friends list (rendered by JS into this container).
              Each chip switches the inventory view to that friend on click.
              Hidden when state.friends is empty. -->
@@ -285,6 +287,18 @@
               <button id="btnViewPrinterTable" data-i18n-aria="btnViewTable"><span class="icon icon-list icon-13"></span></button>
               <button id="btnViewCam" data-i18n-aria="btnViewCam"><span class="icon icon-eye-on icon-13"></span></button>
             </div>
+          </div>
+          <!-- Progress: today's quests, the journey level, the TigerSquad (filled by _renderQuestPill). -->
+          <div class="vtg-group vtg-progress" id="vtgQuests" hidden>
+            <span class="vtg-label"><span data-i18n="questsTitle">Tiger Quests</span></span>
+            <div class="vtg-chips">
+              <button type="button" class="vtg-chip" id="vtgDaily"></button>
+              <button type="button" class="vtg-chip" id="vtgLevel"></button>
+            </div>
+          </div>
+          <div class="vtg-group vtg-progress" id="vtgSquad" hidden>
+            <span class="vtg-label"><span>TigerSquad</span></span>
+            <div class="vtg-chips"><button type="button" class="vtg-chip" id="vtgSquadChip"></button></div>
           </div>
         </div>
         <div class="inv-actions-group">

@@ -27,6 +27,7 @@
  *
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { ensurePrinterIdentity } from '../identity.js';
 import { registerBrand } from '../registry.js';
@@ -1992,6 +1993,7 @@ function _acuWireSheet() {
     // already carries the new value; the regular refresh loop re-confirms later,
     // after the printer has committed. (Verified from captured report logs.)
 
+    questBump("slotAssign");
     closeAcuFilamentEdit();
   });
 }

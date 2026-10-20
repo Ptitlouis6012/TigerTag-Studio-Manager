@@ -7,6 +7,7 @@
  * temperatures, filament data, and print job state.
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { ensurePrinterIdentity } from '../identity.js';
 import { registerBrand, brands } from '../registry.js';
@@ -1116,6 +1117,7 @@ $("snapFilEditSave")?.addEventListener("click", async () => {
     if (!ok) throw new Error("websocket not open");
     // Close immediately; the printer's notify_status_update will arrive
     // moments later and refresh the colour square / vendor labels.
+    questBump("slotAssign");
     closeSnapFilamentEdit();
   } catch (e) {
     console.warn("[snap] filament edit send failed:", e?.message);

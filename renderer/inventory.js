@@ -17,6 +17,7 @@ import {
 import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
+import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillHtml, questPillLabel, questDailyProgress, questCurrentLevel, openQuests } from './quests/index.js';
 
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
 import { initUsbScale, usbScaleRefreshDock } from './IoT/usbscale/index.js';
@@ -217,6 +218,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _scanOpenUid = null;
     _lastScanOpenAt = Date.now();   // opens the twin-burst window for the guard above
     openDetail(row.spoolId, { animateSwap: true });
+    questBump("chipScanOpen");
   }
   // Readiness barrier for destructive automation. Holds the uid whose racks
   // have actually been delivered by subscribeRacks. Auto-organize (auto-store /
@@ -1328,6 +1330,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _populateWhatsNewSelect(display);
     _wnRenderDots(true);   // centre the dot window on the opened version
     document.getElementById("whatsNewOverlay")?.classList.add("open");
+    questBump("whatsNewRead");
     requestAnimationFrame(_placeWhatsNewWin);   // position the floating window
   }
   function closeWhatsNew({ markSeen }) {
@@ -1961,6 +1964,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function setDisconnected() {
     state.displayName = null; state.keyValid = null;
+    questsSignOut();
     _mcpSyncAccount(null);                    // nobody signed in → MCP server off
     state.photoURL = null;  // clear custom avatar → sign-in placeholder shows
     // Single source-of-truth paint of the EMPTY state: passing `null`
@@ -4145,6 +4149,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("friendsOverlay").addEventListener("click", closeFriends);
   $("friendsListCloseTab")?.addEventListener("click", closeFriends);
   $("btnOpenNotifs")?.addEventListener("click", openNotifs);
+  $("btnOpenQuests")?.addEventListener("click", () => openQuests("today"));
+  $("vtgDaily")?.addEventListener("click", () => openQuests("today"));
+  $("vtgLevel")?.addEventListener("click", () => openQuests("journey"));
+  $("vtgSquadChip")?.addEventListener("click", () => _ownSquadTier() ? _openSquadBoard("makers") : _openSquadInvite());
   $("notifPanelClose")?.addEventListener("click", closeNotifs);
   $("notifMarkAll")?.addEventListener("click", _markNotifsRead);
   $("notifCloseTab")?.addEventListener("click", closeNotifs);
@@ -4199,6 +4207,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const src = media?.tagName === "IMG" ? (media.currentSrc || media.src || "") : "";
       return /^https?:\/\//.test(src) && /action=stream|\.mjpe?g|\/stream/i.test(src) ? src : null;
     },
+  });
+
+  // Tiger Quests — counters, daily check-in, the Quests window (quests/index.js).
+  initQuests({
+    t, esc, db: fbDb, uid: () => state.activeAccountId,
+    token: () => state.activeAccountId ? firebase.app(state.activeAccountId).auth().currentUser?.getIdToken() : null,
+    brandName: id => dbFind("brand", id)?.name || "",
+    materialName: id => dbFind("material", id)?.label || "",
+    playTones: (n, o) => _playTones(n, o),
+    onChange: () => { try { _renderQuestPill(); } catch (_) {} },
   });
 
   // ── USB scale (Dymo) module init ───────────────────────────────────────
@@ -4869,6 +4887,75 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   let _lastSquadTier;   // what the TigerSquad card last showed (undefined = never rendered)
   let _squadCountCache = null;   // { n, at } — the TigerSquad head count (_squadMemberCount)
   let _squadRankCache = null;   // { xp, rank, total, at } — the member's world rank (_squadRank)
+  // View bar, after the Printers group: today's quests, the journey level, the TigerSquad.
+  // Each chip is rewritten only when its text changes (signature guard).
+  const _chipBar = pct => `<span class="vtg-chip-bar" aria-hidden="true"><i style="width:${Math.round(pct)}%"></i></span>`;
+  const _setChip = (el, html, label) => {
+    if (!el) return;
+    if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; }
+    el.setAttribute("aria-label", label);
+  };
+  function _renderProgressChips(p = questDailyProgress()) {
+    const own = !state.friendView && !!state.activeAccountId;
+    const lv = questCurrentLevel();
+    const qWrap = $("vtgQuests");
+    if (qWrap) qWrap.hidden = !own || (!p && !lv);
+    const daily = $("vtgDaily");
+    if (daily) {
+      daily.hidden = !p;
+      if (p) {
+        daily.classList.toggle("is-done", p.complete);
+        _setChip(daily, `<span class="icon icon-list-check icon-12" aria-hidden="true"></span><b>${p.done}/${p.total}</b>${_chipBar(p.done / p.total * 100)}`, questPillLabel());
+      }
+    }
+    const level = $("vtgLevel");
+    if (level) {
+      level.hidden = !lv;
+      if (lv) _setChip(level, `<span class="vtg-chip-emoji" aria-hidden="true">${lv.icon}</span><b>${esc(lv.name)}</b><span class="vtg-chip-n">${lv.done}/${lv.total}</span>${_chipBar(lv.done / lv.total * 100)}`,
+        `${lv.name} · ${t("questsProgress", { n: lv.done, total: lv.total })}`);
+    }
+    const sWrap = $("vtgSquad"), chip = $("vtgSquadChip");
+    if (sWrap) sWrap.hidden = !own || typeof state.xpPoints !== "number";
+    if (chip && typeof state.xpPoints === "number") {
+      const tier = _ownSquadTier();
+      SQUAD_TIERS.forEach(x => chip.classList.toggle(`sq-${x}`, tier === x));
+      const xp = `${state.xpPoints.toLocaleString(state.lang)} XP`;
+      _setChip(chip, tier
+        ? `<span class="vtg-chip-tier" aria-hidden="true"></span><b>${esc(squadTierLabel(tier))}</b><span class="vtg-chip-n">${esc(xp)}</span>${chip.dataset.rank ? `<span class="vtg-chip-rank">#${esc(chip.dataset.rank)}</span>` : ""}`
+        : `<span class="icon icon-star-fill icon-12" aria-hidden="true"></span><span class="vtg-chip-n">${esc(xp)}</span><b>${esc(t("squadJoin"))}</b>`,
+        t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }));
+      if (tier) _squadRank().then(r => {
+        const v = r ? String(r.rank) : "";
+        if ((chip.dataset.rank || "") !== v) { chip.dataset.rank = v; _renderProgressChips(); }
+      }).catch(() => {});
+    }
+  }
+  // Daily-quest chip next to the XP chip: today's progress, opens the Quests window.
+  function _renderQuestPill() {
+    // Sidebar button (always visible, collapsed or not): the badge counts what is left today.
+    const p = questDailyProgress(), left = p ? p.total - p.done : 0;
+    const qb = $("questsBadge");
+    if (qb) { qb.textContent = String(left); qb.classList.toggle("hidden", !left); }
+    $("btnOpenQuests")?.setAttribute("aria-label", questPillLabel());
+    _renderProgressChips(p);
+    const info = document.querySelector("#sbUser .sb-user-info");
+    let pill = info?.querySelector(".sb-quest-pill");
+    const html = questPillHtml();
+    if (!info || !html) { pill?.remove(); return; }
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = "sb-quest-pill";
+      pill.setAttribute("role", "button"); pill.tabIndex = 0;
+      const open = e => { e.stopPropagation(); openQuests("today"); };
+      pill.addEventListener("click", open);
+      pill.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(e); } });
+      const after = info.querySelector(".sb-rank-pill") || info.querySelector(".sb-xp-pill");
+      if (after) after.after(pill); else info.appendChild(pill);
+    }
+    if (pill.dataset.html !== html) { pill.innerHTML = html; pill.dataset.html = html; }
+    pill.classList.toggle("is-complete", !!questDailyProgress()?.complete);
+    pill.setAttribute("aria-label", questPillLabel());
+  }
   function renderSupporterBadge() {
     const host = document.querySelector("#sbUser .sb-avatar-wrap"); if (!host) return;
     // TigerSquad member (any level) → heart and ring in the level's colour on the
@@ -4924,6 +5011,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
       xp.setAttribute("aria-label", t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }));
     } else xp?.remove();
+    _renderQuestPill();
     let b = host.querySelector(".sb-supporter-badge");
     if (b && b.dataset.tier !== (tier || "")) { b.remove(); b = null; }
     if (!tier) return;
@@ -6862,6 +6950,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         state.inventory = raw;
         state.rows = snapshot.docs.map(doc => normalizeRow(doc.id, doc.data()));
         _markTwinPairs(state.rows); // symmetric hasTwinPair so the link badge shows on either half
+        if (!snapshot.metadata.fromCache) _questGauges();
 
         /* A spool ARRIVING — however it got here: scanned, typed in, imported,
            or pushed from another device. Never on the first snapshot, which is
@@ -7120,6 +7209,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     subscribeInventory(uid);
     syncLangFromFirestore(uid);
     syncUserDoc(uid);
+    questsSignIn(uid);
     hydratePodSignal(uid);   // seed state.hasPod + lifetime rfidReadersMax from telemetry/studio
     subscribeFriendRequests(uid);
     subscribeFriends(uid);  // live-sync friends (add/remove on the fly, both sides) + per-friend avatar/name listeners
@@ -9618,7 +9708,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ("ean" in patch)      doc.ean = (patch.ean || "").trim();
     // Provenance stamp (set once at friend-import; see _toggleProductFlag).
     if ("importedFrom" in patch && patch.importedFrom) doc.importedFrom = patch.importedFrom;
-    try { await ref.set(doc, { merge: true }); }
+    try { await ref.set(doc, { merge: true }); if (patch.favorite === true) questBump("favorite"); }
     catch (e) { console.warn("[products] write failed:", e); }
   }
 
@@ -10149,6 +10239,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // Mint a token + store it on the list; the snapshot write happens on the
         // next onSnapshot pass once the token is present.
         _listWrite(list.id, { publicToken: _genListToken() });
+        questBump("listShare");
         continue;
       }
       if (isPublic) {
@@ -10196,6 +10287,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     doc.visibility = ["private", "friends", "public"].includes(opts.visibility) ? opts.visibility : "friends";
     try {
       const ref = await fbDb(uid).collection("users").doc(uid).collection("lists").add(doc);
+      questBump("listCreate");
       state.selectedListId = ref.id;
       return ref.id;
     } catch (e) { console.warn("[lists] create failed:", e?.message); return null; }
@@ -11774,6 +11866,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Force-open + animate the side panel ONLY when transitioning INTO rack
     // mode from another view. Re-clicking Storage while already in Storage
     // is a no-op for the panel.
+    if (mode === "rack" && prevMode !== "rack" && opts.persist !== false) questBump("storageView");
     if (mode === "rack" && prevMode !== "rack" && getUnrackedSpools().length > 0) {
       localStorage.setItem("tigertag.unrackedPanelOpen", "true");
       _unrackedAnimateOpen = true;
@@ -11832,6 +11925,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // them (via #card-inv.is-cam-view) and surface the cam-wall "Detach" button
     // in the actions slot instead.
     const _camView = mode === "printer-cam";
+    if (_camView && prevMode !== "printer-cam") questBump("cameraOpen");
     $("card-inv")?.classList.toggle("is-cam-view", _camView);
     const _detachTop = $("camWallDetachTop");
     if (_detachTop) _detachTop.hidden = !(_camView && window.electronAPI?.openCamWindow && !state.friendView);
@@ -12578,8 +12672,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("cvBrand")?.addEventListener("change", () => {
     const s = $("cvSeries"); if (s) s.value = "";
     _catViewSearch();
+    const id = _catByName("brand", $("cvBrand").value, ["name"]);
+    if (id) questBump(`brand_${id}`);
   });
-  ["cvType", "cvMaterial", "cvSeries", "cvSort"].forEach(id =>
+  $("cvMaterial")?.addEventListener("change", () => {
+    _catViewSearch();
+    const id = _catMaterialId($("cvMaterial").value);
+    if (id) questBump(`material_${id}`);
+  });
+  ["cvType", "cvSeries", "cvSort"].forEach(id =>
     $(id)?.addEventListener("change", _catViewSearch));
   $("btnViewCatalogGrid")?.addEventListener("click",  () => setViewMode("catalogGrid"));
   $("btnViewCatalogTable")?.addEventListener("click", () => setViewMode("catalogTable"));
@@ -12983,6 +13084,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         state.sortDir = "asc";
       }
       _saveSort("tigertag.sort.inv", state.sortCol, state.sortDir);
+      questBump("tableSort");
       updateSortIndicators();
       _syncGridSort();
       renderInventory();
@@ -13490,6 +13592,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // holds material data). Format = back to TigerTag Init → `reset`;
       // recycle = out of the TigerTag format → `nfc_init` (mobile vocabulary).
       _cemTargets.forEach(x => _sendTagAnalytics(mode === "format" ? "reset" : "nfc_init", x.uid));
+      questBump(mode === "format" ? "chipInit" : "chipRecycle", _cemTargets.length);
       _cemBeep(true);
       await _cemDelay(500);   // let the full green bar register before closing
       closeEncodeModal();
@@ -15968,6 +16071,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const raw = input.value.trim();
       const val = raw === "" ? null : Math.max(0, Math.round(+raw) || 0);
       _writeProductField(hash, { minStockSpools: (val === 0 ? null : val) });
+      if (val > 0) questBump("minStock");
       renderProductsView();
     };
     const cancel = () => { if (done) return; done = true; renderProductsView(); };
@@ -16153,6 +16257,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (r.raw) { r.raw.message = newVal; if (!r.isCloud) r.raw.needUpdateAt = update.needUpdateAt; }
         if (!r.raw?.color_name && !r.raw?.name) r.colorName = newVal || "-";
         if (!r.isCloud) r.needUpdateAt = update.needUpdateAt;
+        if (newVal) questBump("spoolNote");
       } catch (e) { reportError("spool.editMessage", e); }
       rerender();
     };
@@ -17250,6 +17355,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const a = document.createElement("a");
     a.href = url; a.download = filename;
     document.body.appendChild(a); a.click(); a.remove();
+    questBump("ttagExport");
     URL.revokeObjectURL(url);
   }
 
@@ -20696,6 +20802,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const { ht } = _vatPrices($("roPrice")?.value, _reorderMode(), _vatCountryCode());
     try {
       await _writeProduct(r, { buyUrl, buyPriceHt: ht, minStockSpools: minRaw, note, sku, ean });
+      if (buyUrl) questBump("buyLink");
+      if (+minRaw > 0) questBump("minStock");
       // Reflect the normalized URL back into the hidden canonical field (the
       // snapshot re-render then paints the Shopify button in its saved state).
       if ($("roBuyUrl")) $("roBuyUrl").value = buyUrl;
@@ -21918,6 +22026,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // [· twin updated]" toast — the slider/display/fill already show the
       // new value, the user doesn't need the math spelled out every save.
       _wbShowSavedCheck();
+      questBump("weightUpdate");
 
     } catch (e) { toast($("panelWeightResult"), "bad", e.message || t("networkError")); }
     finally { setLoading(btn, false); }
@@ -23068,6 +23177,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     //    firestore.rules — `theme` must be in its hasOnly([...]) list or this
     //    write is rejected silently.
     _recordUsage({ theme: t });
+    if (t === "light") questBump("lightMode");
   }
 
   // Persist the user's country choice — drives the VAT rate + currency used
@@ -24358,6 +24468,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Deliberately excludes idle/standby/cancelled/failed — those show no preview.
   const _DONE_STATES = new Set(["finished", "complete", "completed"]);
 
+  // Tiger Quests "prints finished at 100 %": a real printer whose job goes from
+  // running to done (demo printers don't count). Every brand reports job ticks here.
+  const _questJobActive = new Map();
+  function _questPrintEdges() {
+    for (const p of state.printers || []) {
+      if (p.demo === true) continue;
+      const j = _getPrinterJob(p), key = _printerKey(p);
+      if (!j) continue;
+      if (j.isDone && _questJobActive.get(key)) questBump("print100");   // done ≠ cancelled (_DONE_STATES)
+      _questJobActive.set(key, j.isActive);
+    }
+  }
   function _getPrinterJob(p) {
     const _pl = printerPlugin(p);
     if (_pl) {
@@ -24853,6 +24975,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const root = document.getElementById("invPrinterView");
     if (!p || !root) return;
     _camKick(p);
+    questBump("cameraOpen");
     const widget = root.querySelector(`.cam-card[data-printer-key="${CSS.escape(key)}"]`);
     if (widget) _refreshCamWidget(widget, p);
     const thumb = root.querySelector(`.printer-card[data-printer-key="${CSS.escape(key)}"] .printer-card-thumb`);
@@ -27776,6 +27899,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // Each follower keeps the gap it had, so a group moves as one shape.
         ...gg.followers.map(f => boardSave(f.id, bx + f.dx, by + f.dy, z)),
       ]);
+      questBump("printerArrange");
       release();        // the writes are in — and with them, any rebuild owed
       layoutPrintersPlan();
     } finally {
@@ -28445,6 +28569,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
   }
   function closePrinterDetail() {
+    _questCamSeen = null;
     // The printer settings panel edits THIS printer — close it too, otherwise
     // it would linger after the printer side-card slid out.
     if ($("printerAddPanel")?.classList.contains("open")) {
@@ -29103,6 +29228,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     onGridJobsChange:      () => {
       if (state.viewMode === "printer-table") _patchTableJobs();
       else                                    _patchGridJobs();
+      _questPrintEdges();
     },
     setupHoldToConfirm,
     creCamStart: ip => startCreCam(ip),
@@ -29465,6 +29591,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
   }
 
+  let _questCamSeen = null;   // printer whose side-panel camera was last counted (Tiger Quests)
   function renderPrinterDetail() {
     const p = _activePrinter;
     if (!p) return;
@@ -29540,6 +29667,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       : (p.brand === "creality") ? `<div id="creCamContainer" class="pp-cam-full${creConn?.status === "connected" ? "" : " cre-cam-hidden"}"><video class="cre-cam-video" data-cre-id="${esc(p.id)}"${creConn?.ip ? ` data-cre-ip="${esc(creConn.ip)}"` : ""} autoplay muted playsinline></video></div>`
       : renderCamBanner(p);
     const showCam = _snapCamVisible || (p.brand === "creality" ? creConn?.status === "connected" : camBannerHtml !== "");
+    // The panel re-renders on every tick: count one camera opening per printer opened.
+    if (showCam && _questCamSeen !== _printerKey(p)) { _questCamSeen = _printerKey(p); questBump("cameraOpen"); }
 
     // Hero photo — only when the camera is NOT taking over.
     const heroImgHtml = (!showCam && heroImgUrl)
@@ -31496,6 +31625,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
       await ref.set(data);
+      questBump("demoPrinter");
       _finishPrinterAdd(brand, ref.id);
     } catch (e) {
       console.warn("[demo] add failed:", e?.message);
@@ -31951,9 +32081,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (mi && mi.value) patch.printerModelId = mi.value.trim();
       if (_chosenMode === "cloud") patch.mode = "cloud";
       const sb = $("printerAddSave"); sb.classList.add("loading"); sb.disabled = true;
+      const _wasName = state.printers.find(p => p.brand === brand && p.id === _printerEditContext.deviceId)?.printerName;
       try {
         await fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand)
           .collection("devices").doc(_printerEditContext.deviceId).update(patch);
+        if (nm && nm !== _wasName) questBump("printerRename");
         const _id = _printerEditContext.deviceId;
         closePrinterAddForm();
         if (_modeChanged) _reconnectAfterModeSwitch(brand, _id, "cloud");
@@ -32011,6 +32143,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         //         untouched. We DO write empty strings so the user can
         //         clear an optional secret field (e.g. mqttPassword).
         const editId = _printerEditContext.deviceId;
+        const _wasName = state.printers.find(p => p.brand === brand && p.id === editId)?.printerName;
         const ref = db.collection("users").doc(uid)
                       .collection("printers").doc(brand)
                       .collection("devices").doc(editId);
@@ -32018,6 +32151,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ...data,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
+        if (data.printerName && data.printerName !== _wasName) questBump("printerRename");
         if (_modeChanged) _reconnectAfterModeSwitch(brand, editId, _chosenMode);
         // Reconnect Snapmaker live channel after a settings edit.
         // The user may have changed the IP (or any other connection
@@ -32557,6 +32691,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Tag this spool for the next render — bounce-in animation
     _justPlacedSpools.add(spoolId);
     await batch.commit();
+    if (!moving?.rackId) questBump("rackPut");   // a spool newly put away, not a move inside the racks
   }
 
   async function unassignSpool(spoolId) {
@@ -32920,6 +33055,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     if (!placed) return 0;
     await batch.commit();
+    questBump("rackPut", placed);
     return placed;
   }
 
@@ -36826,7 +36962,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // friend banner renders the colour-circle + initials fallback.
     const _friendRec = state.friends?.find(f => f.uid === friendUid);
     const friendPhoto = _friendRec?.photoURL || null;
+    questBump("friendVisit");
     state.friendView = { uid: friendUid, displayName: friendName, avatarColor, photoURL: friendPhoto, isPublic: _friendIsPublic, publicKey: _friendRec?.publicKey || null, friendsCount: null, tigerSquad: !!_friendRec?.tigerSquad, squadTier: _friendRec?.squadTier || null, error: null };
+    _renderProgressChips();
     // Read the friend's public profile for the invite code (share link) + their
     // friends count ("X friends" in the banner). userProfiles is auth-readable.
     fbDb().collection("userProfiles").doc(friendUid).get()
@@ -36924,6 +37062,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     unsubscribeFriendProducts();   // stop reading the friend's shared price/link
     unsubscribeFriendLists();      // stop reading the friend's lists (clears friendLists)
     state.friendView = null;
+    _renderProgressChips();
     // Our own products/lists stayed subscribed during the visit, so their data is
     // ready — clear any loading flag left true by the friend subscriptions so we
     // don't flash a spinner on our own Favorites/Lists views on the way back.
@@ -37244,6 +37383,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!state.publicKey) return;
     const link = _friendShareUrl(state.publicKey);
     navigator.clipboard.writeText(link).then(() => {
+      questBump("friendLinkShare");
       const btn = $("btnShareFriendLink");
       btn.classList.add("fp-hero-btn--copied");
       setTimeout(() => btn.classList.remove("fp-hero-btn--copied"), 1500);
@@ -38973,6 +39113,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _studioStateTimer = setTimeout(() => recordStudioState(uid), 7000);
   }
 
+  // Tiger Quests gauges: spools put away in racks, distinct materials in stock.
+  // Sent at session start and after every inventory snapshot (questGauge skips unchanged values).
+  function _questGauges() {
+    if (state.friendView || !state.rows) return;
+    const active = deduplicateTwins(state.rows.slice()).filter(r => !r.deleted);
+    questGauge("spoolsInRacks", active.filter(r => r.rackId).length);
+    questGauge("materialsOwned", new Set(active.map(r => r.raw?.id_material).filter(Boolean)).size);
+  }
   async function recordStudioState(uid) {
     if (uid !== state.activeAccountId || state.friendView) return;
     if (_studioStateRecordedUid === uid) return;
@@ -39034,6 +39182,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if ((state.nfcReaderCount > 0 || _telRfidMax > 0) && !existing.firstRfidReaderAt) payload.firstRfidReaderAt = FV.serverTimestamp();
 
       await ref.set(payload, { merge: true });
+      _questGauges();
 
       // Stock is a GENERAL account fact (the inventory is ecosystem-wide, not
       // Studio-specific), so mirror the summary onto the shared root users/{uid}

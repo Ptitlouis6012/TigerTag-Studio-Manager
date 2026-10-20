@@ -5,6 +5,7 @@
  * HTTP polling on port 8898 (/detail + /control), 2s cadence.
  * Self-registers into the brands registry at module evaluation time.
  */
+import { questBump } from "../../quests/index.js";
 import { ctx } from '../context.js';
 import { registerBrand, brands } from '../registry.js';
 import { meta, schema, helper } from './settings.js';
@@ -1575,6 +1576,7 @@ $("ffgFilEditSave")?.addEventListener("click", async () => {
         ffgNotifyChange(conn, false);
       }
     }
+    questBump("slotAssign");
     closeFlashforgeFilamentEdit();
   } catch (e) {
     console.warn("[ffg] filament edit send failed:", e?.message);
