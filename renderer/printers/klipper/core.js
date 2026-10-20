@@ -211,6 +211,7 @@ async function detect(conn) {
     name: cam.name || "", service: cam.service || "",
     stream: absUrl(conn, cam.stream_url), snapshot: absUrl(conn, cam.snapshot_url),
     flipH: !!cam.flip_horizontal, flipV: !!cam.flip_vertical, rotation: Number(cam.rotation) || 0,
+    fps: Number(cam.target_fps) || 0,
   } : null;
   // Stable identity (ARP MAC) for a re-find after a DHCP change (printers/refind.js).
   d.serial = sys.result?.system_info?.cpu_info?.serial_number || null;

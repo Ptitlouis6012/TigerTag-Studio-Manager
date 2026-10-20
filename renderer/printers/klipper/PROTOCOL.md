@@ -237,6 +237,10 @@ Spoolman sync `MMU_SPOOLMAN`.
 - `service`: `mjpegstreamer` (default), `mjpegstreamer-adaptive`, `uv4l-mjpeg`,
   `ipstream`, `webrtc-camerastreamer`, `webrtc-go2rtc`, `webrtc-mediamtx`,
   `webrtc-janus`, `hlsstream`, `jmuxer-stream`, `iframe`.
+- `mjpegstreamer-adaptive` is not a stream: Mainsail never opens its `stream_url`,
+  it requests `snapshot_url` again and again at the camera's `target_fps`
+  (`MjpegstreamerAdaptive.vue`). The driver does the same, at most every 500 ms,
+  when a snapshot URL exists; with none it falls back to the stream.
 - Universal path: MJPEG `stream_url`, or poll `snapshot_url` (may be empty).
   WebRTC services as a later improvement (the Snapmaker Paxx path already does
   camera-streamer WebRTC).
