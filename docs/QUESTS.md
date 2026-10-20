@@ -1,6 +1,8 @@
 # Tiger Quests — implementation spec
 
-Status: **design validated by the founder (2026-10-20), not built.** Presentation page shared with
+Status: **design validated by the founder (2026-10-20). Phase 1 (backend) written in
+`TigerTag_Firebase_Backend` (`functions/quests.js` + `storeTotals`, rules, unit tests), not deployed
+yet; phase 2 (Studio) not started.** Presentation page shared with
 the TigerSquad: https://claude.ai/artifact/J2mDb8rv39G8axF8hWLydy (the numbers below are the source
 of truth; the page is an illustration).
 
@@ -42,7 +44,9 @@ real-hardware testing).
   by a material, sort the inventory table, read What's New, try a demo printer, switch to light mode,
   set a minimum stock, share the friend link.
 - Server doc: `users/{uid}/quests/daily` = `{ day, tz, missions: [id×4], baseline: {...counters at
-  draw}, done: {open, m0..m3}, bonusPaid }`. A mission is done when its counter exceeds the baseline.
+  draw}, done: [bool×4], open, bonusPaid, days, xp, streak, bestStreak, lastFullDay }`. A mission is
+  done when its counter exceeds the baseline. Only the `dailyQuest` check-in starts a new day; a day
+  the app never reopened just expires.
 - Celebration in the app on every mission done and on the full set.
 - `xpBreakdown.daily = { n: days, xp: Σ }` (accumulated, never recomputed from state).
 
@@ -90,8 +94,26 @@ The nebulae ✨, 19 Galactic explorer · The galaxy 🌌, 20 Legend · The unive
   the level bonus comes on top. `xpBreakdown.journey = { n: actionsDone, xp }`.
 - Action ids are stable strings (`d1.displayName`, `e2.prints100`…); the definition table lives in
   ONE shared module the server and the app both read (the app only displays; the server decides).
-- Server doc: `users/{uid}/quests/journey` = `{ actions: {id: count}, levelsDone: [...],
-  bonusesPaid: [...] }`, rebuilt by `recomputeXp`.
+- Server doc: `users/{uid}/quests/journey` = `{ actions: {id: count}, levelsDone, bonusesPaid,
+  waiting, locked, n, xp }`, rebuilt by `recomputeXp`. Counts keep their best value (a reset counter
+  never takes progress back), except the TigerSquad action, which follows membership. A paid bonus
+  stays paid while its level stays complete.
+- Update bonus doc: `users/{uid}/quests/updates` = `{ version, n, speedruns, xp }`; the current
+  version is the highest in `telemetry/studio.versionsUsed`; only a version with a published GitHub
+  release counts (release dates cached in `appReleases/{version}`). The first version seen is the
+  baseline and pays nothing.
+
+### Counter keys the app writes (phase 2)
+
+All under `telemetry/studio.quest`. **Counters** (`FieldValue.increment(1)` at the action site):
+`lightMode` (switched to light), `storageView`, `weightUpdate`, `spoolNote`, `favorite`, `rackPut`,
+`printerRename`, `printerArrange`, `cameraOpen`, `cameraPhoto`, `cameraVideo`, `listCreate`,
+`listShare`, `buyLink`, `minStock`, `ttagExport`, `tableSort`, `friendLinkShare`, `friendVisit`,
+`whatsNewRead`, `demoPrinter`, `print100`, `slotAssign`, `chipScanOpen`, `chipRecycle`, `chipInit`,
+`nfcTesterRead`, `brand_<id_brand>` (catalogue searched/filtered by that brand), `material_<id_material>`
+(catalogue filtered by that material). **Gauges** (set to the current value): `spoolsInRacks`,
+`materialsOwned`. Everything else (display name, photo, printers, friends, lists, chips, TigerData
+spools, public profile, socials, TigerSquad) is read by the server from state.
 
 ## 4. Rarity rebalance (state-based achievements)
 

@@ -5029,7 +5029,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }, SQUAD_INVITE_DELAY_MS);
   }
   // Joining is an EVENT: the legendary sound, the level badge rising out of a
-  // burst of light with rays, a shower of sparks, "+50 XP" floating up and a
+  // burst of light with rays, a shower of sparks, "+150 XP" floating up and a
   // welcome line — over the invite card, ~3 s. Calm (no particles, no motion)
   // under reduced motion; the sound still plays.
   function _squadCelebrate(card, forced) {
@@ -5046,7 +5046,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       <div class="tsq-cel-rays" aria-hidden="true"></div>
       <div class="tsq-cel-sparks" aria-hidden="true">${sparks}</div>
       <img class="tsq-cel-badge" src="${esc(SQUAD_ASSETS[tier])}" alt="">
-      ${forced ? "" : `<div class="tsq-cel-xp">+50 XP</div>`}
+      ${forced ? "" : `<div class="tsq-cel-xp">+150 XP</div>`}
       <div class="tsq-cel-title">${esc(forced ? t("squadLevelUpTitle", { tier: squadTierLabel(tier) }) : t("squadJoined"))}</div>
       <div class="tsq-cel-tier">${esc(squadTierLabel(tier))}</div>`;
     card.appendChild(fx);
@@ -5196,13 +5196,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // The achievements the server counts (functions/supportWebhooks.js ACH_XP) —
   // `per` = XP per item (lost when removed), `once` = a discovery kept for good.
   const XP_ACHIEVEMENTS = [
-    { id: "tigerScale", xp: 200 }, { id: "mobileApp", xp: 100, once: true }, { id: "tigerSpool", xp: 75 },
-    { id: "tigerTouch", xp: 100 },
-    { id: "tigerPod", xp: 50, once: true }, { id: "td1s", xp: 30, once: true }, { id: "printer", per: 20 },
-    { id: "usbScale", xp: 100, once: true },
-    { id: "rfidReader", xp: 20, once: true }, { id: "friend", per: 10 }, { id: "photo", xp: 10 },
-    { id: "firstRack", xp: 10, once: true }, { id: "social", per: 5 }, { id: "publicProfile", xp: 5 },
-    { id: "firstList", xp: 5, once: true }, { id: "link", per: 5, once: true },
+    { id: "tigerScale", xp: 1000 }, { id: "tigerSpool", xp: 800 }, { id: "tigerTouch", xp: 800 },
+    { id: "tigerPod", xp: 800, once: true }, { id: "mobileApp", xp: 300, once: true }, { id: "td1s", xp: 300, once: true },
+    { id: "usbScale", xp: 100, once: true }, { id: "rfidReader", xp: 100, once: true },
+    { id: "printer", per: 20 }, { id: "firstRack", xp: 20, once: true }, { id: "firstList", xp: 20, once: true },
+    { id: "friend", per: 10 }, { id: "photo", xp: 10 },
+    { id: "social", per: 5 }, { id: "publicProfile", xp: 5 }, { id: "link", per: 5, once: true },
   ];
   // "How do I reach the next level?" — the member's current level, the next
   // one, a progress bar when it is a count, and what to do (same rules as the
