@@ -21,6 +21,7 @@ import { schemaWidget } from '../modal-helpers.js';
 import { morphInner } from '../dom-morph.js';
 import { bambuModelIdFromCode } from './probe.js';
 import { renderBambuModeSwitch, readBambuModeSwitch } from './mode-switch.js';
+import { bambuChamberLightNodes, bambuMergeLights, bambuLightOn } from './lights.js';
 
 const $ = id => document.getElementById(id);
 
@@ -291,15 +292,23 @@ function _bblGcode(conn, lines) {
   _publish(conn, { print: { sequence_id: _nextSeq(), command: "gcode_line", param } });
 }
 
-/** Toggle a light. node = "chamber_light" (X1C) | "work_light" (A1 toolhead). */
-export function bambuLight(conn, on, node = "chamber_light") {
+/** Toggle the light. With no `node`: the chamber light — both strips on the printers that have two
+ *  (H2S / H2D / H2D Pro / H2C / X2D, see lights.js). node = "work_light" (A1 toolhead) drives just that one. */
+export function bambuLight(conn, on, node) {
   if (!conn) return;
-  _publish(conn, { system: {
-    sequence_id: _nextSeq(), command: "ledctrl",
-    led_node: node, led_mode: on ? "on" : "off",
-    led_on_time: 500, led_off_time: 500, loop_times: 0, interval_time: 0,
-  } });
-  if (conn.data) conn.data.lightOn = !!on; // optimistic (telemetry confirms via lights_report)
+  const mode = on ? "on" : "off";
+  const nodes = node ? [node] : bambuChamberLightNodes(conn.modelId, Object.keys(conn.data?.lightModes || {}));
+  for (const n of nodes) {
+    _publish(conn, { system: {
+      sequence_id: _nextSeq(), command: "ledctrl",
+      led_node: n, led_mode: mode,
+      led_on_time: 500, led_off_time: 500, loop_times: 0, interval_time: 0,
+    } });
+  }
+  if (conn.data) { // optimistic (telemetry confirms via lights_report)
+    conn.data.lightModes = bambuMergeLights(conn.data.lightModes, nodes.map(n => ({ node: n, mode })));
+    conn.data.lightOn = !!on;
+  }
   _bblNotify(conn); // repaint now — don't wait for the next report
 }
 
@@ -881,10 +890,12 @@ function _bblMerge(conn, msg) {
   }
 
   // ── Control state (light / speed level / part-fan) for the control card ──
-  // Light: lights_report = [{ node, mode }]. Prefer chamber_light, else first.
+  // Light: lights_report = [{ node, mode }]. On when either chamber light is (the H2 series has two,
+  // and a push may name only one of them), else the first light reported (lights.js).
   if (Array.isArray(p.lights_report) && p.lights_report.length) {
-    const cl = p.lights_report.find(l => l?.node === "chamber_light") || p.lights_report[0];
-    if (cl?.mode) d.lightOn = cl.mode === "on";
+    d.lightModes = bambuMergeLights(d.lightModes, p.lights_report);
+    const on = bambuLightOn(d.lightModes);
+    if (on !== null) d.lightOn = on;
   }
   // Speed level (1-4): spd_lvl.
   if (p.spd_lvl != null) {
