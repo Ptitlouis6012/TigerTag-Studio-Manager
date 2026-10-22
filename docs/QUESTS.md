@@ -36,6 +36,7 @@ real-hardware testing).
   `users/{uid}.tz`). The rollover is local midnight; an app left open checks in at the rollover, on
   window focus, and on launch.
 - Composition: **open the app 10** + **4 missions × 5** + **full-set bonus 30** = 60.
+- **Streak bonus +100 XP every 5 consecutive days with the full set** (5th, 10th, 15th… day of the same streak; a missed day restarts the count).
 - The server draws the 4 missions per user per day (deterministic: hash of uid + date), **no re-roll**,
   filtered by what the user owns and has not finished (no Tiger POD mission without a reader, no
   "join the squad" when already a member).
@@ -45,7 +46,8 @@ real-hardware testing).
   by a material, sort the inventory table, read What's New, try a demo printer, switch to light mode,
   set a minimum stock, share the friend link.
 - Server doc: `users/{uid}/quests/daily` = `{ day, tz, missions: [id×4], baseline: {...counters at
-  draw}, done: [bool×4], open, bonusPaid, days, xp, streak, bestStreak, lastFullDay }`. A mission is
+  draw}, done: [bool×4], open, bonusPaid, days, xp, streak, bestStreak, lastFullDay, openAt, doneAt: [ms×4],
+  missionsDone, streakBonuses }` (openAt / doneAt = when each part was done, ms). A mission is
   done when its counter exceeds the baseline. Only the `dailyQuest` check-in starts a new day; a day
   the app never reopened just expires.
 - Celebration in the app on every mission done and on the full set.

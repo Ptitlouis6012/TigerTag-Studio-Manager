@@ -678,16 +678,6 @@
 .eac-squad-label.eac-squad-label, .eac-squad-label > * { text-align: left; align-self: flex-start; }
 /* Avatars sized in % of their container (my own banner's edit button) keep it through the heart wrapper. */
 .fvb-avatar-edit .av-squad-host { width: 100%; height: 100%; }
-/* XP chip under the name — every account's chip points (server-counted). */
-.sb-user-info:has(.sb-xp-pill) { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 5px; }
-.sb-user-info:has(.sb-xp-pill) > .sb-name { flex-basis: 100%; }
-.sb-xp-pill {
-  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text);
-  font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
-}
-.sb-xp-pill .icon { background: var(--primary); }
-
 /* ══ TigerSquad invite (_openSquadInvite) — dark premium, gamified ══════════
    Palette from the redesign brief; motion 160–300 ms, none under reduced motion. */
 .squad-invite {
@@ -1053,8 +1043,7 @@
    and the friends list down, then snap back. Never wrap inside it — the block
    keeps its height at every width, so nothing jumps. */
 .sb-user-info { overflow: hidden; }
-.sb-user-info > .sb-name, .sb-xp-pill { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.sb-xp-pill { flex-shrink: 0; }
+.sb-user-info > .sb-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 /* Same row height collapsed and expanded (the name + XP block is 44 px tall), so
    the avatar and the friends below never shift when the sidebar folds. */
 /* Same row height collapsed and expanded (the name + XP block is ~44 px tall), so
@@ -1069,8 +1058,6 @@
    so the Notifications button slid right then back. Left-anchored, it just narrows. */
 .sidebar.collapsed .sb-actions { align-items: flex-start; }
 /* The XP chip opens the rankings. */
-.sb-xp-pill[role="button"] { cursor: pointer; transition: filter .15s; }
-.sb-xp-pill[role="button"]:hover { filter: brightness(1.25); }
 /* Rankings window: one fixed height (opens at its final size, never grows when
    the data lands or the tab changes) + shimmering skeleton rows while loading. */
 .squad-board { height: min(680px, 88vh); }
@@ -1085,14 +1072,6 @@
 @keyframes sqb-shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
 @media (prefers-reduced-motion: reduce) { .sqb-skel span, .sqb-skel i { animation: none; } }
 /* World rank chip, next to the XP chip: gold community icon + "#2". */
-.sb-rank-pill {
-  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text);
-  font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
-  white-space: nowrap; flex-shrink: 0; cursor: pointer; transition: filter .15s;
-}
-.sb-rank-pill .icon { width: 12px; height: 12px; background: #FFC83D; }
-.sb-rank-pill:hover { filter: brightness(1.25); }
 /* TigerSquad windows (invite + rankings) scroll without a visible scrollbar. */
 .squad-invite .tsq-scroll { scrollbar-width: none; }
 .squad-invite .tsq-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }

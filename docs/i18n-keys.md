@@ -205,6 +205,6 @@ Online (hosted) connector: `eacMcpWebTitle`, `eacMcpWebSub`, `eacMcpWebHowto`, `
 Install as an app (sidebar, web only): `sbInstallBtn`, `installIosHint` (iOS: Share → Add to Home Screen)
 
 ### Tiger Quests (renderer/quests/index.js)
-Window and pill: `questsTitle`, `questsToday`, `questsJourney`, `questsOpenApp`, `questsFullSet`, `questsStreak` (`{{n}}`), `questsResetIn` (`{{time}}`), `questsMissionDone`, `questsFullSetDone`, `questsLevelDone`, `questsWon`, `questsWaiting`, `questsLocked` (`{{xp}}`), `questsProgress` (`{{n}}`, `{{total}}`), `questsComingSoon`, `questsLoading`, `questsPillLabel` (`{{n}}`, `{{total}}`)
+Window and pill: `questsTitle`, `questsToday`, `questsJourney`, `questsOpenApp`, `questsFullSet`, `questsStreak` (`{{n}}`), `questsMissionDone`, `questsFullSetDone`, `questsLevelDone`, `questsWon`, `questsWaiting`, `questsLocked` (`{{xp}}`), `questsProgress` (`{{n}}`, `{{total}}`), `questsComingSoon`, `questsLoading`, `questsPillLabel` (`{{n}}`, `{{total}}`)
 
 Built from ids (dynamic): daily missions `questDaily_<id>` (`findBrand` takes `{{brand}}`, `filterMaterial` takes `{{material}}`), journey actions `questAct_<level>_<action>` (e.g. `questAct_d1_displayName`, 50 keys), level themes `questLevel_d1`…`questLevel_e5`, ranks `questRank_1`…`questRank_20` and their worlds `questWorld_1`…`questWorld_20`. XP history parts: `xpAch_daily`, `xpAch_updates`, `xpAch_journey`.

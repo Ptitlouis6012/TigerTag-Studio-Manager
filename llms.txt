@@ -72,6 +72,10 @@ publicKeys/{key}           → { uid, claimedAt }
 userProfiles/{uid}         → { publicKey, displayName, isPublic, color, photoURL, socials, friendsCount,
                                tigerSquad: { since, tier, certified, xp } }   ← SERVER-WRITTEN ONLY: Studio calls
                              the `setProfile` Cloud Function (renderer setProfile()), never writes it; tigerSquad from publishSupporter
+publicStats/community      → world-readable community totals (xpTotal, accounts, members, spools {…},
+                             printers {total, byBrand}) written every minute by the communityStats function
+publicStats/community/history/{YYYY-MM-DD} → one point per day of those totals
+                             (both read by the TigerSquad Rankings view, never written by Studio)
 publicLists/{token}        → world-readable snapshot of a list shared by web link (unguessable
                              token); written by the owner when a list's visibility is "public"
 users/{uid}                → { displayName, email, publicKey, privateKey, isPublic,
@@ -282,7 +286,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..." nl="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-1941 keys × 11 locales as of v2.42.2
+2016 keys × 11 locales as of v2.42.2
 
 ## CSS conventions
 

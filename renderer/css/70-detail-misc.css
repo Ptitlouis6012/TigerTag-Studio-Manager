@@ -148,6 +148,7 @@
   .icon-stop      { -webkit-mask-image: url('../../assets/svg/icons/icon_stop.svg');         mask-image: url('../../assets/svg/icons/icon_stop.svg'); }
   .icon-folder    { -webkit-mask-image: url('../../assets/svg/icons/icon_folder.svg');       mask-image: url('../../assets/svg/icons/icon_folder.svg'); }
   .icon-clock     { -webkit-mask-image: url('../../assets/svg/icons/icon_clock.svg');        mask-image: url('../../assets/svg/icons/icon_clock.svg'); }
+  .icon-compass   { -webkit-mask-image: url('../../assets/svg/icons/icon_compass.svg');     mask-image: url('../../assets/svg/icons/icon_compass.svg'); }
   .icon-wifi      { -webkit-mask-image: url('../../assets/svg/icons/icon_wifi.svg');         mask-image: url('../../assets/svg/icons/icon_wifi.svg'); }
 
   button {

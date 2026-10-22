@@ -1,84 +1,7 @@
-/* Tiger Quests (renderer/quests/index.js) — the sidebar pill, the Quests window
-   (built on the TigerSquad window: .squad-invite + its --tsq-* palette) and the
-   celebrations. Motion 160–400 ms, none under reduced motion. */
-
-/* ── Sidebar pill, next to the XP chip ─────────────────────────────────── */
-.sb-quest-pill {
-  display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; padding: 2px 7px 2px 6px; border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text); cursor: pointer;
-  font-size: 10px; font-weight: 800; letter-spacing: .3px; width: fit-content; font-variant-numeric: tabular-nums;
-  transition: background .15s;
-}
-.sb-quest-pill .icon { background: var(--primary); }
-.sb-quest-pill:hover { background: color-mix(in srgb, var(--primary) 26%, transparent); }
-.sb-quest-pill.is-complete { background: color-mix(in srgb, var(--success, #22c55e) 20%, transparent); }
-.sb-quest-pill.is-complete .icon { background: var(--success, #22c55e); }
-
-/* ── Window ────────────────────────────────────────────────────────────── */
-.quest-board { --qst-green: #3DDC84; --qst-gold: #FFD166; text-align: left; }
-.quest-board .tsq-title { text-align: center; }
-.qst-where { margin: -10px 0 0; text-align: center; font-size: 13px; font-weight: 700; color: var(--tsq-muted); }
-.quest-board .sqb-tabs { justify-content: center; }
-.qst-body { display: flex; flex-direction: column; gap: 14px; }
-
-.qst-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.qst-row {
-  display: grid; grid-template-columns: 22px 1fr auto auto; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: 10px; background: var(--tsq-card); border: 1px solid var(--tsq-line);
-  transition: border-color .2s, background .2s;
-}
-.qst-row.is-done { border-color: color-mix(in srgb, var(--qst-green) 45%, var(--tsq-line)); background: color-mix(in srgb, var(--qst-green) 8%, var(--tsq-card)); }
-.qst-check {
-  width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--tsq-line);
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.qst-row.is-done .qst-check { border-color: var(--qst-green); background: var(--qst-green); }
-.qst-row.is-done .qst-check .icon { background: #0b0d12; }
-.qst-label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; font-weight: 600; color: var(--tsq-text); min-width: 0; }
-.qst-row.is-done .qst-label { color: var(--tsq-muted); }
-.qst-count { font-size: 12px; font-weight: 700; color: var(--tsq-muted); font-variant-numeric: tabular-nums; }
-.qst-xp { font-size: 12px; font-weight: 800; color: var(--tsq-orange); font-variant-numeric: tabular-nums; }
-.qst-xp::after { content: " XP"; font-weight: 700; opacity: .75; }
-.qst-row.is-done .qst-xp { color: var(--qst-green); }
-
-.qst-bar { display: block; height: 6px; border-radius: 999px; background: var(--tsq-line); overflow: hidden; }
-.qst-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #FF923F, #FFD166); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
-.qst-row.is-done .qst-bar i, .qst-set.is-done .qst-bar i { background: var(--qst-green); }
-
-.qst-set {
-  display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px;
-  padding: 12px 14px; border-radius: 12px; border: 1px dashed color-mix(in srgb, var(--tsq-orange) 50%, var(--tsq-line));
-}
-.qst-set.is-done { border-style: solid; border-color: var(--qst-green); }
-.qst-set-name { font-size: 13px; font-weight: 800; color: var(--tsq-text); }
-.qst-foot { margin: 0; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; color: var(--tsq-muted); }
-
-/* Journey: one chip per rank, then the rank's levels. */
-.qst-ranks { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.qst-rank {
-  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--tsq-line); background: var(--tsq-card);
-  font-size: 17px; line-height: 1; cursor: pointer; transition: border-color .15s, transform .15s;
-}
-.qst-rank:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--tsq-orange); }
-.qst-rank.is-on { border-color: var(--tsq-orange); box-shadow: 0 0 0 2px color-mix(in srgb, var(--tsq-orange) 35%, transparent); }
-.qst-rank.is-soon { cursor: default; filter: grayscale(1); opacity: .35; }
-.qst-rank-title { margin: 2px 0 0; text-align: center; font-size: 17px; font-weight: 800; color: var(--tsq-text); }
-.qst-rank-title small { display: block; font-size: 12px; font-weight: 600; color: var(--tsq-muted); }
-
-.qst-level { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 14px; background: var(--tsq-bg2); border: 1px solid var(--tsq-line); }
-.qst-level--won { border-color: color-mix(in srgb, var(--qst-green) 50%, var(--tsq-line)); }
-.qst-level--locked .qst-list, .qst-level--waiting .qst-list { opacity: .8; }
-.qst-level-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.qst-level-name { flex: 1; font-size: 14px; font-weight: 800; color: var(--tsq-text); }
-.qst-state {
-  display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: 999px;
-  font-size: 11px; font-weight: 700; background: var(--tsq-card); color: var(--tsq-muted);
-}
-.qst-state .icon { background: var(--tsq-muted); }
-.qst-level--won .qst-state { background: color-mix(in srgb, var(--qst-green) 18%, transparent); color: var(--qst-green); }
-.qst-bonus { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 800; color: var(--qst-gold); }
-.qst-bonus .icon { background: var(--qst-gold); }
-.qst-bonus::after { content: " XP"; font-weight: 700; opacity: .75; }
+/* Tiger Quests (renderer/quests/index.js) — the view-bar chips,
+   the Quests views of the main area (their --tsq-* palette mapped onto the theme
+   tokens, see "Progress views") and the celebrations. Motion 160–400 ms, none
+   under reduced motion. */
 
 /* ── Celebration: a card dropping in at the top, a burst, the XP ───────── */
 .qst-cel {
@@ -117,26 +40,540 @@
   .qst-bar i, .qst-rank { transition: none; }
 }
 
-/* ── View bar: today's quests, journey level, TigerSquad (_renderProgressChips) ── */
-.vtg-chips { display: flex; align-items: center; gap: 6px; height: 36px; }
-.vtg-chip {
-  position: relative; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px 6px;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text);
-  font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; overflow: hidden;
-  transition: border-color .15s, background .15s;
+/* ── View bar, Tiger Quests group: icon buttons (today · journey) with a thin
+   progress line under each icon; the figures are in the hover name. ── */
+.vtg-quests button { flex-direction: column; gap: 3px; }
+.vtg-btn-bar { display: block; width: 18px; height: 3px; border-radius: 2px; background: var(--border); overflow: hidden; }
+.vtg-btn-bar i { display: block; height: 100%; width: 0; border-radius: inherit; background: linear-gradient(90deg, #FF923F, #FFD166); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
+#vtgDaily.is-done .vtg-btn-bar i { background: var(--success); }
+@media (prefers-reduced-motion: reduce) { .vtg-btn-bar i { transition: none; } }
+
+/* ── Progress views in the main area (view modes questsToday / questsJourney / squad) ──
+   The Quests and TigerSquad screens follow the app theme here: their --tsq-*
+   palette is mapped onto the theme tokens instead of the fixed dark window. */
+/* No search bar, stock filters or colour bars in these views. */
+body.progress-view .inv-search-row,
+body.progress-view .rv-hue,
+body.progress-view #gridSortWrap { display: none; }
+
+.inv-quests-view, .inv-squad-view {
+  margin-top: var(--view-gap); flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  --tsq-bg: var(--surface); --tsq-bg2: var(--surface-2); --tsq-card: var(--surface); --tsq-line: var(--border);
+  --tsq-text: var(--text); --tsq-muted: var(--muted); --tsq-orange: var(--primary);
 }
-.vtg-chip[hidden] { display: none; }
-.vtg-chip:hover { border-color: color-mix(in srgb, var(--primary) 55%, var(--border)); background: var(--surface-hover); }
-.vtg-chip b { font-weight: 800; }
-.vtg-chip .icon { background: var(--primary); }
-.vtg-chip-emoji { font-size: 14px; line-height: 1; }
-.vtg-chip-n { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.vtg-chip-rank { font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums; }
-.vtg-chip-bar { position: absolute; left: 10px; right: 10px; bottom: 6px; height: 3px; border-radius: 999px; background: var(--border); overflow: hidden; }
-.vtg-chip-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #FF923F, #FFD166); transition: width .4s cubic-bezier(.2, .8, .2, 1); }
-.vtg-chip.is-done { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
-.vtg-chip.is-done .vtg-chip-bar i { background: var(--success); }
-.vtg-chip.is-done .icon { background: var(--success); }
-.vtg-chip-tier { width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, var(--sq-a, var(--primary)), var(--sq-b, var(--primary))); box-shadow: 0 0 6px color-mix(in srgb, var(--sq-a, var(--primary)) 60%, transparent); }
-#vtgSquadChip { padding-bottom: 0; }
-@media (prefers-reduced-motion: reduce) { .vtg-chip-bar i { transition: none; } }
+.inv-quests-view.hidden, .inv-squad-view.hidden { display: none; }
+
+
+/* The rankings board, drawn inline (squad-board--inline). */
+.squad-board--inline { max-width: 820px; color: var(--text); }
+.squad-board--inline .squad-invite-x { display: none; }
+.squad-board--inline .tsq-scroll { overflow: visible; padding: 4px 0 16px; gap: 12px; }
+.squad-board--inline .tsq-title { text-align: left; font-size: 20px; }
+.squad-board--inline .sqb-wall, .squad-board--inline .sqb-you { align-self: flex-start; text-align: left; }
+.inv-quests-view, .inv-squad-view { scrollbar-width: none; }
+.inv-quests-view::-webkit-scrollbar, .inv-squad-view::-webkit-scrollbar { width: 0; height: 0; }
+.squad-board.squad-board--inline { width: auto; height: auto; max-width: 980px; }
+.squad-board--inline .tsq-title { text-transform: none; letter-spacing: 0; }
+
+/* ── Game world — the Quests views, after the Tiger Quests presentation page:
+   one committed dark world (like the TigerSquad windows), cut-corner panels,
+   diamond boxes, skewed segmented bars, mono numbers with an orange glow. ── */
+.qw {
+  --qw-bg: #0b0d14; --qw-panel: #161b2c; --qw-panel2: #1c2238; --qw-ink: #eef1fb; --qw-muted: #8f97b3; --qw-line: #2a3150;
+  --qw-tiger: #ff7a1a; --qw-tiger2: #ffb347; --qw-glow: rgba(255, 122, 26, .45); --qw-ok: #3ddc84; --qw-legend: #ffb21a;
+  --qw-display: "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --qw-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --qw-cut: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
+  display: flex; flex-direction: column; gap: 14px; color: var(--qw-ink);   /* no panel of its own: the blocks sit straight on the view */
+}
+.qw h2 { margin: 0; font: 700 28px/1.05 var(--qw-display); text-transform: uppercase; letter-spacing: .02em; color: var(--qw-ink); text-shadow: 0 0 30px var(--qw-glow); }
+.qw-eyebrow { display: inline-block; margin-bottom: 6px; padding: 5px 12px 5px 14px; font: 700 11px/1 var(--qw-display); letter-spacing: .28em; text-transform: uppercase;
+  color: var(--qw-bg); background: var(--qw-tiger); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.qw-num, .qw-total, .qw-xp, .qw-slab, .qw-bonus { font-family: var(--qw-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+.qw-empty { margin: 0; padding: 16px; text-align: center; color: var(--qw-muted); border: 1px dashed var(--qw-line); }
+
+.qw-panel { background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); border: 1px solid var(--qw-line); clip-path: var(--qw-cut);
+  padding: 20px; display: grid; gap: 16px; align-content: start; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); }
+.qw-quest { max-width: 820px; }
+.qw-quest-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.qw-total { font-size: 30px; color: var(--qw-tiger); text-shadow: 0 0 18px var(--qw-glow); }
+.qw-total small { font-size: 14px; color: var(--qw-muted); font-weight: 500; text-shadow: none; }
+.qw-where { font: 700 14px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; color: var(--qw-tiger2); }
+
+/* Segmented track: one segment per reward (open + missions + full set). */
+.qw-track { position: relative; height: 14px; background: var(--qw-bg); border: 1px solid var(--qw-line); overflow: hidden; }
+.qw-track::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(100% / var(--seg, 6) - 2px), var(--qw-bg) calc(100% / var(--seg, 6) - 2px) calc(100% / var(--seg, 6))); }
+.qw-track > i { display: block; height: 100%; background: linear-gradient(90deg, var(--qw-tiger), var(--qw-tiger2)); box-shadow: 0 0 16px var(--qw-glow); transition: width .4s ease; }
+
+.qw-tasks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.qw-task { display: flex; align-items: center; gap: 14px; padding: 12px 14px; font-size: 14px; background: rgba(255, 255, 255, .02); border: 1px solid var(--qw-line);
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 0 100%, 0 10px); animation: qw-deal .4s ease both; }
+.qw-tasks li:nth-child(2) { animation-delay: .05s; } .qw-tasks li:nth-child(3) { animation-delay: .1s; }
+.qw-tasks li:nth-child(4) { animation-delay: .15s; } .qw-tasks li:nth-child(5) { animation-delay: .2s; }
+@keyframes qw-deal { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: none; } }
+.qw-box { width: 18px; height: 18px; flex-shrink: 0; border: 2px solid var(--qw-muted); transform: rotate(45deg); transition: background .2s, border-color .2s; }
+.is-done > .qw-box, .is-full > .qw-box { background: var(--qw-ok); border-color: var(--qw-ok); box-shadow: 0 0 12px rgba(61, 220, 132, .6); }
+.qw-task-label { flex: 1; min-width: 0; }
+.qw-task.is-done .qw-task-label { color: var(--qw-muted); text-decoration: line-through; text-decoration-color: var(--qw-ok); }
+.qw-xp { color: var(--qw-tiger2); }
+.qw-task.is-done .qw-xp { color: var(--qw-ok); }
+.qw-streak { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px dashed var(--qw-line); color: var(--qw-muted);
+  font: 700 14px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; }
+.qw-streak.is-won { border-style: solid; border-color: var(--qw-legend); background: rgba(255, 178, 26, .12); color: var(--qw-legend); box-shadow: 0 0 24px rgba(255, 178, 26, .35); }
+.qw-foot { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--qw-muted); }
+
+/* Journey: the rank map (nodes + level pips), then level cards. */
+.qw-nodes { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
+.qw-node { display: grid; gap: 2px; justify-items: start; text-align: left; padding: 10px 12px; font: inherit; color: var(--qw-ink); cursor: pointer;
+  background: var(--qw-panel); border: 1px solid var(--qw-line); clip-path: var(--qw-cut); opacity: .55; transition: opacity .15s, border-color .15s; }
+.qw-node:hover:not(:disabled) { opacity: 1; border-color: var(--qw-tiger); }
+.qw-node.is-reached, .qw-node.is-here { opacity: 1; }
+.qw-node.is-here { border-color: color-mix(in srgb, var(--qw-tiger) 60%, var(--qw-line)); }
+.qw-node.is-on { opacity: 1; border-color: var(--qw-tiger); box-shadow: inset 0 0 22px rgba(255, 122, 26, .2); }
+.qw-node.is-soon { cursor: default; opacity: .32; }
+.qw-nicon { font-size: 22px; line-height: 1.2; }
+.qw-nnum { font: 700 10px var(--qw-display); letter-spacing: .2em; color: var(--qw-muted); }
+.qw-nrole { font: 700 13px var(--qw-display); text-transform: uppercase; letter-spacing: .04em; }
+.qw-nworld { font-size: 11px; color: var(--qw-muted); }
+.qw-pips { display: flex; gap: 4px; margin-top: 5px; }
+.qw-pips i { width: 14px; height: 6px; background: var(--qw-line); transform: skewX(-18deg); }
+.qw-pips i.open { background: transparent; outline: 1px solid var(--qw-tiger); }
+.qw-pips i.on { background: var(--qw-tiger); box-shadow: 0 0 8px var(--qw-glow); }
+
+.qw-lcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; align-items: start; }
+.qw-lcard { padding: 16px; gap: 12px; }
+.qw-lcard.is-won { border-color: var(--qw-ok); box-shadow: inset 0 0 24px rgba(61, 220, 132, .12); }
+.qw-lcard.is-wait { border-color: var(--qw-tiger2); }
+.qw-lcard.is-lock { opacity: .78; }
+.qw-lchead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.qw-lchead b { display: block; font: 700 17px var(--qw-display); text-transform: uppercase; letter-spacing: .04em; color: var(--qw-ink); }
+.qw-ltheme { font-size: 13px; color: var(--qw-muted); }
+.qw-lcmeta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.qw-tstate { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--qw-display); text-transform: uppercase; letter-spacing: .06em; color: var(--qw-muted); }
+.qw-tstate .icon { background: currentColor; }
+.qw-lcard.is-won .qw-tstate { color: var(--qw-ok); }
+.qw-lcard.is-wait .qw-tstate, .qw-lcard.is-lock .qw-tstate { color: var(--qw-tiger2); }
+.qw-bonus { font-size: 13px; color: var(--qw-legend); }
+.qw-lcard.is-won .qw-bonus { color: var(--qw-ok); }
+
+.qw-sbar { display: block; height: 10px; background: var(--qw-bg); border: 1px solid var(--qw-line); overflow: hidden; transform: skewX(-18deg); }
+.qw-sbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--qw-tiger), var(--qw-tiger2)); box-shadow: 0 0 12px var(--qw-glow); transition: width .25s ease; }
+.qw-lcard.is-won > .qw-sbar i, .qw-act.is-full .qw-sbar i { background: var(--qw-ok); box-shadow: 0 0 10px rgba(61, 220, 132, .5); }
+.qw-acts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.qw-act { display: grid; grid-template-columns: 14px minmax(0, 1fr) 72px 64px; gap: 10px; align-items: center; padding: 8px 10px; font-size: 13px;
+  background: rgba(255, 255, 255, .02); border: 1px solid var(--qw-line); }
+.qw-act .qw-box { width: 12px; height: 12px; }
+.qw-act.is-full { color: var(--qw-muted); border-color: color-mix(in srgb, var(--qw-ok) 45%, var(--qw-line)); }
+.qw-act .qw-sbar { height: 8px; }
+.qw-slab { font-size: 12px; color: var(--qw-tiger2); text-align: right; white-space: nowrap; }
+.qw-act.is-full .qw-slab { color: var(--qw-ok); }
+@media (prefers-reduced-motion: reduce) { .qw-task { animation: none; } .qw-track > i, .qw-sbar i { transition: none; } }
+.qw-today { display: grid; grid-template-columns: minmax(0, 820px) minmax(320px, 460px); gap: 16px; align-items: start; }
+@media (max-width: 1200px) { .qw-today { grid-template-columns: minmax(0, 1fr); } }
+/* App-wide button rules fix a 40 px height; a rank node is a small card. */
+.qw .qw-node { height: auto; min-height: 0; align-content: start; white-space: normal; }
+/* TigerSquad makers: each member's rank inside their own country, next to the flag. */
+.sqb-mini-flag { display: inline-flex; align-items: center; gap: 3px; }
+.sqb-crank { font-size: 11px; font-weight: 800; color: var(--tsq-muted); font-variant-numeric: tabular-nums; }
+/* TigerSquad view, Countries tab: three leagues side by side — countries, the
+   member's own country, the makers worldwide (one column in the window, or when narrow). */
+.sqb-cols { display: grid; gap: 16px; align-items: start; }
+.sqb-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.squad-board--inline .sqb-cols:has(.sqb-col:not(:first-child):not([hidden])) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
+.squad-board.squad-board--inline:has(.sqb-col:not(:first-child):not([hidden])) { max-width: none; }
+/* XP history side card (#xpHistPanel): the TigerSquad rows on the theme tokens. */
+.xp-hist-panel {
+  --tsq-bg: var(--surface); --tsq-bg2: var(--surface-2); --tsq-card: var(--surface); --tsq-line: var(--border);
+  --tsq-text: var(--text); --tsq-muted: var(--muted); --tsq-orange: var(--primary);
+}
+.xp-hist-panel .panel-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 24px; }
+.xp-hist-panel .sqb-you { margin: 0; text-align: left; font-size: 14px; font-weight: 800; color: var(--primary); }
+.xp-hist-panel .sqb-row { gap: 10px; padding: 10px 12px; }
+.xp-hist-panel .sqb-delta { width: 42px; }
+.xp-hist-panel .sqb-name { white-space: normal; }
+.xp-hist-panel .sqb-n1 { overflow-wrap: anywhere; }
+
+/* Journey: the rank's levels in a carousel (scroll-snap + arrows), opening on
+   the next level to finish. */
+.qw-carousel { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 10px; align-items: center; }
+.qw-car-track { display: grid; grid-auto-flow: column; grid-auto-columns: max(400px, calc((100% - 28px) / 3)); gap: 14px;
+  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px 0; }
+.qw-car-track::-webkit-scrollbar { height: 0; }
+.qw-car-track > .qw-lcard { scroll-snap-align: start; }
+.qw .qw-car-btn { width: 40px; height: 64px; display: grid; place-items: center; cursor: pointer; border: 1px solid var(--qw-line); background: var(--qw-panel);
+  clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); transition: border-color .15s, background .15s; }
+.qw .qw-car-btn .icon { background: var(--qw-tiger2); }
+.qw .qw-car-btn:hover { border-color: var(--qw-tiger); background: rgba(255, 122, 26, .1); }
+
+/* Loot ladder — rarity rungs (presentation page "Rarity — loot ladder"). */
+.qw-ladder { gap: 10px; }
+/* Rarity colours follow Diablo: common white, uncommon blue (magic), rare
+   yellow, epic green (set), legendary orange. */
+.qw-rung { --c: #e2e2e2; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px 14px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 16%, transparent), var(--qw-panel) 45%);
+  border: 1px solid color-mix(in srgb, var(--c) 45%, var(--qw-line)); clip-path: var(--qw-cut); }
+.qw-rung--legendary { --c: #ff8000; box-shadow: 0 0 30px rgba(255, 128, 0, .25); }
+.qw-rung--epic { --c: #1eff4a; } .qw-rung--rare { --c: #ffe94a; } .qw-rung--uncommon { --c: #6e8cff; }
+.qw-rung-name { padding-top: 10px; font: 700 15px var(--qw-display); text-transform: uppercase; letter-spacing: .08em; color: var(--c);
+  text-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent); }
+.qw-loot { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.qw-item { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px;
+  background: rgba(0, 0, 0, .25); border: 1px solid var(--qw-line); opacity: .62; }
+.qw-item.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 70%, var(--qw-line)); box-shadow: inset 0 0 18px color-mix(in srgb, var(--c) 22%, transparent); }
+.qw-item-ic { width: 40px; height: 40px; display: grid; place-items: center; }
+/* Tiger device artwork drawn as a mask, in the rarity colour. */
+.qw-item-mask { width: 40px; height: 40px; background: var(--c); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent)); }
+.qw-item-ic .icon { background: var(--c); }
+.qw-item-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.qw-item-txt b { font-size: 13px; color: var(--qw-ink); }
+.qw-item-txt small { font-size: 11px; color: var(--qw-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qw-item-xp { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font: 700 12px var(--qw-mono); color: var(--c); white-space: nowrap; }
+.qw-item-xp .icon { background: var(--qw-ok); }
+@media (max-width: 760px) { .qw-rung { grid-template-columns: 1fr; } .qw-rung-name { padding-top: 0; } }
+/* The rank map: one strip of nodes, scrolled sideways (rank 20 sits off-screen). */
+.qw .qw-nodes { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 128px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.qw .qw-nodes::-webkit-scrollbar { height: 0; }
+
+/* ── Today: the daily quests screen (renderer/quests/index.js todayHtml) ──
+   Banner (assets/img/quests/daily-quests-banner.webp), progress + full-set
+   chest, quest rows, side column. Same dark game world as the presentation. */
+.qd { display: flex; flex-direction: column; gap: 14px; }
+.qd-banner { position: relative; display: flex; align-items: center; gap: 18px; min-height: 170px; padding: 22px 28px; border: 1px solid var(--qw-line); border-radius: 14px; overflow: hidden;
+  background: linear-gradient(90deg, #0b0d14 0%, rgba(11, 13, 20, .92) 32%, rgba(11, 13, 20, .2) 62%, transparent 80%),
+    url("../../assets/img/quests/daily-quests-banner.webp") right -40px top 26% / auto 230% no-repeat, #0b0d14; }
+.qd-cal { width: 58px; height: 58px; flex-shrink: 0; color: var(--qw-tiger); filter: drop-shadow(0 0 12px var(--qw-glow)); }
+.qd-cal svg { width: 100%; height: 100%; }
+.qd-head h2 { font-size: 34px; }
+.qd-head p { margin: 6px 0 0; font-size: 15px; color: #d7dbea; }
+.qd-caption { position: absolute; right: 30%; top: 50%; transform: translateY(-50%) rotate(-5deg); padding: 10px 16px; border: 1px solid rgba(255, 255, 255, .25); border-radius: 10px;
+  background: rgba(8, 10, 16, .78); font: italic 700 17px var(--qw-display); color: #ffd7a8; box-shadow: 0 10px 24px rgba(0, 0, 0, .45); }
+
+.qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 25%); gap: 14px; align-items: start; }
+.qd-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.qd-card { position: relative; background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); border: 1px solid var(--qw-line); border-radius: 12px; padding: 14px 16px; }
+.qd-card h3 { margin: 0; font: 700 16px var(--qw-display); text-transform: uppercase; letter-spacing: .04em; color: var(--qw-ink); }
+.qd-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 34%); gap: 10px; }
+.qd-progress { display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.qd-progress-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.qd-progress-head h3 { text-transform: none; font-size: 19px; letter-spacing: 0; }
+.qd-progress-n { font: 700 18px var(--qw-mono); color: var(--qw-muted); }
+.qd-progress-n b, .qd-progress-xp b { color: var(--qw-tiger2); }
+.qd-progress-row { display: flex; align-items: center; gap: 14px; }
+/* One segment per quest (as many as the day has): filled orange when done. */
+.qd-seg { flex: 1; display: flex; gap: 5px; height: 16px; }
+.qd-seg i { position: relative; flex: 1; border-radius: 5px; background: #141a2a; border: 1px solid var(--qw-line); overflow: hidden; }
+.qd-seg i::after { content: ""; position: absolute; inset: 0; transform: scaleX(0); transform-origin: left; background: linear-gradient(90deg, var(--qw-tiger), var(--qw-tiger2)); }
+.qd-seg i.on { border-color: color-mix(in srgb, var(--qw-tiger) 70%, var(--qw-line)); box-shadow: 0 0 8px rgba(255, 122, 26, .25); }
+.qd-seg i.on::after { transform: scaleX(1); }
+.qd-seg i.on.is-new::after { animation: qd-fill .35s ease-out both; }
+@keyframes qd-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.qd-progress-xp { font: 700 15px var(--qw-mono); color: var(--qw-muted); white-space: nowrap; }
+
+.qd-chest { display: flex; align-items: center; gap: 12px; border-color: color-mix(in srgb, var(--qw-legend) 45%, var(--qw-line));
+  background: radial-gradient(120% 140% at 20% 50%, rgba(255, 178, 26, .16), transparent 60%), linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); }
+/* The chest is the day's main reward: 96 px on the left, dimmed until earned. */
+.qd-chest { gap: 14px; padding-top: 10px; padding-bottom: 10px; }
+.qd-chest-art { position: relative; width: 96px; height: 96px; flex-shrink: 0; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 55%, rgba(255, 190, 60, .32), transparent 66%); }
+.qd-chest { overflow: hidden; }   /* the jackpot burst stays inside the panel */
+.qd-chest-img { width: 96px; height: 96px; object-fit: contain; filter: grayscale(1) brightness(.72) drop-shadow(0 6px 12px rgba(0, 0, 0, .5)); transition: filter .3s ease; }
+/* Locked: grey chest; hovering it catches a little gold light. */
+.qd-chest.is-locked { transition: border-color .25s ease, box-shadow .25s ease; }
+.qd-chest.is-locked:hover { border-color: color-mix(in srgb, var(--qw-legend) 70%, var(--qw-line)); box-shadow: inset 0 0 26px rgba(255, 178, 26, .08); }
+.qd-chest.is-locked:hover .qd-chest-img { filter: grayscale(.85) brightness(.8) drop-shadow(0 0 10px rgba(255, 190, 60, .25)); }
+.qd-chest-lock { position: absolute; right: 4px; bottom: 6px; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: #1c2238; border: 1px solid color-mix(in srgb, var(--qw-legend) 55%, var(--qw-line)); }
+.qd-chest-lock .icon { background: var(--qw-legend); }
+.qd-chest.is-near .qd-chest-img { filter: grayscale(1) brightness(.82) drop-shadow(0 0 10px rgba(255, 178, 26, .3)); animation: qd-wiggle 2.4s ease-in-out infinite; }
+.qd-chest.is-earned { border-color: var(--qw-legend); box-shadow: 0 0 26px rgba(255, 178, 26, .28), inset 0 0 30px rgba(255, 178, 26, .08); }
+.qd-chest.is-earned .qd-chest-img { filter: drop-shadow(0 0 14px rgba(255, 190, 60, .65)) drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); }
+.qd-chest-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.qd-chest-label { font: 700 13px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; color: var(--qw-legend); }
+.qd-chest-xp { font: 800 32px/1 var(--qw-mono); color: #ffd36e; text-shadow: 0 0 16px rgba(255, 178, 26, .35); }
+.qd-chest.is-earned .qd-chest-xp { color: var(--qw-ok); text-shadow: 0 0 16px rgba(61, 220, 132, .45); }
+.qd-chest small { font-size: 12px; color: var(--qw-muted); }
+.qd-chest-check { margin-left: auto; width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; background: var(--qw-ok); box-shadow: 0 0 18px rgba(61, 220, 132, .55); }
+.qd-chest-check .icon { background: #0b0d14; }
+@keyframes qd-wiggle { 0%, 88%, 100% { transform: rotate(0); } 91% { transform: rotate(-6deg); } 94% { transform: rotate(6deg); } 97% { transform: rotate(-3deg); } }
+
+.qd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.qd-row { --cat: var(--qw-tiger); display: grid; grid-template-columns: 52px minmax(0, 1fr) 128px 40px minmax(80px, 150px) 70px 150px; gap: 14px; align-items: center;
+  padding: 10px 16px 10px 12px; border: 1px solid var(--qw-line); border-radius: 12px; background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); }
+.qd-cat-quick { --cat: #3ddc84; } .qd-cat-exploration { --cat: #3fa4ff; } .qd-cat-challenge { --cat: #b46bff; }
+.qd-ic { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--qw-tiger) 60%, transparent);
+  background: radial-gradient(circle at 50% 35%, rgba(255, 122, 26, .25), rgba(255, 122, 26, .05)); }
+.qd-ic .icon { background: var(--qw-tiger2); }
+.qd-mask { width: 30px; height: 30px; background: var(--qw-tiger2); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+.qd-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qd-title b { font-size: 15px; color: var(--qw-ink); }
+.qd-title small { font-size: 13px; color: var(--qw-muted); }
+.qd-badge { justify-self: start; min-width: 104px; height: 28px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border-radius: 8px; border: 1px solid var(--cat); color: var(--cat); background: color-mix(in srgb, var(--cat) 12%, transparent);
+  font: 700 12px var(--qw-display); text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+.qd-count { font: 700 14px var(--qw-mono); color: var(--qw-ink); text-align: right; }
+.qd-bar { height: 8px; border-radius: 4px; background: var(--qw-bg); border: 1px solid var(--qw-line); overflow: hidden; }
+.qd-bar i { display: block; height: 100%; background: var(--qw-ok); box-shadow: 0 0 10px rgba(61, 220, 132, .5); transition: width .3s ease; }
+.qd-xp { font: 700 15px var(--qw-mono); color: var(--qw-tiger2); white-space: nowrap; text-align: right; display: inline-block; }
+.qd-status { display: flex; align-items: center; gap: 10px; }
+.qd-status > span:last-child { display: flex; flex-direction: column; font-size: 13px; color: var(--qw-muted); }
+.qd-status b { font-weight: 700; color: var(--qw-muted); }
+.qd-check { width: 34px; height: 34px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--qw-line); }
+.qd-row { transition: background-color .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.qd-row:hover { background: linear-gradient(180deg, #222944, #1a2033); border-color: color-mix(in srgb, var(--qw-tiger) 45%, var(--qw-line)); box-shadow: 0 0 0 1px rgba(255, 122, 26, .12), 0 0 18px rgba(255, 122, 26, .08); }
+.qd-row.is-done { border-color: color-mix(in srgb, var(--qw-ok) 30%, var(--qw-line)); background: linear-gradient(180deg, color-mix(in srgb, var(--qw-ok) 5%, var(--qw-panel2)), var(--qw-panel)); }
+.qd-row.is-done:hover { border-color: color-mix(in srgb, var(--qw-ok) 55%, var(--qw-line)); box-shadow: 0 0 18px rgba(61, 220, 132, .08); }
+/* Completed while the app is open: the check pops, the bar fills, the XP flashes — once. */
+.qd-row.is-new { animation: qd-row-pulse .5s ease-out both; }
+@keyframes qd-row-pulse { from { box-shadow: 0 0 0 0 rgba(61, 220, 132, .55); } to { box-shadow: 0 0 0 10px rgba(61, 220, 132, 0); } }
+.qd-row.is-new .qd-check { animation: qd-pop .4s cubic-bezier(.2, 1.4, .4, 1) both; }
+.qd-row.is-new .qd-bar i { animation: qd-bar .35s ease-out both; }
+.qd-row.is-new .qd-xp { animation: qd-flash 1.2s ease-out both; }
+@keyframes qd-pop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes qd-bar { from { width: 0; } }
+@keyframes qd-flash { 0%, 40% { text-shadow: 0 0 14px rgba(61, 220, 132, .9); transform: scale(1.12); } 100% { text-shadow: none; transform: none; } }
+.qd-row.is-done .qd-xp, .qd-row.is-done .qd-status b { color: var(--qw-ok); }
+.qd-row.is-done .qd-check { border-color: var(--qw-ok); background: var(--qw-ok); box-shadow: 0 0 12px rgba(61, 220, 132, .45); }
+.qd-row.is-done .qd-check .icon { background: #0b0d14; }
+
+.qd-side { display: flex; flex-direction: column; gap: 10px; }
+.qd-side-label { display: block; font-size: 13px; color: var(--qw-muted); }
+.qd-side-big { display: block; font-size: 19px; font-weight: 800; color: var(--qw-ink); }
+.qd-side small { font-size: 12px; color: var(--qw-tiger2); }
+.qd-streak, .qd-next { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.qd-flame .icon { background: var(--qw-tiger); filter: drop-shadow(0 0 8px var(--qw-glow)); }
+.qd-pips { display: flex; gap: 4px; }
+.qd-pips { gap: 5px; }
+.qd-pips i { width: 11px; height: 18px; border-radius: 6px 6px 4px 4px; background: #34405a; border: 1px solid #46536f; }
+.qd-pips i.on { background: linear-gradient(180deg, #ffc061, var(--qw-tiger)); border-color: #ffb347; box-shadow: 0 0 10px var(--qw-glow); }
+.qd-streak .qd-side-big { font-size: 24px; color: var(--qw-tiger2); text-shadow: 0 0 12px rgba(255, 122, 26, .35); }
+.qd-next > .icon { background: var(--qw-ink); }
+/* Next draw: a ring that charges up to midnight — the Tiger Touch ring (track
+   #26456F, one blue, rounded end, from 12 o'clock). */
+.qd-ring { width: 44px; height: 44px; transform: rotate(-90deg); }
+.qd-ring circle { fill: none; stroke-width: 5; }
+.qd-ring-track { stroke: #26456F; }
+.qd-ring-fill { stroke: #3da4f0; stroke-linecap: round; transition: stroke-dasharray .4s ease; }
+.qd-reset.qd-reset { grid-column: 2 / -1; color: var(--qw-muted); }
+.qd-rewards ul, .qd-stats ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.qd-rewards li, .qd-stats li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 14px; color: var(--qw-ink); }
+.qd-rewards b { font: 700 14px var(--qw-mono); color: var(--qw-ok); white-space: nowrap; }
+.qd-stats b { font: 700 14px var(--qw-mono); color: var(--qw-ink); white-space: nowrap; }
+.qd-rewards li .icon, .qd-stats li .icon { background: var(--qw-tiger2); }
+.qd-gem { width: 14px; height: 14px; margin: 0 auto; transform: rotate(45deg); background: var(--qw-ok); box-shadow: 0 0 10px rgba(61, 220, 132, .55); }
+.qd-gem--open { background: var(--qw-tiger2); box-shadow: 0 0 10px var(--qw-glow); }
+.qd-gem--gold { background: var(--qw-legend); box-shadow: 0 0 10px rgba(255, 178, 26, .55); }
+
+@media (max-width: 1500px) { .qd-row { grid-template-columns: 48px minmax(0, 1fr) auto 36px 90px 64px 130px; gap: 10px; } }
+@media (max-width: 1250px) { .qd-grid, .qd-top { grid-template-columns: minmax(0, 1fr); } .qd-caption { display: none; } }
+@media (max-width: 900px) { .qd-row { grid-template-columns: 44px minmax(0, 1fr) auto; } .qd-badge, .qd-count, .qd-bar { display: none; } .qd-status { grid-column: 2 / -1; } }
+@media (prefers-reduced-motion: reduce) {
+  .qd-row.is-new, .qd-chest.is-near .qd-chest-img, .qd-seg i.is-new::after,
+  .qd-row.is-new .qd-check, .qd-row.is-new .qd-bar i, .qd-row.is-new .qd-xp { animation: none; }
+  .qd-row, .qd-bar i { transition: none; }
+}
+.qd-flame .icon, .qd-next > .icon { width: 28px; height: 28px; }
+.qd-flame .icon { width: 36px; height: 36px; }
+.sqb-col-title { margin: 0; font-size: 15px; font-weight: 800; color: var(--tsq-text); }
+.sqb-col-title[hidden] { display: none; }
+
+/* ── Jackpot: the full set completed while the screen is shown (~2 s, once).
+   0–300 ms the bar sweeps and the panel lights up · 300–750 ms the chest goes
+   from grey to gold · 750–1400 ms rays + 16 particles burst from the chest ·
+   1000–1700 ms the XP counts up, rises and shines, the check pops. Transform /
+   opacity / filter only; nothing intercepts the mouse. Never under reduced
+   motion (the screen then shows the earned state at once). ── */
+.qd-progress.is-jackpot .qd-seg { position: relative; }
+.qd-progress.is-jackpot .qd-seg::after { content: ""; position: absolute; inset: -4px 0; pointer-events: none; border-radius: 6px;
+  background: linear-gradient(90deg, transparent, rgba(255, 220, 150, .85), transparent); width: 30%;
+  animation: qd-sweep .5s ease-in .08s both; }
+@keyframes qd-sweep { from { transform: translateX(-110%); opacity: 1; } to { transform: translateX(380%); opacity: 0; } }
+.qd-progress.is-jackpot .qd-seg i.on { animation: qd-seg-pulse .45s ease-out .1s both; }
+@keyframes qd-seg-pulse { 50% { box-shadow: 0 0 16px rgba(255, 140, 40, .8); } }
+
+.qd-chest.is-jackpot { animation: qd-panel-lit .45s ease-out both; }
+@keyframes qd-panel-lit { from { border-color: var(--qw-line); box-shadow: none; } 50% { box-shadow: 0 0 40px rgba(255, 190, 60, .55), inset 0 0 40px rgba(255, 190, 60, .2); } }
+.qd-chest.is-jackpot .qd-chest-art { animation: qd-art-glow .5s ease-out both; }
+@keyframes qd-art-glow { from { opacity: .6; } 60% { filter: brightness(1.6); } }
+.qd-chest.is-jackpot .qd-chest-img { animation: qd-unlock .45s cubic-bezier(.2, 1.2, .4, 1) .3s both; }
+@keyframes qd-unlock {
+  from { filter: grayscale(1) brightness(.72); transform: scale(1); }
+  60% { filter: grayscale(0) brightness(1.35) saturate(1.35) drop-shadow(0 0 22px rgba(255, 200, 80, .95)); transform: scale(1.14); }
+  to { filter: drop-shadow(0 0 14px rgba(255, 190, 60, .65)) drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); transform: scale(1); }
+}
+.qd-burst { position: absolute; left: 64px; top: 50%; width: 0; height: 0; z-index: 2; pointer-events: none; }
+.qd-rays { position: absolute; left: -110px; top: -110px; width: 220px; height: 220px; border-radius: 50%; opacity: 0;
+  background: repeating-conic-gradient(rgba(255, 210, 110, .55) 0 7deg, transparent 7deg 26deg);
+  -webkit-mask: radial-gradient(circle, #000 18%, transparent 70%); mask: radial-gradient(circle, #000 18%, transparent 70%);
+  animation: qd-rays 1.1s ease-out .35s both; }
+@keyframes qd-rays { 0% { opacity: 0; transform: rotate(0) scale(.5); } 30% { opacity: .9; } 100% { opacity: 0; transform: rotate(40deg) scale(1.25); } }
+.qd-p { position: absolute; left: 0; top: 0; opacity: 0; animation: qd-fly .65s cubic-bezier(.15, .7, .3, 1) calc(.75s + var(--dl)) both; }
+.qd-p--dot { width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #ffd36e; box-shadow: 0 0 8px #ffb21a; }
+.qd-p--star { width: 12px; height: 12px; margin: -6px; background: #fff2b0;
+  clip-path: polygon(50% 0, 61% 38%, 100% 50%, 61% 62%, 50% 100%, 39% 62%, 0 50%, 39% 38%); filter: drop-shadow(0 0 4px #ffd36e); }
+.qd-p--conf { width: 5px; height: 9px; margin: -4px -2px; border-radius: 1px; background: var(--qw-tiger); }
+.qd-p--conf:nth-child(4n) { background: #ffcf4a; }
+@keyframes qd-fly {
+  0% { opacity: 0; transform: translate(0, 0) rotate(0) scale(.4); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1); }
+}
+.qd-chest.is-jackpot .qd-chest-xp { animation: qd-xp-win .7s cubic-bezier(.2, 1.3, .4, 1) 1s both, qd-xp-shine .7s ease-in-out 1.15s both;
+  background: linear-gradient(110deg, var(--qw-ok) 40%, #eafff2 50%, var(--qw-ok) 60%) 120% 0 / 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; }
+@keyframes qd-xp-win { from { transform: translateY(10px) scale(.85); opacity: .4; } 55% { transform: translateY(-4px) scale(1.18); text-shadow: 0 0 22px rgba(255, 210, 110, .9); opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes qd-xp-shine { from { background-position: 120% 0; } to { background-position: -20% 0; } }
+.qd-chest-xp { display: inline-block; }
+.qd-chest.is-jackpot .qd-chest-check { animation: qd-pop .4s cubic-bezier(.2, 1.4, .4, 1) 1.15s both; }
+/* The open chest replays the jackpot on click (display only). */
+.qd-chest.is-earned { cursor: pointer; transition: border-color .2s ease, box-shadow .2s ease; }
+.qd-chest.is-earned:hover { box-shadow: 0 0 34px rgba(255, 178, 26, .4), inset 0 0 30px rgba(255, 178, 26, .1); }
+.qd-chest.is-earned:focus-visible { outline: 2px solid var(--qw-legend); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .qd-ring-fill { transition: none; } }
+/* Jackpot: the closed chest sits on top of the open one and fades out as it lights up. */
+.qd-chest-art .qd-chest-closed { position: absolute; inset: 0; margin: auto; pointer-events: none; }
+.qd-chest.is-jackpot .qd-chest-closed { animation: qd-unlock .45s cubic-bezier(.2, 1.2, .4, 1) .3s both, qd-lid-off .25s ease-out .55s both; }
+@keyframes qd-lid-off { to { opacity: 0; } }
+
+/* ── TigerSquad view (renderer/quests/squad-rankings.js) — one dark world like
+   the Quests views, whatever the app theme: hero, My rank, Community pulse,
+   the three leagues. ── */
+.inv-squad-view {
+  --tsq-bg: #0b0d14; --tsq-bg2: #121624; --tsq-card: #161b2c; --tsq-line: #2a3150;
+  --tsq-text: #eef1fb; --tsq-muted: #8f97b3; --tsq-orange: #ff8a2e;
+  --sqr-gold: #ffb21a; --sqr-cyan: #3da4f0; --sqr-ok: #3ddc84;
+  --sqr-display: "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
+  --sqr-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: var(--tsq-text);   /* no panel of its own: the blocks sit straight on the view */
+}
+.squad-board--inline > .squad-invite-x, .squad-board--inline .tsq-title { display: none; }
+.squad-board--inline .tsq-scroll { padding: 0 0 8px; gap: 10px; }
+.squad-board--inline .sqb-tabs { padding: 3px; }
+.squad-board--inline .sqb-tab { height: 32px; }
+.squad-board.squad-board--inline { max-width: none; }
+
+.sqr-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 220px; padding: 12px 18px 12px 32px;
+  border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden;
+  /* One continuous workshop scene, edge to edge (no fade, no added band), cropped in height only. */
+  background: url("../../assets/img/tigersquad/tigersquad-rankings-banner-v4.webp") 50% 39% / cover no-repeat, #0b0d14; }
+.sqr-hero > * { position: relative; z-index: 1; }
+.sqr-hero h2 { margin: 0; font: 800 64px/0.95 var(--sqr-display); letter-spacing: .01em; color: #fff; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
+.sqr-hero-orange { color: var(--tsq-orange); }
+.sqr-hero-sub { margin: 10px 0 0; font: 700 18px var(--sqr-display); letter-spacing: .5em; text-transform: uppercase; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
+.sqr-hero-tag { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 15px; font-weight: 600; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
+.sqr-hero-tag .icon { background: var(--sqr-gold); }
+.sqr-join { height: 34px; padding: 0 16px; border: none; border-radius: 9px; cursor: pointer; font: 800 13px inherit; color: #17120e; background: linear-gradient(180deg, #ff8a2e, #ff6f12); }
+
+.squad-board--inline .sqb-tabs { background: #121624; }
+.sqr { display: flex; flex-direction: column; gap: 10px; }
+.sqr[hidden], .squad-board--inline .sqb-cols[hidden] { display: none; }
+.sqr-updated { margin-left: auto; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--sqr-ok); border: 1px solid color-mix(in srgb, var(--sqr-ok) 50%, transparent); }
+.sqr-muted { color: var(--tsq-muted); font-size: 13px; }
+
+/* The account's rank card, on the right of the hero: who / league / XP / ranks,
+   then the next rival with the real gap. */
+.sqr-card { position: relative; z-index: 1; display: grid; grid-template-columns: auto auto; flex: 0 0 auto;
+  border-radius: 14px; border: 1px solid color-mix(in srgb, var(--sqr-gold) 70%, transparent); background: rgba(10, 12, 20, .86);
+  box-shadow: 0 0 22px rgba(255, 178, 26, .22); backdrop-filter: blur(4px); }
+.sqr-card--out { grid-template-columns: 1fr; max-width: 360px; }
+/* Left: avatar column (avatar, flag, globe) + text column (name, league, XP, ranks). */
+.sqr-card-me { display: grid; grid-template-columns: 56px auto; column-gap: 12px; row-gap: 4px; align-items: center; padding: 10px 16px 10px 12px; }
+.sqr-card--out .sqr-card-me { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.sqr-card-av .sqb-avatar { width: 56px; height: 56px; font-size: 18px; }
+.sqr-card-head { display: flex; flex-direction: column; gap: 1px; }
+.sqr-card-name { font-size: 15px; font-weight: 700; color: #fff; white-space: nowrap; }
+.sqr-card-league { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; color: var(--sq-a, var(--sqr-gold)); white-space: nowrap; }
+.sqr-card-league img { width: 18px; height: 18px; object-fit: contain; }
+.sqr-card-xp { font-size: 21px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: #fff; white-space: nowrap; }
+.sqr-card-ic { justify-self: center; display: grid; place-items: center; font-size: 20px; line-height: 1; }
+.sqr-card-ic .icon { background: var(--sqr-cyan); }
+.sqr-card-rank { font-size: 15px; color: #e9ecf7; white-space: nowrap; }
+.sqr-card-rank b { font-weight: 800; color: #fff; }
+.sqr-card-rival { display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 250px; padding: 10px 14px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.sqr-card .sqr-muted { white-space: normal; margin: 0; }
+.sqr-me-label { font-size: 13px; font-weight: 600; color: #c9cfe2; }
+.sqr-rival-who { display: flex; align-items: center; gap: 12px; }
+.sqr-rival-who .sqb-avatar { width: 40px; height: 40px; flex-shrink: 0; }
+.sqr-rival-who > * { flex-shrink: 0; }
+.sqr-rival-who > .sqr-rival-txt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.sqr-rival-who b { font-size: 13.5px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqr-rival-who small { font-size: 13.5px; font-weight: 800; color: var(--tsq-orange); white-space: nowrap; }
+.sqr-rival-who > .icon { background: #c9cfe2; }
+.sqr-top { font-size: 14px; color: var(--sqr-gold); }
+.sqr-bar { display: block; height: 8px; border-radius: 4px; background: #262c3d; overflow: hidden; }
+.sqr-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff7a1a, #ffb347); box-shadow: 0 0 10px rgba(255, 122, 26, .45); }
+.sqr-flag { font-size: 18px; line-height: 1; }
+
+/* Community pulse: one compact strip. */
+.sqr-pulse { display: grid; grid-template-columns: minmax(240px, 1.1fr) repeat(3, minmax(0, 1fr)); align-items: stretch; min-height: 86px;
+  border: 1px solid var(--tsq-line); border-radius: 14px; background: linear-gradient(180deg, #161b2c, #121624); }
+.sqr-pulse > * + * { border-left: 1px solid var(--tsq-line); }
+.sqr-pulse-intro { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
+.sqr-pulse-intro .icon { width: 30px; height: 30px; background: var(--sqr-cyan); flex-shrink: 0; }
+.sqr-pulse-intro h3 { margin: 0; font: 800 17px var(--sqr-display); text-transform: uppercase; letter-spacing: .03em; color: var(--tsq-text); }
+.sqr-pulse-intro p { margin: 2px 0 0; font-size: 12px; color: var(--tsq-muted); }
+/* The sparkline is the card's background: full width, under the text, fading in toward the right. */
+.sqr-stat { --c: var(--sqr-gold); position: relative; display: flex; align-items: center; gap: 10px; padding: 10px 14px; min-width: 0; overflow: hidden; }
+.sqr-stat > .icon, .sqr-stat-txt { position: relative; z-index: 1; }
+.sqr-stat--spools { --c: var(--sqr-cyan); } .sqr-stat--printers { --c: #b46bff; }
+.sqr-stat > .icon { width: 28px; height: 28px; background: var(--c); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 50%, transparent)); }
+.sqr-stat-txt { display: flex; flex-direction: column; min-width: 0; }
+.sqr-stat-label { font: 800 11px var(--sqr-display); text-transform: uppercase; letter-spacing: .06em; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqr-stat-n { font: 800 24px/1.1 var(--sqr-mono); color: var(--tsq-text); }
+.sqr-stat-txt small { font-size: 11px; line-height: 1.25; color: var(--tsq-muted); }
+.sqr-stat .sqr-spark { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 78%; pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, .35) 0, rgba(0, 0, 0, .55) 35%, #000 100%);
+  mask-image: linear-gradient(90deg, rgba(0, 0, 0, .35) 0, rgba(0, 0, 0, .55) 35%, #000 100%); }
+.sqr-spark-line { fill: none; stroke: var(--c); stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px var(--c)); }
+.sqr-spark-area { fill: color-mix(in srgb, var(--c) 22%, transparent); stroke: none; }
+.sqr-stat-n { text-shadow: 0 1px 8px rgba(11, 13, 20, .9); }
+.sqr-pulse-intro .sqr-pulse-meta { margin-top: 4px; font-size: 12px; color: var(--tsq-text); }
+.sqr-pulse .sqr-updated { margin: 0; padding: 0; border: none; border-radius: 0; font-weight: 700; color: var(--sqr-ok); }
+.sqr-unavail { grid-column: 2 / -1; align-self: center; padding: 0 16px; }
+
+/* Leagues */
+.sqr-boards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.sqr-board { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--tsq-line); background: linear-gradient(180deg, #161b2c, #121624); }
+.sqr-board-head { display: flex; align-items: center; gap: 12px; }
+.sqr-board-head > div { flex: 1; min-width: 0; }
+.sqr-board-head h3 { margin: 0; font-size: 17px; font-weight: 800; color: var(--tsq-text); }
+.sqr-board-head p { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: var(--tsq-orange); }
+.sqr-board-ic { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: rgba(61, 164, 240, .12); flex-shrink: 0; }
+.sqr-board-ic .icon { background: var(--sqr-cyan); }
+.sqr-board-ic .sqr-flag { font-size: 24px; }
+.sqr-all { height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--tsq-line); background: rgba(255, 255, 255, .03); color: var(--tsq-text); font: 700 12px inherit; cursor: pointer; white-space: nowrap; }
+.sqr-all:hover { border-color: var(--tsq-orange); }
+.sqr-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sqr-row { display: grid; grid-template-columns: 38px 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 12px 5px 8px; border-radius: 10px;
+  border: 1px solid var(--tsq-line); background: rgba(255, 255, 255, .02); transition: border-color .2s, background-color .2s; }
+.sqr-row:hover { border-color: color-mix(in srgb, var(--tsq-orange) 40%, var(--tsq-line)); background: rgba(255, 255, 255, .04); }
+.sqr-row.is-me { border-color: var(--tsq-orange); background: linear-gradient(90deg, rgba(255, 122, 26, .16), rgba(255, 122, 26, .04)); box-shadow: 0 0 16px rgba(255, 122, 26, .15); }
+.sqr-medal { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5)); }
+.sqr-rank { text-align: center; font: 800 14px var(--sqr-mono); color: var(--tsq-muted); }
+.sqr-av .sqb-avatar { width: 34px; height: 34px; }
+.sqr-flag--row { font-size: 24px; text-align: center; }
+.sqr-name { display: flex; flex-direction: column; min-width: 0; }
+.sqr-name b { font-size: 14px; color: var(--tsq-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sqr-name small { font-size: 12px; color: var(--tsq-muted); }
+.sqr-name small[class*="sq-"] { color: var(--sq-a); }
+.sqr-mini { font-size: 12px; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
+.sqr-xp { font: 800 14px var(--sqr-mono); color: var(--tsq-text); white-space: nowrap; }
+.sqr-gap { text-align: center; color: var(--tsq-muted); line-height: .6; }
+
+.sqr-skel { border-radius: 14px; background: linear-gradient(90deg, #161b2c 0%, #1e2540 50%, #161b2c 100%) 0 0 / 200% 100%; animation: sqr-shimmer 1.4s linear infinite; }
+@keyframes sqr-shimmer { to { background-position: -200% 0; } }
+
+@media (max-width: 1400px) { .sqr-pulse { grid-template-columns: repeat(3, minmax(0, 1fr)); } .sqr-pulse-intro { grid-column: 1 / -1; border-bottom: 1px solid var(--tsq-line); padding: 8px 16px; } .sqr-pulse > .sqr-stat:nth-child(2) { border-left: none; } }
+@media (max-width: 1200px) { .sqr-boards { grid-template-columns: minmax(0, 1fr); } .sqr-hero { flex-direction: column; align-items: flex-start; } .sqr-hero h2 { font-size: 48px; } }
+@media (prefers-reduced-motion: reduce) { .sqr-skel { animation: none; } .sqr-row { transition: none; } }
+/* Narrower windows: the rank card takes a larger share — slide the trophy group left to stay between title and card. */
+/* The view bar carries the TigerSquad sections (Rankings, Items, History icons): no tabs in the page. */
+.squad-board--inline .sqb-tabs[hidden] { display: none; }
+.vtg-sep[hidden] { display: none; }
+/* Header (own banner): XP and world-rank chips after the TigerSquad badge. */
+.fvb-xp-host { display: contents; }
+.fvb-xp { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px 0 7px; border: none; border-radius: 999px; cursor: pointer;
+  background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--text); font-family: inherit; font-size: 11px; font-weight: 800; line-height: 1; letter-spacing: .3px; font-variant-numeric: tabular-nums;
+  transition: filter .15s; }
+.fvb-xp:hover { filter: brightness(1.25); }
+.fvb-xp .icon { background: var(--primary); }
+.fvb-rank .icon { background: #FFC83D; }

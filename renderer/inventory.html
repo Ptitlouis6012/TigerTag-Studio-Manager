@@ -289,16 +289,24 @@
             </div>
           </div>
           <!-- Progress: today's quests, the journey level, the TigerSquad (filled by _renderQuestPill). -->
+          <span class="vtg-sep" id="vtgSepQuests" aria-hidden="true" hidden></span>
           <div class="vtg-group vtg-progress" id="vtgQuests" hidden>
             <span class="vtg-label"><span data-i18n="questsTitle">Tiger Quests</span></span>
-            <div class="vtg-chips">
-              <button type="button" class="vtg-chip" id="vtgDaily"></button>
-              <button type="button" class="vtg-chip" id="vtgLevel"></button>
+            <div class="view-toggle vtg-quests">
+              <span class="view-toggle-ind" aria-hidden="true"></span>
+              <button id="vtgDaily" data-i18n-aria="questsToday"><span class="icon icon-list-check icon-13"></span><span class="vtg-btn-bar" aria-hidden="true"><i></i></span></button>
+              <button id="vtgLevel" data-i18n-aria="questsJourney"><span class="icon icon-compass icon-13"></span><span class="vtg-btn-bar" aria-hidden="true"><i></i></span></button>
             </div>
           </div>
+          <span class="vtg-sep" id="vtgSepSquad" aria-hidden="true" hidden></span>
           <div class="vtg-group vtg-progress" id="vtgSquad" hidden>
             <span class="vtg-label"><span>TigerSquad</span></span>
-            <div class="vtg-chips"><button type="button" class="vtg-chip" id="vtgSquadChip"></button></div>
+            <div class="view-toggle">
+              <span class="view-toggle-ind" aria-hidden="true"></span>
+              <button id="vtgSquadChip" data-i18n-aria="squadTabRankings"><span class="icon icon-community icon-13"></span></button>
+              <button id="vtgSquadItems" data-i18n-aria="squadItems"><span class="icon icon-star-fill icon-13"></span></button>
+              <button id="vtgSquadHist" data-i18n-aria="xpHistory"><span class="icon icon-clock icon-13"></span></button>
+            </div>
           </div>
         </div>
         <div class="inv-actions-group">
@@ -470,6 +478,8 @@
       <div id="invProductsView" class="inv-products-view hidden"></div>
       <!-- Lists (Amazon-style wishlists) view — populated by renderListsView(). -->
       <div id="invListsView" class="inv-lists-view hidden"></div>
+      <div id="invQuestsView" class="inv-quests-view qst-view hidden"></div>
+      <div id="invSquadView" class="inv-squad-view hidden"></div>
 
       <!-- Search — the official TigerTag+ catalogue (grid or table), rendered by
            renderCatalogView() from the LOCAL cache. Picking a product only
@@ -1504,6 +1514,19 @@
       <div class="fp-empty-title" data-i18n="notifsEmptyTitle">No notifications</div>
       <div class="fp-empty-sub" data-i18n="notifsEmptySub">Friend requests and updates show up here</div>
     </div>
+  </div>
+</div>
+
+<!-- XP history (slide-in from right) — the TigerSquad "History" tab -->
+<button class="pp-close-tab" id="xpHistCloseTab" aria-label="Close" data-i18n-aria="tutoClose" hidden>»</button>
+<div class="detail-panel friends-panel xp-hist-panel" id="xpHistPanel">
+  <div class="panel-header">
+    <span class="panel-title" data-i18n="xpHistory">History</span>
+    <button class="panel-close" id="xpHistPanelClose" aria-label="Close" data-i18n-aria="tutoClose">✕</button>
+  </div>
+  <div class="panel-body friends-body">
+    <p class="sqb-you" hidden></p>
+    <ol class="sqb-list" aria-live="polite"></ol>
   </div>
 </div>
 
