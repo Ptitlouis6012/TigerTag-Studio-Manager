@@ -4259,28 +4259,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     onScaleUsed: () => _recordUsbScale(),
   });
 
+  // Settings → Data → "Export .ttag": the whole inventory, in the TigerTag file format.
   $("btnStgExport").addEventListener("click", () => {
-    if (!state.inventory) return;
-    const blob = new Blob([JSON.stringify(state.inventory,null,2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob); const a = document.createElement("a");
-    a.href = url; a.download = `tigertag-${Date.now()}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    const lbl = $("btnStgExport").querySelector("[data-i18n]");
+    const flash = key => { if (!lbl) return; lbl.textContent = t(key); setTimeout(() => { lbl.textContent = t("settingsExport"); }, 1800); };
+    // Reading every chip backup takes a few seconds on a large stock: show it working.
+    const btn = $("btnStgExport");
+    if (btn.disabled) return;
+    btn.disabled = true; btn.classList.add("loading");
+    _exportAllTtag(flash).catch(e => reportError("ttag.exportAll", e))
+      .finally(() => { btn.disabled = false; btn.classList.remove("loading"); });
   });
 
   // "Import a .ttag" — three entry points share one flow: the visible inventory
   // toolbar button, Settings → Data, and drag-drop anywhere on the window.
   const _onImportTtagClick = () => openTtagImportPicker();
   $("btnStgImportTtag")?.addEventListener("click", _onImportTtagClick);
-  $("btnInvImportTtag")?.addEventListener("click", _onImportTtagClick);
   $("ttagImportClose")?.addEventListener("click", closeTtagImport);
   // Restore/Import option info bubbles — the ⓘ (.tool-info) shows the app's
   // positioned tooltip on hover. Delegated once on the persistent body.
   $("ttagImportBody")?.addEventListener("mouseover", e => { const el = e.target.closest?.(".tool-info"); if (el) _showToolInfoTip(el); });
   $("ttagImportBody")?.addEventListener("mouseout",  e => { const el = e.target.closest?.(".tool-info"); if (el && !el.contains(e.relatedTarget)) _hideToolInfoTip(); });
-  // "Export" — whole-inventory .ttag, the toolbar counterpart to the per-spool
-  // export in the detail toolbox.
-  $("btnInvExportTtag")?.addEventListener("click", () => _exportSelectedTtag().catch(e => reportError("ttag.exportSel", e)));
   _wireTtagDropZone();
-  _syncInvBarButtons();
 
   /* ── "From Catalogue" → the Search views ────────────────────────────────
      The button is a shortcut INTO the Search segment, not a modal of its own:
@@ -4290,8 +4290,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // …and it lands in the SAME layout you were already reading the inventory in:
   // grid → catalogue grid, list → catalogue list. Jumping from a list of rows to
   // a wall of cards (or the reverse) reads as a different feature rather than the
-  // same shelf seen from the catalogue side. `_syncInvBarButtons` only shows the
-  // button in those two modes, so there is no third case to map.
+  // same shelf seen from the catalogue side. Only those two modes reach here,
+  // so there is no third case to map.
   // (The entry point is the "+ Material" side card — see openMaterialSourcePicker.)
 
   /* ── Settings → Tools: force a catalogue re-sync ────────────────────────────
@@ -4845,7 +4845,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
       const xp = typeof d.xpPoints === "number" ? d.xpPoints : null;
       const cert = typeof d.certifiedPlusCount === "number" ? d.certifiedPlusCount : null;
-      if (xp === state.xpPoints && cert === state.certifiedPlusCount) return;
+      state.tigerTagCount = typeof d.tigerTagCount === "number" ? d.tigerTagCount : 0;   // squad progress (Bronze → Silver)
+      if (xp === state.xpPoints && cert === state.certifiedPlusCount) { _renderProgressChips(); return; }
       state.xpPoints = xp; state.certifiedPlusCount = cert;
       _renderSquadXp();
     }, () => {});
@@ -4944,7 +4945,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (lv) _setBar(level, lv.done / lv.total * 100, `${lv.name} · ${t("questsProgress", { n: lv.done, total: lv.total })}`);
     }
     if (qWrap && !qWrap.hidden && qWasHidden) { qWrap.dataset.shown = "1"; requestAnimationFrame(() => _positionViewIndicators(true)); }
-    // TigerSquad group: Rankings · Items · History (no figures — they are in the page).
+    // TigerSquad group: Rankings · Items · History. Items carries the progress to the
+    // next squad level (Bronze → 20 TigerTag chips, Gold → 50 Certified; Silver's step
+    // is a donation, nothing to count); the figures are in its hover name.
+    const sTier = _ownSquadTier();
+    const sGoal = sTier === "bronze" ? [state.tigerTagCount || 0, 20, "silver"] : sTier === "gold" ? [state.certifiedPlusCount || 0, 50, "platinum"]
+      : sTier === "platinum" ? [1, 1, null] : [0, 1, null];
+    _setBar($("vtgSquadItems"), Math.min(100, sGoal[0] / sGoal[1] * 100),
+      sGoal[2] ? `${t("squadItems")} · ${t("xpNextTitle", { tier: squadTierLabel(sGoal[2]) })} ${Math.min(sGoal[0], sGoal[1])}/${sGoal[1]}` : t("squadItems"));
     const sWrap = $("vtgSquad");
     if (sWrap) {
       const hide = !own || typeof state.xpPoints !== "number";
@@ -9125,8 +9133,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!root || !root.querySelectorAll) return;
     root.querySelectorAll("img[data-img-src]:not([data-img-seen])").forEach(_imgAttach);
   }
+  // An observed image that leaves the DOM before it was ever requested is
+  // unobserved, or the IntersectionObserver keeps it (and its card) alive for
+  // the session — the virtualised catalogue grid drops cards on every scroll.
+  function _imgForget(img) {
+    if (img.isConnected || img.dataset.imgBusy || img.getAttribute("src")) return;
+    _imgIO?.unobserve(img);
+    delete img.dataset.imgSeen;
+  }
   new MutationObserver(muts => {
     for (const m of muts) {
+      for (const n of m.removedNodes) {
+        if (n.nodeType !== 1 || n.isConnected) continue;
+        if (n.matches?.("img[data-img-seen]")) _imgForget(n);
+        else n.querySelectorAll?.("img[data-img-seen]").forEach(_imgForget);
+      }
       for (const n of m.addedNodes) {
         if (n.nodeType !== 1) continue;
         if (n.matches?.("img[data-img-src]")) _imgAttach(n);
@@ -9143,6 +9164,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // until the bytes arrived.
     img.classList.add("img-loaded");
     _imgDone(img);
+  }, true);
+
+  // The side-card photos (`.panel-img`) load straight from `src`, outside the
+  // queue, but are revealed the same way: the wrap shows the plain spool colour
+  // until the bytes are in, then the inset photo fades in — no empty rounded
+  // frame drawn over the colour while it loads.
+  document.addEventListener("load", e => {
+    if (e.target instanceof HTMLImageElement && e.target.classList.contains("panel-img")) {
+      e.target.classList.add("img-loaded");
+    }
   }, true);
 
   document.addEventListener("error", e => {
@@ -11516,7 +11547,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     document.body.classList.remove("bulk-select-mode");
     document.querySelectorAll(".js-select-toggle").forEach(b => b.classList.remove("active"));
     _clearSelection();
-    _syncTtagExportBtn();   // selection cleared → Export disables
 
     // Materials regroup on exit; printers / products have no grouping (skip the
     // re-render so live camera thumbnails / freshly-typed rows aren't rebuilt).
@@ -11697,7 +11727,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   function _updateBulkBar() {
-    _syncTtagExportBtn();   // Export follows the selection (disabled when empty)
     const bar = $("bulkBar");
     if (!bar) return;
     const ctx = _bulkCtx();
@@ -11989,7 +12018,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     // What the "+" will do here — Material, Device or Rack — said in its name.
     _syncSearchAddLabel();
-    _syncInvBarButtons();    // .ttag Export/Import: inventory (table/grid) only
     _syncSearchPlaceholder(); // materials ↔ printer search hint
     // Right-of-search selectors: in the printer grid/table swap them to printer
     // brand + tag (materials-only Material / Version selects hidden via the body
@@ -14607,8 +14635,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // toggle, a price edit, any product snapshot) patches the card badges instead
   // of rebuilding every card: a rebuild re-inserted 60 photos twice per click
   // and dropped the chunks scrolled into view.
+  // The signature is the mode/language string PLUS the hit array compared item
+  // by item — the items are the index's own objects, so an identity loop answers
+  // "same list?" without joining 18 000 ids into a string on every keystroke.
   let _catViewRenderedSig   = "";
+  let _catViewRenderedHits  = [];
   let _catViewRenderedIndex = null;
+  // Grid virtualisation — see _catViewGridRender.
+  const CAT_GRID_BUFFER_ROWS = 4;
+  let _cvGridStart = 0, _cvGridEnd = 0, _cvGridRowH = 0, _cvGridRaf = 0;
 
   function renderCatalogView() {
     if (!$("invCatalogView")) return;
@@ -14628,16 +14663,39 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      within one brand — the control stays disabled until a brand is picked).
      All of it runs over the local cache: changing a filter never hits the API.
   */
-  const CAT_SORTS = {
-    brand:    (a, b) => String(a.brand || "").localeCompare(String(b.brand || "")),
-    name:     (a, b) => String(a._name || "").localeCompare(String(b._name || "")),
-    material: (a, b) => String(a.material || "").localeCompare(String(b.material || "")),
-  };
+  const CAT_SORTS = { brand: "brand", name: "_name", material: "material" };
+  // The whole catalogue sorted ONCE per (index, sort key) into an item → rank
+  // map; a search then orders its hits by integer rank. Sorting 18 000 items
+  // with localeCompare on every keystroke was most of the typing lag. Title is
+  // the tiebreak so the order is stable between renders.
+  let _catSortCache = { idx: null, key: "", rank: null };
+  function _catSortRank(sortKey) {
+    const field = CAT_SORTS[sortKey] || CAT_SORTS.brand;
+    if (_catSortCache.idx === _catalogIndex && _catSortCache.key === field) return _catSortCache.rank;
+    const coll = new Intl.Collator();
+    const items = _catalogIndex.map(e => e.it);
+    items.sort((a, b) => coll.compare(String(a[field] || ""), String(b[field] || ""))
+                      || coll.compare(String(a.title || ""), String(b.title || "")));
+    const rank = new Map();
+    items.forEach((it, i) => rank.set(it, i));
+    _catSortCache = { idx: _catalogIndex, key: field, rank };
+    return rank;
+  }
 
   // Counts are computed over the WHOLE catalogue, not the current result set —
   // the number next to "Bambu Lab" answers "how many are there", which stays
   // stable as the other filters move.
+  // The counts only move with the index (and the "All …" rows with the
+  // language), so the three catalogue-wide selects are rebuilt only then, and
+  // Series only when the brand changes too — not on every keystroke.
+  let _catFacetsKey = "", _catFacetsIdx = null;
   function _catViewFillFacets() {
+    const brandNow = $("cvBrand")?.value || "";
+    const key = state.lang + "|" + brandNow;
+    if (_catFacetsIdx === _catalogIndex && _catFacetsKey === key) return;
+    const fullRebuild = _catFacetsIdx !== _catalogIndex || !_catFacetsKey.startsWith(state.lang + "|");
+    _catFacetsIdx = _catalogIndex;
+    _catFacetsKey = key;
     const idx = _catalogIndex.map(e => e.it);
     const countBy = (list, key) => {
       const m = new Map();
@@ -14662,9 +14720,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // and the BUTTON shows the field name (via `data-csel-short`, which
     // _enhanceSelect swaps in whenever no value is picked) so the user can see
     // what the menu filters without opening it.
-    fill($("cvType"),     t("filterAllVersions"),  countBy(idx, "product_type"));
-    fill($("cvBrand"),    t("filterAllBrands"),    countBy(idx, "brand"));
-    fill($("cvMaterial"), t("filterAllMaterials"), countBy(idx, "material"));
+    if (fullRebuild) {
+      fill($("cvType"),     t("filterAllVersions"),  countBy(idx, "product_type"));
+      fill($("cvBrand"),    t("filterAllBrands"),    countBy(idx, "brand"));
+      fill($("cvMaterial"), t("filterAllMaterials"), countBy(idx, "material"));
+    }
 
     // Series depends on the chosen brand.
     const brand = $("cvBrand")?.value || "";
@@ -14703,26 +14763,30 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _catViewHits = _catalogFilter($("searchInv")?.value, fBrand, fMat)
       .filter(it => (!fType || it.product_type === fType)
                  && (!fSeries || it._series === fSeries));
-    const sorter = CAT_SORTS[$("cvSort")?.value || "brand"] || CAT_SORTS.brand;
-    // Title as the tiebreak so the order is stable between renders.
-    _catViewHits.sort((a, b) => sorter(a, b) || String(a.title || "").localeCompare(String(b.title || "")));
+    const rank = _catSortRank($("cvSort")?.value || "brand");
+    _catViewHits.sort((a, b) => rank.get(a) - rank.get(b));
     // Drop a selection the current query no longer contains.
     if (_catViewSelectedId && !_catViewHits.some(x => String(x.id) === _catViewSelectedId)) {
       _catViewSelectedId = null;
     }
     const body = $("catalogViewBody");
-    const sig = [state.viewMode, state.lang, _catViewHits.map(x => x.id).join(",")].join("|");
-    if (body && sig === _catViewRenderedSig && _catalogIndex === _catViewRenderedIndex && body.childElementCount) {
+    const sig = state.viewMode + "|" + state.lang;
+    const sameHits = _catViewHits.length === _catViewRenderedHits.length
+      && _catViewHits.every((x, i) => x === _catViewRenderedHits[i]);
+    if (body && sameHits && sig === _catViewRenderedSig && _catalogIndex === _catViewRenderedIndex && body.childElementCount) {
       _catViewPatchBadges(body);
       _catViewPaintSelection();
       _catViewSyncStatus();
       return;
     }
     _catViewRenderedSig = sig;
+    _catViewRenderedHits = _catViewHits;
     _catViewRenderedIndex = _catalogIndex;
     _catViewShown = 0;
+    _cvGridStart = _cvGridEnd = 0;
     if (body) {
       const grid = state.viewMode === "catalogGrid";
+      body.style.paddingTop = body.style.paddingBottom = "";
       // The grid REUSES `.inv-grid` — same track size and gap as the inventory
       // grid, so a catalogue card is exactly the size of a spool card. Only the
       // sentinel hook is ours.
@@ -14741,7 +14805,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           </div>`;
       }
     }
-    _catViewRenderChunk();
+    if (state.viewMode === "catalogGrid") {
+      // A new result list starts at its top — the old offset means nothing in it.
+      const view = $("invCatalogView");
+      if (view) view.scrollTop = 0;
+      _cvGridRowH = 0;
+      _catViewGridRender();
+    } else {
+      _catViewRenderChunk();
+    }
     _catViewSyncStatus();
     // Search — the TABLE scrolls inside its own bordered box (like the inventory
     // and Favorites tables); the GRID fills the view, so the view is what
@@ -14924,6 +14996,79 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
   }
 
+  /* Grid virtualisation. The catalogue holds ~18 000 products; appending chunks
+     forever left thousands of cards (and twice as many <img>) in the DOM, and
+     every scroll step got slower as it grew. Only the rows on screen plus
+     CAT_GRID_BUFFER_ROWS either side exist; the body's top/bottom padding stands
+     in for the rest so the scrollbar keeps the full height. Every card has the
+     same height (square photo + fixed body), so one measured card gives the row
+     pitch. Moving the window trims and adds cards at the two ends only — the
+     cards that stay are never touched, so their photos never reload. */
+  function _catViewGridCards(a, b) {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = _catViewHits.slice(a, b).map(_catViewCardHTML).join("");
+    return tpl.content;
+  }
+  function _catViewGridRender() {
+    _cvGridRaf = 0;
+    const body = $("catalogViewBody"), view = $("invCatalogView");
+    if (!body || !view || state.viewMode !== "catalogGrid") return;
+    const n = _catViewHits.length;
+    if (!n) return;
+    const cs = getComputedStyle(body);
+    const cols = Math.max(1, cs.gridTemplateColumns.split(" ").filter(Boolean).length);
+    const gap = parseFloat(cs.rowGap) || 0;
+    if (!_cvGridRowH) {
+      // Nothing to measure yet: lay down the first rows, then read one card.
+      if (!body.firstElementChild) {
+        _cvGridStart = 0;
+        _cvGridEnd = Math.min(n, cols * 3);
+        body.append(_catViewGridCards(0, _cvGridEnd));
+      }
+      _cvGridRowH = body.firstElementChild.getBoundingClientRect().height;
+      if (!_cvGridRowH) return;   // view hidden — the ResizeObserver comes back
+    }
+    const stride = _cvGridRowH + gap;
+    const rows = Math.ceil(n / cols);
+    // How far the view's top edge sits into the body — the padding included,
+    // since it stands for the rows above the window.
+    const into = view.getBoundingClientRect().top - body.getBoundingClientRect().top;
+    const first = Math.max(0, Math.min(rows - 1, Math.floor(into / stride) - CAT_GRID_BUFFER_ROWS));
+    const last  = Math.min(rows, Math.ceil((into + view.clientHeight) / stride) + CAT_GRID_BUFFER_ROWS);
+    const start = first * cols, end = Math.min(n, Math.max(last, first + 1) * cols);
+    if (start !== _cvGridStart || end !== _cvGridEnd) {
+      if (start >= _cvGridEnd || end <= _cvGridStart) {
+        body.replaceChildren(_catViewGridCards(start, end));
+      } else {
+        // One Range delete per end, not one remove() per card.
+        const cut = (from, to) => {
+          if (from >= to) return;
+          const r = document.createRange();
+          r.setStartBefore(body.children[from]);
+          r.setEndAfter(body.children[to - 1]);
+          r.deleteContents();
+        };
+        cut(end - _cvGridStart, _cvGridEnd - _cvGridStart);
+        cut(0, start - _cvGridStart);
+        if (start < _cvGridStart) body.prepend(_catViewGridCards(start, _cvGridStart));
+        if (end > _cvGridEnd) body.append(_catViewGridCards(_cvGridEnd, end));
+      }
+      _cvGridStart = start;
+      _cvGridEnd = end;
+    }
+    body.style.paddingTop = `${first * stride}px`;
+    body.style.paddingBottom = `${Math.max(0, rows - Math.ceil(end / cols)) * stride}px`;
+  }
+  function _catViewGridSchedule() {
+    if (!_cvGridRaf && state.viewMode === "catalogGrid") _cvGridRaf = requestAnimationFrame(_catViewGridRender);
+  }
+  $("invCatalogView")?.addEventListener("scroll", _catViewGridSchedule, { passive: true });
+  // A width change moves the column count AND the card height (the photo is
+  // square), so both are measured again.
+  if ($("invCatalogView") && "ResizeObserver" in window) {
+    new ResizeObserver(() => { _cvGridRowH = 0; _catViewGridSchedule(); }).observe($("invCatalogView"));
+  }
+
   // One-off status message (a failed sync with nothing cached to fall back on).
   function _catViewSetStatus(msg) {
     const el = $("catalogViewStatus");
@@ -14952,18 +15097,39 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      already looked at costs nothing, and the cache dies with the session.
   */
   const _catDetailCache = new Map();
+  // The LIST item dressed as a detail answer — what the catalogue already holds
+  // in memory (brand, material, aspects, colours, photo, measure). The card
+  // opens from it AT ONCE; the real detail (temperatures, description, links)
+  // refines it in place when `product/get` answers, which takes ~1 s.
+  function _catApiFromItem(it) {
+    const grams = _catMeasureToGrams(it.measure) || null;
+    return {
+      brand: it.brand, product_type: it.product_type, name: it.title,
+      series: it.series || it._series, sku: it.sku, barcode: it.barcode, color: it.color,
+      images: it.img_src ? { main_src: it.img_src } : {},
+      filament: {
+        material: it.material, aspect1: it.aspect1, aspect2: it.aspect2,
+        color: it.color, color_info: it.color_info,
+        measure_value: grams, measure_unit: grams ? "g" : undefined, grams,
+      },
+    };
+  }
   async function _catViewProductCard(it) {
     if (!it) return;
     let api = _catDetailCache.get(String(it.id));
     if (!api) {
+      _catViewShowProduct(it, _catApiFromItem(it));
       const res = await window.electronAPI?.lookupProduct?.(Number(it.id));
-      if (!res?.ok || !res.api) return;          // silent: the row stays selected
+      if (!res?.ok || !res.api) return;          // silent: the provisional card stays
       api = res.api;
       _catDetailCache.set(String(it.id), api);
     }
     // The selection may have moved (or been cleared) while the fetch was in
     // flight — don't yank the card onto a product the user has left behind.
     if (String(it.id) !== String(_catViewSelectedId)) return;
+    _catViewShowProduct(it, api);
+  }
+  function _catViewShowProduct(it, api) {
     // Adding from the catalogue makes a TigerData+ (chipless id + real product
     // id), so the preview is identified as exactly that spool would be: built on
     // a chipless id, keyed by `_spoolProductKey` ("tt:<id>"). It used to be built
@@ -14975,6 +15141,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     let row = null;
     try { row = normalizeRow(cloudId, seed); } catch (_) {}
     const hash = row ? _productKeyHash(row) : "cat:" + it.id;
+    // Same product refined by its detail: the identity may sharpen (aspects,
+    // diameter), but it is still this card — refresh it in place, no slide-swap.
+    if (_productCardData?.catalogItem === it && $("productCardPanel")?.classList.contains("open")) {
+      _productCardData.id = hash;
+    }
     openProductCard({
       id: hash,
       key: row ? _spoolProductKey(row) : "cat:" + it.id,
@@ -17237,6 +17408,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       let last = null, stable = 0;
       const t0 = performance.now();
       const step = (now) => {
+        // Mid slide-swap (_ghostSwapPanel) the real panel is snapped off-screen
+        // and slides back in over the ghost of the old card: the tab holds its
+        // place on screen until the new card has landed, instead of riding the
+        // snap out and back.
+        if (panel._swapping) { tab._glueRaf = requestAnimationFrame(step); return; }
         const r = panel.getBoundingClientRect();
         if (!r.width) {                    // panel not rendered — snap and settle
           if (open) tab.style.right = `${Math.round(target)}px`; else tab.hidden = true;
@@ -17276,8 +17452,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // id-scoped (e.g. #panelBody hides its scrollbar) and stripping it would
     // re-show a scrollbar → narrower content → layout shift. Duplicate ids are
     // harmless: the ghost is inserted AFTER the real panel, so getElementById
-    // still returns the real one, and the ghost is inert + removed within 400ms.
+    // still returns the real one, and the ghost is inert + removed once the new
+    // card has slid over it. A swap that starts while the previous one is still
+    // running drops that ghost first (its removal timer is cleared below).
+    panel._ghost?.remove();
     const ghost = panel.cloneNode(true);
+    panel._ghost = ghost;
     ghost.classList.add("detail-ghost");   // z-index:100 (behind detail 101 / printer 105), inert
     ghost.style.right = panel.style.right || "";   // match any stacked offset
     // A panel that sits at or below the ghost's own z (the product card, 99)
@@ -17302,12 +17482,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const gBody = ghost.querySelector(scrollSel), rBody = panel.querySelector(scrollSel);
       if (gBody && rBody) gBody.scrollTop = rBody.scrollTop;
     }
+    // The close tab stays put on screen for the whole swap (see _setTab), until
+    // the new card has actually landed — the slide starts two frames late, and
+    // later still on a busy frame, so a fixed delay let the tab jump.
+    panel._swapping = true;
+    clearTimeout(panel._swapT);
     panel.style.transition = "none";
     panel.classList.remove("open");   // snap off-screen (translateX 100%)
     panel.offsetWidth;                // reflow
     panel.style.transition = "";      // restore the slide transition
-    requestAnimationFrame(() => requestAnimationFrame(() => panel.classList.add("open")));
-    setTimeout(() => ghost.remove(), 400);
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      panel.classList.add("open");
+      // The ghost goes once it is covered — timed from the real start of the
+      // slide, so a late frame can't uncover an empty strip.
+      panel._swapT = setTimeout(() => { panel._swapping = false; ghost.remove(); panel._ghost = null; }, 270);   // .25s slide
+    }));
   }
 
   // All toolbox button wiring, extracted so a card-presence change can re-wire
@@ -17470,54 +17659,30 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   // Export the WHOLE (non-deleted) inventory as one grouped .ttag — every
-  // material, twins naturally included since all docs travel together. Own
+  // material, twins included (each spool brings its partner, deduped). Own
   // inventory only; refuses if any legacy CLOUD_ is still around (invariant #2).
-  // Export the SELECTED materials (multi-select) as one `.ttag`. The button is
-  // disabled when nothing is selected (see `_syncTtagExportBtn`), so this is a
-  // no-op guard for a stray call. Each selected spool contributes its own doc +
-  // its twin partner (atomic), deduped.
-  async function _exportSelectedTtag() {
+  // Settings → Data → "Export .ttag". `flash(key)` shows the outcome on the button.
+  async function _exportAllTtag(flash = () => {}) {
     const uid = state.activeAccountId;
-    if (!uid || !state.inventory) return;
-    const lbl = $("btnInvExportTtag")?.querySelector("[data-i18n]");
-    const flash = (key) => {
-      if (!lbl) return;
-      lbl.textContent = t(key);
-      setTimeout(() => { if (lbl) lbl.textContent = t("ttagExportShort"); }, 1800);
-    };
+    if (!uid || !state.inventory || state.friendView) return;
     const seen = new Set();
     const records = [];
-    for (const sid of state.selectedSpools) {
-      for (const rec of _ttagMaterialRecords(sid)) {
+    for (const r of state.rows || []) {
+      if (r.deleted) continue;
+      for (const rec of _ttagMaterialRecords(r.spoolId)) {
         if (seen.has(rec.spoolId)) continue;
         seen.add(rec.spoolId);
         records.push(rec);
       }
     }
-    if (!records.length) return;   // nothing selected → the button is disabled anyway
+    if (!records.length) return;
     if (_ttagHasLegacyCloud(records)) { flash("ttagCloudBlocked"); return; }
     const backups = await _ttagCollectBackups(records, uid);
     const stamp = new Date(Date.now()).toISOString().slice(0, 10);
-    _saveTtagFile(`tigertag-selection-${stamp}.ttag`, _ttagSerialize(_buildTtag(records, backups, uid)));
+    _saveTtagFile(`tigertag-inventory-${stamp}.ttag`, _ttagSerialize(_buildTtag(records, backups, uid)));
     flash("ttagExportOk");
   }
 
-  // Export acts on the current multi-selection → disable it when nothing is
-  // selected. Called on every selection change + when the bar (re)appears.
-  function _syncTtagExportBtn() {
-    const btn = $("btnInvExportTtag");
-    if (btn) btn.disabled = state.selectedSpools.size === 0;
-  }
-
-  // The inventory action-bar buttons (.ttag Export/Import, + From Catalogue)
-  // make sense only in the material inventory (table/grid) and never on a
-  // read-only friend view — they all write to the user's own inventory.
-  function _syncInvBarButtons() {
-    const show = (state.viewMode === "table" || state.viewMode === "grid") && !state.friendView;
-    $("btnInvExportTtag")?.classList.toggle("hidden", !show);
-    $("btnInvImportTtag")?.classList.toggle("hidden", !show);
-    _syncTtagExportBtn();
-  }
 
   /* ── .ttag IMPORT ─────────────────────────────────────────────────────────
      Read a .ttag, validate its marker, sanitise untrusted fields, preview, and
@@ -36872,7 +37037,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // A friend's inventory is read-only — hide the write action (Add product /
     // Add device) since it can't act on a friend's docs.
     $("searchAddBtn")?.classList.toggle("hidden", !!state.friendView);
-    _syncInvBarButtons();   // hide the .ttag Export/Import bar on a friend view
     // The cam-wall "Detach" button is meaningless in a friend view (no cameras) —
     // force-hide it here so it can never linger from a prior cam session.
     if (state.friendView) { const _d = $("camWallDetachTop"); if (_d) _d.hidden = true; }

@@ -25,7 +25,9 @@ const DAILY_QUEST_URL = "https://us-central1-tigertag-connect.cloudfunctions.net
 const FLUSH_MS = 1500;                 // bumps within this window land in one write
 const FOCUS_CHECKIN_MS = 10 * 60e3;    // a window focus re-checks in at most every 10 min
 const RANKS = 20;                      // ranks announced in the app; the server ships 1 and 2
-const RANK_ICONS = ["🏕️", "🌄", "🏔️", "🏜️", "🛶", "⛵", "🌊", "🧊", "🛩️", "🎈", "🛰️", "🌙", "🌍", "☄️", "🪐", "🧭", "⭐", "✨", "🌌", "♾️"];
+// Rank icons: assets/svg/ranks/rank-NN.svg (1 base camp … 20 the universe), drawn as a
+// mask in the current colour — the url() resolves from quests.css (renderer/quests/).
+const rankIcon = n => `<span class="qm-rank-ic" style="--ico:url('../../assets/svg/ranks/rank-${String(n).padStart(2, "0")}.svg')" aria-hidden="true"></span>`;
 const RANK_IDS = { discovery: 1, explorer: 2 };
 
 let _ctx = null;
@@ -213,7 +215,7 @@ export function questCurrentLevel() {
   const lv = _levels.find(l => !paid.has(l.id)) || _levels[_levels.length - 1];
   const n = RANK_IDS[lv.rank] || 1;
   return {
-    id: lv.id, rank: n, icon: RANK_ICONS[n - 1], name: `${_ctx.t(`questRank_${n}`)} ${lv.id.slice(1)}`,
+    id: lv.id, rank: n, icon: rankIcon(n), name: `${_ctx.t(`questRank_${n}`)} ${lv.id.slice(1)}`,
     done: lv.actions.filter(x => (a[x.id] || 0) >= x.target).length, total: lv.actions.length,
   };
 }
@@ -223,8 +225,6 @@ export function questCurrentLevel() {
 // renderQuestsView(host, tab) on every render.
 // Look: the Tiger Quests presentation page — a dark game world, cut-corner
 // panels, diamond check boxes, skewed segmented bars (quests.css "Game world").
-let _viewRank = null;   // rank picked in the Journey view (null = current rank)
-let _carRank = null;    // rank whose carousel position is being kept across renders
 export function openQuests(tab = "today") { _ctx.openView?.(tab); }
 // Jackpot: the full set completing while the daily screen is shown plays a ~2 s
 // sequence (bar sweep → chest lights up → particle burst → XP count-up). Data
@@ -251,34 +251,24 @@ export function renderQuestsView(host, tab = "today") {
       if ((e.key === "Enter" || e.key === " ") && e.target.closest?.(".qd-chest.is-earned")) { e.preventDefault(); replayJackpot(); }
     });
     host.addEventListener("click", e => {
+      // Missions: a built chapter shows its levels; the arrows slide the row of chapters.
       const r = e.target.closest("[data-rank]");
-      if (r && !r.disabled) { _viewRank = Number(r.dataset.rank); refresh(); return; }
+      if (r && !r.disabled) { _missionRank = Number(r.dataset.rank); refresh(); return; }
+      const arrow = e.target.closest("[data-chap]");
+      if (arrow) { const tr = host.querySelector(".qm-chap-track"); tr?.scrollBy({ left: tr.clientWidth * .8 * Number(arrow.dataset.chap), behavior: reducedMotion() ? "auto" : "smooth" }); return; }
       if (e.target.closest(".qd-chest.is-earned")) { replayJackpot(); return; }
-      const step = e.target.closest("[data-car]");
-      if (step) {
-        const track = host.querySelector(".qw-car-track"), card = track?.querySelector(".qw-lcard");
-        if (track && card) track.scrollBy({ left: (card.offsetWidth + 14) * Number(step.dataset.car), behavior: reducedMotion() ? "auto" : "smooth" });
-      }
     });
   }
-  const rank = _viewRank || currentRank();
-  const prevScroll = host.querySelector(".qw-car-track")?.scrollLeft;
-  host.innerHTML = `<div class="qw">${tab === "today" ? todayHtml() : journeyHtml(rank)}</div>`;
+  const keep = host.querySelector(".qm-chap-track")?.scrollLeft;
+  host.innerHTML = `<div class="qw">${tab === "today" ? todayHtml() : journeyHtml()}</div>`;
+  const track = host.querySelector(".qm-chap-track");
+  if (track) {
+    // Keep the row where the user left it; the first time, bring the selected chapter into view.
+    if (keep != null) track.scrollLeft = keep;
+    else track.querySelector(".qm-chap.is-on")?.scrollIntoView({ block: "nearest", inline: "center" });
+  }
   const xpEl = host.querySelector(".qd-chest.is-jackpot .qd-chest-xp");
   if (xpEl) countUp(xpEl, Number(xpEl.dataset.xp) || 0);
-  const track = host.querySelector(".qw-car-track");
-  if (track) {
-    if (_carRank === rank && prevScroll != null) track.scrollTo({ left: prevScroll, behavior: "instant" });
-    else {
-      // Land on the next level to finish — once the journey has loaded (before
-      // that every level looks unfinished) and the view is on screen — then
-      // keep the user's position.
-      // A render while the view is still hidden (launch) measures nothing: retry on the next one.
-      if (_journey && track.clientWidth) _carRank = rank;
-      const next = track.querySelector(".qw-lcard:not(.is-won)");
-      if (next) track.scrollTo({ left: next.getBoundingClientRect().left - track.getBoundingClientRect().left, behavior: "instant" });
-    }
-  }
   if (Date.now() - _lastCheckIn > 60e3) checkIn();
 }
 
@@ -290,12 +280,6 @@ function currentRank() {
   return open ? RANK_IDS[open.rank] || 1 : RANK_IDS[_levels[_levels.length - 1].rank] || 1;
 }
 const pct = (n, of) => Math.max(0, Math.min(100, Math.round((n / Math.max(1, of)) * 100)));
-const sbar = (n, of) => `<span class="qw-sbar" aria-hidden="true"><i style="width:${pct(n, of)}%"></i></span>`;
-function task({ label, done, xp }) {
-  const { esc } = _ctx;
-  return `<li class="qw-task${done ? " is-done" : ""}"><span class="qw-box" aria-hidden="true"></span>
-    <span class="qw-task-label">${esc(label)}</span>${xp ? `<span class="qw-xp">+${xp} XP</span>` : ""}</li>`;
-}
 
 // ── Today: the daily quests screen ───────────────────────────────────────────
 // Banner, today's progress + the full-set chest, one row per quest, and a side
@@ -309,9 +293,6 @@ const MISSION_LOOK = {
   whatsNew: ["sparkle", "quick"], sortTable: ["list", "quick"], weightMove: ["scale", "challenge"],
   rackSpool: ["rack-grid", "challenge"], note: ["edit", "challenge"], minStock: ["bars", "challenge"], wishlist: ["cart", "challenge"],
 };
-const CALENDAR_SVG = `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="10" width="36" height="32" rx="6" fill="none" stroke="currentColor" stroke-width="3.5"/>
-  <path d="M6 19h36M16 6v8M32 6v8" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
-  <g fill="currentColor"><rect x="13" y="25" width="6" height="5" rx="1.2"/><rect x="21" y="25" width="6" height="5" rx="1.2"/><rect x="29" y="25" width="6" height="5" rx="1.2"/><rect x="13" y="33" width="6" height="5" rx="1.2"/><rect x="21" y="33" width="6" height="5" rx="1.2"/></g></svg>`;
 const localDayOf = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 // The streak still counts when the last full set was today or yesterday; older, it is broken.
 function liveStreak() {
@@ -408,10 +389,12 @@ function todayHtml() {
   const stat = (icon, label, value) => value == null ? "" : `<li><span class="icon icon-${icon} icon-14" aria-hidden="true"></span><span>${esc(label)}</span><b>${esc(String(value))}</b></li>`;
   return `
   <div class="qd">
-    <section class="qd-banner">
-      <span class="qd-cal" aria-hidden="true">${CALENDAR_SVG}</span>
-      <div class="qd-head"><h2>${esc(t("questsDailyHeading"))}</h2><p>${esc(t("questsDailySub"))}</p></div>
-      <span class="qd-caption">${esc(t("questsCaption"))}</span>
+    <section class="sqr-hero qd-hero">
+      <div class="sqr-hero-txt">
+        <h2><span>TIGER</span><span class="sqr-hero-orange">QUESTS</span></h2>
+        <p class="sqr-hero-sub">${esc(t("questsDailyHeading"))}</p>
+        <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("questsCaption"))}</p>
+      </div>
     </section>
     <div class="qd-grid">
       <div class="qd-main">
@@ -478,34 +461,6 @@ function untilMidnight() {
   return h ? `${h} h ${String(m % 60).padStart(2, "0")}` : `${m} min`;
 }
 
-// One level as a card: its 5 actions with their bars, its state and bonus.
-function levelCard(l) {
-  const { t, esc } = _ctx;
-  const a = _journey?.actions || {}, paid = new Set(_journey?.bonusesPaid || []);
-  const waiting = new Set(_journey?.waiting || []), locked = new Set(_journey?.locked || []);
-  const name = levelName(l.id);
-  const acts = l.actions;
-  const done = l.actions.filter(x => (a[x.id] || 0) >= x.target).length;
-  const state = paid.has(l.id) ? "won" : waiting.has(l.id) ? "wait" : locked.has(l.id) ? "lock" : "open";
-  const chip = state === "won" ? t("questsWon") : state === "wait" ? t("questsWaiting")
-      : state === "lock" ? t("questsLocked", { xp: l.enter.toLocaleString() }) : t("questsProgress", { n: done, total: l.actions.length });
-  const [title, theme] = name.split(" · ");
-  return `
-      <section class="qw-panel qw-lcard is-${state}">
-        <header class="qw-lchead">
-          <div><b>${esc(title)}</b><span class="qw-ltheme">${esc(theme || "")}</span></div>
-          <div class="qw-lcmeta"><span class="qw-tstate">${state === "lock" ? `<span class="icon icon-lock icon-10" aria-hidden="true"></span>` : ""}${esc(chip)}</span>
-            <span class="qw-bonus">+${l.bonus} XP</span></div>
-        </header>
-        ${sbar(done, l.actions.length)}
-        <ul class="qw-acts">${acts.map(x => {
-          const c = Math.min(a[x.id] || 0, x.target), full = c >= x.target;
-          return `<li class="qw-act${full ? " is-full" : ""}"><span class="qw-box" aria-hidden="true"></span><span class="qw-act-label">${esc(actionLabel(x.id))}</span>
-            ${sbar(c, x.target)}<span class="qw-slab">${x.target > 1 ? `${c}/${x.target}` : ""}${x.xp ? ` +${x.xp}` : ""}</span></li>`;
-        }).join("")}</ul>
-      </section>`;
-}
-
 // Loot: every XP item the account can own, by rarity — legendary on top
 // (Tiger devices). Owned items glow; the rest show what they are worth.
 // ctx.loot() → [{ id, label, hint, xp, per, n, got, img?, icon?, rarity?, value? }] from the host
@@ -540,33 +495,87 @@ function lootHtml() {
     </section>`;
 }
 
-// Rank nodes (every rank, 5 pips = its levels), then the picked rank's level
-// cards, in a carousel.
-function journeyHtml(rank) {
+// ── Missions (the journey) ───────────────────────────────────────────────────
+// Hero with the current chapter's progress, the chapters in one sliding row
+// (a built chapter is selectable), the selected chapter's heading, then its
+// levels as illustrated cards. All figures come from the journey doc and the
+// server's level table.
+let _missionRank = null;   // chapter picked in the row (null = the current one)
+const levelState = (l, paid, waiting, locked) => paid.has(l.id) ? "won" : waiting.has(l.id) ? "wait" : locked.has(l.id) ? "lock" : "open";
+
+function missionCard(l) {
+  const { t, esc } = _ctx;
+  const a = _journey?.actions || {}, paid = new Set(_journey?.bonusesPaid || []);
+  const state = levelState(l, paid, new Set(_journey?.waiting || []), new Set(_journey?.locked || []));
+  const done = l.actions.filter(x => (a[x.id] || 0) >= x.target).length;
+  const [title, theme] = levelName(l.id).split(" · ");
+  const won = state === "won";
+  const status = won ? t("questsCompleted") : state === "wait" ? t("questsWaiting")
+    : state === "lock" ? t("questsLocked", { xp: l.enter.toLocaleString() }) : t("questsInProgress");
+  const rows = l.actions.map(x => {
+    const c = Math.min(a[x.id] || 0, x.target), full = c >= x.target, part = !full && c > 0;
+    return `<li class="qm-row${full ? " is-full" : part ? " is-part" : ""}">
+      <span class="qm-dot" aria-hidden="true">${full ? `<span class="icon icon-check icon-10"></span>` : ""}</span>
+      <span class="qm-row-label">${esc(actionLabel(x.id))}</span>
+      ${x.target > 1 ? `<span class="qm-row-n">${c}/${x.target}</span>` : ""}
+      ${x.xp ? `<span class="qm-row-xp">+${x.xp} XP</span>` : ""}</li>`;
+  }).join("");
+  return `
+    <article class="qm-card is-${state}">
+      <header class="qm-card-head">
+        <div><h4>${esc(title)}</h4><p>${esc(theme || "")}</p></div>
+        ${won ? `<span class="qm-badge"><span class="icon icon-check icon-10" aria-hidden="true"></span>${esc(t("questsCompleted"))}</span>`
+          : `<div class="qm-card-n"><b>${done} / ${l.actions.length}</b><span>+${l.bonus} XP</span></div>`}
+      </header>
+      <span class="qm-bar" aria-hidden="true"><i style="width:${pct(done, l.actions.length)}%"></i></span>
+      <div class="qm-art" style="--art:url('../../assets/img/quests/mission-${l.id}.webp')" aria-hidden="true"></div>
+      <ul class="qm-rows">${rows}</ul>
+      <footer class="qm-card-foot"><b>+${l.bonus} XP${won ? ` <span class="icon icon-check icon-12" aria-hidden="true"></span>` : ""}</b>
+        <span class="qm-status">${state === "lock" ? `<span class="icon icon-lock icon-10" aria-hidden="true"></span>` : ""}${esc(status)}</span></footer>
+    </article>`;
+}
+
+function journeyHtml() {
   const { t, esc } = _ctx;
   if (!_levels) return `<p class="qw-empty">${esc(t("questsLoading"))}</p>`;
   const paid = new Set(_journey?.bonusesPaid || []);
   const cur = currentRank();
-  const nodes = Array.from({ length: RANKS }, (_, i) => {
-    const n = i + 1, lv = _levels.filter(l => RANK_IDS[l.rank] === n), ready = lv.length > 0;
-    const pips = ready ? lv.map(l => `<i class="${paid.has(l.id) ? "on" : "open"}"></i>`).join("") : "<i></i>".repeat(5);
-    const cls = n === rank ? " is-on" : "", st = !ready ? " is-soon" : n < cur ? " is-reached" : n === cur ? " is-here" : "";
-    return `<button type="button" class="qw-node${cls}${st}" data-rank="${n}"${ready ? "" : " disabled"}>
-      <span class="qw-nicon" aria-hidden="true">${RANK_ICONS[i]}</span><span class="qw-nnum">#${n}</span>
-      <span class="qw-nrole">${esc(t(`questRank_${n}`))}</span><span class="qw-nworld">${esc(ready ? t(`questWorld_${n}`) : t("questsComingSoon"))}</span>
-      <span class="qw-pips" aria-hidden="true">${pips}</span></button>`;
+  const built = new Set(_levels.map(l => RANK_IDS[l.rank]).filter(Boolean));
+  const rank = built.has(_missionRank) ? _missionRank : cur;
+  const levelsOf = n => _levels.filter(l => RANK_IDS[l.rank] === n);
+  const wonIn = n => levelsOf(n).filter(l => paid.has(l.id)).length;
+  const curLv = levelsOf(cur);
+  const chapters = Array.from({ length: RANKS }, (_, i) => {
+    const n = i + 1, lv = levelsOf(n), ready = lv.length > 0;
+    const pips = ready ? lv.map(l => `<i class="${paid.has(l.id) ? "on" : ""}"></i>`).join("") : "<i></i>".repeat(5);
+    const st = !ready ? " is-soon" : n === rank ? " is-on" : wonIn(n) === lv.length ? " is-done" : "";
+    return `<button type="button" class="qm-chap${st}" data-rank="${n}"${ready ? "" : " disabled"}>
+      <span class="qm-chap-ic">${rankIcon(n)}</span><span class="qm-chap-n">#${n}</span>
+      <b>${esc(t(`questRank_${n}`))}</b><small>${esc(ready ? t(`questWorld_${n}`) : t("questsComingSoon"))}</small>
+      <span class="qm-pips" aria-hidden="true">${pips}</span></button>`;
   }).join("");
-  const cards = _levels.filter(l => RANK_IDS[l.rank] === rank).map(l => levelCard(l)).join("");
+  const lv = levelsOf(rank), won = wonIn(rank);
   return `
-    <section class="qw-panel qw-map">
-      <div class="qw-quest-head"><div><span class="qw-eyebrow">${esc(t("questsTitle"))}</span><h2>${esc(t("questsJourney"))}</h2></div>
-        <span class="qw-where">${RANK_ICONS[cur - 1]} ${esc(t(`questRank_${cur}`))} · ${esc(t(`questWorld_${cur}`))}</span></div>
-      <div class="qw-nodes" role="group" aria-label="${esc(t("questsJourney"))}">${nodes}</div>
+    <section class="qm-hero">
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
+        <h2>${esc(t("questsJourney"))}</h2><p>${esc(t("squadHeroTagline"))}</p></div>
+      <div class="qm-hero-card">
+        <b>${rankIcon(cur)} ${esc(t(`questRank_${cur}`))} · ${esc(t(`questWorld_${cur}`))}</b>
+        <span>${esc(t("questsLevelsDone", { n: wonIn(cur), total: curLv.length }))}</span>
+        <span class="qm-bar" aria-hidden="true"><i style="width:${pct(wonIn(cur), curLv.length || 1)}%"></i></span>
+      </div>
     </section>
-    <div class="qw-carousel">
-      <button type="button" class="qw-car-btn" data-car="-1" aria-label="${esc(t("questsPrevLevel"))}"><span class="icon icon-chevron-l icon-14" aria-hidden="true"></span></button>
-      <div class="qw-car-track">${cards}</div>
-      <button type="button" class="qw-car-btn" data-car="1" aria-label="${esc(t("questsNextLevel"))}"><span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></button>
+    <div class="qm-chapters">
+      <button type="button" class="qm-arrow" data-chap="-1" aria-label="${esc(t("questsPrevChapter"))}"><span class="icon icon-chevron-l icon-14" aria-hidden="true"></span></button>
+      <div class="qm-chap-track" role="group" aria-label="${esc(t("questsJourney"))}">${chapters}</div>
+      <button type="button" class="qm-arrow" data-chap="1" aria-label="${esc(t("questsNextChapter"))}"><span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></button>
     </div>
-    `;
+    <header class="qm-head">
+      <span class="qm-head-ic">${rankIcon(rank)}</span>
+      <h3>${esc(t(`questRank_${rank}`))}</h3>
+      <p>${esc(t(`questWorld_${rank}`))}${t(`questRankDesc_${rank}`) !== `questRankDesc_${rank}` ? ` · ${esc(t(`questRankDesc_${rank}`))}` : ""}</p>
+      <div class="qm-head-n"><span>${esc(t("questsLevelsDone", { n: won, total: lv.length }))}</span>
+        <span class="qm-segs" aria-hidden="true">${lv.map(l => `<i class="${paid.has(l.id) ? "on" : ""}"></i>`).join("")}</span></div>
+    </header>
+    <div class="qm-cards">${lv.map(missionCard).join("")}</div>`;
 }

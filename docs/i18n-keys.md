@@ -25,7 +25,7 @@
 | `settingsOpenBtn` | Settings button label |
 | `settingsTitle` | Panel title |
 | `settingsLang` | Language section label |
-| `settingsExport` | Download JSON button |
+| `settingsExport` | Settings → Data: export the whole inventory as .ttag |
 | `settingsCopied` | Copy confirmation |
 | `debugOpenBtn` | Open debug panel button |
 | `fsExplorerOpenBtn` | Open Firestore explorer button (opens debug panel on the Firestore tab) |

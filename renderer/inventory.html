@@ -301,10 +301,10 @@
           <span class="vtg-sep" id="vtgSepSquad" aria-hidden="true" hidden></span>
           <div class="vtg-group vtg-progress" id="vtgSquad" hidden>
             <span class="vtg-label"><span>TigerSquad</span></span>
-            <div class="view-toggle">
+            <div class="view-toggle vtg-quests">
               <span class="view-toggle-ind" aria-hidden="true"></span>
               <button id="vtgSquadChip" data-i18n-aria="squadTabRankings"><span class="icon icon-community icon-13"></span></button>
-              <button id="vtgSquadItems" data-i18n-aria="squadItems"><span class="icon icon-star-fill icon-13"></span></button>
+              <button id="vtgSquadItems" data-i18n-aria="squadItems"><span class="icon icon-star-fill icon-13"></span><span class="vtg-btn-bar" aria-hidden="true"><i></i></span></button>
               <button id="vtgSquadHist" data-i18n-aria="xpHistory"><span class="icon icon-clock icon-13"></span></button>
             </div>
           </div>
@@ -314,17 +314,6 @@
           <button id="btnSelectMode" class="inv-select-btn js-select-toggle" type="button" title="Select multiple">
             <span class="icon icon-check icon-13"></span>
             <span data-i18n="bulkSelectMode">Select</span>
-          </button>
-          <!-- .ttag data actions — whole-inventory Export + Import, shown only in
-               the material inventory (table/grid), hidden in friend view. Import
-               also lives in Settings → Data and via drag-drop anywhere. -->
-          <button id="btnInvExportTtag" class="inv-add-btn inv-ttag-btn" type="button">
-            <span class="icon icon-download icon-13"></span>
-            <span data-i18n="ttagExportShort">Export</span>
-          </button>
-          <button id="btnInvImportTtag" class="inv-add-btn inv-ttag-btn" type="button">
-            <span class="icon icon-backup icon-13"></span>
-            <span data-i18n="ttagImportShort">Import</span>
           </button>
           <!-- "From Catalogue" used to be a top-bar button of its own; it is now
                the first choice of the "+ Material" side card (#matSourcePanel),
@@ -622,7 +611,7 @@
             <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
           </span>
         </label>
-        <p class="stg-row-help" data-i18n="stgDataHelp">Export your inventory locally as JSON, or copy the public API URL (with your access key embedded) so a script or another machine can fetch it remotely.</p>
+        <p class="stg-row-help" data-i18n="stgDataHelp">Export your inventory as a .ttag file, or copy the public API URL (with your access key embedded) so a script or another machine can fetch it remotely.</p>
         <div class="stg-row-actions stg-row-actions--col">
           <button class="ghost sm" id="btnSbReload" title="Resync inventory from the cloud">
             <span class="icon icon-refresh icon-13"></span>
@@ -630,7 +619,7 @@
           </button>
           <button class="ghost sm" id="btnStgExport">
             <span class="icon icon-download icon-13"></span>
-            <span data-i18n="settingsExport">↓ Download JSON</span>
+            <span data-i18n="settingsExport">Export .ttag</span>
           </button>
           <button class="ghost sm" id="btnStgImportTtag">
             <span class="icon icon-backup icon-13"></span>

@@ -2161,7 +2161,13 @@
   #productCardPanel .panel-img-wrap > .panel-img,
   #detailPanel .panel-img-wrap > .panel-img {
     border-radius: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, .18);
+    /* No backdrop of its own, like the grid card's overlay: a transparent
+       product photo sits on the spool colour, not on a dark square. */
+    background: none;
+    opacity: 0; transition: opacity .25s ease;
   }
+  #productCardPanel .panel-img-wrap > .panel-img.img-loaded,
+  #detailPanel .panel-img-wrap > .panel-img.img-loaded { opacity: 1; }
   .panel-img-placeholder { width: 100%; aspect-ratio: 1; background: linear-gradient(135deg,var(--surface-2),#2a1a0e); display: flex; align-items: center; justify-content: center; }
   .panel-img-placeholder img { width: 40%; opacity: .5; }
   .panel-img-color-placeholder { width: 100%; aspect-ratio: 1; display: flex; align-items: flex-start; justify-content: flex-end; overflow: hidden; }
