@@ -86,7 +86,7 @@ const LEGENDARY = [
   { id: "tigerScale", img: "tigerscale-flat2", side: "l" }, { id: "tigerSpool", img: "tigerspool-flat2", side: "l" },
   { id: "tigerTouch", img: "tigertouch-flat3", side: "r" }, { id: "tigerPod", img: "tigerpod-flat2", side: "r" },
 ];
-export function squadItemsHeroHtml(ctx, owned = {}) {
+export function squadItemsHeroHtml(ctx, owned = {}, nextCard = "") {
   const { t, esc } = ctx;
   const n = LEGENDARY.filter(x => owned[x.id]).length;
   const item = x => `<img class="sqi-item sqi-item--${x.img}${owned[x.id] ? " is-on" : ""}" src="../assets/img/tigersquad/legendary/${x.img}.webp" alt=""
@@ -95,7 +95,7 @@ export function squadItemsHeroHtml(ctx, owned = {}) {
     <section class="sqr-hero sqi-hero">
       <div class="sqr-hero-txt">
         <h2><span>TIGER</span><span class="sqr-hero-orange">SQUAD</span></h2>
-        <p class="sqr-hero-sub">${esc(t("questsLootTitle"))}</p>
+        <p class="sqr-hero-sub">${esc(t("squadGrimoireSub"))}</p>
         <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("squadLegendaryCount", { n, total: LEGENDARY.length }))}</p>
       </div>
       <div class="sqi-scene">
@@ -106,6 +106,7 @@ export function squadItemsHeroHtml(ctx, owned = {}) {
         </span>
         ${LEGENDARY.filter(x => x.side === "r").map(item).join("")}
       </div>
+      ${nextCard ? `<div class="sqr-card sqi-next">${nextCard}</div>` : ""}
     </section>`;
 }
 
@@ -145,8 +146,8 @@ export function squadHeroHtml(ctx, members) {
           <span class="sqr-me-label">${esc(t("squadNextRival"))}</span>
           ${/* Always one line per league — country then world — leader or not: the
                leader's line shows the medal and "Number one" in place of a rival. */""}
-          ${r.natRank ? rivalRow(`<span class="sqr-rival-badge">${flagAv(r.cc, 16)}</span>`, aboveNat, t("squadInCountry", { country: ctx.cname(r.cc) })) : ""}
-          ${rivalRow(`<span class="sqr-rival-badge"><span class="icon icon-globe icon-16"></span></span>`, above, t("squadWorldwide"))}
+          ${r.natRank ? rivalRow(`<span class="sqr-rival-badge">${flagAv(r.cc, 20)}</span>`, aboveNat, t("squadInCountry", { country: ctx.cname(r.cc) })) : ""}
+          ${rivalRow(`<span class="sqr-rival-badge"><span class="icon icon-globe icon-20"></span></span>`, above, t("squadWorldwide"))}
           ${tied ? `<small class="sqr-muted">${esc(t("squadTiedWith", { name: tied.name }))}</small>` : ""}
         </div>
       </div>`

@@ -479,42 +479,58 @@ function untilMidnight() {
 // variable, so it resolves from quests.css (renderer/quests/), hence ../../.
 const RARITIES = [["legendary", 800], ["epic", 300], ["rare", 100], ["uncommon", 20], ["common", 0]];
 export function questLootHtml() { return lootHtml(); }
-// Two panels side by side: the physical items (devices, chips, printers — the
-// loot) and the profile & community achievements (friends, links, lists…).
-// Each is one grid of cards sorted by rarity, the rarity carried by the card
-// itself (colour, chip) instead of a band per rarity.
+// The Grimoire: two panels side by side — Loot (the physical items: devices,
+// chips, printers) and Feats (the rewarded actions: friends, links, updates…).
+// Loot is split in three groups (legendary relics as large showcase tiles, gear,
+// chips); Feats is one list of row cards. The rarity is carried by the card
+// itself (colour, chip); only legendary cards glow once owned, so the green of
+// Epic stays a rarity, not an "owned" signal.
+const CHIP_IDS = new Set(["chipTag", "chipPlus", "chipCert"]);
 function lootHtml() {
-  const all = _ctx.loot?.() || [];
-  const a = ladderHtml(all.filter(x => x.physical), "questsLoot", "questsLootTitle");
-  const b = ladderHtml(all.filter(x => !x.physical), "questsBadgesEyebrow", "questsBadgesTitle");
+  const all = (_ctx.loot?.() || []).map(x => ({ ...x, r: rarityOf(x) }));
+  const loot = all.filter(x => x.physical), feats = all.filter(x => !x.physical);
+  const a = ladderHtml(loot, "questsLootSub", "questsLoot", "questsUnlocked", [
+    ["questsRelics", x => x.r === "legendary", "relics"],
+    ["questsGear", x => x.r !== "legendary" && !CHIP_IDS.has(x.id), "gear"],
+    ["questsChips", x => CHIP_IDS.has(x.id), "chips"],
+  ]);
+  const b = ladderHtml(feats, "questsFeatsSub", "questsFeats", "questsAccomplished", [[null, () => true, "rows"]]);
   return a || b ? `<div class="qw-ladders">${a}${b}</div>` : "";
 }
 const rarityOf = x => x.rarity || (RARITIES.find(([, min]) => (x.per || x.xp) >= min) || RARITIES[RARITIES.length - 1])[0];
 const earnedOf = x => (x.per ? (x.n || 0) * x.per : (x.got ? x.xp : 0));
-function ladderHtml(items, eyebrowKey, titleKey) {
+function ladderHtml(items, eyebrowKey, titleKey, countKey, groups) {
   const { t, esc } = _ctx;
   if (!items.length) return "";
   const order = RARITIES.map(r => r[0]);
-  const sorted = items.map(x => ({ ...x, r: rarityOf(x) }))
-    .sort((p, q) => order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
+  const sorted = [...items].sort((p, q) => order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
   const got = sorted.filter(x => x.got).length;
   const xp = sorted.reduce((s, x) => s + earnedOf(x), 0);
   const card = x => `
     <article class="qw-card qw-card--${x.r}${x.got ? " is-got" : ""}">
       <span class="qw-card-ic" aria-hidden="true">${x.img ? `<span class="qw-item-mask" style="--ico:url('../../assets/svg/icons/${x.img}')"></span>` : `<span class="icon icon-${x.icon || "star-fill"} icon-20"></span>`}</span>
       ${x.per && x.n ? `<span class="qw-card-n">×${x.n}</span>` : ""}
-      <b class="qw-card-name">${esc(x.label)}</b>
-      <small class="qw-card-hint">${esc(x.hint || "")}</small>
+      <span class="qw-card-txt"><b class="qw-card-name">${esc(x.label)}</b>
+      <small class="qw-card-hint">${esc(x.hint || "")}</small></span>
       <span class="qw-card-foot">
         <span class="qw-card-rar">${esc(t(`questsRarity_${x.r}`))}</span>
         <span class="qw-card-xp">${x.got ? `<span class="icon icon-check icon-12" aria-hidden="true"></span>` : `<span class="icon icon-lock icon-11" aria-hidden="true"></span>`}${esc(x.value || (x.per ? t("xpPerItem", { xp: x.per }) : `+${x.xp} XP`))}</span>
       </span>
     </article>`;
+  const group = ([key, keep, layout]) => {
+    const list = sorted.filter(keep);
+    if (!list.length) return "";
+    const head = key ? `<h3 class="qw-group-h">${esc(t(key))}${layout === "relics" ? ` <span>· ${list.filter(x => x.got).length} / ${list.length}</span>` : ""}</h3>` : "";
+    return `<div class="qw-group">${head}<div class="qw-cards qw-cards--${layout}">${list.map(card).join("")}</div></div>`;
+  };
+  const pct = Math.round(got / sorted.length * 100);
   return `
     <section class="qw-panel qw-ladder">
       <div class="qw-quest-head"><div><span class="qw-eyebrow">${esc(t(eyebrowKey))}</span><h2>${esc(t(titleKey))}</h2></div>
-        <div class="qw-ladder-sum"><b>${got} / ${sorted.length}</b><span>${xp.toLocaleString()} XP</span></div></div>
-      <div class="qw-cards">${sorted.map(card).join("")}</div>
+        <div class="qw-ladder-sum"><b>${esc(t(countKey, { got, n: sorted.length }))}</b>
+          <span class="qw-ladder-bar" style="--p:${pct}%"></span>
+          <span>${esc(t("questsXpEarned", { xp: xp.toLocaleString() }))}</span></div></div>
+      ${groups.map(group).join("")}
     </section>`;
 }
 

@@ -10,6 +10,28 @@ squadRanks/
     world       map         — uid → rank; national: CC → { uid → rank }; countries: CC → rank
                               (Studio compares its live leagues against it: the ▲ / ▼ arrows)
 
+squadDeals/
+  {dealId}/                 — TigerSquad partner deals (Deals view, quests/squad-deals.js).
+                              Read: TigerSquad members only (userProfiles/{uid}.tigerSquad set);
+                              written only by the TigerHub admin (Admin SDK)
+    status      string      — "draft" (hidden) | "active" (claimable) | "archived" (over: kept in
+                              the history of members who accepted it, "ended" for the others);
+                              deleting the deal removes it everywhere
+    codeMode    string      — "shared" (secret/main code) | "unique" (codes/ pool, one per member)
+    stock, claimed number   — pool size / claims made (server-kept)
+    partner, title, description, badge  string — badge e.g. "-15%"
+    image       string      — https only
+    minXp       number      — XP needed to unlock the code and the link (0 = every member)
+    secret/main             — { code, link }: read only by a member whose tigerSquad.xp
+                              reaches minXp (rules); below it the deal shows locked
+    claims/{uid}            — { code, at, used, usedAt }: the member's own acceptance, written
+                              by the backend squadDeal function ("Get my code" / "I used it")
+    codes/{autoId}          — { code, uid, at }: single-use pool, server-only
+    startAt, endAt timestamp? — the window; the app hides a deal outside it
+    countries   string[]    — ISO alpha-2; empty = worldwide. Matched against the
+                              member's league country (userProfiles tigerSquad.country)
+    order       number      — display order (low first)
+
 publicKeys/
   {key}/                    — key = public code e.g. "4X7-K3M" (XXX-XXX format)
     uid         string      — owner uid
@@ -26,7 +48,7 @@ userProfiles/
     isPublic    boolean     — whether inventory is publicly visible
     color, customColor      — avatar colour (#rrggbb)
     photoURL    string?     — custom avatar, from Storage avatars/{uid} (photoFromStorage / photoRemove)
-    socials     string[]    — https profile links, max 8
+    socials     string[]    — https profile links, max 5, one per site
     friendsCount number     — maintained by the backend
     tigerSquad  map?        — { since, tier: "bronze"|"silver"|"gold"|"platinum", certified, xp, country? } TigerSquad member (wall of fame; certified = SDK-verified TigerTag+ count, xp = chip points that rank the makers): SERVER-ONLY, set by publishSupporter when users/{uid}.supportPublicly is true (gold if they gave, bronze otherwise); refused from clients
 

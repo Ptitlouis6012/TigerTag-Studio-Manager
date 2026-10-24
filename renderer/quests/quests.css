@@ -787,7 +787,7 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-rival-row .sqr-rival-txt small { font-size: 11.5px; font-weight: 800; color: var(--tsq-orange); white-space: nowrap; }
 .sqr-rival-row .sqr-bar { grid-column: 2 / -1; height: 4px; }
 .sqr-rival-badge { display: inline-flex; align-items: center; justify-content: center; }
-.sqr-rival-badge .icon { background: #c9cfe2; }
+.sqr-rival-badge .icon { background: var(--sqr-cyan); }   /* same globe as the rank line (.sqr-card-ic) */
 .sqr-rival-row.is-top { grid-template-columns: 16px 24px minmax(0, 1fr); }
 .sqr-rival-row.is-top b { font-size: 12.5px; font-weight: 800; color: var(--sqr-gold, #ffc83d); white-space: nowrap; }
 .sqr-rival-medal { width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(255, 200, 61, .4)); }
@@ -841,8 +841,9 @@ body.progress-view #gridSortWrap { display: none; }
   border: 1px solid color-mix(in srgb, var(--c) 22%, var(--qw-line)); border-top: 3px solid color-mix(in srgb, var(--c) 40%, transparent);
   opacity: .58; transition: border-color .2s, box-shadow .2s, opacity .2s; }
 .qw-card--legendary { --c: #ff8000; } .qw-card--epic { --c: #1eff4a; } .qw-card--rare { --c: #ffe94a; } .qw-card--uncommon { --c: #6e8cff; }
-.qw-card.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 55%, var(--qw-line)); border-top-color: var(--c);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 18%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 10%, transparent); }
+.qw-card.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 55%, var(--qw-line)); border-top-color: var(--c); }
+/* Only a legendary relic glows once owned. */
+.qw-card--legendary.is-got { box-shadow: 0 0 18px color-mix(in srgb, var(--c) 22%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 12%, transparent); }
 .qw-card:hover { border-color: color-mix(in srgb, var(--c) 80%, var(--qw-line)); }
 .qw-card-ic { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 2px; }
 .qw-card-ic .icon { width: 26px; height: 26px; background: var(--c); }
@@ -855,6 +856,28 @@ body.progress-view #gridSortWrap { display: none; }
 .qw-card-rar { font: 700 10px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; color: var(--c); }
 .qw-card-xp { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--qw-mono); color: var(--c); white-space: nowrap; }
 .qw-card-xp .icon-check { background: var(--qw-ok); } .qw-card-xp .icon-lock { background: var(--qw-muted); }
+/* Grimoire groups: relics as showcase tiles, gear as small tiles, chips and
+   feats as row cards (icon left, text, rarity + XP underneath). */
+.qw-ladder-sum { min-width: min(46%, 280px); }
+.qw-ladder-sum b { font-size: 16px; }
+.qw-ladder-bar { align-self: stretch; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; position: relative; }
+.qw-ladder-bar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--p); border-radius: inherit; background: var(--qw-tiger2); }
+.qw-group { display: flex; flex-direction: column; gap: 8px; }
+.qw-group + .qw-group { margin-top: 6px; }
+.qw-group-h { margin: 0; font: 700 13px var(--qw-display); color: var(--qw-tiger2); letter-spacing: .02em; }
+.qw-group-h span { color: var(--qw-muted); font-weight: 600; }
+.qw-cards--relics, .qw-cards--gear { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.qw-cards--relics .qw-card { min-height: 160px; }
+.qw-cards--relics .qw-card-ic, .qw-cards--relics .qw-item-mask { width: 60px; height: 60px; }
+.qw-cards--gear .qw-card { min-height: 118px; }
+.qw-cards--chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.qw-cards--rows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 760px) { .qw-cards--relics, .qw-cards--gear { grid-template-columns: repeat(2, minmax(0, 1fr)); } .qw-cards--chips, .qw-cards--rows { grid-template-columns: 1fr; } }
+.qw-cards--chips .qw-card, .qw-cards--rows .qw-card { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: 1fr auto; column-gap: 12px; min-height: 96px; align-items: center; }
+.qw-cards--chips .qw-card-ic, .qw-cards--rows .qw-card-ic { grid-row: 1 / 3; margin: 0; }
+.qw-cards--chips .qw-card-txt, .qw-cards--rows .qw-card-txt { padding-right: 34px; }
+.qw-cards--chips .qw-card-foot, .qw-cards--rows .qw-card-foot { grid-column: 2; padding-top: 4px; }
+.qw-card-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 /* Secret bonus mission (a `secret` level, shown once its rank's other levels are
    won): the sixth card of the row, purple and gold, with a "Secret mission" tag
    and a soft pulse when it appears. */
@@ -899,3 +922,97 @@ body.progress-view #gridSortWrap { display: none; }
   background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .18) 50%, transparent 65%); background-size: 250% 100%; animation: qm-shine 3.2s ease-in-out infinite; }
 .qm-secret-wrap:has(.qm-card.is-won) .qm-secret-tag { background: linear-gradient(90deg, #ffe58a, #ffb347, #e2b6ff); }
 @media (prefers-reduced-motion: reduce) { .qm-secret-wrap > .qm-card.is-won, .qm-secret-wrap > .qm-card.is-won::after { animation: none; } }
+/* Items banner — the next squad level in the right card (same frame as the
+   Rankings card): badges, title, progress, the how in one short line. */
+.sqr-card.sqi-next { display: block; width: 360px; max-width: 40%; padding: 10px 14px; }
+.sqi-next .sqb-next { display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; }
+.sqi-next .sqb-next-badge { width: 42px; height: 42px; }
+.sqi-next .sqb-next-body { gap: 4px; }
+.sqi-next .sqb-next-body b { font-size: 13.5px; }
+.sqi-next .sqb-next-body p { font-size: 11.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sqi-next .sqb-next-alt { display: none !important; }
+.sqi-next .sqb-next-cta { align-self: flex-start; padding: 4px 10px; font-size: 12px; }
+@container (max-width: 1100px) { .sqi-hero .sqr-card.sqi-next { display: none; } }
+
+/* ── Tiger Squad Deals (quests/squad-deals.js) ───────────────────────────────
+   Same hero as the Grimoire (wall, desk, the tiger behind it) with two glowing
+   "%" coins on the desk; then the partner offers as cards, or "coming soon". */
+.sqd-view { display: flex; flex-direction: column; gap: 14px; }
+.sqd-hero .sqd-scene { position: relative; flex: 1 1 auto; align-self: stretch; display: flex; align-items: flex-end; justify-content: center;
+  gap: 18px; margin-bottom: calc(-6px - var(--hero-sink, 4px)); min-width: 0; padding-right: 24px; }
+.sqd-hero > .sqd-scene.sqd-scene { z-index: auto; }
+.sqd-coin { position: relative; z-index: 2; flex-shrink: 0; width: 64px; aspect-ratio: 1; margin-bottom: 8px; display: grid; place-items: center; border-radius: 50%;
+  font: 900 34px/1 var(--sqr-display); color: #3a1d00; background: radial-gradient(circle at 35% 30%, #ffe0a3, #ff9a1f 55%, #c25a00);
+  box-shadow: 0 0 22px rgba(255, 138, 0, .55), inset 0 -4px 0 rgba(0, 0, 0, .25); animation: sqd-float 3.2s ease-in-out infinite; }
+.sqd-coin--b { width: 52px; font-size: 28px; animation-delay: -1.6s; }
+@keyframes sqd-float { 50% { transform: translateY(-6px) rotate(-6deg); } }
+@media (prefers-reduced-motion: reduce) { .sqd-coin { animation: none; } }
+@container (max-width: 640px) { .sqd-hero .sqd-scene { display: none; } }
+
+.sqd-soon { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 48px 24px;
+  border: 1px dashed color-mix(in srgb, var(--tsq-orange) 45%, var(--tsq-line)); border-radius: 14px;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--tsq-orange) 12%, transparent), transparent 70%); }
+.sqd-soon-ic { width: 64px; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; margin-bottom: 4px;
+  background: color-mix(in srgb, var(--tsq-orange) 16%, transparent); box-shadow: 0 0 24px color-mix(in srgb, var(--tsq-orange) 30%, transparent); }
+.sqd-soon-ic .icon { width: 30px; height: 30px; background: var(--tsq-orange); }
+.sqd-soon h3 { margin: 0; font: 800 26px var(--sqr-display); letter-spacing: .04em; text-transform: uppercase; color: var(--tsq-text); }
+.sqd-soon p { margin: 0; max-width: 460px; color: var(--tsq-muted); font-size: 14px; line-height: 1.5; }
+
+.sqd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.sqd-card { display: flex; flex-direction: column; border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden; background: var(--tsq-card);
+  transition: border-color .2s, transform .2s; }
+.sqd-card:hover { border-color: color-mix(in srgb, var(--tsq-orange) 60%, var(--tsq-line)); transform: translateY(-2px); }
+.sqd-card-art { position: relative; aspect-ratio: 16 / 7; display: grid; place-items: center;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--tsq-orange) 22%, var(--tsq-bg2)), var(--tsq-bg2)); }
+.sqd-card-art img { width: 100%; height: 100%; object-fit: cover; }
+.sqd-card-art > .icon { width: 44px; height: 44px; background: var(--tsq-orange); }
+.sqd-card-badge { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 99px; font: 800 13px var(--qw-mono, monospace);
+  color: #fff; background: var(--tsq-orange); box-shadow: 0 2px 10px rgba(0, 0, 0, .35); }
+.sqd-card-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; flex: 1; }
+.sqd-card-partner { font: 700 11px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-orange); }
+.sqd-card-body h3 { margin: 0; font-size: 17px; color: var(--tsq-text); }
+.sqd-card-body p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--tsq-muted); white-space: pre-line; }
+.sqd-card-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--tsq-muted); }
+.sqd-card-meta > span { display: inline-flex; align-items: center; gap: 5px; }
+.sqd-card-meta .icon { background: var(--tsq-muted); }
+.sqd-card-actions { margin-top: auto; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.sqd-code { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 9px; cursor: pointer;
+  border: 1px dashed color-mix(in srgb, var(--tsq-orange) 70%, transparent); background: color-mix(in srgb, var(--tsq-orange) 10%, transparent); color: var(--tsq-text); }
+.sqd-code b { font: 800 14px var(--qw-mono, monospace); letter-spacing: .08em; }
+.sqd-code .icon { background: var(--tsq-orange); }
+.sqd-code.is-copied { border-style: solid; border-color: var(--qw-ok, #3ad07a); }
+.sqd-code.is-copied .icon { background: var(--qw-ok, #3ad07a); }
+.sqd-open { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; font-weight: 700; font-size: 13px;
+  color: #fff; background: var(--tsq-orange); text-decoration: none; }
+.sqd-open .icon { background: #fff; }
+/* A deal above the member's XP: no code, no link — the XP still to earn. */
+.sqd-card.is-locked .sqd-card-art { filter: grayscale(.7) brightness(.7); }
+.sqd-lock { margin-top: auto; padding-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.sqd-lock-head { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--tsq-text); }
+.sqd-lock-head .icon { background: var(--tsq-orange); }
+.sqd-lock-bar { height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .08); position: relative; overflow: hidden; }
+.sqd-lock-bar::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--p); border-radius: inherit; background: var(--tsq-orange); }
+.sqd-lock small { font-size: 12px; color: var(--tsq-muted); }
+/* Unique codes: "Get my code", what is left; "I used it" → the Archived section. */
+.sqd-left { align-self: center; font-size: 12px; color: var(--tsq-muted); }
+.sqd-get { border: 0; cursor: pointer; }
+.sqd-mark { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 9px; cursor: pointer; font-size: 13px;
+  border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); }
+.sqd-mark:hover { color: var(--tsq-text); border-color: var(--qw-ok, #3ad07a); }
+.sqd-mark .icon { background: currentColor; }
+.sqd-get:disabled, .sqd-mark:disabled { opacity: .5; cursor: progress; }
+.sqd-arch-h { margin: 8px 0 0; font: 700 13px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-muted); }
+.sqd-arch-h span { margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: rgba(255, 255, 255, .06); }
+.sqd-card.is-used { opacity: .6; }
+.sqd-card.is-used:hover { opacity: 1; transform: none; }
+.sqd-card.is-used .sqd-card-art { filter: grayscale(1); }
+.sqd-used-tag { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; padding: 1px 8px; border-radius: 99px; letter-spacing: .06em;
+  color: var(--qw-ok, #3ad07a); background: color-mix(in srgb, var(--qw-ok, #3ad07a) 14%, transparent); }
+.sqd-used-tag .icon { background: currentColor; }
+/* Ended deals (archived / past their dates, never accepted) and the slim
+   "coming soon" line above the history when nothing is live. */
+.sqd-card.is-ended { opacity: .55; }
+.sqd-card.is-ended .sqd-card-art { filter: grayscale(1); }
+.sqd-card.is-ended .sqd-used-tag { color: var(--tsq-muted); background: rgba(255, 255, 255, .06); }
+.sqd-soon--slim { padding: 22px 24px; }
+.sqd-soon--slim h3 { font-size: 18px; }

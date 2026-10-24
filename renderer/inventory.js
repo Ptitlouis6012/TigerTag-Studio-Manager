@@ -18,6 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
+import { dealsViewHtml, sortDeals, wireDeals } from './quests/squad-deals.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -4186,6 +4187,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("vtgSquadChip")?.addEventListener("click", _squadGate(() => _openSquadView("countries")));
   $("vtgSquadItems")?.addEventListener("click", _squadGate(() => _openSquadView("ach")));
   $("vtgSquadHist")?.addEventListener("click", _squadGate(() => openXpHistory()));
+  $("vtgSquadDeals")?.addEventListener("click", _squadGate(() => setViewMode("squadDeals")));
   $("notifPanelClose")?.addEventListener("click", closeNotifs);
   $("notifMarkAll")?.addEventListener("click", _markNotifsRead);
   $("notifCloseTab")?.addEventListener("click", closeNotifs);
@@ -4274,7 +4276,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // a chip re-programmed or certified moves to the other item with its XP.
       const c = b.chips || {};
       const chipItem = (id, n, per, label) => ({ id, physical: true, rarity: "common", n, per, xp: 0, got: n > 0,
-        label, hint: t("xpChipTypeHint", { xp: per }), icon: "tag", value: `${(n * per).toLocaleString(state.lang)} XP` });
+        label, hint: t("xpChipTypeHint", { xp: per }), icon: "tag", value: t("questsXpEarned", { xp: (n * per).toLocaleString(state.lang) }) });
       const chips = [
         chipItem("chipTag", c.tag ?? Math.max(0, (c.n || 0) - (state.certifiedPlusCount || 0)), 1, "TigerTag"),
         chipItem("chipPlus", c.plus || 0, 2, "TigerTag+"),
@@ -5039,6 +5041,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const hide = state.friendView ? false : (!own || typeof state.xpPoints !== "number");
       if ($("vtgSquadItems")) $("vtgSquadItems").hidden = !!state.friendView;
       if ($("vtgSquadHist")) $("vtgSquadHist").hidden = !!state.friendView;
+      if ($("vtgSquadDeals")) $("vtgSquadDeals").hidden = !!state.friendView;
       // Shown later than the rest of the bar (the XP arrives after sign-in): place its selection bubble then.
       if (sWrap.hidden !== hide) { sWrap.hidden = hide; if (!hide) requestAnimationFrame(() => _positionViewIndicators(true)); }
     }
@@ -5282,6 +5285,53 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     host.replaceChildren();
     _openSquadBoard(_squadViewTab, host);
   }
+  // Deals view ("%" in the TigerSquad group): the partner offers of the
+  // `squadDeals` collection (managed in the TigerHub admin) — live, the
+  // member's Archived history, ended — sorted by quests/squad-deals.js against
+  // the member's league country (userProfiles/{uid}.tigerSquad.country, else
+  // the country they picked). Painted at once from the last load, then
+  // refreshed (at most once a minute). A read refused (not a member) → nothing
+  // to show → "coming soon".
+  const _deals = { uid: null, at: 0, docs: [], country: null, xp: 0 };
+  const SQUAD_DEAL_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/squadDeal";
+  async function _renderDealsView() {
+    const host = $("invDealsView"); if (!host) return;
+    const uid = state.activeAccountId; if (!uid) return;
+    const ctx = { t, esc, lang: state.lang, toast: msg => _flashMessage(msg), onAction: async (action, dealId) => {
+      // Contract: TigerTag_Firebase_Backend functions/squadDeals.js.
+      const user = fbAuth(uid).currentUser;
+      const res = await fetch(SQUAD_DEAL_URL, { method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+        body: JSON.stringify({ action, dealId }) });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
+      _deals.at = 0;   // reload: the claim (code / used) and the pool counters changed
+      await _renderDealsView();
+    } };
+    wireDeals(host, ctx);
+    const paint = () => { if (state.viewMode === "squadDeals") host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0 }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country)); };
+    paint();
+    if (_deals.uid === uid && Date.now() - _deals.at < 60e3) return;
+    try {
+      const db = fbDb(uid);
+      const [prof, snap] = await Promise.all([
+        db.collection("userProfiles").doc(uid).get().catch(() => null),
+        db.collection("squadDeals").where("status", "in", ["active", "archived"]).get(),
+      ]);
+      const sq = prof?.get?.("tigerSquad") || {}, cc = sq.country, xp = Number(sq.xp) || 0;
+      const docs = await Promise.all(snap.docs.map(async d => {
+        const deal = { id: d.id, ...d.data() };
+        // Own claim always (accepted deals stay in the history); the link only
+        // when the XP reaches minXp (the rules refuse it below).
+        const [claim, sec] = await Promise.all([d.ref.collection("claims").doc(uid).get(),
+          (deal.minXp || 0) <= xp ? d.ref.collection("secret").doc("main").get() : Promise.resolve(null)].map(p => p.catch(() => null)));
+        deal.claim = claim?.data() || null;
+        deal.secret = sec?.data?.() || null;
+        return deal;
+      }));
+      Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null });
+    } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, country: state.squadCountry || null }); }
+    paint();
+  }
   // Community pulse for the Rankings view: the public totals the TigerHub page
   // reads (publicStats/community, recomputed by the communityStats function
   // every minute). The totals are FOLLOWED live (onSnapshot) while the view is
@@ -5434,7 +5484,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // Items has its own banner: the tiger and the four legendary devices, lit when owned.
         const xb = state.xpBreakdown || {}, got = id => (xb[id]?.xp || 0) > 0;
         card.querySelector(".sqr-hero-host").innerHTML = which === "ach"
-          ? squadItemsHeroHtml(rctx, { tigerScale: got("tigerScale"), tigerSpool: got("tigerSpool"), tigerTouch: got("tigerTouch"), tigerPod: got("tigerPod") })
+          ? squadItemsHeroHtml(rctx, { tigerScale: got("tigerScale"), tigerSpool: got("tigerSpool"), tigerTouch: got("tigerTouch"), tigerPod: got("tigerPod") },
+              // The next squad level rides in the banner's right card, like the other heroes' cards.
+              mine ? _squadNextLevelHTML(mine.breakdown, fmt).trim().replace(/^<li/, "<div").replace(/<\/li>$/, "</div>") : "")
           : squadHeroHtml(rctx, members);
         const rk = card.querySelector(".sqr-host"), ranked = which === "countries", legendary = which === "ach";
         rk.hidden = !(ranked || legendary); card.querySelector(".sqb-cols").hidden = ranked || legendary;
@@ -5456,7 +5508,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         }
         // Legendary items: the next squad level, then every XP item by rarity (the loot ladder).
         if (legendary) {
-          rk.innerHTML = `<div class="qw sqr-loot">${mine ? `<ol class="sqb-list">${_squadNextLevelHTML(mine.breakdown, fmt)}</ol>` : ""}${questLootHtml()}</div>`;
+          rk.innerHTML = `<div class="qw sqr-loot">${questLootHtml()}</div>`;
           return;
         }
       }
@@ -8673,12 +8725,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("invSquadView")?.classList.toggle("hidden", state.viewMode !== "squad" && state.viewMode !== "squadItems");
     $("invXpHistView")?.classList.toggle("hidden", state.viewMode !== "xpHistory");
     $("vtgSquadHist")?.classList.toggle("active", state.viewMode === "xpHistory");
+    $("vtgSquadDeals")?.classList.toggle("active", state.viewMode === "squadDeals");
+    $("invDealsView")?.classList.toggle("hidden", state.viewMode !== "squadDeals");
     if (_isProgressMode(state.viewMode)) {
       $("card-welcome").classList.add("hidden");
       $("card-inv").classList.remove("hidden");
       for (const id of ["invTableWrap", "invGrid", "invRackView", "invPrinterView", "invProductsView", "invListsView", "invEmpty", "invCatalogView"]) $(id)?.classList.add("hidden");
       $("mainResult").innerHTML = "";
       if (state.viewMode === "xpHistory") _renderXpHistView();
+      else if (state.viewMode === "squadDeals") _renderDealsView();
       else if (state.viewMode === "squad" || state.viewMode === "squadItems") _renderSquadView();
       else renderQuestsView($("invQuestsView"), state.viewMode === "questsJourney" ? "journey" : "today");
       return;
@@ -12170,7 +12225,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   /* ── view toggle ── */
   // Tiger Quests (Today / Journey) and TigerSquad: progress views of the main area.
-  const _isProgressMode = m => m === "questsToday" || m === "questsJourney" || m === "squad" || m === "squadItems" || m === "xpHistory";
+  const _isProgressMode = m => m === "questsToday" || m === "questsJourney" || m === "squad" || m === "squadItems" || m === "xpHistory" || m === "squadDeals";
   function setViewMode(mode, opts = {}) {
     // Web build: the printer views need the LAN (not reachable from a browser yet).
     if (!HAS_NATIVE && _isPrinterMode(mode)) mode = "grid";
@@ -39229,7 +39284,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // userProfiles/{uid} is world-readable and server-validated: the Firestore
   // rule refuses every client create/update. setProfile checks the fields
   // (pseudo 2-40 chars, no link / e-mail, 3 changes a day; #rrggbb colour;
-  // https socials, max 8; the friend code must be the caller's), writes the
+  // https socials, max 5, one per site; the friend code must be the caller's), writes the
   // profile, and mirrors displayName / isPublic / socials / publicKey into
   // users/{uid} and displayName into the Auth profile. Studio READS the profile
   // (live listener on userProfiles/{uid}) and never republishes it.
