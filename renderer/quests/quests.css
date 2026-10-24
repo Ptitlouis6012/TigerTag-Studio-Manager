@@ -109,30 +109,9 @@ body.progress-view #gridSortWrap { display: none; }
 
 /* Loot ladder — rarity rungs (presentation page "Rarity — loot ladder"). */
 .qw-ladder { gap: 10px; }
-/* Rarity colours follow Diablo: common white, uncommon blue (magic), rare
-   yellow, epic green (set), legendary orange. */
-.qw-rung { --c: #e2e2e2; display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 14px; align-items: start; padding: 12px 14px;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--c) 16%, transparent), var(--qw-panel) 45%);
-  border: 1px solid color-mix(in srgb, var(--c) 45%, var(--qw-line)); clip-path: var(--qw-cut); }
-.qw-rung--legendary { --c: #ff8000; box-shadow: 0 0 30px rgba(255, 128, 0, .25); }
-.qw-rung--epic { --c: #1eff4a; } .qw-rung--rare { --c: #ffe94a; } .qw-rung--uncommon { --c: #6e8cff; }
-.qw-rung-name { padding-top: 10px; font: 700 15px var(--qw-display); text-transform: uppercase; letter-spacing: .08em; color: var(--c);
-  text-shadow: 0 0 14px color-mix(in srgb, var(--c) 60%, transparent); }
-.qw-loot { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
-.qw-item { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 10px;
-  background: rgba(0, 0, 0, .25); border: 1px solid var(--qw-line); opacity: .62; }
-.qw-item.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 70%, var(--qw-line)); box-shadow: inset 0 0 18px color-mix(in srgb, var(--c) 22%, transparent); }
-.qw-item-ic { width: 40px; height: 40px; display: grid; place-items: center; }
-/* Tiger device artwork drawn as a mask, in the rarity colour. */
+/* Tiger device artwork drawn as a mask, in the rarity colour (Items cards). */
 .qw-item-mask { width: 40px; height: 40px; background: var(--c); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat;
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent)); }
-.qw-item-ic .icon { background: var(--c); }
-.qw-item-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.qw-item-txt b { font-size: 13px; color: var(--qw-ink); }
-.qw-item-txt small { font-size: 11px; color: var(--qw-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.qw-item-xp { display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; font: 700 12px var(--qw-mono); color: var(--c); white-space: nowrap; }
-.qw-item-xp .icon { background: var(--qw-ok); }
-@media (max-width: 760px) { .qw-rung { grid-template-columns: 1fr; } .qw-rung-name { padding-top: 0; } }
 
 /* ── Today: the daily quests screen (renderer/quests/index.js todayHtml) ──
    Banner (assets/img/quests/daily-quests-scene.webp on a CSS wall + desk), progress + full-set
@@ -443,7 +422,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-rival-who b { font-size: 13.5px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sqr-rival-who small { font-size: 13.5px; font-weight: 800; color: var(--tsq-orange); white-space: nowrap; }
 .sqr-rival-who > .icon { background: #c9cfe2; }
-.sqr-top { font-size: 14px; color: var(--sqr-gold); }
 .sqr-bar { display: block; height: 8px; border-radius: 4px; background: #262c3d; overflow: hidden; }
 .sqr-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff7a1a, #ffb347); box-shadow: 0 0 10px rgba(255, 122, 26, .45); }
 .sqr-flag { font-size: 18px; line-height: 1; }
@@ -498,7 +476,29 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-row { display: grid; grid-template-columns: 38px 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; height: 52px; box-sizing: border-box; padding: 5px 12px 5px 8px; border-radius: 10px;
   border: 1px solid var(--tsq-line); background: rgba(255, 255, 255, .02); transition: border-color .2s, background-color .2s; }
 .sqr-row:hover { border-color: color-mix(in srgb, var(--tsq-orange) 40%, var(--tsq-line)); background: rgba(255, 255, 255, .04); }
-.sqr-row.is-me { border-color: var(--tsq-orange); background: linear-gradient(90deg, rgba(255, 122, 26, .16), rgba(255, 122, 26, .04)); box-shadow: 0 0 16px rgba(255, 122, 26, .15); }
+/* A maker's row in their theme colour (--mc, their avatar colour), fading to the right. Your own row keeps its orange highlight. */
+.sqr-row.has-mc { border-color: color-mix(in srgb, var(--mc) 38%, var(--tsq-line));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mc) 50%, transparent), color-mix(in srgb, var(--mc) 12%, transparent) 80%); }
+.sqr-row.has-mc:hover { border-color: color-mix(in srgb, var(--mc) 70%, var(--tsq-line)); }
+/* Countries league: each row in its flag's colours (--f1..--f3); your country
+   keeps its orange frame. */
+.sqr-row.has-flag { border-color: color-mix(in srgb, var(--f1) 35%, var(--tsq-line));
+  /* The flag's colours as bands split at 45° with a short blend, like a
+     bicolor / tricolor spool (135deg, the app's SPLIT_BLEND look). */
+  /* Mixed into the dark row (not made transparent): a white or yellow stripe
+     stays a mid tone, so white text and the rank stay readable on it. */
+  --b1: color-mix(in srgb, var(--f1) 58%, #121726); --b2: color-mix(in srgb, var(--f2) 46%, #121726); --b3: color-mix(in srgb, var(--f3) 46%, #121726);
+  background: linear-gradient(135deg, var(--b1) 0 30%, var(--b2) 37% 63%, var(--b3) 70% 100%); }
+/* Text on a bright band (a white or yellow stripe) keeps its contrast. */
+.sqr-row.has-flag .sqr-name b, .sqr-row.has-flag .sqr-xp { text-shadow: 0 1px 3px rgba(0, 0, 0, .75); }
+.sqr-row.has-flag .sqr-name small { color: rgba(255, 255, 255, .78); text-shadow: 0 1px 2px rgba(0, 0, 0, .7); }
+.sqr-row.has-flag:hover { border-color: color-mix(in srgb, var(--f1) 65%, var(--tsq-line)); }
+/* …and keeps the orange frame over a coloured row (declared after the colour rules). */
+.sqr-row.is-me.has-mc, .sqr-row.is-me.has-flag { border-color: var(--tsq-orange); box-shadow: 0 0 0 1px var(--tsq-orange), 0 0 18px rgba(255, 122, 26, .3); }
+/* Your row: an orange frame and glow. It only paints its own orange fill on a
+   plain row — a row in a flag's or a maker's colours keeps them. */
+.sqr-row.is-me { border-color: var(--tsq-orange); box-shadow: 0 0 16px rgba(255, 122, 26, .15); }
+.sqr-row.is-me:not(.has-mc):not(.has-flag) { background: linear-gradient(90deg, rgba(255, 122, 26, .16), rgba(255, 122, 26, .04)); }
 .sqr-medal { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5)); }
 .sqr-rank { text-align: center; font: 800 14px var(--sqr-mono); color: var(--tsq-muted); }
 .sqr-av .sqb-avatar { width: 34px; height: 34px; }
@@ -520,7 +520,8 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-move { display: inline-flex; align-items: center; gap: 3px; font: 800 11px var(--sqr-mono); }
 .sqr-move svg { width: 9px; height: 7px; fill: currentColor; }
 .sqr-move.is-up { color: #34d399; }
-.sqr-move.is-down { color: #f87171; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
+.sqr-move.is-down { color: #f87171; } .sqr-move.is-same { color: var(--tsq-muted, #8c95a8); }
+.sqr-move.is-same i { display: block; width: 9px; height: 2px; border-radius: 1px; background: currentColor; opacity: .7; margin: 3px 0; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
 .sqr-xp { font: 800 14px var(--sqr-mono); color: var(--tsq-text); white-space: nowrap; }
 .sqr-gap { text-align: center; color: var(--tsq-muted); line-height: .6; }
 /* The account's own row when it ranks below the cut: a dashed top edge marks the skipped rows. */
@@ -563,8 +564,8 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff7a1a, #ffb347); transition: width .4s ease; }
 
 /* Chapters: one row that slides, arrows on both ends. */
-.qm-chapters { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 8px; align-items: center; padding: 8px; border-radius: 14px;
-  border: 1px solid var(--qw-line); background: linear-gradient(180deg, #161b2c, #121624); }
+/* The chapter row sits straight on the view (no box around it), arrows at its ends. */
+.qm-chapters { display: grid; grid-template-columns: 30px minmax(0, 1fr) 30px; gap: 8px; align-items: center; }
 .qm-chap-track { display: grid; grid-auto-flow: column; grid-auto-columns: 118px; gap: 8px; overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
 .qm-chap-track::-webkit-scrollbar { height: 0; }
 .qw .qm-arrow { width: 30px; height: 56px; display: grid; place-items: center; border-radius: 8px; border: 1px solid var(--qw-line); background: rgba(255, 255, 255, .03); cursor: pointer; }
@@ -574,7 +575,8 @@ body.progress-view #gridSortWrap { display: none; }
   border-radius: 10px; border: 1px solid var(--qw-line); background: #161b2c; color: var(--qw-ink); font: inherit; cursor: pointer; transition: border-color .2s, box-shadow .2s, background-color .2s; }
 .qm-chap-ic { font-size: 20px; line-height: 1.2; }
 .qm-chap-n { font: 700 10px var(--qw-display); letter-spacing: .2em; color: var(--qw-muted); }
-.qm-chap b { font: 800 13px var(--qw-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; }
+.qm-chap b { font: 800 13px var(--qw-display); text-transform: uppercase; letter-spacing: .03em; white-space: nowrap;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; }   /* long names (pt, de…) stay in their tile */
 .qm-chap small { font-size: 11px; color: var(--qw-muted); white-space: nowrap; }
 .qm-pips { display: flex; gap: 3px; margin-top: 5px; }
 .qm-pips i { width: 14px; height: 4px; border-radius: 2px; background: #2e3550; }
@@ -585,14 +587,6 @@ body.progress-view #gridSortWrap { display: none; }
 .qw .qm-chap.is-soon { opacity: .4; cursor: default; }
 
 /* Chapter heading. */
-.qm-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
-.qm-head-ic { font-size: 30px; line-height: 1; }
-.qm-head h3 { margin: 0; font: 800 30px var(--qw-display); text-transform: uppercase; letter-spacing: .03em; color: var(--qw-ink); }
-.qm-head p { margin: 0; font-size: 15px; color: #c9cfe2; }
-.qm-head-n { margin-left: auto; display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--qw-line); font-size: 13px; font-weight: 600; color: var(--qw-ink); }
-.qm-segs { display: flex; gap: 3px; }
-.qm-segs i { width: 18px; height: 6px; border-radius: 3px; background: #2e3550; }
-.qm-segs i.on { background: var(--qw-ok); box-shadow: 0 0 6px rgba(61, 220, 132, .5); }
 
 /* Level cards. */
 /* Five levels per chapter: five columns on a wide window, fewer when narrower. */
@@ -617,7 +611,10 @@ body.progress-view #gridSortWrap { display: none; }
 /* Illustration (assets/img/quests/mission-<level>.webp): a transparent scene,
    contained and sitting on the card's warm workshop glow. */
 .qm-art { height: 92px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .06); padding: 6px 8px 4px; box-sizing: border-box;
-  background: var(--art) center bottom / contain no-repeat content-box, radial-gradient(120% 140% at 50% 110%, rgba(255, 122, 26, .45), transparent 60%), linear-gradient(180deg, #1a1f30, #0e1220); }
+  background: var(--art) center bottom / contain no-repeat content-box, radial-gradient(120% 140% at 50% 110%, rgba(255, 122, 26, .45), transparent 60%),
+  /* The scene's backdrop is the banner's wall: the account's colour (--hero-wall,
+     set from it) or, without one, the navy. */
+  var(--hero-wall, linear-gradient(180deg, #1a1f30, #0e1220)); }
 .qm-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .qm-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 4px 2px; font-size: 13px; color: var(--qw-ink); border-radius: 6px; }
 .qm-row-label { min-width: 0; }
@@ -637,14 +634,13 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-status { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; border-radius: 8px; border: 1px solid var(--qw-line); font-size: 12px; font-weight: 600; color: #c9cfe2; }
 .qm-status .icon { background: currentColor; }
 .qm-card.is-won .qm-status { color: var(--qw-ok); border-color: color-mix(in srgb, var(--qw-ok) 50%, var(--qw-line)); }
-@media (max-width: 900px) { .qm-hero { height: auto; flex-direction: column; align-items: flex-start; } .qm-head-n { margin-left: 0; } }
+@media (max-width: 900px) { .qm-hero { height: auto; flex-direction: column; align-items: flex-start; } }
 @media (prefers-reduced-motion: reduce) { .qm-card, .qw .qm-chap, .qm-bar i { transition: none; } }
 /* Rank icons (assets/svg/ranks/rank-NN.svg) drawn as a mask in the current colour. */
 .qm-rank-ic { display: inline-block; width: 1em; height: 1em; vertical-align: -.12em; background: currentColor;
   -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
 .qm-chap-ic { color: var(--qw-tiger2); font-size: 22px; line-height: 1; }
 .qm-chap.is-soon .qm-chap-ic { color: var(--qw-muted); }
-.qm-head-ic { color: var(--qw-tiger); font-size: 30px; line-height: 1; }
 .qm-hero-card b .qm-rank-ic { color: var(--qw-tiger2); }
 
 /* ── Hero banners on narrow windows ─────────────────────────────────────────
@@ -782,3 +778,124 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-gap { color: var(--qw-muted); padding: 0 2px; }
 .xph-count { margin-left: auto; font-size: 12.5px; color: var(--qw-muted); }
 @media (max-width: 1100px) { .xph-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* Next rival, one line per league (country, world): badge, avatar, name + XP to go, a thin bar. */
+.sqr-card-rival .sqr-rival-row { display: grid; grid-template-columns: 16px 24px minmax(0, 1fr); column-gap: 6px; row-gap: 3px; align-items: center; }
+.sqr-rival-row .sqb-avatar { width: 24px; height: 24px; }
+.sqr-rival-row .av-squad-heart { display: none; }
+.sqr-rival-row .sqr-rival-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.sqr-rival-row .sqr-rival-txt b { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqr-rival-row .sqr-rival-txt small { font-size: 11.5px; font-weight: 800; color: var(--tsq-orange); white-space: nowrap; }
+.sqr-rival-row .sqr-bar { grid-column: 2 / -1; height: 4px; }
+.sqr-rival-badge { display: inline-flex; align-items: center; justify-content: center; }
+.sqr-rival-badge .icon { background: #c9cfe2; }
+.sqr-rival-row.is-top { grid-template-columns: 16px 24px minmax(0, 1fr); }
+.sqr-rival-row.is-top b { font-size: 12.5px; font-weight: 800; color: var(--sqr-gold, #ffc83d); white-space: nowrap; }
+.sqr-rival-medal { width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(255, 200, 61, .4)); }
+.sqr-hero .sqr-card-rival.sqr-card-rival { width: 200px; }
+.sqr-rival-row .sqr-rival-txt small { font-size: 11px; }
+/* The one rank number (rankNo() in squad-rankings.js): white, mono, bold, a
+   shadow so it reads on any row colour. Size follows where it sits. */
+.sqr-no { font-family: var(--sqr-mono, ui-monospace, monospace); font-weight: 800; color: #fff; text-shadow: 0 1px 3px rgba(0, 0, 0, .75); white-space: nowrap; }
+.sqr-rank .sqr-no { font-size: 14px; }
+.sqr-mini .sqr-no { font-size: 11px; }
+.sqb-row .sqr-no { font-size: 15px; }
+.sqb-medal-1 .sqr-no, .sqb-medal-2 .sqr-no, .sqb-medal-3 .sqr-no { color: inherit; }   /* the full list keeps its podium tints */
+.sqr-card-rank .sqr-no { font-size: 13px; }
+.fvb-xp-n .sqr-no { font-size: inherit; text-shadow: none; }
+/* Items banner: the tiger in its setup, the four legendary devices on the desk —
+   a black silhouette until owned, then lit with the legendary glow. Same height,
+   wall and desk as every hero (.sqr-hero); the row sits on the desk line. */
+.sqi-hero .sqi-scene { position: relative; z-index: 2; flex: 1 1 auto; align-self: stretch; display: flex; align-items: flex-end; justify-content: center;
+  gap: 14px; margin-bottom: calc(-6px - var(--hero-sink, 4px)); min-width: 0; padding-right: 24px; }
+/* The tiger stands BEHIND the desk (its belly hidden by the desk, z 1) and
+   rests its paws ON it: a second layer with the paws only sits over the desk.
+   The scene must not be a stacking context for that, hence z-index: auto. */
+.sqi-hero > .sqi-scene.sqi-scene { z-index: auto; }
+.sqi-tiger { position: relative; flex-shrink: 0; height: 126px; aspect-ratio: 1226 / 802; margin: 0 6px; top: 0; }   /* like the Tiger Squad hero: the waist cut sits just under the desk top, paws resting on it */
+.sqi-tiger img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sqi-tiger-back { z-index: 0; }
+.sqi-tiger-front { z-index: 2; }
+.sqi-item { position: relative; z-index: 2; transform: translateY(3px); }   /* bases on the desk top stripe, like the Tiger Squad printer */
+.sqi-item { flex-shrink: 0; transition: filter .3s, opacity .3s; filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .5)); opacity: .7; }
+.sqi-item.is-on { opacity: 1; filter: drop-shadow(0 0 10px rgba(255, 138, 0, .65)) drop-shadow(0 0 2px rgba(255, 200, 120, .8)); }
+.sqi-item--tigerscale-flat2 { height: 100px; }
+.sqi-item--tigerspool-flat2 { height: 92px; }
+.sqi-item--tigertouch-flat3 { height: 70px; }
+.sqi-item--tigerpod-flat2 { height: 96px; }
+@container (max-width: 900px) { .sqi-hero .sqi-item--tigerspool-flat2, .sqi-hero .sqi-item--tigerpod-flat2 { display: none; } }
+@container (max-width: 640px) { .sqi-hero .sqi-scene { display: none; } }
+/* Items view — two panels of rarity cards (lootHtml / ladderHtml). The rarity
+   is the card's own colour (--c: Diablo — legendary orange, epic green, rare
+   yellow, uncommon blue, common white); owned cards glow, the rest are dimmed
+   with a lock. Side by side on wide windows, stacked below 1300 px. */
+.qw-ladders { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
+@media (min-width: 1300px) { .qw-ladders { grid-template-columns: 1fr 1fr; } }
+.qw-ladders .qw-ladder { margin: 0; }
+.qw-ladder-sum { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.qw-ladder-sum b { font: 800 20px var(--qw-mono); color: var(--qw-ink); }
+.qw-ladder-sum span { font: 700 12px var(--qw-mono); color: var(--qw-tiger2); }
+.qw-ladders .qw-quest-head { display: flex; align-items: flex-end; gap: 12px; }
+.qw-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.qw-card { --c: #e2e2e2; position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px 12px 10px; border-radius: 12px; min-height: 132px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 9%, transparent), rgba(0, 0, 0, .25) 60%);
+  border: 1px solid color-mix(in srgb, var(--c) 22%, var(--qw-line)); border-top: 3px solid color-mix(in srgb, var(--c) 40%, transparent);
+  opacity: .58; transition: border-color .2s, box-shadow .2s, opacity .2s; }
+.qw-card--legendary { --c: #ff8000; } .qw-card--epic { --c: #1eff4a; } .qw-card--rare { --c: #ffe94a; } .qw-card--uncommon { --c: #6e8cff; }
+.qw-card.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 55%, var(--qw-line)); border-top-color: var(--c);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--c) 18%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 10%, transparent); }
+.qw-card:hover { border-color: color-mix(in srgb, var(--c) 80%, var(--qw-line)); }
+.qw-card-ic { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 2px; }
+.qw-card-ic .icon { width: 26px; height: 26px; background: var(--c); }
+.qw-card-n { position: absolute; top: 10px; right: 10px; padding: 2px 8px; border-radius: 99px; font: 800 12px var(--qw-mono); color: var(--qw-ink);
+  background: color-mix(in srgb, var(--c) 22%, rgba(0, 0, 0, .4)); }
+.qw-card-name { font-size: 14px; color: var(--qw-ink); line-height: 1.25; }
+.qw-card-hint { font-size: 11.5px; line-height: 1.35; color: var(--qw-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.qw-card-foot { margin-top: auto; padding-top: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 6px; }
+.qw-card-rar { white-space: nowrap; }
+.qw-card-rar { font: 700 10px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; color: var(--c); }
+.qw-card-xp { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--qw-mono); color: var(--c); white-space: nowrap; }
+.qw-card-xp .icon-check { background: var(--qw-ok); } .qw-card-xp .icon-lock { background: var(--qw-muted); }
+/* Secret bonus mission (a `secret` level, shown once its rank's other levels are
+   won): the sixth card of the row, purple and gold, with a "Secret mission" tag
+   and a soft pulse when it appears. */
+.qm-cards.has-secret { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+@media (max-width: 1450px) { .qm-cards.has-secret { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1000px) { .qm-cards.has-secret { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.qm-secret-wrap { position: relative; display: flex; animation: qm-secret-in .6s ease-out both; }
+.qm-secret-wrap > .qm-card { flex: 1; border-color: rgba(190, 130, 255, .6);
+  background: radial-gradient(120% 90% at 50% 0%, rgba(160, 90, 255, .3), transparent 60%), linear-gradient(180deg, #241a3a, #151225);
+  box-shadow: 0 0 24px rgba(160, 90, 255, .28); }
+.qm-secret-wrap > .qm-card .qm-art { border-color: rgba(190, 130, 255, .35); }
+.qm-secret-tag { position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 1; padding: 2px 12px; font: 800 10px var(--qw-display); letter-spacing: .14em; text-transform: uppercase; color: #1a1205;
+  background: linear-gradient(90deg, #ffd34d, #ff9f1c); clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 6px 100%); }
+.qm-secret-wrap > .qm-card { padding-top: 22px; }
+@keyframes qm-secret-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
+@media (prefers-reduced-motion: reduce) { .qm-secret-wrap { animation: none; } }
+/* Legendary chapter tile — every level of the rank AND its secret bonus won: a
+   rotating gold-and-purple border, a light sweep, a pulsing glow and a crown. */
+@property --qm-spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.qw .qm-chap.is-legend { position: relative; overflow: hidden; border-color: transparent;
+  background: linear-gradient(180deg, rgba(60, 30, 90, .95), #1a1426) padding-box,
+    conic-gradient(from var(--qm-spin), #ffd34d, #ff9f1c, #b46cff, #6e8cff, #ffd34d) border-box;
+  border: 2px solid transparent; animation: qm-spin 4s linear infinite, qm-legend-glow 2.4s ease-in-out infinite; }
+.qw .qm-chap.is-legend b { background: linear-gradient(90deg, #ffe58a, #ffb347, #e2b6ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.qw .qm-chap.is-legend .qm-chap-ic { color: #ffd34d; filter: drop-shadow(0 0 6px rgba(255, 211, 77, .8)); }
+.qw .qm-chap.is-legend .qm-pips i { background: linear-gradient(90deg, #ffd34d, #b46cff); box-shadow: 0 0 6px rgba(255, 211, 77, .6); }
+.qm-chap-crown { position: absolute; top: 4px; right: 6px; font-size: 13px; color: #ffd34d; text-shadow: 0 0 8px rgba(255, 211, 77, .9); animation: qm-twinkle 1.6s ease-in-out infinite; }
+.qm-chap-shine { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .28) 50%, transparent 65%);
+  background-size: 250% 100%; animation: qm-shine 3.2s ease-in-out infinite; }
+@keyframes qm-spin { to { --qm-spin: 360deg; } }
+@keyframes qm-legend-glow { 50% { box-shadow: 0 0 22px rgba(255, 190, 80, .55), 0 0 40px rgba(180, 108, 255, .35); } }
+@keyframes qm-shine { 0% { background-position: 150% 0; } 60%, 100% { background-position: -100% 0; } }
+@keyframes qm-twinkle { 50% { transform: scale(1.25) rotate(15deg); opacity: .75; } }
+@media (prefers-reduced-motion: reduce) { .qw .qm-chap.is-legend, .qm-chap-crown, .qm-chap-shine { animation: none; } }
+/* The secret mission once WON: the same legendary treatment as its chapter tile —
+   rotating gold-and-purple border, light sweep, pulsing glow. */
+.qm-secret-wrap > .qm-card.is-won { position: relative; overflow: hidden; border: 2px solid transparent;
+  background: radial-gradient(120% 90% at 50% 0%, rgba(255, 200, 80, .22), transparent 60%) padding-box, linear-gradient(180deg, #2a1e3c, #151225) padding-box,
+    conic-gradient(from var(--qm-spin), #ffd34d, #ff9f1c, #b46cff, #6e8cff, #ffd34d) border-box;
+  animation: qm-spin 4s linear infinite, qm-legend-glow 2.4s ease-in-out infinite; }
+.qm-secret-wrap > .qm-card.is-won::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .18) 50%, transparent 65%); background-size: 250% 100%; animation: qm-shine 3.2s ease-in-out infinite; }
+.qm-secret-wrap:has(.qm-card.is-won) .qm-secret-tag { background: linear-gradient(90deg, #ffe58a, #ffb347, #e2b6ff); }
+@media (prefers-reduced-motion: reduce) { .qm-secret-wrap > .qm-card.is-won, .qm-secret-wrap > .qm-card.is-won::after { animation: none; } }

@@ -2295,6 +2295,16 @@
   header.top {
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; margin-bottom: 14px; flex-wrap: wrap;
+    position: relative; isolation: isolate;
+  }
+  /* Theme colour glow behind the header (--theme-tint, set from the account's
+     — or the visited friend's — avatar colour): bleeds into the page padding,
+     stays present across the width, fades out at the bottom. */
+  header.top::before {
+    content: ""; position: absolute; inset: -16px -20px -10px; z-index: -1; pointer-events: none;
+    background: var(--theme-tint, none);
+    -webkit-mask: linear-gradient(180deg, #000 70%, transparent); mask: linear-gradient(180deg, #000 70%, transparent);
+    transition: background .4s;
   }
   /* TD1S / Scale / Cloud (and the optional RFID pill) — always pinned to
      the right edge of the header. `margin-left: auto` makes this work even
@@ -5176,3 +5186,87 @@ body.ttag-dragging .ttag-drop-hint { display: flex; }
 #ttagImportOverlay .ttag-mode-opt-desc { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
   /* The "Share" badge sits at the end of the socials row, a little apart from the icons. */
   .fvb-socials .fvb-badge--share { margin-left: 4px; }
+
+/* ── My profile, two columns (redesign) ─────────────────────────────────────
+   Double width, cards in two columns: profile / community / preferences on
+   the left, AI assistants / online connector / advanced on the right. One
+   column when the window is narrow. The colour strip sits beside the identity
+   in the hero. Explanations moved to ⓘ bubbles (.eac-info). */
+#editAccountModalOverlay .modal-card { width: 780px; max-width: calc(100vw - 16px); }
+#editAccountModalOverlay .eac-hero { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
+#editAccountModalOverlay .eac-hero .eac-swatches { width: auto; margin-top: 0; gap: 7px; justify-content: flex-end; }
+#editAccountModalOverlay .eac-body { padding: 0 14px 14px; }
+#editAccountModalOverlay .eac-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: start; }
+#editAccountModalOverlay .eac-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+#editAccountModalOverlay .eac-col .eac-group.eac-group {
+  padding: 12px 16px; border: 1px solid var(--border-soft); border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+#editAccountModalOverlay .eac-card-title {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 8px;
+  font-size: 14px; font-weight: 600; color: var(--text);
+}
+#editAccountModalOverlay .eac-card-title > .icon { background-color: var(--muted); }
+#editAccountModalOverlay .eac-sub-label { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border-soft); }
+/* Tighter rows inside the cards: the two columns should fit a 1000 px tall window. */
+#editAccountModalOverlay .eac-col .eac-row.eac-row { min-height: 34px; }
+#editAccountModalOverlay .eac-socials-label { margin-top: 12px; }
+#editAccountModalOverlay .eac-socials-count { color: var(--faint); }
+/* The online connector is a card of its own now: no inner divider. */
+#editAccountModalOverlay .eac-col .eac-mcp-web.eac-mcp-web { margin-top: 0; padding-top: 14px; border-top: 1px solid var(--border-soft); }
+#editAccountModalOverlay .eac-mcp-howto-row { display: flex; align-items: center; gap: 8px; }
+/* ⓘ bubbles outside the account section (the base .eac-info rule only sized them). */
+#editAccountModalOverlay .eac-card-title .eac-info .icon { background: var(--faint); }
+@media (max-width: 820px) {
+  #editAccountModalOverlay .eac-cols { grid-template-columns: 1fr; }
+}
+/* Member: the TigerSquad badge takes the avatar's corner (like the header
+   avatar); the pen badge steps aside, the hover overlay still shows the pen. */
+#editAccountModalOverlay .eac-avatar-editable.eac-avatar--squad::before,
+#editAccountModalOverlay .eac-avatar-editable.eac-avatar--squad::after { display: none; }
+#editAccountModalOverlay .eac-avatar .av-squad-heart { z-index: 3; }
+/* TigerSquad row: the toggle stays on the title's line, the stats run below
+   it on two planned lines (XP · certified / world rank). */
+#editAccountModalOverlay .eac-row:has(.eac-squad-label) { align-items: flex-start; }
+#editAccountModalOverlay .eac-row:has(.eac-squad-label) .eac-toggle { margin-top: 2px; }
+#editAccountModalOverlay .eac-squad-label.eac-squad-label { flex-direction: column; align-items: flex-start; gap: 3px; }
+#editAccountModalOverlay .eac-squad-xp > span { display: block; }
+/* Colour strip a touch quieter: 16 px dots, the custom picker a little larger. */
+#editAccountModalOverlay .eac-hero .eac-swatch { width: 16px; height: 16px; }
+#editAccountModalOverlay .eac-hero .eac-swatch-custom { width: 22px; height: 22px; }
+/* Connected assistant rows: name + revoke on the first line, the date and
+   last use on a full-width second line that never breaks ("il y a 1h"). */
+#editAccountModalOverlay .eac-mcp-grant.eac-mcp-grant { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px; padding: 8px 8px 8px 10px; }
+#editAccountModalOverlay .eac-mcp-grant-text { display: contents; }
+#editAccountModalOverlay .eac-mcp-grant-name { grid-column: 1; grid-row: 1; align-self: center; }
+#editAccountModalOverlay .eac-mcp-grant .eac-mcp-cut { grid-column: 2; grid-row: 1; }
+#editAccountModalOverlay .eac-mcp-grant-meta { grid-column: 1 / -1; grid-row: 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Edit my profile (#identityOverlay) — avatar, display name, theme colour. */
+#identityOverlay .idm-card { width: 440px; max-width: calc(100vw - 32px); padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
+#identityOverlay .idm-head { display: flex; align-items: center; justify-content: space-between; }
+#identityOverlay .idm-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+#identityOverlay .idm-head .modal-close { position: static; }
+#identityOverlay .idm-avatar-row { display: flex; align-items: center; gap: 16px; }
+#identityOverlay .idm-avatar { width: 76px; height: 76px; font-size: 26px; cursor: default; }
+#identityOverlay .idm-photo-btns { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+#identityOverlay .idm-btn { display: inline-flex; align-items: center; gap: 6px; }
+#identityOverlay .idm-btn--danger { color: var(--danger); } #identityOverlay .idm-btn--danger .icon { background: var(--danger); }
+#identityOverlay .eac-avatar-result:empty { display: none; }
+#identityOverlay .idm-field { display: flex; flex-direction: column; gap: 7px; }
+#identityOverlay .eac-field-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }
+#identityOverlay .eac-name-row { display: flex; gap: 6px; }
+#identityOverlay .eac-name-input { flex: 1; min-width: 0; padding: 8px 11px; font-size: 13px; border-radius: 9px; }
+#identityOverlay .eac-name-save { width: 34px; height: 34px; border-radius: 9px; transition: background .18s, border-color .18s; }
+#identityOverlay .eac-name-save.is-ok { background: var(--success); border-color: var(--success); }
+#identityOverlay .eac-name-save.is-ok .icon { background-color: var(--on-accent); }
+#identityOverlay .eac-name-save.is-err { border-color: var(--danger); animation: eacSaveShake .38s; }
+#identityOverlay .eac-name-save.is-busy { opacity: .5; pointer-events: none; }
+#identityOverlay .eac-swatches { margin-top: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+#identityOverlay .eac-swatch { flex: 0 0 auto; width: 32px; height: 32px; aspect-ratio: auto; }
+#identityOverlay .eac-swatch[data-color] { border-color: var(--ink-10); }
+#identityOverlay .eac-swatch[data-color].active { border-color: var(--text); }
+#identityOverlay .idm-foot { display: flex; justify-content: flex-end; }
+/* The pen beside the name in My profile. */
+.eac-ident-edit { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+.eac-ident-edit .icon { background: var(--muted); }
+.eac-ident-edit:hover { background: var(--surface-2); } .eac-ident-edit:hover .icon { background: var(--primary); }

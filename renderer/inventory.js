@@ -18,7 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
-import { squadHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows } from './quests/squad-rankings.js';
+import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
@@ -427,6 +427,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!el.querySelector(":scope > .av-plus")) el.appendChild(_makeAvatarPlus());
     _renderAvatarPhotoOverlay(el, p.photoURL);
     el.dataset.avMode = p.mode;
+    if (el.id === "sbAvatar") _applyThemeColor();   // the account's colour themes the space
   }
 
   // Template form — returns the full HTML for innerHTML-built lists.
@@ -455,6 +456,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // new pipeline so they get the centralised behaviour for free.
   function applyAvatarStyle(acc) {
     paintAvatar($("sbAvatar"), acc);
+  }
+  /* THEME COLOUR — the avatar colour a user picked personalises their space:
+     the header's glow (--theme-tint), the hero banners' wall and the mission
+     illustrations' backdrop (--hero-wall, renderer/quests/quests.css). In a
+     friend's view it is THE FRIEND's colour, like visiting their place; back
+     home, yours again. Blended into the navy so white text stays readable.
+     Called when the sidebar avatar is repainted (every account / colour
+     change) and from renderFriendBanner (entering / leaving a friend's view). */
+  function _themeColorHex() {
+    const c = state.friendView ? state.friendView.avatarColor : getAccShadow(activeAccount());
+    return typeof c === "string" && /^#[0-9a-f]{6}$/i.test(c) ? c : null;
+  }
+  function _applyThemeColor() {
+    const c = _themeColorHex();
+    const root = document.documentElement.style;
+    if (!c) { root.removeProperty("--hero-wall"); root.removeProperty("--theme-tint"); return; }
+    const mix = pct => `color-mix(in srgb, ${c} ${pct}%, #0f1830)`;
+    // ONE tone everywhere: the header glow is the banners' own wall, so the
+    // header and the hero banners read as the same colour.
+    const wall = `linear-gradient(115deg, ${mix(42)} 0%, ${mix(20)} 55%, ${mix(30)} 100%)`;
+    root.setProperty("--hero-wall", wall);
+    root.setProperty("--theme-tint", wall);
   }
   // Inline template form of the photo overlay — used by `innerHTML`-built
   // avatar variants (dropdown, sidebar friend chips, profiles modal,
@@ -4157,7 +4180,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("vtgLevel")?.addEventListener("click", () => setViewMode("questsJourney"));
   // Not in the TigerSquad: every entry of its menu offers to join instead of
   // opening a view that is about membership.
-  const _squadGate = open => () => { if (state.activeAccountId && !state.supportPublicly) { _openSquadInvite(); return; } open(); };
+  // Non-members get the invitation — except in a friend's view, where the
+  // rankings show what the FRIEND sees (nothing there is about joining).
+  const _squadGate = open => () => { if (state.activeAccountId && !state.friendView && !state.supportPublicly) { _openSquadInvite(); return; } open(); };
   $("vtgSquadChip")?.addEventListener("click", _squadGate(() => _openSquadView("countries")));
   $("vtgSquadItems")?.addEventListener("click", _squadGate(() => _openSquadView("ach")));
   $("vtgSquadHist")?.addEventListener("click", _squadGate(() => openXpHistory()));
@@ -4224,6 +4249,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     brandName: id => dbFind("brand", id)?.name || "",
     materialName: id => dbFind("material", id)?.label || "",
     playTones: (n, o) => _playTones(n, o),
+    loadingHTML: () => _loadingHTML(),   // the app's page loader (a friend's stock, Tiger Squad…)
+    // XP an action earns through ANOTHER part of the account (its mission pays 0):
+    // joining the TigerSquad is paid as the squad bonus.
+    xpElsewhere: id => (id === "d5.squad" ? SQUAD_XP : 0),   // read late: SQUAD_XP is declared further down
     onChange: () => {
       try { _renderQuestPill(); } catch (_) {}
       if (state.viewMode === "questsToday" || state.viewMode === "questsJourney") renderInventory();
@@ -4236,12 +4265,34 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const IMG = { tigerScale: "icon_tigerscale_3d", tigerSpool: "icon_tigerspool_3d", tigerTouch: "icon_tigertouch_3d",
                     tigerPod: "Icon_tigerpod_3d", td1s: "Icon_td1s_3d", mobileApp: "icon_mobile_app" };
       const ICON = { usbScale: "scale", rfidReader: "tag", printer: "printer", firstRack: "rack-grid", firstList: "list",
-                     friend: "user", photo: "image", social: "link", publicProfile: "eye-on", link: "community" };
-      // TigerTag chips: 1–10 XP per physical chip → common; shown with what they earned.
-      const chips = { id: "chips", rarity: "common", n: b.chips?.n || 0, got: (b.chips?.xp || 0) > 0, xp: 0, per: 0,
-        label: t("xpPart_chips"), hint: t("xpChipsHint"), icon: "tag", value: `${(b.chips?.xp || 0).toLocaleString(state.lang)} XP` };
-      return [chips, ...[...XP_ACHIEVEMENTS, { id: "squad", xp: SQUAD_XP }].map(a => ({
-        id: a.id, xp: a.xp || 0, per: a.per || 0, n: b[a.id]?.n || 0, got: (b[a.id]?.xp || 0) > 0,
+                     friend: "user", photo: "image", social: "link", link: "community" };
+      // Physical things you own (devices, chips, printers) vs what you do in the
+      // app (friends, links, lists…): the Items view shows them in two tables.
+      const PHYSICAL = new Set(["chips", "tigerScale", "tigerSpool", "tigerTouch", "tigerPod", "td1s", "usbScale", "rfidReader", "printer"]);
+      // TigerTag chips: three common items, one per type, each physical chip (UID)
+      // counted once in its CURRENT type (backend breakdown chips.tag / plus / cert):
+      // a chip re-programmed or certified moves to the other item with its XP.
+      const c = b.chips || {};
+      const chipItem = (id, n, per, label) => ({ id, physical: true, rarity: "common", n, per, xp: 0, got: n > 0,
+        label, hint: t("xpChipTypeHint", { xp: per }), icon: "tag", value: `${(n * per).toLocaleString(state.lang)} XP` });
+      const chips = [
+        chipItem("chipTag", c.tag ?? Math.max(0, (c.n || 0) - (state.certifiedPlusCount || 0)), 1, "TigerTag"),
+        chipItem("chipPlus", c.plus || 0, 2, "TigerTag+"),
+        chipItem("chipCert", c.cert ?? (state.certifiedPlusCount || 0), 10, "TigerTag+ Certified"),
+      ];
+      // App updates: +50 XP per new released version installed, +50 more within 3
+      // days of its release (backend quests.js UPDATE) — profile & community table.
+      // Two items: the update itself, and the Speedrun (the breakdown's xp is
+      // 50 × updates + 50 × speedruns, so the speedrun count is what is left).
+      const updN = b.updates?.n || 0, runN = Math.max(0, Math.round(((b.updates?.xp || 0) - 50 * updN) / 50));
+      const upd = [
+        { id: "updates", physical: false, rarity: "uncommon", n: updN, per: 50, xp: 0, got: updN > 0,
+          label: t("xpAch_updates"), hint: t("xpUpdatesHint"), icon: "download" },
+        { id: "speedrun", physical: false, rarity: "uncommon", n: runN, per: 50, xp: 0, got: runN > 0,
+          label: "Speedrun", hint: t("xpSpeedrunHint"), icon: "bolt" },
+      ];
+      return [...chips, ...upd, ...[...XP_ACHIEVEMENTS, { id: "squad", xp: SQUAD_XP }].map(a => ({
+        id: a.id, physical: PHYSICAL.has(a.id), xp: a.xp || 0, per: a.per || 0, n: b[a.id]?.n || 0, got: (b[a.id]?.xp || 0) > 0,
         label: t(a.id === "squad" ? "xpPart_squad" : `xpAch_${a.id}`), hint: a.id === "squad" ? "" : t(`xpAchHint_${a.id}`),
         img: IMG[a.id] ? `${IMG[a.id]}.svg` : null, icon: ICON[a.id] || null,
       }))];
@@ -4470,7 +4521,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // .av-initials text and the photo overlay all in one shot. No
     // textContent on #eacAvatar itself (that would wipe the hover
     // overlay + the avatar menu children, breaking the click flow).
-    paintAvatar($("eacAvatar"), _editingAccount);
+    paintAvatar($("eacAvatar"), _editingAccount); _paintEacSquad();
     $("eacName").textContent    = _editingAccount.displayName || "";
     $("eacName").style.display  = _editingAccount.displayName ? "" : "none";
     $("eacEmail").textContent   = _editingAccount.email || "";
@@ -4520,7 +4571,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <button type="button" class="eac-social-del" aria-label="✕"${url ? "" : " hidden"}><span class="icon icon-close icon-12"></span></button>
       </div>`;
     };
-    box.innerHTML = (state.socials || []).map(rowHTML).join("") + rowHTML("");   // trailing empty add-row
+    const list = state.socials || [];
+    const cnt = $("eacSocialsCount"); if (cnt) cnt.textContent = `(${list.length}/${SOCIALS_MAX})`;
+    // Trailing empty add-row — gone once the profile holds SOCIALS_MAX links.
+    box.innerHTML = list.map(rowHTML).join("") + (list.length < SOCIALS_MAX ? rowHTML("") : "");
   }
   async function _saveSocials() {
     const uid = state.activeAccountId; if (!uid || state.friendView) return;
@@ -4824,6 +4878,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // until it lands, a fresh join shows the obvious bronze / gold.
   const SQUAD_TIERS = ["bronze", "silver", "gold", "platinum"];
   const squadTierLabel = tier => tier ? tier[0].toUpperCase() + tier.slice(1) : "";
+  /* My profile's avatar wears the member's TigerSquad look exactly like every
+     avatarMarkup() avatar (header, friends): the level ring (.av-squad.sq-<tier>)
+     and the level badge on its corner. The pen badge gives way to it there —
+     the hover overlay still says the avatar is editable, as in the header. */
+  function _paintEacSquad() {
+    const el = $("eacAvatar"); if (!el) return;
+    const tier = _ownSquadTier();
+    el.classList.remove("av-squad", ...SQUAD_TIERS.map(x => `sq-${x}`));
+    el.classList.toggle("eac-avatar--squad", !!tier);
+    let badge = el.querySelector(":scope > .av-squad-heart");
+    if (!tier) { badge?.remove(); return; }
+    el.classList.add("av-squad", `sq-${tier}`);
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.setAttribute("aria-hidden", "true");
+      badge.innerHTML = `<img alt="">`;
+      el.appendChild(badge);
+    }
+    badge.className = `av-squad-heart sq-${tier}`;
+    badge.querySelector("img").src = `../assets/img/tigersquad/tigersquad-${tier}.webp`;
+    el.style.boxShadow = "";   // the ring replaces the account-colour glow
+  }
   function _ownSquadTier() {
     if (!state.supportPublicly) return null;
     return SQUAD_TIERS.includes(state.squadTier) ? state.squadTier : (state.supporter ? "gold" : "bronze");
@@ -4958,7 +5034,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       sGoal[2] ? `${t("squadItems")} · ${t("xpNextTitle", { tier: squadTierLabel(sGoal[2]) })} ${Math.min(sGoal[0], sGoal[1])}/${sGoal[1]}` : t("squadItems"));
     const sWrap = $("vtgSquad");
     if (sWrap) {
-      const hide = !own || typeof state.xpPoints !== "number";
+      // A friend's view keeps the group with Rankings only, seen as the friend
+      // sees it; Items and History are about your own account.
+      const hide = state.friendView ? false : (!own || typeof state.xpPoints !== "number");
+      if ($("vtgSquadItems")) $("vtgSquadItems").hidden = !!state.friendView;
+      if ($("vtgSquadHist")) $("vtgSquadHist").hidden = !!state.friendView;
       // Shown later than the rest of the bar (the XP arrives after sign-in): place its selection bubble then.
       if (sWrap.hidden !== hide) { sWrap.hidden = hide; if (!hide) requestAnimationFrame(() => _positionViewIndicators(true)); }
     }
@@ -4990,7 +5070,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         rk.addEventListener("click", () => _openSquadView("countries"));
         host.appendChild(rk);
       }
-      rk.querySelector(".fvb-xp-n").textContent = `#${r.rank}`;
+      rk.querySelector(".fvb-xp-n").innerHTML = rankNo(r.rank);   // the one rank look (squad-rankings.js)
       rk.setAttribute("aria-label", t("squadRankLine", { rank: r.rank, total: r.total }));
     }).catch(() => {});
   }
@@ -5189,9 +5269,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function _renderSquadView() {
     const host = $("invSquadView"); if (!host) return;
-    const uid = state.activeAccountId;
+    // Whose rankings: yours, or in a friend's view the friend's (their rank
+    // card, rivals, country league and row) — the board is rebuilt for them.
+    const uid = state.friendView?.uid || state.activeAccountId;
     // Reused while fresh; reloaded (instantly from the last load) after 2 min.
     const tab = state.viewMode === "squadItems" ? "ach" : "countries";
+    // Tiger Quests secret mission d6: a friend's Tiger Squad seen, your Items opened.
+    if (state.friendView) questBump("friendSquadView"); else if (tab === "ach") questBump("squadItemsOpen");
     if (tab !== _squadViewTab) host.scrollTop = 0;   // switching section starts at the top
     _squadViewTab = tab;
     if (host._sqb && host._sqb.uid === uid && Date.now() - host._sqb.at < 120e3) { host._sqb.render(_squadViewTab); return; }
@@ -5264,10 +5348,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const rtf = new Intl.RelativeTimeFormat(state.lang || "en", { numeric: "auto" });
     const dayFmt = new Intl.DateTimeFormat(state.lang || "en", { month: "short", day: "numeric" });
     return {
-      uid, t, esc, fmt, cname, flagOf: _flagOf, myCountry, lang: state.lang, squadXp: state.xpPoints,
+      uid, t, esc, fmt, cname, flagOf: _flagOf, myCountry, lang: state.lang,
+      // A friend's view: their rankings, never your XP nor a "Join" button on their card.
+      friend: uid !== state.activeAccountId, squadXp: uid === state.activeAccountId ? state.xpPoints : null,
       rankBase: _squadPulse.ranks,
       tierLabel: squadTierLabel, brandLabel: b => _PT_BRAND_LABEL[b] || b,
       avatar: m => avatarMarkup({ ...m.profile, tigerSquad: true, squadTier: m.tier }, "sqb-avatar"),
+      memberColor: m => profileColor(m.profile),   // the maker's theme colour, tints their league row
       ago: ms => { const m = Math.round((Date.now() - ms) / 60e3); return m < 60 ? rtf.format(-m, "minute") : rtf.format(-Math.round(m / 60), "hour"); },
       day: d => { try { return dayFmt.format(new Date(`${d}T12:00:00`)); } catch (_) { return d; } },
     };
@@ -5297,6 +5384,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   async function _openSquadBoard(tab = "countries", host = null) {
     const uid = state.activeAccountId; if (!uid || (!host && document.querySelector(".squad-board:not(.squad-board--inline)"))) return;
+    // Who the page is FOR (the "me" of the rank card, rivals, country league and
+    // highlighted row): you, or the friend whose view is open. Reads stay yours.
+    const viewer = (host && state.friendView?.uid) || uid;
     const opener = document.activeElement;
     const bd = document.createElement("div"); bd.className = "support-backdrop";
     const card = document.createElement("div");
@@ -5327,7 +5417,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (_squadBoardCache && _squadBoardCache.uid !== uid) _squadBoardCache = null;
     let members = _squadBoardCache?.members || [];
     let loading = !_squadBoardCache;
-    const myCountry = () => members.find(m => m.uid === uid)?.country || state.squadCountry || null;
+    const myCountry = () => members.find(m => m.uid === viewer)?.country || (viewer === uid ? state.squadCountry : null) || null;
     let mine = _squadBoardCache?.mine || null;   // { breakdown, unlocked, history[] } — loaded with the board
     // Skeleton rows while the first load runs: the window has its final shape at
     // once instead of popping open when the data lands.
@@ -5340,8 +5430,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // The view (main area): the hero on every tab; the Rankings tab is the
       // quests/squad-rankings.js layout (My rank, Community pulse, three leagues).
       if (host) {
-        const rctx = _squadRankCtx(uid, cname, fmt, myCountry());
-        card.querySelector(".sqr-hero-host").innerHTML = squadHeroHtml(rctx, members);
+        const rctx = _squadRankCtx(viewer, cname, fmt, myCountry());
+        // Items has its own banner: the tiger and the four legendary devices, lit when owned.
+        const xb = state.xpBreakdown || {}, got = id => (xb[id]?.xp || 0) > 0;
+        card.querySelector(".sqr-hero-host").innerHTML = which === "ach"
+          ? squadItemsHeroHtml(rctx, { tigerScale: got("tigerScale"), tigerSpool: got("tigerSpool"), tigerTouch: got("tigerTouch"), tigerPod: got("tigerPod") })
+          : squadHeroHtml(rctx, members);
         const rk = card.querySelector(".sqr-host"), ranked = which === "countries", legendary = which === "ach";
         rk.hidden = !(ranked || legendary); card.querySelector(".sqb-cols").hidden = ranked || legendary;
         card.querySelector(".sqb-wall").hidden = !(ranked || legendary);
@@ -5380,7 +5474,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (idx >= 0) you.textContent = t("squadBoardYourCountry", { flag: `${_flagOf(mine)} ${cname(mine)}`, rank: idx + 1, total: rows.length });
         list.innerHTML = rows.length ? rows.map((r, i) => `
           <li class="sqb-row${medal(i)}${r.cc === mine ? " is-me" : ""}">
-            <span class="sqb-rank">#${i + 1}</span>
+            <span class="sqb-rank">${rankNo(i + 1)}</span>
             <span class="sqb-flag" aria-hidden="true">${_flagOf(r.cc)}</span>
             <span class="sqb-name"><span class="sqb-n1">${esc(cname(r.cc))}</span><small>${esc(t("squadMembers", { n: r.n }))}</small></span>
             <span class="sqb-xp">${fmt(r.xp)} XP</span>
@@ -5409,9 +5503,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (act === "close") close();
       else if (act === "wall") window.electronAPI?.openExternal(wallUrl);
     });
+    // First load of the inline view: the same loader as a friend's stock while
+    // the members come in (later opens reuse the last load at once).
+    let loader = null;
+    if (host && loading) {
+      loader = document.createElement("div");
+      loader.innerHTML = _loadingHTML();
+      card.hidden = true;
+      host.append(loader);
+    }
     if (host) {
       host.append(card);
-      host._sqb = { uid, at: Date.now(), render, tab: () => card.querySelector(".sqb-tab.is-on")?.dataset.tab || _squadViewTab };
+      host._sqb = { uid: viewer, at: Date.now(), render, tab: () => card.querySelector(".sqb-tab.is-on")?.dataset.tab || _squadViewTab };
       // The league columns fill the height they have: re-fit when the view resizes.
       if (!host._sqbFit && "ResizeObserver" in window) {
         let raf = 0;
@@ -5447,6 +5550,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                history: hist.docs.map(h => h.data()) };
     } catch (_) { mine = { breakdown: {}, unlocked: {}, total: state.xpPoints || 0, history: [] }; }
     loading = false;
+    if (loader) { loader.remove(); card.hidden = false; }
     _squadBoardCache = { uid, members, mine };
     if (card.isConnected) render(card.querySelector(".sqb-tab.is-on")?.dataset.tab || tab);
   }
@@ -5460,7 +5564,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     { id: "usbScale", xp: 100, once: true }, { id: "rfidReader", xp: 100, once: true },
     { id: "printer", per: 20 }, { id: "firstRack", xp: 20, once: true }, { id: "firstList", xp: 20, once: true },
     { id: "friend", per: 10 }, { id: "photo", xp: 10 },
-    { id: "social", per: 5 }, { id: "publicProfile", xp: 5 }, { id: "link", per: 5, once: true },
+    { id: "social", per: 5 }, { id: "link", per: 5, once: true },
   ];
   // "How do I reach the next level?" — the member's current level, the next
   // one, a progress bar when it is a count, and what to do (same rules as the
@@ -5714,7 +5818,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Members: append the world rank once it is known ("· #3 worldwide of 9").
     _squadRank().then(r => {
       if (!r || !el.isConnected) return;
-      el.textContent = `${t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 })} · ${t("squadRankLine", { rank: r.rank, total: r.total })}`;
+      // The rank on a line of its own — a planned break, not "sur 152" wrapping alone.
+      el.innerHTML = `<span>${esc(t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }))}</span><span>${esc(t("squadRankLine", { rank: r.rank, total: r.total }))}</span>`;
     });
   }
   const XP_COUNT_VERSION = 2;   // matches the server's counting rules (supportWebhooks.js)
@@ -5910,6 +6015,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Persist avatar colour as RGB integers in users/{uid} so any surface can read it,
   // and publish the single hex field through setProfile so friends see it immediately.
   function saveColorToFirestore(acc) {
+    questBump("themeColor");   // Tiger Quests secret mission d6 — a theme colour picked
     try {
       const user = fbAuth().currentUser;
       if (!user || user.uid !== acc.id) return;
@@ -5933,7 +6039,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const idx = accounts.findIndex(a => a.id === _editingAccount.id);
       if (idx >= 0) { accounts[idx].color = color; delete accounts[idx].customColor; saveAccounts(accounts); _editingAccount = accounts[idx]; }
       $("eacAvatar").style.background = getAccGradient(_editingAccount);
-      $("eacAvatar").style.color = readableTextOn(getAccShadow(_editingAccount));
+      $("eacAvatar").style.color = readableTextOn(getAccShadow(_editingAccount)); _paintIdmAvatar(); _paintIdmAvatar();
       if (_editingAccount.id === state.activeAccountId) applyAvatarStyle(_editingAccount);
       renderAccountDropdown();
       saveColorToFirestore(_editingAccount);
@@ -5951,7 +6057,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("eacSwatchCustom").classList.add("active");
     $("eacSwatchCustom").style.background = getAccGradient(_editingAccount);
     $("eacAvatar").style.background = getAccGradient(_editingAccount);
-    $("eacAvatar").style.color = readableTextOn(getAccShadow(_editingAccount));
+    $("eacAvatar").style.color = readableTextOn(getAccShadow(_editingAccount)); _paintIdmAvatar();
     if (_editingAccount.id === state.activeAccountId) applyAvatarStyle(_editingAccount);
     renderAccountDropdown();
     clearTimeout(_colorDebounce);
@@ -5965,10 +6071,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // ── Custom avatar — Discord-style edit flow in edit-account modal ──
   // Click on the avatar opens a small popover menu (Change / Remove),
   // wired further down. Hover state (the pen icon) is pure CSS, no JS.
-  $("eacAvatar")?.addEventListener("click", e => {
-    e.stopPropagation();
-    _toggleAvatarMenu();
-  });
+  // The avatar (and the pen beside the name) opens "Edit my profile": photo,
+  // display name and theme colour in a window of their own, so the My profile
+  // panel keeps the room for everything else. The controls inside keep their
+  // ids — the handlers below and further down are the panel's own.
+  function _paintIdmAvatar() {
+    const el = $("idmAvatar"); if (!el) return;
+    paintAvatar(el, _editingAccount || activeAccount());
+    if (state.photoURL) _renderAvatarPhotoOverlay(el, state.photoURL);
+  }
+  function openIdentityModal() {
+    $("avatarMenuRemove").hidden = !state.photoURL;
+    _paintIdmAvatar();
+    $("identityOverlay")?.classList.add("open");
+  }
+  function closeIdentityModal() { $("identityOverlay")?.classList.remove("open"); }
+  $("eacAvatar")?.addEventListener("click", e => { e.stopPropagation(); openIdentityModal(); });
+  $("eacIdentEdit")?.addEventListener("click", e => { e.stopPropagation(); openIdentityModal(); });
+  $("identityClose")?.addEventListener("click", closeIdentityModal);
+  $("identityDone")?.addEventListener("click", closeIdentityModal);
+  $("identityOverlay")?.addEventListener("click", e => { if (e.target.id === "identityOverlay") closeIdentityModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && $("identityOverlay")?.classList.contains("open")) closeIdentityModal(); });
   // Close the menu on outside click or Escape — standard popover UX.
   document.addEventListener("click", e => {
     if (!$("avatarMenu")?.classList.contains("open")) return;
@@ -5999,7 +6122,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     res.style.color = "var(--muted)"; res.textContent = t("avatarUploading");
     try {
       const url = await uploadCroppedAvatar(cropped.blob, cropped.contentType);
-      _renderAvatarPhotoOverlay($("eacAvatar"), url);
+      _renderAvatarPhotoOverlay($("eacAvatar"), url); _renderAvatarPhotoOverlay($("idmAvatar"), url);
+      $("avatarMenuRemove").hidden = false;
       res.style.color = "var(--success)"; res.textContent = t("avatarUploadOk");
       setTimeout(() => { res.textContent = ""; }, 2000);
     } catch (e) {
@@ -6015,7 +6139,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     res.style.color = "var(--muted)"; res.textContent = t("avatarRemoving");
     try {
       await removeCustomAvatar();
-      _renderAvatarPhotoOverlay($("eacAvatar"), null);
+      _renderAvatarPhotoOverlay($("eacAvatar"), null); _renderAvatarPhotoOverlay($("idmAvatar"), null);
+      $("avatarMenuRemove").hidden = true;
       res.style.color = "var(--success)"; res.textContent = t("avatarRemoveOk");
       setTimeout(() => { res.textContent = ""; }, 2000);
     } catch (e) {
@@ -6076,7 +6201,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // 3. Refresh UI through the centralised avatar pipeline so
       //    gradient + initials + photo overlay stay in sync.
       $("eacName").textContent = newName; $("eacName").style.display = "";
-      paintAvatar($("eacAvatar"), _editingAccount);
+      paintAvatar($("eacAvatar"), _editingAccount); _paintEacSquad();
       if (_editingAccount.id === state.activeAccountId) {
         state.displayName = newName;
         $("sbName").textContent = newName;
@@ -10398,16 +10523,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     for (const [re, icon, color] of _SOCIAL_MAP) if (re.test(host)) return { icon, color, host };
     return { icon: "globe", color: "#5b6b8c", host };   // any other site → globe
   }
-  // Clean list of social URLs (https-normalised, deduped, capped).
+  // Clean list of social URLs (https-normalised, one per site, capped). Same
+  // rule as the backend's setProfile (xpRules.SOCIALS_MAX): it keeps the first
+  // link of each site and at most 5 — and the social XP counts known networks
+  // once each, so a second link to the same site would earn nothing anyway.
+  const SOCIALS_MAX = 5;
   function _cleanSocials(list) {
     const seen = new Set(), out = [];
     for (const raw of (Array.isArray(list) ? list : [])) {
       const u = _normalizeBuyUrl(String(raw || "").trim());
-      if (!u || !_socialMeta(u)) continue;
-      const k = u.toLowerCase();
-      if (seen.has(k)) continue;
-      seen.add(k); out.push(u);
-      if (out.length >= 8) break;
+      const m = u && _socialMeta(u);
+      if (!m || seen.has(m.host)) continue;
+      seen.add(m.host); out.push(u);
+      if (out.length >= SOCIALS_MAX) break;
     }
     return out;
   }
@@ -37183,6 +37311,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // updating the sidebar avatar in place.
   let _fvbSig = null;
   function renderFriendBanner() {
+    _applyThemeColor();   // a friend's view takes the friend's colour, home takes yours
+    try { _renderProgressChips(); } catch (_) {}   // the Tiger Squad group follows (friend: Rankings only)
     const banner = $("friendViewBanner");
     // Toggle the sidebar avatar's "swap-back" affordance — visible only
     // while we're currently viewing a friend's inventory. The avatar's
@@ -37307,6 +37437,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ${_socialsRowHTML(state.socials, `${shareBtn}<span class="fvb-xp-host"></span>`)}
         </div>`;
       _paintOwnXpChips();
+      _paintEacSquad();   // My profile's avatar follows the squad level too
     }
     banner.classList.remove("fvb--error");
     banner.classList.add("fvb--own");
@@ -38751,7 +38882,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   // Every way into the XP history (the view bar, the XP notification, the
   // TigerSquad views) opens the page.
-  function openXpHistory() { if (state.activeAccountId) setViewMode("xpHistory"); }
+  function openXpHistory() {
+    if (!state.activeAccountId) return;
+    if (!state.friendView) questBump("xpHistoryOpen");   // Tiger Quests secret mission d6
+    setViewMode("xpHistory");
+  }
   // The full page: range, filters, search and page live here across renders.
   const _xph = { range: "30d", page: 1, filter: { cat: "", dir: "", q: "" } };
   function _paintXpHistView() {
@@ -38768,7 +38903,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   async function _renderXpHistView() {
     const host = $("invXpHistView"); if (!host) return;
     const uid = state.activeAccountId; if (!uid) return;
-    if (_xpLog.uid === uid) _paintXpHistView(); else host.innerHTML = `<div class="qw"><p class="qw-empty">${esc(t("questsLoading"))}</p></div>`;
+    if (_xpLog.uid === uid) _paintXpHistView(); else host.innerHTML = _loadingHTML();   // same loader as a friend's stock
     try { await _loadXpLog(uid, true); } catch (_) {}
     if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView();
   }
@@ -41822,7 +41957,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   (function wireMcpHosted() {
     const api = window.mcpBridge;
     const list = $("eacMcpGrants");
-    if (!api?.hostedGrants || !list) { $("eacMcpWeb")?.setAttribute("hidden", ""); return; }
+    if (!api?.hostedGrants || !list) { $("eacMcpWeb")?.setAttribute("hidden", ""); $("eacMcpGrantsCard")?.setAttribute("hidden", ""); return; }
     const copyBtn = $("btnMcpWebCopy");
     let copyT = null;
     copyBtn.addEventListener("click", async () => {

@@ -300,7 +300,7 @@
           </div>
           <span class="vtg-sep" id="vtgSepSquad" aria-hidden="true" hidden></span>
           <div class="vtg-group vtg-progress" id="vtgSquad" hidden>
-            <span class="vtg-label"><span>TigerSquad</span></span>
+            <span class="vtg-label"><span>Tiger Squad</span></span>
             <div class="view-toggle vtg-quests">
               <span class="view-toggle-ind" aria-hidden="true"></span>
               <button id="vtgSquadChip" data-i18n-aria="squadTabRankings"><span class="icon icon-community icon-13"></span></button>
@@ -2056,72 +2056,30 @@
           <span class="eac-avatar-hover-overlay" aria-hidden="true">
             <span class="icon icon-edit icon-18"></span>
           </span>
-          <!-- Popover menu — opened on click via JS. Anchored to the
-               avatar so it appears just under it. -->
-          <div class="avatar-menu" id="avatarMenu" role="menu">
-            <button class="avatar-menu-item" id="avatarMenuChange" role="menuitem">
-              <span class="icon icon-edit icon-13"></span>
-              <span data-i18n="avatarChangeOpt">Change avatar</span>
-            </button>
-            <button class="avatar-menu-item avatar-menu-item--danger" id="avatarMenuRemove" role="menuitem" hidden>
-              <span class="icon icon-trash icon-13"></span>
-              <span data-i18n="avatarRemoveOpt">Remove avatar</span>
-            </button>
-          </div>
         </div>
         <div class="eac-ident-text">
           <div style="display:flex;align-items:center;gap:7px">
             <div class="eac-name" id="eacName"></div>
+            <button type="button" class="eac-ident-edit" id="eacIdentEdit" data-i18n-aria="eacIdentTitle" aria-label="Edit my profile"><span class="icon icon-edit icon-13"></span></button>
             <span class="eac-admin-badge hidden" id="eacAdminBadge">Admin</span>
           </div>
           <div class="eac-email" id="eacEmail"></div>
         </div>
-      </div>
-      <div class="eac-swatches" id="eacSwatches">
-        <button class="eac-swatch" data-color="orange"  style="background:linear-gradient(135deg,#f97316,#fb923c)"  title="Orange"></button>
-        <button class="eac-swatch" data-color="amber"   style="background:linear-gradient(135deg,#d97706,#f59e0b)"  title="Amber"></button>
-        <button class="eac-swatch" data-color="yellow"  style="background:linear-gradient(135deg,#ca8a04,#eab308)"  title="Yellow"></button>
-        <button class="eac-swatch" data-color="lime"    style="background:linear-gradient(135deg,#65a30d,#84cc16)"  title="Lime"></button>
-        <button class="eac-swatch" data-color="green"   style="background:linear-gradient(135deg,#16a34a,#22c55e)"  title="Green"></button>
-        <button class="eac-swatch" data-color="teal"    style="background:linear-gradient(135deg,#0d9488,#14b8a6)"  title="Teal"></button>
-        <button class="eac-swatch" data-color="sky"     style="background:linear-gradient(135deg,#0284c7,#0ea5e9)"  title="Sky"></button>
-        <button class="eac-swatch" data-color="blue"    style="background:linear-gradient(135deg,#2563eb,#3b82f6)"  title="Blue"></button>
-        <button class="eac-swatch" data-color="violet"  style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)"  title="Violet"></button>
-        <button class="eac-swatch" data-color="fuchsia" style="background:linear-gradient(135deg,#c026d3,#d946ef)"  title="Fuchsia"></button>
-        <button class="eac-swatch" data-color="rose"    style="background:linear-gradient(135deg,#e11d48,#f43f5e)"  title="Rose"></button>
-        <button class="eac-swatch" data-color="red"     style="background:linear-gradient(135deg,#dc2626,#ef4444)"  title="Red"></button>
-        <button class="eac-swatch" data-color="slate"   style="background:linear-gradient(135deg,#475569,#64748b)"  title="Slate"></button>
-        <label class="eac-swatch eac-swatch-custom" id="eacSwatchCustom" title="Custom color">
-          <input type="color" id="eacCustomColor" tabindex="-1" />
-          <span class="icon icon-palette icon-13"></span>
-        </label>
       </div>
     </div>
     <!-- Body — grouped into sections rather than one long field run, so the
          card scans at a glance: who you are, then how it looks, then where
          you are, then the rarely-touched things. -->
     <div class="eac-body">
-      <!-- Avatar status message (inline, right under the hero avatar) -->
-      <div id="eacAvatarResult" class="eac-avatar-result"></div>
-
-      <!-- ── Display name — label sits above the field, which is the shape an
-           editable text input wants: the label reads as the field's caption
-           rather than as a settings row whose value happens to be typeable. ── -->
-      <section class="eac-group">
-        <div class="eac-field-label" data-i18n="displayNameLabel">Display name</div>
-        <div class="eac-name-row">
-          <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="40" placeholder="—" autocomplete="off" />
-          <button class="ghost sm eac-name-save" id="btnSaveDisplayName">
-            <span class="icon icon-check icon-13"></span>
-          </button>
-        </div>
-        <div id="eacNameResult" class="eac-inline-result"></div>
-      </section>
-
-      <!-- ── Links — its own washed block, so the stack of link cards reads as
-           one region instead of loose rows inside Profile. ── -->
+      <!-- Two columns of cards (one under 820 px): who you are on the left —
+           profile, community, preferences — and what can read your stock on the
+           right — AI assistants, the online connector, debug. Explanations live
+           in ⓘ bubbles; nothing was removed. -->
+      <div class="eac-cols">
+      <div class="eac-col">
       <section class="eac-group eac-group--links">
-        <h3 class="eac-group-title" data-i18n="editSocialsLabel">Social links</h3>
+        <h3 class="eac-card-title"><span class="icon icon-user icon-14" aria-hidden="true"></span><span data-i18n="eacGroupProfile">Profile</span></h3>
+        <div class="eac-field-label eac-socials-label"><span data-i18n="editSocialsLabel">Social links</span> <span class="eac-socials-count" id="eacSocialsCount"></span></div>
         <div id="eacSocials" class="eac-socials"></div>
         <!-- These links are mirrored to the public profile, which friends and
              the web read. Nothing in the UI said so until now. -->
@@ -2131,30 +2089,9 @@
         </div>
       </section>
 
-      <!-- ── TigerSquad — the Hub's wall of fame, open to everyone, with a level
-           (bronze / silver / gold / platinum) the server computes. Joined from
-           the support menu, the invite or here (publishSupporter). ── -->
-      <section class="eac-group">
-        <div class="eac-row">
-          <span class="eac-row-label eac-squad-label">
-            <span data-i18n="squadJoin">Join the TigerSquad</span>
-            <span class="eac-squad-xp hidden" id="eacSquadXp"></span>
-          </span>
-          <label class="eac-toggle">
-            <input type="checkbox" id="eacSquadToggle" />
-            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
-          </label>
-        </div>
-        <!-- The flag your XP counts for in the TigerSquad countries ranking. -->
-        <div class="eac-row">
-          <span class="eac-row-label" data-i18n="squadCountryLabel">Your flag</span>
-          <select id="eacSquadCountry"></select>
-        </div>
-      </section>
 
-      <!-- ── Appearance ── -->
       <section class="eac-group">
-        <h3 class="eac-group-title" data-i18n="eacGroupAppearance">Appearance</h3>
+        <h3 class="eac-card-title"><span class="icon icon-settings icon-14" aria-hidden="true"></span><span data-i18n="eacGroupPrefs">Preferences</span></h3>
         <div class="eac-row">
           <span class="eac-row-label" data-i18n="stgThemeRow">Theme</span>
           <div class="eac-seg" id="eacThemeSeg" role="tablist">
@@ -2162,13 +2099,7 @@
             <button type="button" class="eac-seg-btn" data-theme-choice="light" data-i18n="stgThemeLight">Light</button>
           </div>
         </div>
-      </section>
-
-      <!-- ── Language & region ──
-           Each setting is one row: label left, control right. The two hints
-           stay — they carry information the control itself cannot show. -->
-      <section class="eac-group">
-        <h3 class="eac-group-title" data-i18n="eacGroupRegion">Language &amp; region</h3>
+        <div class="eac-field-label eac-sub-label" data-i18n="eacGroupRegion">Language &amp; region</div>
         <div class="eac-row">
           <span class="eac-row-label" data-i18n="settingsLang">Language</span>
           <select class="lang-select" id="langSelect">
@@ -2248,10 +2179,26 @@
           </div>
         </div>
       </section>
+      <!-- ── Advanced (admin only; the whole section hides with the row) ── -->
+      <section class="eac-group eac-debug-row hidden" id="eacDebugRow">
+        <h3 class="eac-card-title"><span class="icon icon-wrench icon-14" aria-hidden="true"></span><span data-i18n="eacGroupAdvanced">Advanced</span></h3>
+        <div class="eac-row">
+          <span class="eac-row-label eac-debug-label">
+            <span class="icon icon-info icon-13"></span>
+            Debug mode
+          </span>
+          <label class="eac-toggle">
+            <input type="checkbox" id="eacDebugToggle" />
+            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+          </label>
+        </div>
+      </section>
+      </div>
 
+      <div class="eac-col">
       <!-- ── AI assistants (local MCP server, read-only) — per profile ── -->
       <section class="eac-group" id="eacMcpGroup">
-        <h3 class="eac-group-title" data-i18n="stgMcpTitle">AI assistants</h3>
+        <h3 class="eac-card-title"><span class="icon icon-sparkle icon-14" aria-hidden="true"></span><span data-i18n="stgMcpTitle">AI assistants</span></h3>
         <div class="eac-row">
           <span class="eac-row-label">
             <span data-i18n="eacMcpRow">Let an AI read my inventory</span>
@@ -2287,38 +2234,53 @@
             </button>
           </div>
         </div>
-        <!-- Hosted connector (Tiger Hub) — independent of the local toggle above -->
-        <div class="eac-mcp-web" id="eacMcpWeb">
-          <div class="eac-mcp-web-title" data-i18n="eacMcpWebTitle">From the web and your phone</div>
-          <p class="eac-mcp-web-sub" data-i18n="eacMcpWebSub">Claude.ai, ChatGPT and their phone apps can read your stock too — nothing to install, just add this address as a custom connector.</p>
-          <div class="eac-mcp-url">
+      </section>
+
+      <!-- Hosted connector (Tiger Hub) — independent of the local toggle above -->
+      <section class="eac-group eac-mcp-web" id="eacMcpWeb">
+        <h3 class="eac-card-title"><span class="icon icon-globe icon-14" aria-hidden="true"></span><span data-i18n="eacMcpWebTitle">From the web and your phone</span> <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebSub" data-tip="Claude.ai, ChatGPT and their phone apps can read your stock too — nothing to install, just add this address as a custom connector." data-i18n-aria="eacMcpWebTitle"><span class="icon icon-info icon-13"></span></span></h3>
+        <div class="eac-mcp-url">
             <code id="eacMcpWebUrl">https://mcp.tigersystem.io/mcp</code>
             <button type="button" class="eac-mcp-copy" id="btnMcpWebCopy" data-i18n="copyLabel">Copy</button>
           </div>
-          <button type="button" class="eac-mcp-howto" id="btnMcpWebHowto">
+        <div class="eac-mcp-howto-row">
+            <button type="button" class="eac-mcp-howto" id="btnMcpWebHowto">
             <span data-i18n="eacMcpWebHowto">How to connect</span>
             <span class="icon icon-arrow-r icon-11" aria-hidden="true"></span>
           </button>
-          <p class="eac-mcp-web-diff" data-i18n="eacMcpWebDiff">On this computer: only while Studio is open, but it sees your printers live. Online: works anywhere without Studio, minus the live printer view.</p>
-          <div class="eac-mcp-web-title" data-i18n="eacMcpGrantsTitle">Connected online assistants</div>
-          <div class="eac-mcp-grants" id="eacMcpGrants"></div>
+          <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebDiff" data-tip="On this computer: only while Studio is open, but it sees your printers live. Online: works anywhere without Studio, minus the live printer view." data-i18n-aria="eacMcpWebTitle"><span class="icon icon-info icon-13"></span></span>
         </div>
       </section>
 
-      <!-- ── Advanced (admin only; the whole section hides with the row) ── -->
-      <section class="eac-group eac-debug-row hidden" id="eacDebugRow">
-        <h3 class="eac-group-title" data-i18n="eacGroupAdvanced">Advanced</h3>
+      <!-- Connected online assistants — a card of its own (hidden with the
+           connector when the hosted grants API is not available). -->
+      <section class="eac-group" id="eacMcpGrantsCard">
+        <h3 class="eac-card-title"><span class="icon icon-user icon-14" aria-hidden="true"></span><span data-i18n="eacMcpGrantsTitle">Connected online assistants</span></h3>
+        <div class="eac-mcp-grants" id="eacMcpGrants"></div>
+      </section>
+
+      <!-- Community sits in the right column: the left one grows with the social links (up to 5). -->
+      <section class="eac-group">
+        <h3 class="eac-card-title"><span class="icon icon-heart icon-14" aria-hidden="true"></span><span data-i18n="eacGroupCommunity">Community</span></h3>
         <div class="eac-row">
-          <span class="eac-row-label eac-debug-label">
-            <span class="icon icon-info icon-13"></span>
-            Debug mode
+          <span class="eac-row-label eac-squad-label">
+            <span data-i18n="squadJoin">Join the TigerSquad</span>
+            <span class="eac-squad-xp hidden" id="eacSquadXp"></span>
           </span>
           <label class="eac-toggle">
-            <input type="checkbox" id="eacDebugToggle" />
+            <input type="checkbox" id="eacSquadToggle" />
             <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
           </label>
         </div>
+        <!-- The flag your XP counts for in the TigerSquad countries ranking. -->
+        <div class="eac-row">
+          <span class="eac-row-label" data-i18n="squadCountryLabel">Your flag</span>
+          <select id="eacSquadCountry"></select>
+        </div>
       </section>
+
+      </div>
+      </div>
 
     </div>
     <!-- Sign out is pinned below the scrolling body: it is the one destructive
@@ -2337,6 +2299,66 @@
        from the avatar menu. Lets the user zoom, rotate by 90°, drag,
        and reset before committing. Output is always PNG (transparent
        outside the circle, opaque inside). ── -->
+
+<!-- ── Edit my profile — avatar, display name, theme colour (opened from the
+     My profile avatar or the pen beside the name). The controls keep their ids:
+     their handlers are the ones the My profile panel always had. ── -->
+<div class="modal-overlay" id="identityOverlay">
+  <div class="modal-card idm-card" role="dialog" aria-modal="true" aria-labelledby="idmTitle">
+    <div class="idm-head"><h3 id="idmTitle" data-i18n="eacIdentTitle">Edit my profile</h3>
+      <button class="modal-close" id="identityClose" aria-label="Close">✕</button></div>
+    <div class="idm-avatar-row">
+      <div class="eac-avatar idm-avatar" id="idmAvatar"></div>
+          <div class="idm-photo-btns">
+            <button class="ghost sm idm-btn" id="avatarMenuChange">
+              <span class="icon icon-edit icon-13"></span>
+              <span data-i18n="avatarChangeOpt">Change avatar</span>
+            </button>
+            <button class="ghost sm idm-btn idm-btn--danger" id="avatarMenuRemove" hidden>
+              <span class="icon icon-trash icon-13"></span>
+              <span data-i18n="avatarRemoveOpt">Remove avatar</span>
+            </button>
+          </div>
+
+    </div>
+    <div id="eacAvatarResult" class="eac-avatar-result"></div>
+
+    <div class="idm-field">
+        <div class="eac-field-label" data-i18n="displayNameLabel">Display name</div>
+        <div class="eac-name-row">
+          <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="40" placeholder="—" autocomplete="off" />
+          <button class="ghost sm eac-name-save" id="btnSaveDisplayName">
+            <span class="icon icon-check icon-13"></span>
+          </button>
+        </div>
+        <div id="eacNameResult" class="eac-inline-result"></div>
+    </div>
+    <div class="idm-field">
+      <div class="eac-field-label"><span data-i18n="eacThemeColor">Theme colour</span>
+        <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacThemeColorTip" data-tip="Colours your avatar, your header and your banners — and what friends see when they visit." data-i18n-aria="eacThemeColor"><span class="icon icon-info icon-13"></span></span></div>
+      <div class="eac-swatches" id="eacSwatches">
+        <button class="eac-swatch" data-color="orange"  style="background:linear-gradient(135deg,#f97316,#fb923c)"  title="Orange"></button>
+        <button class="eac-swatch" data-color="amber"   style="background:linear-gradient(135deg,#d97706,#f59e0b)"  title="Amber"></button>
+        <button class="eac-swatch" data-color="yellow"  style="background:linear-gradient(135deg,#ca8a04,#eab308)"  title="Yellow"></button>
+        <button class="eac-swatch" data-color="lime"    style="background:linear-gradient(135deg,#65a30d,#84cc16)"  title="Lime"></button>
+        <button class="eac-swatch" data-color="green"   style="background:linear-gradient(135deg,#16a34a,#22c55e)"  title="Green"></button>
+        <button class="eac-swatch" data-color="teal"    style="background:linear-gradient(135deg,#0d9488,#14b8a6)"  title="Teal"></button>
+        <button class="eac-swatch" data-color="sky"     style="background:linear-gradient(135deg,#0284c7,#0ea5e9)"  title="Sky"></button>
+        <button class="eac-swatch" data-color="blue"    style="background:linear-gradient(135deg,#2563eb,#3b82f6)"  title="Blue"></button>
+        <button class="eac-swatch" data-color="violet"  style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)"  title="Violet"></button>
+        <button class="eac-swatch" data-color="fuchsia" style="background:linear-gradient(135deg,#c026d3,#d946ef)"  title="Fuchsia"></button>
+        <button class="eac-swatch" data-color="rose"    style="background:linear-gradient(135deg,#e11d48,#f43f5e)"  title="Rose"></button>
+        <button class="eac-swatch" data-color="red"     style="background:linear-gradient(135deg,#dc2626,#ef4444)"  title="Red"></button>
+        <button class="eac-swatch" data-color="slate"   style="background:linear-gradient(135deg,#475569,#64748b)"  title="Slate"></button>
+        <label class="eac-swatch eac-swatch-custom" id="eacSwatchCustom" title="Custom color">
+          <input type="color" id="eacCustomColor" tabindex="-1" />
+          <span class="icon icon-palette icon-13"></span>
+        </label>
+      </div>
+    </div>
+    <div class="idm-foot"><button class="primary sm" id="identityDone" data-i18n="idmDone">Done</button></div>
+  </div>
+</div>
 <div class="modal-overlay" id="avatarCropOverlay">
   <div class="modal-card avatar-crop-card">
     <div class="avatar-crop-header">

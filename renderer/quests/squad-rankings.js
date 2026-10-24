@@ -15,6 +15,12 @@
  *   ctx = { uid, t, esc, fmt, cname, flagOf, avatar(member) → html, tierLabel(tier),
  *           brandLabel(id), lang, squadXp (number|null), myCountry }
  */
+import { FLAG_COLORS } from './flag-colors.js';
+
+// THE rank number ("#4"), one look wherever a rank is written: league rank
+// columns, the national "#1" beside a maker's flag, the rank card, the full
+// list and the header chip (inventory.js imports it).
+export const rankNo = n => `<span class="sqr-no">#${n}</span>`;
 const MEDAL = n => `<img class="sqr-medal" src="../assets/img/tigersquad/rank-medal-${n}.webp" alt="#${n}">`;
 const PREVIEW = 5;                // fewest rows shown before "View all"
 // Rows per league column — at least PREVIEW, more when the view has room
@@ -50,14 +56,18 @@ function ranks(ctx, members) {
 // Rank movement since the start of the day: the server writes the leagues'
 // ranks at the first minute of each Paris day (squadRanks/current, see the
 // backend's communityStats), the host passes it as ctx.rankBase, and each row
-// shows the difference with its live rank. No baseline → no arrows.
+// shows the difference with its live rank: ▲ / ▼ with the places, a grey dash
+// when it holds the same place. Not in the morning's ranks (new today, or no
+// baseline at all) → null, nothing shown.
 function rankMoves(base, ids) {
   const now = {};
   ids.forEach((id, i) => { now[id] = i + 1; });
-  return id => (base && base[id] && now[id] ? base[id] - now[id] : 0);
+  return id => (base && base[id] && now[id] ? base[id] - now[id] : null);
 }
 const ARROW = up => `<svg viewBox="0 0 10 8" aria-hidden="true"><path d="${up ? "M5 0 10 8H0z" : "M5 8 0 0h10z"}"/></svg>`;
-const moveHtml = d => d ? `<small class="sqr-move ${d > 0 ? "is-up" : "is-down"}">${ARROW(d > 0)}${Math.abs(d)}</small>` : "";
+const moveHtml = d => d == null ? ""
+  : d === 0 ? `<small class="sqr-move is-same" aria-hidden="true"><i></i></small>`
+  : `<small class="sqr-move ${d > 0 ? "is-up" : "is-down"}">${ARROW(d > 0)}${Math.abs(d)}</small>`;
 
 // A country shown like a member: a round "avatar" with its flag inside
 // (assets/svg/flags, flag-icons 1x1), instead of an emoji.
@@ -66,13 +76,56 @@ const flagAv = (cc, size, podium = 0) => /^[a-z]{2}$/i.test(cc || "")
   ? `<span class="sqr-flagav${podium >= 1 && podium <= 3 ? ` sqr-flagav--p${podium}` : ""}" style="--s:${size}px"><img src="../assets/svg/flags/${cc.toLowerCase()}.svg" alt="" loading="lazy" decoding="async"></span>`
   : "";
 
+// ── Items hero ───────────────────────────────────────────────────────────────
+// The Items view's banner: the tiger in its setup with the four LEGENDARY
+// devices on the desk, drawn in the banners' mascot style from the real
+// products (assets/img/tigersquad/legendary/*-flat2.webp).
+// Each is a black silhouette until the account owns it, then lit.
+// `owned` = { tigerScale, tigerSpool, tigerTouch, tigerPod } booleans.
+const LEGENDARY = [
+  { id: "tigerScale", img: "tigerscale-flat2", side: "l" }, { id: "tigerSpool", img: "tigerspool-flat2", side: "l" },
+  { id: "tigerTouch", img: "tigertouch-flat3", side: "r" }, { id: "tigerPod", img: "tigerpod-flat2", side: "r" },
+];
+export function squadItemsHeroHtml(ctx, owned = {}) {
+  const { t, esc } = ctx;
+  const n = LEGENDARY.filter(x => owned[x.id]).length;
+  const item = x => `<img class="sqi-item sqi-item--${x.img}${owned[x.id] ? " is-on" : ""}" src="../assets/img/tigersquad/legendary/${x.img}.webp" alt=""
+      aria-label="${esc(t(`xpAch_${x.id}`))}${owned[x.id] ? "" : " — " + esc(t("questsLocked2"))}">`;
+  return `
+    <section class="sqr-hero sqi-hero">
+      <div class="sqr-hero-txt">
+        <h2><span>TIGER</span><span class="sqr-hero-orange">SQUAD</span></h2>
+        <p class="sqr-hero-sub">${esc(t("questsLootTitle"))}</p>
+        <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("squadLegendaryCount", { n, total: LEGENDARY.length }))}</p>
+      </div>
+      <div class="sqi-scene">
+        ${LEGENDARY.filter(x => x.side === "l").map(item).join("")}
+        <span class="sqi-tiger" aria-hidden="true">
+          <img class="sqi-tiger-back" src="../assets/img/tigersquad/legendary/tiger.webp" alt="">
+          <img class="sqi-tiger-front" src="../assets/img/tigersquad/legendary/tiger-front.webp" alt="">
+        </span>
+        ${LEGENDARY.filter(x => x.side === "r").map(item).join("")}
+      </div>
+    </section>`;
+}
+
 // ── Hero ─────────────────────────────────────────────────────────────────────
 export function squadHeroHtml(ctx, members) {
   const { t, esc, fmt } = ctx;
   const r = ranks(ctx, members);
   // The account's rank card (the one place the page shows it): who, league, XP,
   // national + world rank, and the next rival with the real XP gap.
-  const above = r.me ? r.world.slice(0, r.worldRank - 1).reverse().find(m => m.xp > r.me.xp) || null : null;
+  // The next rival in a list: the nearest member above with MORE XP (ties are not a target).
+  const rivalIn = list => { const i = r.me ? list.indexOf(r.me) : -1; return i > 0 ? list.slice(0, i).reverse().find(m => m.xp > r.me.xp) || null : null; };
+  const above = rivalIn(r.world), aboveNat = r.cc ? rivalIn(r.nat) : null;
+  const MEDAL1 = `<img class="sqr-rival-medal" src="../assets/img/tigersquad/rank-medal-1.webp" alt="">`;
+  // One rival line per league: its badge (flag / globe), then the rival — or the medal when you lead it.
+  const rivalRow = (badge, rival, label) => rival ? `
+      <div class="sqr-rival-row" aria-label="${esc(label)}">${badge}${ctx.avatar(rival)}
+        <span class="sqr-rival-txt"><b>${esc(rival.name)}</b><small>${esc(t("squadXpToGo", { xp: fmt(rival.xp - r.me.xp) }))}</small></span>
+        <span class="sqr-bar" aria-hidden="true"><i style="width:${Math.max(2, Math.min(100, Math.round(r.me.xp / Math.max(1, rival.xp) * 100)))}%"></i></span>
+      </div>` : `
+      <div class="sqr-rival-row is-top" aria-label="${esc(label)}">${badge}${MEDAL1}<b>${esc(t("squadTopShort"))}</b></div>`;
   const tied = r.me ? r.world.find(m => m !== r.me && m.xp === r.me.xp) : null;
   const card = r.me ? `
       <div class="sqr-card sq-${r.me.tier}">
@@ -84,17 +137,16 @@ export function squadHeroHtml(ctx, members) {
         </div>
         <div class="sqr-card-ranks">
           ${r.natRank ? `<span class="sqr-card-ic" aria-hidden="true">${flagAv(r.cc, 20)}</span>
-            <span class="sqr-card-rank"><b>#${r.natRank}</b> ${esc(t("squadInCountry", { country: ctx.cname(r.cc) }))}</span>` : ""}
+            <span class="sqr-card-rank" aria-label="#${r.natRank} ${esc(t("squadInCountry", { country: ctx.cname(r.cc) }))}">${rankNo(r.natRank)}</span>` : ""}
           <span class="sqr-card-ic" aria-hidden="true"><span class="icon icon-globe icon-20"></span></span>
-          <span class="sqr-card-rank"><b>#${r.worldRank}</b> ${esc(t("squadWorldwide"))}</span>
+          <span class="sqr-card-rank" aria-label="#${r.worldRank} ${esc(t("squadWorldwide"))}">${rankNo(r.worldRank)}</span>
         </div>
         <div class="sqr-card-rival">
           <span class="sqr-me-label">${esc(t("squadNextRival"))}</span>
-          ${above ? `<div class="sqr-rival-who">${ctx.avatar(above)}<span class="sqr-rival-txt"><b>${esc(above.name)}</b>
-              <small>${esc(t("squadXpToGo", { xp: fmt(above.xp - r.me.xp) }))}</small></span>
-              <span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></div>
-            <span class="sqr-bar" aria-hidden="true"><i style="width:${Math.max(2, Math.min(100, Math.round(r.me.xp / Math.max(1, above.xp) * 100)))}%"></i></span>`
-            : `<b class="sqr-top">${esc(t("squadTopSpot"))}</b>`}
+          ${/* Always one line per league — country then world — leader or not: the
+               leader's line shows the medal and "Number one" in place of a rival. */""}
+          ${r.natRank ? rivalRow(`<span class="sqr-rival-badge">${flagAv(r.cc, 16)}</span>`, aboveNat, t("squadInCountry", { country: ctx.cname(r.cc) })) : ""}
+          ${rivalRow(`<span class="sqr-rival-badge"><span class="icon icon-globe icon-16"></span></span>`, above, t("squadWorldwide"))}
           ${tied ? `<small class="sqr-muted">${esc(t("squadTiedWith", { name: tied.name }))}</small>` : ""}
         </div>
       </div>`
@@ -103,7 +155,7 @@ export function squadHeroHtml(ctx, members) {
         <div class="sqr-card-me"><b class="sqr-card-name">${esc(t("squadNotRanked"))}</b>
           ${typeof ctx.squadXp === "number" ? `<b class="sqr-card-xp">${esc(fmt(ctx.squadXp))} XP</b>` : ""}
           <p class="sqr-muted">${esc(t("squadNotRankedHow"))}</p>
-          <button type="button" class="sqr-join" data-next="join">${esc(t("squadJoin"))}</button></div>
+          ${ctx.friend ? "" : `<button type="button" class="sqr-join" data-next="join">${esc(t("squadJoin"))}</button>`}</div>
       </div>`;
   return `
     <section class="sqr-hero">
@@ -167,7 +219,7 @@ export function pulseHtml(ctx, pulse, history) {
 // lower; "View all" opens the full list in place.
 // The column icon already shows the flag: drop the {{flag}} slot's leftover space.
 const noFlag = text => text.replace(/\s+/g, " ").trim();
-function rankCell(i) { return i < 3 ? MEDAL(i + 1) : `<span class="sqr-rank">#${i + 1}</span>`; }
+function rankCell(i) { return i < 3 ? MEDAL(i + 1) : `<span class="sqr-rank">${rankNo(i + 1)}</span>`; }
 // No subtitle: the account's own ranks are in the hero card.
 function column(ctx, key, title, icon, rows, isMe, rowHtml) {
   const { t, esc } = ctx;
@@ -193,16 +245,26 @@ function leaguesHtml(ctx, members, loading) {
   const r = ranks(ctx, members);
   const base = ctx.rankBase || {};
   const mvW = rankMoves(base.world, r.world.map(m => m.uid));
-  const mvN = r.cc ? rankMoves(base.national?.[r.cc], r.nat.map(m => m.uid)) : () => 0;
+  const mvN = r.cc ? rankMoves(base.national?.[r.cc], r.nat.map(m => m.uid)) : () => null;
   const mvC = rankMoves(base.countries, r.countries.map(c => c.cc));
-  const memberRow = (withFlag, mv) => (m, i) => `
-    <li class="sqr-row${m.uid === ctx.uid ? " is-me" : ""}">${rankCell(i)}
+  // Each maker's row wears their theme colour (the avatar colour they picked).
+  const memberRow = (withFlag, mv) => (m, i) => {
+    const mc = ctx.memberColor?.(m);
+    return `
+    <li class="sqr-row${m.uid === ctx.uid ? " is-me" : ""}${mc ? " has-mc" : ""}"${mc ? ` style="--mc:${mc}"` : ""}>${rankCell(i)}
       <span class="sqr-av">${ctx.avatar(m)}</span>
-      <span class="sqr-name"><b>${esc(m.name)}${withFlag && m.country ? ` <span class="sqr-mini">${flagAv(m.country, 14)}<small>#${r.world.filter(x => x.country === m.country).indexOf(m) + 1}</small></span>` : ""}</b>
+      <span class="sqr-name"><b>${esc(m.name)}${withFlag && m.country ? ` <span class="sqr-mini">${flagAv(m.country, 14)}<small>${rankNo(r.world.filter(x => x.country === m.country).indexOf(m) + 1)}</small></span>` : ""}</b>
         <small class="sq-${m.tier}">${esc(ctx.tierLabel(m.tier))}</small></span>
       <span class="sqr-xp">${esc(fmt(m.xp))} XP${moveHtml(mv(m.uid))}</span></li>`;
+  };
+  // A country's row in its flag's colours (FLAG_COLORS, read from the bundled flags).
+  const flagVars = cc => {
+    const f = FLAG_COLORS[cc]; if (!f) return "";
+    const [a, b = a, c = b] = f;
+    return ` style="--f1:${a};--f2:${b};--f3:${c}"`;
+  };
   const countryRow = (c, i) => `
-    <li class="sqr-row${c.cc === r.cc ? " is-me" : ""}">${rankCell(i)}
+    <li class="sqr-row${c.cc === r.cc ? " is-me" : ""}${FLAG_COLORS[c.cc] ? " has-flag" : ""}"${flagVars(c.cc)}>${rankCell(i)}
       <span class="sqr-av" aria-hidden="true">${flagAv(c.cc, 34, i + 1)}</span>
       <span class="sqr-name"><b>${esc(ctx.cname(c.cc))}</b><small>${esc(t("squadMembers", { n: c.n }))}</small></span>
       <span class="sqr-xp">${esc(fmt(c.xp))} XP${moveHtml(mvC(c.cc))}</span></li>`;

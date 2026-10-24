@@ -190,7 +190,8 @@ function levelName(id) {
   const { t } = _ctx;
   const lv = _levels?.find(l => l.id === id);
   const n = lv ? RANK_IDS[lv.rank] : null;
-  return `${n ? t(`questRank_${n}`) : ""} ${id.slice(1)} · ${t(`questLevel_${id}`)}`.trim();
+  // A secret level has no number of its own: "Discovery ★".
+  return `${n ? t(`questRank_${n}`) : ""} ${lv?.secret ? "★" : id.slice(1)} · ${t(`questLevel_${id}`)}`.trim();
 }
 
 // ── Today's progress (view-bar chip, sidebar badge) ─────────────────────────
@@ -210,11 +211,20 @@ export function questPillLabel() {
   return p ? _ctx.t("questsPillLabel", { n: p.done, total: p.total }) : _ctx.t("questsTitle");
 }
 
+// Secret levels (server `secret: true`, e.g. Discovery's bonus "d6") stay out of
+// the progression: they never are "the current level", never count in a
+// rank's n / 5, and only APPEAR once every other level of their rank is won.
+const mainLevels = () => (_levels || []).filter(l => !l.secret);
+function secretShown(l) {
+  const paid = new Set(_journey?.bonusesPaid || []);
+  return mainLevels().filter(m => m.rank === l.rank).every(m => paid.has(m.id));
+}
 // The level the user is working on: the first one whose bonus is not paid yet.
 export function questCurrentLevel() {
   if (!_levels) return null;
   const paid = new Set(_journey?.bonusesPaid || []), a = _journey?.actions || {};
-  const lv = _levels.find(l => !paid.has(l.id)) || _levels[_levels.length - 1];
+  const main = mainLevels();
+  const lv = main.find(l => !paid.has(l.id)) || main[main.length - 1];
   const n = RANK_IDS[lv.rank] || 1;
   return {
     id: lv.id, rank: n, icon: rankIcon(n), name: `${_ctx.t(`questRank_${n}`)} ${lv.id.slice(1)}`,
@@ -278,8 +288,8 @@ export function renderQuestsView(host, tab = "today") {
 function currentRank() {
   if (!_levels) return 1;
   const paid = new Set(_journey?.bonusesPaid || []);
-  const open = _levels.find(l => !paid.has(l.id));
-  return open ? RANK_IDS[open.rank] || 1 : RANK_IDS[_levels[_levels.length - 1].rank] || 1;
+  const main = mainLevels(), open = main.find(l => !paid.has(l.id));
+  return open ? RANK_IDS[open.rank] || 1 : RANK_IDS[main[main.length - 1].rank] || 1;
 }
 const pct = (n, of) => Math.max(0, Math.min(100, Math.round((n / Math.max(1, of)) * 100)));
 
@@ -362,7 +372,7 @@ function questRow({ look, title, desc, done, xp, at, fresh }) {
 function todayHtml() {
   const { t, esc } = _ctx;
   const p = questDailyProgress();
-  if (!p) return `<p class="qw-empty">${esc(t("questsLoading"))}</p>`;
+  if (!p) return (_ctx.loadingHTML?.() || `<p class="qw-empty">${esc(t("questsLoading"))}</p>`);
   const r = { open: 10, mission: 5, fullSet: 20, streakBonus: 0, streakEvery: 5, ...(_rewards?.daily || {}) };
   const items = [{ look: MISSION_LOOK.open, title: t("questsOpenApp"), desc: t("questDesc_open"), done: _daily.open, xp: r.open, at: _daily.openAt }]
     .concat((_daily.missions || []).map((id, k) => {
@@ -469,29 +479,42 @@ function untilMidnight() {
 // variable, so it resolves from quests.css (renderer/quests/), hence ../../.
 const RARITIES = [["legendary", 800], ["epic", 300], ["rare", 100], ["uncommon", 20], ["common", 0]];
 export function questLootHtml() { return lootHtml(); }
+// Two panels side by side: the physical items (devices, chips, printers — the
+// loot) and the profile & community achievements (friends, links, lists…).
+// Each is one grid of cards sorted by rarity, the rarity carried by the card
+// itself (colour, chip) instead of a band per rarity.
 function lootHtml() {
+  const all = _ctx.loot?.() || [];
+  const a = ladderHtml(all.filter(x => x.physical), "questsLoot", "questsLootTitle");
+  const b = ladderHtml(all.filter(x => !x.physical), "questsBadgesEyebrow", "questsBadgesTitle");
+  return a || b ? `<div class="qw-ladders">${a}${b}</div>` : "";
+}
+const rarityOf = x => x.rarity || (RARITIES.find(([, min]) => (x.per || x.xp) >= min) || RARITIES[RARITIES.length - 1])[0];
+const earnedOf = x => (x.per ? (x.n || 0) * x.per : (x.got ? x.xp : 0));
+function ladderHtml(items, eyebrowKey, titleKey) {
   const { t, esc } = _ctx;
-  const items = _ctx.loot?.() || [];
   if (!items.length) return "";
-  const tiers = RARITIES.map(([id, min], i) => {
-    const max = i ? RARITIES[i - 1][1] : Infinity;
-    const own = items.filter(x => x.rarity ? x.rarity === id : (x.per || x.xp) >= min && (x.per || x.xp) < max);
-    if (!own.length) return "";
-    return `
-      <div class="qw-rung qw-rung--${id}">
-        <div class="qw-rung-name">${esc(t(`questsRarity_${id}`))}</div>
-        <div class="qw-loot">${own.map(x => `
-          <div class="qw-item${x.got ? " is-got" : ""}">
-            <span class="qw-item-ic" aria-hidden="true">${x.img ? `<span class="qw-item-mask" style="--ico:url('../../assets/svg/icons/${x.img}')"></span>` : `<span class="icon icon-${x.icon || "star-fill"} icon-20"></span>`}</span>
-            <span class="qw-item-txt"><b>${esc(x.label)}${x.per && x.n ? ` · ${x.n}` : ""}</b><small>${esc(x.hint || "")}</small>
-              <span class="qw-item-xp">${x.got ? `<span class="icon icon-check icon-12" aria-hidden="true"></span>` : ""}${esc(x.value || (x.per ? t("xpPerItem", { xp: x.per }) : `+${x.xp} XP`))}</span></span>
-          </div>`).join("")}</div>
-      </div>`;
-  }).join("");
+  const order = RARITIES.map(r => r[0]);
+  const sorted = items.map(x => ({ ...x, r: rarityOf(x) }))
+    .sort((p, q) => order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
+  const got = sorted.filter(x => x.got).length;
+  const xp = sorted.reduce((s, x) => s + earnedOf(x), 0);
+  const card = x => `
+    <article class="qw-card qw-card--${x.r}${x.got ? " is-got" : ""}">
+      <span class="qw-card-ic" aria-hidden="true">${x.img ? `<span class="qw-item-mask" style="--ico:url('../../assets/svg/icons/${x.img}')"></span>` : `<span class="icon icon-${x.icon || "star-fill"} icon-20"></span>`}</span>
+      ${x.per && x.n ? `<span class="qw-card-n">×${x.n}</span>` : ""}
+      <b class="qw-card-name">${esc(x.label)}</b>
+      <small class="qw-card-hint">${esc(x.hint || "")}</small>
+      <span class="qw-card-foot">
+        <span class="qw-card-rar">${esc(t(`questsRarity_${x.r}`))}</span>
+        <span class="qw-card-xp">${x.got ? `<span class="icon icon-check icon-12" aria-hidden="true"></span>` : `<span class="icon icon-lock icon-11" aria-hidden="true"></span>`}${esc(x.value || (x.per ? t("xpPerItem", { xp: x.per }) : `+${x.xp} XP`))}</span>
+      </span>
+    </article>`;
   return `
     <section class="qw-panel qw-ladder">
-      <div class="qw-quest-head"><div><span class="qw-eyebrow">${esc(t("questsLoot"))}</span><h2>${esc(t("questsLootTitle"))}</h2></div></div>
-      ${tiers}
+      <div class="qw-quest-head"><div><span class="qw-eyebrow">${esc(t(eyebrowKey))}</span><h2>${esc(t(titleKey))}</h2></div>
+        <div class="qw-ladder-sum"><b>${got} / ${sorted.length}</b><span>${xp.toLocaleString()} XP</span></div></div>
+      <div class="qw-cards">${sorted.map(card).join("")}</div>
     </section>`;
 }
 
@@ -518,7 +541,7 @@ function missionCard(l) {
       <span class="qm-dot" aria-hidden="true">${full ? `<span class="icon icon-check icon-10"></span>` : ""}</span>
       <span class="qm-row-label">${esc(actionLabel(x.id))}</span>
       ${x.target > 1 ? `<span class="qm-row-n">${c}/${x.target}</span>` : ""}
-      ${x.xp ? `<span class="qm-row-xp">+${x.xp} XP</span>` : ""}</li>`;
+      ${(x.xp || _ctx.xpElsewhere?.(x.id)) ? `<span class="qm-row-xp">+${x.xp || _ctx.xpElsewhere(x.id)} XP</span>` : ""}</li>`;
   }).join("");
   return `
     <article class="qm-card is-${state}">
@@ -537,24 +560,29 @@ function missionCard(l) {
 
 function journeyHtml() {
   const { t, esc } = _ctx;
-  if (!_levels) return `<p class="qw-empty">${esc(t("questsLoading"))}</p>`;
+  if (!_levels) return (_ctx.loadingHTML?.() || `<p class="qw-empty">${esc(t("questsLoading"))}</p>`);
   const paid = new Set(_journey?.bonusesPaid || []);
   const cur = currentRank();
   const built = new Set(_levels.map(l => RANK_IDS[l.rank]).filter(Boolean));
   const rank = built.has(_missionRank) ? _missionRank : cur;
-  const levelsOf = n => _levels.filter(l => RANK_IDS[l.rank] === n);
+  const levelsOf = n => mainLevels().filter(l => RANK_IDS[l.rank] === n);
+  const secretsOf = n => _levels.filter(l => l.secret && RANK_IDS[l.rank] === n && secretShown(l));
   const wonIn = n => levelsOf(n).filter(l => paid.has(l.id)).length;
   const curLv = levelsOf(cur);
   const chapters = Array.from({ length: RANKS }, (_, i) => {
     const n = i + 1, lv = levelsOf(n), ready = lv.length > 0;
     const pips = ready ? lv.map(l => `<i class="${paid.has(l.id) ? "on" : ""}"></i>`).join("") : "<i></i>".repeat(5);
-    const st = !ready ? " is-soon" : n === rank ? " is-on" : wonIn(n) === lv.length ? " is-done" : "";
+    // Selected AND done keeps its green bars: the two states add up.
+    // Every level AND the secret bonus won: the chapter becomes a legendary tile.
+    const secrets = _levels.filter(l => l.secret && RANK_IDS[l.rank] === n);
+    const legend = ready && wonIn(n) === lv.length && secrets.length > 0 && secrets.every(l => paid.has(l.id));
+    const st = !ready ? " is-soon" : `${n === rank ? " is-on" : ""}${wonIn(n) === lv.length ? " is-done" : ""}${legend ? " is-legend" : ""}`;
     return `<button type="button" class="qm-chap${st}" data-rank="${n}"${ready ? "" : " disabled"}>
       <span class="qm-chap-ic">${rankIcon(n)}</span><span class="qm-chap-n">#${n}</span>
       <b>${esc(t(`questRank_${n}`))}</b><small>${esc(ready ? t(`questWorld_${n}`) : t("questsComingSoon"))}</small>
-      <span class="qm-pips" aria-hidden="true">${pips}</span></button>`;
+      <span class="qm-pips" aria-hidden="true">${pips}</span>${legend ? `<span class="qm-chap-crown" aria-hidden="true">★</span><span class="qm-chap-shine" aria-hidden="true"></span>` : ""}</button>`;
   }).join("");
-  const lv = levelsOf(rank), won = wonIn(rank);
+  const lv = levelsOf(rank);
   return `
     <section class="qm-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
@@ -571,12 +599,10 @@ function journeyHtml() {
       <div class="qm-chap-track" role="group" aria-label="${esc(t("questsJourney"))}">${chapters}</div>
       <button type="button" class="qm-arrow" data-chap="1" aria-label="${esc(t("questsNextChapter"))}"><span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></button>
     </div>
-    <header class="qm-head">
-      <span class="qm-head-ic">${rankIcon(rank)}</span>
-      <h3>${esc(t(`questRank_${rank}`))}</h3>
-      <p>${esc(t(`questWorld_${rank}`))}${t(`questRankDesc_${rank}`) !== `questRankDesc_${rank}` ? ` · ${esc(t(`questRankDesc_${rank}`))}` : ""}</p>
-      <div class="qm-head-n"><span>${esc(t("questsLevelsDone", { n: won, total: lv.length }))}</span>
-        <span class="qm-segs" aria-hidden="true">${lv.map(l => `<i class="${paid.has(l.id) ? "on" : ""}"></i>`).join("")}</span></div>
-    </header>
-    <div class="qm-cards">${lv.map(missionCard).join("")}</div>`;
+    ${(() => {
+      // A revealed secret level follows the others in the same row, as a card of its own kind.
+      const sec = secretsOf(rank);
+      return `<div class="qm-cards${sec.length ? " has-secret" : ""}">${lv.map(missionCard).join("")}${sec.map(l =>
+        `<div class="qm-secret-wrap"><span class="qm-secret-tag">${esc(t("questsSecretTag"))}</span>${missionCard(l)}</div>`).join("")}</div>`;
+    })()}`;
 }
