@@ -3,6 +3,13 @@
 > Extracted from `CLAUDE.md` to keep the always-loaded instructions lean. Read this on demand when touching Firestore reads/writes or the data model. Security rules live in the **backend repo** (`TigerTag_Firebase_Backend/firestore.rules`) — see CLAUDE.md → *Firestore Security Rules*.
 
 ```
+squadRanks/
+  current/                  — TigerSquad ranks at the start of the Paris day (signed-in read,
+                              written only by the backend's communityStats on a new day)
+    day         string      — YYYY-MM-DD (Europe/Paris)
+    world       map         — uid → rank; national: CC → { uid → rank }; countries: CC → rank
+                              (Studio compares its live leagues against it: the ▲ / ▼ arrows)
+
 publicKeys/
   {key}/                    — key = public code e.g. "4X7-K3M" (XXX-XXX format)
     uid         string      — owner uid

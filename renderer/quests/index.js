@@ -129,7 +129,7 @@ function onDaily(d) {
     (d.missions || []).forEach((id, k) => {
       if (d.done?.[k] && !prev.done?.[k]) celebrate("mission", { label: missionLabel(id), xp: _rewards?.daily?.mission ?? 5 });
     });
-    if (d.bonusPaid && !prev.bonusPaid) celebrate("fullSet", { xp: _rewards?.daily?.fullSet ?? 30 });
+    if (d.bonusPaid && !prev.bonusPaid) celebrate("fullSet", { xp: _rewards?.daily?.fullSet ?? 20 });
   }
   refresh();
 }
@@ -361,7 +361,7 @@ function todayHtml() {
   const { t, esc } = _ctx;
   const p = questDailyProgress();
   if (!p) return `<p class="qw-empty">${esc(t("questsLoading"))}</p>`;
-  const r = { open: 10, mission: 5, fullSet: 30, streakBonus: 0, streakEvery: 5, ...(_rewards?.daily || {}) };
+  const r = { open: 10, mission: 5, fullSet: 20, streakBonus: 0, streakEvery: 5, ...(_rewards?.daily || {}) };
   const items = [{ look: MISSION_LOOK.open, title: t("questsOpenApp"), desc: t("questDesc_open"), done: _daily.open, xp: r.open, at: _daily.openAt }]
     .concat((_daily.missions || []).map((id, k) => {
       const base = String(id).split(":")[0];
@@ -389,12 +389,10 @@ function todayHtml() {
   const stat = (icon, label, value) => value == null ? "" : `<li><span class="icon icon-${icon} icon-14" aria-hidden="true"></span><span>${esc(label)}</span><b>${esc(String(value))}</b></li>`;
   return `
   <div class="qd">
-    <section class="sqr-hero qd-hero">
-      <div class="sqr-hero-txt">
-        <h2><span>TIGER</span><span class="sqr-hero-orange">QUESTS</span></h2>
-        <p class="sqr-hero-sub">${esc(t("questsDailyHeading"))}</p>
-        <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("questsCaption"))}</p>
-      </div>
+    <section class="qm-hero qd-hero">
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
+        <h2>${esc(t("questsDailyHeading"))}</h2><p>${esc(t("questsCaption"))}</p></div>
+      <div class="hero-scene" aria-hidden="true"></div>
     </section>
     <div class="qd-grid">
       <div class="qd-main">
@@ -408,8 +406,8 @@ function todayHtml() {
           </section>
           <section class="qd-card qd-chest is-${chestState}${jackpot ? " is-jackpot" : ""}"${p.complete ? ` role="button" tabindex="0" aria-label="${esc(t("questsReplayJackpot"))}"` : ""}>
             ${jackpot ? `<span class="qd-burst" aria-hidden="true"><span class="qd-rays"></span>${BURST}</span>` : ""}
-            <span class="qd-chest-art"><img class="qd-chest-img" src="../assets/img/quests/full-set-chest${p.complete ? "" : "-closed"}.webp" alt="">
-              ${jackpot ? `<img class="qd-chest-img qd-chest-closed" src="../assets/img/quests/full-set-chest-closed.webp" alt="">` : ""}
+            <span class="qd-chest-art"><img class="qd-chest-img" src="../assets/img/quests/full-set-chest${p.complete ? "" : "-closed"}-v2.webp" alt="">
+              ${jackpot ? `<img class="qd-chest-img qd-chest-closed" src="../assets/img/quests/full-set-chest-closed-v2.webp" alt="">` : ""}
               ${p.complete ? "" : `<span class="qd-chest-lock" aria-hidden="true"><span class="icon icon-lock icon-10"></span></span>`}</span>
             <div class="qd-chest-txt"><span class="qd-chest-label">${esc(t("questsFullSet"))}</span><b class="qd-chest-xp" data-xp="${r.fullSet}">+${r.fullSet} XP</b>
               <small>${esc(t(p.complete ? "questsChestEarned" : "questsChestLocked"))} · ${p.done}/${p.total}</small></div>
@@ -559,6 +557,7 @@ function journeyHtml() {
     <section class="qm-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
         <h2>${esc(t("questsJourney"))}</h2><p>${esc(t("squadHeroTagline"))}</p></div>
+      <div class="hero-scene" aria-hidden="true"></div>
       <div class="qm-hero-card">
         <b>${rankIcon(cur)} ${esc(t(`questRank_${cur}`))} · ${esc(t(`questWorld_${cur}`))}</b>
         <span>${esc(t("questsLevelsDone", { n: wonIn(cur), total: curLv.length }))}</span>

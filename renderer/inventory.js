@@ -17,7 +17,8 @@ import {
 import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
-import { squadHeroHtml, squadRankingsHtml, toggleLeague } from './quests/squad-rankings.js';
+import { pageHtml as xpPageHtml, chartPoints as xpChartPoints, tipHtml as xpTipHtml } from './quests/xp-history.js';
+import { squadHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
 // ── USB scale (Dymo M-series) module ──────────────────────────────────────
@@ -1966,6 +1967,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function setDisconnected() {
     state.displayName = null; state.keyValid = null;
     questsSignOut();
+    _stopSquadPulse();
     _mcpSyncAccount(null);                    // nobody signed in → MCP server off
     state.photoURL = null;  // clear custom avatar → sign-in placeholder shows
     // Single source-of-truth paint of the EMPTY state: passing `null`
@@ -4153,12 +4155,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("btnOpenQuests")?.addEventListener("click", () => openQuests("today"));
   $("vtgDaily")?.addEventListener("click", () => setViewMode("questsToday"));
   $("vtgLevel")?.addEventListener("click", () => setViewMode("questsJourney"));
-  $("vtgSquadChip")?.addEventListener("click", () => _openSquadView("countries"));
-  $("vtgSquadItems")?.addEventListener("click", () => _openSquadView("ach"));
-  $("vtgSquadHist")?.addEventListener("click", () => openXpHistory());
+  // Not in the TigerSquad: every entry of its menu offers to join instead of
+  // opening a view that is about membership.
+  const _squadGate = open => () => { if (state.activeAccountId && !state.supportPublicly) { _openSquadInvite(); return; } open(); };
+  $("vtgSquadChip")?.addEventListener("click", _squadGate(() => _openSquadView("countries")));
+  $("vtgSquadItems")?.addEventListener("click", _squadGate(() => _openSquadView("ach")));
+  $("vtgSquadHist")?.addEventListener("click", _squadGate(() => openXpHistory()));
   $("notifPanelClose")?.addEventListener("click", closeNotifs);
-  $("xpHistPanelClose")?.addEventListener("click", closeXpHistory);
-  $("xpHistCloseTab")?.addEventListener("click", closeXpHistory);
   $("notifMarkAll")?.addEventListener("click", _markNotifsRead);
   $("notifCloseTab")?.addEventListener("click", closeNotifs);
   $("notifOverlay")?.addEventListener("click", closeNotifs);
@@ -5196,32 +5199,102 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _openSquadBoard(_squadViewTab, host);
   }
   // Community pulse for the Rankings view: the public totals the TigerHub page
-  // reads (publicStats/community, updated by the communityStats function every
-  // minute) and their daily history — read when the view opens, at most once a
-  // minute, never polled.
-  const _squadPulse = { at: 0, pulse: undefined, history: [] };
+  // reads (publicStats/community, recomputed by the communityStats function
+  // every minute). The totals are FOLLOWED live (onSnapshot) while the view is
+  // open — each new value lands as soon as the backend writes it, like the
+  // TigerHub page's 20 s poll but without reads in between; the daily history
+  // (the sparklines) is read when the view opens, at most once a minute.
+  const _squadPulse = { at: 0, pulse: undefined, history: [], ranks: null, unsub: null, onChange: null };
   async function _loadSquadPulse(uid) {
+    const ref = fbDb(uid).collection("publicStats").doc("community");
+    if (!_squadPulse.unsub) {
+      let first = true;
+      _squadPulse.unsub = ref.onSnapshot(doc => {
+        const d = doc.data();
+        _squadPulse.pulse = d ? { ...d, updatedAt: d.updatedAt?.toMillis?.() || null } : null;
+        if (!first) _squadPulse.onChange?.();
+        first = false;
+      }, e => { console.warn("[squad] community pulse:", e.code || e.message); _squadPulse.pulse = null; });
+    }
     if (Date.now() - _squadPulse.at < 60e3) return;
     _squadPulse.at = Date.now();
     try {
-      const ref = fbDb(uid).collection("publicStats").doc("community");
-      const [doc, hist] = await Promise.all([ref.get(), ref.collection("history").orderBy("day", "desc").limit(90).get()]);
+      const [doc, hist, ranks] = await Promise.all([ref.get(), ref.collection("history").orderBy("day", "desc").limit(90).get(),
+        // The leagues' ranks at the start of the day (server-written) — the up / down arrows.
+        fbDb(uid).collection("squadRanks").doc("current").get().catch(() => null)]);
       const d = doc.data();
       _squadPulse.pulse = d ? { ...d, updatedAt: d.updatedAt?.toMillis?.() || null } : null;
       _squadPulse.history = hist.docs.map(x => x.data()).reverse();
+      _squadPulse.ranks = ranks?.data() || null;
     } catch (e) { console.warn("[squad] community pulse:", e.code || e.message); _squadPulse.pulse = null; }
+  }
+  try { localStorage.removeItem("tigertag.squadRanks"); } catch (_) {}   // the old local baseline (the server keeps it now)
+  function _stopSquadPulse() {
+    _squadPulse.unsub?.(); _squadPulse.unsub = null; _squadPulse.onChange = null;
+  }
+  // The counters roll to their value (ease-out, 1.6 s) — up from 0 the first time
+  // they show, then from the last shown value — and a gain pops out of the
+  // counter ("+40 XP") whenever it goes up, as on the TigerHub page.
+  const _pulseShown = {};
+  function _rollPulse(root, fmt) {
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    root.querySelectorAll("[data-roll]").forEach(el => {
+      const key = el.dataset.roll, to = Number(el.dataset.v) || 0;
+      const from = _pulseShown[key] ?? 0;
+      _pulseShown[key] = to;
+      cancelAnimationFrame(el._roll);
+      if (still || from === to) { el.textContent = fmt(to); return; }
+      if (key in _pulseShown && from && to > from) {
+        const pop = document.createElement("span");
+        pop.className = "sqr-gain";
+        pop.textContent = `+${fmt(to - from)}${el.dataset.unit ? " " + el.dataset.unit : ""}`;
+        el.closest(".sqr-stat")?.append(pop);
+        setTimeout(() => pop.remove(), 1800);
+      }
+      const t0 = performance.now();
+      const step = now => {
+        const p = Math.min(1, (now - t0) / 1600), e = 1 - Math.pow(1 - p, 3);
+        el.textContent = fmt(Math.round(from + (to - from) * e));
+        if (p < 1) el._roll = requestAnimationFrame(step);
+      };
+      el._roll = requestAnimationFrame(step);
+    });
   }
   function _squadRankCtx(uid, cname, fmt, myCountry) {
     const rtf = new Intl.RelativeTimeFormat(state.lang || "en", { numeric: "auto" });
     const dayFmt = new Intl.DateTimeFormat(state.lang || "en", { month: "short", day: "numeric" });
     return {
       uid, t, esc, fmt, cname, flagOf: _flagOf, myCountry, lang: state.lang, squadXp: state.xpPoints,
+      rankBase: _squadPulse.ranks,
       tierLabel: squadTierLabel, brandLabel: b => _PT_BRAND_LABEL[b] || b,
       avatar: m => avatarMarkup({ ...m.profile, tigerSquad: true, squadTier: m.tier }, "sqb-avatar"),
       ago: ms => { const m = Math.round((Date.now() - ms) / 60e3); return m < 60 ? rtf.format(-m, "minute") : rtf.format(-Math.round(m / 60), "hour"); },
       day: d => { try { return dayFmt.format(new Date(`${d}T12:00:00`)); } catch (_) { return d; } },
     };
   }
+  // League columns show as many rows as the view has room for (at least 5):
+  // measure the free height under the boards once they are laid out, convert it
+  // into rows, and re-render when the count changes. Stacked columns (narrow
+  // window) keep the minimum — they would only grow the page.
+  function _fitSquadLeagues(card, rerender) {
+    requestAnimationFrame(() => {
+      const boards = card.querySelector(".sqr-boards");
+      const row = boards?.querySelector(".sqr-row");
+      if (!boards || !row || !boards.offsetParent) return;
+      let sc = boards.parentElement;
+      while (sc && sc !== document.body && !/(auto|scroll)/.test(getComputedStyle(sc).overflowY)) sc = sc.parentElement;
+      if (!sc) return;
+      const stacked = getComputedStyle(boards).gridTemplateColumns.split(" ").length < 3;
+      const step = row.getBoundingClientRect().height + parseFloat(getComputedStyle(row.parentElement).rowGap || 0);
+      // Whatever follows the boards (the wall-of-fame link) keeps its place.
+      const wall = card.querySelector(".sqb-wall");
+      const below = wall && !wall.hidden ? wall.getBoundingClientRect().bottom - boards.getBoundingClientRect().bottom : 0;
+      const free = sc.getBoundingClientRect().bottom - boards.getBoundingClientRect().bottom - below - 8;
+      const want = stacked ? 0 : leagueRows() + Math.floor(free / step);
+      if (setLeagueRows(want)) rerender();
+    });
+  }
+
   async function _openSquadBoard(tab = "countries", host = null) {
     const uid = state.activeAccountId; if (!uid || (!host && document.querySelector(".squad-board:not(.squad-board--inline)"))) return;
     const opener = document.activeElement;
@@ -5272,7 +5345,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const rk = card.querySelector(".sqr-host"), ranked = which === "countries", legendary = which === "ach";
         rk.hidden = !(ranked || legendary); card.querySelector(".sqb-cols").hidden = ranked || legendary;
         card.querySelector(".sqb-wall").hidden = !(ranked || legendary);
-        if (ranked) { rk.innerHTML = squadRankingsHtml(rctx, { members, loading, pulse: _squadPulse.pulse, history: _squadPulse.history }); return; }
+        if (ranked) {
+          rk.innerHTML = squadRankingsHtml(rctx, { members, loading, pulse: _squadPulse.pulse, history: _squadPulse.history });
+          _rollPulse(rk, fmt);
+          // A new total from the backend swaps the pulse strip only, then rolls.
+          _squadPulse.onChange = () => {
+            // View closed or left: stop following (it resumes when the view reopens).
+            if (!card.isConnected || !card.offsetParent) { _stopSquadPulse(); return; }
+            const strip = rk.querySelector(".sqr-pulse");
+            if (!strip || rk.hidden) return;
+            strip.outerHTML = squadPulseHtml(rctx, _squadPulse.pulse, _squadPulse.history);
+            _rollPulse(rk, fmt);
+          };
+          _fitSquadLeagues(card, () => render("countries"));
+          return;
+        }
         // Legendary items: the next squad level, then every XP item by rarity (the loot ladder).
         if (legendary) {
           rk.innerHTML = `<div class="qw sqr-loot">${mine ? `<ol class="sqb-list">${_squadNextLevelHTML(mine.breakdown, fmt)}</ol>` : ""}${questLootHtml()}</div>`;
@@ -5325,6 +5412,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (host) {
       host.append(card);
       host._sqb = { uid, at: Date.now(), render, tab: () => card.querySelector(".sqb-tab.is-on")?.dataset.tab || _squadViewTab };
+      // The league columns fill the height they have: re-fit when the view resizes.
+      if (!host._sqbFit && "ResizeObserver" in window) {
+        let raf = 0;
+        host._sqbFit = new ResizeObserver(() => {
+          cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => { if (host._sqb?.tab() === "countries") host._sqb.render("countries"); });
+        });
+        host._sqbFit.observe(host);
+      }
     } else {
       bd.addEventListener("click", () => { if (performance.now() - _supportClosedAt > 250) close(); });
       document.addEventListener("keydown", onKey);
@@ -8450,12 +8546,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("vtgSquadItems")?.classList.toggle("active", state.viewMode === "squadItems");
     $("invQuestsView")?.classList.toggle("hidden", !(state.viewMode === "questsToday" || state.viewMode === "questsJourney"));
     $("invSquadView")?.classList.toggle("hidden", state.viewMode !== "squad" && state.viewMode !== "squadItems");
+    $("invXpHistView")?.classList.toggle("hidden", state.viewMode !== "xpHistory");
+    $("vtgSquadHist")?.classList.toggle("active", state.viewMode === "xpHistory");
     if (_isProgressMode(state.viewMode)) {
       $("card-welcome").classList.add("hidden");
       $("card-inv").classList.remove("hidden");
       for (const id of ["invTableWrap", "invGrid", "invRackView", "invPrinterView", "invProductsView", "invListsView", "invEmpty", "invCatalogView"]) $(id)?.classList.add("hidden");
       $("mainResult").innerHTML = "";
-      if (state.viewMode === "squad" || state.viewMode === "squadItems") _renderSquadView();
+      if (state.viewMode === "xpHistory") _renderXpHistView();
+      else if (state.viewMode === "squad" || state.viewMode === "squadItems") _renderSquadView();
       else renderQuestsView($("invQuestsView"), state.viewMode === "questsJourney" ? "journey" : "today");
       return;
     }
@@ -11943,7 +12042,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   /* ── view toggle ── */
   // Tiger Quests (Today / Journey) and TigerSquad: progress views of the main area.
-  const _isProgressMode = m => m === "questsToday" || m === "questsJourney" || m === "squad" || m === "squadItems";
+  const _isProgressMode = m => m === "questsToday" || m === "questsJourney" || m === "squad" || m === "squadItems" || m === "xpHistory";
   function setViewMode(mode, opts = {}) {
     // Web build: the printer views need the LAN (not reachable from a browser yet).
     if (!HAS_NATIVE && _isPrinterMode(mode)) mode = "grid";
@@ -22414,7 +22513,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Close every open side card (spool / group / printer / settings) in one go.
   function _closeAllSidePanels() {
     if ($("notifPanel")?.classList.contains("open"))      closeNotifs();
-    if ($("xpHistPanel")?.classList.contains("open"))     closeXpHistory();
     if ($("matSourcePanel")?.classList.contains("open"))  closeMaterialSourcePicker();
     if ($("containerPanel")?.classList.contains("open"))  closeContainerPicker();
     if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
@@ -37562,6 +37660,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           } else { cntEl.hidden = true; cntEl.textContent = ""; }
         }
         $("adfPreview").classList.remove("hidden");
+        // Already friends: show who it is, but nothing to send (the rules refuse it too).
+        if ((state.friends || []).some(f => f.uid === targetUid)) {
+          $("adfResult").textContent = "✓ " + t("friendAlready");
+          $("adfResult").className = "adf-result adf-result--success";
+          $("adfSend").disabled = true;
+          return;
+        }
         $("adfResult").textContent = "";
         $("adfResult").className = "adf-result";
         $("adfSend").disabled = false;
@@ -37605,7 +37710,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!_adfFoundUid) return;
     $("adfSend").disabled = true;
     try {
-      await sendFriendRequest(adfValue());
+      const res = await sendFriendRequest(adfValue());
+      if (res?.error === "already") {
+        $("adfResult").textContent = "✓ " + t("friendAlready");
+        $("adfResult").className = "adf-result adf-result--success";
+        return;
+      }
       $("adfResult").textContent = "✓ " + t("friendRequestSent");
       $("adfResult").className = "adf-result adf-result--success";
       $("adfPreview").classList.add("hidden");
@@ -37885,8 +37995,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .collection("users").doc(uid)
       .collection("friendRequests")
       .onSnapshot(async snap => {
-        _chimeOnFirestoreArrival("friendReq", snap);   // ring on a real incoming request
-        state.friendRequests = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+        // A request from someone who is ALREADY a friend means nothing (and could
+        // not be accepted: the friendship docs exist) — delete it, never show it.
+        // The rules refuse new ones; this clears any written before that.
+        const known = new Set((state.friends || []).map(f => f.uid));
+        const stale = snap.docs.filter(d => known.has(d.id));
+        stale.forEach(d => d.ref.delete().catch(() => {}));
+        _chimeOnFirestoreArrival("friendReq", { ...snap, docChanges: () => snap.docChanges().filter(c => !known.has(c.doc.id)) });   // ring on a real incoming request
+        state.friendRequests = snap.docs.filter(d => !known.has(d.id)).map(d => ({ uid: d.id, ...d.data() }));
         renderNotifBadge();
         renderFriendRequestsList();
         // Show the accept/refuse modal for each new incoming request — EXCEPT on a
@@ -37895,7 +38011,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // notification arrives instead), so an accept prompt would be stale.
         if (!state.isPublic) {
           snap.docChanges().forEach(change => {
-            if (change.type === "added") showFriendRequestModal(change.doc.id, change.doc.data());
+            if (change.type === "added" && !known.has(change.doc.id)) showFriendRequestModal(change.doc.id, change.doc.data());
           });
         }
         // Enrich each request with the requester's public avatar / colour so the
@@ -38545,34 +38661,102 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   // XP history side card (the TigerSquad "History" tab): what the account won and
   // lost, newest first — read from the board's last load, else loaded here.
-  async function openXpHistory() {
+  // ── XP history — the side card (breakdown ring + last transactions) and the
+  // full page (view mode "xpHistory"), both drawn by quests/xp-history.js from
+  // the server's log users/{uid}/xpHistory ({ key, delta, total, n, at }).
+  const _xpLog = { uid: null, at: 0, log: [], total: 0, full: false };
+  async function _loadXpLog(uid, full = false) {
+    if (_xpLog.uid === uid && Date.now() - _xpLog.at < 60e3 && (_xpLog.full || !full)) return _xpLog;
+    const me = fbDb(uid).collection("users").doc(uid);
+    const [doc, hist] = await Promise.all([me.get(), me.collection("xpHistory").orderBy("at", "desc").limit(full ? 2000 : 300).get()]);
+    Object.assign(_xpLog, { uid, at: Date.now(), full, total: doc.data()?.xpPoints || 0, log: hist.docs.map(h => h.data()) });
+    return _xpLog;
+  }
+  function _xphCtx() {
+    const lang = state.lang || "en";
+    const rel = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+    const hm = new Intl.DateTimeFormat(lang, { hour: "2-digit", minute: "2-digit" });
+    const md = new Intl.DateTimeFormat(lang, { month: "short", day: "numeric" });
+    const dayStart = ms => { const d = new Date(ms); d.setHours(0, 0, 0, 0); return d.getTime(); };
+    return {
+      t, esc, fmt: n => Number(n || 0).toLocaleString(lang), ago: ms => (ms ? timeAgo(ms) : ""),
+      // "Today, 14:32" / "Yesterday, 18:27" / "Oct 28, 19:44"
+      when: ms => {
+        if (!ms) return "";
+        const days = Math.round((dayStart(Date.now()) - dayStart(ms)) / 864e5);
+        const d = days <= 1 ? rel.format(-days, "day") : md.format(ms);
+        return `${d.charAt(0).toUpperCase()}${d.slice(1)}, ${hm.format(ms)}`;
+      },
+      day: ms => md.format(ms),
+    };
+  }
+  // Every way into the XP history (the view bar, the XP notification, the
+  // TigerSquad views) opens the page.
+  function openXpHistory() { if (state.activeAccountId) setViewMode("xpHistory"); }
+  // The full page: range, filters, search and page live here across renders.
+  const _xph = { range: "30d", page: 1, filter: { cat: "", dir: "", q: "" } };
+  function _paintXpHistView() {
+    const host = $("invXpHistView"); if (!host) return;
+    const q = host.querySelector("[data-xph-filter='q']");
+    const caret = q && document.activeElement === q ? q.selectionStart : null;
+    // The curve is drawn at its card's real width: the main column, i.e. the view
+    // minus the right column (360 + gap) when the layout has two columns.
+    const two = matchMedia("(min-width: 1351px)").matches;
+    const chartW = Math.max(320, host.clientWidth - (two ? 374 : 0) - 34);
+    host.innerHTML = `<div class="qw">${xpPageHtml(_xphCtx(), { ..._xph, chartW, log: _xpLog.log, total: _xpLog.total })}</div>`;
+    if (caret != null) { const n = host.querySelector("[data-xph-filter='q']"); n.focus(); n.setSelectionRange(caret, caret); }
+  }
+  async function _renderXpHistView() {
+    const host = $("invXpHistView"); if (!host) return;
     const uid = state.activeAccountId; if (!uid) return;
-    _closeAllSidePanels();
-    closeFriends();
-    const panel = $("xpHistPanel"), list = panel.querySelector(".sqb-list"), you = panel.querySelector(".sqb-you");
-    const fmt = n => Number(n || 0).toLocaleString(state.lang || "en");
-    let mine = _squadBoardCache?.uid === uid ? _squadBoardCache.mine : null;
-    _renderMyXp(list, you, mine, fmt, "hist");
-    panel.classList.add("open");
-    _setTab($("xpHistCloseTab"), true, panel.offsetWidth, panel);
-    try {
-      const me = fbDb(uid).collection("users").doc(uid);
-      const [doc, hist] = await Promise.all([me.get(), me.collection("xpHistory").orderBy("at", "desc").limit(60).get()]);
-      const d = doc.data() || {};
-      mine = { breakdown: d.xpBreakdown || {}, unlocked: d.xpUnlocked || {}, total: d.xpPoints || 0, history: hist.docs.map(h => h.data()) };
-      if (uid === state.activeAccountId && panel.classList.contains("open")) _renderMyXp(list, you, mine, fmt, "hist");
-    } catch (_) {}
+    if (_xpLog.uid === uid) _paintXpHistView(); else host.innerHTML = `<div class="qw"><p class="qw-empty">${esc(t("questsLoading"))}</p></div>`;
+    try { await _loadXpLog(uid, true); } catch (_) {}
+    if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView();
   }
-  function closeXpHistory() {
-    $("xpHistPanel")?.classList.remove("open");
-    _setTab($("xpHistCloseTab"), false, 0, $("xpHistPanel"));
+  {
+    const host = $("invXpHistView");
+    host?.addEventListener("click", e => {
+      const r = e.target.closest("[data-xph-range]");
+      if (r) { _xph.range = r.dataset.xphRange; _paintXpHistView(); return; }
+      const p = e.target.closest("[data-xph-page]");
+      if (p && !p.disabled) { _xph.page = Number(p.dataset.xphPage) || 1; _paintXpHistView(); host.querySelector(".xph-table-wrap")?.scrollIntoView({ block: "nearest" }); }
+    });
+    let _qT = 0;
+    const onFilter = e => {
+      const f = e.target.closest("[data-xph-filter]"); if (!f) return;
+      _xph.filter[f.dataset.xphFilter] = f.value; _xph.page = 1;
+      clearTimeout(_qT);
+      if (f.dataset.xphFilter === "q") _qT = setTimeout(_paintXpHistView, 160); else _paintXpHistView();
+    };
+    host?.addEventListener("change", onFilter);
+    host?.addEventListener("input", e => { if (e.target.matches("[data-xph-filter='q']")) onFilter(e); });
+    // The curve's tooltip: the nearest dot to the pointer, its transaction and balance.
+    host?.addEventListener("pointermove", e => {
+      const svg = e.target.closest(".xph-svg"); const tip = host.querySelector(".xph-tip");
+      if (!svg || !tip) { if (tip) tip.hidden = true; return; }
+      const dots = [...svg.querySelectorAll("circle")]; if (!dots.length) return;
+      const box = svg.getBoundingClientRect();
+      let best = null, bd = Infinity;
+      for (const d of dots) { const r = d.getBoundingClientRect(), dx = Math.abs(r.left + r.width / 2 - e.clientX); if (dx < bd) { bd = dx; best = d; } }
+      if (!best || bd > 40) { tip.hidden = true; return; }
+      dots.forEach(d => d.classList.toggle("is-hot", d === best));
+      const pts = xpChartPoints(_xpLog.log, _xph.range), h = pts[Number(best.dataset.i)];
+      if (!h) return;
+      tip.innerHTML = xpTipHtml(_xphCtx(), h); tip.hidden = false;
+      const r = best.getBoundingClientRect(), wrap = svg.parentElement.getBoundingClientRect();
+      const left = Math.min(wrap.width - tip.offsetWidth - 4, Math.max(4, r.left - wrap.left - tip.offsetWidth / 2));
+      tip.style.left = `${left}px`; tip.style.top = `${Math.max(0, r.top - wrap.top - tip.offsetHeight - 12)}px`;
+    });
+    host?.addEventListener("pointerleave", () => { const tip = host.querySelector(".xph-tip"); if (tip) tip.hidden = true; });
+    // A new width redraws the curve at that width.
+    if (host && "ResizeObserver" in window) {
+      let w = 0, raf = 0;
+      new ResizeObserver(() => {
+        if (state.viewMode !== "xpHistory" || Math.abs(host.clientWidth - w) < 8) return;
+        w = host.clientWidth; cancelAnimationFrame(raf); raf = requestAnimationFrame(_paintXpHistView);
+      }).observe(host);
+    }
   }
-  // A click anywhere outside the side card (and outside what opens it) closes it.
-  document.addEventListener("pointerdown", e => {
-    if (!$("xpHistPanel")?.classList.contains("open")) return;
-    if (e.target.closest("#xpHistPanel, #xpHistCloseTab, #vtgSquadHist")) return;
-    closeXpHistory();
-  }, true);
   function closeNotifs() {
     $("notifPanel").classList.remove("open");
     $("notifOverlay").classList.remove("open");
@@ -38585,6 +38769,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const user = fbAuth().currentUser;
     if (!user) return;
     const db    = fbDb(user.uid); // named instance — stable across async operations
+    // Already friends (a request left over from before the rules refused it):
+    // the friendship docs exist, so the batch below would be denied — just clear it.
+    if ((state.friends || []).some(f => f.uid === requesterUid)) {
+      await db.collection("users").doc(user.uid).collection("friendRequests").doc(requesterUid).delete();
+      return;
+    }
     const batch = db.batch();
     const myRef    = db.collection("users").doc(user.uid);
     const theirRef = db.collection("users").doc(requesterUid);
@@ -38804,6 +38994,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!keySnap.exists) return { error: "notFound" };
     const targetUid = keySnap.data().uid;
     if (targetUid === user.uid) return { error: "self" };
+    if ((state.friends || []).some(f => f.uid === targetUid)) return { error: "already" };
     // Fetch display name from userProfiles
     const profileSnap = await db.collection("userProfiles").doc(targetUid).get();
     const displayName = profileSnap.exists ? profileSnap.data().displayName : targetUid;

@@ -30,12 +30,12 @@ real-hardware testing).
 - Rules + deploys follow `.agents/rules/firestore-changes.md`; mass recompute follows
   `.agents/rules/irreversible-actions.md` (explicit go).
 
-## 1. Daily quest — 60 XP / day
+## 1. Daily quest — 50 XP / day
 
 - Day = the user's **local** day (client sends its IANA time zone; server validates and stores it on
   `users/{uid}.tz`). The rollover is local midnight; an app left open checks in at the rollover, on
   window focus, and on launch.
-- Composition: **open the app 10** + **4 missions × 5** + **full-set bonus 30** = 60.
+- Composition: **open the app 10** + **4 missions × 5** + **full-set bonus 20** = 50.
 - **Streak bonus +100 XP every 5 consecutive days with the full set** (5th, 10th, 15th… day of the same streak; a missed day restarts the count).
 - The server draws the 4 missions per user per day (deterministic: hash of uid + date), **no re-roll**,
   filtered by what the user owns and has not finished (no Tiger POD mission without a reader, no
@@ -79,11 +79,11 @@ real-hardware testing).
 | Discovery 3 | 200 | 100 | My printers | add your first 3D printer · rename your printer · arrange printers in the grid · open a printer camera · take a camera photo |
 | Discovery 4 | 350 | 125 | Shopping & lists | create a wishlist · add a buy link · set a minimum stock · export a .ttag file · filter the catalogue by PETG |
 | Discovery 5 | 500 | 150 | Community | share your friend link · add your first friend · join the TigerSquad · visit a friend's stock · read What's New |
-| Explorer 1 | 700 | 200 | Organised stock | spools in racks (25) · update spool weights (25) · program TigerTag chips (5) · program a TigerTag+ chip · scan a spool's chip to open it |
-| Explorer 2 | 950 | 250 | Printing | try a demo printer · prints finished at 100 % (5) · record a camera video · printers connected (2) · assign a spool to a printer slot |
-| Explorer 3 | 1250 | 300 | Social | friends (3) · visits to friends' stocks (5) · share a public list · make your profile public · add a social link |
-| Explorer 4 | 1600 | 350 | Chip workshop | recycle a chip · initialise a chip (TigerTag Init) · program TigerTag chips (10) · own TigerTag+ chips (3) · read a chip with the NFC tester |
-| Explorer 5 | 2000 | 400 | Collector | brands explored in the catalogue (10) · different materials owned (5) · prints finished at 100 % (10) · spools in racks (50) · daily quest 7 days in a row |
+| Explorer 1 | 700 | 50 | Organised stock | spools in racks (25) · update spool weights (25) · program TigerTag chips (5) · program a TigerTag+ chip · scan a spool's chip to open it |
+| Explorer 2 | 950 | 75 | Printing | try a demo printer · prints finished at 100 % (5) · record a camera video · printers connected (2) · assign a spool to a printer slot |
+| Explorer 3 | 1250 | 100 | Social | friends (3) · visits to friends' stocks (5) · share a public list · make your profile public · add a social link |
+| Explorer 4 | 1600 | 125 | Chip workshop | recycle a chip · initialise a chip (TigerTag Init) · program TigerTag chips (10) · own TigerTag+ chips (3) · read a chip with the NFC tester |
+| Explorer 5 | 2000 | 150 | Collector | brands explored in the catalogue (10) · different materials owned (5) · prints finished at 100 % (10) · spools in racks (50) · daily quest 7 days in a row |
 
 Ranks (role · world), icons in the app: 1 Discovery · Base camp 🏕️, 2 Explorer · The hills 🌄,
 3 Mountaineer · The mountains 🏔️, 4 Nomad · The deserts 🏜️, 5 Boatman · The rivers 🛶, 6 Navigator ·
@@ -120,7 +120,7 @@ spools, public profile, socials, TigerSquad) is read by the server from state.
 
 ## 4. Rarity rebalance (state-based achievements)
 
-A perfect day is 60 XP, so devices are rescaled to stay "legendary". Values in `ACH_XP`:
+A perfect day is 50 XP, so devices are rescaled to stay "legendary". Values in `ACH_XP`:
 
 | Rarity | Items |
 |---|---|

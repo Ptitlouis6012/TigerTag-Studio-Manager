@@ -10,6 +10,13 @@
     ]
   },
   {
+    "id": 500,
+    "name": "Hobby Lobby",
+    "type_ids": [
+      142
+    ]
+  },
+  {
     "id": 628,
     "name": "Buddy3D",
     "type_ids": [
@@ -65,6 +72,13 @@
   {
     "id": 3132,
     "name": "Hatchbox",
+    "type_ids": [
+      142
+    ]
+  },
+  {
+    "id": 3308,
+    "name": "American Filament",
     "type_ids": [
       142
     ]
@@ -364,6 +378,13 @@
     ]
   },
   {
+    "id": 17095,
+    "name": "Sting3D",
+    "type_ids": [
+      142
+    ]
+  },
+  {
     "id": 17689,
     "name": "Professional Lab",
     "type_ids": [
@@ -380,6 +401,13 @@
   {
     "id": 19265,
     "name": "CC3D",
+    "type_ids": [
+      142
+    ]
+  },
+  {
+    "id": 19868,
+    "name": "3DPower",
     "type_ids": [
       142
     ]
@@ -692,6 +720,13 @@
     ]
   },
   {
+    "id": 45589,
+    "name": "iBOSS",
+    "type_ids": [
+      142
+    ]
+  },
+  {
     "id": 45670,
     "name": "Panchroma",
     "type_ids": [
@@ -773,6 +808,13 @@
   {
     "id": 49784,
     "name": "GIANTARM",
+    "type_ids": [
+      142
+    ]
+  },
+  {
+    "id": 50187,
+    "name": "3DHoJor",
     "type_ids": [
       142
     ]
@@ -944,6 +986,13 @@
     ]
   },
   {
+    "id": 57839,
+    "name": "ALL3DP",
+    "type_ids": [
+      142
+    ]
+  },
+  {
     "id": 58231,
     "name": "IC3D",
     "type_ids": [
@@ -988,6 +1037,13 @@
   {
     "id": 60882,
     "name": "Recreus",
+    "type_ids": [
+      142
+    ]
+  },
+  {
+    "id": 62276,
+    "name": "SmartPrint",
     "type_ids": [
       142
     ]

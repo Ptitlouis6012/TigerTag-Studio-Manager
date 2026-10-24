@@ -469,6 +469,7 @@
       <div id="invListsView" class="inv-lists-view hidden"></div>
       <div id="invQuestsView" class="inv-quests-view qst-view hidden"></div>
       <div id="invSquadView" class="inv-squad-view hidden"></div>
+      <div id="invXpHistView" class="inv-squad-view xph-view hidden"></div>
 
       <!-- Search — the official TigerTag+ catalogue (grid or table), rendered by
            renderCatalogView() from the LOCAL cache. Picking a product only
@@ -1503,19 +1504,6 @@
       <div class="fp-empty-title" data-i18n="notifsEmptyTitle">No notifications</div>
       <div class="fp-empty-sub" data-i18n="notifsEmptySub">Friend requests and updates show up here</div>
     </div>
-  </div>
-</div>
-
-<!-- XP history (slide-in from right) — the TigerSquad "History" tab -->
-<button class="pp-close-tab" id="xpHistCloseTab" aria-label="Close" data-i18n-aria="tutoClose" hidden>»</button>
-<div class="detail-panel friends-panel xp-hist-panel" id="xpHistPanel">
-  <div class="panel-header">
-    <span class="panel-title" data-i18n="xpHistory">History</span>
-    <button class="panel-close" id="xpHistPanelClose" aria-label="Close" data-i18n-aria="tutoClose">✕</button>
-  </div>
-  <div class="panel-body friends-body">
-    <p class="sqb-you" hidden></p>
-    <ol class="sqb-list" aria-live="polite"></ol>
   </div>
 </div>
 

@@ -105,18 +105,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqb-col { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .squad-board--inline .sqb-cols:has(.sqb-col:not(:first-child):not([hidden])) { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
 .squad-board.squad-board--inline:has(.sqb-col:not(:first-child):not([hidden])) { max-width: none; }
-/* XP history side card (#xpHistPanel): the TigerSquad rows on the theme tokens. */
-.xp-hist-panel {
-  --tsq-bg: var(--surface); --tsq-bg2: var(--surface-2); --tsq-card: var(--surface); --tsq-line: var(--border);
-  --tsq-text: var(--text); --tsq-muted: var(--muted); --tsq-orange: var(--primary);
-}
-.xp-hist-panel .panel-body { display: flex; flex-direction: column; gap: 10px; padding: 14px 14px 24px; }
-.xp-hist-panel .sqb-you { margin: 0; text-align: left; font-size: 14px; font-weight: 800; color: var(--primary); }
-.xp-hist-panel .sqb-row { gap: 10px; padding: 10px 12px; }
-.xp-hist-panel .sqb-delta { width: 42px; }
-.xp-hist-panel .sqb-name { white-space: normal; }
-.xp-hist-panel .sqb-n1 { overflow-wrap: anywhere; }
-
 /* Missions: every built level, rank by rank. */
 
 /* Loot ladder — rarity rungs (presentation page "Rarity — loot ladder"). */
@@ -147,13 +135,53 @@ body.progress-view #gridSortWrap { display: none; }
 @media (max-width: 760px) { .qw-rung { grid-template-columns: 1fr; } .qw-rung-name { padding-top: 0; } }
 
 /* ── Today: the daily quests screen (renderer/quests/index.js todayHtml) ──
-   Banner (assets/img/quests/daily-quests-banner.webp), progress + full-set
+   Banner (assets/img/quests/daily-quests-scene.webp on a CSS wall + desk), progress + full-set
    chest, quest rows, side column. Same dark game world as the presentation. */
 .qd { display: flex; flex-direction: column; gap: 14px; }
-/* Banner: the TigerSquad hero (.sqr-hero) — same size, title and type — on the daily artwork. */
-.sqr-hero.qd-hero { --tsq-line: var(--qw-line); --tsq-orange: #ff8a2e; --sqr-gold: #ffb21a;
-  --sqr-display: "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif;
-  background: url("../../assets/img/quests/daily-quests-banner.webp") 50% 28% / cover no-repeat, #0b0d14; }
+/* Hero banners (Today, Missions, TigerSquad): each artwork is a transparent
+   scene (objects only); the wall and the desk are CSS, so the backdrop is a
+   setting. Set --hero-wall (a colour or any gradient), --hero-desk and
+   --hero-desk-h on any ancestor (body, a theme…) — the scenes sit on it
+   unchanged, at any banner width. The defaults are the navy workshop. */
+.qd-hero, .qm-hero, .sqr-hero {
+  --hero-wall-c: var(--hero-wall, #13204a);
+  --hero-desk-c: var(--hero-desk, linear-gradient(180deg, #c8743a 0 6px, #b5652f 6px 14px, #8a4a26 14px));
+  --hero-desk-hc: var(--hero-desk-h, 26px);
+  /* Every hero banner is the same height, in every view. */
+  position: relative; height: 150px; background: var(--hero-wall-c); }
+/* Three planes. The scene is a flex item between the title and the card, so
+   it takes the room left and shrinks with the window instead of sliding under
+   the card. Its own background is the back layer (behind the desk); the desk
+   is the hero's ::after; the scene's ::after is the optional --hero-front
+   layer — the same image keeping only what rests ON the desk (paws, printer
+   feet) — over the desk. --hero-sink is how far the scene's bottom sits under
+   the desk's top edge, so the desk edge lands on the line where waist-up
+   characters are cut. Text and card sit above all three. */
+.qd-hero::after, .qm-hero::after, .sqr-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+  height: var(--hero-desk-hc); background: var(--hero-desk-c); pointer-events: none; }
+.qd-hero > .hero-scene, .qm-hero > .hero-scene, .sqr-hero > .hero-scene { position: relative; z-index: auto; align-self: stretch;
+  margin-bottom: calc(-6px - var(--hero-sink, 4px));
+  /* Full size while there is room; on a narrow banner the art may shrink to
+     80 % — never less (below that the banner drops the scene, see the
+     container queries further down). */
+  flex: 1 1 var(--hero-scene-w, 0); min-width: calc(var(--hero-scene-w, 0px) * .8); }
+/* The art is drawn by the two pseudo-elements, so it may extend past the room
+   the scene reserves (the card is allowed over the TigerSquad printer). */
+.hero-scene::before, .hero-scene::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+.hero-scene::before { background: var(--hero-scene) var(--hero-scene-pos, center) bottom / contain no-repeat; }
+.hero-scene::after { z-index: 2; background: var(--hero-front, none) var(--hero-scene-pos, center) bottom / contain no-repeat; }
+/* --hero-art-w: the art's full width when it is wider than what the scene
+   reserves (--hero-scene-w) — centred while there is room, then pinned left and
+   spilling right; it scales with the scene when the scene shrinks. */
+.sqr-hero:not(.qd-hero) .hero-scene::before, .sqr-hero:not(.qd-hero) .hero-scene::after {
+  right: auto; left: max(0px, calc(50% - var(--hero-art-w) / 2)); background-position: left bottom;
+  width: min(var(--hero-art-w), calc(100% * var(--hero-art-ratio))); }
+/* Narrow banners, in steps — each hero is its own size container. */
+.qd-hero, .qm-hero, .sqr-hero { container-type: inline-size; }
+.qd-hero > :not(.hero-scene), .qm-hero > :not(.hero-scene), .sqr-hero > :not(.hero-scene) { position: relative; z-index: 3; }
+/* Banner: the Missions hero (.qm-hero) — same markup, size and type — with the
+   daily scene on the right (the Missions scene sits in the middle). */
+.qm-hero.qd-hero { --hero-scene: url("../../assets/img/quests/daily-quests-scene.webp"); --hero-scene-pos: right; --hero-scene-w: 430px; }
 .qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 25%); gap: 14px; align-items: start; }
 .qd-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .qd-card { position: relative; background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); border: 1px solid var(--qw-line); border-radius: 12px; padding: 14px 16px; }
@@ -355,15 +383,17 @@ body.progress-view #gridSortWrap { display: none; }
 .squad-board--inline .sqb-tab { height: 32px; }
 .squad-board.squad-board--inline { max-width: none; }
 
-.sqr-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 220px; padding: 12px 18px 12px 32px;
-  border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden;
-  /* One continuous workshop scene, edge to edge (no fade, no added band), cropped in height only. */
-  background: url("../../assets/img/tigersquad/tigersquad-rankings-banner-v4.webp") 50% 39% / cover no-repeat, #0b0d14; }
-.sqr-hero > * { position: relative; z-index: 1; }
-.sqr-hero h2 { margin: 0; font: 800 64px/0.95 var(--sqr-display); letter-spacing: .01em; color: #fff; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
+.sqr-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 18px 8px 28px;
+  border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden; }
+.sqr-hero:not(.qd-hero) { --hero-scene: url("../../assets/img/tigersquad/tigersquad-scene-v3.webp");
+  --hero-front: url("../../assets/img/tigersquad/tigersquad-scene-v3-front-v2.webp"); --hero-sink: 6px; --hero-art-w: 420px; --hero-art-ratio: 1.346;
+  /* Reserve the tigers and the trophy only: the card may cover the printer. */
+  --hero-scene-w: 312px;
+  padding-bottom: calc(var(--hero-desk-hc) + 6px); }
+.sqr-hero h2 { margin: 0; font: 800 52px/0.95 var(--sqr-display); letter-spacing: .01em; color: #fff; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
 .sqr-hero-orange { color: var(--tsq-orange); }
-.sqr-hero-sub { margin: 10px 0 0; font: 700 18px var(--sqr-display); letter-spacing: .5em; text-transform: uppercase; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
-.sqr-hero-tag { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 15px; font-weight: 600; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
+.sqr-hero-sub { margin: 6px 0 0; font: 700 14px var(--sqr-display); letter-spacing: .42em; text-transform: uppercase; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
+.sqr-hero-tag { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
 .sqr-hero-tag .icon { background: var(--sqr-gold); }
 .sqr-join { height: 34px; padding: 0 16px; border: none; border-radius: 9px; cursor: pointer; font: 800 13px inherit; color: #17120e; background: linear-gradient(180deg, #ff8a2e, #ff6f12); }
 
@@ -375,28 +405,39 @@ body.progress-view #gridSortWrap { display: none; }
 
 /* The account's rank card, on the right of the hero: who / league / XP / ranks,
    then the next rival with the real gap. */
-.sqr-card { position: relative; z-index: 1; display: grid; grid-template-columns: auto auto; flex: 0 0 auto;
+/* Two columns — who (with the ranks on one line under it) and the next rival —
+   so the card stays narrow.
+   Centred on the banner's full height (it may overlap the desk): the hero's
+   bottom padding reserves the desk for the text, so the card is pushed down
+   by half the difference between the bottom and top paddings. */
+.sqr-card { position: relative; z-index: 1; display: grid; grid-template-columns: auto auto; grid-template-areas: "me rival" "ranks rival"; align-items: stretch; flex: 0 0 auto; align-self: center; top: calc((var(--hero-desk-hc) + 6px - 8px) / 2);
   border-radius: 14px; border: 1px solid color-mix(in srgb, var(--sqr-gold) 70%, transparent); background: rgba(10, 12, 20, .86);
   box-shadow: 0 0 22px rgba(255, 178, 26, .22); backdrop-filter: blur(4px); }
 .sqr-card--out { grid-template-columns: 1fr; max-width: 360px; }
 /* Left: avatar column (avatar, flag, globe) + text column (name, league, XP, ranks). */
-.sqr-card-me { display: grid; grid-template-columns: 56px auto; column-gap: 12px; row-gap: 4px; align-items: center; padding: 10px 16px 10px 12px; }
+.sqr-card-me { grid-area: me; display: flex; align-items: center; gap: 10px; padding: 10px 12px 6px 10px; }
+.sqr-card-ranks { grid-area: ranks; display: grid; grid-template-columns: 18px auto 18px auto; column-gap: 6px; align-items: center; justify-content: start; padding: 6px 12px 10px; border-top: 1px solid rgba(255, 255, 255, .12); }
+.sqr-card-ranks .sqr-card-rank + .sqr-card-ic { margin-left: 8px; }
+/* Not enough room for title + tigers + full card (≈1110 px; the card may
+   already cover the printer): the next rival goes first — the scene keeps its
+   size, the card keeps who you are and your ranks. */
+}
 .sqr-card--out .sqr-card-me { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-.sqr-card-av .sqb-avatar { width: 56px; height: 56px; font-size: 18px; }
+.sqr-card-av .sqb-avatar { width: 46px; height: 46px; font-size: 16px; }
 .sqr-card-head { display: flex; flex-direction: column; gap: 1px; }
 .sqr-card-name { font-size: 15px; font-weight: 700; color: #fff; white-space: nowrap; }
 .sqr-card-league { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; color: var(--sq-a, var(--sqr-gold)); white-space: nowrap; }
 .sqr-card-league img { width: 18px; height: 18px; object-fit: contain; }
-.sqr-card-xp { font-size: 21px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: #fff; white-space: nowrap; }
+.sqr-card-xp { font-size: 18px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: #fff; white-space: nowrap; }
 .sqr-card-ic { justify-self: center; display: grid; place-items: center; font-size: 20px; line-height: 1; }
 .sqr-card-ic .icon { background: var(--sqr-cyan); }
-.sqr-card-rank { font-size: 15px; color: #e9ecf7; white-space: nowrap; }
+.sqr-card-rank { font-size: 13px; color: #e9ecf7; white-space: nowrap; }
 .sqr-card-rank b { font-weight: 800; color: #fff; }
-.sqr-card-rival { display: flex; flex-direction: column; justify-content: center; gap: 7px; min-width: 250px; padding: 10px 14px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.sqr-card-rival { display: flex; flex-direction: column; justify-content: center; grid-area: rival; gap: 7px; width: 170px; padding: 10px 12px; border-left: 1px solid rgba(255, 255, 255, .12); }
 .sqr-card .sqr-muted { white-space: normal; margin: 0; }
 .sqr-me-label { font-size: 13px; font-weight: 600; color: #c9cfe2; }
-.sqr-rival-who { display: flex; align-items: center; gap: 12px; }
-.sqr-rival-who .sqb-avatar { width: 40px; height: 40px; flex-shrink: 0; }
+.sqr-rival-who { display: flex; align-items: center; gap: 8px; }
+.sqr-rival-who .sqb-avatar { width: 34px; height: 34px; flex-shrink: 0; }
 .sqr-rival-who > * { flex-shrink: 0; }
 .sqr-rival-who > .sqr-rival-txt { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
 .sqr-rival-who b { font-size: 13.5px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -422,9 +463,16 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-stat > .icon { width: 28px; height: 28px; background: var(--c); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 50%, transparent)); }
 .sqr-stat-txt { display: flex; flex-direction: column; min-width: 0; }
 .sqr-stat-label { font: 800 11px var(--sqr-display); text-transform: uppercase; letter-spacing: .06em; color: var(--c); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sqr-stat-n { font: 800 24px/1.1 var(--sqr-mono); color: var(--tsq-text); }
+.sqr-stat-n { font: 800 24px/1.1 var(--sqr-mono); color: var(--tsq-text); font-variant-numeric: tabular-nums; }
+/* "+40 XP" rising out of a counter when the community total goes up. */
+.sqr-gain { position: absolute; right: 22%; top: 30px; z-index: 2; pointer-events: none; white-space: nowrap;
+  font: 800 20px var(--sqr-mono); color: var(--c); text-shadow: 0 0 10px currentColor;
+  animation: sqr-gain 1.8s cubic-bezier(.2, .8, .2, 1) forwards; }
+@keyframes sqr-gain { 0% { opacity: 0; transform: translateY(10px) scale(.8); } 15% { opacity: 1; transform: translateY(0) scale(1.1); }
+  70% { opacity: 1; transform: translateY(-14px) scale(1); } 100% { opacity: 0; transform: translateY(-26px) scale(.95); } }
 .sqr-stat-txt small { font-size: 11px; line-height: 1.25; color: var(--tsq-muted); }
-.sqr-stat .sqr-spark { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 78%; pointer-events: none;
+/* Inset from the card's edges so the curve never touches the border. */
+.sqr-stat .sqr-spark { position: absolute; left: 12px; right: 12px; bottom: 8px; width: calc(100% - 24px); height: calc(78% - 12px); pointer-events: none;
   -webkit-mask-image: linear-gradient(90deg, rgba(0, 0, 0, .35) 0, rgba(0, 0, 0, .55) 35%, #000 100%);
   mask-image: linear-gradient(90deg, rgba(0, 0, 0, .35) 0, rgba(0, 0, 0, .55) 35%, #000 100%); }
 .sqr-spark-line { fill: none; stroke: var(--c); stroke-width: 1.6; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px var(--c)); }
@@ -435,7 +483,7 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-unavail { grid-column: 2 / -1; align-self: center; padding: 0 16px; }
 
 /* Leagues */
-.sqr-boards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.sqr-boards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
 .sqr-board { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--tsq-line); background: linear-gradient(180deg, #161b2c, #121624); }
 .sqr-board-head { display: flex; align-items: center; gap: 12px; }
 .sqr-board-head > div { flex: 1; min-width: 0; }
@@ -447,27 +495,43 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-all { height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--tsq-line); background: rgba(255, 255, 255, .03); color: var(--tsq-text); font: 700 12px inherit; cursor: pointer; white-space: nowrap; }
 .sqr-all:hover { border-color: var(--tsq-orange); }
 .sqr-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.sqr-row { display: grid; grid-template-columns: 38px 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 5px 12px 5px 8px; border-radius: 10px;
+.sqr-row { display: grid; grid-template-columns: 38px 38px minmax(0, 1fr) auto; gap: 10px; align-items: center; height: 52px; box-sizing: border-box; padding: 5px 12px 5px 8px; border-radius: 10px;
   border: 1px solid var(--tsq-line); background: rgba(255, 255, 255, .02); transition: border-color .2s, background-color .2s; }
 .sqr-row:hover { border-color: color-mix(in srgb, var(--tsq-orange) 40%, var(--tsq-line)); background: rgba(255, 255, 255, .04); }
 .sqr-row.is-me { border-color: var(--tsq-orange); background: linear-gradient(90deg, rgba(255, 122, 26, .16), rgba(255, 122, 26, .04)); box-shadow: 0 0 16px rgba(255, 122, 26, .15); }
 .sqr-medal { width: 36px; height: 36px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .5)); }
 .sqr-rank { text-align: center; font: 800 14px var(--sqr-mono); color: var(--tsq-muted); }
 .sqr-av .sqb-avatar { width: 34px; height: 34px; }
-.sqr-flag--row { font-size: 24px; text-align: center; }
+.sqr-flagav { display: inline-block; width: var(--s); height: var(--s); flex-shrink: 0; vertical-align: middle; border-radius: 50%; overflow: hidden;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .16); background: #262c3d; }
+.sqr-flagav img { display: block; width: 100%; height: 100%; object-fit: cover; }
+/* Top three countries: a gold / silver / bronze ring, matching the medal. */
+.sqr-flagav--p1 { box-shadow: 0 0 0 2.5px #f5c542, 0 0 10px rgba(245, 197, 66, .45); }
+.sqr-flagav--p2 { box-shadow: 0 0 0 2.5px #d4dbe6, 0 0 10px rgba(212, 219, 230, .35); }
+.sqr-flagav--p3 { box-shadow: 0 0 0 2.5px #d0864a, 0 0 10px rgba(208, 134, 74, .4); }
+.sqr-board-ic:has(.sqr-flagav) { background: none; }
 .sqr-name { display: flex; flex-direction: column; min-width: 0; }
 .sqr-name b { font-size: 14px; color: var(--tsq-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sqr-name small { font-size: 12px; color: var(--tsq-muted); }
 .sqr-name small[class*="sq-"] { color: var(--sq-a); }
-.sqr-mini { font-size: 12px; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
+.sqr-mini { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; font-size: 12px; }
+/* Rank movement since yesterday, under the XP: green up, red down. */
+.sqr-xp { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+.sqr-move { display: inline-flex; align-items: center; gap: 3px; font: 800 11px var(--sqr-mono); }
+.sqr-move svg { width: 9px; height: 7px; fill: currentColor; }
+.sqr-move.is-up { color: #34d399; }
+.sqr-move.is-down { color: #f87171; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
 .sqr-xp { font: 800 14px var(--sqr-mono); color: var(--tsq-text); white-space: nowrap; }
 .sqr-gap { text-align: center; color: var(--tsq-muted); line-height: .6; }
+/* The account's own row when it ranks below the cut: a dashed top edge marks the skipped rows. */
+.sqr-row--far { position: relative; margin-top: 4px; }
+.sqr-row--far::before { content: ""; position: absolute; left: 12px; right: 12px; top: -6px; border-top: 1px dashed var(--tsq-line); }
 
 .sqr-skel { border-radius: 14px; background: linear-gradient(90deg, #161b2c 0%, #1e2540 50%, #161b2c 100%) 0 0 / 200% 100%; animation: sqr-shimmer 1.4s linear infinite; }
 @keyframes sqr-shimmer { to { background-position: -200% 0; } }
 
 @media (max-width: 1400px) { .sqr-pulse { grid-template-columns: repeat(3, minmax(0, 1fr)); } .sqr-pulse-intro { grid-column: 1 / -1; border-bottom: 1px solid var(--tsq-line); padding: 8px 16px; } .sqr-pulse > .sqr-stat:nth-child(2) { border-left: none; } }
-@media (max-width: 1200px) { .sqr-boards { grid-template-columns: minmax(0, 1fr); } .sqr-hero { flex-direction: column; align-items: flex-start; } .sqr-hero h2 { font-size: 48px; } }
+@media (max-width: 1200px) { .sqr-boards { grid-template-columns: minmax(0, 1fr); } .sqr-hero h2 { font-size: 44px; } }
 @media (prefers-reduced-motion: reduce) { .sqr-skel { animation: none; } .sqr-row { transition: none; } }
 /* Narrower windows: the rank card takes a larger share — slide the trophy group left to stay between title and card. */
 /* The view bar carries the TigerSquad sections (Rankings, Items, History icons): no tabs in the page. */
@@ -483,13 +547,14 @@ body.progress-view #gridSortWrap { display: none; }
 .fvb-rank .icon { background: #FFC83D; }
 
 /* ── Missions (journey): hero, chapter row, chapter heading, illustrated level cards ── */
-.qm-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 150px; padding: 12px 18px 12px 28px;
+.qm-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 18px 12px 28px;
   border: 1px solid var(--qw-line); border-radius: 14px; overflow: hidden;
-  background: url("../../assets/img/quests/missions-banner.webp") 50% 40% / cover no-repeat, #0b0d14; }
+  --hero-scene: url("../../assets/img/quests/missions-scene.webp"); --hero-scene-w: 330px;
+  padding-bottom: calc(var(--hero-desk-hc) + 6px); }
 .qm-hero-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .qm-hero-txt h2 { font-size: 52px; line-height: .95; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
 .qm-hero-txt p { margin: 4px 0 0; font: 700 14px var(--qw-display); letter-spacing: .42em; text-transform: uppercase; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
-.qm-hero-card { display: flex; flex-direction: column; gap: 8px; min-width: 230px; padding: 12px 16px; border-radius: 12px;
+.qm-hero-card { display: flex; flex-direction: column; gap: 8px; min-width: 200px; padding: 12px 16px; border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--qw-tiger) 65%, transparent); background: rgba(10, 12, 20, .84); box-shadow: 0 0 22px rgba(255, 122, 26, .2); }
 .qm-hero-card b { font: 800 15px var(--qw-display); text-transform: uppercase; letter-spacing: .06em; color: var(--qw-tiger2); }
 .qm-hero-card > span:not(.qm-bar) { font-size: 13px; font-weight: 600; color: var(--qw-ink); }
@@ -549,9 +614,10 @@ body.progress-view #gridSortWrap { display: none; }
   color: var(--qw-ok); border: 1px solid color-mix(in srgb, var(--qw-ok) 60%, transparent); background: rgba(61, 220, 132, .12); white-space: nowrap; }
 .qm-badge .icon { background: var(--qw-ok); }
 .qm-card.is-won .qm-bar i { background: var(--qw-ok); }
-/* Illustration (assets/img/quests/mission-<level>.webp) over a warm workshop glow while it is missing. */
-.qm-art { height: 92px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .06);
-  background: var(--art) center / cover no-repeat, radial-gradient(120% 140% at 50% 110%, rgba(255, 122, 26, .45), transparent 60%), linear-gradient(180deg, #1a1f30, #0e1220); }
+/* Illustration (assets/img/quests/mission-<level>.webp): a transparent scene,
+   contained and sitting on the card's warm workshop glow. */
+.qm-art { height: 92px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .06); padding: 6px 8px 4px; box-sizing: border-box;
+  background: var(--art) center bottom / contain no-repeat content-box, radial-gradient(120% 140% at 50% 110%, rgba(255, 122, 26, .45), transparent 60%), linear-gradient(180deg, #1a1f30, #0e1220); }
 .qm-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .qm-row { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 4px 2px; font-size: 13px; color: var(--qw-ink); border-radius: 6px; }
 .qm-row-label { min-width: 0; }
@@ -561,7 +627,8 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-row.is-part .qm-dot { border-color: var(--qw-tiger2); background: conic-gradient(var(--qw-tiger2) 0 50%, transparent 50%); }
 .qm-row-n { font-weight: 700; color: var(--qw-tiger2); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .qm-row.is-full .qm-row-n { color: var(--qw-ok); }
-.qm-row-xp { font-weight: 800; color: var(--qw-tiger2); white-space: nowrap; }
+/* Always the last column, so the XP lines up whether or not the row has a count. */
+.qm-row-xp { grid-column: 4; font-weight: 800; color: var(--qw-tiger2); white-space: nowrap; }
 .qm-row.is-full .qm-row-xp { color: var(--qw-ok); }
 .qm-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 10px; border-top: 1px solid var(--qw-line); }
 .qm-card-foot b { display: inline-flex; align-items: center; gap: 6px; font: 800 20px var(--qw-display); color: var(--qw-tiger2); }
@@ -579,3 +646,137 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-chap.is-soon .qm-chap-ic { color: var(--qw-muted); }
 .qm-head-ic { color: var(--qw-tiger); font-size: 30px; line-height: 1; }
 .qm-hero-card b .qm-rank-ic { color: var(--qw-tiger2); }
+
+/* ── Hero banners on narrow windows ─────────────────────────────────────────
+   Thresholds are the banner's inner width (container queries measure the
+   content box), from measured needs: title + gaps + card + scene at 80 %. The
+   art never goes below 80 %: past that point the scene is dropped, the title
+   stays. TigerSquad drops the next rival, then the ranks line, then the
+   scene. Missions drops its level card first (the chapter row right under the
+   banner shows the same progress), then the scene. */
+@container (max-width: 1020px) {
+  .sqr-hero .sqr-card { grid-template-columns: auto; grid-template-areas: "me" "ranks"; }
+  .sqr-hero .sqr-card-rival { display: none; }
+}
+@container (max-width: 790px) {
+  .sqr-hero .sqr-card { grid-template-areas: "me"; }
+  .sqr-hero .sqr-card-ranks { display: none; }
+}
+@container (max-width: 730px) { .sqr-hero:not(.qd-hero) > .hero-scene { display: none; } }
+@container (max-width: 960px) { .qm-hero > .qm-hero-card { display: none; } }
+@container (max-width: 715px) { .qm-hero:not(.qd-hero) > .hero-scene { display: none; } }
+@container (max-width: 765px) { .qd-hero > .hero-scene { display: none; } }
+
+/* ── XP history (renderer/quests/xp-history.js) ────────────────────────────────
+   The page (view mode "xpHistory", #invXpHistView): tiles across, then the
+   curve beside the breakdown ring, then the log across the page. Same dark world as Tiger Quests. */
+/* Page layout: tiles across, the curve beside the breakdown ring (same height),
+   the log across. One column on a narrow window. */
+.xph-board { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 14px;
+  grid-template-areas: "tiles tiles" "chart break" "log log"; }
+.xph-board > .xph-tiles { grid-area: tiles; }
+.xph-board > .xph-chart-card { grid-area: chart; }
+.xph-board > .xph-break-card { grid-area: break; }   /* stretched to the curve's card height */
+.xph-break-card .xph-ring-row { margin: auto 0; }
+.xph-board > .xph-log-card { grid-area: log; }
+@media (max-width: 1350px) { .xph-board { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tiles" "chart" "break" "log"; } }
+.xph-card { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; border-radius: 14px;
+  border: 1px solid var(--qw-line); background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); min-width: 0; }
+.xph-head { display: flex; align-items: center; gap: 12px; }
+.xph-head > div:not(.xph-ranges):not(.xph-filters) { flex: 1; min-width: 0; }
+.xph-head h3 { margin: 0; font: 800 17px/1.1 var(--qw-display); text-transform: uppercase; letter-spacing: .04em; color: var(--qw-ink); }
+.xph-head p { margin: 2px 0 0; font-size: 12.5px; color: var(--qw-muted); }
+.xph-ic { --c: var(--qw-tiger); display: inline-grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px;
+  background: color-mix(in srgb, var(--c) 18%, #0e1220); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); }
+/* Card headers: the icon on its own, no tinted box (like the tiles). */
+.xph-head > .xph-ic { width: 32px; height: 32px; background: none; border: 0; }
+.xph-head > .xph-ic .icon { width: 24px; height: 24px; }
+.xph-ic .icon { background: var(--c); }
+.xph-arrow { width: 80%; height: 80%; fill: var(--c); filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent)); }
+.is-up { color: var(--qw-ok); } .is-down { color: #f87171; }
+.xph-empty { margin: 0; padding: 14px; text-align: center; font-size: 13px; color: var(--qw-muted); border: 1px dashed var(--qw-line); border-radius: 10px; }
+
+/* Breakdown ring */
+.xph-ring-row { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 14px; align-items: center; }
+.xph-ring { position: relative; width: 136px; height: 136px; }
+.xph-ring svg { width: 100%; height: 100%; }
+.xph-ring-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
+.xph-ring-mid b { font: 800 19px var(--qw-mono); }
+.xph-ring-mid span { font: 800 14px var(--qw-display); color: var(--qw-ink); }
+.xph-ring-mid small { margin-top: 3px; font-size: 10px; color: var(--qw-muted); }
+.xph-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+.xph-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; color: var(--qw-ink); }
+.xph-legend b { font: 800 13px var(--qw-mono); }
+.xph-dot { width: 11px; height: 11px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px color-mix(in srgb, var(--c) 60%, transparent); }
+
+.xph-break-card .xph-legend li { font-size: 12.5px; gap: 7px; }
+
+/* Full page */
+.xph-hero { --hero-scene: url("../../assets/img/tigersquad/tigersquad-scene-v3.webp");
+  --hero-front: url("../../assets/img/tigersquad/tigersquad-scene-v3-front-v2.webp"); --hero-sink: 6px; --hero-scene-pos: right; --hero-scene-w: 330px; }
+.xph-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.xph-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--qw-line);
+  background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); min-width: 0; }
+/* Minimal: the icon on its own, no tinted box behind it. */
+.xph-tile > .xph-ic { width: 44px; height: 44px; background: none; border: 0; }
+.xph-tile > .xph-ic .icon { width: 30px; height: 30px; }
+.xph-tile > .xph-ic .xph-arrow { width: 100%; height: 100%; }
+.xph-tile > div { display: flex; flex-direction: column; min-width: 0; }
+.xph-tile-t { font: 800 11.5px var(--qw-display); text-transform: uppercase; letter-spacing: .08em; color: var(--qw-muted); }
+.xph-tile b { font: 800 26px/1.15 var(--qw-mono); color: var(--qw-ink); white-space: nowrap; }
+.xph-tile b small { font: 800 14px var(--qw-display); color: var(--qw-tiger2); }
+.xph-tile--gain b { color: var(--qw-ok); } .xph-tile--loss b { color: #f87171; }
+.xph-tile--gain b small, .xph-tile--loss b small { color: inherit; }
+.xph-tile-s { font-size: 12px; color: var(--qw-muted); }
+.xph-ranges { display: flex; gap: 6px; }
+.xph-range { height: 32px; min-width: 48px; padding: 0 12px; border-radius: 8px; cursor: pointer; font: 800 12px var(--qw-display); letter-spacing: .04em;
+  color: var(--qw-ink); background: rgba(255, 255, 255, .03); border: 1px solid var(--qw-line); transition: background-color .2s, border-color .2s; }
+.xph-range:hover { border-color: var(--qw-tiger); }
+.xph-range.is-on { color: #1a0f04; background: linear-gradient(180deg, var(--qw-tiger2), var(--qw-tiger)); border-color: transparent; }
+.xph-chart { position: relative; height: 230px; }
+.xph-tip[hidden] { display: none; }
+.xph-svg { display: block; overflow: visible; }
+.xph-grid { stroke: rgba(255, 255, 255, .06); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.xph-ylab, .xph-xlab { fill: var(--qw-muted); font: 600 11px system-ui, sans-serif; }
+.xph-ylab { text-anchor: end; dominant-baseline: middle; }
+.xph-xlab { text-anchor: middle; }
+.xph-area { fill: rgba(255, 140, 40, .14); }
+.xph-line { fill: none; stroke: var(--qw-tiger2); stroke-width: 2.2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(255, 140, 40, .45)); }
+.xph-svg circle { stroke: #0b0d14; stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer; }
+.xph-svg circle.is-up { fill: var(--qw-ok); } .xph-svg circle.is-down { fill: #f87171; }
+.xph-svg circle:hover, .xph-svg circle.is-hot { stroke: #fff; stroke-width: 2.5; }
+.xph-tip { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; min-width: 150px; pointer-events: none;
+  border-radius: 10px; border: 1px solid var(--qw-line); background: rgba(10, 12, 20, .95); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); font-size: 12.5px; }
+.xph-tip small { color: var(--qw-muted); } .xph-tip b { color: var(--qw-ink); } .xph-tip span { font: 800 13px var(--qw-mono); }
+.xph-key { position: absolute; right: 10px; bottom: 32px; display: flex; gap: 14px; padding: 6px 10px; border-radius: 8px;
+  background: rgba(10, 12, 20, .75); border: 1px solid var(--qw-line); font-size: 12px; color: var(--qw-ink); }
+.xph-key span { display: inline-flex; align-items: center; gap: 6px; }
+.xph-key i { width: 9px; height: 9px; border-radius: 50%; } .xph-key i.is-up { background: var(--qw-ok); } .xph-key i.is-down { background: #f87171; }
+.xph-filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.xph-filters select, .xph-search { height: 36px; border-radius: 9px; border: 1px solid var(--qw-line); background: #0f1322; color: var(--qw-ink); font: 600 13px inherit; }
+.xph-filters select { padding: 0 10px; cursor: pointer; }
+.xph-search { display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; min-width: 220px; }
+.xph-search .icon { background: var(--qw-muted); }
+.xph-search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: inherit; font: inherit; }
+.xph-table-wrap { overflow-x: auto; }
+.xph-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.xph-table th { padding: 8px 10px; text-align: left; font: 800 11px var(--qw-display); text-transform: uppercase; letter-spacing: .08em; color: var(--qw-muted); border-bottom: 1px solid var(--qw-line); }
+.xph-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255, 255, 255, .04); color: var(--qw-ink); }
+.xph-table tr:hover td { background: rgba(255, 255, 255, .025); }
+.xph-table .xph-num { text-align: right; font: 800 13px var(--qw-mono); white-space: nowrap; }
+.xph-table td.is-up { color: var(--qw-ok); } .xph-table td.is-down { color: #f87171; }
+.xph-date { color: var(--qw-muted) !important; white-space: nowrap; }
+.xph-act { display: inline-flex; align-items: center; gap: 10px; }
+.xph-act .xph-ic { width: 28px; height: 28px; border-radius: 8px; }
+.xph-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
+  color: color-mix(in srgb, var(--c) 85%, #fff); background: color-mix(in srgb, var(--c) 16%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
+.xph-pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.xph-pg { min-width: 36px; height: 34px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 8px; cursor: pointer;
+  font: 700 13px inherit; color: var(--qw-ink); background: rgba(255, 255, 255, .03); border: 1px solid var(--qw-line); }
+.xph-pg .icon { background: currentColor; }
+.xph-pg:hover:not(:disabled) { border-color: var(--qw-tiger); }
+.xph-pg.is-on { color: #1a0f04; background: linear-gradient(180deg, var(--qw-tiger2), var(--qw-tiger)); border-color: transparent; }
+.xph-pg:disabled { opacity: .4; cursor: default; }
+.xph-gap { color: var(--qw-muted); padding: 0 2px; }
+.xph-count { margin-left: auto; font-size: 12.5px; color: var(--qw-muted); }
+@media (max-width: 1100px) { .xph-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

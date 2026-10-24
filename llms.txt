@@ -76,6 +76,8 @@ publicStats/community      → world-readable community totals (xpTotal, account
                              printers {total, byBrand}) written every minute by the communityStats function
 publicStats/community/history/{YYYY-MM-DD} → one point per day of those totals
                              (both read by the TigerSquad Rankings view, never written by Studio)
+squadRanks/current         → TigerSquad ranks at the start of the Paris day (world, national, countries; uid / country → rank),
+                             signed-in read, server-written — the leagues' up / down arrows
 publicLists/{token}        → world-readable snapshot of a list shared by web link (unguessable
                              token); written by the owner when a list's visibility is "public"
 users/{uid}                → { displayName, email, publicKey, privateKey, isPublic,
@@ -286,7 +288,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..." nl="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-2017 keys × 11 locales as of v2.42.2
+2060 keys × 11 locales as of v2.42.2
 
 ## CSS conventions
 

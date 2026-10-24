@@ -16,7 +16,17 @@
  *           brandLabel(id), lang, squadXp (number|null), myCountry }
  */
 const MEDAL = n => `<img class="sqr-medal" src="../assets/img/tigersquad/rank-medal-${n}.webp" alt="#${n}">`;
-const PREVIEW = 5;                // rows shown before "View all"
+const PREVIEW = 5;                // fewest rows shown before "View all"
+// Rows per league column — at least PREVIEW, more when the view has room
+// (set by the host after measuring, see setLeagueRows).
+let _rows = PREVIEW;
+export function leagueRows() { return _rows; }
+export function setLeagueRows(n) {
+  const v = Math.max(PREVIEW, Math.min(40, n | 0));
+  if (v === _rows) return false;
+  _rows = v;
+  return true;
+}
 const _expanded = new Set();      // league columns opened with "View all" (kept across renders)
 
 export function toggleLeague(key) {
@@ -37,6 +47,25 @@ function ranks(ctx, members) {
     natRank: me && cc ? nat.indexOf(me) + 1 : 0 };
 }
 
+// Rank movement since the start of the day: the server writes the leagues'
+// ranks at the first minute of each Paris day (squadRanks/current, see the
+// backend's communityStats), the host passes it as ctx.rankBase, and each row
+// shows the difference with its live rank. No baseline → no arrows.
+function rankMoves(base, ids) {
+  const now = {};
+  ids.forEach((id, i) => { now[id] = i + 1; });
+  return id => (base && base[id] && now[id] ? base[id] - now[id] : 0);
+}
+const ARROW = up => `<svg viewBox="0 0 10 8" aria-hidden="true"><path d="${up ? "M5 0 10 8H0z" : "M5 8 0 0h10z"}"/></svg>`;
+const moveHtml = d => d ? `<small class="sqr-move ${d > 0 ? "is-up" : "is-down"}">${ARROW(d > 0)}${Math.abs(d)}</small>` : "";
+
+// A country shown like a member: a round "avatar" with its flag inside
+// (assets/svg/flags, flag-icons 1x1), instead of an emoji.
+// `podium` (1-3) rings it gold / silver / bronze, like the medal next to it.
+const flagAv = (cc, size, podium = 0) => /^[a-z]{2}$/i.test(cc || "")
+  ? `<span class="sqr-flagav${podium >= 1 && podium <= 3 ? ` sqr-flagav--p${podium}` : ""}" style="--s:${size}px"><img src="../assets/svg/flags/${cc.toLowerCase()}.svg" alt="" loading="lazy" decoding="async"></span>`
+  : "";
+
 // ── Hero ─────────────────────────────────────────────────────────────────────
 export function squadHeroHtml(ctx, members) {
   const { t, esc, fmt } = ctx;
@@ -52,7 +81,9 @@ export function squadHeroHtml(ctx, members) {
           <span class="sqr-card-head"><b class="sqr-card-name">${esc(r.me.name)}</b>
             <span class="sqr-card-league"><img src="../assets/img/tigersquad/tigersquad-${r.me.tier}.webp" alt="">${esc(t("squadLeagueName", { tier: ctx.tierLabel(r.me.tier) }))}</span>
             <b class="sqr-card-xp">${esc(fmt(r.me.xp))} XP</b></span>
-          ${r.natRank ? `<span class="sqr-card-ic sqr-flag" aria-hidden="true">${ctx.flagOf(r.cc)}</span>
+        </div>
+        <div class="sqr-card-ranks">
+          ${r.natRank ? `<span class="sqr-card-ic" aria-hidden="true">${flagAv(r.cc, 20)}</span>
             <span class="sqr-card-rank"><b>#${r.natRank}</b> ${esc(t("squadInCountry", { country: ctx.cname(r.cc) }))}</span>` : ""}
           <span class="sqr-card-ic" aria-hidden="true"><span class="icon icon-globe icon-20"></span></span>
           <span class="sqr-card-rank"><b>#${r.worldRank}</b> ${esc(t("squadWorldwide"))}</span>
@@ -81,6 +112,7 @@ export function squadHeroHtml(ctx, members) {
         <p class="sqr-hero-sub">${esc(t("squadHeroSub"))}</p>
         <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("squadHeroTagline"))}</p>
       </div>
+      <div class="hero-scene" aria-hidden="true"></div>
       ${members.length ? card : ""}
     </section>`;
 }
@@ -103,7 +135,7 @@ function spark(values) {
 }
 // One compact strip: what it is, then three stats (icon, label, value, a line
 // of context, a small sparkline over the real daily history when there is one).
-function pulseHtml(ctx, pulse, history) {
+export function pulseHtml(ctx, pulse, history) {
   const { t, esc, fmt } = ctx;
   // The intro carries the context: what it is, how many accounts, when it was updated.
   const intro = `<div class="sqr-pulse-intro"><span class="icon icon-globe icon-24" aria-hidden="true"></span>
@@ -114,17 +146,19 @@ function pulseHtml(ctx, pulse, history) {
   // The XP curve starts with the TigerSquad (older days carry no XP).
   const xpH = h.filter(d => Number.isFinite(d.xpTotal) && d.xpTotal > 0).map(d => d.xpTotal);
   const spools = h.map(d => d.spools?.total), printers = h.map(d => typeof d.printers === "number" ? d.printers : d.printers?.total);
-  const stat = (cls, icon, label, value, sub, series) => `
+  // data-roll / data-v: the host rolls each number to its value and pops the
+  // gain ("+40 XP") when it goes up — see _rollPulse in inventory.js.
+  const stat = (cls, icon, label, value, sub, series, unit = "") => `
     <article class="sqr-stat sqr-stat--${cls}">
       <span class="icon icon-${icon} icon-24" aria-hidden="true"></span>
-      <div class="sqr-stat-txt"><span class="sqr-stat-label">${esc(label)}</span><b class="sqr-stat-n">${esc(value)}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div>
+      <div class="sqr-stat-txt"><span class="sqr-stat-label">${esc(label)}</span><b class="sqr-stat-n" data-roll="${cls}" data-v="${Number(value) || 0}" data-unit="${unit}">${esc(fmt(value))}</b>${sub ? `<small>${esc(sub)}</small>` : ""}</div>
       ${spark(series)}
     </article>`;
   return `
     <section class="sqr-pulse">${intro}
-      ${stat("xp", "bolt", t("squadPulseXp"), fmt(pulse.xpTotal), "", xpH)}
-      ${stat("spools", "package", t("squadPulseSpools"), fmt(pulse.spools?.total), "", spools)}
-      ${stat("printers", "printer", t("squadPulsePrinters"), fmt(pulse.printers?.total), "", printers)}
+      ${stat("xp", "bolt", t("squadPulseXp"), pulse.xpTotal, "", xpH, "XP")}
+      ${stat("spools", "package", t("squadPulseSpools"), pulse.spools?.total, "", spools)}
+      ${stat("printers", "printer", t("squadPulsePrinters"), pulse.printers?.total, "", printers)}
     </section>`;
 }
 
@@ -139,13 +173,16 @@ function column(ctx, key, title, icon, rows, isMe, rowHtml) {
   const { t, esc } = ctx;
   const open = _expanded.has(key);
   const meAt = rows.findIndex(isMe);
-  const shown = open ? rows.map((r, i) => [r, i]) : rows.slice(0, PREVIEW).map((r, i) => [r, i]);
-  const tail = !open && meAt >= PREVIEW ? `<li class="sqr-gap" aria-hidden="true">…</li>${rowHtml(rows[meAt], meAt)}` : "";
+  // When the account ranks below the cut, its row takes the last slot, so all
+  // three columns keep the same number of rows (and the same height).
+  const far = !open && meAt >= _rows;
+  const shown = open ? rows.map((r, i) => [r, i]) : rows.slice(0, far ? _rows - 1 : _rows).map((r, i) => [r, i]);
+  const tail = far ? rowHtml(rows[meAt], meAt).replace('class="sqr-row', 'class="sqr-row sqr-row--far') : "";
   return `
     <section class="sqr-board">
       <header class="sqr-board-head"><span class="sqr-board-ic" aria-hidden="true">${icon}</span>
         <div><h3>${esc(title)}</h3></div>
-        ${rows.length > PREVIEW ? `<button type="button" class="sqr-all" data-sqr-all="${key}" aria-expanded="${open}">${esc(t(open ? "squadShowLess" : "squadViewAll"))}</button>` : ""}
+        ${rows.length > _rows ? `<button type="button" class="sqr-all" data-sqr-all="${key}" aria-expanded="${open}">${esc(t(open ? "squadShowLess" : "squadViewAll"))}</button>` : ""}
       </header>
       <ol class="sqr-rows">${shown.map(([r, i]) => rowHtml(r, i)).join("")}${tail}</ol>
     </section>`;
@@ -154,23 +191,27 @@ function leaguesHtml(ctx, members, loading) {
   const { t, fmt, esc } = ctx;
   if (loading) return `<div class="sqr-boards">${[0, 1, 2].map(() => `<section class="sqr-board"><div class="sqr-skel sqr-skel--board"></div></section>`).join("")}</div>`;
   const r = ranks(ctx, members);
-  const memberRow = withFlag => (m, i) => `
+  const base = ctx.rankBase || {};
+  const mvW = rankMoves(base.world, r.world.map(m => m.uid));
+  const mvN = r.cc ? rankMoves(base.national?.[r.cc], r.nat.map(m => m.uid)) : () => 0;
+  const mvC = rankMoves(base.countries, r.countries.map(c => c.cc));
+  const memberRow = (withFlag, mv) => (m, i) => `
     <li class="sqr-row${m.uid === ctx.uid ? " is-me" : ""}">${rankCell(i)}
       <span class="sqr-av">${ctx.avatar(m)}</span>
-      <span class="sqr-name"><b>${esc(m.name)}${withFlag && m.country ? ` <span class="sqr-mini">${ctx.flagOf(m.country)}<small>#${r.world.filter(x => x.country === m.country).indexOf(m) + 1}</small></span>` : ""}</b>
+      <span class="sqr-name"><b>${esc(m.name)}${withFlag && m.country ? ` <span class="sqr-mini">${flagAv(m.country, 14)}<small>#${r.world.filter(x => x.country === m.country).indexOf(m) + 1}</small></span>` : ""}</b>
         <small class="sq-${m.tier}">${esc(ctx.tierLabel(m.tier))}</small></span>
-      <span class="sqr-xp">${esc(fmt(m.xp))} XP</span></li>`;
+      <span class="sqr-xp">${esc(fmt(m.xp))} XP${moveHtml(mv(m.uid))}</span></li>`;
   const countryRow = (c, i) => `
     <li class="sqr-row${c.cc === r.cc ? " is-me" : ""}">${rankCell(i)}
-      <span class="sqr-flag sqr-flag--row" aria-hidden="true">${ctx.flagOf(c.cc)}</span>
+      <span class="sqr-av" aria-hidden="true">${flagAv(c.cc, 34, i + 1)}</span>
       <span class="sqr-name"><b>${esc(ctx.cname(c.cc))}</b><small>${esc(t("squadMembers", { n: c.n }))}</small></span>
-      <span class="sqr-xp">${esc(fmt(c.xp))} XP</span></li>`;
+      <span class="sqr-xp">${esc(fmt(c.xp))} XP${moveHtml(mvC(c.cc))}</span></li>`;
   const globe = `<span class="icon icon-globe icon-24"></span>`;
   return `
     <div class="sqr-boards">
       ${column(ctx, "countries", t("squadCountryLabel"), globe, r.countries, c => c.cc === r.cc, countryRow)}
       ${r.cc ? column(ctx, "national", noFlag(t("squadColNational", { flag: "", country: ctx.cname(r.cc) })),
-        `<span class="sqr-flag">${ctx.flagOf(r.cc)}</span>`, r.nat, m => m.uid === ctx.uid, memberRow(false)) : ""}
-      ${column(ctx, "world", t("squadColWorld"), globe, r.world, m => m.uid === ctx.uid, memberRow(true))}
+        flagAv(r.cc, 36), r.nat, m => m.uid === ctx.uid, memberRow(false, mvN)) : ""}
+      ${column(ctx, "world", t("squadColWorld"), globe, r.world, m => m.uid === ctx.uid, memberRow(true, mvW))}
     </div>`;
 }
