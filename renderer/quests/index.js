@@ -102,7 +102,9 @@ async function checkIn() {
     if (!token || uid !== _uid) return;
     const r = await fetch(DAILY_QUEST_URL, {
       method: "POST", headers: { "Content-Type": "application/json", "X-Firebase-Id-Token": token },
-      body: JSON.stringify({ tz }),
+      // secretLevels: this app knows secret levels (hidden until revealed);
+      // the server leaves them out for older versions.
+      body: JSON.stringify({ tz, secretLevels: true }),
     });
     if (!r.ok || uid !== _uid) return;
     const j = await r.json();
@@ -271,8 +273,17 @@ export function renderQuestsView(host, tab = "today") {
       if (e.target.closest(".qd-chest.is-earned")) { replayJackpot(); return; }
     });
   }
+  // Signature guard: every XP / Firestore / focus update re-renders the view;
+  // when the markup is the same, leave the DOM alone — rewriting it restarted
+  // the cards' entrance and glow animations (the secret card flashed).
+  const html = `<div class="qw">${tab === "today" ? todayHtml() : journeyHtml()}</div>`;
+  if (host._qwHtml === html && host.firstElementChild) {
+    if (Date.now() - _lastCheckIn > 60e3) checkIn();
+    return;
+  }
+  host._qwHtml = html;
   const keep = host.querySelector(".qm-chap-track")?.scrollLeft;
-  host.innerHTML = `<div class="qw">${tab === "today" ? todayHtml() : journeyHtml()}</div>`;
+  host.innerHTML = html;
   const track = host.querySelector(".qm-chap-track");
   if (track) {
     // Keep the row where the user left it; the first time, bring the selected chapter into view.

@@ -81,7 +81,7 @@ real-hardware testing).
 | Discovery 5 | 500 | 150 | Community | share your friend link · add your first friend · join the TigerSquad · visit a friend's stock · read What's New |
 | Explorer 1 | 700 | 50 | Organised stock | spools in racks (25) · update spool weights (25) · program TigerTag chips (5) · program a TigerTag+ chip · scan a spool's chip to open it |
 | Discovery ★ (secret) | — | 100 | Behind the scenes — revealed once Discovery 1–5 are won, never gates Explorer | pick a theme colour · a friend's Tiger Squad · XP history · Tiger Squad items · daily quests 5 days in a row |
-| Explorer 2 | 950 | 75 | Printing | turn on camera auto-play for a (real) printer · prints finished at 100 % (5) · record a camera video · printers connected (2) · assign a spool to a printer slot |
+| Explorer 2 | 950 | 75 | Printing | turn on camera auto-play for a (real) printer · prints finished at 100 % (5) · record a camera video · try a Demo printer · assign a spool to a printer slot |
 | Explorer 3 | 1250 | 100 | Social | friends (3) · visits to friends' stocks (5) · share a public list · make your profile public · add a social link |
 | Explorer 4 | 1600 | 125 | Chip workshop | recycle a chip · initialise a chip (TigerTag Init) · program TigerTag chips (10) · own TigerTag+ chips (3) · read a chip with the NFC tester |
 | Explorer 5 | 2000 | 150 | Collector | brands explored in the catalogue (10) · different materials owned (5) · prints finished at 100 % (10) · spools in racks (50) · daily quest 7 days in a row |

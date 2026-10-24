@@ -884,7 +884,7 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-cards.has-secret { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 @media (max-width: 1450px) { .qm-cards.has-secret { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 1000px) { .qm-cards.has-secret { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.qm-secret-wrap { position: relative; display: flex; animation: qm-secret-in .6s ease-out both; }
+.qm-secret-wrap { position: relative; display: flex; }
 .qm-secret-wrap > .qm-card { flex: 1; border-color: rgba(190, 130, 255, .6);
   background: radial-gradient(120% 90% at 50% 0%, rgba(160, 90, 255, .3), transparent 60%), linear-gradient(180deg, #241a3a, #151225);
   box-shadow: 0 0 24px rgba(160, 90, 255, .28); }
@@ -892,8 +892,17 @@ body.progress-view #gridSortWrap { display: none; }
 .qm-secret-tag { position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 1; padding: 2px 12px; font: 800 10px var(--qw-display); letter-spacing: .14em; text-transform: uppercase; color: #1a1205;
   background: linear-gradient(90deg, #ffd34d, #ff9f1c); clip-path: polygon(0 0, 100% 0, calc(100% - 6px) 100%, 6px 100%); }
 .qm-secret-wrap > .qm-card { padding-top: 22px; }
-@keyframes qm-secret-in { from { opacity: 0; transform: translateY(8px) scale(.97); } }
-@media (prefers-reduced-motion: reduce) { .qm-secret-wrap { animation: none; } }
+/* Always on, won or not: the card is a foil card — a light sweep crosses it
+   every few seconds and its purple glow breathes. (Won, it adds the legendary
+   border below.) The sweep passes OVER the content (screen blend, no clicks)
+   so it crosses the whole card — under it, the opaque illustration and rows
+   cut it off halfway. */
+.qm-secret-wrap > .qm-card { position: relative; overflow: hidden; isolation: isolate; animation: qm-secret-breathe 3s ease-in-out infinite; }
+.qm-secret-wrap > .qm-card:not(.is-won)::before { content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit; mix-blend-mode: screen;
+  background: linear-gradient(115deg, transparent 30%, rgba(226, 182, 255, .10) 42%, rgba(255, 255, 255, .26) 50%, rgba(255, 211, 77, .12) 57%, transparent 70%);
+  background-size: 260% 100%; background-repeat: no-repeat; animation: qm-sweep 5s ease-in-out infinite; }
+@keyframes qm-secret-breathe { 50% { box-shadow: 0 0 34px rgba(160, 90, 255, .5), 0 0 8px rgba(255, 211, 77, .25); } }
+@media (prefers-reduced-motion: reduce) { .qm-secret-wrap > .qm-card, .qm-secret-wrap > .qm-card::before { animation: none; } }
 /* Legendary chapter tile — every level of the rank AND its secret bonus won: a
    rotating gold-and-purple border, a light sweep, a pulsing glow and a crown. */
 @property --qm-spin { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
@@ -906,10 +915,13 @@ body.progress-view #gridSortWrap { display: none; }
 .qw .qm-chap.is-legend .qm-pips i { background: linear-gradient(90deg, #ffd34d, #b46cff); box-shadow: 0 0 6px rgba(255, 211, 77, .6); }
 .qm-chap-crown { position: absolute; top: 4px; right: 6px; font-size: 13px; color: #ffd34d; text-shadow: 0 0 8px rgba(255, 211, 77, .9); animation: qm-twinkle 1.6s ease-in-out infinite; }
 .qm-chap-shine { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .28) 50%, transparent 65%);
-  background-size: 250% 100%; animation: qm-shine 3.2s ease-in-out infinite; }
+  background-size: 250% 100%; background-repeat: no-repeat; animation: qm-sweep 5s ease-in-out infinite; }
 @keyframes qm-spin { to { --qm-spin: 360deg; } }
 @keyframes qm-legend-glow { 50% { box-shadow: 0 0 22px rgba(255, 190, 80, .55), 0 0 40px rgba(180, 108, 255, .35); } }
-@keyframes qm-shine { 0% { background-position: 150% 0; } 60%, 100% { background-position: -100% 0; } }
+/* One diagonal pass from off the left edge to off the right edge (no-repeat:
+   a repeating background left a copy of the band frozen mid-card), then a
+   pause with nothing on the card before the next pass. */
+@keyframes qm-sweep { 0% { background-position: 150% 0; } 40%, 100% { background-position: -100% 0; } }
 @keyframes qm-twinkle { 50% { transform: scale(1.25) rotate(15deg); opacity: .75; } }
 @media (prefers-reduced-motion: reduce) { .qw .qm-chap.is-legend, .qm-chap-crown, .qm-chap-shine { animation: none; } }
 /* The secret mission once WON: the same legendary treatment as its chapter tile —
@@ -919,7 +931,7 @@ body.progress-view #gridSortWrap { display: none; }
     conic-gradient(from var(--qm-spin), #ffd34d, #ff9f1c, #b46cff, #6e8cff, #ffd34d) border-box;
   animation: qm-spin 4s linear infinite, qm-legend-glow 2.4s ease-in-out infinite; }
 .qm-secret-wrap > .qm-card.is-won::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .18) 50%, transparent 65%); background-size: 250% 100%; animation: qm-shine 3.2s ease-in-out infinite; }
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .18) 50%, transparent 65%); background-size: 250% 100%; background-repeat: no-repeat; animation: qm-sweep 5s ease-in-out infinite; }
 .qm-secret-wrap:has(.qm-card.is-won) .qm-secret-tag { background: linear-gradient(90deg, #ffe58a, #ffb347, #e2b6ff); }
 @media (prefers-reduced-motion: reduce) { .qm-secret-wrap > .qm-card.is-won, .qm-secret-wrap > .qm-card.is-won::after { animation: none; } }
 /* Items banner — the next squad level in the right card (same frame as the

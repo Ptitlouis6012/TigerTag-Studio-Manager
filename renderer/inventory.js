@@ -4511,6 +4511,23 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── modal: disconnect account ── */
   /* ── modal: edit account ── */
   let _editingAccount = null;
+  // The "Edit my profile" window's fields (photo result, display name, theme
+  // colour) for _editingAccount — filled by the profile panel and by the
+  // window itself when it opens on its own (header avatar).
+  function _fillIdentityFields() {
+    $("eacAvatarResult").textContent = "";
+    $("eacDisplayNameInput").value = _editingAccount.displayName || "";
+    $("eacNameResult").textContent = "";
+    const isCustom = _editingAccount?.color === "custom";
+    if (isCustom && _editingAccount.customColor) {
+      $("eacCustomColor").value = _editingAccount.customColor;
+      $("eacSwatchCustom").style.background = getAccGradient(_editingAccount);
+    }
+    $("eacSwatches").querySelectorAll(".eac-swatch[data-color]").forEach(sw =>
+      sw.classList.toggle("active", !isCustom && sw.dataset.color === (_editingAccount?.color || "orange"))
+    );
+    $("eacSwatchCustom").classList.toggle("active", isCustom);
+  }
   function openEditAccountModal(acc) {
     _editingAccount = acc || activeAccount(); if (!_editingAccount) return;
     // AI-assistant access is the SIGNED-IN account's choice (the server serves
@@ -4527,9 +4544,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("eacName").textContent    = _editingAccount.displayName || "";
     $("eacName").style.display  = _editingAccount.displayName ? "" : "none";
     $("eacEmail").textContent   = _editingAccount.email || "";
-    $("eacAvatarResult").textContent = "";
-    $("eacDisplayNameInput").value = _editingAccount.displayName || "";
-    $("eacNameResult").textContent = "";
+    _fillIdentityFields();
     // Mark the live theme on the segment. The modal is re-opened, not rebuilt,
     // so this has to be refreshed each time — same as langSelect further down.
     document.querySelectorAll("#eacThemeSeg .eac-seg-btn").forEach(b =>
@@ -4546,15 +4561,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _fillSquadCountry();
     _renderSquadXp();
     if (state.xpPoints == null) _requestXpRecount();   // never counted yet → ask the server once
-    const isCustom = _editingAccount?.color === "custom";
-    if (isCustom && _editingAccount.customColor) {
-      $("eacCustomColor").value = _editingAccount.customColor;
-      $("eacSwatchCustom").style.background = getAccGradient(_editingAccount);
-    }
-    $("eacSwatches").querySelectorAll(".eac-swatch[data-color]").forEach(sw =>
-      sw.classList.toggle("active", !isCustom && sw.dataset.color === (_editingAccount?.color || "orange"))
-    );
-    $("eacSwatchCustom").classList.toggle("active", isCustom);
     _populateVatCountrySelect();
     _syncPriceModeSeg();
     _wireSocialsEditor();
@@ -6042,12 +6048,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   document.addEventListener("keydown", e => { if (e.key === "Escape" && _supportMenu) _closeSupportMenu(); });
 
   // The header chip (own view) renders an editable avatar too — clicking it
-  // (hover shows a pencil overlay) changes the photo. Delegated on the static
+  // (hover shows a pencil overlay) opens "Edit my profile". Delegated on the static
   // banner so it survives renderFriendBanner's innerHTML rebuilds. Never fires
   // in friend view: that chip shows the friend's avatar and has no edit button.
   $("friendViewBanner")?.addEventListener("click", e => {
     if (state.friendView) return;
-    if (e.target.closest(".fvb-avatar-edit")) _changeMyAvatar();
+    if (e.target.closest(".fvb-avatar-edit")) openIdentityModal();
   });
   $("btnAddFirstAccount").addEventListener("click", openAddAccountModal);
   // btnManageProfiles is now rendered dynamically in renderAccountDropdown — listener attached there
@@ -6133,6 +6139,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (state.photoURL) _renderAvatarPhotoOverlay(el, state.photoURL);
   }
   function openIdentityModal() {
+    // Opened on its own (header avatar, profile panel closed): edit the active
+    // account and fill the fields the panel would have filled.
+    if (!$("editAccountModalOverlay")?.classList.contains("open")) {
+      _editingAccount = activeAccount(); if (!_editingAccount) return;
+      _fillIdentityFields();
+    }
     $("avatarMenuRemove").hidden = !state.photoURL;
     _paintIdmAvatar();
     $("identityOverlay")?.classList.add("open");
@@ -6184,8 +6196,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       res.textContent = e?.code ? profileErrorText(e) : t(e.message === "too-large" ? "avatarTooLarge" : "avatarUploadFailed");
     }
   });
-  $("avatarMenuRemove")?.addEventListener("click", async e => {
-    e.stopPropagation();
+  // Remove the photo: a trash button held 1.5 s (hold-to-confirm), not a click.
+  setupHoldToConfirm($("avatarMenuRemove"), 1500, async () => {
     _closeAvatarMenu();
     const res = $("eacAvatarResult");
     res.style.color = "var(--muted)"; res.textContent = t("avatarRemoving");
@@ -37482,7 +37494,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         ? `<span class="fvb-count"><span class="icon icon-user icon-11"></span>${esc(t(isPub ? "followerCount" : "friendCount", { n: myCount }))}</span>`
         : "";
       banner.innerHTML = `
-        <button type="button" class="fvb-avatar-edit" id="fvbAvatarEdit" data-i18n-title="changeAvatar" title="${esc(t("changeAvatar"))}" aria-label="${esc(t("changeAvatar"))}">
+        <button type="button" class="fvb-avatar-edit" id="fvbAvatarEdit" aria-label="${esc(t("eacIdentTitle"))}">
           ${avatarMarkup({ ...acc, tigerSquad: !!_ownSquadTier(), squadTier: _ownSquadTier() }, "fvb-avatar")}
           <span class="fvb-avatar-ovl" aria-hidden="true"><span class="icon icon-edit icon-12"></span></span>
         </button>

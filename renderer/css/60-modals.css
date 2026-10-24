@@ -5251,6 +5251,9 @@ body.ttag-dragging .ttag-drop-hint { display: flex; }
 #identityOverlay .idm-photo-btns { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 #identityOverlay .idm-btn { display: inline-flex; align-items: center; gap: 6px; }
 #identityOverlay .idm-btn--danger { color: var(--danger); } #identityOverlay .idm-btn--danger .icon { background: var(--danger); }
+/* Remove photo: the trash icon alone, square, held 1.5 s (hold fill inside). */
+#identityOverlay .idm-btn--icon { position: relative; overflow: hidden; justify-content: center; width: 34px; aspect-ratio: 1; padding: 0; }
+#identityOverlay .idm-btn--icon .icon { position: relative; z-index: 1; }
 #identityOverlay .eac-avatar-result:empty { display: none; }
 #identityOverlay .idm-field { display: flex; flex-direction: column; gap: 7px; }
 #identityOverlay .eac-field-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }

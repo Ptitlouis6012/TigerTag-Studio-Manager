@@ -209,7 +209,6 @@
   "questAct_e1_scanOpen": "Scan de chip van een spoel om hem te openen",
   "questAct_e2_prints": "Prints voltooid op 100 %",
   "questAct_e2_video": "Neem een cameravideo op",
-  "questAct_e2_printers": "Verbonden printers",
   "questAct_e2_slotAssign": "Wijs een spoel toe aan een printerslot",
   "questAct_e2_demo": "Probeer een demoprinter",
   "questAct_e2_autoCam": "Camera-autostart aanzetten voor een printer",

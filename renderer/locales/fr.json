@@ -209,7 +209,6 @@
   "questAct_e1_scanOpen": "Scanne la puce d’une bobine pour l’ouvrir",
   "questAct_e2_prints": "Impressions terminées à 100 %",
   "questAct_e2_video": "Enregistre une vidéo de la caméra",
-  "questAct_e2_printers": "Imprimantes connectées",
   "questAct_e2_slotAssign": "Attribue une bobine à un emplacement d’imprimante",
   "questAct_e2_demo": "Essaie une imprimante de démo",
   "questAct_e2_autoCam": "Activer le démarrage auto de la caméra d'une imprimante",

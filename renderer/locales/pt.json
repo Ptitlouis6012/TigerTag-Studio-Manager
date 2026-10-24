@@ -209,7 +209,6 @@
   "questAct_e1_scanOpen": "Escaneie o chip de um carretel para abri-lo",
   "questAct_e2_prints": "Impressões concluídas a 100 %",
   "questAct_e2_video": "Grave um vídeo da câmera",
-  "questAct_e2_printers": "Impressoras conectadas",
   "questAct_e2_slotAssign": "Atribua um carretel a um slot da impressora",
   "questAct_e2_demo": "Experimente uma impressora de demonstração",
   "questAct_e2_autoCam": "Ativar o início automático da câmera de uma impressora",
