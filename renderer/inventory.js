@@ -17,7 +17,7 @@ import {
 import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
-import { pageHtml as xpPageHtml, chartPoints as xpChartPoints, tipHtml as xpTipHtml } from './quests/xp-history.js';
+import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
 import { squadHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -4966,7 +4966,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ($("vtgSepQuests")) $("vtgSepQuests").hidden = !!qWrap?.hidden;
     if ($("vtgSepSquad")) $("vtgSepSquad").hidden = !!sWrap?.hidden;
   }
-  // Header (own banner), after the TigerSquad badge: XP and world rank — both
+  // Header (own banner), after the Share button: XP and world rank — both
   // open the TigerSquad rankings. Patched in place; the banner keeps the host.
   function _paintOwnXpChips() {
     const host = document.querySelector("#friendViewBanner .fvb-xp-host");
@@ -12142,7 +12142,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // them (via #card-inv.is-cam-view) and surface the cam-wall "Detach" button
     // in the actions slot instead.
     const _camView = mode === "printer-cam";
-    if (_camView && prevMode !== "printer-cam") questBump("cameraOpen");
+    // Demo printers (simulator) never feed a quest: the wall counts only with a real one.
+    if (_camView && prevMode !== "printer-cam" && (state.printers || []).some(p => p.demo !== true)) questBump("cameraOpen");
     $("card-inv")?.classList.toggle("is-cam-view", _camView);
     const _detachTop = $("camWallDetachTop");
     if (_detachTop) _detachTop.hidden = !(_camView && window.electronAPI?.openCamWindow && !state.friendView);
@@ -24738,7 +24739,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             else renderPrintersView();
           }
           // Live-update an open detail panel if it shows one of the changed docs
-          if ($("printerPanel")?.classList.contains("open")) refreshOpenPrinterDetail();
+          if ($("printerPanel")?.classList.contains("open")) refreshOpenPrinterDetail({ fromSnapshot: true });
         }, err => console.warn(`[printers/${brand}]`, err.code, err.message));
     });
   }
@@ -25297,12 +25298,30 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "anycubic" && (p.ip || p.mode === "cloud") && !_ppForcedOfflineKeys.has(acuKey(p))) acuConnect(p);
     } catch (e) { console.warn("[board-cam] kick failed for", _printerKey(p), e?.message || e); }
   }
+  /* AUTOMATIC START, chosen per printer in its settings (`camAutoStart` on the
+     printer doc, off by default): such a machine, once ONLINE, is put in the
+     playing set exactly as if its play key had been pressed — same set, same
+     kick, same single upstream connection. Run on each board render and each
+     live tick, so a machine that comes online later starts too; offline
+     machines are left alone, so nothing retries in a loop. */
+  function _autoStartCams() {
+    if (!HAS_NATIVE) return;
+    for (const p of state.printers || []) {
+      if (p.camAutoStart !== true) continue;
+      const key = _printerKey(p);
+      if (_camPlaying.has(key) || !_isPrinterOnline(p)) continue;
+      if (!_boardCamHtml(p) && !_camStartable(p)) continue;   // no camera on this machine
+      _camPlaying.add(key);
+      _camKick(p);
+    }
+  }
   /* The feed rarely exists the instant play is pressed — the link is still
      coming up. So play ASKS, and this puts the picture in place as soon as
      there is one: it runs on every tick, and does nothing at all once the feed
      is in the DOM. Cheap enough to be unconditional, and it is what makes the
      card catch up on its own instead of waiting for a full redraw. */
   function _camCatchUp() {
+    _autoStartCams();
     if (!_camPlaying.size) return;
     const root = document.getElementById("invPrinterView");
     if (!root) return;
@@ -25329,7 +25348,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const root = document.getElementById("invPrinterView");
     if (!p || !root) return;
     _camKick(p);
-    questBump("cameraOpen");
+    questBump("cameraOpen", 1, p);
     const widget = root.querySelector(`.cam-card[data-printer-key="${CSS.escape(key)}"]`);
     if (widget) _refreshCamWidget(widget, p);
     const thumb = root.querySelector(`.printer-card[data-printer-key="${CSS.escape(key)}"] .printer-card-thumb`);
@@ -25769,6 +25788,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function renderPrintersView(force = false) {
     const host = $("invPrinterView");
     if (!host) return;
+    _autoStartCams();
     _printerRenderWatchdog && clearTimeout(_printerRenderWatchdog);
     _printerRenderWatchdog = null;
     /* NOT WHILE SOMETHING IS IN THE USER'S HAND.
@@ -28253,7 +28273,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // Each follower keeps the gap it had, so a group moves as one shape.
         ...gg.followers.map(f => boardSave(f.id, bx + f.dx, by + f.dy, z)),
       ]);
-      questBump("printerArrange");
+      if (state.printers.some(p => p.demo !== true)) questBump("printerArrange");   // not with Demo printers only
       release();        // the writes are in — and with them, any rebuild owed
       layoutPrintersPlan();
     } finally {
@@ -29481,7 +29501,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Re-render the detail panel against the live state.printers (so a
   // Firestore snapshot that updates the open printer is reflected without
   // closing the panel). Called on every snapshot when the panel is open.
-  function refreshOpenPrinterDetail() {
+  function refreshOpenPrinterDetail({ fromSnapshot = false } = {}) {
     if (!_activePrinter) return;
     const fresh = state.printers.find(p => p.brand === _activePrinter.brand && p.id === _activePrinter.id);
     if (!fresh) { closePrinterDetail(); return; } // doc was deleted
@@ -29490,6 +29510,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // chip list in place — a full rebuild would kill focus / close the dropdown.
     const structSig = _printerStructSig(fresh);
     const tagsSig   = JSON.stringify(fresh.tags || []);
+    /* A snapshot that leaves the open printer's doc as it was (another machine of
+       the same brand, an echo) has nothing to show here. Rebuilding anyway
+       recreated the camera <video> on every snapshot — the Creality picture
+       flashed black several times a second. Live status changes call without
+       `fromSnapshot` and still rebuild. */
+    if (fromSnapshot && structSig === _lastPrinterStructSig && tagsSig === _lastPrinterTagsSig) {
+      _updatePrinterConnBtn();
+      return;
+    }
     if (structSig === _lastPrinterStructSig && tagsSig !== _lastPrinterTagsSig && $("ppTagChips")) {
       _lastPrinterTagsSig = tagsSig;
       _renderTagChips(_printerTagCtx(fresh));
@@ -30022,7 +30051,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       : renderCamBanner(p);
     const showCam = _snapCamVisible || (p.brand === "creality" ? creConn?.status === "connected" : camBannerHtml !== "");
     // The panel re-renders on every tick: count one camera opening per printer opened.
-    if (showCam && _questCamSeen !== _printerKey(p)) { _questCamSeen = _printerKey(p); questBump("cameraOpen"); }
+    if (showCam && _questCamSeen !== _printerKey(p)) { _questCamSeen = _printerKey(p); questBump("cameraOpen", 1, p); }
 
     // Hero photo — only when the camera is NOT taking over.
     const heroImgHtml = (!showCam && heroImgUrl)
@@ -32073,6 +32102,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       (editPrinter, bodyEl, widgetCtx);
     // A brand may offer to change how an existing printer is reached (Bambu: Cloud ⇄ LAN).
     if (isEdit) brandEntry.connModeSwitch?.render(editPrinter, bodyEl, widgetCtx);
+    // Camera — start on its own on the board (every brand; saved as `camAutoStart`).
+    const _autoCamHtml = `
+      <section class="pba-section">
+        <header class="pba-section-head">${esc(t("printerSecCamera"))}</header>
+        <label class="stg-row stg-row--toggle pba-toggle-row">
+          <span class="stg-row-text">
+            <span class="stg-row-title">${esc(t("printerLblAutoCam"))}
+              <span class="eac-info" tabindex="0" role="button" data-tip="${esc(t("printerHintAutoCam"))}" aria-label="${esc(t("printerHintAutoCam"))}"><span class="icon icon-info icon-13"></span></span>
+            </span>
+          </span>
+          <span class="eac-toggle">
+            <input type="checkbox" name="camAutoStart" role="switch"${editPrinter?.camAutoStart === true ? " checked" : ""} />
+            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+          </span>
+        </label>
+      </section>`;
+    const _errEl = bodyEl.querySelector("#printerAddError");
+    if (_errEl) _errEl.insertAdjacentHTML("beforebegin", _autoCamHtml);
+    else bodyEl.insertAdjacentHTML("beforeend", _autoCamHtml);
+    // The ⓘ sits inside the toggle's <label>: reading it must not flip the switch.
+    bodyEl.querySelector(".pba-toggle-row .eac-info")?.addEventListener("click", e => e.preventDefault());
 
     // ── Open + initial focus ─────────────────────────────────────────────────
     // Non-modal, like the spool sidecard: no dimming overlay so the list and the
@@ -32434,12 +32484,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const patch = { printerName: nm, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
       if (mi && mi.value) patch.printerModelId = mi.value.trim();
       if (_chosenMode === "cloud") patch.mode = "cloud";
+      const _ac = body.querySelector("input[name=camAutoStart]");
+      if (_ac) patch.camAutoStart = _ac.checked;
+      const _acTurnedOn = !!_ac?.checked && _editingPrinter?.camAutoStart !== true;
       const sb = $("printerAddSave"); sb.classList.add("loading"); sb.disabled = true;
       const _wasName = state.printers.find(p => p.brand === brand && p.id === _printerEditContext.deviceId)?.printerName;
       try {
         await fbDb(uid).collection("users").doc(uid).collection("printers").doc(brand)
           .collection("devices").doc(_printerEditContext.deviceId).update(patch);
-        if (nm && nm !== _wasName) questBump("printerRename");
+        if (nm && nm !== _wasName) questBump("printerRename", 1, state.printers.find(p => p.brand === brand && p.id === _printerEditContext.deviceId));
+        if (_acTurnedOn) questBump("camAutoStart", 1, _editingPrinter);   // Tiger Quests e2.autoCam
         const _id = _printerEditContext.deviceId;
         closePrinterAddForm();
         if (_modeChanged) _reconnectAfterModeSwitch(brand, _id, "cloud");
@@ -32466,12 +32520,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }));
     Object.assign(data, schema.fixed || {});
     if (_chosenMode === "lan") data.mode = "lan";
+    const _autoCamEl = body.querySelector("input[name=camAutoStart]");
     // A schema may show one stored field as several boxes (Klipper: ip + port → "ip").
     if (schema.fromForm) {
       try { const out = schema.fromForm(data); for (const k of Object.keys(data)) delete data[k]; Object.assign(data, out); }
       catch (e) { err.textContent = t(e.message); err.hidden = false; return; }
     }
 
+    // After fromForm, which rebuilds `data` from the schema fields only.
+    if (_autoCamEl) data.camAutoStart = _autoCamEl.checked;
     if (!data.printerName) {
       err.textContent = t("printerAddErrName");
       err.hidden = false;
@@ -32505,7 +32562,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ...data,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        if (data.printerName && data.printerName !== _wasName) questBump("printerRename");
+        if (data.printerName && data.printerName !== _wasName) questBump("printerRename", 1, state.printers.find(p => p.brand === brand && p.id === editId));
+        if (data.camAutoStart && _editingPrinter?.camAutoStart !== true) questBump("camAutoStart", 1, _editingPrinter);   // Tiger Quests e2.autoCam
         if (_modeChanged) _reconnectAfterModeSwitch(brand, editId, _chosenMode);
         // Reconnect Snapmaker live channel after a settings edit.
         // The user may have changed the IP (or any other connection
@@ -32560,6 +32618,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         }
         await ref.set(docPayload);
         addedId = ref.id;
+        if (data.camAutoStart) questBump("camAutoStart");   // Tiger Quests e2.autoCam
       }
       closePrinterAddForm();
     } catch (e) {
@@ -37244,8 +37303,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </button>
         <div class="fvb-inner">
           <div class="fvb-name-row"><span class="fvb-name">${esc(own)}</span>${countText}</div>
-          <div class="fvb-badges">${relBadge}${_ownSquadTier() ? `<span class="sb-squad-pill fvb-squad sq-${_ownSquadTier()}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(_ownSquadTier())}</span>` : ""}<span class="fvb-xp-host"></span></div>
-          ${_socialsRowHTML(state.socials, shareBtn)}
+          <div class="fvb-badges">${relBadge}${_ownSquadTier() ? `<span class="sb-squad-pill fvb-squad sq-${_ownSquadTier()}"><span class="icon icon-heart-fill icon-10" aria-hidden="true"></span>TigerSquad · ${squadTierLabel(_ownSquadTier())}</span>` : ""}</div>
+          ${_socialsRowHTML(state.socials, `${shareBtn}<span class="fvb-xp-host"></span>`)}
         </div>`;
       _paintOwnXpChips();
     }
@@ -38730,24 +38789,34 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     };
     host?.addEventListener("change", onFilter);
     host?.addEventListener("input", e => { if (e.target.matches("[data-xph-filter='q']")) onFilter(e); });
-    // The curve's tooltip: the nearest dot to the pointer, its transaction and balance.
+    // The curve's tooltip: the sample nearest the pointer (positions in data-xs /
+    // data-ys) gets the guide line and the focus dot; its balance and change.
+    const _xphHide = svg => {
+      const tip = host.querySelector(".xph-tip"); if (tip) tip.hidden = true;
+      svg?.querySelectorAll(".xph-guide, .xph-focus").forEach(el => el.setAttribute("visibility", "hidden"));
+    };
     host?.addEventListener("pointermove", e => {
       const svg = e.target.closest(".xph-svg"); const tip = host.querySelector(".xph-tip");
-      if (!svg || !tip) { if (tip) tip.hidden = true; return; }
-      const dots = [...svg.querySelectorAll("circle")]; if (!dots.length) return;
-      const box = svg.getBoundingClientRect();
-      let best = null, bd = Infinity;
-      for (const d of dots) { const r = d.getBoundingClientRect(), dx = Math.abs(r.left + r.width / 2 - e.clientX); if (dx < bd) { bd = dx; best = d; } }
-      if (!best || bd > 40) { tip.hidden = true; return; }
-      dots.forEach(d => d.classList.toggle("is-hot", d === best));
-      const pts = xpChartPoints(_xpLog.log, _xph.range), h = pts[Number(best.dataset.i)];
+      if (!svg || !tip) { _xphHide(host.querySelector(".xph-svg")); return; }
+      const xs = (svg.dataset.xs || "").split(",").map(Number), ys = (svg.dataset.ys || "").split(",").map(Number);
+      if (!xs.length) return;
+      const box = svg.getBoundingClientRect(), k = svg.viewBox.baseVal.width / box.width;
+      const px = (e.clientX - box.left) * k;
+      let lo = 0, hi = xs.length - 1;                         // binary search: xs ascend
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] < px) lo = mid; else hi = mid; }
+      const i = Math.abs(xs[lo] - px) <= Math.abs(xs[hi] - px) ? lo : hi;
+      const pts = xpChartSeries(_xpLog.log, _xph.range), h = pts[i];
       if (!h) return;
-      tip.innerHTML = xpTipHtml(_xphCtx(), h); tip.hidden = false;
-      const r = best.getBoundingClientRect(), wrap = svg.parentElement.getBoundingClientRect();
-      const left = Math.min(wrap.width - tip.offsetWidth - 4, Math.max(4, r.left - wrap.left - tip.offsetWidth / 2));
-      tip.style.left = `${left}px`; tip.style.top = `${Math.max(0, r.top - wrap.top - tip.offsetHeight - 12)}px`;
+      const g = svg.querySelector(".xph-guide"), f = svg.querySelector(".xph-focus");
+      g.setAttribute("x1", xs[i]); g.setAttribute("x2", xs[i]); g.setAttribute("visibility", "visible");
+      f.setAttribute("cx", xs[i]); f.setAttribute("cy", ys[i]); f.setAttribute("visibility", "visible");
+      tip.innerHTML = xpSampleTipHtml(_xphCtx(), h); tip.hidden = false;
+      const wrap = svg.parentElement.getBoundingClientRect();
+      const cx = box.left - wrap.left + xs[i] / k, cy = box.top - wrap.top + ys[i] / k;
+      tip.style.left = `${Math.min(wrap.width - tip.offsetWidth - 4, Math.max(4, cx - tip.offsetWidth / 2))}px`;
+      tip.style.top = `${Math.max(0, cy - tip.offsetHeight - 14)}px`;
     });
-    host?.addEventListener("pointerleave", () => { const tip = host.querySelector(".xph-tip"); if (tip) tip.hidden = true; });
+    host?.addEventListener("pointerleave", () => _xphHide(host.querySelector(".xph-svg")));
     // A new width redraws the curve at that width.
     if (host && "ResizeObserver" in window) {
       let w = 0, raf = 0;

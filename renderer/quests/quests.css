@@ -712,8 +712,10 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-break-card .xph-legend li { font-size: 12.5px; gap: 7px; }
 
 /* Full page */
-.xph-hero { --hero-scene: url("../../assets/img/tigersquad/tigersquad-scene-v3.webp");
-  --hero-front: url("../../assets/img/tigersquad/tigersquad-scene-v3-front-v2.webp"); --hero-sink: 6px; --hero-scene-pos: right; --hero-scene-w: 330px; }
+/* XP History: its own scene — the tiger pointing at its rising XP curve, star
+   coins, logbook and hourglass on the desk (one layer, waist cut on the desk line). */
+.xph-hero { --hero-scene: url("../../assets/img/quests/xp-history-scene.webp");
+  --hero-front: none; --hero-sink: 5px; --hero-scene-pos: right; --hero-scene-w: 440px; }
 .xph-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .xph-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--qw-line);
   background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); min-width: 0; }
@@ -740,18 +742,18 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-ylab, .xph-xlab { fill: var(--qw-muted); font: 600 11px system-ui, sans-serif; }
 .xph-ylab { text-anchor: end; dominant-baseline: middle; }
 .xph-xlab { text-anchor: middle; }
-.xph-area { fill: rgba(255, 140, 40, .14); }
-.xph-line { fill: none; stroke: var(--qw-tiger2); stroke-width: 2.2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 4px rgba(255, 140, 40, .45)); }
-.xph-svg circle { stroke: #0b0d14; stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer; }
-.xph-svg circle.is-up { fill: var(--qw-ok); } .xph-svg circle.is-down { fill: #f87171; }
-.xph-svg circle:hover, .xph-svg circle.is-hot { stroke: #fff; stroke-width: 2.5; }
+.xph-area { fill: url(#xphFill); }
+.xph-line { fill: none; stroke: url(#xphStroke); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 6px rgba(255, 140, 40, .55)); }
+.xph-end { fill: #ffb347; stroke: #0b0d14; stroke-width: 2; }
+.xph-end-halo { fill: rgba(255, 140, 40, .25); animation: xph-pulse 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes xph-pulse { 50% { transform: scale(1.5); opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .xph-end-halo { animation: none; } }
+.xph-guide { stroke: rgba(255, 179, 71, .45); stroke-width: 1; stroke-dasharray: 3 4; }
+.xph-focus { fill: #fff; stroke: #ff7a1a; stroke-width: 3; filter: drop-shadow(0 0 6px rgba(255, 140, 40, .8)); pointer-events: none; }
 .xph-tip { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; min-width: 150px; pointer-events: none;
   border-radius: 10px; border: 1px solid var(--qw-line); background: rgba(10, 12, 20, .95); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); font-size: 12.5px; }
 .xph-tip small { color: var(--qw-muted); } .xph-tip b { color: var(--qw-ink); } .xph-tip span { font: 800 13px var(--qw-mono); }
-.xph-key { position: absolute; right: 10px; bottom: 32px; display: flex; gap: 14px; padding: 6px 10px; border-radius: 8px;
-  background: rgba(10, 12, 20, .75); border: 1px solid var(--qw-line); font-size: 12px; color: var(--qw-ink); }
-.xph-key span { display: inline-flex; align-items: center; gap: 6px; }
-.xph-key i { width: 9px; height: 9px; border-radius: 50%; } .xph-key i.is-up { background: var(--qw-ok); } .xph-key i.is-down { background: #f87171; }
 .xph-filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 .xph-filters select, .xph-search { height: 36px; border-radius: 9px; border: 1px solid var(--qw-line); background: #0f1322; color: var(--qw-ink); font: 600 13px inherit; }
 .xph-filters select { padding: 0 10px; cursor: pointer; }
@@ -767,7 +769,7 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-table td.is-up { color: var(--qw-ok); } .xph-table td.is-down { color: #f87171; }
 .xph-date { color: var(--qw-muted) !important; white-space: nowrap; }
 .xph-act { display: inline-flex; align-items: center; gap: 10px; }
-.xph-act .xph-ic { width: 28px; height: 28px; border-radius: 8px; }
+.xph-act .xph-ic { width: 20px; height: 20px; background: none; border: 0; border-radius: 0; }  /* bare icon, no box */
 .xph-chip { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap;
   color: color-mix(in srgb, var(--c) 85%, #fff); background: color-mix(in srgb, var(--c) 16%, transparent); border: 1px solid color-mix(in srgb, var(--c) 40%, transparent); }
 .xph-pager { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }

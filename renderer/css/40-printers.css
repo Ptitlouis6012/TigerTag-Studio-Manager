@@ -3532,3 +3532,7 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pba-toggle-inner { overflow: hidden; min-height: 0; }
 .pba-toggle-inner > .pba-field { padding-top: 8px; }
 @media (prefers-reduced-motion: reduce) { .pba-toggle-body { transition: none; } }
+
+/* Printer settings → Camera: the Settings toggle row bleeds 8 px each side for
+   its hover fill; padding brings its text back onto the form's label edge. */
+.pba-toggle-row { padding: 4px 8px; }

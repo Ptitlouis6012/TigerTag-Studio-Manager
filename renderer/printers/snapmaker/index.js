@@ -778,7 +778,7 @@ export function openSnapFilamentEdit(printer, extruderIndex) {
   const applyEl = $("snapFilEditSave");
   if (subEl)   subEl.disabled   = readonly;
   if (applyEl) applyEl.disabled = readonly;
-  _snapFilEdit = { brand: printer.brand, deviceId: printer.id, extruderIndex, key: snapKey(printer), readonly };
+  _snapFilEdit = { brand: printer.brand, deviceId: printer.id, demo: printer.demo === true, extruderIndex, key: snapKey(printer), readonly };
   _sfeSelectedBrand    = fil.vendor  || "";
   _sfeSelectedMaterial = fil.type    || "";
 
@@ -1081,6 +1081,7 @@ $("snapFilEditSave")?.addEventListener("click", async () => {
   if (!_snapFilEdit) return;
   const conn = _snapConns.get(_snapFilEdit.key);
   if (!conn) return;
+  const questPrinter = { demo: _snapFilEdit.demo };
   const errEl = $("sfeError");
   errEl.hidden = true;
 
@@ -1117,7 +1118,7 @@ $("snapFilEditSave")?.addEventListener("click", async () => {
     if (!ok) throw new Error("websocket not open");
     // Close immediately; the printer's notify_status_update will arrive
     // moments later and refresh the colour square / vendor labels.
-    questBump("slotAssign");
+    questBump("slotAssign", 1, questPrinter);
     closeSnapFilamentEdit();
   } catch (e) {
     console.warn("[snap] filament edit send failed:", e?.message);

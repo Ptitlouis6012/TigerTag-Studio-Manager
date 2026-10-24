@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.42.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.43.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -239,6 +239,8 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - Shared MJPEG multiplexer (`cam_manager.js`) — one upstream connection serves every consumer (sidecard + cam wall) simultaneously, respecting single-client firmware limits (v1.7.2; FlashForge-specific precursor v1.7.1).
 - Creality single shared `RTCPeerConnection` across every surface that shows its camera (v1.8.2).
 - **Snapmaker U1 camera on the stock firmware** — no Paxx needed: the printer's own monitor is woken over Moonraker and shown as 1080p stills at ~1 fps on every surface (side card, camera wall, cards); Paxx keeps its WebRTC live video (v2.33.0).
+- **Camera photos and videos** — hovering any printer camera (side card or camera wall) offers photo, record (10 min cap) and the printer's capture folder; photos at the stream's native resolution, videos taken from the source without re-encoding where the transport allows (Bambu RTSPS, MJPEG, Snapmaker stills, WebRTC via MediaRecorder); filed per printer under `Pictures/Tiger Studio/Captures/` with a `printer.json` keeping its names and IPs (v2.43.0).
+- **Start the camera automatically** — per-printer setting (`camAutoStart`): an online printer's board camera starts without a click, including one that comes online later (v2.43.0).
 
 ## Sensors & devices
 
@@ -272,6 +274,9 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **XP and level-up notifications** — the day's gains in one row, each level climbed in its own (v2.38.0).
 - **Member card** — members see their level, the head count and a link to the wall in the Support menu and the requests card, swapped live on join / leave (v2.37.0).
 - **Support the project** — Buy Me a Coffee, Ko-fi or PayPal from every coffee button; donations linked to the account by a fixed supporter code, the payer email or a later claim, with a thank-you notification (v2.37.0).
+- **Tiger Quests** — daily quests (open the app + four missions drawn by the server each day, a full-set chest with a jackpot animation, a 5-day streak bonus, next-draw countdown, stats) and tutorial missions (20-chapter map; Discovery and Explorer built, five levels of five missions each with an illustration and a level bonus), counted from the app's batched action counters; Demo printers earn nothing (v2.43.0).
+- **TigerSquad view** — a view of the main area: Rankings with three leagues side by side (countries with flag avatars and medal rings, your country, makers worldwide), daily rank arrows from a server baseline, the live Community pulse (total XP, spools, printers with rolling counters and sparklines), and Items, every XP item on a rarity ladder (v2.43.0).
+- **XP history page** — total / gained / lost / activities tiles, the XP balance curve over 7D / 30D / 90D / All, the 30-day breakdown ring by category and the full activity log with category, gain / loss filters and search (v2.43.0).
 
 ## Feedback & requests
 

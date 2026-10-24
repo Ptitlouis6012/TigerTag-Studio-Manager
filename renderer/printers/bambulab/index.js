@@ -1335,7 +1335,7 @@ $('bblFilEditSave')?.addEventListener('click', () => {
   // reads `.color`); repairing that mechanism was the wrong call — the mechanism
   // should not exist.
 
-  questBump("slotAssign");
+  questBump("slotAssign", 1, printer);
   closeBambuFilamentEdit();
 });
 

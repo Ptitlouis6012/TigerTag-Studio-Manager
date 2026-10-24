@@ -211,11 +211,12 @@
   "questAct_e1_chips": "Programma chip TigerTag",
   "questAct_e1_plus": "Programma un chip TigerTag+",
   "questAct_e1_scanOpen": "Scansiona il chip di una bobina per aprirla",
-  "questAct_e2_demo": "Prova una stampante demo",
   "questAct_e2_prints": "Stampe finite al 100 %",
   "questAct_e2_video": "Registra un video dalla fotocamera",
   "questAct_e2_printers": "Stampanti collegate",
   "questAct_e2_slotAssign": "Assegna una bobina a uno slot della stampante",
+  "questAct_e2_demo": "Prova una stampante demo",
+  "questAct_e2_autoCam": "Attiva l'avvio automatico della videocamera di una stampante",
   "questAct_e3_friends": "Amici",
   "questAct_e3_visits": "Visite alle scorte degli amici",
   "questAct_e3_publicList": "Condividi una lista pubblica",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "Andamento XP",
   "xpEvolutionSub": "Il tuo saldo XP nel tempo",
   "xpRangeAll": "Tutto",
-  "xpGain": "XP guadagnati",
-  "xpLoss": "XP persi",
   "xpBalanceAt": "Saldo: {{xp}} XP",
   "xpActivityHistory": "Cronologia attività",
   "xpActivitySub": "Tutte le tue transazioni XP",
@@ -2153,5 +2152,8 @@
   "xpPrev": "Precedente",
   "xpNext": "Successivo",
   "xpShowing": "{{from}}–{{to}} di {{n}} transazioni",
-  "friendAlready": "Siete già amici."
+  "friendAlready": "Siete già amici.",
+  "printerSecCamera": "Videocamera",
+  "printerLblAutoCam": "Avvia la videocamera automaticamente",
+  "printerHintAutoCam": "Il video in diretta parte da solo nella bacheca stampanti quando questa stampante è online. Disattivato: un clic su play."
 }

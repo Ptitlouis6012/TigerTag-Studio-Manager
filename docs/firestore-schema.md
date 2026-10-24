@@ -198,6 +198,7 @@ users/
             isActive         boolean
             sortIndex, camSortIndex  number — user ordering (grid + cam wall)
             camSize          string?   — "1x" | "2x" cam-wall tile size
+            camAutoStart     boolean?  — the board starts this printer's camera on its own once it is online (default off)
             units            map?      — the machine's filament storage, keyed by unit
               {unitId}/        id: one entry per physical unit (an AMS / CFS / ACE box, a
                                holder pair, the external arm). A MAP, so Firestore can

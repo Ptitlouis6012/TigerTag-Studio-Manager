@@ -1214,6 +1214,7 @@ $('elgColorGrid')?.addEventListener('change', e => {
 $('elgFilEditSave')?.addEventListener('click', async () => {
   if (!_elgFilEdit) return;
   const conn    = _elegooConns.get(_elgFilEdit.key);
+  const questPrinter = _elgFilEdit.printer;
   const errEl   = $('elgError');
   errEl.hidden  = true;
 
@@ -1273,7 +1274,7 @@ $('elgFilEditSave')?.addEventListener('click', async () => {
       _elgPublish(c, isMono ? 1061 : 2005, {});
     }, 1000);
 
-    questBump("slotAssign");
+    questBump("slotAssign", 1, questPrinter);
     closeElegooFilamentEdit();
   } catch (e) {
     console.warn('[elg] filament edit failed:', e?.message);

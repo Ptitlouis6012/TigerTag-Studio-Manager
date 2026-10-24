@@ -211,11 +211,12 @@
   "questAct_e1_chips": "Запиши чипы TigerTag",
   "questAct_e1_plus": "Запиши чип TigerTag+",
   "questAct_e1_scanOpen": "Отсканируй чип катушки, чтобы открыть её",
-  "questAct_e2_demo": "Попробуй демо-принтер",
   "questAct_e2_prints": "Печати, завершённые на 100 %",
   "questAct_e2_video": "Запиши видео с камеры",
   "questAct_e2_printers": "Подключённые принтеры",
   "questAct_e2_slotAssign": "Назначь катушку слоту принтера",
+  "questAct_e2_demo": "Попробуй демо-принтер",
+  "questAct_e2_autoCam": "Включить автозапуск камеры принтера",
   "questAct_e3_friends": "Друзья",
   "questAct_e3_visits": "Визиты к запасам друзей",
   "questAct_e3_publicList": "Поделись публичным списком",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "Динамика XP",
   "xpEvolutionSub": "Баланс XP во времени",
   "xpRangeAll": "Всё",
-  "xpGain": "Начисление",
-  "xpLoss": "Списание",
   "xpBalanceAt": "Баланс: {{xp}} XP",
   "xpActivityHistory": "История действий",
   "xpActivitySub": "Все операции с XP",
@@ -2153,5 +2152,8 @@
   "xpPrev": "Назад",
   "xpNext": "Далее",
   "xpShowing": "{{from}}–{{to}} из {{n}} операций",
-  "friendAlready": "Вы уже друзья."
+  "friendAlready": "Вы уже друзья.",
+  "printerSecCamera": "Камера",
+  "printerLblAutoCam": "Запускать камеру автоматически",
+  "printerHintAutoCam": "Видео запускается само на панели принтеров, когда этот принтер в сети. Выключено: по нажатию на воспроизведение."
 }

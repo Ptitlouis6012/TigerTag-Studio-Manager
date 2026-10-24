@@ -211,11 +211,12 @@
   "questAct_e1_chips": "Program TigerTag chips",
   "questAct_e1_plus": "Program a TigerTag+ chip",
   "questAct_e1_scanOpen": "Scan a spool’s chip to open it",
-  "questAct_e2_demo": "Try a demo printer",
   "questAct_e2_prints": "Prints finished at 100 %",
   "questAct_e2_video": "Record a camera video",
   "questAct_e2_printers": "Printers connected",
   "questAct_e2_slotAssign": "Assign a spool to a printer slot",
+  "questAct_e2_demo": "Try a demo printer",
+  "questAct_e2_autoCam": "Turn on camera auto-play for a printer",
   "questAct_e3_friends": "Friends",
   "questAct_e3_visits": "Visits to friends’ stocks",
   "questAct_e3_publicList": "Share a public list",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "XP evolution",
   "xpEvolutionSub": "Your XP balance over time",
   "xpRangeAll": "All",
-  "xpGain": "XP gain",
-  "xpLoss": "XP loss",
   "xpBalanceAt": "Balance: {{xp}} XP",
   "xpActivityHistory": "Activity history",
   "xpActivitySub": "All your XP transactions",
@@ -2153,5 +2152,8 @@
   "xpPrev": "Previous",
   "xpNext": "Next",
   "xpShowing": "Showing {{from}}–{{to}} of {{n}} transactions",
-  "friendAlready": "You're already friends."
+  "friendAlready": "You're already friends.",
+  "printerSecCamera": "Camera",
+  "printerLblAutoCam": "Start the camera automatically",
+  "printerHintAutoCam": "The live feed starts on its own on the printers board when this printer is online. Off: one click on play."
 }

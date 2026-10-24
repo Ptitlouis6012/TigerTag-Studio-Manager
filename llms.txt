@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.42.1** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.43.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -374,6 +374,16 @@ link) are kept in `users/{uid}.xpUnlocked`. The split is `users/{uid}.xpBreakdow
 logged in `users/{uid}/xpHistory` (server-only), and the server writes `xp_gain` (one per day) and
 `squad_level` notifications. Public ranking data = `userProfiles/{uid}.tigerSquad` { since, tier,
 xp, certified, country } — the Countries League sums `xp` per `country` (`users/{uid}.squadCountry`).
+
+**Tiger Quests** (v2.43.0) — spec `docs/QUESTS.md`. The app reports what the user does as batched
+counters in `users/{uid}/telemetry/studio.quest` (`questBump(key, n, printer)` in
+`renderer/quests/index.js`; a Demo printer never counts) and checks in with the backend's `dailyQuest`.
+The server (`functions/quests.js`) owns everything that pays: today's draw and full set in
+`quests/daily`, the tutorial-missions journey (Discovery 1–5, Explorer 1–5, five actions per level)
+in `quests/journey`, folded into the XP as the `daily` / `updates` / `journey` breakdown parts.
+Views of the main area: Tiger Quests (Today, Missions), TigerSquad (Rankings, Items) and the XP
+history page (`renderer/quests/xp-history.js`, from `users/{uid}/xpHistory`). Daily rank arrows
+compare the live leagues with `squadRanks/current` (written by `communityStats`).
 
 ## Optional docs
 

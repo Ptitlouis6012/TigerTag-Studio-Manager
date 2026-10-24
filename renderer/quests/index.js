@@ -43,8 +43,10 @@ export function initQuests(ctx) {
 }
 
 // ── 1. Counters ──────────────────────────────────────────────────────────────
-export function questBump(key, n = 1) {
-  if (!_uid || !key) return;
+// `printer`: the machine the action was done on — a Demo printer (simulator)
+// never feeds a quest, so its actions are dropped here.
+export function questBump(key, n = 1, printer = null) {
+  if (!_uid || !key || printer?.demo === true) return;
   _bumps.set(key, (_bumps.get(key) || 0) + n);
   scheduleFlush();
 }

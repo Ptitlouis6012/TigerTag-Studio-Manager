@@ -133,7 +133,10 @@ export function addCreCamConsumer(videoEl) {
   const s = _sess(ip);
   s.consumers.add(videoEl);
   if (s.mjpeg) { _mjpegOn(videoEl, s.mjpeg); return; }
-  if (s.stream) {
+  // Re-assigning the SAME stream restarts the element (readyState → 0, a black
+  // frame): re-attach runs on every board tick and panel refresh, so with two
+  // surfaces open the picture flashed black several times a second.
+  if (s.stream && videoEl.srcObject !== s.stream) {
     videoEl.srcObject = s.stream;
     videoEl.play().catch(() => {});
   }

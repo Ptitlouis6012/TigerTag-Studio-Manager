@@ -1,4 +1,183 @@
 {
+  "2.43.0": {
+    "date": "2026-10-24",
+    "items": [
+      {
+        "icon": "list-check",
+        "title": {
+          "en": "Daily quests",
+          "fr": "Quêtes du jour",
+          "de": "Tägliche Quests",
+          "es": "Misiones diarias",
+          "it": "Missioni giornaliere",
+          "zh": "每日任务",
+          "pt": "Missões diárias",
+          "pt-pt": "Missões diárias",
+          "pl": "Codzienne zadania",
+          "ru": "Ежедневные задания",
+          "nl": "Dagelijkse quests"
+        },
+        "body": {
+          "en": "Open the app, do four small things, grab some XP. Finish the set and a chest pops open. Five full days in a row? Bonus. Yes, we know.",
+          "fr": "Ouvre l’app, fais quatre petits trucs, ramasse de l’XP. Termine la série et un coffre s’ouvre. Cinq jours complets d’affilée ? Bonus. Oui, on sait.",
+          "de": "App öffnen, vier kleine Sachen erledigen, XP einsammeln. Alles geschafft? Eine Truhe geht auf. Fünf volle Tage am Stück? Bonus. Ja, wissen wir.",
+          "es": "Abre la app, haz cuatro cositas y llévate XP. Completa la serie y se abre un cofre. ¿Cinco días completos seguidos? Bonus. Sí, lo sabemos.",
+          "it": "Apri l’app, fai quattro cosette, prendi XP. Completa la serie e si apre un forziere. Cinque giorni pieni di fila? Bonus. Sì, lo sappiamo.",
+          "zh": "打开应用，做四件小事，拿点 XP。全部完成会开出一个宝箱。连续五天全勤？有奖励。嗯，我们懂。",
+          "pt": "Abra o app, faça quatro coisinhas e ganhe XP. Complete a série e um baú se abre. Cinco dias completos seguidos? Bônus. Sim, a gente sabe.",
+          "pt-pt": "Abre a app, faz quatro coisinhas e ganha XP. Completa a série e abre-se um baú. Cinco dias completos seguidos? Bónus. Sim, nós sabemos.",
+          "pl": "Otwórz aplikację, zrób cztery drobiazgi, zgarnij XP. Komplet? Otwiera się skrzynia. Pięć pełnych dni z rzędu? Bonus. Tak, wiemy.",
+          "ru": "Открой приложение, сделай четыре мелочи, забери XP. Закрыл всё — открывается сундук. Пять полных дней подряд? Бонус. Да, мы в курсе.",
+          "nl": "Open de app, doe vier kleine dingen, pak wat XP. Alles af? Er gaat een kist open. Vijf volle dagen op rij? Bonus. Ja, we weten het."
+        }
+      },
+      {
+        "icon": "compass",
+        "title": {
+          "en": "Tutorial missions",
+          "fr": "Missions tutoriel",
+          "de": "Tutorial-Missionen",
+          "es": "Misiones tutorial",
+          "it": "Missioni tutorial",
+          "zh": "教程任务",
+          "pt": "Missões tutorial",
+          "pt-pt": "Missões tutorial",
+          "pl": "Misje samouczka",
+          "ru": "Обучающие миссии",
+          "nl": "Tutorialmissies"
+        },
+        "body": {
+          "en": "Levels of five missions that show you around the app — and pay you for it. Each level comes with its own illustration and a bonus.",
+          "fr": "Des niveaux de cinq missions qui te font visiter l’app — et qui te paient pour ça. Chaque niveau a son illustration et son bonus.",
+          "de": "Level mit je fünf Missionen, die dir die App zeigen — und dich dafür bezahlen. Jedes Level hat sein Bild und seinen Bonus.",
+          "es": "Niveles de cinco misiones que te enseñan la app — y te pagan por ello. Cada nivel trae su ilustración y su bonus.",
+          "it": "Livelli da cinque missioni che ti fanno girare l’app — e ti pagano pure. Ogni livello ha la sua illustrazione e il suo bonus.",
+          "zh": "每级五个任务，带你逛遍整个应用——还给你发奖励。每一级都有自己的插画和奖励。",
+          "pt": "Níveis de cinco missões que te mostram o app — e te pagam por isso. Cada nível tem sua ilustração e seu bônus.",
+          "pt-pt": "Níveis de cinco missões que te mostram a app — e te pagam por isso. Cada nível tem a sua ilustração e o seu bónus.",
+          "pl": "Poziomy po pięć misji, które oprowadzą cię po aplikacji — i jeszcze za to zapłacą. Każdy poziom ma ilustrację i bonus.",
+          "ru": "Уровни по пять миссий, которые проведут тебя по приложению — и ещё заплатят за это. У каждого уровня своя картинка и бонус.",
+          "nl": "Levels van vijf missies die je door de app loodsen — en je er nog voor betalen ook. Elk level heeft z’n eigen plaatje en bonus."
+        }
+      },
+      {
+        "icon": "star-fill",
+        "title": {
+          "en": "TigerSquad rankings",
+          "fr": "Classements TigerSquad",
+          "de": "TigerSquad-Ranglisten",
+          "es": "Clasificaciones TigerSquad",
+          "it": "Classifiche TigerSquad",
+          "zh": "TigerSquad 排行榜",
+          "pt": "Rankings TigerSquad",
+          "pt-pt": "Rankings TigerSquad",
+          "pl": "Rankingi TigerSquad",
+          "ru": "Рейтинги TigerSquad",
+          "nl": "TigerSquad-ranglijsten"
+        },
+        "body": {
+          "en": "Countries, your country, the whole world: three leagues side by side, flags included. Little arrows tell you who climbed since this morning. Not that you’re checking.",
+          "fr": "Les pays, ton pays, le monde entier : trois ligues côte à côte, drapeaux compris. De petites flèches montrent qui a grimpé depuis ce matin. Non pas que tu regardes.",
+          "de": "Länder, dein Land, die ganze Welt: drei Ligen nebeneinander, mit Flaggen. Kleine Pfeile zeigen, wer seit heute Morgen aufgestiegen ist. Nicht dass du nachschaust.",
+          "es": "Países, tu país, el mundo entero: tres ligas lado a lado, banderas incluidas. Unas flechitas muestran quién ha subido desde esta mañana. No es que mires.",
+          "it": "Paesi, il tuo paese, il mondo intero: tre leghe affiancate, bandiere comprese. Delle freccette mostrano chi è salito da stamattina. Non che tu controlli.",
+          "zh": "国家、你的国家、全世界：三个联赛并排，还带国旗。小箭头告诉你今天早上以来谁往上爬了。当然，你才没在看。",
+          "pt": "Países, o seu país, o mundo todo: três ligas lado a lado, com bandeiras. Setinhas mostram quem subiu desde hoje cedo. Não que você esteja olhando.",
+          "pt-pt": "Países, o teu país, o mundo inteiro: três ligas lado a lado, com bandeiras. Pequenas setas mostram quem subiu desde esta manhã. Não que estejas a ver.",
+          "pl": "Kraje, twój kraj, cały świat: trzy ligi obok siebie, z flagami. Małe strzałki pokazują, kto awansował od rana. Nie żebyś sprawdzał.",
+          "ru": "Страны, твоя страна, весь мир: три лиги рядом, с флагами. Маленькие стрелки показывают, кто поднялся с утра. Не то чтобы ты проверял.",
+          "nl": "Landen, jouw land, de hele wereld: drie competities naast elkaar, met vlaggen. Pijltjes tonen wie sinds vanochtend is gestegen. Niet dat je kijkt."
+        }
+      },
+      {
+        "icon": "bars",
+        "title": {
+          "en": "Your XP history",
+          "fr": "Ton historique d’XP",
+          "de": "Dein XP-Verlauf",
+          "es": "Tu historial de XP",
+          "it": "La tua cronologia XP",
+          "zh": "你的 XP 历史",
+          "pt": "Seu histórico de XP",
+          "pt-pt": "O teu histórico de XP",
+          "pl": "Twoja historia XP",
+          "ru": "Твоя история XP",
+          "nl": "Je XP-geschiedenis"
+        },
+        "body": {
+          "en": "A whole page about you: a smooth curve of your XP, where it came from, and every single point you earned. And the odd one you lost.",
+          "fr": "Une page entière sur toi : une jolie courbe de ton XP, d’où elle vient, et chaque point gagné. Et l’occasionnel point perdu.",
+          "de": "Eine ganze Seite über dich: eine schöne XP-Kurve, woher sie kommt und jeder einzelne Punkt. Und der eine oder andere verlorene.",
+          "es": "Una página entera sobre ti: una curva bonita de tu XP, de dónde sale y cada punto ganado. Y alguno que otro perdido.",
+          "it": "Una pagina tutta per te: una bella curva della tua XP, da dove arriva e ogni singolo punto. E qualcuno perso per strada.",
+          "zh": "一整页都是你：一条漂亮的 XP 曲线、它从哪来，以及你赚到的每一分。还有偶尔丢掉的那一点。",
+          "pt": "Uma página inteira sobre você: uma curva bonita do seu XP, de onde ele vem e cada ponto ganho. E um ou outro perdido.",
+          "pt-pt": "Uma página inteira sobre ti: uma curva bonita do teu XP, de onde vem e cada ponto ganho. E um ou outro perdido.",
+          "pl": "Cała strona o tobie: ładna krzywa twojego XP, skąd się wzięło i każdy zdobyty punkt. I ten czy inny stracony.",
+          "ru": "Целая страница о тебе: красивая кривая XP, откуда она взялась и каждый заработанный балл. И пара потерянных.",
+          "nl": "Een hele pagina over jou: een mooie XP-curve, waar die vandaan komt en elk verdiend puntje. En af en toe een verloren."
+        }
+      },
+      {
+        "icon": "camera",
+        "title": {
+          "en": "Photos and videos from your printers",
+          "fr": "Photos et vidéos de tes imprimantes",
+          "de": "Fotos und Videos von deinen Druckern",
+          "es": "Fotos y vídeos de tus impresoras",
+          "it": "Foto e video dalle tue stampanti",
+          "zh": "打印机拍照和录像",
+          "pt": "Fotos e vídeos das suas impressoras",
+          "pt-pt": "Fotos e vídeos das tuas impressoras",
+          "pl": "Zdjęcia i filmy z drukarek",
+          "ru": "Фото и видео с твоих принтеров",
+          "nl": "Foto’s en video’s van je printers"
+        },
+        "body": {
+          "en": "Hover a printer camera: snap a photo, record a video, open the folder. Full quality, filed per printer. That timelapse won’t film itself. Well, now it kind of does.",
+          "fr": "Survole une caméra d’imprimante : une photo, une vidéo, le dossier. Pleine qualité, rangé par imprimante. Ce timelapse ne va pas se filmer tout seul. Enfin, un peu maintenant.",
+          "de": "Über eine Druckerkamera fahren: Foto, Video, Ordner. Volle Qualität, pro Drucker abgelegt. Der Zeitraffer filmt sich nicht von selbst. Na ja, jetzt schon irgendwie.",
+          "es": "Pasa el ratón por una cámara: foto, vídeo, carpeta. Calidad completa, ordenado por impresora. Ese timelapse no se va a grabar solo. Bueno, ahora un poco sí.",
+          "it": "Passa sopra una videocamera: foto, video, cartella. Qualità piena, archiviato per stampante. Quel timelapse non si filma da solo. Beh, ora un po’ sì.",
+          "zh": "鼠标移到打印机摄像头上：拍照、录像、打开文件夹。原画质，按打印机归档。那个延时摄影不会自己拍。嗯，现在差不多会了。",
+          "pt": "Passe o mouse numa câmera: foto, vídeo, pasta. Qualidade total, separado por impressora. Esse timelapse não vai se filmar sozinho. Bom, agora meio que vai.",
+          "pt-pt": "Passa o rato por uma câmara: foto, vídeo, pasta. Qualidade total, arrumado por impressora. Esse timelapse não se filma sozinho. Bem, agora quase.",
+          "pl": "Najedź na kamerę drukarki: zdjęcie, film, folder. Pełna jakość, posegregowane według drukarki. Ten timelapse sam się nie nagra. No, teraz trochę tak.",
+          "ru": "Наведи на камеру принтера: фото, видео, папка. Полное качество, по папке на принтер. Таймлапс сам себя не снимет. Ну, теперь почти.",
+          "nl": "Ga over een printercamera: foto, video, map. Volle kwaliteit, per printer opgeborgen. Die timelapse filmt zichzelf niet. Nou ja, nu een beetje wel."
+        }
+      },
+      {
+        "icon": "play",
+        "title": {
+          "en": "Cameras that start on their own",
+          "fr": "Des caméras qui démarrent toutes seules",
+          "de": "Kameras, die von selbst starten",
+          "es": "Cámaras que arrancan solas",
+          "it": "Videocamere che partono da sole",
+          "zh": "自动开启的摄像头",
+          "pt": "Câmeras que ligam sozinhas",
+          "pt-pt": "Câmaras que arrancam sozinhas",
+          "pl": "Kamery, które startują same",
+          "ru": "Камеры, которые включаются сами",
+          "nl": "Camera’s die vanzelf starten"
+        },
+        "body": {
+          "en": "Tired of pressing play? Turn on “Start the camera automatically” in a printer’s settings and its feed shows up on the board as soon as it’s online.",
+          "fr": "Marre d’appuyer sur lecture ? Active « Démarrer la caméra automatiquement » dans les réglages d’une imprimante et son flux s’affiche sur le tableau dès qu’elle est en ligne.",
+          "de": "Keine Lust mehr auf Play? Schalte „Kamera automatisch starten“ in den Druckereinstellungen ein, und das Bild erscheint auf der Übersicht, sobald er online ist.",
+          "es": "¿Harto de darle a reproducir? Activa «Iniciar la cámara automáticamente» en los ajustes de una impresora y su imagen aparece en el panel en cuanto se conecta.",
+          "it": "Stufo di premere play? Attiva «Avvia la videocamera automaticamente» nelle impostazioni di una stampante e il video compare in bacheca appena è online.",
+          "zh": "懒得每次点播放？在打印机设置里打开“自动开启摄像头”，它一上线画面就出现在面板上。",
+          "pt": "Cansou de apertar play? Ative “Iniciar a câmera automaticamente” nas configurações de uma impressora e a imagem aparece no painel assim que ela fica online.",
+          "pt-pt": "Farto de carregar no play? Ativa “Iniciar a câmara automaticamente” nas definições de uma impressora e a imagem aparece no painel assim que fica online.",
+          "pl": "Masz dość klikania play? Włącz „Uruchamiaj kamerę automatycznie” w ustawieniach drukarki, a obraz pojawi się na tablicy, gdy tylko będzie online.",
+          "ru": "Надоело жать «плей»? Включи «Запускать камеру автоматически» в настройках принтера — и картинка появится на панели, как только он будет в сети.",
+          "nl": "Klaar met op play drukken? Zet “Camera automatisch starten” aan in de printerinstellingen en het beeld verschijnt op het bord zodra hij online is."
+        }
+      }
+    ]
+  },
   "2.42.1": {
     "date": "2026-10-19",
     "items": [

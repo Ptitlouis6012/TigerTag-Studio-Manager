@@ -169,7 +169,7 @@ The **printer board** lays your fleet out the way your workshop actually looks: 
 
 The **camera view** works the same way: drag each camera where you want it, pull its corner to give it exactly the size it deserves, and use **Arrange** to snap them against each other with the same grid and guides as the other two plans. A camera keeps its place and its size while its printer sleeps, and one sent fullscreen fills the whole screen.
 
-Each machine's card can also show **what it is printing** — preview, percentage, time left, finish time and layers — and **its camera**: hover the printer's photo, press play, and the photo gives way to the live feed. **Pause and stop** sit on the card while it prints, so you never have to go looking for the machine. Nothing streams until you ask for it, and the board, the camera wall and the printer's own page share a single connection to each machine.
+Each machine's card can also show **what it is printing** — preview, percentage, time left, finish time and layers — and **its camera**: hover the printer's photo, press play, and the photo gives way to the live feed. **Pause and stop** sit on the card while it prints, so you never have to go looking for the machine. Nothing streams until you ask for it — or, for the printers you choose, **the camera starts on its own** as soon as the printer is online *(new in 2.43.0)* — and the board, the camera wall and the printer's own page share a single connection to each machine. Hover any camera to **take a photo or record a video**: full quality, filed per printer *(new in 2.43.0)*.
 
 ### 📦 Storage / Racks
 
@@ -194,7 +194,9 @@ Organize your filament collection into physical racks — drag spools onto slots
 - Four levels shown as a badge on your avatar: Bronze, Silver (20 TigerTag chips), Gold (a coffee), Platinum (a coffee + 50 certified TigerTag+)
 - XP for every TigerTag chip you own — certified TigerTag+ count the most — to rank the makers
 - XP for exploring the ecosystem too — friends, printers, a TigerScale, the phone app and more
-- Rankings: the Countries League, the Makers, your achievements and your XP history, plus your world rank
+- Rankings: three leagues side by side — countries, your country and makers worldwide — with daily up / down arrows and the live community pulse
+- Tiger Quests: daily quests with a bonus chest and streaks, and tutorial missions that show you around the app for XP
+- Your XP history: a balance curve, the breakdown by category and every transaction
 
 ### ⚖ Sensors & Devices
 

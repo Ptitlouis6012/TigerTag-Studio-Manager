@@ -1242,13 +1242,13 @@
   /* ⓘ next to a label — same behaviour and same bubble as the rack view's
      `.rp-info`: the explanation appears when asked instead of living under the
      control as a permanent paragraph. */
-  #editAccountModalOverlay .eac-info {
+  .eac-info {
     display: inline-flex; align-items: center; cursor: help;
     flex-shrink: 0; border: none; background: none; padding: 0;
   }
-  #editAccountModalOverlay .eac-info .icon { background: var(--faint); transition: background .15s; }
-  #editAccountModalOverlay .eac-info:hover .icon,
-  #editAccountModalOverlay .eac-info:focus-visible .icon { background: var(--primary); }
+  .eac-info .icon { background: var(--faint); transition: background .15s; }
+  .eac-info:hover .icon,
+  .eac-info:focus-visible .icon { background: var(--primary); }
 
   /* AI assistants (MCP) — once the toggle is on: one tile per app, its real
      logo in its brand colour, one click to add Studio to it. Status + the two

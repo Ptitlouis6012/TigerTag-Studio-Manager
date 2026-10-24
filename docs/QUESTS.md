@@ -80,7 +80,7 @@ real-hardware testing).
 | Discovery 4 | 350 | 125 | Shopping & lists | create a wishlist · add a buy link · set a minimum stock · export a .ttag file · filter the catalogue by PETG |
 | Discovery 5 | 500 | 150 | Community | share your friend link · add your first friend · join the TigerSquad · visit a friend's stock · read What's New |
 | Explorer 1 | 700 | 50 | Organised stock | spools in racks (25) · update spool weights (25) · program TigerTag chips (5) · program a TigerTag+ chip · scan a spool's chip to open it |
-| Explorer 2 | 950 | 75 | Printing | try a demo printer · prints finished at 100 % (5) · record a camera video · printers connected (2) · assign a spool to a printer slot |
+| Explorer 2 | 950 | 75 | Printing | turn on camera auto-play for a (real) printer · prints finished at 100 % (5) · record a camera video · printers connected (2) · assign a spool to a printer slot |
 | Explorer 3 | 1250 | 100 | Social | friends (3) · visits to friends' stocks (5) · share a public list · make your profile public · add a social link |
 | Explorer 4 | 1600 | 125 | Chip workshop | recycle a chip · initialise a chip (TigerTag Init) · program TigerTag chips (10) · own TigerTag+ chips (3) · read a chip with the NFC tester |
 | Explorer 5 | 2000 | 150 | Collector | brands explored in the catalogue (10) · different materials owned (5) · prints finished at 100 % (10) · spools in racks (50) · daily quest 7 days in a row |
@@ -112,7 +112,7 @@ All under `telemetry/studio.quest`. **Counters** (`FieldValue.increment(1)` at t
 `lightMode` (switched to light), `storageView`, `weightUpdate`, `spoolNote`, `favorite`, `rackPut`,
 `printerRename`, `printerArrange`, `cameraOpen`, `cameraPhoto`, `cameraVideo`, `listCreate`,
 `listShare`, `buyLink`, `minStock`, `ttagExport`, `tableSort`, `friendLinkShare`, `friendVisit`,
-`whatsNewRead`, `demoPrinter`, `print100`, `slotAssign`, `chipScanOpen`, `chipRecycle`, `chipInit`,
+`whatsNewRead`, `demoPrinter`, `camAutoStart`, `print100`, `slotAssign`, `chipScanOpen`, `chipRecycle`, `chipInit`,
 `nfcTesterRead`, `brand_<id_brand>` (catalogue searched/filtered by that brand), `material_<id_material>`
 (catalogue filtered by that material). **Gauges** (set to the current value): `spoolsInRacks`,
 `materialsOwned`. Everything else (display name, photo, printers, friends, lists, chips, TigerData

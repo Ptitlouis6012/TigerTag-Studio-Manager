@@ -211,11 +211,12 @@
   "questAct_e1_chips": "写入 TigerTag 芯片",
   "questAct_e1_plus": "写入一枚 TigerTag+ 芯片",
   "questAct_e1_scanOpen": "扫描耗材芯片打开它",
-  "questAct_e2_demo": "试用演示打印机",
   "questAct_e2_prints": "完成 100% 的打印",
   "questAct_e2_video": "录制一段摄像头视频",
   "questAct_e2_printers": "已连接的打印机",
   "questAct_e2_slotAssign": "把耗材分配到打印机料槽",
+  "questAct_e2_demo": "试用演示打印机",
+  "questAct_e2_autoCam": "为一台打印机开启摄像头自动播放",
   "questAct_e3_friends": "好友",
   "questAct_e3_visits": "参观好友库存",
   "questAct_e3_publicList": "分享一个公开清单",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "XP 变化",
   "xpEvolutionSub": "XP 余额随时间的变化",
   "xpRangeAll": "全部",
-  "xpGain": "获得",
-  "xpLoss": "扣除",
   "xpBalanceAt": "余额：{{xp}} XP",
   "xpActivityHistory": "动态记录",
   "xpActivitySub": "你的全部 XP 记录",
@@ -2153,5 +2152,8 @@
   "xpPrev": "上一页",
   "xpNext": "下一页",
   "xpShowing": "第 {{from}}–{{to}} 条，共 {{n}} 条",
-  "friendAlready": "你们已经是好友了。"
+  "friendAlready": "你们已经是好友了。",
+  "printerSecCamera": "摄像头",
+  "printerLblAutoCam": "自动开启摄像头",
+  "printerHintAutoCam": "此打印机在线时，实时画面会在打印机面板上自动开始。关闭时：点一下播放。"
 }

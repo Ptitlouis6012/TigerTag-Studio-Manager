@@ -1576,7 +1576,7 @@ $("ffgFilEditSave")?.addEventListener("click", async () => {
         ffgNotifyChange(conn, false);
       }
     }
-    questBump("slotAssign");
+    questBump("slotAssign", 1, printer);
     closeFlashforgeFilamentEdit();
   } catch (e) {
     console.warn("[ffg] filament edit send failed:", e?.message);

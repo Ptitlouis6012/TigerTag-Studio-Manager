@@ -1993,7 +1993,7 @@ function _acuWireSheet() {
     // already carries the new value; the regular refresh loop re-confirms later,
     // after the printer has committed. (Verified from captured report logs.)
 
-    questBump("slotAssign");
+    questBump("slotAssign", 1, printer);
     closeAcuFilamentEdit();
   });
 }

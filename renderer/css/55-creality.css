@@ -31,29 +31,6 @@
    torn down by a panel rebuild; only the visibility changes. */
 .cre-cam-hidden { display: none; }
 
-/* ── Control card — disable-motors button ───────────────────────────────────
-   The jog pad, step select and fan reuse the shared .elg-* / .snap-ctrl-*
-   styles (50-snapmaker.css / 57-elegoo.css). Only this button is Creality-specific. */
-.cre-ctrl-disable {
-  width: 100%;
-  margin-top: 6px;
-  padding: 5px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  cursor: pointer;
-  transition: background .12s, color .12s, border-color .12s;
-}
-.cre-ctrl-disable:hover {
-  color: var(--primary);
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--info) 8%, transparent);
-}
-.cre-ctrl-disable:active { background: color-mix(in srgb, var(--info) 16%, transparent); }
-
 /* ── Filament slot: pencil edit button (the ONLY edit trigger) ───────────────
    The square itself is now a select target (.snap-fil--selectable); editing is
    isolated to this small button so a click no longer means "edit". */

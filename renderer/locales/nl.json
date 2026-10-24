@@ -211,11 +211,12 @@
   "questAct_e1_chips": "Programmeer TigerTag-chips",
   "questAct_e1_plus": "Programmeer een TigerTag+-chip",
   "questAct_e1_scanOpen": "Scan de chip van een spoel om hem te openen",
-  "questAct_e2_demo": "Probeer een demoprinter",
   "questAct_e2_prints": "Prints voltooid op 100 %",
   "questAct_e2_video": "Neem een cameravideo op",
   "questAct_e2_printers": "Verbonden printers",
   "questAct_e2_slotAssign": "Wijs een spoel toe aan een printerslot",
+  "questAct_e2_demo": "Probeer een demoprinter",
+  "questAct_e2_autoCam": "Camera-autostart aanzetten voor een printer",
   "questAct_e3_friends": "Vrienden",
   "questAct_e3_visits": "Bezoeken aan vriendenvoorraad",
   "questAct_e3_publicList": "Deel een openbare lijst",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "XP-verloop",
   "xpEvolutionSub": "Je XP-saldo in de tijd",
   "xpRangeAll": "Alles",
-  "xpGain": "XP-winst",
-  "xpLoss": "XP-verlies",
   "xpBalanceAt": "Saldo: {{xp}} XP",
   "xpActivityHistory": "Activiteitengeschiedenis",
   "xpActivitySub": "Al je XP-transacties",
@@ -2153,5 +2152,8 @@
   "xpPrev": "Vorige",
   "xpNext": "Volgende",
   "xpShowing": "{{from}}–{{to}} van {{n}} transacties",
-  "friendAlready": "Jullie zijn al vrienden."
+  "friendAlready": "Jullie zijn al vrienden.",
+  "printerSecCamera": "Camera",
+  "printerLblAutoCam": "Camera automatisch starten",
+  "printerHintAutoCam": "Het livebeeld start vanzelf op het printerbord als deze printer online is. Uit: één klik op afspelen."
 }

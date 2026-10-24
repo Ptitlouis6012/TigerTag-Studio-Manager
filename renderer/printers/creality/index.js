@@ -848,6 +848,14 @@ function renderCreHead(conn) {
     </div>`;
 }
 
+// The control card is hidden while a job runs (motion would wreck it).
+function _creIsPrinting(d) {
+  const progressRaw = Math.max(d.printProgress || 0, d.dProgress || 0);
+  const isFinished  = progressRaw >= 100 || d.state === 2;
+  return !isFinished && (progressRaw > 0 || d.printLeftTime > 0
+         || d.printJobTime > 0 || d.layer > 0 || d.isPaused);
+}
+
 export function renderCrealityLiveInner(p) {
   const conn = _creConns.get(creKey(p));
   if (!conn) return `
@@ -859,12 +867,17 @@ export function renderCrealityLiveInner(p) {
   // blocks that actually changed (see _creUpdateLive) — otherwise rebuilding the
   // whole panel mid-hover recreates the slot you're over and the hover-lift bounces.
   return `
-    <div id="creHeadBlock">${renderCreHead(conn)}</div>
     <div id="creJobBlock">${renderCreJobCard(p, conn)}</div>
-    <div id="creTempBlock">${renderCreTempCard(conn)}</div>
+    <div id="creHeadBlock">${_creHeadIfPrinting(conn)}</div>
     <div id="creCtrlBlock">${renderCreControlCard(p, conn)}</div>
+    <div id="creTempBlock">${renderCreTempCard(conn)}</div>
     <div id="creFilBlock">${renderCreFilamentCard(p, conn)}</div>`;
 }
+
+// Files + light: in the control card's info column (Elegoo layout); on their own
+// row only while printing, when the control card is hidden.
+const _creHeadIfPrinting = conn =>
+  conn?.status === "connected" && _creIsPrinting(conn.data) ? renderCreHead(conn) : "";
 
 // Surgically refresh the live panel: replace a block's HTML only when it actually
 // changed. This keeps the hovered filament slot / dragged fan slider intact across
@@ -887,7 +900,7 @@ function _creUpdateLive(p, conn) {
     el.innerHTML = html; el._creHtml = html;
     return true;
   };
-  upd("creHeadBlock", renderCreHead(conn));
+  upd("creHeadBlock", _creHeadIfPrinting(conn));
   const jobChanged = upd("creJobBlock", renderCreJobCard(p, conn));
   // Don't rebuild the temp card while a target is being typed inline.
   if (!document.querySelector("[data-cre-set-temp][data-editing='1']")) upd("creTempBlock", renderCreTempCard(conn));
@@ -957,8 +970,8 @@ function renderCreJobCard(p, conn) {
   let fileName = String(d.printFileName || "").trim();
   if (!fileName && hasLivePrintSignals) fileName = String(d.lastHistoryFilename || "").trim();
 
-  const hasPrintContext = hasLivePrintSignals || fileName !== "";
-  if (!hasPrintContext) return "";
+  // No job: the card still shows, idle (printer picture, "No active print",
+  // 0 %, Standby) — the same card Snapmaker keeps under its video.
 
   const isFinished = progressRaw >= 100 || stateCode === 2;
   const isPrinting = !isFinished && (progressRaw > 0 || leftTime > 0 || jobTime > 0 || layer > 0);
@@ -1003,9 +1016,12 @@ function renderCreJobCard(p, conn) {
   if (!thumbUrl && isPrinting) {
     thumbUrl = `http://${conn.ip}/downloads/original/current_print_image.png`;
   }
+  if (!thumbUrl) thumbUrl = ctx.printerImageUrlFor(p.brand, p.printerModelId)
+                         || ctx.printerImageUrl(ctx.findPrinterModel(p.brand, "0")) || null;
 
-  const displayName = fileName || (ctx.t("snapJobNoActive") || "Current print");
-  const nameLine = `<div class="snap-job-name" title="${ctx.esc(displayName)}">${ctx.esc(displayName)}</div>`;
+  const nameLine = fileName
+    ? `<div class="snap-job-name" title="${ctx.esc(fileName)}">${ctx.esc(fileName)}</div>`
+    : `<div class="snap-job-name snap-job-name--idle">${ctx.esc(ctx.t("snapJobNoActive") || "—")}</div>`;
 
   return `
     <div class="snap-job snap-job--${ctx.esc(jobStateCls)}">
@@ -1015,7 +1031,7 @@ function renderCreJobCard(p, conn) {
         ${nameLine}
         <div class="snap-job-stats">
           <span class="snap-job-pct">${progress}%</span>
-          ${durationText ? `<span class="snap-job-time">${ctx.SNAP_ICON_CLOCK}<span>${ctx.esc(durationText)}</span></span>` : ""}
+          <span class="snap-job-time">${ctx.SNAP_ICON_CLOCK}<span>${ctx.esc(durationText || "0m")}</span></span>
           ${leftText     ? `<span class="snap-job-time snap-job-time--left">${ctx.SNAP_ICON_CLOCK}<span>${ctx.esc(leftText)}</span></span>` : ""}
         </div>
         <div class="snap-job-bar">${jobBarFill(bar)}</div>
@@ -1101,11 +1117,7 @@ function creFmtPos(v) {
 function renderCreControlCard(p, conn) {
   if (conn?.status !== "connected") return "";
   const d = conn.data;
-  const progressRaw = Math.max(d.printProgress || 0, d.dProgress || 0);
-  const isFinished  = progressRaw >= 100 || d.state === 2;
-  const isPrinting  = !isFinished && (progressRaw > 0 || d.printLeftTime > 0
-                       || d.printJobTime > 0 || d.layer > 0 || d.isPaused);
-  if (isPrinting) return "";
+  if (_creIsPrinting(d)) return "";
 
   const step    = conn._ctrlStep ?? 10;
   const spd      = Math.round(Number(d.curFeedratePct)) || 100;   // feedrate % (M220)
@@ -1183,8 +1195,23 @@ function renderCreControlCard(p, conn) {
           </button>
         </div>
 
-        <!-- Info column: position + step + extrude/retract + disable -->
+        <!-- Info column: disable motors (M84) + files + light, position, step,
+             speed (Elegoo layout) -->
         <div class="elg-jog-info-col">
+          <div class="elg-ctrl-actions">
+            <button type="button" class="cre-action-btn cre-action-btn--motors elg-ctrl-action" data-cre-ctrl-disable
+                    data-acu-tip="${ctx.esc(ctx.t("creDisableMotors"))}" aria-label="${ctx.esc(ctx.t("creDisableMotors"))}">
+              <span class="icon icon-disable-motor icon-16" aria-hidden="true"></span>
+            </button>
+            <button type="button" class="cre-action-btn cre-action-btn--files elg-ctrl-action"
+                    data-cre-open-files="1" aria-label="${ctx.esc(ctx.t("creFilesTitle"))}">
+              <span class="icon icon-folder icon-16"></span>
+            </button>
+            <button type="button" class="cre-action-btn cre-action-btn--led elg-ctrl-action${d.lightSw === 1 ? " cre-action-btn--led-on" : ""}"
+                    data-cre-action="led" aria-label="${ctx.esc(d.lightSw === 1 ? (ctx.t("creLedOnTip") || "Turn off LED") : (ctx.t("creLedOffTip") || "Turn on LED"))}">
+              <span class="icon icon-bulb icon-16"></span>
+            </button>
+          </div>
           <div class="snap-ctrl-pos">
             <span>X:<b>${ctx.esc(creFmtPos(pos?.x))}</b></span>
             <span>Y:<b>${ctx.esc(creFmtPos(pos?.y))}</b></span>
@@ -1203,7 +1230,6 @@ function renderCreControlCard(p, conn) {
               ${[25, 50, 75, 100, 125, 150, 200].map(s => `<option value="${s}"${s === spd ? " selected" : ""}>${s}%</option>`).join("")}
             </select>
           </div>
-          <button type="button" class="cre-ctrl-disable" data-cre-ctrl-disable title="M84">${ctx.esc(ctx.t("creDisableMotors"))}</button>
         </div>
 
       </div>
@@ -1612,7 +1638,7 @@ document.getElementById("creColorGrid")?.addEventListener("change", e => {
 // Save button — sends modifyMaterial via WebSocket (format from Dart app)
 document.getElementById("creFilEditSave")?.addEventListener("click", async () => {
   if (!_creFilEdit) return;
-  const { conn, boxId, slotIndex } = _creFilEdit;
+  const { conn, boxId, slotIndex, printer } = _creFilEdit;
   const errEl = document.getElementById("creError");
   errEl.hidden = true;
 
@@ -1660,7 +1686,7 @@ document.getElementById("creFilEditSave")?.addEventListener("click", async () =>
     if (!conn?.ws || conn.ws.readyState !== WebSocket.OPEN) throw new Error("ws not open");
     creLogPush(conn, "→", cmd);
     conn.ws.send(cmd);
-    questBump("slotAssign");
+    questBump("slotAssign", 1, printer);
     closeCreFilamentEdit();
   } catch (err) {
     console.warn("[cre] filament edit send failed:", err?.message);

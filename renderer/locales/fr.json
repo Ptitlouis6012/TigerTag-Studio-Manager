@@ -211,11 +211,12 @@
   "questAct_e1_chips": "Programme des puces TigerTag",
   "questAct_e1_plus": "Programme une puce TigerTag+",
   "questAct_e1_scanOpen": "Scanne la puce d’une bobine pour l’ouvrir",
-  "questAct_e2_demo": "Essaie une imprimante de démo",
   "questAct_e2_prints": "Impressions terminées à 100 %",
   "questAct_e2_video": "Enregistre une vidéo de la caméra",
   "questAct_e2_printers": "Imprimantes connectées",
   "questAct_e2_slotAssign": "Attribue une bobine à un emplacement d’imprimante",
+  "questAct_e2_demo": "Essaie une imprimante de démo",
+  "questAct_e2_autoCam": "Activer le démarrage auto de la caméra d'une imprimante",
   "questAct_e3_friends": "Amis",
   "questAct_e3_visits": "Visites de stocks d’amis",
   "questAct_e3_publicList": "Partage une liste publique",
@@ -2136,8 +2137,6 @@
   "xpEvolution": "Évolution de l'XP",
   "xpEvolutionSub": "Ton solde d'XP dans le temps",
   "xpRangeAll": "Tout",
-  "xpGain": "Gain d'XP",
-  "xpLoss": "Perte d'XP",
   "xpBalanceAt": "Solde : {{xp}} XP",
   "xpActivityHistory": "Historique d'activité",
   "xpActivitySub": "Toutes tes transactions d'XP",
@@ -2153,5 +2152,8 @@
   "xpPrev": "Précédent",
   "xpNext": "Suivant",
   "xpShowing": "{{from}}–{{to}} sur {{n}} transactions",
-  "friendAlready": "Vous êtes déjà amis."
+  "friendAlready": "Vous êtes déjà amis.",
+  "printerSecCamera": "Caméra",
+  "printerLblAutoCam": "Démarrer la caméra automatiquement",
+  "printerHintAutoCam": "Le flux vidéo démarre tout seul sur le tableau des imprimantes quand cette imprimante est en ligne. Désactivé : un clic sur lecture."
 }

@@ -1540,8 +1540,10 @@
   .cre-action-btn:hover  { background: var(--surface-3); }
   .cre-action-btn .icon  { background-color: var(--muted); flex-shrink: 0; }
 
-  /* Icon-only variant — files, LED, pause, stop are all square icon-only buttons */
+  /* Icon-only variant — files, LED, disable motors, pause, stop are all square
+     icon-only buttons */
   .cre-action-btn--files,
+  .cre-action-btn--motors,
   .cre-action-btn--led,
   .cre-action-btn--pause,
   .cre-action-btn--stop {

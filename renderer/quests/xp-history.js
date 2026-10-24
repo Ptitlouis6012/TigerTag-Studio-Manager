@@ -182,18 +182,39 @@ export function chartPoints(log, range) {
   const since = days ? Date.now() - days * DAY : 0;
   return log.filter(h => msOf(h) >= since && Number.isFinite(h.total)).slice().reverse();
 }
+/* The curve is the balance sampled at even steps over the range (like the
+   TigerSquad pulse's one point a day), not one point per transaction — a
+   transaction-by-transaction line is a staircase. Each sample carries the
+   balance at its end and what changed during it. */
+const SAMPLES = { "7d": 28, "30d": 30, "90d": 45, all: 60 };
+export function chartSeries(log, range) {
+  const tx = chartPoints(log, range);
+  if (tx.length < 2) return tx;
+  const days = RANGES[range] ?? 30, now = Date.now();
+  const t0 = days ? now - days * DAY : msOf(tx[0]), n = SAMPLES[range] || 30, step = (now - t0) / n;
+  // Balance before the range opens: the oldest transaction's total minus its delta.
+  let bal = tx[0].total - (tx[0].delta || 0), j = 0;
+  const out = [{ ms: t0, total: bal, delta: 0, n: 0 }];
+  for (let k = 1; k <= n; k++) {
+    const end = t0 + step * k; let delta = 0, cnt = 0;
+    while (j < tx.length && msOf(tx[j]) <= end) { bal = tx[j].total; delta += tx[j].delta || 0; cnt++; j++; }
+    out.push({ ms: end, total: bal, delta, n: cnt });
+  }
+  return out;
+}
 export function chartSvg(ctx, log, range, width = 1000) {
-  const pts = chartPoints(log, range);
+  const pts = chartSeries(log, range);
   if (pts.length < 2) return `<p class="xph-empty">${ctx.esc(ctx.t("xpHistoryEmpty"))}</p>`;
   // Drawn at the real pixel width (the host measures it), so text and dots keep their shape.
   const W = Math.max(320, Math.round(width)), H = 230, L = 56, R = 14, T = 14, B = 28;
-  const t0 = msOf(pts[0]), t1 = msOf(pts[pts.length - 1]) || t0 + 1;
+  const t0 = pts[0].ms, t1 = pts[pts.length - 1].ms || t0 + 1;
   const vs = pts.map(p => p.total);
   let lo = Math.min(...vs), hi = Math.max(...vs);
   const pad = Math.max(10, (hi - lo) * .08); lo = Math.max(0, lo - pad); hi += pad;
   const x = ms => L + (W - L - R) * ((ms - t0) / Math.max(1, t1 - t0));
   const y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
-  const line = pts.map((p, i) => `${i ? "L" : "M"}${x(msOf(p)).toFixed(1)} ${y(p.total).toFixed(1)}`).join(" ");
+  const P = pts.map(p => [x(p.ms), y(p.total)]);
+  const line = smoothPath(P);
   const ticks = 4;
   const grid = Array.from({ length: ticks + 1 }, (_, i) => {
     const v = lo + (hi - lo) * i / ticks, yy = y(v).toFixed(1);
@@ -204,20 +225,54 @@ export function chartSvg(ctx, log, range, width = 1000) {
     const ms = t0 + (t1 - t0) * i / days;
     return `<text x="${x(ms).toFixed(1)}" y="${H - 6}" class="xph-xlab">${ctx.esc(ctx.day(ms))}</text>`;
   }).join("");
-  // Thin the dots on a long range so they stay readable.
-  const step = Math.max(1, Math.ceil(pts.length / 160));
-  const dots = pts.map((p, i) => (i % step && i !== pts.length - 1) ? "" :
-    `<circle cx="${x(msOf(p)).toFixed(1)}" cy="${y(p.total).toFixed(1)}" r="4.5" class="${p.delta < 0 ? "is-down" : "is-up"}" data-i="${i}"/>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="xph-svg" data-xph-range-now="${range}">
+  const [ex, ey] = P[P.length - 1];
+  // No dot per transaction: the hover finds the nearest point from data-xs and
+  // moves ONE guide + focus dot there (wired in inventory.js).
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="xph-svg" data-xph-range-now="${range}"
+      data-xs="${P.map(q => q[0].toFixed(1)).join(",")}" data-ys="${P.map(q => q[1].toFixed(1)).join(",")}">
+    <defs>
+      <linearGradient id="xphFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ff8c28" stop-opacity=".38"/><stop offset=".6" stop-color="#ff8c28" stop-opacity=".08"/><stop offset="1" stop-color="#ff8c28" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="xphStroke" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ffb347"/><stop offset="1" stop-color="#ff7a1a"/>
+      </linearGradient>
+    </defs>
     ${grid}
-    <path d="${line} L${x(t1).toFixed(1)} ${H - B} L${L} ${H - B} Z" class="xph-area"/>
+    <path d="${line} L${ex.toFixed(1)} ${H - B} L${P[0][0].toFixed(1)} ${H - B} Z" class="xph-area"/>
     <path d="${line}" class="xph-line"/>
-    ${dots}${xl}</svg>
-    <div class="xph-tip" hidden></div>
-    <div class="xph-key"><span><i class="is-up"></i>${ctx.esc(ctx.t("xpGain"))}</span><span><i class="is-down"></i>${ctx.esc(ctx.t("xpLoss"))}</span></div>`;
+    <circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="9" class="xph-end-halo"/>
+    <circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="4" class="xph-end"/>
+    <line class="xph-guide" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>
+    <circle class="xph-focus" r="5" cx="0" cy="0" visibility="hidden"/>
+    ${xl}</svg>
+    <div class="xph-tip" hidden></div>`;
 }
-export function tipHtml(ctx, h) {
-  return `<small>${ctx.esc(ctx.when(msOf(h)))}</small><b>${ctx.esc(label(ctx, h))}</b>
-    <span class="${h.delta < 0 ? "is-down" : "is-up"}">${signed(ctx, h.delta)} XP</span>
-    <small>${ctx.esc(ctx.t("xpBalanceAt", { xp: ctx.fmt(h.total) }))}</small>`;
+/* Smooth curve through the points that never overshoots them (monotone cubic,
+   Fritsch–Carlson): a balance that only steps up must not dip between two
+   steps. Points sharing an x (same timestamp) are passed straight through. */
+function smoothPath(P) {
+  const n = P.length;
+  if (n < 3) return P.map((q, i) => `${i ? "L" : "M"}${q[0].toFixed(1)} ${q[1].toFixed(1)}`).join(" ");
+  const d = [], m = new Array(n).fill(0);
+  for (let i = 0; i < n - 1; i++) { const dx = P[i + 1][0] - P[i][0]; d.push(dx > 0 ? (P[i + 1][1] - P[i][1]) / dx : 0); }
+  m[0] = d[0]; m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) m[i] = d[i - 1] * d[i] <= 0 ? 0 : (d[i - 1] + d[i]) / 2;
+  for (let i = 0; i < n - 1; i++) {
+    if (!d[i]) { m[i] = 0; m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i], h = a * a + b * b;
+    if (h > 9) { const k = 3 / Math.sqrt(h); m[i] = k * a * d[i]; m[i + 1] = k * b * d[i]; }
+  }
+  let out = `M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const [x0, y0] = P[i], [x1, y1] = P[i + 1], dx = (x1 - x0) / 3;
+    if (dx <= 0) { out += ` L${x1.toFixed(1)} ${y1.toFixed(1)}`; continue; }
+    out += ` C${(x0 + dx).toFixed(1)} ${(y0 + m[i] * dx).toFixed(1)} ${(x1 - dx).toFixed(1)} ${(y1 - m[i + 1] * dx).toFixed(1)} ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+  }
+  return out;
+}
+// Tooltip of one sample: when, what changed in it, the balance at its end.
+export function sampleTipHtml(ctx, p) {
+  const chg = p.delta ? `<span class="${p.delta < 0 ? "is-down" : "is-up"}">${signed(ctx, p.delta)} XP</span>` : "";
+  return `<small>${ctx.esc(ctx.when(p.ms))}</small><b>${ctx.esc(ctx.t("xpBalanceAt", { xp: ctx.fmt(p.total) }))}</b>${chg}`;
 }
