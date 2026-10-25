@@ -3831,6 +3831,47 @@ ipcMain.handle('timelapse:download', async (_evt, videoUrl, suggestedFilename) =
 // ── ffmpeg detection — shared by the Bambu RTSP camera and the Anycubic FLV
 //    camera below. Tries the bundled ffmpeg-static binary first (ships on every
 //    OS, so Windows works out of the box), then common system paths.
+/* Cuts ffmpeg's `-f image2pipe -vcodec mjpeg` output (JPEGs one after the other)
+   into frames: from a start marker (FF D8) to the next end marker (FF D9), the
+   LAST start before that end being the frame's. Shared by every camera that reads
+   ffmpeg's stdout (Bambu RTSPS, Prusa RTSP, Anycubic FLV).
+
+   It used to walk the buffer byte by byte in JavaScript, from its first byte, on
+   EVERY chunk: a frame arriving in several chunks was scanned again from the start
+   each time, and a stream that stalled mid-frame (the camera's connection cut
+   while a recording stopped) grew the buffer without limit and made each new chunk
+   dearer — the main process sat at 100 % until the window stopped answering.
+   Now the search is native (Buffer.indexOf), resumes where the last chunk ended,
+   and the buffer is capped. */
+const _SOI = Buffer.from([0xFF, 0xD8]), _EOI = Buffer.from([0xFF, 0xD9]);
+const _JPEG_TRIM = 2 * 1024 * 1024;   // a frame is far smaller: past this, what precedes the last start is junk
+const _JPEG_BUF_MAX = 4 * 1024 * 1024;
+function _jpegSplitter(onFrame) {
+  let buf = Buffer.alloc(0);
+  let from = 0;                      // where the end-marker search resumes
+  return chunk => {
+    buf = buf.length ? Buffer.concat([buf, chunk]) : chunk;
+    for (;;) {
+      const e = buf.indexOf(_EOI, from);
+      if (e < 0) {
+        // No complete frame yet. A normal frame is well under 1 MB; a buffer past
+        // _JPEG_TRIM holds a stalled or garbled stream: keep only from its last start.
+        if (buf.length > _JPEG_TRIM) {
+          const s = buf.lastIndexOf(_SOI);
+          buf = s > 0 ? buf.subarray(s) : s < 0 ? Buffer.alloc(0) : buf;
+          if (buf.length > _JPEG_BUF_MAX) buf = Buffer.alloc(0);
+        }
+        from = Math.max(0, buf.length - 1);   // one byte back: a marker may be split across chunks
+        return;
+      }
+      const s = buf.lastIndexOf(_SOI, e);
+      if (s >= 0) onFrame(buf.subarray(s, e + 2));
+      buf = buf.subarray(e + 2);
+      from = 0;
+    }
+  };
+}
+
 let _ffmpegBin = null;
 (function _detectFfmpeg() {
   const candidates = [];
@@ -4494,25 +4535,13 @@ let _ffmpegBin = null;
 
       // Parse raw stdout for JPEG frames: SOI (FF D8) → EOI (FF D9).
       // ffmpeg -f image2pipe -vcodec mjpeg outputs raw JPEG files concatenated.
-      let buf = Buffer.alloc(0);
-      proc.stdout.on('data', chunk => {
-        buf = Buffer.concat([buf, chunk]);
-        let start = -1;
-        for (let i = 0; i < buf.length - 1; i++) {
-          if (buf[i] === 0xFF && buf[i + 1] === 0xD8) { start = i; }
-          if (start !== -1 && buf[i] === 0xFF && buf[i + 1] === 0xD9) {
-            const frame = buf.slice(start, i + 2);
-            buf = buf.slice(i + 2);
-            if (!event.sender.isDestroyed())
-              event.sender.send('bambulab:cam-frame', key, frame);
-            // Forward to detached cam window if open
-            if (_camWindow && !_camWindow.isDestroyed())
-              _camWindow.webContents.send('bambulab:cam-frame', key, frame);
-            start = -1;
-            i = -1; // restart scan from new buf[0]
-          }
-        }
-      });
+      proc.stdout.on('data', _jpegSplitter(frame => {
+        if (!event.sender.isDestroyed())
+          event.sender.send('bambulab:cam-frame', key, frame);
+        // Forward to detached cam window if open
+        if (_camWindow && !_camWindow.isDestroyed())
+          _camWindow.webContents.send('bambulab:cam-frame', key, frame);
+      }));
 
       proc.on('close', (code) => {
         if (_bambuRtspProcs.get(key) === proc) _bambuRtspProcs.delete(key);
@@ -4574,21 +4603,10 @@ let _ffmpegBin = null;
       proc._stopped = false;
       _prusaRtspProcs.set(key, proc);
       proc.stderr.on('data', chunk => { const msg = chunk.toString().trim(); if (msg) console.error(`[prusa-rtsp:${key}]`, msg); });
-      let buf = Buffer.alloc(0);
-      proc.stdout.on('data', chunk => {
-        buf = Buffer.concat([buf, chunk]);
-        let start = -1;
-        for (let i = 0; i < buf.length - 1; i++) {
-          if (buf[i] === 0xFF && buf[i + 1] === 0xD8) start = i;
-          if (start !== -1 && buf[i] === 0xFF && buf[i + 1] === 0xD9) {
-            const frame = buf.slice(start, i + 2);
-            buf = buf.slice(i + 2);
-            if (!event.sender.isDestroyed()) event.sender.send('prusa:cam-frame', key, frame);
-            if (_camWindow && !_camWindow.isDestroyed()) _camWindow.webContents.send('prusa:cam-frame', key, frame);
-            start = -1; i = -1;
-          }
-        }
-      });
+      proc.stdout.on('data', _jpegSplitter(frame => {
+        if (!event.sender.isDestroyed()) event.sender.send('prusa:cam-frame', key, frame);
+        if (_camWindow && !_camWindow.isDestroyed()) _camWindow.webContents.send('prusa:cam-frame', key, frame);
+      }));
       proc.on('close', (code) => {
         if (_prusaRtspProcs.get(key) === proc) _prusaRtspProcs.delete(key);
         if (proc._stopped) return;
@@ -5184,25 +5202,13 @@ let _ffmpegBin = null;
       });
 
       // Parse raw stdout for JPEG frames: SOI (FF D8) → EOI (FF D9).
-      let buf = Buffer.alloc(0);
-      proc.stdout.on('data', chunk => {
-        buf = Buffer.concat([buf, chunk]);
-        let start = -1;
-        for (let i = 0; i < buf.length - 1; i++) {
-          if (buf[i] === 0xFF && buf[i + 1] === 0xD8) { start = i; }
-          if (start !== -1 && buf[i] === 0xFF && buf[i + 1] === 0xD9) {
-            const frame = buf.slice(start, i + 2);
-            buf = buf.slice(i + 2);
-            if (!event.sender.isDestroyed())
-              event.sender.send('anycubic:cam-frame', key, frame.toString('base64'));
-            // Forward to detached cam window if open
-            if (_camWindow && !_camWindow.isDestroyed())
-              _camWindow.webContents.send('anycubic:cam-frame', key, frame.toString('base64'));
-            start = -1;
-            i = -1; // restart scan from new buf[0]
-          }
-        }
-      });
+      proc.stdout.on('data', _jpegSplitter(frame => {
+        if (!event.sender.isDestroyed())
+          event.sender.send('anycubic:cam-frame', key, frame.toString('base64'));
+        // Forward to detached cam window if open
+        if (_camWindow && !_camWindow.isDestroyed())
+          _camWindow.webContents.send('anycubic:cam-frame', key, frame.toString('base64'));
+      }));
 
       proc.on('close', (code) => {
         if (_acuCamProcs.get(key) === proc) _acuCamProcs.delete(key);
