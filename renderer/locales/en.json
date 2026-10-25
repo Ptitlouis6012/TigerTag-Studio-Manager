@@ -2278,16 +2278,11 @@
   "envOpen": "Open it",
   "envOpenSurprises": "Open them",
   "chestOpen": "Open the chest",
-  "pullHold": "Hold to open",
+  "pullSound": "Sound",
+  "pullHoldTen": "Hold 2 s",
+  "pullHoldOne": "Hold to open",
   "pullOne": "Open ×1",
   "pullMany": "Open ×{{n}}",
-  "pullAgain": "Again ×{{n}}",
-  "pullSkip": "Skip",
-  "pullTapNext": "Tap to continue",
-  "pullLeft": {
-    "one": "{{n}} envelope left",
-    "other": "{{n}} envelopes left"
-  },
   "chestInside": {
     "one": "{{n}} envelope inside",
     "other": "{{n}} envelopes inside"

@@ -2278,16 +2278,11 @@
   "envOpen": "L'ouvrir",
   "envOpenSurprises": "Les ouvrir",
   "chestOpen": "Ouvrir le coffre",
-  "pullHold": "Maintenez pour ouvrir",
+  "pullSound": "Son",
+  "pullHoldTen": "Maintenez 2 s",
+  "pullHoldOne": "Maintenez pour ouvrir",
   "pullOne": "Ouvrir ×1",
   "pullMany": "Ouvrir ×{{n}}",
-  "pullAgain": "Encore ×{{n}}",
-  "pullSkip": "Passer",
-  "pullTapNext": "Touchez pour continuer",
-  "pullLeft": {
-    "one": "{{n}} enveloppe restante",
-    "other": "{{n}} enveloppes restantes"
-  },
   "chestInside": {
     "one": "{{n}} enveloppe à l’intérieur",
     "other": "{{n}} enveloppes à l’intérieur"

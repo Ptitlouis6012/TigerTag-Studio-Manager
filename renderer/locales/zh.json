@@ -2278,16 +2278,11 @@
   "envOpen": "拆开",
   "envOpenSurprises": "拆开它们",
   "chestOpen": "打开宝箱",
-  "pullHold": "长按拆开",
+  "pullSound": "声音",
+  "pullHoldTen": "长按 2 秒",
+  "pullHoldOne": "长按拆开",
   "pullOne": "拆 ×1",
   "pullMany": "拆 ×{{n}}",
-  "pullAgain": "再来 ×{{n}}",
-  "pullSkip": "跳过",
-  "pullTapNext": "点击继续",
-  "pullLeft": {
-    "one": "还剩 {{n}} 个红包",
-    "other": "还剩 {{n}} 个红包"
-  },
   "chestInside": {
     "one": "里面有 {{n}} 个红包",
     "other": "里面有 {{n}} 个红包"

@@ -2278,16 +2278,11 @@
   "envOpen": "Aprila",
   "envOpenSurprises": "Aprile",
   "chestOpen": "Apri il forziere",
-  "pullHold": "Tieni premuto per aprire",
+  "pullSound": "Audio",
+  "pullHoldTen": "Tieni premuto 2 s",
+  "pullHoldOne": "Tieni premuto per aprire",
   "pullOne": "Apri ×1",
   "pullMany": "Apri ×{{n}}",
-  "pullAgain": "Ancora ×{{n}}",
-  "pullSkip": "Salta",
-  "pullTapNext": "Tocca per continuare",
-  "pullLeft": {
-    "one": "{{n}} busta rimasta",
-    "other": "{{n}} buste rimaste"
-  },
   "chestInside": {
     "one": "{{n}} busta dentro",
     "other": "{{n}} buste dentro"

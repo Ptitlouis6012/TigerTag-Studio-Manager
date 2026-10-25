@@ -1335,64 +1335,268 @@ body.progress-view #gridSortWrap { display: none; }
   .tc-chest-card:not(.is-opened) .tc-chest { animation: none; }
   .tc-chest-lid, .tc-chest-glow { transition: none; }
 }
-/* TigerCoins pulls (quests/coin-pull.js), gacha style: one big envelope at a
-   time; its glow climbs the rarity ladder (data-r 0 → 4) before it opens. */
-.tp { --r0: #9aa3bd; --r1: #3ddc84; --r2: #3d8bff; --r3: #a855f7; --r4: #ffb21a; }
+/* TigerCoins pulls (quests/coin-pull.js) — "Tiger Arcade Jackpot", gacha ×
+   casino: no panel — the envelope, the cards and the controls float over the
+   dimmed app, a turning spotlight behind them; the big red envelope; each rarity reveals a card of its own MATERIAL — matte
+   paper, green enamel, blue holo, purple neon, solid gold jackpot. */
 .tc-reveal.tp { background: rgba(3, 4, 8, .9); }
-/* The stage: a dark panel with a soft spotlight, like the other TigerCoins modals. */
-.tp-box { width: min(520px, 94vw); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; user-select: none;
-  padding: 16px 20px 22px; border-radius: 20px; border: 1px solid color-mix(in srgb, #ffcf3d 30%, var(--tsq-line));
-  background: radial-gradient(ellipse at 50% 45%, #232a45 0%, #121624 60%, #0b0d14 100%); overflow: hidden; }
-.tp-top { align-self: stretch; display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
-.tp-count { font: 800 14px var(--qw-mono, monospace); color: #ffd75e; letter-spacing: .04em; }
-.tp-stage { position: relative; width: 100%; height: 360px; display: grid; place-items: center; }
-.tp-hint { margin: 0; font-size: 12.5px; color: var(--tsq-muted); }
-.tp-card { position: relative; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
-  --rc: var(--r0); }
-.tp-card[data-r="1"] { --rc: var(--r1); } .tp-card[data-r="2"] { --rc: var(--r2); }
-.tp-card[data-r="3"] { --rc: var(--r3); } .tp-card[data-r="4"] { --rc: var(--r4); }
-/* The glow behind the envelope, in the rarity reached so far. */
-.tp-card::before { content: ""; position: absolute; inset: -70px; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, color-mix(in srgb, var(--rc) 55%, transparent), transparent 62%);
-  opacity: .55; transition: opacity .25s; }
-.tp-card.is-step .tp-env { animation: tp-step .28s ease-out; }
-.tp-card.is-step::before { animation: tp-flare .28s ease-out; }
-@keyframes tp-step { 40% { transform: scale(1.06) rotate(-1.5deg); } }
-@keyframes tp-flare { 0% { opacity: 1; transform: scale(1.15); } }
-.tp-env { position: relative; display: block; width: 190px; height: 230px; perspective: 700px; }
-.tp-card.is-opened .tc-env-flap { transform: rotateX(180deg); z-index: 0; opacity: 0; }
-.tp-card.is-opened .tc-env-seal { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
-.tp-card.is-opened .tc-env-note { transform: translateY(-46%); box-shadow: 0 0 0 3px var(--rc), 0 0 30px var(--rc); }
-.tp-card.is-opened::before { opacity: .9; }
-.tp-label { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); margin: 0; white-space: nowrap;
-  font: 900 22px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .12em; color: var(--rc);
-  text-shadow: 0 0 18px var(--rc); opacity: 0; transition: opacity .3s .25s; }
-.tp-card.is-opened .tp-label { opacity: 1; }
-/* Particles, as many as the envelope is rare. */
-.tp-spark { position: absolute; left: 50%; top: 45%; width: 8px; height: 8px; border-radius: 50%; pointer-events: none;
-  background: var(--rc); box-shadow: 0 0 10px var(--rc); transform: translate(-50%, -50%) scale(var(--s));
-  animation: tp-spark 1.2s cubic-bezier(.2, .8, .3, 1) var(--dl) forwards; }
-@keyframes tp-spark { to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0); opacity: 0; } }
-/* A legendary: the stage flashes gold and rays turn behind the envelope. */
-.tp-stage.is-legend::before { content: ""; position: absolute; inset: -40px; pointer-events: none; border-radius: 50%;
-  background: repeating-conic-gradient(rgba(255, 190, 40, .28) 0 8deg, transparent 8deg 22deg);
-  mask: radial-gradient(circle, #000 20%, transparent 70%); animation: tp-rays 6s linear infinite; }
-.tp-stage.is-legend::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: rgba(255, 210, 90, .55); animation: tp-flash .7s ease-out forwards; }
-@keyframes tp-rays { to { transform: rotate(360deg); } }
-@keyframes tp-flash { to { opacity: 0; } }
-/* The pile's envelope: hold it — the ring fills, the envelope trembles. */
-.tp-pile { width: 190px; height: 230px; min-height: 0; animation: tc-env-wiggle 2.6s ease-in-out infinite; }
-.tp-pile.is-holding { animation: tp-tremble .12s linear infinite; }
-@keyframes tp-tremble { 25% { transform: translate(-1px, 1px) rotate(-.6deg); } 75% { transform: translate(1px, -1px) rotate(.6deg); } }
-.tp-ring { position: absolute; inset: -26px; border-radius: 50%; pointer-events: none;
-  background: conic-gradient(#ffcf3d calc(var(--hold, 0) * 360deg), transparent 0);
-  mask: radial-gradient(circle, transparent 62%, #000 63%, #000 66%, transparent 67%); }
+.tpx { position: relative; width: min(780px, 96vw); display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 22px 26px 24px; text-align: center; user-select: none; }
+.tpx-head { position: relative; z-index: 2; align-self: stretch; display: flex; justify-content: flex-end; margin: 4px 6px 0; }
+.tpx-ic { position: relative; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--tsq-line);
+  background: rgba(0, 0, 0, .3); color: var(--tsq-muted); cursor: pointer; }
+.tpx-ic:hover { color: var(--tsq-text); }
+.tpx-ic .icon { background: currentColor; }
+.tpx-sound.is-off::after { content: ""; position: absolute; width: 2px; height: 20px; background: currentColor; transform: rotate(45deg); border-radius: 2px; }
+.tpx-stage { position: relative; z-index: 1; width: 100%; height: 440px; display: grid; place-items: center; }
+.tpx-fx { position: absolute; inset: -20px; width: calc(100% + 40px); height: calc(100% + 40px); pointer-events: none; z-index: 5; }
+.tpx-body { position: relative; z-index: 2; display: grid; place-items: center; }
+/* The spotlight: two soft beams turning slowly behind everything. */
+.tpx-spot { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; margin: -280px 0 0 -280px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, transparent 0 20deg, rgba(120, 150, 255, .10) 30deg, transparent 50deg 200deg, rgba(255, 140, 210, .08) 215deg, transparent 235deg);
+  mask: radial-gradient(circle, #000 25%, transparent 70%); animation: tpx-spin 14s linear infinite; }
+@keyframes tpx-spin { to { transform: rotate(360deg); } }
+.tpx-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.tpx-foot { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 44px; }
+.tpx-total { margin: 0; font: 900 40px var(--qw-mono, monospace); color: #ffd75e; text-shadow: 0 2px 0 #7a4a00, 0 0 24px rgba(255, 190, 40, .7); }
+/* A ×N's counts and total: they pop up below the cards, float up over them
+   and stay above them until the member moves on — no backdrop, out of the
+   layout (the cards never move); a dark outline keeps them readable. */
+.tpx-float { position: absolute; left: 50%; bottom: 0; z-index: 7; pointer-events: none; white-space: nowrap;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  transform: translate(-50%, 0); opacity: 0; animation: tpx-float 1.6s cubic-bezier(.2, .8, .3, 1) .15s forwards; }
+.tpx-float .tc-reveal-sum { margin: 0 0 6px; }
+/* The rarity counts as badges: a pill in each rarity's colour. */
+.tpx-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 640px; }
+.tpx-badges .tc-sum { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px 5px 6px; border-radius: 99px;
+  font: 800 13px var(--sqr-display, system-ui); letter-spacing: .04em; text-transform: uppercase;
+  background: color-mix(in srgb, currentColor 16%, rgba(8, 10, 20, .7)); box-shadow: inset 0 0 0 1.5px currentColor, 0 0 14px color-mix(in srgb, currentColor 35%, transparent); }
+.tpx-badges .tc-sum b { display: grid; place-items: center; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 99px;
+  background: var(--bc); color: #0b0d14; font: 900 13px var(--qw-mono, monospace); }
+.tpx-badges .tc-sum--common { color: #c3c9d9; --bc: #c3c9d9; }
+.tpx-badges .tc-sum--uncommon { --bc: #3ddc84; } .tpx-badges .tc-sum--rare { --bc: #3d8bff; }
+.tpx-badges .tc-sum--epic { --bc: #a855f7; } .tpx-badges .tc-sum--legendary { --bc: #ffb21a; }
+.tpx-float .tpx-total { font-size: 46px; text-shadow: 0 3px 0 #7a4a00, 0 0 3px #000, 0 0 3px #000, 0 0 26px rgba(255, 190, 40, .8); }
+@keyframes tpx-float {
+  0% { opacity: 0; transform: translate(-50%, 30px) scale(.6); }
+  14% { opacity: 1; transform: translate(-50%, 0) scale(1.15); }
+  24% { transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -455px) scale(1); } }
+
+/* The pile: the big envelope floats, a light sweeps over it; hold → ring fills. */
+.tpx-pile { position: relative; width: 210px; height: 262px; min-height: 0; padding: 0; border: 0; background: none; cursor: pointer;
+  animation: tpx-bob 3s ease-in-out infinite; }
+/* The tilt layer follows the mouse (coin-pull.js tilt): 3D turn + a glare. */
+.tpx-pile { perspective: 700px; }
+.tpx-tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+  transition: transform .18s ease-out; }
+.tpx-tilt:not(.is-tilted) { transition: transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+.tpx-glare { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .3s; mix-blend-mode: soft-light;
+  -webkit-mask: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat; mask: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .95), rgba(255, 255, 255, 0) 45%); }
+.tpx-tilt.is-tilted .tpx-glare { opacity: 1; }
+.tpx-pile .tpx-env { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .5)) drop-shadow(0 0 22px rgba(255, 80, 80, .25)); }
+.tpx-env-shine { position: absolute; inset: 0; pointer-events: none;
+  -webkit-mask: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat; mask: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat;
+  background: linear-gradient(115deg, transparent 35%, rgba(255, 255, 255, .55) 47%, transparent 58%) -200% 0 / 250% 100% no-repeat;
+  animation: tpx-sheen 3.2s ease-in-out infinite; }
+@keyframes tpx-sheen { 0%, 45% { background-position: 200% 0; } 85%, 100% { background-position: -100% 0; } }
+@keyframes tpx-bob { 50% { transform: translateY(-8px) rotate(-1deg); } }
+.tpx-pile.is-holding { animation: tpx-tremble .09s linear infinite; }
+@keyframes tpx-tremble { 25% { transform: translate(-1.5px, 1px) rotate(-.8deg); } 75% { transform: translate(1.5px, -1px) rotate(.8deg); } }
+.tpx-ring { position: absolute; left: 50%; top: 50%; width: 300px; height: 300px; margin: -150px 0 0 -150px; pointer-events: none; transform: rotate(-90deg); }
+.tpx-ring circle { fill: none; stroke: rgba(255, 255, 255, .07); stroke-width: 2.5; }
+.tpx-ring .tpx-ring-fill { stroke: #ffcf3d; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: calc(100 - var(--hold, 0) * 100);
+  filter: drop-shadow(0 0 4px #ffcf3d); opacity: min(1, calc(var(--hold, 0) * 20)); }
+
+/* ×1: the envelope shakes while its glow climbs (--rc), then the card rises. */
+.tpx-one { position: relative; width: 300px; height: 420px; display: grid; place-items: center; --glow: 0;
+  transform: perspective(800px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .18s ease-out; }
+.tpx-one:not(.is-tilted) { transition: transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+/* The revealed card's light follows the mouse too. */
+.tpx-one.is-tilted .tpx-card-shine { animation: none; mix-blend-mode: overlay; opacity: 1;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .9), transparent 50%); }
+.tpx-one .tpx-env { position: absolute; width: 210px; transition: transform .45s cubic-bezier(.5, 0, .5, 1), opacity .4s .1s, filter .2s;
+  filter: drop-shadow(0 0 calc(8px + var(--glow) * 1px) var(--rc)) drop-shadow(0 0 30px var(--rc)); }
+.tpx-one[data-r="1"] { --glow: 6; } .tpx-one[data-r="2"] { --glow: 12; } .tpx-one[data-r="3"] { --glow: 20; } .tpx-one[data-r="4"] { --glow: 30; }
+.tpx-env.is-shaking { animation: tpx-shake .14s linear infinite; }
+@keyframes tpx-shake { 25% { transform: translate(-2px, 1px) rotate(-1.2deg); } 75% { transform: translate(2px, -1px) rotate(1.2deg); } }
+.tpx-one.is-step .tpx-env { animation: tpx-step .3s ease-out, tpx-shake .14s linear infinite; }
+@keyframes tpx-step { 40% { transform: scale(1.08); } }
+.tpx-one.is-open .tpx-env { transform: translateY(110px) scale(.82); opacity: 0; }
+.tpx-one > .tpx-card { position: absolute; opacity: 0; transform: translateY(60px) scale(.5) rotate(-6deg); }
+.tpx-one.is-open > .tpx-card { animation: tpx-rise .55s cubic-bezier(.2, 1.5, .4, 1) .15s forwards; }
+@keyframes tpx-rise { to { opacity: 1; transform: none; } }
+/* Rays behind an epic (purple) or a legendary (gold). */
+.tpx-rays { position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; margin: -260px 0 0 -260px; pointer-events: none; opacity: 0;
+  background: repeating-conic-gradient(var(--rc) 0 7deg, transparent 7deg 20deg); mask: radial-gradient(circle, #000 12%, transparent 62%); }
+.tpx-one.is-open[data-r="3"] .tpx-rays { opacity: .35; animation: tpx-spin 9s linear infinite; transition: opacity .6s; }
+.tpx-one.is-open[data-r="4"] .tpx-rays { opacity: .55; animation: tpx-spin 6s linear infinite; transition: opacity .4s; }
+.tpx-stage.is-legend::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 9;
+  background: radial-gradient(circle, rgba(255, 236, 170, .9), rgba(255, 178, 26, .5) 40%, transparent 75%); animation: tpx-flash .9s ease-out forwards; }
+@keyframes tpx-flash { to { opacity: 0; } }
+.tpx-stage.is-legend { animation: tpx-quake .4s ease-out; }
+@keyframes tpx-quake { 15% { transform: translate(-4px, 2px); } 30% { transform: translate(4px, -2px); } 45% { transform: translate(-3px, -1px); } 60% { transform: translate(2px, 1px); } }
+
+/* Per-rarity colours of the full-screen layer (coin-pull.js rarityFx). */
+.tpx-legend.is-r2 { --lc1: #bfe0ff; --lc2: #3d8bff; --lr: rgba(120, 180, 255, .3); }
+.tpx-legend.is-r3 { --lc1: #f0d9ff; --lc2: #a855f7; --lr: rgba(190, 120, 255, .34); }
+.tpx-legend.is-r4 { --lc1: #ffe08a; --lc2: #ffb21a; --lr: rgba(255, 214, 110, .38); }
+.tpx-legend.is-r2 .lg-flash { animation-duration: .6s; opacity: 0; }
+.tpx-legend.is-r3 .lg-dim { animation: lg-dim-epic 2.4s ease-out forwards; }
+@keyframes lg-dim-epic { 0% { opacity: 0; } 15% { opacity: .85; } 100% { opacity: .55; } }
+.tpx-legend.is-r3 .lg-title b { font-size: clamp(34px, 6vw, 84px);
+  background: linear-gradient(100deg, #6b21a8, #d9a8ff 30%, #ffffff 45%, #d9a8ff 60%, #a855f7) 0 0 / 250% 100%; -webkit-background-clip: text; background-clip: text;
+  filter: drop-shadow(0 3px 0 #2e1065) drop-shadow(0 0 26px rgba(168, 85, 247, .9)); }
+/* Epic lightning: the screen flickers neon twice. */
+.tpx-legend .lg-bolt { position: absolute; inset: 0; background: radial-gradient(circle at var(--cx) var(--cy), rgba(230, 200, 255, .55), transparent 60%);
+  opacity: 0; animation: lg-bolt .9s steps(1) .45s; }
+@keyframes lg-bolt { 0% { opacity: 1; } 12% { opacity: 0; } 22% { opacity: .8; } 30% { opacity: 0; } 55% { opacity: .5; } 62% { opacity: 0; } }
+/* A legendary takes the whole screen (coin-pull.js legendFx): the room goes
+   dark, a flash, two shockwaves and god rays from the card (--cx/--cy), a
+   full-screen fountain of coins, a LEGENDARY banner sweeping through; the card
+   slams in from the foreground. */
+.tpx-legend { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; --cx: 50vw; --cy: 50vh; }
+/* The stage stays above the legendary layer: the card is always in front. */
+.tc-reveal.tp > .tpx { z-index: 1; }
+.tpx-legend .lg-dim { position: absolute; inset: 0; background: radial-gradient(circle at var(--cx) var(--cy), rgba(60, 30, 0, .2), rgba(0, 0, 0, .85) 70%);
+  opacity: 0; animation: lg-dim 3s ease-out forwards; }
+@keyframes lg-dim { 0% { opacity: 0; } 12% { opacity: 1; } 100% { opacity: .7; } }
+.tpx-legend .lg-rays { position: absolute; left: var(--cx); top: var(--cy); width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
+  background: repeating-conic-gradient(var(--lr, rgba(255, 214, 110, .38)) 0 5deg, transparent 5deg 15deg);
+  mask: radial-gradient(circle, #000 4%, transparent 45%); opacity: 0; animation: lg-rays-in .8s ease-out .35s forwards, tpx-spin 18s linear infinite; }
+@keyframes lg-rays-in { to { opacity: 1; } }
+.tpx-legend .lg-ring { position: absolute; left: var(--cx); top: var(--cy); width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+  border: 6px solid var(--lc1, #ffe08a); box-shadow: 0 0 30px var(--lc2, #ffb21a), inset 0 0 30px var(--lc2, #ffb21a); opacity: 0; animation: lg-ring 1.1s cubic-bezier(.1, .7, .3, 1) .4s forwards; }
+.tpx-legend .lg-ring--2 { animation-delay: .62s; border-width: 3px; }
+@keyframes lg-ring { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(60); } }
+.tpx-legend .lg-flash { position: absolute; inset: 0; background: radial-gradient(circle at var(--cx) var(--cy), #fffbe6, var(--lc1, rgba(255, 210, 90, .9)) 25%, transparent 70%);
+  opacity: 0; animation: lg-flash 1s ease-out .38s forwards; }
+@keyframes lg-flash { 0% { opacity: 0; } 8% { opacity: 1; } 100% { opacity: 0; } }
+.tpx-legend .lg-fx { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* An earlier layer under a newer one (epic + legendary in a ×10): its banner
+   steps aside, its rays keep turning — the other way, under the gold. */
+.tpx-legend.is-under .lg-title { opacity: 0; transition: opacity .3s; }
+.tpx-legend.is-under .lg-rays { animation: lg-rays-in .8s ease-out .35s forwards, tpx-spin 22s linear infinite reverse; }
+/* The recap floats up: the banners fade out to leave it the top of the screen. */
+.tc-reveal.is-recap .tpx-legend .lg-title { opacity: 0; transition: opacity .35s; }
+.tpx-legend .lg-title { position: absolute; left: 0; right: 0; top: 9vh; display: flex; justify-content: center; }
+.tpx-legend .lg-title b { font: 900 clamp(40px, 8vw, 110px) var(--sqr-display, system-ui); letter-spacing: .14em; text-transform: uppercase; line-height: 1;
+  background: linear-gradient(100deg, #b86b00, #ffd75e 30%, #fffbe6 45%, #ffd75e 60%, #e89a12) 0 0 / 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 4px 0 #5a2e00) drop-shadow(0 0 30px rgba(255, 190, 40, .8));
+  opacity: 0; animation: lg-title 1s cubic-bezier(.2, 1.5, .4, 1) .7s forwards, lg-title-shine 2.2s linear 1.5s infinite; }
+@keyframes lg-title { 0% { opacity: 0; transform: scale(2.4) translateY(-20px); letter-spacing: .5em; } 100% { opacity: 1; transform: none; } }
+@keyframes lg-title-shine { to { background-position: -250% 0; } }
+/* The legendary card slams in from the foreground and the screen shakes. */
+.tpx-one.is-open[data-r="4"] > .tpx-card { animation: tpx-slam .75s cubic-bezier(.2, 1.3, .3, 1) .5s forwards; z-index: 9; }
+.tpx-one.is-open[data-r="3"] > .tpx-card { animation: tpx-slam-epic .6s cubic-bezier(.2, 1.3, .3, 1) .45s forwards; }
+@keyframes tpx-slam-epic { 0% { opacity: 0; transform: scale(2) rotate(-8deg); filter: blur(4px) brightness(1.8); } 60% { opacity: 1; transform: scale(.94); filter: none; } 100% { opacity: 1; transform: none; } }
+@keyframes tpx-slam { 0% { opacity: 0; transform: scale(3) rotate(-14deg); filter: blur(6px) brightness(2); } 55% { opacity: 1; transform: scale(.9) rotate(2deg); filter: none; } 100% { opacity: 1; transform: none; } }
+.tc-reveal.tp:has(.tpx-legend.is-r4) .tpx { animation: lg-quake .55s ease-out .9s; }
+.tc-reveal.tp:has(.tpx-legend.is-r3) .tpx { animation: lg-quake .35s ease-out .8s; }
+@keyframes lg-quake { 10% { transform: translate(-10px, 6px); } 25% { transform: translate(9px, -7px); } 40% { transform: translate(-7px, -4px); } 55% { transform: translate(6px, 5px); } 75% { transform: translate(-3px, 2px); } }
+.tpx-slot.is-star:has(.r4), .tpx-slot.is-star:has(.r3) { z-index: 9; }
+
+/* The card: one material per rarity. */
+.tpx-card { position: relative; width: 260px; height: 360px; border-radius: 22px; overflow: hidden; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 6px; border: 3px solid #0b0d14; isolation: isolate; }
+.tpx-card-coin { width: 112px; height: 112px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .35)); }
+.tpx-card-amt { font: 900 54px var(--qw-mono, monospace); line-height: 1; }
+.tpx-card-rar { padding: 5px 14px; border-radius: 99px; font: 800 15px var(--sqr-display, system-ui); letter-spacing: .14em; text-transform: uppercase; }
+.tpx-card-shine { position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: overlay;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .85) 45%, transparent 60%) 200% 0 / 250% 100% no-repeat;
+  animation: tpx-sheen 2.6s ease-in-out infinite; }
+/* Common — matte paper. */
+.tpx-card.r0 { background: linear-gradient(180deg, #eef0f5, #cdd2de); color: #2a3045; box-shadow: 0 10px 24px rgba(0, 0, 0, .4); }
+.tpx-card.r0 .tpx-card-rar { background: #9aa3bd; color: #fff; }
+.tpx-card.r0 .tpx-card-shine { opacity: .45; }
+/* Uncommon — green enamel with a bright rim. */
+.tpx-card.r1 { background: radial-gradient(circle at 50% 30%, #4ff09a, #179a57 70%); color: #fff;
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, .35), inset 0 0 0 7px #0f6b3c, 0 0 22px rgba(61, 220, 132, .45); }
+.tpx-card.r1 .tpx-card-amt { text-shadow: 0 2px 0 #0f6b3c; }
+.tpx-card.r1 .tpx-card-rar { background: #0f6b3c; color: #b6ffd4; }
+/* Rare — blue holo: a rainbow foil drifts across it. */
+.tpx-card.r2 { background: linear-gradient(160deg, #2f7bff, #12348a); color: #fff; box-shadow: 0 0 28px rgba(61, 139, 255, .6), inset 0 0 0 3px rgba(190, 220, 255, .6); }
+.tpx-card.r2::before { content: ""; position: absolute; inset: 0; z-index: 1; mix-blend-mode: overlay; opacity: .5;
+  background: repeating-linear-gradient(120deg, #ff6bd6 0 8%, #6bfff0 12% 20%, #fff36b 24% 32%, #8a6bff 36% 44%) 0 0 / 300% 300%;
+  animation: tpx-holo 4s linear infinite; }
+@keyframes tpx-holo { to { background-position: 300% 300%; } }
+.tpx-card.r2 > * { z-index: 2; }
+.tpx-card.r2 .tpx-card-amt { text-shadow: 0 0 12px rgba(160, 210, 255, .9); }
+.tpx-card.r2 .tpx-card-rar { background: rgba(10, 30, 80, .55); color: #cfe3ff; }
+/* Epic — purple neon: a dark core, a light running round the rim. */
+.tpx-card.r3 { background: radial-gradient(circle at 50% 35%, #3a1d63, #160b29 75%); color: #f1e2ff; border-color: transparent;
+  box-shadow: 0 0 34px rgba(168, 85, 247, .7), 0 0 80px rgba(168, 85, 247, .3); }
+.tpx-card.r3::before { content: ""; position: absolute; inset: -60%; z-index: -1; background: conic-gradient(#a855f7, #ff6bd6, #6be4ff, #a855f7); animation: tpx-spin 2.2s linear infinite; }
+.tpx-card.r3::after { content: ""; position: absolute; inset: 3px; z-index: -1; border-radius: 19px; background: radial-gradient(circle at 50% 35%, #3a1d63, #160b29 75%); }
+.tpx-card.r3 .tpx-card-amt { color: #fff; text-shadow: 0 0 8px #a855f7, 0 0 20px #a855f7; }
+.tpx-card.r3 .tpx-card-rar { background: #a855f7; color: #fff; box-shadow: 0 0 12px #a855f7; }
+/* Legendary — solid gold jackpot, crown on top. */
+.tpx-card.r4 { overflow: visible; background: linear-gradient(160deg, #fff1b8, #ffcf3d 35%, #e89a12 75%, #b86b00); color: #5a2e00; border-color: #5a2e00;
+  box-shadow: 0 0 40px rgba(255, 190, 40, .8), 0 0 100px rgba(255, 178, 26, .45), inset 0 0 0 4px rgba(255, 250, 220, .7);
+  animation: tpx-gold 1.6s ease-in-out infinite; }
+@keyframes tpx-gold { 50% { box-shadow: 0 0 60px rgba(255, 210, 90, .95), 0 0 140px rgba(255, 178, 26, .55), inset 0 0 0 4px rgba(255, 250, 220, .9); } }
+.tpx-card.r4 .tpx-card-shine { mix-blend-mode: soft-light; border-radius: 19px; }
+.tpx-card.r4 .tpx-card-amt { font-size: 62px; text-shadow: 0 2px 0 #fff4c2; }
+.tpx-card.r4 .tpx-card-rar { background: #5a2e00; color: #ffd75e; }
+.tpx-crown { position: absolute; top: -86px; left: 50%; width: 170px; transform: translateX(-50%) rotate(-6deg); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .4));
+  animation: tpx-crown 1.2s cubic-bezier(.2, 1.6, .4, 1) .55s both; }
+@keyframes tpx-crown { from { transform: translateX(-50%) translateY(-40px) scale(.3); opacity: 0; } }
+
+/* ×N: a fan of face-down cards, flipped in cascade. */
+.tpx-fan { display: grid; grid-template-columns: repeat(5, 130px); gap: 14px; }
+.tpx-fan:not(.is-two) { grid-template-columns: repeat(var(--n, 5), 130px); }
+.tpx-slot { position: relative; width: 130px; height: 176px; perspective: 600px; animation: tpx-deal .35s cubic-bezier(.2, 1.3, .4, 1) calc(var(--i) * 30ms) both; }
+@keyframes tpx-deal { from { opacity: 0; transform: translateY(40px) scale(.6) rotate(-10deg); } }
+/* Each ×N card follows the mouse (coin-pull.js tilt), its light too. */
+.tpx-slot-tilt { position: absolute; inset: 0; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d;
+  transition: transform .18s ease-out; }
+.tpx-slot-tilt:not(.is-tilted) { transition: transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+.tpx-slot-tilt.is-tilted .tpx-card-shine { animation: none; mix-blend-mode: overlay; opacity: 1;
+  background: radial-gradient(circle at var(--gx, 50%) var(--gy, 50%), rgba(255, 255, 255, .85), transparent 55%); }
+.tpx-back { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; transition: transform .25s ease-in, opacity .2s .1s; }
+.tpx-card.is-mini { position: absolute; inset: 0; width: 130px; height: 176px; border-radius: 14px; border-width: 2px; gap: 5px;
+  transform: rotateY(-90deg); opacity: 0; transition: transform .28s cubic-bezier(.2, 1.4, .4, 1) .12s, opacity .1s .12s; }
+.tpx-card.is-mini .tpx-card-coin { width: 50px; height: 50px; }
+.tpx-card.is-mini .tpx-card-amt { font-size: 26px; }
+.tpx-card.r4.is-mini .tpx-card-amt { font-size: 28px; }
+.tpx-card.is-mini .tpx-card-rar { padding: 3px 8px; font-size: 10px; letter-spacing: .08em; }
+.tpx-slot.is-flipped .tpx-back { transform: rotateY(90deg); opacity: 0; }
+.tpx-slot.is-flipped .tpx-card { transform: none; opacity: 1; }
+.tpx-slot.is-star { z-index: 2; animation: tpx-star .5s cubic-bezier(.2, 1.6, .4, 1) both; }
+@keyframes tpx-star { 50% { transform: scale(1.22); } to { transform: scale(1.1); } }
+
+/* Coins flying to the balance. */
+.tpx-fly { position: fixed; left: 0; top: 0; z-index: 600; width: 26px; height: 26px; margin: -13px 0 0 -13px; pointer-events: none; }
+
 /* Held buttons: the fill sweeps while the button is held. */
 .tp-hold { position: relative; overflow: hidden; }
 .tp-hold > span:not(.tp-fill) { position: relative; }
-.tp-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--hold, 0) * 100%); background: rgba(255, 255, 255, .28); pointer-events: none; }
-.tp-ten { background: linear-gradient(135deg, #a855f7, #ff8a2e); }
-.tp-sum .tc-reveal-grid { margin-bottom: 4px; }
+.tp-fill { position: absolute; inset: 0; background: rgba(255, 255, 255, .3); pointer-events: none; clip-path: inset(0 calc((1 - var(--hold, 0)) * 100%) 0 0 round 9px); }
+/* A click where a hold is needed: a "no" shake and a bubble above. */
+.tp-hold.is-nudged, .tpx-pile.is-nudged { animation: tp-no .4s ease-out; }
+@keyframes tp-no { 20% { translate: -6px 0; } 40% { translate: 5px 0; } 60% { translate: -3px 0; } 80% { translate: 2px 0; } }
+.tp-hold { overflow: visible; }
+.tp-hold > .tp-fill { border-radius: inherit; }
+.tp-bubble { position: absolute; left: 50%; bottom: calc(100% + 10px); z-index: 3; translate: -50% 0; white-space: nowrap; pointer-events: none;
+  padding: 6px 12px; border-radius: 10px; background: #fffbe6; color: #2a1a00; font: 800 12.5px var(--sqr-display, system-ui);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .4); animation: tp-bubble 1.4s ease-out forwards; }
+.tp-bubble::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px; border: 6px solid transparent; border-top-color: #fffbe6; }
+.tpx-pile .tp-bubble { bottom: auto; top: -18px; }
+@keyframes tp-bubble { 0% { opacity: 0; transform: translateY(6px) scale(.9); } 12% { opacity: 1; transform: none; } 80% { opacity: 1; } 100% { opacity: 0; } }
+.tp-ten { background: linear-gradient(135deg, #a855f7, #ff8a2e); box-shadow: 0 0 16px rgba(168, 85, 247, .45); }
+/* Holding ×10 (2 s): the button strains — it shakes harder and glows brighter as --hold grows. */
+.tp-ten.is-holding { animation: tp-strain .08s linear infinite;
+  box-shadow: 0 0 calc(16px + var(--hold, 0) * 40px) rgba(255, 170, 60, calc(.45 + var(--hold, 0) * .5)), 0 0 calc(var(--hold, 0) * 70px) rgba(168, 85, 247, .6);
+  transform: scale(calc(1 + var(--hold, 0) * .08)); }
+@keyframes tp-strain { 25% { translate: calc(var(--hold, 0) * -3px) calc(var(--hold, 0) * 1px); } 75% { translate: calc(var(--hold, 0) * 3px) calc(var(--hold, 0) * -1px); } }
 @media (prefers-reduced-motion: reduce) {
-  .tp-pile, .tp-pile.is-holding, .tp-card.is-step .tp-env, .tp-stage.is-legend::before { animation: none; }
+  .tpx-spot, .tpx-pile, .tpx-pile.is-holding, .tpx-env-shine, .tpx-env.is-shaking, .tpx-one.is-step .tpx-env,
+  .tpx-card-shine, .tpx-card.r2::before, .tpx-card.r3::before, .tpx-card.r4, .tpx-stage.is-legend, .tpx-crown, .tpx-slot, .tpx-slot.is-star,
+  .tpx-one.is-open .tpx-rays, .tp-ten.is-holding { animation: none; }
+  .tpx-float { animation: none; opacity: 1; }
+  .tpx-legend .lg-rays, .tpx-legend .lg-ring, .tpx-legend .lg-flash, .tpx-legend .lg-bolt, .tc-reveal.tp:has(.tpx-legend) .tpx { animation: none; }
+  .tpx-legend .lg-title b, .tpx-one.is-open[data-r="4"] > .tpx-card, .tpx-one.is-open[data-r="3"] > .tpx-card { animation: none; opacity: 1; }
+  .tpx-stage.is-legend::after { display: none; }
+  .tpx-one .tpx-env, .tpx-one > .tpx-card, .tpx-card.is-mini, .tpx-back { transition: opacity .15s; }
 }

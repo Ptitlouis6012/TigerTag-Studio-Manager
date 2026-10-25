@@ -2278,16 +2278,11 @@
   "envOpen": "Otwórz",
   "envOpenSurprises": "Otwórz je",
   "chestOpen": "Otwórz skrzynię",
-  "pullHold": "Przytrzymaj, aby otworzyć",
+  "pullSound": "Dźwięk",
+  "pullHoldTen": "Przytrzymaj 2 s",
+  "pullHoldOne": "Przytrzymaj, aby otworzyć",
   "pullOne": "Otwórz ×1",
   "pullMany": "Otwórz ×{{n}}",
-  "pullAgain": "Jeszcze ×{{n}}",
-  "pullSkip": "Pomiń",
-  "pullTapNext": "Dotknij, aby kontynuować",
-  "pullLeft": {
-    "one": "Została {{n}} koperta",
-    "other": "Zostało {{n}} kopert"
-  },
   "chestInside": {
     "one": "{{n}} koperta w środku",
     "other": "{{n}} kopert w środku"
