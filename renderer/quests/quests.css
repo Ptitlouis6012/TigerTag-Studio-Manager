@@ -1201,15 +1201,16 @@ body.progress-view #gridSortWrap { display: none; }
   background: radial-gradient(circle at 35% 30%, #fff1b8 0 18%, #ffcf3d 36%, #e89a12 78%, #b86b00);
   box-shadow: inset 0 0 0 1.5px #a35a00, inset 0 0 0 3px rgba(255, 241, 184, .55); }
 .tcoin--big { width: 34px; height: 34px; box-shadow: inset 0 0 0 2.5px #a35a00, inset 0 0 0 6px rgba(255, 241, 184, .55), 0 0 18px rgba(255, 190, 40, .35); }
-.sqd-coins { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 14px;
-  border: 1px solid color-mix(in srgb, #ffcf3d 35%, var(--tsq-line)); background: linear-gradient(90deg, rgba(255, 207, 61, .10), transparent 60%), var(--tsq-card); }
-.sqd-coins-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.sqd-coins-txt b { font: 800 18px var(--qw-mono, monospace); color: #ffd75e; }
-.sqd-coins-txt small { font-size: 12px; color: var(--tsq-muted); }
+/* The TigerCoins card on the Deals banner's right (.sqr-card, like the other
+   Tiger Squad heroes): balance + envelopes waiting, then the actions. */
+.sqr-card.sqd-coins { display: flex; flex-direction: column; gap: 8px; width: 380px; max-width: 44%; padding: 10px 12px; }
+.sqd-coins-top { display: flex; align-items: center; gap: 10px; }
+.sqd-coins-bal { flex: 1; min-width: 0; font: 800 18px var(--qw-mono, monospace); color: #ffd75e; white-space: nowrap; }
+.sqd-coins-acts { display: flex; gap: 8px; }
+.sqd-coins-acts .sqd-coins-open { flex: 1; justify-content: center; }
 .sqd-coins-pile { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700;
   color: #ffd75e; background: rgba(255, 207, 61, .12); white-space: nowrap; }
 .sqd-coins-open { white-space: nowrap; }
-.sqd-coins { flex-wrap: wrap; }
 .sqd-coins-codebtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; white-space: nowrap;
   border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
   transition: color .15s, border-color .15s; }

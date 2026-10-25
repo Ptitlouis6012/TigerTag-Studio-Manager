@@ -275,17 +275,20 @@ function coinsBar(ctx) {
   const { t, esc, lang } = ctx, c = ctx.coins;
   if (!c) return "";
   const pile = (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0);
+  // A card on the banner's right, like the other Tiger Squad heroes' cards;
+  // the help line is its tooltip-free aria-label.
   return `
-    <section class="sqd-coins">
-      <span class="tcoin tcoin--big" aria-hidden="true"></span>
-      <div class="sqd-coins-txt">
-        <b>${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}</b>
-        <small>${esc(t("coinsHint"))}</small>
+    <div class="sqr-card sqd-coins" role="group" aria-label="${esc(t("coinsHint"))}">
+      <div class="sqd-coins-top">
+        <span class="tcoin tcoin--big" aria-hidden="true"></span>
+        <b class="sqd-coins-bal">${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}</b>
+        ${pile ? `<span class="sqd-coins-pile"><span class="tc-env-mini" aria-hidden="true"></span>${esc(t("coinsPile", { n: pile }))}</span>` : ""}
       </div>
-      ${pile ? `<span class="sqd-coins-pile"><span class="tc-env-mini" aria-hidden="true"></span>${esc(t("coinsPile", { n: pile }))}</span>
-      <button type="button" class="sqd-open sqd-coins-open" data-coins-open>${esc(t("coinsOpen"))}</button>` : ""}
-      <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog"><span class="icon icon-gift icon-13" aria-hidden="true"></span>${esc(t("coinsHaveCode"))}</button>
-    </section>`;
+      <div class="sqd-coins-acts">
+        ${pile ? `<button type="button" class="sqd-open sqd-coins-open" data-coins-open>${esc(t("coinsOpen"))}</button>` : ""}
+        <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog"><span class="icon icon-gift icon-13" aria-hidden="true"></span>${esc(t("coinsHaveCode"))}</button>
+      </div>
+    </div>`;
 }
 
 /** The gift-code modal: a scratch-card key in three boxes of four
@@ -564,8 +567,8 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadDeals"))}</h2><p>${esc(t("squadDealsSub"))}</p></div>
       <div class="hero-scene" aria-hidden="true"></div>
+      ${ctx.loading ? "" : coinsBar(ctx)}
     </section>
-    ${ctx.loading ? "" : coinsBar(ctx)}
     ${body}
     <button type="button" class="pp-close-tab sqd-close-tab${ctx.openId && ctx.openId === findOpen(ctx, live, history, ended) ? " is-open" : ""}" aria-label="${esc(t("squadDealsClose"))}"><span class="cttab-glyph">»</span></button>`;
 }
