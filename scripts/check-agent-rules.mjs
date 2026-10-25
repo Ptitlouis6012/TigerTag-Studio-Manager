@@ -21,9 +21,13 @@
  */
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { join, extname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
-const read = f => readFileSync(join(root, f), "utf8");
+// fileURLToPath, not URL.pathname: on Windows .pathname is "/C:/…" and the
+// joins below resolve to "C:\C:\…". CRLF → LF so a Windows checkout
+// (core.autocrlf=true) matches the "\n"-based patterns.
+const root = fileURLToPath(new URL("..", import.meta.url));
+const read = f => readFileSync(join(root, f), "utf8").replace(/\r\n/g, "\n");
 const LOCALES = ["en", "fr", "de", "es", "it", "zh", "pt", "pt-pt", "pl", "ru", "nl"];
 const errors = [], warnings = [];
 

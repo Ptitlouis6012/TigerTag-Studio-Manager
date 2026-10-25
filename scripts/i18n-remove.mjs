@@ -12,8 +12,9 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname;
+const root = fileURLToPath(new URL("..", import.meta.url));   // not .pathname: "/C:/…" on Windows
 const dir = path.join(root, "renderer/locales");
 const args = process.argv.slice(2);
 let keys = args.filter(a => !a.startsWith("--"));
