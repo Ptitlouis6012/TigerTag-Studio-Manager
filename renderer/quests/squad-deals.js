@@ -99,8 +99,10 @@ function dealParts(ctx, d, section) {
     : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
   const timer = got && exp && !used && section === "live"
     ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
+  // A deal paid in TigerCoins with no badge of its own reads "Free" (never "0 €").
+  const badge = d.badge ? pick(d.badge, lang) : d.costCoins > 0 ? t("squadDealsFree") : "";
   const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
-        ${d.badge ? `<span class="sqd-card-badge">${esc(pick(d.badge, lang))}</span>` : ""}${timer}`;
+        ${badge ? `<span class="sqd-card-badge ${badgeKind(badge, !d.badge && d.costCoins > 0)}">${esc(badge)}</span>` : ""}${timer}`;
   const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
@@ -196,8 +198,10 @@ function dealSide(ctx, d, section) {
 // a product photo filling the square on white like a deal's.
 
 // Light markdown → HTML, escaped: "## " heading, "- " bullet, "1. " step,
-// "> " highlighted note, blank line = new paragraph.
-function mdLite(esc, src) {
+// "> " highlighted note, **bold**, blank line = new paragraph.
+function mdLite(escRaw, src) {
+  // **bold** inside a line, after escaping (so nothing else turns into HTML).
+  const esc = x => escRaw(x).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>");
   const out = [], para = [];
   let list = null;   // { tag, items }
   const flushPara = () => { if (para.length) out.push(`<p>${para.map(esc).join(" ")}</p>`); para.length = 0; };
@@ -222,6 +226,17 @@ function mdLite(esc, src) {
   return out.join("");
 }
 
+// A badge's colour says what kind of perk it is, read from its text: XP
+// (green), free (black and gold), an amount off "−5 €" (red), a percentage
+// (orange, the default).
+function badgeKind(text, free = false) {
+  const s = String(text || "");
+  if (free) return "is-free";
+  if (/\bXP\b/i.test(s)) return "is-xp";
+  if (/[€$£¥]/.test(s)) return "is-amount";
+  return "is-pct";
+}
+
 // An announcement's picture with its badge and, when it has an end date, the
 // countdown to it (the same ticking pill as a claimed code's; at zero the view
 // repaints and the announcement is gone).
@@ -229,7 +244,7 @@ function annArt(ctx, d) {
   const { t, esc, lang } = ctx;
   const img = /^https:\/\//i.test(d.image || "") ? d.image : "", end = ms(d.endAt);
   return `${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="icon icon-info icon-20" aria-hidden="true"></span>`}
-        ${d.badge ? `<span class="sqd-card-badge">${esc(pick(d.badge, lang))}</span>` : ""}
+        ${d.badge ? `<span class="sqd-card-badge ${badgeKind(pick(d.badge, lang))}">${esc(pick(d.badge, lang))}</span>` : ""}
         ${end && end > Date.now() ? `<div class="sqd-timer" data-exp="${end}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, end - Date.now()) }))}</span></div>` : ""}`;
 }
 
@@ -248,6 +263,31 @@ function annCard(ctx, d) {
     </article>`;
 }
 
+// An announcement for an app (d.appLinks { ios, android, iosBeta, androidBeta }):
+// a QR code per platform to scan with the phone, beta first (the new features)
+// with a switch to the stable release; each QR is also a link. QR images come
+// from ctx.qr(url) (the app's local generator).
+function appsBlock(ctx, links) {
+  const { t, esc } = ctx;
+  const https = u => (/^https:\/\//i.test(u || "") ? u : "");
+  const chans = [["beta", https(links.iosBeta), https(links.androidBeta)], ["stable", https(links.ios), https(links.android)]].filter(c => c[1] || c[2]);
+  if (!chans.length || !ctx.qr) return "";
+  const qr = (url, os) => url ? `
+        <a class="sqd-app-qr" href="${esc(url)}" target="_blank" rel="noopener">
+          <img src="${ctx.qr(url)}" alt="" width="132" height="132">
+          <span><span class="icon icon-${os} icon-13" aria-hidden="true"></span>${esc(t(os === "apple" ? "appIphone" : "appAndroid"))}</span>
+        </a>` : "";
+  return `
+      <div class="sqd-apps" data-ch="${chans[0][0]}">
+        ${chans.length > 1 ? `<div class="sqd-apps-tabs" role="tablist">
+          <button type="button" role="tab" data-app-ch="beta"><b>${esc(t("appBeta"))}</b><small>${esc(t("appBetaHint"))}</small></button>
+          <button type="button" role="tab" data-app-ch="stable"><b>${esc(t("appStable"))}</b><small>${esc(t("appStableHint"))}</small></button>
+        </div>` : ""}
+        <p class="sqd-apps-scan"><span class="icon icon-mobile-app icon-14" aria-hidden="true"></span>${esc(t("appScan"))}</p>
+        ${chans.map(([ch, ios, android]) => `<div class="sqd-apps-qrs" data-for="${ch}">${qr(ios, "apple")}${qr(android, "android")}</div>`).join("")}
+      </div>`;
+}
+
 function annSide(ctx, d) {
   const { esc, lang } = ctx;
   const title = pick(d.title, lang), img = /^https:\/\//i.test(d.image || "") ? d.image : "";
@@ -260,6 +300,7 @@ function annSide(ctx, d) {
       <div class="sqd-side-body">
         <h2>${esc(title)}</h2>
         ${mdLite(esc, pick(d.body, lang) || pick(d.description, lang))}
+        ${d.appLinks ? appsBlock(ctx, d.appLinks) : ""}
         ${url && label ? `<div class="sqd-side-actions"><a class="sqd-open sqd-wide" href="${esc(url)}"${url.startsWith("https") ? ` target="_blank" rel="noopener"` : ""}>${esc(label)}<span class="icon icon-${url.startsWith("mailto") ? "mail" : "arrow-up-right"} icon-12" aria-hidden="true"></span></a></div>` : ""}
       </div>
     </aside>`;
@@ -275,23 +316,21 @@ function coinsBar(ctx) {
   const { t, esc, lang } = ctx, c = ctx.coins;
   if (!c) return "";
   const pile = (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0);
-  // A card on the banner's right, like the other Tiger Squad heroes' cards;
-  // the help line is its tooltip-free aria-label.
+  // A minimal card on the banner's right, like the other Tiger Squad heroes'
+  // cards: the coin and the balance; the envelope with how many wait (opens
+  // them); a gift icon for a code. Full texts in the accessible names.
   return `
     <div class="sqr-card sqd-coins" role="group" aria-label="${esc(t("coinsHint"))}">
-      <div class="sqd-coins-top">
-        <span class="tcoin tcoin--big" aria-hidden="true"></span>
-        <b class="sqd-coins-bal">${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}</b>
-        ${pile ? `<span class="sqd-coins-pile"><span class="tc-env-mini" aria-hidden="true"></span>${esc(t("coinsPile", { n: pile }))}</span>` : ""}
-      </div>
-      <div class="sqd-coins-acts">
-        ${pile ? `<button type="button" class="sqd-open sqd-coins-open" data-coins-open>${esc(t("coinsOpen"))}</button>` : ""}
-        <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog"><span class="icon icon-gift icon-13" aria-hidden="true"></span>${esc(t("coinsHaveCode"))}</button>
-      </div>
+      <b class="sqd-coins-bal" aria-label="${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}"><span class="tcoin tcoin--big" aria-hidden="true"></span>${(c.balance || 0).toLocaleString(lang)}</b>
+      ${pile ? `<button type="button" class="sqd-coins-env" data-coins-open aria-label="${esc(t("coinsOpen"))} — ${esc(t("coinsPile", { n: pile }))}"><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">${pile}</button>` : ""}
+      <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog" aria-label="${esc(t("coinsHaveCode"))}"><span class="icon icon-gift icon-13" aria-hidden="true"></span></button>
     </div>`;
 }
 
-/** The gift-code modal: a scratch-card key in three boxes of four
+/** The gift-code modal ("Gift code", generic: a code gives coins, envelopes or
+ *  chests), drawn from the ChatGPT mockup (assets-src/img/tigercoins/
+ *  code-modal-mockup.png): the tiger pointing at the boxes, a chest of coins,
+ *  a title plaque, the key in three boxes of four
  *  (XXXX-XXXX-XXXX). Typing moves to the next box, Backspace on an empty box
  *  goes back, a pasted key (dashes, spaces or not) fills the three. The backend
  *  credits it once per account (coins or surprise envelopes); its error stays in the
@@ -301,18 +340,28 @@ function openCoinsCodeModal(ctx) {
   if (document.querySelector(".tc-code")) return;
   const el = document.createElement("div");
   el.className = "tc-reveal tc-code";
-  const box = i => `<input class="tc-code-box" data-i="${i}" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX" aria-label="${esc(t("coinsCodePlaceholder"))} ${i + 1} / 3">`;
+  const box = i => `<input class="tc-code-box" data-i="${i}" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX" aria-label="${esc(t("giftCodeTitle"))} ${i + 1} / 3">`;
+  // Where a code comes from (the strip at the bottom).
+  const src = (ic, title, sub) => `<li><span class="tcx-src-ic">${ic}</span><span><b>${esc(t(title))}</b><small>${esc(t(sub))}</small></span></li>`;
   el.innerHTML = `
-    <form class="tc-reveal-card tc-code-card" role="dialog" aria-modal="true" aria-label="${esc(t("coinsCodePlaceholder"))}" novalidate>
-      <span class="tc-code-ic" aria-hidden="true"><span class="icon icon-gift icon-22"></span></span>
-      <h3>${esc(t("coinsCodePlaceholder"))}</h3>
-      <p class="tc-code-hint">${esc(t("coinsCodeHint"))}</p>
-      <div class="tc-code-row">${box(0)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(1)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(2)}</div>
-      <p class="tc-code-err" role="alert" hidden></p>
-      <div class="tc-reveal-actions">
-        <button type="button" class="tc-code-cancel" data-cancel>${esc(t("btnCancel"))}</button>
-        <button type="submit" class="sqd-open" data-redeem disabled>${esc(t("coinsRedeem"))}</button>
+    <form class="tc-reveal-card tc-code-card tcx" role="dialog" aria-modal="true" aria-label="${esc(t("giftCodeTitle"))}" novalidate>
+      <img class="tcx-tiger" src="../assets/img/tigercoins/code-tiger.webp" alt="" aria-hidden="true">
+      <img class="tcx-chest" src="../assets/img/tigercoins/code-chest.webp" alt="" aria-hidden="true">
+      <span class="tcx-pile" aria-hidden="true"><img src="../assets/img/tigercoins/envelope.webp" alt=""><img src="../assets/img/tigercoins/coin.webp" alt=""><img src="../assets/img/tigercoins/coin.webp" alt=""></span>
+      <button type="button" class="tcx-x" data-cancel aria-label="${esc(t("btnCancel"))}"><span class="icon icon-close icon-14" aria-hidden="true"></span></button>
+      <div class="tcx-main">
+        <div class="tcx-plaque"><span class="tcx-gift" aria-hidden="true"><span class="icon icon-gift"></span></span><h3>${esc(t("giftCodeTitle"))}</h3></div>
+        <p class="tc-code-hint">${esc(t("coinsCodeHint"))}</p>
+        <div class="tc-code-row">${box(0)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(1)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(2)}</div>
+        <p class="tc-code-err" role="alert" hidden></p>
+        <button type="submit" class="tcx-go" data-redeem disabled>${esc(t("coinsRedeem"))}<span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></button>
       </div>
+      <ul class="tcx-srcs">
+        ${src(`<span class="icon icon-discord" aria-hidden="true"></span>`, "codeSrcDiscord", "codeSrcDiscordSub")}
+        ${src(`<span class="icon icon-nfc" aria-hidden="true"></span>`, "codeSrcRfid", "codeSrcRfidSub")}
+        ${src(`<span class="icon icon-card" aria-hidden="true"></span>`, "codeSrcCard", "codeSrcCardSub")}
+        ${src(`<img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">`, "codeSrcShared", "codeSrcSharedSub")}
+      </ul>
     </form>`;
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add("is-open"));
@@ -643,6 +692,8 @@ export function wireDeals(host, ctx) {
   host.addEventListener("click", async e => {
     if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
     if (e.target.closest("[data-coins-code]")) { openCoinsCodeModal(ctx); return; }
+    const ch = e.target.closest("[data-app-ch]");
+    if (ch) { ch.closest(".sqd-apps").dataset.ch = ch.dataset.appCh; return; }
     const opener = e.target.closest("[data-coins-open]");
     if (opener) { if (!opener.disabled) { opener.disabled = true; try { await ctx.onOpenEnvelopes(); } finally { opener.disabled = false; } } return; }
     const tab = e.target.closest("[data-sqd-tab]");

@@ -5375,6 +5375,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await _renderDealsView();
     }, onExpire: () => _renderDealsView(),
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
+    qr: url => _makeQrDataUrl(url, { size: 264, margin: 2, fg: "#111318", bg: "#ffffff", logo: false }),   // black on white: always scans
     openChest: id => _coinsCtx(uid, paint).openChest(id),
     // A gift code: credited once per account; the error code reaches the toast.
     onRedeemCode: async (code) => {

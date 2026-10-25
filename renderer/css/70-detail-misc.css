@@ -114,6 +114,8 @@
   .icon-coffee   { -webkit-mask-image: url('../../assets/svg/icons/icon_coffee.svg'); mask-image: url('../../assets/svg/icons/icon_coffee.svg'); }
   .icon-gift      { -webkit-mask-image: url('../../assets/svg/icons/icon_gift.svg');         mask-image: url('../../assets/svg/icons/icon_gift.svg'); }
   .icon-volume    { -webkit-mask-image: url('../../assets/svg/icons/icon_volume.svg');       mask-image: url('../../assets/svg/icons/icon_volume.svg'); }
+  .icon-card      { -webkit-mask-image: url('../../assets/svg/icons/icon_card.svg');         mask-image: url('../../assets/svg/icons/icon_card.svg'); }
+  .icon-mobile-app { -webkit-mask-image: url('../../assets/svg/icons/icon_mobile_app.svg');  mask-image: url('../../assets/svg/icons/icon_mobile_app.svg'); }
   .icon-grid      { -webkit-mask-image: url('../../assets/svg/icons/icon_grid.svg');         mask-image: url('../../assets/svg/icons/icon_grid.svg'); }
   .icon-grip      { -webkit-mask-image: url('../../assets/svg/icons/icon_grip.svg');         mask-image: url('../../assets/svg/icons/icon_grip.svg'); }
   /* "Support the project" button — opens the chooser (Buy Me a Coffee, Ko-fi or

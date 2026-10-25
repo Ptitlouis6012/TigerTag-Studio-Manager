@@ -1029,6 +1029,11 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-card-art > .icon { width: 44px; height: 44px; background: var(--tsq-orange); }
 .sqd-card-badge { position: absolute; top: 7px; right: 7px; padding: 5px 11px; border-radius: 99px; font: 800 17px/1 var(--qw-mono, monospace);
   color: #fff; background: var(--tsq-orange); box-shadow: 0 2px 10px rgba(0, 0, 0, .35); }
+/* One colour per kind of perk (squad-deals.js badgeKind): a percentage stays
+   orange; an amount off is red; XP is green; free is black and gold. */
+.sqd-card-badge.is-amount { background: #e3343b; }
+.sqd-card-badge.is-xp { background: #1fa85c; box-shadow: 0 2px 10px rgba(0, 0, 0, .35), 0 0 14px rgba(61, 220, 132, .45); }
+.sqd-card-badge.is-free { background: #111318; color: #ffd75e; box-shadow: inset 0 0 0 2px #ffcf3d, 0 2px 10px rgba(0, 0, 0, .35), 0 0 14px rgba(255, 207, 61, .35); }
 .sqd-card-body { display: flex; flex-direction: column; gap: 4px; padding: 9px 10px 10px; flex: 1; }
 .sqd-card-partner { font: 700 11px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-orange); }
 .sqd-card-body h3 { margin: 0; font-size: 14px; line-height: 1.3; color: var(--tsq-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1197,20 +1202,24 @@ body.progress-view #gridSortWrap { display: none; }
 /* ── TigerCoins (functions/tigerCoins.js) ────────────────────────────────────
    The coin, the balance bar over the deals, coin prices, the surprise envelope
    reveal, the gift-code modal and the gift envelope. */
-.tcoin { display: inline-block; flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px;
-  background: radial-gradient(circle at 35% 30%, #fff1b8 0 18%, #ffcf3d 36%, #e89a12 78%, #b86b00);
-  box-shadow: inset 0 0 0 1.5px #a35a00, inset 0 0 0 3px rgba(255, 241, 184, .55); }
-.tcoin--big { width: 34px; height: 34px; box-shadow: inset 0 0 0 2.5px #a35a00, inset 0 0 0 6px rgba(255, 241, 184, .55), 0 0 18px rgba(255, 190, 40, .35); }
+/* The TigerCoin: the illustrated tiger coin (assets/img/tigercoins/coin.webp). */
+.tcoin { display: inline-block; flex-shrink: 0; width: 16px; height: 16px; vertical-align: -3px;
+  background: url("../../assets/img/tigercoins/coin.webp") center / contain no-repeat; }
+.tcoin--big { width: 38px; height: 38px; filter: drop-shadow(0 0 10px rgba(255, 190, 40, .45)); }
 /* The TigerCoins card on the Deals banner's right (.sqr-card, like the other
-   Tiger Squad heroes): balance + envelopes waiting, then the actions. */
-.sqr-card.sqd-coins { display: flex; flex-direction: column; gap: 8px; width: 380px; max-width: 44%; padding: 10px 12px; }
-.sqd-coins-top { display: flex; align-items: center; gap: 10px; }
-.sqd-coins-bal { flex: 1; min-width: 0; font: 800 18px var(--qw-mono, monospace); color: #ffd75e; white-space: nowrap; }
-.sqd-coins-acts { display: flex; gap: 8px; }
-.sqd-coins-acts .sqd-coins-open { flex: 1; justify-content: center; }
-.sqd-coins-pile { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700;
-  color: #ffd75e; background: rgba(255, 207, 61, .12); white-space: nowrap; }
-.sqd-coins-open { white-space: nowrap; }
+   Tiger Squad heroes), minimal, one row: the coin and the balance; the
+   envelope with how many wait (opens them); a gift icon for a code. */
+.sqr-card.sqd-coins { display: flex; flex-direction: row; align-items: center; gap: 10px; padding: 8px 10px 8px 12px; }
+.sqd-coins-bal { display: inline-flex; align-items: center; gap: 8px; margin-right: 6px; font: 800 24px var(--qw-mono, monospace); color: #ffd75e;
+  text-shadow: 0 0 14px rgba(255, 190, 40, .35); white-space: nowrap; }
+.sqd-coins-env { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 8px; border: 0; border-radius: 12px; cursor: pointer;
+  background: linear-gradient(135deg, #ff8a2e, #e3343b); color: #fff; font: 900 17px var(--qw-mono, monospace);
+  box-shadow: 0 0 16px rgba(255, 110, 50, .45); transition: transform .15s, box-shadow .15s; }
+.sqd-coins-env img { width: 22px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); animation: tc-env-wiggle 2.6s ease-in-out infinite; }
+.sqd-coins-env:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(255, 110, 50, .7); }
+.sqd-coins-env:disabled { opacity: .6; cursor: default; }
+.sqd-coins .sqd-coins-codebtn { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 12px; }
+.sqd-coins .sqd-coins-codebtn .icon { width: 16px; height: 16px; }
 .sqd-coins-codebtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; white-space: nowrap;
   border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
   transition: color .15s, border-color .15s; }
@@ -1307,8 +1316,7 @@ body.progress-view #gridSortWrap { display: none; }
   .tc-env-flap, .tc-env-note, .tc-env-seal { transition: none; }
 }
 /* A tiny red envelope with its gold seal (the coins bar's pile). */
-.tc-env-mini { position: relative; width: 12px; height: 15px; flex-shrink: 0; border-radius: 2px; background: linear-gradient(160deg, #e3343b, #b5161e); }
-.tc-env-mini::after { content: ""; position: absolute; left: 50%; top: 38%; width: 5px; height: 5px; border-radius: 50%; transform: translate(-50%, -50%); background: #ffcf3d; }
+.tc-env-mini { display: inline-block; width: 13px; height: 16px; flex-shrink: 0; background: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat; }
 /* TigerCoins chest (squad-deals.js showChest): a box in its type's colour
    (--cc) with gold bands; opening lifts the lid and spills a light, then its
    envelopes are revealed. */
@@ -1601,3 +1609,85 @@ body.progress-view #gridSortWrap { display: none; }
   .tpx-stage.is-legend::after { display: none; }
   .tpx-one .tpx-env, .tpx-one > .tpx-card, .tpx-card.is-mini, .tpx-back { transition: opacity .15s; }
 }
+/* The gift-code modal (squad-deals.js openCoinsCodeModal), from the ChatGPT
+   mockup: separate art layers (tiger, chest, coin pile) around a centre with
+   the title plaque, the boxes and a big Redeem button; where codes come from
+   along the bottom. Each layer moves on its own. */
+.tc-code-card.tcx { position: relative; width: min(860px, 94vw); padding: 46px 0 0; overflow: visible; text-align: center;
+  border: 2px solid #ffcf3d; border-radius: 26px; box-shadow: 0 0 0 4px rgba(255, 207, 61, .15), 0 0 60px rgba(255, 178, 26, .25), 0 30px 80px rgba(0, 0, 0, .6);
+  background: radial-gradient(ellipse at 50% 40%, #26305a 0%, #151a33 55%, #0b0e1c 100%); }
+.tcx-main { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 0 230px 24px; }
+.tcx-plaque { position: relative; padding: 12px 46px 10px; border-radius: 16px; background: linear-gradient(180deg, #6a1f2a, #3d0f17);
+  box-shadow: inset 0 0 0 3px #e89a12, inset 0 0 0 5px #3d0f17, inset 0 0 0 6px rgba(255, 207, 61, .5), 0 8px 20px rgba(0, 0, 0, .4); }
+.tcx-plaque h3 { margin: 0; font: 900 34px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  background: linear-gradient(180deg, #fff, #ffe08a 55%, #ffb21a); -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 3px 0 #2a0a10); }
+.tcx-gift { position: absolute; left: 50%; top: -34px; display: grid; place-items: center; width: 50px; height: 50px; translate: -50% 0; border-radius: 14px;
+  background: linear-gradient(180deg, #ff6b4a, #d8261f); box-shadow: inset 0 0 0 3px #ffcf3d, 0 0 26px rgba(255, 190, 40, .7); animation: tcx-gift 2.4s ease-in-out infinite; }
+.tcx-gift .icon { width: 26px; height: 26px; background: #fff3c4; }
+@keyframes tcx-gift { 50% { transform: translateY(-5px) rotate(-4deg); } }
+.tcx .tc-code-hint { margin: 0; font-size: 14px; font-weight: 600; color: #b9c2e0; }
+.tcx .tc-code-box { width: 112px; flex: 0 1 112px; height: 60px; font-size: 24px; border: 2px solid rgba(255, 207, 61, .55); background: #0b0e1c;
+  box-shadow: inset 0 0 14px rgba(255, 207, 61, .12), 0 0 14px rgba(255, 207, 61, .15); }
+.tcx .tc-code-box:focus { border-color: #ffcf3d; box-shadow: inset 0 0 14px rgba(255, 207, 61, .2), 0 0 0 4px rgba(255, 207, 61, .18), 0 0 22px rgba(255, 207, 61, .45); }
+.tcx .tc-code-dash { color: #ffcf3d; font-size: 22px; }
+.tcx-go { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 330px; max-width: 100%; height: 56px; margin-top: 4px; border: 0; border-radius: 16px; cursor: pointer;
+  background: linear-gradient(180deg, #ffc23a, #ff8a1e); color: #3a1a00; font: 900 22px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .06em;
+  box-shadow: inset 0 -4px 0 rgba(120, 50, 0, .35), inset 0 2px 0 rgba(255, 255, 255, .5), 0 8px 22px rgba(255, 140, 30, .45); transition: transform .12s, filter .12s, opacity .15s; }
+.tcx-go .icon { background: currentColor; }
+.tcx-go:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.06); }
+.tcx-go:not(:disabled):active { transform: translateY(1px); }
+.tcx-go:disabled { opacity: .45; cursor: default; }
+.tcx-x { position: absolute; z-index: 4; top: 14px; right: 14px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, .15); background: rgba(0, 0, 0, .35); color: #cfd6ee; }
+.tcx-x .icon { background: currentColor; }
+.tcx-x:hover { color: #fff; }
+/* The art layers, each with its own little motion. */
+.tcx-tiger { position: absolute; z-index: 3; left: -38px; top: -26px; width: 250px; pointer-events: none; transform-origin: 40% 90%;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .45)); animation: tcx-tiger 3.2s ease-in-out infinite; }
+@keyframes tcx-tiger { 50% { transform: rotate(2.5deg) translateY(-4px); } }
+.tcx-chest { position: absolute; z-index: 3; right: -40px; bottom: 70px; width: 250px; pointer-events: none;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .45)) drop-shadow(0 0 24px rgba(255, 190, 40, .35)); animation: tcx-chest 2.8s ease-in-out infinite; }
+@keyframes tcx-chest { 50% { transform: translateY(-6px) rotate(-1.5deg); } }
+.tcx-pile { position: absolute; z-index: 3; left: -14px; bottom: 74px; width: 170px; height: 120px; pointer-events: none; }
+.tcx-pile img { position: absolute; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .45)); }
+.tcx-pile img:nth-child(1) { left: 0; bottom: 18px; width: 72px; rotate: -14deg; }
+.tcx-pile img:nth-child(2) { left: 52px; bottom: 0; width: 96px; animation: tcx-coin 2.6s ease-in-out infinite; }
+.tcx-pile img:nth-child(3) { left: 118px; bottom: 6px; width: 52px; animation: tcx-coin 2.6s ease-in-out .8s infinite; }
+@keyframes tcx-coin { 50% { transform: translateY(-5px) rotate(6deg); } }
+/* Where codes come from. */
+.tcx-srcs { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 0; list-style: none;
+  border-top: 2px solid rgba(255, 207, 61, .45); border-radius: 0 0 24px 24px; background: rgba(5, 7, 15, .6); }
+.tcx-srcs li { display: flex; align-items: center; gap: 12px; padding: 14px 16px; text-align: left; }
+.tcx-srcs li + li { border-left: 1px solid rgba(255, 255, 255, .08); }
+.tcx-src-ic { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; }
+.tcx-src-ic .icon { width: 30px; height: 30px; }
+.tcx-src-ic .icon-discord { background: #5865f2; }
+.tcx-src-ic .icon-nfc { background: #7aa2ff; height: 22px; }
+.tcx-src-ic .icon-card { background: #ffd75e; }
+.tcx-src-ic img { width: 30px; height: 36px; object-fit: contain; }
+.tcx-srcs b { display: block; font-size: 13.5px; color: #eef1fb; }
+.tcx-srcs small { display: block; font-size: 12px; color: #8f97b3; }
+@media (max-width: 900px) { .tcx-tiger, .tcx-chest, .tcx-pile { display: none; } .tcx-main { padding: 0 24px 24px; } .tcx-srcs { grid-template-columns: repeat(2, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .tcx-gift, .tcx-tiger, .tcx-chest, .tcx-pile img { animation: none; } }
+/* An app announcement's side card (squad-deals.js appsBlock): beta / stable
+   switch, then a QR code per platform to scan with the phone (also a link). */
+.sqd-apps { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 4px; padding: 12px; border-radius: 14px; background: rgba(0, 0, 0, .25);
+  box-shadow: inset 0 0 0 1px var(--tsq-line); }
+.sqd-apps-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sqd-apps-tabs button { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; height: auto; min-height: 0; line-height: 1.25; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-align: left;
+  border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); }
+.sqd-apps-tabs b { font-size: 13px; color: var(--tsq-text, #eef1fb); }
+.sqd-apps-tabs small { font-size: 11px; }
+.sqd-apps[data-ch="beta"] [data-app-ch="beta"], .sqd-apps[data-ch="stable"] [data-app-ch="stable"] {
+  border-color: var(--tsq-orange); background: color-mix(in srgb, var(--tsq-orange) 14%, transparent); color: var(--tsq-text, #eef1fb); }
+.sqd-apps-scan { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 12.5px; font-weight: 600; color: var(--tsq-muted); }
+.sqd-apps-scan .icon { background: currentColor; }
+.sqd-apps-qrs { display: none; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 10px; }
+.sqd-apps[data-ch="beta"] .sqd-apps-qrs[data-for="beta"], .sqd-apps[data-ch="stable"] .sqd-apps-qrs[data-for="stable"] { display: grid; }
+.sqd-app-qr { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border-radius: 12px; background: #fff; text-decoration: none;
+  transition: transform .15s, box-shadow .15s; }
+.sqd-app-qr:hover { transform: translateY(-2px); box-shadow: 0 0 0 3px var(--tsq-orange); }
+.sqd-app-qr img { width: 132px; height: 132px; image-rendering: pixelated; }
+.sqd-app-qr > span { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; font-weight: 800; color: #1d1d1f; }
+.sqd-app-qr .icon { background: #1d1d1f; }
