@@ -740,7 +740,7 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-ring-row:has([data-i="8"]:hover) circle[data-i="8"],
 .xph-ring-row:has([data-i="9"]:hover) circle[data-i="9"],
 .xph-ring-row:has([data-i="10"]:hover) circle[data-i="10"],
-.xph-ring-row:has([data-i="11"]:hover) circle[data-i="11"] { stroke-width: 22; filter: drop-shadow(0 0 6px currentColor) brightness(1.15); }
+.xph-ring-row:has([data-i="11"]:hover) circle[data-i="11"] { stroke-width: 34; filter: drop-shadow(0 0 6px currentColor) brightness(1.15); }
 .xph-ring-row:has([data-i="0"]:hover) li[data-i="0"],
 .xph-ring-row:has([data-i="1"]:hover) li[data-i="1"],
 .xph-ring-row:has([data-i="2"]:hover) li[data-i="2"],

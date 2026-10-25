@@ -56,17 +56,17 @@ export function breakdownHtml(ctx, log, days = 30) {
   const span = parts.reduce((a, p) => a + Math.abs(p.v), 0);
   // The ring: one arc per category, sized by its share of the XP gained, with a
   // hairline gap between arcs.
-  const R = 52, C = 2 * Math.PI * R;
+  const R = 46, C = 2 * Math.PI * R;   // a thick ring: 28 wide, its outer edge where it always was
   let at = 0;
   // Hovering an arc or its legend row lifts that arc and dims the others
   // (quests.css .xph-ring-row, matched by data-i).
   const arcs = span ? parts.map((p, i) => {
     const len = Math.abs(p.v) / span * C, gap = parts.length > 1 ? Math.min(3, len / 3) : 0;
-    const arc = `<circle data-i="${i}" style="color:${p.c.color}" r="${R}" cx="64" cy="64" fill="none" stroke="${p.c.color}" stroke-width="16"
+    const arc = `<circle data-i="${i}" style="color:${p.c.color}" r="${R}" cx="64" cy="64" fill="none" stroke="${p.c.color}" stroke-width="28"
       stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-at}" transform="rotate(-90 64 64)"/>`;
     at += len;
     return arc;
-  }).join("") : `<circle r="${R}" cx="64" cy="64" fill="none" stroke="#262c3d" stroke-width="16"/>`;
+  }).join("") : `<circle r="${R}" cx="64" cy="64" fill="none" stroke="#262c3d" stroke-width="28"/>`;
   const legend = parts.map((p, i) => `
     <li data-i="${i}"><span class="xph-dot" style="--c:${p.c.color}"></span><span>${esc(t("xpCat_" + p.c.id))}</span>
       <b class="${p.v < 0 ? "is-down" : "is-up"}">${signed(ctx, p.v)}</b></li>`).join("");
