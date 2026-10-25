@@ -1891,7 +1891,7 @@
   .spool-card .card-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Hovered card with a name too long to fit: it scrolls to its end and back
      (wired in inventory.js — --mq-dist / --mq-dur are measured per card). */
-  .spool-card .card-name.is-marquee, .sqd-card-body > h3.is-marquee { text-overflow: clip; }
+  .spool-card .card-name.is-marquee, .sqd-card-body > h3.is-marquee, .nc-tile b.is-marquee, .tc-give-name.is-marquee { text-overflow: clip; }
   /* Starts moving the instant the card is hovered — no lead-in pause: out
      (0-40 %), rest at the end (40-55 %), back (55-95 %), a short rest at the
      start (95-100 %) before the next loop. */

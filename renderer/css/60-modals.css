@@ -4554,6 +4554,9 @@
   display: flex; flex-direction: column; gap: 18px;
   padding: 20px;
 }
+/* Still scrolls (wheel, trackpad), without a visible scrollbar. */
+.whatsnew-body { scrollbar-width: none; }
+.whatsnew-body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .whatsnew-release-title {
   font-size: 16px; font-weight: 700; color: var(--text);
   letter-spacing: -.01em; line-height: 1.3;
@@ -4561,12 +4564,12 @@
   border-bottom: 1px solid var(--border);
 }
 .whatsnew-item { display: flex; gap: 14px; align-items: flex-start; }
+/* Just the icon, no tile behind it — larger, so it still leads the line. */
 .whatsnew-item-icon {
-  flex-shrink: 0; width: 38px; height: 38px; border-radius: 11px;
+  flex-shrink: 0; width: 30px; height: 30px; margin-top: 1px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--primary-soft);
 }
-.whatsnew-item-icon .icon { background-color: var(--primary); }
+.whatsnew-item-icon .icon { width: 22px; height: 22px; background-color: var(--primary); }
 .whatsnew-item-text { flex: 1; min-width: 0; }
 .whatsnew-item-title { font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
 .whatsnew-item-body { font-size: 13px; line-height: 1.55; color: var(--muted); }

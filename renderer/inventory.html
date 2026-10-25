@@ -300,7 +300,7 @@
               <button id="vtgSquadChip" data-i18n-aria="squadTabRankings"><span class="icon icon-community icon-13"></span></button>
               <button id="vtgSquadItems" data-i18n-aria="squadItems"><span class="icon icon-star-fill icon-13"></span><span class="vtg-btn-bar" aria-hidden="true"><i></i></span></button>
               <button id="vtgSquadHist" data-i18n-aria="xpHistory"><span class="icon icon-clock icon-13"></span></button>
-              <button id="vtgSquadDeals" data-i18n-aria="squadDeals"><span class="icon icon-percent icon-13"></span></button>
+              <button id="vtgSquadDeals" data-i18n-aria="squadDeals"><span class="icon icon-percent icon-13"></span><span class="view-order-badge" id="viewDealsBadge" hidden>0</span></button>
             </div>
           </div>
         </div>
@@ -1462,6 +1462,15 @@
         </span>
         <span class="icon icon-chevron-r icon-14 fp-shop-arrow"></span>
       </button>
+      <!-- Give one of my gift envelopes to a friend (the give picker) -->
+      <button class="fp-shop fp-give" id="btnGiveEnvelope">
+        <img class="fp-give-ic" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+        <span class="fp-shop-text">
+          <span class="fp-shop-title" data-i18n="friendGiveEnvelope">Give an envelope</span>
+          <span class="fp-shop-sub" data-i18n="friendGiveEnvelopeSub">Pass a gift envelope to a friend</span>
+        </span>
+        <span class="icon icon-chevron-r icon-14 fp-shop-arrow"></span>
+      </button>
     </div>
 
   </div>
@@ -1496,7 +1505,7 @@
   <div class="panel-body friends-body">
     <div id="notifList" class="fp-list notif-list"></div>
     <div class="fp-empty notif-empty hidden" id="notifEmpty">
-      <div class="fp-empty-icon"><span class="icon icon-bell icon-14"></span></div>
+      <img class="nc-empty-tiger" src="../assets/img/tigersquad/legendary/tiger.webp" alt="" aria-hidden="true">
       <div class="fp-empty-title" data-i18n="notifsEmptyTitle">No notifications</div>
       <div class="fp-empty-sub" data-i18n="notifsEmptySub">Friend requests and updates show up here</div>
     </div>

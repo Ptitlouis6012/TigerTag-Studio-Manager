@@ -18,6 +18,7 @@
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
 import { revealPulls } from './coin-pull.js';
+import { ambientStart, ambientStop } from './coin-sound.js';
 
 // A text field is a plain string or a { lang: text } map (en as fallback).
 const pick = (v, lang) => (v && typeof v === "object" ? v[lang] || v.en || Object.values(v)[0] || "" : v || "");
@@ -25,6 +26,10 @@ const ms = v => (v?.toMillis ? v.toMillis() : typeof v === "number" ? v : v ? Da
 // When the member's claimed code stops being usable: claims/{uid}.expiresAt
 // (set by the squadDeal function from the deal's claimDays); a claim made
 // before expiresAt existed gets claim time + claimDays. null = no limit.
+// A badge that just says "free" in TigerHub: the app writes "Free" in the reader's language.
+const FREE_BADGE = /^(free|offert|offerts|gratuit|gratis)$/i;
+// The last 3 days of a claimed code: its countdown turns red and pulses — use it now.
+const SOON_MS = 3 * 864e5;
 export function claimExpiry(d) {
   const c = d.claim; if (!c) return null;
   if (c.expiresAt) return ms(c.expiresAt);
@@ -98,17 +103,21 @@ function dealParts(ctx, d, section) {
   const tag = used ? ["is-used", "check", "squadDealsUsed"] : expired ? ["is-ended", "clock", "squadDealsExpired"]
     : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
   const timer = got && exp && !used && section === "live"
-    ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
-  // A deal paid in TigerCoins with no badge of its own reads "Free" (never "0 €").
+    ? `<div class="sqd-timer${exp - Date.now() < SOON_MS ? " is-soon" : ""}" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
+  // A deal paid in TigerCoins with no badge of its own reads "Free" (never "0 €"),
+  // and so does a badge set to "free" in TigerHub (a gift: "5 € on us" is free,
+  // not "-5 €") — shown in the reader's language.
   // hideBadge (set in TigerHub): the picture already says it, no badge at all.
-  const badge = d.hideBadge ? "" : d.badge ? pick(d.badge, lang) : d.costCoins > 0 ? t("squadDealsFree") : "";
+  const freeBadge = FREE_BADGE.test(String(pick(d.badge, lang) || "").trim());
+  const free = freeBadge || (!d.badge && d.costCoins > 0);
+  const badge = d.hideBadge ? "" : free ? t("squadDealsFree") : d.badge ? pick(d.badge, lang) : "";
   const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
-        ${badge ? `<span class="sqd-card-badge ${badgeKind(badge, !d.badge && d.costCoins > 0)}">${esc(badge)}</span>` : ""}${timer}`;
+        ${badge ? `<span class="sqd-card-badge ${badgeKind(badge, free)}">${esc(badge)}</span>` : ""}${timer}`;
   const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
   return { claim, used, exp, code, got, linkOnly, locked, unique, left, safeLink, tag, art, partner, cost, afford, coinsShort: Math.max(0, cost - coins),
-    title: d.badge && !d.hideBadge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
+    title: d.badge && !d.hideBadge && !freeBadge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
 }
 
 // The grid card: illustration, partner, title and one state line — the
@@ -166,8 +175,11 @@ function dealSide(ctx, d, section) {
           ${!p.got ? (p.unique && !p.left ? `<span class="sqd-left">${esc(t("squadDealsSoldOut"))}</span>` : (p.cost ? `<button type="button" class="sqd-open sqd-wide sqd-get sqd-spend" data-deal="${esc(d.id)}"${p.afford ? "" : " disabled"}><span class="tcoin" aria-hidden="true"></span>${esc(t("coinsSpend", { n: p.cost.toLocaleString(lang) }))}</button>
             ${p.afford ? "" : `<small class="sqd-coins-short">${esc(t("coinsToGo", { n: p.coinsShort.toLocaleString(lang) }))}</small>`}`
             : `<button type="button" class="sqd-open sqd-wide sqd-get" data-deal="${esc(d.id)}">${esc(t(p.linkOnly ? "squadDealsUnlock" : "squadDealsGet"))}</button>`)) : ""}
-          ${p.code ? `<div class="sqd-code-row"><code>${esc(p.code)}</code><button type="button" class="sqd-code" data-code="${esc(p.code)}"><span class="icon icon-copy icon-13" aria-hidden="true"></span><span class="sqd-code-lbl">${esc(t("squadDealsCopyBtn"))}</span></button></div>` : ""}
-          ${p.got && p.safeLink ? `<a class="sqd-open sqd-wide" href="${esc(p.safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
+          ${/* Used or archived: the code is spent — stars in its place, nothing to copy,
+               and no link (the shop link carries the code to apply it). */""}
+          ${p.code ? (p.used || section !== "live" ? `<div class="sqd-code-row is-spent"><code aria-hidden="true">********</code></div>`
+            : `<div class="sqd-code-row"><code>${esc(p.code)}</code><button type="button" class="sqd-code" data-code="${esc(p.code)}"><span class="icon icon-copy icon-13" aria-hidden="true"></span><span class="sqd-code-lbl">${esc(t("squadDealsCopyBtn"))}</span></button></div>`) : ""}
+          ${p.got && p.safeLink && !p.used && section === "live" ? `<a class="sqd-open sqd-wide" href="${esc(p.safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
           ${p.got && !p.used && section === "live" ? `<button type="button" class="sqd-mark sqd-wide" data-deal="${esc(d.id)}"><span class="hold-progress" aria-hidden="true"></span><span class="icon icon-check icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsMarkUsed"))}</span></button>` : ""}
         </div>`;
   const foot = section === "live" && !p.used && d.claimDays ? `<small class="sqd-side-foot"><span class="icon icon-clock icon-12" aria-hidden="true"></span>${esc(t("squadDealsClaimDays", { n: d.claimDays }))}</small>` : "";
@@ -317,15 +329,83 @@ function coinsBar(ctx) {
   const { t, esc, lang } = ctx, c = ctx.coins;
   if (!c) return "";
   const pile = (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0);
-  // A minimal card on the banner's right, like the other Tiger Squad heroes'
-  // cards: the coin and the balance; the envelope with how many wait (opens
-  // them); a gift icon for a code. Full texts in the accessible names.
+  // On the banner's right: a minimal card holding only the balance, like the
+  // other Tiger Squad heroes' cards; under it, the envelope with how many wait
+  // (opens them) and a plain gift icon (a code). Full texts in the accessible names.
   return `
-    <div class="sqr-card sqd-coins" role="group" aria-label="${esc(t("coinsHint"))}">
-      <b class="sqd-coins-bal" aria-label="${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}"><span class="tcoin tcoin--big" aria-hidden="true"></span>${(c.balance || 0).toLocaleString(lang)}</b>
-      ${pile ? `<button type="button" class="sqd-coins-env" data-coins-open aria-label="${esc(t("coinsOpen"))} — ${esc(t("coinsPile", { n: pile }))}"><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">${pile}</button>` : ""}
-      <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog" aria-label="${esc(t("coinsHaveCode"))}"><span class="icon icon-gift icon-13" aria-hidden="true"></span></button>
+    <div class="sqd-coins-wrap" role="group" aria-label="${esc(t("coinsHint"))}">
+      <div class="sqr-card sqd-coins">
+        <b class="sqd-coins-bal" aria-label="${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}">${(c.balance || 0).toLocaleString(lang)}<span class="tcoin tcoin--big" aria-hidden="true"></span></b>
+      </div>
+      <div class="sqd-coins-acts">
+        ${/* Always there: with envelopes it opens them (and calls for a click); at 0 it says how to get some. */""}
+        ${pile ? `<button type="button" class="sqd-coins-env" data-coins-open aria-label="${esc(t("coinsOpen"))} — ${esc(t("coinsPile", { n: pile }))}"><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">${pile}</button>`
+          : `<button type="button" class="sqd-coins-env is-empty" data-coins-help aria-haspopup="dialog" aria-label="${esc(t("envHelpTitle"))}"><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">0</button>`}
+        <button type="button" class="sqd-coins-gift" data-coins-code aria-haspopup="dialog" aria-label="${esc(t("coinsHaveCode"))}"><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true"></button>
+      </div>
     </div>`;
+}
+
+/** "You got an envelope!": a friend gave one (functions/tigerCoins.js
+ *  giveEnvelope). Only says so — who, with their avatar — and closes: the
+ *  envelope waits in the pile. Resolves "see" (go to the Deals) or "close". */
+export function showEnvelopeGift(ctx, { name, avatar }) {
+  const { t, esc } = ctx;
+  const el = document.createElement("div");
+  el.className = "tc-reveal tc-gotgift";
+  el.innerHTML = `
+    <div class="tc-reveal-card tc-code-card tcx tcx--help" role="dialog" aria-modal="true" aria-label="${esc(t("envGiftTitle"))}">
+      <img class="tch-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      <div class="tcx-main">
+        <div class="tcx-plaque"><h3>${esc(t("envGiftTitle"))}</h3></div>
+        <p class="tcg-from">${avatar || ""}<span><b>${esc(t("notifEnvelopeGift", { name }))}</b><small>${esc(t("notifEnvelopeGiftText"))}</small></span></p>
+        <button type="button" class="tcx-go" data-see>${esc(t("envGiftSee"))}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("is-open"));
+  return new Promise(resolve => {
+    const close = how => { el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); resolve(how); };
+    const onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close("close"); } };
+    document.addEventListener("keydown", onKey, true);
+    el.addEventListener("mousedown", e => { if (e.target === el) close("close"); });   // no × : a click beside it or Esc closes
+    el.querySelector("[data-see]").addEventListener("click", () => close("see"));
+  });
+}
+
+/** "How to get envelopes": opened from the envelope button when there is none.
+ *  The gift-code modal's look, narrower: a big envelope rising from behind the
+ *  card, a title plaque, the
+ *  five ways (TigerTag+ Certified filaments, gift codes, Discord and e-mail,
+ *  milestones and events, a shared envelope), and "I have a code", which opens the code modal. */
+function openEnvelopeHelp(ctx) {
+  const { t, esc } = ctx;
+  if (document.querySelector(".tc-help")) return;
+  const el = document.createElement("div");
+  el.className = "tc-reveal tc-help";
+  const row = (art, title, sub) => `<li><span class="tch-ic">${art}</span><span><b>${esc(t(title))}</b><small>${esc(t(sub))}</small></span></li>`;
+  el.innerHTML = `
+    <div class="tc-reveal-card tc-code-card tcx tcx--help" role="dialog" aria-modal="true" aria-label="${esc(t("envHelpTitle"))}">
+      <img class="tch-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      <div class="tcx-main">
+        <div class="tcx-plaque"><h3>${esc(t("envHelpTitle"))}</h3></div>
+        <ul class="tch-list">
+          ${row(`<img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt="">`, "envHelpChip", "envHelpChipSub")}
+          ${row(`<img src="../assets/img/tigercoins/gift-v2.webp" alt="">`, "envHelpCode", "envHelpCodeSub")}
+          ${row(`<span class="tch-duo"><span class="icon icon-discord" aria-hidden="true"></span><span class="icon icon-mail" aria-hidden="true"></span></span>`, "envHelpMail", "envHelpMailSub")}
+          ${row(`<img src="../assets/img/tigercoins/crown.webp" alt="">`, "envHelpBonus", "envHelpBonusSub")}
+          ${row(`<img src="../assets/img/tigercoins/envelope.webp" alt="">`, "codeSrcShared", "codeSrcSharedSub")}
+        </ul>
+        <button type="button" class="tcx-go" data-code>${esc(t("coinsHaveCode"))}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("is-open"));
+  const close = () => { el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); };
+  const onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+  document.addEventListener("keydown", onKey, true);
+  el.addEventListener("mousedown", e => { if (e.target === el) close(); });
+  el.querySelector("[data-code]").addEventListener("click", () => { close(); setTimeout(() => openCoinsCodeModal(ctx), 180); });
 }
 
 /** The gift-code modal ("Gift code", generic: a code gives coins, envelopes or
@@ -339,6 +419,7 @@ function coinsBar(ctx) {
 function openCoinsCodeModal(ctx) {
   const { t, esc } = ctx;
   if (document.querySelector(".tc-code")) return;
+  ambientStart();   // the envelope stage's music plays while the code is typed (stopped by close)
   const el = document.createElement("div");
   el.className = "tc-reveal tc-code";
   const box = i => `<input class="tc-code-box" data-i="${i}" maxlength="4" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX" aria-label="${esc(t("giftCodeTitle"))} ${i + 1} / 3">`;
@@ -349,17 +430,17 @@ function openCoinsCodeModal(ctx) {
       <img class="tcx-tiger" src="../assets/img/tigercoins/code-tiger.webp" alt="" aria-hidden="true">
       <img class="tcx-chest" src="../assets/img/tigercoins/code-chest.webp" alt="" aria-hidden="true">
       <span class="tcx-pile" aria-hidden="true"><img src="../assets/img/tigercoins/envelope.webp" alt=""><img src="../assets/img/tigercoins/coin.webp" alt=""><img src="../assets/img/tigercoins/coin.webp" alt=""></span>
-      <button type="button" class="tcx-x" data-cancel aria-label="${esc(t("btnCancel"))}"><span class="icon icon-close icon-14" aria-hidden="true"></span></button>
+      
       <div class="tcx-main">
-        <div class="tcx-plaque"><span class="tcx-gift" aria-hidden="true"><span class="icon icon-gift"></span></span><h3>${esc(t("giftCodeTitle"))}</h3></div>
+        <div class="tcx-plaque"><img class="tcx-gift" src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true"><h3>${esc(t("giftCodeTitle"))}</h3></div>
         <p class="tc-code-hint">${esc(t("coinsCodeHint"))}</p>
-        <div class="tc-code-row">${box(0)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(1)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(2)}</div>
-        <p class="tc-code-err" role="alert" hidden></p>
-        <button type="submit" class="tcx-go" data-redeem disabled>${esc(t("coinsRedeem"))}<span class="icon icon-chevron-r icon-14" aria-hidden="true"></span></button>
+        <div class="tc-code-row">${box(0)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(1)}<span class="tc-code-dash" aria-hidden="true">–</span>${box(2)}
+          <p class="tc-code-err" role="alert" hidden></p></div>
+        <button type="submit" class="tcx-go" data-redeem disabled>${esc(t("coinsRedeem"))}</button>
       </div>
       <ul class="tcx-srcs">
         ${src(`<span class="icon icon-discord" aria-hidden="true"></span>`, "codeSrcDiscord", "codeSrcDiscordSub")}
-        ${src(`<span class="icon icon-nfc" aria-hidden="true"></span>`, "codeSrcRfid", "codeSrcRfidSub")}
+        ${src(`<img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt="">`, "codeSrcRfid", "codeSrcRfidSub")}
         ${src(`<span class="icon icon-card" aria-hidden="true"></span>`, "codeSrcCard", "codeSrcCardSub")}
         ${src(`<img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">`, "codeSrcShared", "codeSrcSharedSub")}
       </ul>
@@ -397,11 +478,10 @@ function openCoinsCodeModal(ctx) {
       else if (e.key === "ArrowRight" && b.selectionStart === b.value.length && i < 2) boxes[i + 1].focus();
     });
   });
-  const close = () => { el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); };
+  const close = () => { ambientStop(); el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); };
   const onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
   document.addEventListener("keydown", onKey, true);
   el.addEventListener("mousedown", e => { if (e.target === el) close(); });
-  el.querySelector("[data-cancel]").addEventListener("click", close);
   form.addEventListener("submit", async e => {
     e.preventDefault();
     const v = value();
@@ -499,27 +579,35 @@ export async function openChests(ctx, list) {
  *  surprise envelopes revealed next, or N chests opened next. `env` = { kind, message?, coins,
  *  surprises } with `open`, or { split, result } already opened. `more` =
  *  envelopes still waiting after this one. Resolves "next" or "done". */
-export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
+/* `give` (a gift envelope from the pile, not yet opened): { left, max, tier,
+   friends: [{ uid, name, avatar }], send(uid) → status } — "Give to a friend"
+   lists the friends with today's allowance (by TigerSquad level), a held
+   button confirms (functions/tigerCoins.js giveEnvelope). `giveOnly`: straight
+   to the friend picker (from the opening stage); "Back" closes. */
+export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giveOnly = false } = {}) {
   const { t, esc, lang } = ctx;
   const msg = env.message ? (env.message[lang] || env.message.en || env.message.fr || "") : "";
-  const title = env.split ? t("envSplitTitle") : env.kind === "milestone" ? t("envMilestone") : t("envTitle");
+  const title = giveOnly ? t("friendGiveEnvelope") : env.split ? t("envSplitTitle") : env.kind === "milestone" ? t("envMilestone")
+    : env.kind === "friend" && env.from ? t("envFromFriend", { name: env.from }) : t("envTitle");
+  const canGive = !!(give && env.id && !env.result && !env.split);
+  const firstActions = `
+        <button type="button" class="tcx-go tc-env-go" data-env-go>${esc(t("envOpen"))}</button>
+        ${canGive ? `<button type="button" class="tc-code-cancel tc-env-give" data-env-give><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true">${esc(t("envGive"))}</button>` : ""}`;
   const el = document.createElement("div");
   el.className = "tc-reveal tc-envm";
+  // The gift-code modal's frame: the illustrated envelope rising from behind
+  // the card, the title plaque, the message; opening sends the envelope off and
+  // the prize pops in with the TigerCoin.
   el.innerHTML = `
-    <div class="tc-reveal-card tc-env-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-      <h3>${esc(title)}</h3>
-      <p class="tc-env-msg">${esc(msg || (env.split ? "" : t("envDefaultMsg")))}</p>
-      <div class="tc-env" aria-hidden="true">
-        <span class="tc-env-back"></span>
-        <span class="tc-env-note"><b class="tc-env-amount"></b><small class="tc-env-unit"></small></span>
-        <span class="tc-env-front"></span>
-        <span class="tc-env-flap"></span>
-        <span class="tc-env-seal"><span class="tcoin tcoin--big"></span></span>
-      </div>
-      <p class="tc-env-rank" hidden></p>
-      <p class="tc-code-err" role="alert" hidden></p>
-      <div class="tc-reveal-actions">
-        <button type="button" class="sqd-open tc-env-go" data-env-go>${esc(t("envOpen"))}</button>
+    <div class="tc-reveal-card tc-code-card tcx tcx--help tc-env-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+      <img class="tch-env tc-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      <div class="tcx-main">
+        <div class="tcx-plaque"><h3>${esc(title)}</h3></div>
+        <p class="tc-env-msg"${giveOnly ? " hidden" : ""}>${esc(msg || (env.split ? "" : t("envDefaultMsg")))}</p>
+        <div class="tc-env-prize" aria-live="polite"><img src="../assets/img/tigercoins/coin.webp" alt="" aria-hidden="true"><span><b class="tc-env-amount"></b><small class="tc-env-unit"></small></span></div>
+        <p class="tc-env-rank" hidden></p>
+        <p class="tc-code-err" role="alert" hidden></p>
+        <div class="tc-reveal-actions">${firstActions}</div>
       </div>
     </div>`;
   document.body.appendChild(el);
@@ -541,12 +629,65 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
       }
       card.classList.add("is-opened");
       actions.innerHTML = `
-        ${chests || surprises ? `<button type="button" class="sqd-open" data-env="surprises">${esc(t("envOpenSurprises"))}</button>`
-          : `${more ? `<button type="button" class="sqd-open" data-env="next">${esc(t("envNext", { n: more }))}</button>` : ""}
+        ${chests || surprises ? `<button type="button" class="tcx-go" data-env="surprises">${esc(t("envOpenSurprises"))}</button>`
+          : `${more ? `<button type="button" class="tcx-go" data-env="next">${esc(t("envNext", { n: more }))}</button>` : ""}
         <button type="button" class="tc-code-cancel" data-env="done">${esc(t("coinsCollect"))}</button>`}`;
     };
     if (env.result) reveal(env.result);
+    // Give to a friend: the friends (today's allowance on top), one picked, a held button sends.
+    const showGive = () => {
+      const friends = give.friends || [], left = give.left || 0;
+      actions.innerHTML = `
+        <div class="tc-give">
+          ${left ? "" : `<p class="tc-give-left is-none">${esc(t("envGiveNone"))}</p>`}
+          ${friends.length > 8 ? `<label class="sqd-search tc-give-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" data-give-q placeholder="${esc(t("friendsSearch"))}" autocomplete="off"></label>` : ""}
+          ${friends.length ? `<div class="tc-give-list" role="radiogroup" aria-label="${esc(t("envGivePick"))}">${friends.map(f =>
+            `<button type="button" role="radio" aria-checked="false" class="tc-give-f" data-give-to="${esc(f.uid)}" data-name="${esc(f.name)}"${left ? "" : " disabled"}><span class="tc-give-av">${f.avatar}<span class="tc-give-check" aria-hidden="true"><span class="icon icon-check icon-11"></span></span></span><span class="tc-give-name">${esc(f.name)}</span></button>`).join("")}</div>`
+            : `<p class="tc-give-left">${esc(t("envGiveNoFriends"))}</p>`}
+          ${friends.length && left ? `<button type="button" class="sqd-mark sqd-wide tc-give-go" disabled><span class="hold-progress" aria-hidden="true"></span><span class="icon icon-gift icon-12" aria-hidden="true"></span><span class="tc-give-lbl">${esc(t("envGiveShort"))}</span></button>` : ""}
+        </div>`;
+      // Many friends: the search filters the grid by name, in place.
+      actions.querySelector("[data-give-q]")?.addEventListener("input", e => {
+        const q = e.target.value.trim().toLowerCase();
+        actions.querySelectorAll(".tc-give-f").forEach(b => { b.hidden = !!q && !b.dataset.name.toLowerCase().includes(q); });
+      });
+      const go = actions.querySelector(".tc-give-go");
+      if (!go) return;
+      // A friend already chosen (from the friends list): picked, the button armed.
+      const pre = give.picked && actions.querySelector(`[data-give-to="${CSS.escape(give.picked)}"]`);
+      if (pre && !pre.disabled) { pre.setAttribute("aria-checked", "true"); go.disabled = false; go.querySelector(".tc-give-lbl").textContent = t("envGiveShort"); }
+      // The app's hold-to-confirm button (.agents/rules/hold-to-confirm.md): a gift
+      // cannot be taken back, so the binding duration (1500 ms).
+      ctx.hold?.(go, 1500, async () => {
+        const pick = actions.querySelector('.tc-give-f[aria-checked="true"]');
+        if (!pick || go.disabled) return;
+        go.disabled = true;
+        try {
+          await give.send(pick.dataset.giveTo);
+          el.querySelector(".tc-env-msg").textContent = t("envGiveSent", { name: pick.dataset.name });
+          card.classList.add("is-given");
+          actions.innerHTML = "";
+          setTimeout(() => finish(more ? "next" : "done"), 1500);
+        } catch (err) {
+          const er = el.querySelector(".tc-code-err");
+          er.textContent = t(err?.message === "GIFT_LIMIT" ? "envGiveNone" : "squadDealsErr");
+          er.hidden = false;
+          go.disabled = false;
+        }
+      }, { hint: true });
+    };
+    if (giveOnly && canGive) showGive();
+    // No "Back" button: a click beside the card closes it (not while a reveal is running).
+    el.addEventListener("mousedown", e => { if (e.target === el && !card.classList.contains("is-given")) finish("back"); });
     el.addEventListener("click", async e => {
+      if (e.target.closest("[data-env-give]")) { showGive(); return; }
+      const f = e.target.closest("[data-give-to]");
+      if (f && !f.disabled) {
+        actions.querySelectorAll(".tc-give-f").forEach(x => x.setAttribute("aria-checked", String(x === f)));
+        const go = actions.querySelector(".tc-give-go");
+        if (go) { go.disabled = false; go.querySelector(".tc-give-lbl").textContent = t("envGiveShort"); }
+        return;
+      }
       const b = e.target.closest("[data-env]");
       if (b?.dataset.env === "surprises") {
         // The envelope gives way to what it held: its chests, or the rarity reveal.
@@ -581,11 +722,12 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
   const mineN = live.filter(d => { if (d.kind === "announcement") return false; const p = dealParts(ctx, d, "live"); return p.got && !p.used; }).length;
   const coinN = live.filter(d => d.kind !== "announcement" && d.costCoins > 0).length;
   const tab = (id, icon, key, n) => `<button type="button" role="tab" class="sqd-tab${f.tab === id ? " is-on" : ""}" data-sqd-tab="${id}" aria-selected="${f.tab === id}">${icon}${esc(t(key))}${n ? `<b>${n}</b>` : ""}</button>`;
+  // While loading, the same bar, greyed and inert (the page keeps its final shape).
   const bar = `
-    <div class="sqd-bar" role="search">
+    <div class="sqd-bar${ctx.loading ? " is-skel" : ""}" role="search"${ctx.loading ? " inert" : ""}>
       <div class="sqd-tabs" role="tablist">
         ${tab("all", `<span class="icon icon-grid icon-13" aria-hidden="true"></span>`, "squadDealsFilterAll", 0)}
-        ${coinN ? tab("exchange", `<span class="tcoin" aria-hidden="true"></span>`, "squadDealsExchange", 0) : ""}
+        ${coinN || ctx.loading ? tab("exchange", `<span class="tcoin" aria-hidden="true"></span>`, "squadDealsExchange", 0) : ""}
         ${tab("mine", `<span class="icon icon-tag icon-13" aria-hidden="true"></span>`, "squadDealsFilterMine", mineN)}
       </div>
       <label class="sqd-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" data-sqd-q value="${esc(f.q)}" placeholder="${esc(t("squadDealsSearch"))}"></label>
@@ -605,9 +747,14 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
       <p>${esc(t("squadDealsSoonBody"))}</p>
     </section>
     ${anns.length ? `<div class="sqd-grid">${anns.map(d => annCard(ctx, d)).join("")}</div>${anns.map(d => annSide(ctx, d)).join("")}` : ""}`;
-  // First load for this account: shimmering placeholder cards, as in the other views.
-  const body = ctx.loading ? `
-    <div class="sqd-grid" aria-busy="true">${Array.from({ length: 8 }, () => `<div class="sqd-card sqd-card--skel"><span class="sqr-skel sqd-skel-art"></span><span class="sqr-skel sqd-skel-line"></span><span class="sqr-skel sqd-skel-line is-short"></span></div>`).join("")}</div>`
+  // First load for this account: the final page's shape — the filter bar, then
+  // shimmering cards laid out like a deal's (picture, partner, title, state,
+  // stock bar) — so nothing jumps when the deals land.
+  const skelCard = `<div class="sqd-card sqd-card--skel"><span class="sqr-skel sqd-skel-art"></span>
+      <span class="sqr-skel sqd-skel-line is-kicker"></span><span class="sqr-skel sqd-skel-line"></span>
+      <span class="sqr-skel sqd-skel-line is-short"></span><span class="sqr-skel sqd-skel-line is-bar"></span></div>`;
+  const body = ctx.loading ? `${bar}
+    <div class="sqd-grid" aria-busy="true">${skelCard.repeat(30)}</div>`
     : live.length > anns.length || history.length || ended.length ? `
     ${live.length > anns.length ? group(live, "live") : soon(true)}
     ${group(history, "history", "squadDealsArchived")}
@@ -617,7 +764,7 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadDeals"))}</h2><p>${esc(t("squadDealsSub"))}</p></div>
       <div class="hero-scene" aria-hidden="true"></div>
-      ${ctx.loading ? "" : coinsBar(ctx)}
+      ${ctx.loading ? `<div class="sqr-card sqd-coins sqd-coins--skel" aria-hidden="true"><span class="sqr-skel"></span></div>` : coinsBar(ctx)}
     </section>
     ${body}
     <button type="button" class="pp-close-tab sqd-close-tab${ctx.openId && ctx.openId === findOpen(ctx, live, history, ended) ? " is-open" : ""}" aria-label="${esc(t("squadDealsClose"))}"><span class="cttab-glyph">»</span></button>`;
@@ -664,6 +811,7 @@ export function wireDeals(host, ctx) {
     for (const el of host.querySelectorAll(".sqd-timer[data-exp]")) {
       const left = Number(el.dataset.exp) - Date.now();
       if (left <= 0) { c.onExpire?.(); return; }
+      el.classList.toggle("is-soon", left < SOON_MS);
       el.lastElementChild.textContent = c.t("squadDealsTimeLeft", { time: countdown(c.t, left) });
     }
   }, 1000);
@@ -708,6 +856,7 @@ export function wireDeals(host, ctx) {
   host.addEventListener("click", async e => {
     if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
     if (e.target.closest("[data-coins-code]")) { openCoinsCodeModal(ctx); return; }
+    if (e.target.closest("[data-coins-help]")) { openEnvelopeHelp(ctx); return; }
     const ch = e.target.closest("[data-app-ch]");
     if (ch) { ch.closest(".sqd-apps").dataset.ch = ch.dataset.appCh; return; }
     const opener = e.target.closest("[data-coins-open]");

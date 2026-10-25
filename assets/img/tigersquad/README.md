@@ -16,5 +16,6 @@ To switch one on: drop the file here, then set its path in `SQUAD_ASSETS`
 (same file, next to `_openSquadInvite`) — e.g.
 `gold: "../assets/img/tigersquad/tigersquad-gold.webp"`.
 
-Perk icons (founder-supplied colour SVGs, drawn as images on the three perk cards):
-`perk-gift.svg` (+50 XP), `perk-badges.svg` (badges to unlock), `perk-heart.svg` (back the project).
+The join modal's "What you unlock" tiles reuse each space's own art (rankings scene, deals scene,
+a legendary item, the XP history scene, the red envelope); the +150 XP chip uses
+`../tigercoins/gift-v2.webp`. (The old perk SVGs were retired with the three perk cards.)

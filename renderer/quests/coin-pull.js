@@ -17,7 +17,7 @@
 // Sound: coin-sound.js (Web Audio, mutable). prefers-reduced-motion: no
 // shake, flight, rain or rays — a short fade, the rarity and the amount.
 
-import { holdRise, setSound, sfx, soundOn, warmSound } from "./coin-sound.js";
+import { ambientStart, ambientStop, holdRise, setSound, sfx, soundOn, warmSound } from "./coin-sound.js";
 
 const ORDER = ["common", "uncommon", "rare", "epic", "legendary"];
 const COLORS = ["#9aa3bd", "#3ddc84", "#3d8bff", "#a855f7", "#ffb21a"];
@@ -42,6 +42,7 @@ function overlay() {
   return el;
 }
 function closeOverlay(el) {
+  ambientStop();   // the stage's music fades out with it
   el.classList.remove("is-open");
   setTimeout(() => el.remove(), 220);
 }
@@ -65,6 +66,7 @@ function frame(el, ctx) {
   sound.addEventListener("click", () => {
     const on = !soundOn();
     setSound(on);
+    if (on && el.dataset.ambient) ambientStart();   // muted when the stage opened: the music starts now
     sound.classList.toggle("is-off", !on);
     sound.setAttribute("aria-pressed", String(on));
   });
@@ -394,9 +396,15 @@ export async function revealPulls(ctx, opened) {
  *  `pull(n)` asks the backend ({ opened, unopened, balance }). After each
  *  reveal a click goes back to the pile; a click outside the envelope on the
  *  pile leaves; it closes by itself when the pile is empty. */
-export async function openPullStage(ctx, { left, pull }) {
+/* `gift` (gift envelopes in the pile): { count() → n, run() → the new pile size
+   or null } — a small "Give to a friend (n)" under the pile; run() opens the
+   friend picker over the stage, the stage then redraws its pile. */
+export async function openPullStage(ctx, { left, pull, gift = null }) {
   const { t, esc } = ctx;
   const el = overlay();
+  // The envelope pile has its own background music while the stage is open.
+  el.dataset.ambient = "1";
+  ambientStart();
   let remaining = left;
   for (;;) {
     if (remaining <= 0) { closeOverlay(el); return; }
@@ -414,15 +422,23 @@ export async function openPullStage(ctx, { left, pull }) {
           </span>
         </button>`;
       tilt(el, f.body.querySelector(".tpx-tilt"));
+      const gifts = gift?.count() || 0;
       f.foot.innerHTML = `
         <div class="tc-reveal-actions">
           ${ten > 1 ? `<button type="button" class="sqd-open tp-hold tp-ten" data-n="${ten}"><span class="tp-fill" aria-hidden="true"></span><span>${esc(t("pullMany", { n: ten }))}</span></button>` : ""}
-        </div>`;
+        </div>
+        ${gifts ? `<div class="tp-gift-row"><button type="button" class="tc-code-cancel tp-gift" data-gift><img src="${IMG}gift-v2.webp" alt="" aria-hidden="true">${esc(t("envGive"))} (${gifts})</button></div>` : ""}`;
       picked = await new Promise(resolve => {
         onOutside(el, () => resolve(0));
+        el.querySelector("[data-gift]")?.addEventListener("click", async () => {
+          const n = await gift.run();
+          if (n != null) remaining = n;
+          resolve(-1);   // back to a fresh pile
+        });
         el.querySelectorAll("[data-n]").forEach(b => holdToFire(b, Number(b.dataset.n) > 1 ? HOLD_TEN_MS : HOLD_MS, () => resolve(Number(b.dataset.n)),
           t(Number(b.dataset.n) > 1 ? "pullHoldTen" : "pullHoldOne")));
       });
+      if (picked === -1) continue;
       if (!picked) { closeOverlay(el); return; }
     }
     f.foot.innerHTML = "";

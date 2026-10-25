@@ -698,19 +698,24 @@
 .tsq-sub { margin: -8px 0 0; font-size: 15px; font-weight: 600; color: var(--tsq-text); }
 .tsq-desc { margin: -10px auto 0; max-width: 440px; font-size: 13px; line-height: 1.5; color: var(--tsq-muted); }
 
-/* C — the three perks (informative: no pointer) */
-.tsq-perks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.tsq-perk {
-  --acc: #FF923F; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 14px; border-radius: 12px;
-  background: var(--tsq-card); border: 1px solid var(--tsq-line); transition: background .16s ease-out, border-color .16s ease-out, transform .16s ease-out;
-}
-.tsq-perk--badges { --acc: #A66BFF; } .tsq-perk--support { --acc: #FF4D5A; }
-.tsq-perk-ic { width: 36px; height: 36px; margin-bottom: 4px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: color-mix(in srgb, var(--acc) 16%, transparent); transition: transform .16s ease-out; }
-.tsq-perk-ic .icon { width: 18px; height: 18px; background: var(--acc); }
-.tsq-perk b { font-size: 13px; color: var(--tsq-text); }
-.tsq-perk span:last-child { font-size: 11.5px; line-height: 1.4; color: var(--tsq-muted); }
-.tsq-perk:hover { background: #20263A; border-color: color-mix(in srgb, var(--acc) 45%, var(--tsq-line)); transform: translateY(-2px); }
-.tsq-perk:hover .tsq-perk-ic { transform: scale(1.08); }
+/* C — the +150 XP chip, then what joining unlocks: one tile per space, with
+   that space's own art (informative: no pointer). */
+.tsq-xp-chip { align-self: center; display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 6px 14px 6px 8px; border-radius: 99px;
+  font-size: 13px; font-weight: 800; color: #ffd75e; background: color-mix(in srgb, #ffb21a 14%, transparent); border: 1px solid color-mix(in srgb, #ffb21a 40%, transparent); }
+.tsq-xp-chip img { width: 22px; height: 22px; object-fit: contain; }
+.tsq-unlocks-h { margin: 2px 0 0; font-size: 12px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--tsq-muted); text-align: center; }
+.tsq-unlocks { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.tsq-unlock { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px 12px; border-radius: 12px; text-align: center;
+  background: var(--tsq-card); border: 1px solid var(--tsq-line); transition: background .16s ease-out, border-color .16s ease-out, transform .16s ease-out; }
+.tsq-unlock-art { position: relative; width: 100%; height: 62px; margin-bottom: 4px; border-radius: 8px; overflow: hidden; }
+/* The art fills its slot: the wide scenes cropped to their centre (the tigers),
+   the single objects (legendary item, envelope) whole. */
+.tsq-unlock-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 55% 60%; transition: transform .16s ease-out; }
+.tsq-unlock--items .tsq-unlock-art img, .tsq-unlock--envelopes .tsq-unlock-art img { object-fit: contain; }
+.tsq-unlock b { font-size: 12.5px; line-height: 1.2; color: var(--tsq-text); }
+.tsq-unlock span:last-child { font-size: 11px; line-height: 1.35; color: var(--tsq-muted); }
+.tsq-unlock:hover { background: #20263A; border-color: color-mix(in srgb, var(--tsq-orange) 45%, var(--tsq-line)); transform: translateY(-2px); }
+.tsq-unlock:hover .tsq-unlock-art img { transform: scale(1.06); }
 
 /* D — levels (TigerSquadRankBadge) */
 .tsq-adventure { padding: 14px; border-radius: 14px; background: var(--tsq-bg2); border: 1px solid var(--tsq-line); }
@@ -779,7 +784,7 @@
 .tsq-foot { margin: -4px 0 0; font-size: 12px; color: #8A93A6; }
 
 @media (max-width: 560px) {
-  .tsq-perks { grid-template-columns: 1fr; }
+  .tsq-unlocks { grid-template-columns: repeat(2, 1fr); }
   .tsq-ranks { flex-wrap: wrap; }
   .tsq-rank { flex: 0 0 calc(50% - 4px); }
   .tsq-rank-arrow { display: none; }
@@ -788,9 +793,8 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .squad-invite, .squad-invite.is-closing, .tsq-join.is-busy .icon { animation: none; }
-  .tsq-perk, .tsq-perk-ic, .tsq-rank { transition: none; }
-  .tsq-perk:hover, .tsq-rank:hover, .tsq-rank:focus-visible { transform: none; }
-  .tsq-perk:hover .tsq-perk-ic { transform: none; }
+  .tsq-unlock, .tsq-unlock-art img, .tsq-rank { transition: none; }
+  .tsq-unlock:hover, .tsq-unlock:hover .tsq-unlock-art img, .tsq-rank:hover, .tsq-rank:focus-visible { transform: none; }
 }
 
 /* In the scrolling column, nothing may shrink below its own height (the 48 / 42 px buttons). */
@@ -803,33 +807,10 @@
 .tsq-rank-badge img { width: 100%; height: 100%; object-fit: contain; transition: filter .16s ease-out; }
 .tsq-rank:hover .tsq-rank-badge:has(img), .tsq-rank:focus-visible .tsq-rank-badge:has(img) { box-shadow: none; }
 .tsq-rank:hover .tsq-rank-badge img, .tsq-rank:focus-visible .tsq-rank-badge img { filter: drop-shadow(0 0 10px color-mix(in srgb, var(--rc) 55%, transparent)); }
-/* Perk icons are the colour SVG artwork: no tinted tile, a touch larger. */
-.tsq-perk-ic { background: none; width: 48px; height: 48px; margin-bottom: -4px; }
-.tsq-perk-ic img { width: 100%; height: 100%; }
-/* Perk cards — each glows in its own colour: radial light from the icon, tinted rim, two sparkles. */
-.tsq-perk {
-  position: relative; overflow: hidden; padding: 16px 12px 14px; border-radius: 14px;
-  border-color: color-mix(in srgb, var(--acc) 34%, var(--tsq-line));
-  background:
-    radial-gradient(120% 75% at 50% 0%, color-mix(in srgb, var(--acc) 24%, transparent), transparent 70%),
-    linear-gradient(180deg, color-mix(in srgb, var(--acc) 7%, var(--tsq-card)), var(--tsq-card));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--acc) 30%, transparent), 0 0 22px -8px color-mix(in srgb, var(--acc) 55%, transparent);
-}
-.tsq-perk::before, .tsq-perk::after {
-  content: ""; position: absolute; width: 7px; height: 7px; pointer-events: none;
-  background: color-mix(in srgb, var(--acc) 70%, #fff);
-  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-  opacity: .7;
-}
-.tsq-perk::before { top: 16px; left: 18px; }
-.tsq-perk::after { top: 30px; right: 20px; width: 5px; height: 5px; opacity: .5; }
-.tsq-perk-ic { width: 56px; height: 56px; filter: drop-shadow(0 0 10px color-mix(in srgb, var(--acc) 55%, transparent)); }
-.tsq-perk b { font-size: 14px; }
-.tsq-perk--xp b { color: var(--acc); }
-.tsq-perk span:last-child { color: #C3CAD8; }
-.tsq-perk:hover { background:
-    radial-gradient(120% 75% at 50% 0%, color-mix(in srgb, var(--acc) 32%, transparent), transparent 70%),
-    linear-gradient(180deg, color-mix(in srgb, var(--acc) 9%, var(--tsq-card)), var(--tsq-card)); }
+/* Unlock tiles glow softly from the top, like the old perk cards. */
+.tsq-unlock { background: radial-gradient(120% 70% at 50% 0%, color-mix(in srgb, var(--tsq-orange) 16%, transparent), transparent 70%), var(--tsq-card);
+  border-color: color-mix(in srgb, var(--tsq-orange) 22%, var(--tsq-line)); }
+.tsq-unlock-art img { filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .4)); }
 /* "Discover the levels →" — an info bubble anchored under the link (caret at top right). */
 .tsq-adventure { position: relative; }
 .tsq-explainer {
@@ -902,15 +883,11 @@
 .tsq-reassure { gap: 6px 22px; font-size: 12.5px; color: #C3CAD8; }
 .tsq-reassure li { gap: 6px; }
 .tsq-reassure .icon { width: 14px; height: 14px; background: #2ED16E; }
-/* Perk artwork — a light idle loop per card (gift hops, badge sways, heart beats), the sparkles twinkle;
-   staggered so the three never move at once. Hover plays it livelier. Off under reduced motion. */
-.tsq-perk-ic img { transform-origin: 50% 70%; }
-.tsq-perk--xp .tsq-perk-ic img { animation: tsq-gift 3.6s ease-in-out infinite; }
-.tsq-perk--badges .tsq-perk-ic img { transform-origin: 50% 10%; animation: tsq-sway 4s ease-in-out 1.2s infinite; }
-.tsq-perk--support .tsq-perk-ic img { transform-origin: 50% 55%; animation: tsq-beat 2.4s ease-in-out .6s infinite; }
-.tsq-perk:hover .tsq-perk-ic img { animation-duration: 1.4s; }
-.tsq-perk::before { animation: tsq-twinkle 2.8s ease-in-out infinite; }
-.tsq-perk::after { animation: tsq-twinkle 2.8s ease-in-out 1.4s infinite; }
+/* A light idle loop: the +150 XP gift hops, the red envelope sways; livelier on
+   hover. Off under reduced motion. */
+.tsq-xp-chip img { transform-origin: 50% 70%; animation: tsq-gift 3.6s ease-in-out infinite; }
+.tsq-unlock--envelopes .tsq-unlock-art img { transform-origin: 50% 10%; animation: tsq-sway 4s ease-in-out 1.2s infinite; }
+.tsq-unlock--envelopes:hover .tsq-unlock-art img { animation-duration: 1.4s; }
 @keyframes tsq-gift {
   0%, 62%, 100% { transform: translateY(0) rotate(0); }
   70% { transform: translateY(-5px) rotate(-6deg); }
@@ -923,18 +900,8 @@
   25% { transform: rotate(5deg); }
   75% { transform: rotate(-5deg); }
 }
-@keyframes tsq-beat {
-  0%, 40%, 100% { transform: scale(1); }
-  10% { transform: scale(1.12); }
-  20% { transform: scale(.97); }
-  30% { transform: scale(1.08); }
-}
-@keyframes tsq-twinkle {
-  0%, 100% { opacity: .25; transform: scale(.7) rotate(0); }
-  50% { opacity: .9; transform: scale(1.15) rotate(45deg); }
-}
 @media (prefers-reduced-motion: reduce) {
-  .tsq-perk-ic img, .tsq-perk::before, .tsq-perk::after { animation: none; }
+  .tsq-xp-chip img, .tsq-unlock--envelopes .tsq-unlock-art img { animation: none; }
 }
 /* Footer row — member count bottom-left, the motto bottom-right. */
 .tsq-foot { margin: -4px 0 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; }

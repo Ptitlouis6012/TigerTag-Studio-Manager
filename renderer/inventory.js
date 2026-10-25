@@ -18,7 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
-import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, showEnvelopeGift, sortDeals, wireDeals } from './quests/squad-deals.js';
 import { openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
@@ -435,6 +435,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // Template form — returns the full HTML for innerHTML-built lists.
   // Mirrors `paintAvatar`: all three children present, `data-av-mode`
   // on the host drives the invariant.
+  // ONE way to draw a user, everywhere (.agents/rules/user-avatars.md): the
+  // friends bar's look — photo or initials on their colour, the TigerSquad ring
+  // and level badge — from the freshest record held for them: my own account
+  // (with my level), else their friend entry (photo, colour, level), else what
+  // was given. Only the size changes, through the class. Never call
+  // userAvatar() directly for a person.
+  function userAvatar(who, className, extraClass) {
+    const uid = who?.uid || who?.fromUid || who?.id || null;
+    let src = who || {};
+    if (uid && uid === state.activeAccountId) {
+      const tier = _ownSquadTier();
+      src = { ...src, ...(activeAccount() || {}), tigerSquad: !!tier, squadTier: tier };
+    } else if (uid) {
+      const f = (state.friends || []).find(x => x.uid === uid);
+      if (f) src = { ...src, ...f };
+    }
+    return avatarMarkup(src, className, extraClass);
+  }
   function avatarMarkup(source, className, extraClass) {
     const p = _buildAvatarParts(source);
     // TigerSquad members (public supporters) wear a golden ring, wherever drawn.
@@ -2080,14 +2098,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // account" (Discord-style) — they don't replace the main menu.
     const accountsHtml = accounts.map(a => `
         <button class="acct-drop-item${a.id===activeId?' active':''}" data-drop-id="${esc(a.id)}">
-          ${avatarMarkup(a, "acct-drop-avatar")}
+          ${userAvatar(a, "acct-drop-avatar")}
           <span class="acct-drop-name">${esc(_shortName(a.displayName, a.email))}</span>
           ${a.id===activeId ? '<span class="acct-drop-check">✓</span>' : ''}
         </button>`).join("");
 
     list.innerHTML = `
       <div class="acct-drop-current">
-        ${avatarMarkup(acc, "acct-drop-avatar")}
+        ${userAvatar(acc, "acct-drop-avatar")}
         <span class="acct-drop-name">${esc(_shortName(acc?.displayName, acc?.email))}</span>
         <span class="acct-drop-check">✓</span>
       </div>
@@ -5085,14 +5103,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     xp.querySelector(".fvb-xp-n").textContent = xpTxt;
     xp.setAttribute("aria-label", t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }));
     _squadRank().then(r => {
-      let rk = host.querySelector(".fvb-rank");
+      let rk = document.querySelector("#friendViewBanner .fvb-rank");
       if (!r) { rk?.remove(); return; }
       if (!rk) {
         rk = document.createElement("button"); rk.type = "button"; rk.className = "fvb-xp fvb-rank";
         rk.innerHTML = `<span class="icon icon-community icon-12" aria-hidden="true"></span><span class="fvb-xp-n"></span>`;
         rk.addEventListener("click", () => _openSquadView("countries"));
-        host.appendChild(rk);
       }
+      // Beside the pseudo (the name row), not in the chips row; the banner may be
+      // rebuilt, so it is re-placed each time.
+      const nameEl = document.querySelector("#friendViewBanner.fvb--own .fvb-name");
+      if (nameEl && nameEl.nextElementSibling !== rk) nameEl.after(rk); else if (!nameEl && rk.parentElement !== host) host.appendChild(rk);
       rk.querySelector(".fvb-xp-n").innerHTML = rankNo(r.rank);   // the one rank look (squad-rankings.js)
       rk.setAttribute("aria-label", t("squadRankLine", { rank: r.rank, total: r.total }));
     }).catch(() => {});
@@ -5325,58 +5346,72 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return res.json();
   }
   // `unopened` = the chips' surprise envelopes, `envelopes` = the gift envelopes, `chests` = the chests.
-  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [] });
+  // Count pill on the Deals ("%") view button: the envelopes waiting to be
+  // opened (the chips', the gifts, the chests) — like the Lists pills. Never
+  // opens anything: the member opens them when they like, all at once if so.
+  const _envCount = c => c ? (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0) : 0;
+  function _paintDealsBadge(n) {
+    const el = $("viewDealsBadge");
+    if (!el) return;
+    el.textContent = n > 99 ? "99+" : String(n);
+    el.hidden = !n;
+  }
+  // `gifts` = today's allowance of envelopes to give friends ({ left, max, tier }).
+  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null });
   // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
-  const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg),
+  const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg), hold: setupHoldToConfirm,
     openChest: async id => {
       const r = await _tigerCoins(uid, "openChest", { id });
-      _deals.coins = _coinsOf(r);
+      _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
       after?.();
       return r;
     } });
   // The chips' surprise envelopes, gacha style: pulls of 1 or 10, each held
   // to open and revealed one envelope at a time (quests/coin-pull.js).
-  function _openChipEnvelopes(uid, ctx, after) {
-    return openPullStage(ctx, { left: _deals.coins?.unopened || 0, pull: async n => {
-      const r = await _tigerCoins(uid, "open", { count: n });
-      _deals.coins = _coinsOf(r);
-      after?.();
-      return r;
-    } });
-  }
-  // The gift envelopes one after another (campaigns, milestone bonuses —
-  // functions/coinEnvelopes.js). True when the member went through all of them.
-  async function _openGiftEnvelopes(uid, ctx, list, after) {
-    for (let i = 0; i < list.length; i++) {
-      const how = await showEnvelope(ctx, list[i], { more: list.length - i - 1, open: async () => {
-        const r = await _tigerCoins(uid, "openEnvelope", { id: list[i].id });
-        _deals.coins = _coinsOf(r);
-        after?.();
-        return r;
-      } });
-      if (how !== "next") return i === list.length - 1;
-    }
-    return true;
-  }
-  // "Open my envelopes": the gifts first, then the chests, then the chips' surprise envelopes.
+  // A gift envelope that paid coins shows as a card of the rarity those coins
+  // fall in (the main table's ranges, functions/coinTypes.js).
+  const _coinRarity = n => n >= 500 ? "legendary" : n >= 100 ? "epic" : n >= 40 ? "rare" : n >= 15 ? "uncommon" : "common";
+  const _pileSize = () => (_deals.coins?.unopened || 0) + (_deals.coins?.envelopes?.length || 0);
+  // "Open my envelopes": ONE opening stage for the whole pile — the gift
+  // envelopes first (their coins and surprise envelopes as cards), then the
+  // chips'; the chests (in the pile, or just won) open when the stage closes.
+  // A gift envelope can also go, unopened, to a friend ("Give to a friend"
+  // under the pile, today's allowance by TigerSquad level).
   async function _openAllEnvelopes(uid, ctx, after) {
-    const gifts = _deals.coins?.envelopes || [];
-    if (gifts.length && !(await _openGiftEnvelopes(uid, ctx, gifts, after))) return;
+    if (document.querySelector(".tc-reveal")) return;   // an opening is already on screen
+    const set = r => { _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins)); after?.(); };
+    const pull = async n => {
+      const opened = [];
+      let r = null;
+      for (; n > 0 && _deals.coins?.envelopes?.length; n--) {
+        r = await _tigerCoins(uid, "openEnvelope", { id: _deals.coins.envelopes[0].id });
+        set(r);
+        opened.push(...(r.opened || []));
+        if (r.coins) opened.push({ rarity: _coinRarity(r.coins), coins: r.coins });
+      }
+      if (n > 0 && _deals.coins?.unopened) {
+        r = await _tigerCoins(uid, "open", { count: n });
+        set(r);
+        opened.push(...(r.opened || []));
+      }
+      return { opened, unopened: _pileSize() };
+    };
+    const gift = {
+      count: () => (_deals.coins?.gifts?.max ? _deals.coins?.envelopes?.length || 0 : 0),
+      run: async () => {
+        const env = _deals.coins?.envelopes?.[0], g = _deals.coins?.gifts;
+        if (!env || !g) return null;
+        await showEnvelope({ ...ctx, hold: setupHoldToConfirm }, env, { giveOnly: true, give: {   // the Deals ctx has no hold
+          left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "",
+          friends: (state.friends || []).map(f => ({ uid: f.uid, name: f.displayName || "—", avatar: userAvatar(f, "sqb-avatar") })),
+          send: async to => { const r = await _tigerCoins(uid, "giveEnvelope", { id: env.id, to }); set(r); return r; },
+        } });
+        return _pileSize();
+      },
+    };
+    if (_pileSize()) await openPullStage(ctx, { left: _pileSize(), pull, gift });
     const chests = _deals.coins?.chests || [];
-    if (chests.length && !(await openChests(ctx, chests))) return;
-    if (_deals.coins?.unopened) await _openChipEnvelopes(uid, ctx, after);
-  }
-  // At launch, once per account and session: gift envelopes waiting → offered.
-  const _giftsOffered = new Set();
-  async function _offerGiftEnvelopes(uid) {
-    if (_giftsOffered.has(uid)) return;
-    _giftsOffered.add(uid);
-    const r = await _tigerCoins(uid, "status").catch(() => null);
-    if (!r?.envelopes?.length || uid !== state.activeAccountId) return;
-    const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
-    const ctx = _coinsCtx(uid, after);
-    _deals.coins = _coinsOf(r);
-    await _openGiftEnvelopes(uid, ctx, r.envelopes, after);
+    if (chests.length) await openChests(ctx, chests);
   }
   async function _renderDealsView() {
     const host = $("invDealsView"); if (!host) return;
@@ -5397,7 +5432,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // A gift code: credited once per account; the error code reaches the toast.
     onRedeemCode: async (code) => {
       const r = await _tigerCoins(uid, "redeem", { code });
-      _deals.coins = _coinsOf(r);
+      _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
       paint();
       return r;
     } };
@@ -5435,6 +5470,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }));
       Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null,
         coins: coins ? _coinsOf(coins) : null });
+      _paintDealsBadge(_envCount(_deals.coins));
     } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, country: state.squadCountry || null }); }
     paint();
   }
@@ -5509,7 +5545,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       friend: uid !== state.activeAccountId, squadXp: uid === state.activeAccountId ? state.xpPoints : null,
       rankBase: _squadPulse.ranks,
       tierLabel: squadTierLabel, brandLabel: b => _PT_BRAND_LABEL[b] || b,
-      avatar: m => avatarMarkup({ ...m.profile, tigerSquad: true, squadTier: m.tier }, "sqb-avatar"),
+      avatar: m => userAvatar({ ...m.profile, uid: m.uid, tigerSquad: true, squadTier: m.tier }, "sqb-avatar"),
       memberColor: m => profileColor(m.profile),   // the maker's theme colour, tints their league row
       ago: ms => { const m = Math.round((Date.now() - ms) / 60e3); return m < 60 ? rtf.format(-m, "minute") : rtf.format(-Math.round(m / 60), "hour"); },
       day: d => { try { return dayFmt.format(new Date(`${d}T12:00:00`)); } catch (_) { return d; } },
@@ -5794,9 +5830,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const ranks = SQUAD_TIERS.map(r => tigerSquadRankBadgeHTML({
       rank: r, label: squadTierLabel(r), description: t(`squadRank_${r}`), assetSrc: SQUAD_ASSETS[r],
     })).join(`<li class="tsq-rank-arrow" aria-hidden="true"><span class="icon icon-arrow-r icon-12"></span></li>`);
-    const perk = (kind, icon, title, body) => `
-        <li class="tsq-perk tsq-perk--${kind}">
-          <span class="tsq-perk-ic"><img src="../assets/img/tigersquad/perk-${icon}.svg" alt="" aria-hidden="true"></span>
+    // What joining unlocks: one tile per space, with that space's own art.
+    const unlock = (kind, img, title, body) => `
+        <li class="tsq-unlock tsq-unlock--${kind}">
+          <span class="tsq-unlock-art"><img src="../assets/img/${img}" alt="" aria-hidden="true"></span>
           <b>${esc(t(title))}</b><span>${esc(t(body))}</span>
         </li>`;
     const wallUrl = `https://tigersystem.io/${state.lang || "en"}/tigersquad`;
@@ -5806,10 +5843,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <h2 class="tsq-title" id="squadInviteTitle">${esc(t("squadInvTitle")).replace("TigerSquad", '<span class="tsq-grad">TigerSquad</span>')}</h2>
         <p class="tsq-sub">${esc(t("squadInvSub"))}</p>
         <p class="tsq-desc" id="squadInviteDesc">${esc(t("squadInvDesc"))}</p>
-        <ul class="tsq-perks">
-          ${perk("xp", "gift", "squadPerkXpTitle", "squadPerkXpBody")}
-          ${perk("badges", "badges", "squadPerkBadgesTitle", "squadPerkBadgesBody")}
-          ${perk("support", "heart", "squadPerkSupportTitle", "squadPerkSupportBody")}
+        <p class="tsq-xp-chip"><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true">${esc(t("squadPerkXpTitle"))}</p>
+        <h3 class="tsq-unlocks-h">${esc(t("squadUnlocks"))}</h3>
+        <ul class="tsq-unlocks">
+          ${unlock("leagues", "tigersquad/tigersquad-scene-v3.webp", "squadHeroSub", "squadUnlockLeaguesBody")}
+          ${unlock("deals", "tigersquad/deals-scene.webp", "squadDeals", "squadUnlockDealsBody")}
+          ${unlock("items", "tigersquad/legendary/tigerscale-flat2.webp", "squadItems", "squadUnlockItemsBody")}
+          ${unlock("history", "quests/xp-history-scene.webp", "xpHistoryTitle", "squadUnlockHistoryBody")}
+          ${unlock("envelopes", "tigercoins/envelope.webp", "squadUnlockEnvTitle", "squadUnlockEnvBody")}
         </ul>
         <section class="tsq-adventure">
           <div class="tsq-adv-head">
@@ -7735,8 +7776,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // "My requests": the backend reads their GitHub status and raises a
     // notification for any change — once per sign-in, after the app settles.
     setTimeout(() => { if (uid === state.activeAccountId) syncReports().catch(() => {}); }, 8000);
-    // TigerCoins gift envelopes waiting (a campaign, a milestone bonus): offered once the app has settled.
-    setTimeout(() => { if (uid === state.activeAccountId) _offerGiftEnvelopes(uid).catch(() => {}); }, 6000);
+    // The Deals button's envelope count, read once the app has settled (nothing opens).
+    _paintDealsBadge(0);
+    setTimeout(() => {
+      if (uid !== state.activeAccountId) return;
+      _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) _paintDealsBadge(_envCount(_coinsOf(r))); }).catch(() => {});
+    }, 6000);
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
@@ -7846,7 +7891,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const isActive = acc.id === activeId;
       return `
       <div class="prf-acct${isActive ? " prf-acct--active" : ""}">
-        ${avatarMarkup(acc, "prf-acct-avatar")}
+        ${userAvatar(acc, "prf-acct-avatar")}
         <div class="prf-acct-info">
           <span class="prf-acct-name">${name}</span>
           ${isActive
@@ -11285,11 +11330,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      pointer stays. Off hover the name is ellipsised as before (the text is only
      wrapped in a moving span during the hover: an inline-block child would
      lose the ellipsis). Delegated on the document, so rebuilt / patched cards
-     need no wiring. Spool cards (.card-name) and Tiger Squad deal cards (their
-     title, quests/squad-deals.js) alike. */
+     need no wiring. Spool cards (.card-name), Tiger Squad deal cards (their
+     title, quests/squad-deals.js) and the low-stock spools of the notification
+     centre (.nc-tile) and the friends of the give-an-envelope picker (.tc-give-f) alike. */
   (function wireCardNameMarquee() {
     const SPEED = 45;   // px per second
-    const CARD = ".spool-card, .sqd-card", NAME = ".card-name, .sqd-card-body > h3";
+    const CARD = ".spool-card, .sqd-card, .nc-tile, .tc-give-f", NAME = ".card-name, .sqd-card-body > h3, .nc-tile b, .tc-give-name";
     const start = card => {
       const el = card.querySelector(NAME);
       if (!el || el.querySelector(":scope > .card-name-mq")) return;
@@ -20807,7 +20853,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const name    = _shortName((src?.displayName) || imp.name || "", imp.uid);
     if (!name) return "";
     const av = src
-      ? avatarMarkup({ displayName: src.displayName || imp.name, photoURL: src.photoURL || null,
+      ? userAvatar({ displayName: src.displayName || imp.name, photoURL: src.photoURL || null,
                        color: src.color || friendColorFallback(imp.uid) }, "ro-from-av")
       : `<span class="ro-from-av ro-from-av--gone" data-av-mode="init"><span class="av-initials">`
         + `${esc(((name[0]) || "?").toUpperCase())}</span></span>`;
@@ -24209,7 +24255,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                       data-friend-color="${esc(color)}"
                       data-tooltip="${esc(_shortName(f.displayName, f.uid))}"
                       title="${esc(_shortName(f.displayName, f.uid))}">
-        ${avatarMarkup(f, "sb-friend-avatar")}
+        ${userAvatar(f, "sb-friend-avatar")}
         <span class="sb-friend-name">${esc(_shortName(f.displayName, f.uid))}</span>
       </button>`;
     }).join("");
@@ -24588,7 +24634,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const date = f.addedAt ? timeAgo(f.addedAt.seconds ? f.addedAt.seconds * 1000 : f.addedAt) : "";
       return `<div class="fp-friend" data-uid="${esc(f.uid)}" data-name="${esc(_shortName(f.displayName, f.uid))}" data-color="${esc(color)}" draggable="true">
         <span class="fp-grip" aria-hidden="true"><span class="icon icon-grip icon-16"></span></span>
-        ${avatarMarkup(f, "fp-friend-avatar")}
+        ${userAvatar(f, "fp-friend-avatar")}
         <div class="fp-friend-main">
           <div class="fp-friend-name">${esc(_shortName(f.displayName, f.uid))}</div>
           <div class="fp-friend-date">${date ? t("friendAddedOn", { date }) : ""}</div>
@@ -24598,8 +24644,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             <span class="icon icon-trash icon-13"></span>
           </button>
         </div>
-        <span class="fp-friend-chevron" title="${t('friendViewInv')}" aria-hidden="true">
-          <span class="icon icon-chevron-r icon-14"></span>
+        <span class="fp-friend-chevron" aria-hidden="true">
+          <span class="icon icon-eye-on icon-16"></span>
         </span>
       </div>`;
     }).join("");
@@ -24611,6 +24657,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         switchToFriendView(row.dataset.uid, row.dataset.name, row.dataset.color);
       });
     });
+
     list.querySelectorAll(".fp-friend-remove").forEach(btn => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -37632,7 +37679,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           : "";
         const line2 = relBadge + squadBadge;
         banner.innerHTML = `
-          ${avatarMarkup(friendSource, "fvb-avatar")}
+          ${userAvatar(friendSource, "fvb-avatar")}
           <div class="fvb-inner">
             <div class="fvb-name-row"><span class="fvb-name">${esc(displayName || "—")}</span>${countText}</div>
             ${line2 ? `<div class="fvb-badges">${line2}</div>` : ""}
@@ -37671,7 +37718,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         : "";
       banner.innerHTML = `
         <button type="button" class="fvb-avatar-edit" id="fvbAvatarEdit" aria-label="${esc(t("eacIdentTitle"))}">
-          ${avatarMarkup({ ...acc, tigerSquad: !!_ownSquadTier(), squadTier: _ownSquadTier() }, "fvb-avatar")}
+          ${userAvatar({ ...acc, tigerSquad: !!_ownSquadTier(), squadTier: _ownSquadTier() }, "fvb-avatar")}
           <span class="fvb-avatar-ovl" aria-hidden="true"><span class="icon icon-edit icon-12"></span></span>
         </button>
         <div class="fvb-inner">
@@ -38170,6 +38217,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("btnAddFriend").addEventListener("click", openAddFriendModal);
   // Support the project → open the official goodies shop in the browser
   // (mirrors the sidebar Shop button).
+  $("btnGiveEnvelope")?.addEventListener("click", () => _giveEnvelopeTo());   // a gift envelope to a friend
   $("btnGoodiesShop")?.addEventListener("click", () =>
     window.electronAPI?.openExternal("https://shop.tigersystem.io/collections/tigertag-rfid-maker"));
 
@@ -38493,7 +38541,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const name = _shortName(r.displayName, r.uid);
     return `
       <div class="fp-req-head">
-        ${avatarMarkup(r, "fp-friend-avatar")}
+        ${userAvatar(r, "fp-friend-avatar")}
         <div class="fp-friend-main">
           <div class="fp-friend-name">${esc(name)}</div>
           <div class="fp-friend-date">${esc(t("friendReqSub"))}</div>
@@ -38563,7 +38611,45 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
         renderNotifBadge();
         renderNotifCenter();
+        _announceEnvelopeGifts(uid);
       }, err => console.warn("[notifs]", err?.message));
+  }
+  // A friend gave me an envelope: besides the bell, a modal says so (who, with
+  // their avatar) — once per notification (ids kept per account in
+  // localStorage), live or at the next sign-in — and the Deals count refreshes.
+  // Nothing opens: the envelope waits in the pile.
+  // The giver drawn as in the friends bar: their friend entry (photo, colour,
+  // TigerSquad ring) when they are a friend, else what the notification carries.
+  const _giverAvatar = n => userAvatar({ uid: n.fromUid, displayName: n.fromName, photoURL: n.photoURL || null, color: n.color || null }, "sb-friend-avatar");
+  // The modal of one "envelope_gift" notification (a click on it in the bell).
+  function _showEnvelopeGiftNotif(id) {
+    const n = (state.notifications || []).find(x => x.id === id);
+    if (!n) { setViewMode("squadDeals"); return; }
+    showEnvelopeGift({ t, esc }, { name: _shortName(n.fromName, n.fromUid),
+      avatar: _giverAvatar(n) })
+      .then(how => { if (how === "see") setViewMode("squadDeals"); });
+  }
+  let _envGiftBusy = false;
+  async function _announceEnvelopeGifts(uid) {
+    if (_envGiftBusy) return;
+    const key = `tigertag.envGiftShown.${uid}`;
+    let shown = [];
+    try { shown = JSON.parse(localStorage.getItem(key) || "[]"); } catch (_) {}
+    const todo = (state.notifications || []).filter(n => n.type === "envelope_gift" && !n.read && !shown.includes(n.id));
+    if (!todo.length) return;
+    _envGiftBusy = true;
+    _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) _paintDealsBadge(_envCount(_coinsOf(r))); }).catch(() => {});
+    try {
+      for (const n of todo.reverse()) {   // oldest first
+        if (uid !== state.activeAccountId) break;
+        while (document.querySelector(".tc-reveal")) await new Promise(r => setTimeout(r, 800));   // never over another opening
+        shown = [...shown, n.id].slice(-50);
+        try { localStorage.setItem(key, JSON.stringify(shown)); } catch (_) {}
+        const how = await showEnvelopeGift({ t, esc }, { name: _shortName(n.fromName, n.fromUid),
+          avatar: _giverAvatar(n) });
+        if (how === "see") { setViewMode("squadDeals"); break; }
+      }
+    } finally { _envGiftBusy = false; }
   }
   function unsubscribeNotifications() {
     if (state.unsubNotifs) { try { state.unsubNotifs(); } catch (_) {} state.unsubNotifs = null; }
@@ -38572,6 +38658,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _notifText(n) {
     if (n.type === "friend_accepted") return t("notifAcceptedFriend", { name: _shortName(n.fromName, n.fromUid) });
     if (n.type === "friend_added")    return t("notifAddedFriend",    { name: _shortName(n.fromName, n.fromUid) });
+    if (n.type === "envelope_gift")   return t("notifEnvelopeGift",   { name: _shortName(n.fromName, n.fromUid) });
+    if (n.type === "envelope_chip")   return t("notifEnvelopeChip",   { n: Number(n.data?.n) || 1 });
     return n.text || "";
   }
 
@@ -38890,6 +38978,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     badge.classList.toggle("hidden", n === 0);
   }
 
+  // ── Notification centre (the ChatGPT redesign, assets-src/img/notifications/
+  // notif-panel-mockup.png): filter tabs with counts (all / envelopes / squad /
+  // system / stock), cards grouped by day (today, yesterday, this week, older),
+  // each tinted by kind (--nc) with its art and ONE inline action, the low-stock
+  // notices gathered in a single card (a tile per spool, "Order"), a red dot on
+  // what was unread when the centre opened. The rows keep their data-* attributes,
+  // so the routing below (clicks, restart, firmware snooze…) is unchanged.
+  const _notifFilter = { tab: "all" };
+  let _notifFresh = new Set();   // ids unread when the centre opened: their dot stays while it is open
+  const NOTIF_ACCENT = { envelope: "#e5484d", xp: "#3ddc84", level: "#ffb21a", friend: "#3da4f0", heart: "#f472b6",
+    report: "#3da4f0", update: "#a78bfa", community: "#ff8a2e", system: "#8f97b3", stock: "#e5484d" };
+  function _notifStockCollapsed() { try { return localStorage.getItem("tigertag.notifStockCollapsed") === "1"; } catch (_) { return false; } }
   function renderNotifCenter() {
     const list = $("notifList");
     const empty = $("notifEmpty");
@@ -38899,126 +38999,174 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const notifs = state.notifications  || [];
     if (empty) empty.classList.toggle("hidden", !!(reqs.length || locals.length || notifs.length));
     $("notifMarkAll")?.classList.toggle("hidden", !notifs.some(n => !n.read));   // "Mark all read" only when there ARE unread
-    // Order: actionable friend requests, then local (app-update) notices, then
-    // dismissible general notifications.
-    const reqHtml = reqs.map(r =>
-      `<div class="fp-req notif-req" data-uid="${esc(r.uid)}">${_reqRowInnerHtml(r)}</div>`).join("");
-    const localHtml = locals.map(n => {
-      // Community nudges + avatar: the whole row IS the call-to-action (no button).
-      const isCommunity = !!COMMUNITY[n.action];
-      const isFw = n.action === "paxx" || n.action === "ffgfw";   // firmware notices: later + ✕
-      const clickable = isCommunity || n.action === "avatar" || isFw || n.action === "lowstock" || n.action === "report";
-      const brandIc = isCommunity ? ` notif-ic--${n.action}`         // branded square icon
-        : (n.action === "lowstock" ? " notif-ic--lowstock" : "");    // amber alert icon
-      // A notice originating from a printer speaks WITH its brand logo (the
-      // machine "talking") — those render as the RAW brand SVG, no chip. The
-      // community nudges keep their branded square chip (white logo on the brand
-      // colour), so the Shopify notif matches the sidebar Shop button.
-      const iconHtml = n.img
-        ? `<span class="notif-ic notif-ic--img"><img src="${esc(n.img)}" alt="" onerror="this.style.display='none'" /></span>`
-        : (n.brand && _BRAND_HAS_LOGO.has(n.brand))
-        ? `<span class="notif-ic notif-ic--bare"><span class="pt-thumb-logo" data-brand="${esc(n.brand)}"></span></span>`
-        : n.action === "coffee"
-        ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt="" /></span>`
-        : `<span class="notif-ic${brandIc}"><span class="icon icon-${esc(n.icon || "refresh")} icon-14"></span></span>`;
-      return `
-      <div class="notif-item notif-item--unread notif-item--local${clickable ? " notif-item--clickable" : ""}" data-local-id="${esc(n.id)}"${clickable ? ` data-local-action="${esc(n.action)}"` : ""}>
-        ${iconHtml}
-        <div class="fp-friend-main">
-          ${n.title ? `<div class="notif-title">${esc(n.title)}</div>` : ""}
-          <div class="notif-text">${esc(n.text)}${n.version ? ` (v${esc(n.version)})` : ""}</div>
-          ${isFw ? `<button type="button" class="primary sm notif-later" title="${esc(t("notifRemindLater"))}"><span class="icon icon-bell icon-12"></span>${esc(t("notifRemindLater"))}</button>` : ""}
+    const lang = state.lang || "en", ms = v => (v?.seconds ? v.seconds * 1000 : Number(v) || 0);
+    // One card: art · title / text · time · unread dot. The card IS its action
+    // (`act`: { id, arg, icon }): clicking it goes there, and an icon on the
+    // right shows where (the cart, an envelope, the XP chart…).
+    const card = ({ kind, accent, attrs = "", clickable = false, fresh = false, art, title, text, when, act, extra = "", after = "" }) => `
+      <div class="notif-item nc-card${clickable || act ? " notif-item--clickable" : ""}${fresh ? " is-fresh" : ""}" data-nc-kind="${kind}" style="--nc:${accent}" ${attrs}${act ? ` data-nc-act="${act.id}" data-nc-arg="${esc(act.arg || "")}"` : ""}>
+        <span class="nc-art">${art}</span>
+        <div class="nc-main">
+          ${title ? `<div class="notif-title">${esc(title)}</div>` : ""}
+          ${text ? `<div class="notif-text">${esc(text)}</div>` : ""}
+          ${extra}
+          ${when ? `<div class="fp-friend-date">${esc(when)}</div>` : ""}
         </div>
-        ${n.action === "restart" ? `<button class="primary sm notif-restart">${esc(t("btnRestartUpdate"))}</button>` : ""}
-        ${isFw ? `<button type="button" class="fp-friend-btn notif-dismiss notif-dismiss-paxx" title="${esc(t("cancelLabel"))}"><span class="icon icon-close icon-13"></span></button>` : ""}
+        ${act ? `<span class="nc-go" aria-label="${esc(act.label)}"><span class="icon icon-${act.icon} icon-18" aria-hidden="true"></span></span>` : ""}
+        ${after}
+        ${fresh ? `<span class="nc-dot" aria-hidden="true"></span>` : ""}
       </div>`;
-    }).join("");
-    const notifHtml = notifs.map(n => {
-      const when = n.createdAt ? timeAgo(n.createdAt.seconds ? n.createdAt.seconds * 1000 : n.createdAt) : "";
-      const unread = n.read ? "" : " notif-item--unread";
-      // Cross-user "friend accepted" / "friend added" → avatar + derived sentence.
+    const icon = (name, cls = "") => `<span class="notif-ic${cls}"><span class="icon icon-${name} icon-14"></span></span>`;
+    const items = [], stock = [];   // items: { kind, at, html } — stock: the low-stock notices, one card for all
+    // Local notices (app update, firmware, nudges, a reply on my request): current state, so "today".
+    for (const n of locals) {
+      if (n.action === "lowstock") { stock.push({ key: n.id, img: n.img, title: n.title, text: n.text, at: Date.now() }); continue; }
+      const isCommunity = !!COMMUNITY[n.action], isFw = n.action === "paxx" || n.action === "ffgfw";
+      const clickable = isCommunity || n.action === "avatar" || isFw || n.action === "report";
+      const art = n.img ? `<img src="${esc(n.img)}" alt="" onerror="this.style.display='none'">`
+        : (n.brand && _BRAND_HAS_LOGO.has(n.brand)) ? `<span class="notif-ic notif-ic--bare"><span class="pt-thumb-logo" data-brand="${esc(n.brand)}"></span></span>`
+        : n.action === "coffee" ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt=""></span>`
+        : n.action === "restart" || n.action === "update" || (!n.icon && !isCommunity) || n.icon === "refresh" ? `<img src="../assets/img/notifications/update.webp" alt="">`   // app update (docs/ART-DIRECTION.md)
+        : icon(n.icon || "refresh", isCommunity ? ` notif-ic--${n.action}` : "");
+      const accent = n.action === "report" ? NOTIF_ACCENT.report : isCommunity ? NOTIF_ACCENT.community : n.action === "restart" || isFw ? NOTIF_ACCENT.update : NOTIF_ACCENT.system;
+      items.push({ kind: "system", at: Date.now(), html: card({ kind: "system", accent, clickable,
+        attrs: `data-local-id="${esc(n.id)}"${clickable && n.action !== "report" && !isCommunity ? ` data-local-action="${esc(n.action)}"` : ""}`,
+        art, title: n.title, text: `${n.text || ""}${n.version ? ` (v${n.version})` : ""}`,
+        act: n.action === "report" ? { id: "report", icon: "chat", label: t("notifActDiscussion") } : isCommunity ? { id: "community", arg: n.action, icon: "arrow-up-right", label: t("notifActOpen") } : null,
+        extra: isFw ? `<button type="button" class="primary sm notif-later" title="${esc(t("notifRemindLater"))}"><span class="icon icon-bell icon-12"></span>${esc(t("notifRemindLater"))}</button>` : "",
+        after: `${n.action === "restart" ? `<button class="primary sm notif-restart">${esc(t("btnRestartUpdate"))}</button>` : ""}${isFw ? `<button type="button" class="fp-friend-btn notif-dismiss notif-dismiss-paxx" title="${esc(t("cancelLabel"))}"><span class="icon icon-close icon-13"></span></button>` : ""}` }) });
+    }
+    // Firestore notifications (server- or friend-written).
+    for (const n of notifs) {
+      const at = ms(n.createdAt), when = at ? timeAgo(at) : "", fresh = _notifFresh.has(n.id) || !n.read;
+      const base = { fresh, when, attrs: `data-id="${esc(n.id)}"` };
+      const subject = { uid: n.fromUid, displayName: n.fromName, photoURL: n.photoURL || null, color: n.color || null };
       if (n.type === "friend_accepted" || n.type === "friend_added") {
-        const subject = { displayName: n.fromName, photoURL: n.photoURL || null, color: n.color || null };
-        return `<div class="notif-item${unread}" data-id="${esc(n.id)}">
-          ${avatarMarkup(subject, "fp-friend-avatar")}
-          <div class="fp-friend-main">
-            <div class="notif-text">${esc(_notifText(n))}</div>
-            <div class="fp-friend-date">${esc(when)}</div>
-          </div>
-        </div>`;
-      }
-      // First payment tied to this account (server-written by the support webhooks).
-      if (n.type === "supporter_thanks") {
-        return `<div class="notif-item${unread}" data-id="${esc(n.id)}">
-          <span class="notif-ic notif-ic--supporter"><span class="icon icon-heart-fill icon-14"></span></span>
-          <div class="fp-friend-main">
-            <div class="notif-title">${esc(t("notifSupporterTitle"))}</div>
-            <div class="notif-text">${esc(t("notifSupporterText"))}</div>
-            <div class="fp-friend-date">${esc(when)}</div>
-          </div>
-        </div>`;
-      }
-      // TigerSquad (server-written by the XP engine): the day's XP gains, grouped
-      // in one row, and a level climbed — the badge itself is the icon.
-      if (n.type === "xp_gain" || n.type === "squad_level") {
+        items.push({ kind: "squad", at, html: card({ ...base, kind: "squad", accent: NOTIF_ACCENT.friend, art: userAvatar(subject, "sb-friend-avatar"),
+          title: _notifText(n), act: n.fromUid ? { id: "friend", arg: n.fromUid, icon: "grid", label: t("notifActFriendStock") } : null }) });
+      } else if (n.type === "envelope_gift") {
+        items.push({ kind: "envelopes", at, html: card({ ...base, kind: "envelopes", accent: NOTIF_ACCENT.envelope, clickable: true,
+          art: `<img src="../assets/img/tigercoins/envelope.webp" alt=""><span class="nc-art-av">${userAvatar(subject, "fp-friend-avatar")}</span>`,
+          title: t("notifEnvelopeGift", { name: _shortName(n.fromName, n.fromUid) }), text: t("notifEnvelopeGiftText"),
+          act: { id: "gift", arg: n.id, icon: "mail", label: t("envGiftTitle") } }) });
+      } else if (n.type === "envelope_chip") {
+        // TigerTag+ Certified chips counted today = surprise envelopes (supportWebhooks.js syncChip).
+        items.push({ kind: "envelopes", at, html: card({ ...base, kind: "envelopes", accent: NOTIF_ACCENT.envelope, clickable: true,
+          art: `<img src="../assets/img/tigercoins/envelope.webp" alt=""><span class="nc-art-av nc-art-logo"><img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt=""></span>`,
+          title: t("notifEnvelopeChip", { n: Number(n.data?.n) || 1 }), text: t("notifEnvelopeChipText"),
+          act: { id: "envelopes", icon: "mail", label: t("notifActOpenEnvelopes") } }) });
+      } else if (n.type === "supporter_thanks") {
+        items.push({ kind: "squad", at, html: card({ ...base, kind: "squad", accent: NOTIF_ACCENT.heart, art: icon("heart-fill", " notif-ic--supporter"),
+          title: t("notifSupporterTitle"), text: t("notifSupporterText") }) });
+      } else if (n.type === "xp_gain" || n.type === "squad_level") {
         const lvl = n.type === "squad_level", tier = SQUAD_TIERS.includes(n.data?.tier) ? n.data.tier : "gold";
         const parts = (n.data?.parts || []).map(k => k === "chips" ? t("xpPart_chips") : k === "squad" ? t("xpPart_squad") : t("xpAch_" + k));
-        return `<div class="notif-item${unread} notif-item--clickable" data-id="${esc(n.id)}" data-notif-action="${lvl ? "squadlevel" : "squadxp"}">
-          ${lvl ? `<img class="notif-ic notif-ic--badge" src="${esc(SQUAD_ASSETS[tier])}" alt="">`
-                : `<span class="notif-ic notif-ic--xp"><span class="icon icon-star-fill icon-14"></span></span>`}
-          <div class="fp-friend-main">
-            <div class="notif-title">${esc(lvl ? t("squadLevelUpTitle", { tier: squadTierLabel(tier) })
-                                               : t("notifXpTitle", { xp: Number(n.data?.gained || 0).toLocaleString(state.lang || "en") }))}</div>
-            <div class="notif-text">${esc(lvl ? t("squadLevelUpText_" + tier) : parts.join(" · "))}</div>
-            <div class="fp-friend-date">${esc(when)}</div>
-          </div>
-        </div>`;
-      }
-      // A request of mine changed status on GitHub (server-written by `myReports`).
-      // Worded HERE, in the user's language — the server only says which status.
-      if (n.type === "request_status") {
+        items.push({ kind: "squad", at, html: card({ ...base, kind: "squad", accent: lvl ? NOTIF_ACCENT.level : NOTIF_ACCENT.xp,
+          art: `<img src="${lvl ? esc(SQUAD_ASSETS[tier]) : "../assets/img/tigercoins/xp-v2.webp"}" alt="">`,
+          title: lvl ? t("squadLevelUpTitle", { tier: squadTierLabel(tier) }) : t("notifXpTitle", { xp: Number(n.data?.gained || 0).toLocaleString(lang) }),
+          text: lvl ? t("squadLevelUpText_" + tier) : parts.join(" · "),
+          act: lvl ? { id: "progress", icon: "sparkle", label: t("notifActProgress") } : { id: "xp", icon: "bars", label: t("notifActXpHistory") } }) });
+      } else if (n.type === "request_status") {
         const st = n.data?.status || "open";
-        return `<div class="notif-item${unread} notif-item--clickable" data-id="${esc(n.id)}" data-notif-action="report">
-          <span class="notif-ic notif-ic--req notif-ic--req-${esc(st)}"><span class="icon icon-suggestion icon-14"></span></span>
-          <div class="fp-friend-main">
-            <div class="notif-title">${esc(t(`notifReq_${st}`, { n: n.data?.number || "" }))}</div>
-            <div class="notif-text">${esc(n.data?.title || "")}</div>
-            <div class="fp-friend-date">${esc(when)}</div>
-          </div>
-        </div>`;
+        items.push({ kind: "system", at, html: card({ ...base, kind: "system", accent: NOTIF_ACCENT.report, art: icon("suggestion", ` notif-ic--req notif-ic--req-${esc(st)}`),
+          title: t(`notifReq_${st}`, { n: n.data?.number || "" }), text: n.data?.title || "",
+          act: { id: "report", icon: "chat", label: t("notifActDiscussion") } }) });
+      } else if ((n.action || "") === "lowstock") {
+        // Older low-stock notices stored the desktop's local /img-cache/ path — only that desktop can show it.
+        const img = !HAS_NATIVE && String(n.data?.img || "").startsWith("/img-cache/") ? "" : n.data?.img;
+        stock.push({ key: n.data?.key || "", img, title: n.title, text: n.text, at, fresh });
+      } else {
+        // Owner-authored event (community / announcement / app update): clickable to its action.
+        const action = n.action || "";
+        const canRestart = action === "whatsnew" && _updateReadyVersion && n.data?.version === _updateReadyVersion;
+        const art = n.data?.img ? `<img src="${esc(n.data.img)}" alt="" onerror="this.style.display='none'">`
+          : action === "coffee" ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt=""></span>`
+          : action === "whatsnew" ? `<img src="../assets/img/notifications/update.webp" alt="">`   // a new version (docs/ART-DIRECTION.md)
+          : icon(n.icon || "bell", COMMUNITY[action] ? ` notif-ic--${action}` : "");
+        items.push({ kind: "system", at, html: card({ ...base, kind: "system", accent: action === "whatsnew" ? NOTIF_ACCENT.update : COMMUNITY[action] ? NOTIF_ACCENT.community : NOTIF_ACCENT.system,
+          clickable: !!action, attrs: `data-id="${esc(n.id)}"${action && action !== "whatsnew" && !COMMUNITY[action] ? ` data-notif-action="${esc(action)}" data-notif-key="${esc(n.data?.key || "")}" data-notif-version="${esc(n.data?.version || "")}"` : ""}`,
+          art, title: n.title, text: n.text,
+          act: action === "whatsnew" ? { id: "whatsnew", arg: n.data?.version || "", icon: "book", label: t("notifActWhatsNew") }
+            : COMMUNITY[action] ? { id: "community", arg: action, icon: "arrow-up-right", label: t("notifActOpen") } : null,
+          after: canRestart ? `<button class="primary sm notif-restart">${esc(t("btnRestartUpdate"))}</button>` : "" }) });
       }
-      // Owner-authored event (low_stock / community / announcement): icon chip +
-      // title + text + time, clickable to its action. NO delete (social-style feed).
-      const action = n.action || "";
-      // Older low-stock notices stored the desktop's local /img-cache/ path —
-      // only that same desktop can show it.
-      const img = !HAS_NATIVE && String(n.data?.img || "").startsWith("/img-cache/") ? "" : n.data?.img;
-      const brandIc = COMMUNITY[action] ? ` notif-ic--${action}` : (action === "lowstock" ? " notif-ic--lowstock" : "");
-      const iconHtml = img
-        ? `<span class="notif-ic notif-ic--img"><img src="${esc(img)}" alt="" onerror="this.style.display='none'" /></span>`
-        : action === "coffee"
-        ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt="" /></span>`
-        : `<span class="notif-ic${brandIc}"><span class="icon icon-${esc(n.icon || "bell")} icon-14"></span></span>`;
-      const clickable = !!action;
-      // App-update announcement whose version is downloaded & ready ON THIS device
-      // → add the Restart button (installs the update). Elsewhere the row just
-      // opens What's New.
-      const canRestart = action === "whatsnew" && _updateReadyVersion && n.data?.version === _updateReadyVersion;
-      return `<div class="notif-item${unread}${clickable ? " notif-item--clickable" : ""}" data-id="${esc(n.id)}"${clickable ? ` data-notif-action="${esc(action)}" data-notif-key="${esc(n.data?.key || "")}" data-notif-version="${esc(n.data?.version || "")}"` : ""}>
-        ${iconHtml}
-        <div class="fp-friend-main">
-          ${n.title ? `<div class="notif-title">${esc(n.title)}</div>` : ""}
-          <div class="notif-text">${esc(n.text || "")}</div>
-          <div class="fp-friend-date">${esc(when)}</div>
-        </div>
-        ${canRestart ? `<button class="primary sm notif-restart">${esc(t("btnRestartUpdate"))}</button>` : ""}
-      </div>`;
-    }).join("");
-    list.innerHTML = reqHtml + localHtml + notifHtml;
+    }
+    // The low-stock notices, ONE card: a tile per spool (opens it), "Order", foldable.
+    // A spool notified several times shows once (its newest notice).
+    { const seen = new Map(); for (const x of stock) { const k = x.key || x.title; const o = seen.get(k); if (!o || (x.at || 0) > (o.at || 0)) seen.set(k, { ...x, fresh: x.fresh || o?.fresh }); } stock.splice(0, stock.length, ...seen.values()); }
+    if (stock.length) {
+      const folded = _notifStockCollapsed(), at = Math.max(...stock.map(x => x.at || 0));
+      // Each spool drawn like everywhere else (thumbHTML: the photo inside its
+      // material colour frame), from its product record (state.products).
+      const prodByKey = new Map(Object.values(state.products || {}).map(p => [p.key, p]));
+      const tiles = stock.map(x => { const p = prodByKey.get(x.key), row = p ? _productAsRow(p) : null; return `
+          <button type="button" class="nc-tile" data-stock-key="${esc(x.key)}">
+            ${row ? thumbHTML(row, 40, { badges: false }) : x.img ? `<img src="${esc(x.img)}" alt="" onerror="this.style.visibility='hidden'">` : `<span class="nc-tile-ph"></span>`}
+            <span><b>${esc(x.title || "")}</b><small>${esc((String(x.text || "").match(/\d+\s*\/\s*\d+/) || [x.text || ""])[0])}</small></span>
+          </button>`; }).join("");
+      items.push({ kind: "stock", at, html: card({ kind: "stock", accent: NOTIF_ACCENT.stock, fresh: stock.some(x => x.fresh),
+        art: `<img src="../assets/img/notifications/low-stock.webp" alt="">`,   // the low-stock spool (docs/ART-DIRECTION.md)
+        title: t("notifLowStockTitle", { n: stock.length }), text: t("notifLowStockSub"),
+        act: { id: "order", icon: "cart", label: t("notifActOrder") },
+        after: `<button type="button" class="nc-fold" aria-expanded="${!folded}" aria-label="${esc(t("notifTabStock"))}"><span class="icon icon-chevron-r icon-12" aria-hidden="true"></span></button>
+          <div class="nc-stock-grid">${tiles}</div>` }).replace('class="notif-item nc-card', `class="notif-item nc-card nc-stock${folded ? " is-folded" : ""}`) });
+    }
+    // Tabs: a count of what is unread (fresh) in each; the friend requests count as Squad.
+    const tab = _notifFilter.tab;
+    const freshOf = k => items.filter(x => (k === "all" || x.kind === k) && x.html.includes(" is-fresh")).length + (k === "all" || k === "squad" ? reqs.length : 0);
+    const TABS = [["all", `<span class="icon icon-bell icon-12"></span>`, "notifTabAll"],
+      ["envelopes", `<img src="../assets/img/tigercoins/envelope.webp" alt="">`, "notifTabEnvelopes"],
+      ["squad", `<span class="icon icon-star-fill icon-12"></span>`, "notifTabSquad"],
+      ["system", `<span class="icon icon-settings icon-12"></span>`, "notifTabSystem"],
+      ["stock", `<span class="icon icon-cart icon-12"></span>`, "notifTabStock"]];
+    const tabsHtml = `<div class="nc-tabs" role="tablist">${TABS.map(([k, ic, key]) => { const c = freshOf(k);
+      return `<button type="button" role="tab" class="nc-tab${tab === k ? " is-on" : ""}" data-nc-tab="${k}" aria-selected="${tab === k}">${ic}<span>${esc(t(key))}</span>${c ? `<b>${c}</b>` : ""}</button>`; }).join("")}</div>`;
+    // Day groups, newest first; the local notices sit in "today".
+    const dayStart = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x.getTime(); };
+    const today = dayStart(Date.now()), groupOf = at => !at || at >= today ? 0 : at >= today - 864e5 ? 1 : at >= today - 6 * 864e5 ? 2 : 3;
+    const longDay = new Intl.DateTimeFormat(lang, { weekday: "long", day: "numeric", month: "long" });
+    const GROUPS = [["notifToday", longDay.format(today)], ["notifYesterday", longDay.format(today - 864e5)], ["notifThisWeek", ""], ["notifOlder", ""]];
+    const shown = items.filter(x => tab === "all" || x.kind === tab).sort((x, y) => (y.at || 0) - (x.at || 0));
+    const reqHtml = tab === "all" || tab === "squad" ? reqs.map(r => `<div class="fp-req notif-req" data-uid="${esc(r.uid)}">${_reqRowInnerHtml(r)}</div>`).join("") : "";
+    let body = reqHtml;
+    GROUPS.forEach(([key, date], g) => {
+      const rows = shown.filter(x => groupOf(x.at) === g);
+      if (rows.length) body += `<div class="nc-day"><b>${esc(t(key))}</b>${date ? `<span>${esc(date.charAt(0).toUpperCase() + date.slice(1))}</span>` : ""}</div>${rows.map(x => x.html).join("")}`;
+    });
+    if (!body && (reqs.length || locals.length || notifs.length)) body = `<p class="nc-none">${esc(t("notifsEmptyTitle"))}</p>`;
+    list.innerHTML = (reqs.length || locals.length || notifs.length ? tabsHtml : "") + body;
     list.querySelectorAll(".notif-req").forEach(row => {
       const r = reqs.find(x => x.uid === row.dataset.uid);
       if (r) _wireReqRow(row, r);
     });
+    list.querySelectorAll("[data-nc-tab]").forEach(b => b.addEventListener("click", () => { _notifFilter.tab = b.dataset.ncTab; renderNotifCenter(); }));
+    // A card with an action: clicking it goes there (the icon on its right says where).
+    list.querySelectorAll(".nc-card[data-nc-act]").forEach(cardEl => cardEl.addEventListener("click", e => {
+      if (e.target.closest("button")) return;   // its own buttons (restart, fold, a spool tile…)
+      const arg = cardEl.dataset.ncArg;
+      closeNotifs();
+      switch (cardEl.dataset.ncAct) {
+        case "gift": _showEnvelopeGiftNotif(arg); break;
+        case "envelopes": _openEnvelopesNow(); break;
+        case "xp": openXpHistory(); break;
+        case "progress": _openSquadView("ach"); break;
+        case "friend": { const f = (state.friends || []).find(x => x.uid === arg); switchToFriendView(arg, f?.displayName || "", f?.color || null); break; }
+        case "whatsnew": openWhatsNew(arg || undefined, { manual: true }); break;
+        case "report": openReport({ tab: "mine" }); break;
+        case "community": _openCommunityLink(arg); break;
+        case "order": setViewMode("order"); break;
+      }
+    }));
+    list.querySelectorAll(".nc-fold").forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation();
+      const cardEl = b.closest(".nc-stock"), folded = !cardEl.classList.contains("is-folded");
+      cardEl.classList.toggle("is-folded", folded);
+      b.setAttribute("aria-expanded", String(!folded));
+      try { localStorage.setItem("tigertag.notifStockCollapsed", folded ? "1" : "0"); } catch (_) {}
+    }));
+    list.querySelectorAll("[data-stock-key]").forEach(b => b.addEventListener("click", e => {
+      e.stopPropagation(); closeNotifs(); _openLowStockProduct(b.dataset.stockKey);
+    }));
     list.querySelectorAll(".notif-restart").forEach(btn =>
       btn.addEventListener("click", e => { e.stopPropagation(); window.electronAPI?.installUpdate?.(); }));
     // "Remind me later" on the paxx notice — snooze without permanently
@@ -39037,22 +39185,47 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (a === "avatar") _changeMyAvatar();
         else if (a === "paxx") _openPaxxPrinter();
         else if (a === "ffgfw") _openFfgFwPrinter();
-        else if (a === "lowstock") _openLowStockProduct(row.dataset.localId);
         else if (a === "report") openReport({ tab: "mine" });   // a reply on one of my requests
         else if (COMMUNITY[a]) _openCommunityLink(a);
       }));
-    // Owner-event notifs (low_stock / community …) → route their action on click.
+    // Server / owner notifications → route their action on click.
     list.querySelectorAll("[data-notif-action]").forEach(row =>
       row.addEventListener("click", () => {
         closeNotifs();
         const a = row.dataset.notifAction;
-        if (a === "lowstock") _openLowStockProduct(row.dataset.notifKey);
-        else if (a === "report") openReport({ tab: "mine" });
+        if (a === "report") openReport({ tab: "mine" });
         else if (a === "whatsnew") openWhatsNew(row.dataset.notifVersion || undefined, { manual: true });
-        else if (a === "squadxp") _openSquadView("hist");
+        else if (a === "squadxp") openXpHistory();
         else if (a === "squadlevel") _openSquadView("ach");
         else if (COMMUNITY[a]) _openCommunityLink(a);
       }));
+  }
+  // From the Friends panel ("Give an envelope"): the oldest gift envelope, the
+  // give picker over every friend — or one already picked when `friendUid` is
+  // given (functions/tigerCoins.js giveEnvelope; a held button sends).
+  async function _giveEnvelopeTo(friendUid = null) {
+    const uid = state.activeAccountId; if (!uid) return;
+    const pool = friendUid ? (state.friends || []).filter(x => x.uid === friendUid) : (state.friends || []);
+    if (!pool.length) { _flashMessage(t("envGiveNoFriends")); return; }
+    let c;
+    try { c = _coinsOf(await _tigerCoins(uid, "status")); } catch (_) { _flashMessage(t("squadDealsErr")); return; }
+    _deals.coins = c; _paintDealsBadge(_envCount(c));
+    const env = c.envelopes?.[0], g = c.gifts;
+    if (!env || !g?.max) { _flashMessage(t("envGiveNoGift")); return; }
+    await showEnvelope(_coinsCtx(uid), env, { giveOnly: true, give: {
+      left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "", picked: friendUid,
+      friends: pool.map(f => ({ uid: f.uid, name: _shortName(f.displayName, f.uid), avatar: userAvatar(f, "sqb-avatar") })),
+      send: async to => { const r = await _tigerCoins(uid, "giveEnvelope", { id: env.id, to }); _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins)); return r; },
+    } });
+  }
+  // "Open my envelopes" from a notification: the Deals view and the opening
+  // stage at once (the pile read first when the Deals have not loaded it yet).
+  async function _openEnvelopesNow() {
+    const uid = state.activeAccountId; if (!uid) return;
+    setViewMode("squadDeals");
+    if (!_deals.coins) { try { _deals.coins = _coinsOf(await _tigerCoins(uid, "status")); } catch (_) { return; } }
+    const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
+    _openAllEnvelopes(uid, _coinsCtx(uid, after), after);
   }
 
   function _dismissNotif(id) {
@@ -39085,6 +39258,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // slide-in, which isn't part of _closeAllSidePanels).
     _closeAllSidePanels();
     closeFriends();
+    _notifFresh = new Set((state.notifications || []).filter(n => !n.read).map(n => n.id));   // their dot stays while open
     renderNotifCenter();
     $("notifPanel").classList.add("open");
     // No backdrop — keep the rest of the UI clickable while the panel is open,
@@ -39123,7 +39297,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         return `${d.charAt(0).toUpperCase()}${d.slice(1)}, ${hm.format(ms)}`;
       },
       day: ms => md.format(ms),
-      meAvatar: () => avatarMarkup(activeAccount() || {}, "sqb-avatar"),   // the "Me" scope's avatar
+      meAvatar: () => userAvatar(activeAccount() || {}, "sqb-avatar"),   // the "Me" scope's avatar
     };
   }
   // Every way into the XP history (the view bar, the XP notification, the
@@ -39340,7 +39514,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function openRemoveFriendModal(friend) {
     _rmFriendUid = friend.uid;
     const name = _shortName(friend.displayName, friend.uid);
-    $("rmFriendAvatar").innerHTML = avatarMarkup(friend, "confirm-avatar-img");
+    $("rmFriendAvatar").innerHTML = userAvatar(friend, "confirm-avatar-img");
     $("rmFriendTitle").textContent   = t("friendRemoveTitle",   { name });
     $("rmFriendBody").textContent    = t("friendRemoveConfirm",  { name });
     $("rmFriendConfirm").textContent = t("friendRemoveBtn");

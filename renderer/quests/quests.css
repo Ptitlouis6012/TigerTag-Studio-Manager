@@ -1118,6 +1118,9 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-timer { position: absolute; left: 7px; bottom: 7px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; white-space: nowrap; border-radius: 99px;
   font: 700 11px var(--qw-mono, monospace); color: var(--tsq-orange); background: rgba(12, 14, 22, .86); box-shadow: 0 2px 8px rgba(0, 0, 0, .3); font-variant-numeric: tabular-nums; }
 .sqd-timer .icon { background: currentColor; }
+.sqd-timer.is-soon { color: #fff; background: #e5484d; animation: sqd-soon 1.6s ease-in-out infinite; }
+@keyframes sqd-soon { 50% { box-shadow: 0 0 0 4px rgba(229, 72, 77, .35); } }
+@media (prefers-reduced-motion: reduce) { .sqd-timer.is-soon { animation: none; } }
 /* Grid card = a button opening the side card; the open deal's card stays lit. */
 .sqd-card[data-open] { cursor: pointer; outline: none; }
 .sqd-card[data-open]:focus-visible, .sqd-card.is-selected { border-color: var(--tsq-orange); box-shadow: 0 0 0 1px var(--tsq-orange); }
@@ -1162,6 +1165,10 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-skel-art { aspect-ratio: 1; }
 .sqd-skel-line.sqd-skel-line { height: 12px; margin: 0 10px; border-radius: 6px; }
 .sqd-skel-line.is-short { width: 55%; }
+.sqd-skel-line.sqd-skel-line.is-kicker { width: 38%; height: 8px; margin-top: 4px; }
+.sqd-skel-line.sqd-skel-line.is-bar { height: 4px; margin-top: 6px; }
+.sqd-bar.is-skel { opacity: .55; }
+.sqd-coins--skel .sqr-skel { display: block; width: 110px; height: 40px; border-radius: 10px; }
 /* Side card — slides in from the right like a spool's detail panel. */
 .sqd-side { position: fixed; top: 8px; right: 0; bottom: 8px; z-index: 101; width: 380px; max-width: 95vw; display: flex; flex-direction: column;
   background: var(--tsq-card); border: 1px solid var(--tsq-line); border-right: none; border-radius: 14px 0 0 14px; overflow: hidden auto;
@@ -1170,6 +1177,10 @@ body.progress-view #gridSortWrap { display: none; }
 /* The card being covered by the next one: one slot under it, then closed
    without a slide (it is hidden behind the new card by then). */
 .sqd-side.is-under { z-index: 100; transition: none; }
+/* The view's scroll fade is a mask, and a mask clips every descendant — the
+   side cards live inside the view, so the fade would cut through them: no fade
+   while one is open. */
+.inv-squad-view.sqd-view.scroll-fade:has(.sqd-side.is-open) { -webkit-mask-image: none; mask-image: none; }
 .sqd-side-head { padding: 16px 16px 12px; font-size: 15px; font-weight: 700; color: var(--tsq-text); }
 .sqd-side-art { padding: 0 16px; }
 .sqd-side-art .sqd-card-art { border-radius: 12px; overflow: hidden; }
@@ -1202,6 +1213,7 @@ body.progress-view #gridSortWrap { display: none; }
   border: 1px dashed color-mix(in srgb, var(--tsq-orange) 70%, transparent); background: color-mix(in srgb, var(--tsq-orange) 8%, transparent); }
 .sqd-code-row code { flex: 1; min-width: 0; padding: 10px 12px; font: 800 13px var(--qw-mono, monospace); letter-spacing: .06em; color: var(--tsq-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqd-code-row.is-spent code { color: var(--tsq-muted); letter-spacing: .3em; }
 .sqd-code-row .sqd-code { border: 0; border-left: 1px solid color-mix(in srgb, var(--tsq-orange) 40%, transparent); border-radius: 0; padding: 0 12px;
   font-size: 12.5px; font-weight: 700; background: none; }
 .sqd-side-actions .sqd-mark { justify-content: center; }
@@ -1247,14 +1259,36 @@ body.progress-view #gridSortWrap { display: none; }
   box-shadow: 0 0 16px rgba(255, 110, 50, .45); transition: transform .15s, box-shadow .15s; }
 .sqd-coins-env img { width: 22px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); animation: tc-env-wiggle 2.6s ease-in-out infinite; }
 .sqd-coins-env:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(255, 110, 50, .7); }
+/* Envelopes waiting: the button calls — a pulsing halo, a little hop every few
+   seconds and a light sweep across it. Still with reduced motion. */
+.sqd-coins-env { position: relative; overflow: hidden; animation: sqd-env-call 2.6s ease-in-out infinite; }
+.sqd-coins-env::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, .55) 50%, transparent 65%) -150% 0 / 250% 100% no-repeat;
+  animation: sqd-env-shine 2.6s ease-in-out infinite; }
+@keyframes sqd-env-call {
+  0%, 100% { transform: none; box-shadow: 0 0 16px rgba(255, 110, 50, .45); }
+  8% { transform: translateY(-3px) scale(1.06); }
+  16% { transform: translateY(0) scale(1); }
+  50% { box-shadow: 0 0 28px 4px rgba(255, 110, 50, .75); }
+}
+@keyframes sqd-env-shine { 0%, 40% { background-position: -150% 0; } 75%, 100% { background-position: 150% 0; } }
+.sqd-coins-env:hover { animation-play-state: paused; }
+/* No envelope: the counter still shows (0), quiet, and opens the "how to get some" help. */
+.sqd-coins-env.is-empty { animation: none; background: linear-gradient(135deg, #5a3a3e, #3e2a30); color: #e9c9c4; box-shadow: none; }
+.sqd-coins-env.is-empty::after { display: none; }
+.sqd-coins-env.is-empty img { animation: none; filter: grayscale(.35) drop-shadow(0 2px 2px rgba(0, 0, 0, .35)); }
+@media (prefers-reduced-motion: reduce) { .sqd-coins-env, .sqd-coins-env::after { animation: none; } }
 .sqd-coins-env:disabled { opacity: .6; cursor: default; }
-.sqd-coins .sqd-coins-codebtn { width: 40px; height: 40px; padding: 0; justify-content: center; border-radius: 12px; }
-.sqd-coins .sqd-coins-codebtn .icon { width: 16px; height: 16px; }
-.sqd-coins-codebtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; white-space: nowrap;
-  border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
-  transition: color .15s, border-color .15s; }
-.sqd-coins-codebtn .icon { background: currentColor; }
-.sqd-coins-codebtn:hover { color: #ffd75e; border-color: color-mix(in srgb, #ffcf3d 45%, var(--tsq-line)); }
+/* The card loses the hero cards' own downward offset, which pushed it onto
+   the buttons; the stack, centred, clears the desk. */
+.sqd-coins-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.sqd-coins-wrap > .sqr-card.sqd-coins { top: 0; }
+.sqd-coins-acts { display: flex; align-items: center; gap: 10px; }
+/* The code's gift: no frame, the illustrated gift box, which hops on hover. */
+.sqd-coins-gift { display: grid; place-items: center; width: 36px; aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--tsq-muted); transition: color .15s, transform .15s; }
+.sqd-coins-gift img { width: 34px; height: 34px; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .4)); transition: transform .15s; }
+.sqd-coins-gift:hover img { transform: translateY(-2px) rotate(-6deg) scale(1.08); }
 .tc-code-card { width: min(460px, 92vw); padding: 28px 26px 22px; }
 .tc-code-ic { display: grid; place-items: center; width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 16px;
   background: radial-gradient(circle at 35% 30%, rgba(255, 241, 184, .35), rgba(255, 207, 61, .14)); box-shadow: 0 0 24px rgba(255, 190, 40, .25); }
@@ -1314,38 +1348,59 @@ body.progress-view #gridSortWrap { display: none; }
 @media (prefers-reduced-motion: reduce) { .tc-sur { animation-duration: .01s; } }
 /* TigerCoins envelope (squad-deals.js showEnvelope): a red envelope with a gold
    seal; opening lifts the flap and slides up the note with what it held. */
-.tc-env-card { width: min(420px, 92vw); padding: 26px 24px 22px; }
-.tc-env-card h3 { margin-bottom: 4px; }
-.tc-env-msg { min-height: 18px; margin: 0 0 18px; font-size: 13.5px; color: var(--tsq-muted); }
-.tc-env { position: relative; display: block; width: 190px; height: 230px; margin: 0 auto; perspective: 700px; }
-.tc-env-back, .tc-env-front { position: absolute; left: 0; right: 0; bottom: 0; height: 100%; border-radius: 14px; }
-.tc-env-back { background: #9e121a; }
-.tc-env-front { z-index: 2; background: linear-gradient(160deg, #e3343b, #b5161e 70%); box-shadow: inset 0 0 0 2px rgba(255, 207, 61, .35), 0 14px 34px rgba(160, 15, 25, .45);
-  clip-path: polygon(0 34%, 50% 52%, 100% 34%, 100% 100%, 0 100%); }
-.tc-env-flap { position: absolute; z-index: 3; left: 0; right: 0; top: 0; height: 52%; transform-origin: top center;
-  background: linear-gradient(180deg, #f04a50, #c71f27); clip-path: polygon(0 0, 100% 0, 100% 65%, 50% 100%, 0 65%);
-  transition: transform .55s cubic-bezier(.3, .7, .3, 1), opacity .25s .35s, z-index 0s .28s; }
-.tc-env-seal { position: absolute; z-index: 4; left: 50%; top: 41%; transform: translate(-50%, -50%); display: grid; place-items: center;
-  width: 58px; height: 58px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff1b8, #ffcf3d 45%, #d38a10);
-  box-shadow: 0 0 0 3px rgba(122, 10, 16, .35), 0 0 22px rgba(255, 190, 40, .45); transition: opacity .25s, transform .4s; }
-.tc-env-seal .tcoin--big { width: 30px; height: 30px; }
-.tc-env-note { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 16px; height: 60%; border-radius: 10px;
-  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 22px; gap: 2px;
-  background: linear-gradient(180deg, #fffaf0, #fbe7b8); transition: transform .6s cubic-bezier(.2, .9, .3, 1.15) .25s; }
-.tc-env-amount { font: 800 30px var(--qw-mono, monospace); color: #b5161e; }
-.tc-env-unit { font-size: 12px; font-weight: 700; color: #8a5a00; text-transform: uppercase; letter-spacing: .06em; }
-.tc-env-card.is-opened .tc-env-flap { transform: rotateX(180deg); z-index: 0; opacity: 0; }
-.tc-env-card.is-opened .tc-env-seal { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
-.tc-env-card.is-opened .tc-env-note { transform: translateY(-46%); }
-.tc-env-rank { margin: 16px 0 0; font-size: 13px; font-weight: 700; color: #ffd75e; }
-.tc-env-card .tc-reveal-actions { margin-top: 20px; flex-wrap: wrap; }
-.tc-env-card:not(.is-opened) .tc-env { animation: tc-env-wiggle 2.6s ease-in-out infinite; }
+/* Give to a friend (showEnvelope `give`): the button under "Open", then the
+   friends to pick from, today's allowance, a held button that sends. */
+.tc-env-give, .tp-gift { display: inline-flex; align-items: center; gap: 8px; }
+.tp-gift img { width: 20px; height: 20px; object-fit: contain; }
+.tp-gift-row { display: flex; justify-content: center; margin-top: 10px; }   /* under "Open ×10", on its own line */
+.tc-env-give img { width: 20px; height: 20px; object-fit: contain; }
+.tc-give { width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.tc-give-left { margin: 0; font-size: 12.5px; color: var(--tsq-muted); }
+.tc-give-left.is-none { color: #ff8a80; }
+/* The friends as a grid of avatars (name under), the picked one ringed and
+   checked; scrolls without a visible scrollbar. */
+.tc-give-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); grid-auto-rows: max-content; align-content: start; gap: 6px; height: 236px; overflow-y: auto;   /* fixed height: the modal keeps its size while the search filters */
+  padding: 4px; scrollbar-width: none; }
+.tc-give-list::-webkit-scrollbar { width: 0; height: 0; display: none; }
+.sqd-search.tc-give-search { flex: none; max-width: none; width: 100%; box-sizing: border-box; }
+.tc-give-f[hidden] { display: none; }
+.tc-give-f { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; height: auto; padding: 10px 4px 8px; border-radius: 12px; cursor: pointer;   /* height: auto beats the global button height */
+  border: 1px solid transparent; background: none; color: var(--tsq-text); transition: background-color .15s, border-color .15s; }
+.tc-give-f:hover:not(:disabled) { background: rgba(255, 255, 255, .05); }
+.tc-give-f[aria-checked="true"] { border-color: #ffcf3d; background: rgba(255, 207, 61, .1); }
+.tc-give-f:disabled { opacity: .45; cursor: default; }
+.tc-give-av { position: relative; }
+.tc-give-av .sqb-avatar { width: 46px; height: 46px; font-size: 16px; }
+.tc-give-check { position: absolute; right: -4px; bottom: -2px; width: 20px; height: 20px; border-radius: 50%; display: none; place-items: center;
+  background: #ffcf3d; color: #1a0f04; box-shadow: 0 0 0 2px #151a33; }
+.tc-give-check .icon { background: currentColor; }
+.tc-give-f[aria-checked="true"] .tc-give-check { display: grid; }
+.tc-give-name { max-width: 100%; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tc-env-card.is-given .tc-env { animation: tc-give-fly .9s cubic-bezier(.5, 0, .7, .2) forwards; }
+@keyframes tc-give-fly { to { transform: translate(140px, -120px) rotate(18deg) scale(.4); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .tc-env-card.is-given .tc-env { animation: none; opacity: .4; } }
+/* The gift envelope (showEnvelope): the gift-code modal's frame (.tcx--help) —
+   the illustrated envelope rising from behind the card (.tch-env), the plaque,
+   the message, the prize (coin + amount) that pops in once opened, when the
+   envelope flies off. */
+.tc-env-card .tc-env-msg { min-height: 18px; margin: 0; font-size: 14px; font-weight: 600; color: #b9c2e0; }
+.tc-env-prize { display: none; align-items: center; justify-content: center; gap: 14px; }
+.tc-env-prize img { width: 72px; height: 72px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(255, 200, 60, .55)); }
+.tc-env-prize span { display: flex; flex-direction: column; align-items: flex-start; }
+.tc-env-amount { font: 900 44px/1 var(--qw-mono, monospace); color: #ffd75e; text-shadow: 0 0 22px rgba(255, 190, 40, .5); }
+.tc-env-unit { font-size: 12px; font-weight: 800; color: #f3c46b; text-transform: uppercase; letter-spacing: .08em; }
+.tc-env-card.is-opened .tc-env-prize { display: flex; animation: tc-prize-pop .45s cubic-bezier(.2, .8, .2, 1.4); }
+.tc-env-card.is-opened .tc-env { animation: tc-env-away .5s ease-in forwards; }
+@keyframes tc-prize-pop { from { opacity: 0; transform: scale(.5); } }
+@keyframes tc-env-away { to { opacity: 0; transform: translateY(-40px) scale(.7) rotate(-8deg); } }
+.tc-env-rank { margin: 0; font-size: 13px; font-weight: 700; color: #ffd75e; }
+.tc-env-card .tc-reveal-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; }
+.tc-env-card .tc-reveal-actions > .tc-code-cancel { min-width: 200px; }
 @keyframes tc-env-wiggle { 0%, 80%, 100% { transform: rotate(0); } 84% { transform: rotate(-3deg); } 88% { transform: rotate(3deg); } 92% { transform: rotate(-2deg); } 96% { transform: rotate(1deg); } }
 @media (prefers-reduced-motion: reduce) {
-  .tc-env-card:not(.is-opened) .tc-env { animation: none; }
-  .tc-env-flap, .tc-env-note, .tc-env-seal { transition: none; }
+  .tc-env-card.is-opened .tc-env-prize, .tc-env-card.is-opened .tc-env { animation: none; }
+  .tc-env-card.is-opened .tc-env { opacity: 0; }
 }
-/* A tiny red envelope with its gold seal (the coins bar's pile). */
 .tc-env-mini { display: inline-block; width: 13px; height: 16px; flex-shrink: 0; background: url("../../assets/img/tigercoins/envelope.webp") center / contain no-repeat; }
 /* TigerCoins chest (squad-deals.js showChest): a box in its type's colour
    (--cc) with gold bands; opening lifts the lid and spills a light, then its
@@ -1610,7 +1665,7 @@ body.progress-view #gridSortWrap { display: none; }
 
 /* Held buttons: the fill sweeps while the button is held. */
 .tp-hold { position: relative; overflow: hidden; }
-.tp-hold > span:not(.tp-fill) { position: relative; }
+.tp-hold > span:not(.tp-fill):not(.tp-bubble) { position: relative; }   /* the bubble floats above (absolute), it must not widen the button */
 .tp-fill { position: absolute; inset: 0; background: rgba(255, 255, 255, .3); pointer-events: none; clip-path: inset(0 calc((1 - var(--hold, 0)) * 100%) 0 0 round 9px); }
 /* A click where a hold is needed: a "no" shake and a bubble above. */
 .tp-hold.is-nudged, .tpx-pile.is-nudged { animation: tp-no .4s ease-out; }
@@ -1652,13 +1707,23 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx-plaque h3 { margin: 0; font: 900 34px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
   background: linear-gradient(180deg, #fff, #ffe08a 55%, #ffb21a); -webkit-background-clip: text; background-clip: text; color: transparent;
   filter: drop-shadow(0 3px 0 #2a0a10); }
-.tcx-gift { position: absolute; left: 50%; top: -34px; display: grid; place-items: center; width: 50px; height: 50px; translate: -50% 0; border-radius: 14px;
-  background: linear-gradient(180deg, #ff6b4a, #d8261f); box-shadow: inset 0 0 0 3px #ffcf3d, 0 0 26px rgba(255, 190, 40, .7); animation: tcx-gift 2.4s ease-in-out infinite; }
-.tcx-gift .icon { width: 26px; height: 26px; background: #fff3c4; }
+/* The illustrated gift box (the banner's), perched on the plaque. */
+.tcx-gift { position: absolute; left: 50%; top: -50px; width: 64px; height: 64px; object-fit: contain; translate: -50% 0;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .5)) drop-shadow(0 0 14px rgba(255, 190, 40, .45)); animation: tcx-gift 2.4s ease-in-out infinite; }
 @keyframes tcx-gift { 50% { transform: translateY(-5px) rotate(-4deg); } }
 .tcx .tc-code-hint { margin: 0; font-size: 14px; font-weight: 600; color: #b9c2e0; }
 .tcx .tc-code-box { width: 112px; flex: 0 1 112px; height: 60px; font-size: 24px; border: 2px solid rgba(255, 207, 61, .55); background: #0b0e1c;
   box-shadow: inset 0 0 14px rgba(255, 207, 61, .12), 0 0 14px rgba(255, 207, 61, .15); }
+/* A wrong code: a red bubble over the boxes, centred on the middle one —
+   it takes no room, so the modal does not grow. */
+.tcx .tc-code-row { position: relative; }
+.tcx .tc-code-err { position: absolute; left: 50%; bottom: calc(100% + 12px); z-index: 2; margin: 0; padding: 8px 14px; border-radius: 10px; white-space: nowrap;
+  font-size: 13px; font-weight: 700; color: #fff; background: #e5484d; box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+  transform: translateX(-50%); animation: tcx-err-pop .25s cubic-bezier(.2, .8, .2, 1.3); }
+.tcx .tc-code-err::after { content: ""; position: absolute; left: 50%; top: 100%; border: 7px solid transparent; border-top-color: #e5484d; transform: translateX(-50%); }
+.tcx .tc-code-err[hidden] { display: none; }
+@keyframes tcx-err-pop { from { opacity: 0; transform: translate(-50%, 6px) scale(.9); } }
+@media (prefers-reduced-motion: reduce) { .tcx .tc-code-err { animation: none; } }
 .tcx .tc-code-box:focus { border-color: #ffcf3d; box-shadow: inset 0 0 14px rgba(255, 207, 61, .2), 0 0 0 4px rgba(255, 207, 61, .18), 0 0 22px rgba(255, 207, 61, .45); }
 .tcx .tc-code-dash { color: #ffcf3d; font-size: 22px; }
 .tcx-go { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 330px; max-width: 100%; height: 56px; margin-top: 4px; border: 0; border-radius: 16px; cursor: pointer;
@@ -1668,6 +1733,36 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx-go:not(:disabled):hover { transform: translateY(-2px); filter: brightness(1.06); }
 .tcx-go:not(:disabled):active { transform: translateY(1px); }
 .tcx-go:disabled { opacity: .45; cursor: default; }
+/* "How to get envelopes" (openEnvelopeHelp): the code modal's frame, narrower,
+   the envelope over the plaque, the ways as a list. */
+.tc-code-card.tcx.tcx--help { width: min(560px, 94vw); padding-top: 34px; }
+.tcx--help .tcx-main { padding: 0 32px 28px; gap: 16px; }
+.tcx--help .tcx-plaque { padding: 12px 30px 10px; }
+.tcx--help .tcx-plaque h3 { font-size: 24px; white-space: normal; }
+/* The envelope rises from BEHIND the card (z-index -1: under the card, over the dim). */
+.tch-env { position: absolute; left: 50%; top: -112px; z-index: -1; width: 140px; translate: -50% 0; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); animation: tcx-gift 2.4s ease-in-out infinite; }
+.tch-list { width: 100%; margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.tch-list li { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-radius: 14px; text-align: left;
+  background: rgba(11, 14, 28, .6); border: 1px solid rgba(255, 207, 61, .22); }
+/* No tile behind the art: bigger illustrations, lighter rows. */
+.tch-ic { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; color: #ffcf3d; }
+.tch-ic .icon { width: 28px; height: 28px; background: currentColor; }
+.tch-ic img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .45)); }
+.tch-ic img[src$=".svg"] { border-radius: 9px; }   /* the TigerTag logo tile */
+/* Discord and e-mail: the two icons, one over the other's corner. */
+.tch-duo { position: relative; width: 40px; height: 40px; }
+.tch-duo .icon { position: absolute; width: 24px; height: 24px; }
+.tch-duo .icon-discord { left: 0; top: 2px; background: #5865f2; }
+.tch-duo .icon-mail { right: 0; bottom: 2px; background: #ffcf3d; }
+.tch-list b { display: block; font-size: 14px; color: #fff; }
+.tch-list small { font-size: 12.5px; color: #b9c2e0; }
+@media (prefers-reduced-motion: reduce) { .tch-env { animation: none; } }
+/* "You got an envelope!" (showEnvelopeGift): who gave it, their avatar as in
+   the friends bar, no frame around them. */
+.tcg-from { display: flex; align-items: center; gap: 14px; margin: 0; text-align: left; }
+.tcg-from .sb-friend-avatar { width: 48px; height: 48px; font-size: 17px; }   /* the friends bar's avatar (level ring included) */
+.tcg-from b { display: block; font-size: 15px; color: #fff; }
+.tcg-from small { font-size: 12.5px; color: #b9c2e0; }
 .tcx-x { position: absolute; z-index: 4; top: 14px; right: 14px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; cursor: pointer;
   border: 1px solid rgba(255, 255, 255, .15); background: rgba(0, 0, 0, .35); color: #cfd6ee; }
 .tcx-x .icon { background: currentColor; }
@@ -1692,6 +1787,7 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx-srcs li + li { border-left: 1px solid rgba(255, 255, 255, .08); }
 .tcx-src-ic { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; }
 .tcx-src-ic .icon { width: 30px; height: 30px; }
+.tcx-src-ic img { width: 30px; height: 30px; object-fit: contain; border-radius: 7px; }
 .tcx-src-ic .icon-discord { background: #5865f2; }
 .tcx-src-ic .icon-nfc { background: #7aa2ff; height: 22px; }
 .tcx-src-ic .icon-card { background: #ffd75e; }

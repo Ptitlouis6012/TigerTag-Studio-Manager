@@ -1,5 +1,6 @@
 // TigerCoins pull sounds — synthesised with the Web Audio API (no audio file):
-// hold beeps (faster and higher, with an echo), seal crack, flap, card reveal, one jingle per rarity, coin ticks.
+// hold beeps (faster and higher, with an echo), seal crack, flap, card reveal, one jingle per rarity, coin ticks,
+// and the stage's background music (ambientStart / ambientStop).
 // One AudioContext, created on the first sound (a user gesture has happened by
 // then), a master gain at a modest level behind a compressor. Muted state in
 // localStorage `tigertag.coinsSound` ("off" = muted), toggled from the stage.
@@ -100,6 +101,60 @@ export function holdRise(ms) {
     fb.gain.setTargetAtTime(0, now, 0.05);
   };
 }
+
+// The stage's background music (the envelope pile is open): a slow lounge
+// loop — four soft held chords (Am9 · Fmaj7 · Cmaj7 · G6), a bell arpeggio in
+// eighths at 96 BPM with an echo, a faint hi-hat — faded in on start and out on
+// stop. Scheduled a little ahead on the audio clock (lookahead), so it stays in
+// time when the page is busy. Goes through the master gain: muting mutes it.
+let amb = null;
+export function ambientStart() {
+  const a = ctx(); if (!a || amb) return;
+  const out = a.createGain(), lp = a.createBiquadFilter(), echo = a.createDelay(1), fb = a.createGain(), wet = a.createGain();
+  out.gain.setValueAtTime(0.0001, a.currentTime);
+  out.gain.exponentialRampToValueAtTime(1, a.currentTime + 1.6);
+  lp.type = "lowpass"; lp.frequency.value = 2400;
+  echo.delayTime.value = 0.375; fb.gain.value = 0.3; wet.gain.value = 0.35;
+  lp.connect(out); lp.connect(echo); echo.connect(fb).connect(echo); echo.connect(wet).connect(out); out.connect(master);
+  const CHORDS = [[220, 261.6, 329.6, 392, 493.9], [174.6, 220, 261.6, 329.6, 392], [130.8, 196, 246.9, 329.6, 392], [196, 246.9, 293.7, 329.6, 440]];
+  const ARP = [0, 2, 4, 3, 1, 4, 2, 3], STEP = 60 / 96 / 2;   // eighth notes at 96 BPM
+  const voice = (type, f, t, dur, vol, att) => {
+    const o = a.createOscillator(), g = a.createGain();
+    o.type = type; o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + att); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(lp); o.start(t); o.stop(t + dur + 0.05);
+  };
+  const hat = t => {
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * 0.05), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+    src.buffer = buf; f.type = "highpass"; f.frequency.value = 7000;
+    g.gain.setValueAtTime(0.012, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+    src.connect(f).connect(g).connect(out); src.start(t); src.stop(t + 0.06);
+  };
+  let next = a.currentTime + 0.1, step = 0;
+  const tick = () => {
+    while (next < a.currentTime + 0.4) {
+      const ch = CHORDS[Math.floor(step / 16) % CHORDS.length], s = step % 16;
+      if (s === 0) ch.slice(0, 4).forEach(f => { voice("triangle", f, next, STEP * 16 + 0.8, 0.028, 0.9); voice("sine", f / 2, next, STEP * 16 + 0.8, 0.018, 0.9); });
+      if (s % 2 === 0 || s === 7 || s === 15) voice("sine", ch[ARP[(s >> 1) % 8] % ch.length] * 2, next, 0.5, 0.04, 0.005);
+      if (s % 4 === 2) hat(next);
+      next += STEP; step++;
+    }
+  };
+  tick();
+  const id = setInterval(tick, 100);
+  amb = {
+    stop() {
+      clearInterval(id);
+      const t = a.currentTime;
+      out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(Math.max(0.0001, out.gain.value), t);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+      setTimeout(() => out.disconnect(), 1200);
+    },
+  };
+}
+export function ambientStop() { amb?.stop(); amb = null; }
 
 export const sfx = {
   tick() { tone("sine", 520, 520, 0.04, { vol: 0.15 }); },

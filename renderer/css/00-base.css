@@ -354,7 +354,7 @@
 
   /* user section */
   .sb-user {
-    padding: 20px 14px 6px;
+    padding: 4px 14px 6px;   /* tight under the header */
     /* Was flex-shrink:0. Now allowed to shrink (grow 0 → no empty stretch
        when few friends) so the friend list inside can scroll when the
        sidebar runs out of vertical room — see .sb-friends-list. */
@@ -547,7 +547,7 @@
      justify-content:center that would snap the avatar to the centre of the
      still-wide sidebar at the start of the collapse (the "jump to the right").
      Now the avatar stays put and the sidebar just shrinks around it. */
-  .sidebar.collapsed .sb-user { padding: 20px 12.5px 6px; }
+  .sidebar.collapsed .sb-user { padding: 4px 12.5px 6px; }
   /* .sb-avatar is 40px in both states (set in the base rule) — no collapsed override needed. */
   .sidebar.collapsed .sb-actions {
     align-items: center;   /* keep base margin-top (14px) so the block doesn't shift */

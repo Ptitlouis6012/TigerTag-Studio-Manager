@@ -56,6 +56,7 @@ missing from this index, the index cites a missing file, or a cited path does no
 - **Token efficiency**: CODEMAP → `grep -n` → sliced `Read`; delegate lookups to `codemap-explorer` / `simple-task`; never fan out; short answers → `.agents/rules/token-efficiency.md`
 - **Verify UI**: check renderer changes yourself with dev-drive; don't ask the founder to test routine tweaks → `.agents/rules/verify-ui.md`
 - **Firestore changes**: backend repo is the source of truth; rules + `hasOnly` first, deploy, then propagate the docs; `userProfiles` only via `setProfile` → `.agents/rules/firestore-changes.md`
+- **Art direction**: every illustration follows `docs/ART-DIRECTION.md` (canon banner attached, prompt block, checklist), shown to the founder before it is integrated → `.agents/rules/art-direction.md`
 - **assets-src**: artwork dropped at its root is renamed, optimised into `assets/`, master filed under the shipped name → `.agents/rules/assets-src.md`
 
 ### Code
@@ -65,6 +66,7 @@ missing from this index, the index cites a missing file, or a cited path does no
 - **UI/UX defaults**: declutter, consistency, smooth motion, real icons, selected state; no `title=` tooltips (use `aria-label`) → `.agents/rules/ui-ux-defaults.md`
 - **Surgical DOM updates**: signature guard → patch in place → swap one section → full rebuild last → `.agents/rules/surgical-dom-updates.md`
 - **Hold-to-confirm**: `setupHoldToConfirm` with a visible `.hold-progress` fill → `.agents/rules/hold-to-confirm.md`
+- **User avatars**: a person is always drawn by `userAvatar(who, sizeClass)` — the friends bar's look, freshest record (own account / friend entry), only the size changes; never `avatarMarkup()` for a person → `.agents/rules/user-avatars.md`
 - **User doc fields**: pseudo from Firestore `displayName`; `roles` / `tier` server-only; `Debug` is a client-written preference; avatar colour is `color` → `.agents/rules/user-profile-fields.md`
 - **`.ttag` contract**: authored in the fields editor, `docs/TTAG-FIELDS.md` never hand-edited, importer follows the ratified contract → `.agents/rules/ttag-contract.md`
 - **Material swatch**: convention owned by TigerSystem-Docs, drawn only through `colorBg()` / `_pieSplit()` → `.agents/rules/material-swatch.md`

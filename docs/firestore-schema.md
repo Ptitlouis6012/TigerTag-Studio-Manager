@@ -315,7 +315,9 @@ users/
     notifications/
       {notifId}/              — notification centre. Owner reads / marks-read / deletes;
                               a FRIEND may CREATE one (field-whitelisted in rules).
-        type        string    — whitelisted; 1st value: "friend_accepted"
+        type        string    — whitelisted; 1st value: "friend_accepted". Server-written types
+                              also land here, e.g. "envelope_gift" (a friend gave a gift envelope,
+                              functions/tigerCoins.js giveEnvelope; action "coins" → the Deals view)
         fromUid     string    — sender uid (anti-spoof: must equal auth.uid)
         fromName    string
         photoURL    string?
