@@ -100,14 +100,15 @@ function dealParts(ctx, d, section) {
   const timer = got && exp && !used && section === "live"
     ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
   // A deal paid in TigerCoins with no badge of its own reads "Free" (never "0 €").
-  const badge = d.badge ? pick(d.badge, lang) : d.costCoins > 0 ? t("squadDealsFree") : "";
+  // hideBadge (set in TigerHub): the picture already says it, no badge at all.
+  const badge = d.hideBadge ? "" : d.badge ? pick(d.badge, lang) : d.costCoins > 0 ? t("squadDealsFree") : "";
   const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
         ${badge ? `<span class="sqd-card-badge ${badgeKind(badge, !d.badge && d.costCoins > 0)}">${esc(badge)}</span>` : ""}${timer}`;
   const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
   return { claim, used, exp, code, got, linkOnly, locked, unique, left, safeLink, tag, art, partner, cost, afford, coinsShort: Math.max(0, cost - coins),
-    title: d.badge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
+    title: d.badge && !d.hideBadge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
 }
 
 // The grid card: illustration, partner, title and one state line — the
@@ -244,7 +245,7 @@ function annArt(ctx, d) {
   const { t, esc, lang } = ctx;
   const img = /^https:\/\//i.test(d.image || "") ? d.image : "", end = ms(d.endAt);
   return `${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : `<span class="icon icon-info icon-20" aria-hidden="true"></span>`}
-        ${d.badge ? `<span class="sqd-card-badge ${badgeKind(pick(d.badge, lang))}">${esc(pick(d.badge, lang))}</span>` : ""}
+        ${d.badge && !d.hideBadge ? `<span class="sqd-card-badge ${badgeKind(pick(d.badge, lang))}">${esc(pick(d.badge, lang))}</span>` : ""}
         ${end && end > Date.now() ? `<div class="sqd-timer" data-exp="${end}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, end - Date.now()) }))}</span></div>` : ""}`;
 }
 
