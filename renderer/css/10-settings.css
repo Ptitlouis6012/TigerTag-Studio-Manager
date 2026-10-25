@@ -331,15 +331,6 @@
     transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1); width: 100%; box-sizing: border-box;
   }
   .sb-discord-btn:hover { background: #4752C4; box-shadow: 0 3px 14px rgba(88,101,242,.45); }
-  .sb-shop-btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    background: #5e8e3e; border: none; border-radius: 8px;   /* Shopify green */
-    padding: 8px 12px; color: var(--on-accent); font-size: 12px; font-weight: 600;
-    cursor: pointer;
-    transition: background .15s, box-shadow .2s, width .25s cubic-bezier(.4,0,.2,1);
-    width: 100%; box-sizing: border-box;
-  }
-  .sb-shop-btn:hover { background: #4c7532; box-shadow: 0 3px 14px rgba(94,142,62,.45); }
   /* Buy Me a Coffee — the OFFICIAL brand button image (never restyled or
      distorted, per their charter). Expanded: the full pill wordmark, centred.
      Collapsed: a yellow 40×40 square with just the coffee-cup glyph, since the
@@ -372,14 +363,14 @@
   .sb-report-btn .icon { background: currentColor; }
   .sb-report-btn:hover { background: var(--primary); color: var(--on-accent); }
   .sb-report-btn.is-on { background: var(--primary); color: var(--on-accent); border-color: var(--primary); }
-  .sb-wiki-btn, .sb-github-btn, .sb-makerworld-btn, .sb-discord-btn, .sb-shop-btn, .sb-coffee-btn, .sb-report-btn, .sb-download-btn { height: 40px; flex-shrink: 0; }
+  .sb-wiki-btn, .sb-github-btn, .sb-makerworld-btn, .sb-discord-btn, .sb-coffee-btn, .sb-report-btn, .sb-download-btn { height: 40px; flex-shrink: 0; }
   /* Brand logos fill more of the button (app-icon presence), uniform across the
      buttons. Shared rule replaces the old per-button inline sizes. */
   .sb-community button > .icon { width: 24px; height: 24px; }
   /* Community nudge — a message-style red "1" badge on a community button until
      its nudge is done (per account, synced via users/{uid}.{key}Seen). Hidden by
      default; shown only while the button carries `.sb-nudge`. */
-  .sb-wiki-btn, .sb-github-btn, .sb-makerworld-btn, .sb-discord-btn, .sb-shop-btn, .sb-coffee-btn, .sb-report-btn, .sb-download-btn { position: relative; }
+  .sb-wiki-btn, .sb-github-btn, .sb-makerworld-btn, .sb-discord-btn, .sb-coffee-btn, .sb-report-btn, .sb-download-btn { position: relative; }
   .sb-community-badge {
     position: absolute; top: -6px; right: -6px;
     display: none;
@@ -430,7 +421,6 @@
   .sb-community .sb-group > button > .icon { width: 20px; height: 20px; flex-shrink: 0; }
   .sb-community .sb-group > .sb-download-btn > .icon   { background: var(--primary); }
   .sb-community .sb-group > .sb-wiki-btn > .icon       { background: #f5a524; }
-  .sb-community .sb-group > .sb-shop-btn > .icon       { background: #5e9b3c; }
   .sb-community .sb-group > .sb-github-btn > .icon     { background: var(--text); }
   .sb-community .sb-group > .sb-makerworld-btn > .icon { background: #00bca0; }
   .sb-community .sb-group > .sb-discord-btn > .icon    { background: #5865f2; }
@@ -478,7 +468,6 @@
   .sb-community .sb-group > button:hover > .icon { transform: scale(1.06); filter: drop-shadow(0 0 5px var(--ic)); }
   .sb-community .sb-group > .sb-download-btn   { --ic: #FF8A32; }
   .sb-community .sb-group > .sb-wiki-btn       { --ic: #FFC83D; }
-  .sb-community .sb-group > .sb-shop-btn       { --ic: #7ABF43; }
   .sb-community .sb-group > .sb-github-btn     { --ic: #E2E8F0; }
   .sb-community .sb-group > .sb-makerworld-btn { --ic: #00D4C7; }
   .sb-community .sb-group > .sb-discord-btn    { --ic: #5865F2; }

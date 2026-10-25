@@ -18,7 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
-import { dealsViewHtml, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, showCoinsReveal, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -4798,11 +4798,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       btnId: "sbMakerWorldBtn", seen: "makerworldSeen", clickedAt: "makerworldClickedAt",
       icon: "package", titleKey: "notifMakerworldTitle", textKey: "notifMakerworldText",
     },
-    shop: {
-      url: "https://shop.tigersystem.io/collections/tigertag-rfid-maker",
-      btnId: "sbShopBtn", seen: "shopSeen", clickedAt: "shopClickedAt",
-      icon: "shopify", titleKey: "notifShopTitle", textKey: "notifShopText",
-    },
     // "Buy me a coffee" support nudge — unlike the others it only surfaces its
     // notification + sidebar badge after the user has been around for a few
     // days (delayDays): asking a warm, engaged user converts far better than
@@ -5299,8 +5294,58 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // the country they picked). Painted at once from the last load, then
   // refreshed (at most once a minute). A read refused (not a member) → nothing
   // to show → "coming soon".
-  const _deals = { uid: null, at: 0, docs: [], country: null, xp: 0 };
+  const _deals = { uid: null, at: 0, docs: [], country: null, xp: 0, coins: null };
   const SQUAD_DEAL_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/squadDeal";
+  // TigerCoins — balance, chests to open, opening (functions/tigerCoins.js).
+  const TIGER_COINS_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/tigerCoins";
+  async function _tigerCoins(uid, action, extra = {}) {
+    const user = fbAuth(uid).currentUser;
+    const res = await fetch(TIGER_COINS_URL, { method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+      body: JSON.stringify({ action, ...extra }) });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
+    return res.json();
+  }
+  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [] });
+  // Open the chests (100 a call), reveal them, again while the member asks for more.
+  async function _openChests(uid, ctx, after) {
+    try {
+      for (;;) {
+        const r = await _tigerCoins(uid, "open");
+        _deals.coins = _coinsOf(r);
+        after?.();
+        if (!r.opened?.length || (await showCoinsReveal(ctx, r)) !== "more") break;
+      }
+    } catch (_) { ctx.toast(t("squadDealsErr")); }
+  }
+  // Open the account's envelopes one after another (campaigns, milestone
+  // bonuses — functions/coinEnvelopes.js); chests they gave can be opened next.
+  async function _openEnvelopes(uid, ctx, list, after) {
+    let chests = false;
+    for (let i = 0; i < list.length; i++) {
+      const how = await showEnvelope(ctx, list[i], { more: list.length - i - 1, open: async () => {
+        const r = await _tigerCoins(uid, "openEnvelope", { id: list[i].id });
+        _deals.coins = _coinsOf(r);
+        after?.();
+        return r;
+      } });
+      if (how === "chests") { chests = true; break; }
+      if (how !== "next") break;
+    }
+    if (chests) await _openChests(uid, ctx, after);
+  }
+  // At launch, once per account and session: envelopes waiting → open them.
+  const _envChecked = new Set();
+  async function _checkEnvelopes(uid) {
+    if (_envChecked.has(uid)) return;
+    _envChecked.add(uid);
+    const r = await _tigerCoins(uid, "status").catch(() => null);
+    if (!r?.envelopes?.length || uid !== state.activeAccountId) return;
+    const ctx = { t, esc, lang: state.lang, toast: msg => _flashMessage(msg) };
+    const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
+    _deals.coins = _coinsOf(r);
+    await _openEnvelopes(uid, ctx, r.envelopes, after);
+  }
   async function _renderDealsView() {
     const host = $("invDealsView"); if (!host) return;
     const uid = state.activeAccountId; if (!uid) return;
@@ -5311,13 +5356,23 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
         body: JSON.stringify({ action, dealId }) });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
-      _deals.at = 0;   // reload: the claim (code / used) and the pool counters changed
+      _deals.at = 0;   // reload: the claim (code / used), the pool counters and the coins changed
       await _renderDealsView();
-    }, onExpire: () => _renderDealsView() };
+    }, onExpire: () => _renderDealsView(),
+    onOpenCoins: () => _openChests(uid, ctx, paint),
+    onOpenEnvelopes: () => _openEnvelopes(uid, ctx, _deals.coins?.envelopes || [], paint),
+    // A gift code: credited once per account; the error code reaches the toast.
+    onRedeemCode: async (code) => {
+      const r = await _tigerCoins(uid, "redeem", { code });
+      _deals.coins = _coinsOf(r);
+      paint();
+      return r;
+    } };
     wireDeals(host, ctx);
     const paint = () => {
       if (state.viewMode !== "squadDeals") return;
-      host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0, openId: host._sqdOpen, loading: _deals.uid !== uid }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country));
+      host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0, coins: _deals.uid === uid ? _deals.coins : null, openId: host._sqdOpen, filter: host._sqdFilter, loading: _deals.uid !== uid }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country));
+      applyDealsFilter(host);       // the filter bar's choice survives a repaint
       _setupCloseTabHold(host);   // the side card's » tab: long press closes every side card
       // "I used it" moves the deal to the history for good: held 1.2 s, not clicked.
       host.querySelectorAll(".sqd-mark").forEach(b => setupHoldToConfirm(b, 1200, () => {
@@ -5329,9 +5384,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (_deals.uid === uid && Date.now() - _deals.at < 60e3) return;
     try {
       const db = fbDb(uid);
-      const [prof, snap] = await Promise.all([
+      const [prof, snap, coins] = await Promise.all([
         db.collection("userProfiles").doc(uid).get().catch(() => null),
         db.collection("squadDeals").where("status", "in", ["active", "archived"]).get(),
+        _tigerCoins(uid, "status").catch(() => null),   // no balance → no TigerCoins bar
       ]);
       const sq = prof?.get?.("tigerSquad") || {}, cc = sq.country, xp = Number(sq.xp) || 0;
       const docs = await Promise.all(snap.docs.map(async d => {
@@ -5344,7 +5400,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         deal.secret = sec?.data?.() || null;
         return deal;
       }));
-      Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null });
+      Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null,
+        coins: coins ? _coinsOf(coins) : null });
     } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, country: state.squadCountry || null }); }
     paint();
   }
@@ -7645,6 +7702,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // "My requests": the backend reads their GitHub status and raises a
     // notification for any change — once per sign-in, after the app settles.
     setTimeout(() => { if (uid === state.activeAccountId) syncReports().catch(() => {}); }, 8000);
+    // TigerCoins envelopes waiting (a gift, a milestone bonus): offered once the app has settled.
+    setTimeout(() => { if (uid === state.activeAccountId) _checkEnvelopes(uid).catch(() => {}); }, 6000);
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
@@ -11192,11 +11251,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      pointer stays. Off hover the name is ellipsised as before (the text is only
      wrapped in a moving span during the hover: an inline-block child would
      lose the ellipsis). Delegated on the document, so rebuilt / patched cards
-     need no wiring. */
+     need no wiring. Spool cards (.card-name) and Tiger Squad deal cards (their
+     title, quests/squad-deals.js) alike. */
   (function wireCardNameMarquee() {
     const SPEED = 45;   // px per second
+    const CARD = ".spool-card, .sqd-card", NAME = ".card-name, .sqd-card-body > h3";
     const start = card => {
-      const el = card.querySelector(".card-name");
+      const el = card.querySelector(NAME);
       if (!el || el.querySelector(":scope > .card-name-mq")) return;
       const over = el.scrollWidth - el.clientWidth;
       if (over < 2) return;                                   // fits — nothing to scroll
@@ -11208,18 +11269,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       el.classList.add("is-marquee");
     };
     const stop = card => {
-      const el = card.querySelector(".card-name.is-marquee");
+      const el = [...card.querySelectorAll(NAME)].find(n => n.classList.contains("is-marquee"));
       const mq = el?.querySelector(":scope > .card-name-mq");
       if (!el || !mq) return;
       el.innerHTML = mq.innerHTML;
       el.classList.remove("is-marquee");
     };
     document.addEventListener("mouseover", e => {
-      const card = e.target.closest?.(".spool-card");
+      const card = e.target.closest?.(CARD);
       if (card && !card.contains(e.relatedTarget)) start(card);
     });
     document.addEventListener("mouseout", e => {
-      const card = e.target.closest?.(".spool-card");
+      const card = e.target.closest?.(CARD);
       if (card && !card.contains(e.relatedTarget)) stop(card);
     });
   })();
@@ -23661,7 +23722,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("sbGithubBtn").addEventListener("click", () => _clickCommunityBtn("github"));
   $("sbMakerWorldBtn").addEventListener("click", () => _clickCommunityBtn("makerworld"));
   $("sbDiscordBtn").addEventListener("click", () => _clickCommunityBtn("discord"));
-  $("sbShopBtn").addEventListener("click", () => _clickCommunityBtn("shop"));
   $("sbCoffeeBtn")?.addEventListener("click", _openCoffee);
   // Bug or idea? → in-app report that becomes a public GitHub issue (report/index.js).
   initReport({
@@ -39898,7 +39958,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.discordSeen    = !!c.discordSeen;
     state.githubSeen     = !!c.githubSeen;
     state.makerworldSeen = !!c.makerworldSeen;
-    state.shopSeen       = !!c.shopSeen;
     state.coffeeSeen     = !!c.coffeeSeen;
     try { applyDebugMode(); } catch {}
     try { renderCommunityBadges(); } catch {}
@@ -40723,7 +40782,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.discordSeen    = !!data.discordSeen;
       state.githubSeen     = !!data.githubSeen;
       state.makerworldSeen = !!data.makerworldSeen;
-      state.shopSeen       = !!data.shopSeen;
       state.coffeeSeen     = !!data.coffeeSeen;
 
       // Mirror the minimal user-doc shape to the local-first cache so the
@@ -40747,7 +40805,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         priceInputMode: data.priceInputMode === "HT" ? "HT" : "TTC",
         wikiSeen: !!data.wikiSeen,
         discordSeen: !!data.discordSeen, githubSeen: !!data.githubSeen, makerworldSeen: !!data.makerworldSeen,
-        shopSeen: !!data.shopSeen, coffeeSeen: !!data.coffeeSeen,
+        coffeeSeen: !!data.coffeeSeen,
         displayName: data.displayName || null,
       });
 

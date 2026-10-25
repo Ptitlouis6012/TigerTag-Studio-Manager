@@ -16,7 +16,6 @@
 |-----|---------|
 | `githubBtn` | GitHub button |
 | `discordBtn` | Discord button |
-| `shopBtn` | Sidebar goodies-shop button label |
 | `mobileApp` | QR label |
 
 ### Settings panel
