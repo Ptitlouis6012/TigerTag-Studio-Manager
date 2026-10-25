@@ -39123,6 +39123,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         return `${d.charAt(0).toUpperCase()}${d.slice(1)}, ${hm.format(ms)}`;
       },
       day: ms => md.format(ms),
+      meAvatar: () => avatarMarkup(activeAccount() || {}, "sqb-avatar"),   // the "Me" scope's avatar
     };
   }
   // Every way into the XP history (the view bar, the XP notification, the
@@ -39161,7 +39162,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const two = matchMedia("(min-width: 1351px)").matches;
     const chartW = Math.max(320, (host?.clientWidth || 0) - (two ? 374 : 0) - 34);
     let names; try { names = new Intl.DisplayNames([state.lang || "en"], { type: "region" }); } catch (_) {}
-    const league = _xph.scope !== "me" && _league.uid === state.activeAccountId
+    const league = _league.uid === state.activeAccountId
       ? { by: xpLeagueSeries(_league.days, _league.live, _xph.range), country: _league.country, names: cc => { try { return names?.of(cc) || cc; } catch (_) { return cc; } } }
       : null;
     return { ..._xph, chartW, log: _xpLog.log, total: _xpLog.total, league };
@@ -39177,7 +39178,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const host = $("invXpHistView"); if (!host) return;
     const uid = state.activeAccountId; if (!uid) return;
     if (_xpLog.uid === uid) _paintXpHistView(); else host.innerHTML = _loadingHTML();   // same loader as a friend's stock
-    try { await Promise.all([_loadXpLog(uid, true), _xph.scope !== "me" ? _loadLeagues(uid) : null]); } catch (_) {}
+    // The leagues load with the page: their displays show beside mine.
+    try { await Promise.all([_loadXpLog(uid, true), _loadLeagues(uid)]); } catch (_) {}
     if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView();
   }
   {

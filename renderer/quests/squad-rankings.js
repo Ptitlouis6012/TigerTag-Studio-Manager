@@ -71,6 +71,8 @@ const moveHtml = (t, d) => !d ? ""
 // A country shown like a member: a round "avatar" with its flag inside
 // (assets/svg/flags, flag-icons 1x1), instead of an emoji.
 // `podium` (1-3) rings it gold / silver / bronze, like the medal next to it.
+// The World: the globe picture, drawn like a country's round flag.
+const worldAv = size => `<span class="sqr-flagav" style="--s:${size}px"><img src="../assets/img/tigersquad/world-avatar.webp" alt="" decoding="async"></span>`;
 const flagAv = (cc, size, podium = 0) => /^[a-z]{2}$/i.test(cc || "")
   ? `<span class="sqr-flagav${podium >= 1 && podium <= 3 ? ` sqr-flagav--p${podium}` : ""}" style="--s:${size}px"><img src="../assets/svg/flags/${cc.toLowerCase()}.svg" alt="" loading="lazy" decoding="async"></span>`
   : "";
@@ -135,7 +137,7 @@ export function squadHeroHtml(ctx, members) {
         <div class="sqr-card-ranks">
           ${r.natRank ? `<span class="sqr-card-ic" aria-hidden="true">${flagAv(r.cc, 20)}</span>
             <span class="sqr-card-rank" aria-label="#${r.natRank} ${esc(t("squadInCountry", { country: ctx.cname(r.cc) }))}">${rankNo(r.natRank)}</span>` : ""}
-          <span class="sqr-card-ic" aria-hidden="true"><span class="icon icon-globe icon-20"></span></span>
+          <span class="sqr-card-ic" aria-hidden="true">${worldAv(20)}</span>
           <span class="sqr-card-rank" aria-label="#${r.worldRank} ${esc(t("squadWorldwide"))}">${rankNo(r.worldRank)}</span>
         </div>
         <div class="sqr-card-rival">
@@ -143,7 +145,7 @@ export function squadHeroHtml(ctx, members) {
           ${/* Always one line per league — country then world — leader or not: the
                leader's line shows the medal and "Number one" in place of a rival. */""}
           ${r.natRank ? rivalRow(`<span class="sqr-rival-badge">${flagAv(r.cc, 20)}</span>`, aboveNat, t("squadInCountry", { country: ctx.cname(r.cc) })) : ""}
-          ${rivalRow(`<span class="sqr-rival-badge"><span class="icon icon-globe icon-20"></span></span>`, above, t("squadWorldwide"))}
+          ${rivalRow(`<span class="sqr-rival-badge">${worldAv(20)}</span>`, above, t("squadWorldwide"))}
           ${tied ? `<small class="sqr-muted">${esc(t("squadTiedWith", { name: tied.name }))}</small>` : ""}
         </div>
       </div>`
@@ -184,7 +186,7 @@ function spark(values) {
 export function pulseHtml(ctx, pulse, history) {
   const { t, esc, fmt } = ctx;
   // The intro carries the context: what it is, how many accounts, when it was updated.
-  const intro = `<div class="sqr-pulse-intro"><span class="icon icon-globe icon-24" aria-hidden="true"></span>
+  const intro = `<div class="sqr-pulse-intro"><span aria-hidden="true">${worldAv(30)}</span>
     <div><h3>${esc(t("squadPulse"))}</h3><p>${esc(t("squadPulseSub"))}</p>
       ${pulse ? `<p class="sqr-pulse-meta">${esc(t("squadPulseXpSub", { n: fmt(pulse.accounts) }))}${pulse.updatedAt ? ` · <span class="sqr-updated">${esc(t("squadPulseUpdated", { ago: ctx.ago(pulse.updatedAt) }))}</span>` : ""}</p>` : ""}</div></div>`;
   if (!pulse) return `<section class="sqr-pulse">${intro}<p class="sqr-muted sqr-unavail">${esc(t(pulse === null ? "squadPulseUnavailable" : "questsLoading"))}</p></section>`;
@@ -262,7 +264,7 @@ function leaguesHtml(ctx, members, loading) {
       <span class="sqr-av" aria-hidden="true">${flagAv(c.cc, 34, i + 1)}</span>
       <span class="sqr-name"><b>${esc(ctx.cname(c.cc))}</b><small>${esc(t("squadMembers", { n: c.n }))}</small></span>
       <span class="sqr-xp">${esc(fmt(c.xp))} XP${moveHtml(t, mvC(c.cc))}</span></li>`;
-  const globe = `<span class="icon icon-globe icon-24"></span>`;
+  const globe = worldAv(36);
   return `
     <div class="sqr-boards">
       ${column(ctx, "countries", t("squadCountryLabel"), globe, r.countries, c => c.cc === r.cc, countryRow)}

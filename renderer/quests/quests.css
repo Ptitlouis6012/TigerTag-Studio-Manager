@@ -419,7 +419,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-card-league img { width: 18px; height: 18px; object-fit: contain; }
 .sqr-card-xp { font-size: 18px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: #fff; white-space: nowrap; }
 .sqr-card-ic { justify-self: center; display: grid; place-items: center; font-size: 20px; line-height: 1; }
-.sqr-card-ic .icon { background: var(--sqr-cyan); }
 .sqr-card-rank { font-size: 13px; color: #e9ecf7; white-space: nowrap; }
 .sqr-card-rank b { font-weight: 800; color: #fff; }
 .sqr-card-rival { display: flex; flex-direction: column; justify-content: center; grid-area: rival; gap: 7px; width: 170px; padding: 10px 12px; border-left: 1px solid rgba(255, 255, 255, .12); }
@@ -441,7 +440,6 @@ body.progress-view #gridSortWrap { display: none; }
   border: 1px solid var(--tsq-line); border-radius: 14px; background: linear-gradient(180deg, #161b2c, #121624); }
 .sqr-pulse > * + * { border-left: 1px solid var(--tsq-line); }
 .sqr-pulse-intro { display: flex; align-items: center; gap: 12px; padding: 12px 16px; }
-.sqr-pulse-intro .icon { width: 30px; height: 30px; background: var(--sqr-cyan); flex-shrink: 0; }
 .sqr-pulse-intro h3 { margin: 0; font: 800 17px var(--sqr-display); text-transform: uppercase; letter-spacing: .03em; color: var(--tsq-text); }
 .sqr-pulse-intro p { margin: 2px 0 0; font-size: 12px; color: var(--tsq-muted); }
 /* The sparkline is the card's background: full width, under the text, fading in toward the right. */
@@ -805,19 +803,21 @@ body.progress-view #gridSortWrap { display: none; }
 @media (prefers-reduced-motion: reduce) { .xph-end-halo { animation: none; } }
 .xph-guide { stroke: rgba(255, 179, 71, .45); stroke-width: 1; stroke-dasharray: 3 4; }
 /* The league curves (scope "My country" / "Leagues"): one line per country in
-   its colour (mine orange, thicker, drawn last), a flag legend under the chart,
-   and a tooltip listing every league that day. */
+   its colour (mine orange, thicker, drawn last), and a tooltip listing every
+   league that day with its flag. */
 .xph-head { flex-wrap: wrap; }
-.xph-scopes .xph-range { min-width: 0; }
-.xph-chart:has(.xph-mlegend) { height: auto; }
+.xph-avs { display: flex; gap: 10px; }
+.xph-av { position: relative; width: 40px; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; overflow: hidden; cursor: pointer;
+  display: grid; place-items: center; background: #262c3d; color: var(--qw-muted);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .16); opacity: .6; transition: opacity .2s, box-shadow .2s, transform .2s; }
+.xph-av:hover { opacity: 1; transform: translateY(-1px); }
+.xph-av.is-on { opacity: 1; color: var(--qw-tiger2); box-shadow: 0 0 0 2px var(--qw-tiger), 0 0 14px rgba(255, 122, 26, .55); }
+.xph-av > img { width: 100%; height: 100%; object-fit: cover; }
+.xph-av > .sqb-avatar { position: absolute; inset: 0; width: auto; height: auto; }
+.xph-av .icon { background: currentColor; }
 .xph-mline { fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
 .xph-mline.is-mine { stroke-width: 3; opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 140, 40, .55)); }
 .xph-mend { fill: var(--c); stroke: #0b0d14; stroke-width: 2; }
-.xph-mlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; }
-.xph-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--qw-muted); }
-.xph-leg::before { content: ""; width: 10px; height: 3px; border-radius: 2px; background: var(--c); }
-.xph-leg b { font: 800 12px var(--qw-mono); color: var(--qw-ink); }
-.xph-leg.is-mine { color: var(--qw-ink); }
 .xph-flag { height: 12px; aspect-ratio: 4 / 3; border-radius: 2px; object-fit: cover; }
 .xph-tip .xph-tip-row { display: flex; align-items: center; gap: 6px; font: 600 12px system-ui, sans-serif; color: var(--qw-muted); }
 .xph-tip .xph-tip-row i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
@@ -863,7 +863,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-rival-row .sqr-rival-txt small { font-size: 11.5px; font-weight: 800; color: var(--tsq-orange); white-space: nowrap; }
 .sqr-rival-row .sqr-bar { grid-column: 2 / -1; height: 4px; }
 .sqr-rival-badge { display: inline-flex; align-items: center; justify-content: center; }
-.sqr-rival-badge .icon { background: var(--sqr-cyan); }   /* same globe as the rank line (.sqr-card-ic) */
 .sqr-rival-row.is-top { grid-template-columns: 16px 24px minmax(0, 1fr); }
 .sqr-rival-row.is-top b { font-size: 12.5px; font-weight: 800; color: var(--sqr-gold, #ffc83d); white-space: nowrap; }
 .sqr-rival-medal { width: 24px; height: 24px; filter: drop-shadow(0 0 6px rgba(255, 200, 61, .4)); }

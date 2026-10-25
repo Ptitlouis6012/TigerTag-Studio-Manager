@@ -139,7 +139,7 @@ export function pageHtml(ctx, s) {
     <section class="xph-card xph-chart-card">
       <header class="xph-head">${icon({ color: "#ff7a1a", icon: "bars" }, 18)}
         <div><h3>${esc(t("xpEvolution"))}</h3><p>${esc(t(SCOPE_SUB[s.scope] || "xpEvolutionSub"))}</p></div>
-        <div class="xph-ranges xph-scopes" role="group">${Object.keys(SCOPE_SUB).map(k => `<button type="button" class="xph-range${s.scope === k ? " is-on" : ""}" data-xph-scope="${k}">${esc(t(SCOPE_LABEL[k]))}</button>`).join("")}</div>
+        ${scopeDisplays(ctx, s)}
         <div class="xph-ranges" role="group">${Object.keys(RANGES).map(r => `<button type="button" class="xph-range${s.range === r ? " is-on" : ""}" data-xph-range="${r}">${esc(r === "all" ? t("xpRangeAll") : r.toUpperCase())}</button>`).join("")}</div>
       </header>
       <div class="xph-chart" data-xph-chart>${scopeChart(ctx, s)}</div>
@@ -254,7 +254,6 @@ function seriesSvg(ctx, pts, range, width = 1000) {
 // at the end of each Paris day) plus today's live totals, as one series per
 // country: { ms, total, n } with ms ≈ the end of that day.
 const SCOPE_SUB = { me: "xpEvolutionSub", country: "xpCountrySub", leagues: "xpLeaguesSub" };
-const SCOPE_LABEL = { me: "xpScopeMe", country: "xpScopeCountry", leagues: "xpScopeLeagues" };
 const LEAGUE_COLORS = ["#3da4f0", "#3ddc84", "#a78bfa", "#f472b6", "#ffc53d"];
 export function leagueSeries(days, live, range) {
   const since = RANGES[range] ? Date.now() - RANGES[range] * DAY : 0;
@@ -266,13 +265,30 @@ export function leagueSeries(days, live, range) {
   return by;
 }
 function scopeChart(ctx, s) {
-  if (s.scope === "me" || !s.league) return chartSvg(ctx, s.log, s.range, s.chartW);
+  if (s.scope === "me") return chartSvg(ctx, s.log, s.range, s.chartW);
+  if (!s.league) return `<p class="xph-empty">…</p>`;
   const { by, country, names } = s.league;
   if (s.scope === "country") {
     if (!country) return `<p class="xph-empty">${ctx.esc(ctx.t("xpNoCountry"))}</p>`;
     return seriesSvg(ctx, by[country] || [], s.range, s.chartW);
   }
   return multiSvg(ctx, leagueLines(s), s.chartW);
+}
+// The three scopes as clickable avatars beside the title — me (my avatar),
+// my league (its round flag), the World (a globe picture) — the selected one ringed.
+// No text: each says its name and XP to screen readers (aria-label).
+function scopeDisplays(ctx, s) {
+  const { t, esc, fmt } = ctx;
+  const lg = s.league, last = cc => lg?.by[cc]?.[lg.by[cc].length - 1];
+  const mine = lg?.country, all = lg ? Object.keys(lg.by).map(last).filter(Boolean) : null;
+  const av = (k, name, xp, inner) => `<button type="button" class="xph-av${s.scope === k ? " is-on" : ""}" data-xph-scope="${k}" aria-pressed="${s.scope === k}"
+      aria-label="${esc(xp == null ? name : `${name} · ${fmt(xp)} XP`)}">${inner}</button>`;
+  return `<div class="xph-avs" role="group">
+    ${av("me", t("xpScopeMe"), s.total, ctx.meAvatar?.() || "")}
+    ${av("country", mine ? lg.names(mine) : t("xpScopeCountry"), mine ? last(mine)?.total : null,
+      mine ? `<img src="../assets/svg/flags/${mine.toLowerCase()}.svg" alt="" decoding="async">` : `<span class="icon icon-pin icon-16" aria-hidden="true"></span>`)}
+    ${av("leagues", t("xpWorld"), all ? all.reduce((a, p) => a + p.total, 0) : null, `<img src="../assets/img/tigersquad/world-avatar.webp" alt="" decoding="async">`)}
+  </div>`;
 }
 // Leagues: the five best (by their last total) and mine, mine drawn in orange.
 function leagueLines(s) {
@@ -292,11 +308,11 @@ export function chartTipHtml(ctx, s, i) {
   const lines = leagueLines(s); if (!lines.length) return "";
   const ref = lines.reduce((a, l) => (l.pts.length > a.pts.length ? l : a)), ms = ref.pts[i]?.ms;
   if (!ms) return "";
-  const rows = lines.map(l => ({ name: l.name, color: l.color, total: l.pts.find(p => p.ms === ms)?.total }))
+  const rows = lines.map(l => ({ cc: l.cc, name: l.name, color: l.color, total: l.pts.find(p => p.ms === ms)?.total }))
     .filter(r => r.total != null).sort((a, b) => b.total - a.total);
   return leaguesTipHtml(ctx, ms, rows);
 }
-// Several curves on one scale (same days), a legend of flags under it.
+// Several curves on one scale (same days); the tooltip names them (flag + colour).
 function multiSvg(ctx, lines, width = 1000) {
   if (!lines.length) return `<p class="xph-empty">${ctx.esc(ctx.t("xpHistoryEmpty"))}</p>`;
   const W = Math.max(320, Math.round(width)), H = 230, L = 56, R = 14, T = 14, B = 28;
@@ -324,15 +340,12 @@ function multiSvg(ctx, lines, width = 1000) {
   }).join("");
   // The hover walks the longest line's days; the tooltip lists every league that day.
   const ref = lines.reduce((a, l) => (l.pts.length > a.pts.length ? l : a));
-  const flag = cc => `<img class="xph-flag" src="../assets/svg/flags/${cc.toLowerCase()}.svg" alt="" loading="lazy" decoding="async">`;
-  const legend = lines.map(l => `<span class="xph-leg${l.mine ? " is-mine" : ""}" style="--c:${l.color}">${flag(l.cc)}${ctx.esc(l.name)}<b>${ctx.fmt(l.pts[l.pts.length - 1].total)}</b></span>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="xph-svg xph-svg--multi"
       data-xs="${ref.pts.map(p => x(p.ms).toFixed(1)).join(",")}" data-ys="${ref.pts.map(p => y(p.total).toFixed(1)).join(",")}">
     ${grid}${paths}
     <line class="xph-guide" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>
     <circle class="xph-focus" r="0" cx="0" cy="0" visibility="hidden"/>
     ${xl}</svg>
-    <div class="xph-mlegend">${legend}</div>
     <div class="xph-tip" hidden></div>`;
 }
 // Tooltips of the league curves: one league at a point, or every league that day.
@@ -340,7 +353,7 @@ function leagueTipHtml(ctx, p, name) {
   return `<small>${ctx.esc(name ? `${name} · ` : "")}${ctx.esc(ctx.day(p.ms))}</small><b>${ctx.esc(ctx.fmt(p.total))} XP</b><span>${ctx.esc(ctx.t("xpLeagueMembers", { n: p.n }))}</span>`;
 }
 function leaguesTipHtml(ctx, ms, rows) {
-  return `<small>${ctx.esc(ctx.day(ms))}</small>${rows.map(r => `<span class="xph-tip-row" style="--c:${r.color}"><i></i>${ctx.esc(r.name)}<b>${ctx.esc(ctx.fmt(r.total))}</b></span>`).join("")}`;
+  return `<small>${ctx.esc(ctx.day(ms))}</small>${rows.map(r => `<span class="xph-tip-row" style="--c:${r.color}"><i></i><img class="xph-flag" src="../assets/svg/flags/${r.cc.toLowerCase()}.svg" alt="" decoding="async">${ctx.esc(r.name)}<b>${ctx.esc(ctx.fmt(r.total))}</b></span>`).join("")}`;
 }
 
 /* Smooth curve through the points that never overshoots them (monotone cubic,
