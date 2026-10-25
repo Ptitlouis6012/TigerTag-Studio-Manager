@@ -209,7 +209,7 @@
   "questAct_e1_scanOpen": "Scan a spool’s chip to open it",
   "questAct_e2_prints": "Prints finished at 100 %",
   "questAct_e2_video": "Record a camera video",
-  "questAct_e2_slotAssign": "Assign a spool to a printer slot",
+  "questAct_e2_slotAssign": "Edit a filament in a printer",
   "questAct_e2_demo": "Try a demo printer",
   "questAct_e2_autoCam": "Turn on camera auto-play for a printer",
   "questAct_e3_friends": "Friends",

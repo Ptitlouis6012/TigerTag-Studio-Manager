@@ -209,7 +209,7 @@
   "questAct_e1_scanOpen": "扫描耗材芯片打开它",
   "questAct_e2_prints": "完成 100% 的打印",
   "questAct_e2_video": "录制一段摄像头视频",
-  "questAct_e2_slotAssign": "把耗材分配到打印机料槽",
+  "questAct_e2_slotAssign": "编辑打印机中的耗材",
   "questAct_e2_demo": "试用演示打印机",
   "questAct_e2_autoCam": "为一台打印机开启摄像头自动播放",
   "questAct_e3_friends": "好友",

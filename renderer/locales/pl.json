@@ -209,7 +209,7 @@
   "questAct_e1_scanOpen": "Zeskanuj chip szpuli, by ją otworzyć",
   "questAct_e2_prints": "Wydruki ukończone w 100 %",
   "questAct_e2_video": "Nagraj wideo z kamery",
-  "questAct_e2_slotAssign": "Przypisz szpulę do slotu drukarki",
+  "questAct_e2_slotAssign": "Edytuj filament w drukarce",
   "questAct_e2_demo": "Wypróbuj drukarkę demo",
   "questAct_e2_autoCam": "Włącz autostart kamery drukarki",
   "questAct_e3_friends": "Znajomi",

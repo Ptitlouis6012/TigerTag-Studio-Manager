@@ -209,7 +209,7 @@
   "questAct_e1_scanOpen": "Scanne den Chip einer Spule, um sie zu öffnen",
   "questAct_e2_prints": "Drucke bei 100 % fertig",
   "questAct_e2_video": "Nimm ein Kameravideo auf",
-  "questAct_e2_slotAssign": "Weise einem Druckerslot eine Spule zu",
+  "questAct_e2_slotAssign": "Ein Filament in einem Drucker bearbeiten",
   "questAct_e2_demo": "Probiere einen Demo-Drucker aus",
   "questAct_e2_autoCam": "Kamera-Autostart für einen Drucker einschalten",
   "questAct_e3_friends": "Freunde",

@@ -209,7 +209,7 @@
   "questAct_e1_scanOpen": "Escanea el chip de una bobina para abrirla",
   "questAct_e2_prints": "Impresiones terminadas al 100 %",
   "questAct_e2_video": "Graba un vídeo de la cámara",
-  "questAct_e2_slotAssign": "Asigna una bobina a una ranura de impresora",
+  "questAct_e2_slotAssign": "Edita un filamento en una impresora",
   "questAct_e2_demo": "Prueba una impresora de demostración",
   "questAct_e2_autoCam": "Activar el inicio automático de la cámara de una impresora",
   "questAct_e3_friends": "Amigos",
