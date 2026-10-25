@@ -2229,6 +2229,7 @@
   "squadDealsErr": "De tijger liet de code vallen. Probeer het zo opnieuw.",
   "squadDealsClose": "Sluiten",
   "squadDealsFilterAll": "Alle aanbiedingen",
+  "squadDealsExchange": "Inruilen",
   "squadDealsFilterMine": "Mijn codes",
   "squadDealsSearch": "Zoek een aanbieding, een merk…",
   "squadDealsNoMatch": "Geen aanbieding gevonden.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Aanbieding beschikbaar",
   "squadAnnMore": "Meer weten",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Mijn kisten openen",
-  "coinsChests": {
-    "one": "{{n}} kist om te openen",
-    "other": "{{n}} kisten om te openen"
+  "coinsHint": "Elke TigerTag+ Certified-chip stopt je een verrassingsenvelop toe. Open ze, spaar TigerCoins, ruil ze in voor kortingen.",
+  "coinsOpen": "Mijn enveloppen openen",
+  "coinsRevealTitle": "Je verrassingsenveloppen",
+  "coinsPile": {
+    "one": "{{n}} envelop om te openen",
+    "other": "{{n}} enveloppen om te openen"
   },
   "squadDealsTimeLeft": "Nog {{time}}",
   "squadDealsDHMS": "{{d}} d {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Verlopen",
   "squadDealsClaimDays": "{{n}} dagen geldig na ophalen",
-  "coinsHint": "Elke TigerTag+ Certified-chip is een kist vol TigerCoins. Besteed ze aan de aanbiedingen die erom vragen.",
-  "coinsRevealTitle": "Je kisten",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Ophalen",
   "coinsOpenMore": "De volgende openen",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Ik heb een code",
   "coinsCodePlaceholder": "TigerCoins-code",
   "coinsCodeHint": "De 12 tekens van je kaart. Streepjes optioneel, geluk inbegrepen.",
-  "envGotChests": {
-    "one": "bonuskist",
-    "other": "bonuskisten"
-  },
   "coinsRedeem": "Inwisselen",
   "coinsRedeemed": "+{{n}} TigerCoins. Iemand mag je wel.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} bonuskist. Iemand mag je wel.",
-    "other": "+{{n}} bonuskisten. Iemand mag je wel."
-  },
   "coinsCodeInvalid": "Die code opent niets. Controleer de spelling.",
   "coinsCodeExpired": "Deze code is verlopen.",
   "coinsCodeExhausted": "Te laat: deze code is op.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Mijlpaalbonus",
   "envDefaultMsg": "De TigerSquad dacht aan je. Kort, maar oprecht.",
   "envOpen": "Openen",
+  "envOpenSurprises": "Openen",
+  "envGotSurprises": {
+    "one": "verrassingsenvelop",
+    "other": "verrassingsenveloppen"
+  },
   "envNext": "Volgende envelop ({{n}})",
   "envSplitTitle": "Rode envelop",
-  "envSplitRank": "Geluksrang #{{rank}} van {{opened}} tot nu toe · {{parts}} delen in totaal",
-  "coinsEnvelopes": {
-    "one": "{{n}} envelop om te openen",
-    "other": "{{n}} enveloppen om te openen"
-  }
+  "envSplitRank": "Geluksrang #{{rank}} van {{opened}} tot nu toe · {{parts}} delen in totaal"
 }

@@ -124,7 +124,7 @@ function dealCard(ctx, d, section) {
   const mine = p.got && !p.used && section === "live";
   const q = [p.title, d.partner, p.desc].filter(Boolean).join(" ").toLowerCase();
   return `
-    <article class="sqd-card${p.locked ? " is-locked" : ""}${p.tag ? " " + p.tag[0] : ""}${ctx.openId === d.id ? " is-selected" : ""}" data-open="${esc(d.id)}" data-mine="${mine ? 1 : 0}" data-q="${esc(q)}" tabindex="0" role="button" aria-label="${esc(p.title)}">
+    <article class="sqd-card${p.locked ? " is-locked" : ""}${p.tag ? " " + p.tag[0] : ""}${ctx.openId === d.id ? " is-selected" : ""}" data-open="${esc(d.id)}" data-mine="${mine ? 1 : 0}" data-coins="${p.cost ? 1 : 0}" data-q="${esc(q)}" tabindex="0" role="button" aria-label="${esc(p.title)}">
       <div class="sqd-card-art">${p.art}</div>
       <div class="sqd-card-body">
         ${p.partner}
@@ -264,12 +264,14 @@ function annSide(ctx, d) {
 }
 
 // ── TigerCoins ──────────────────────────────────────────────────────────────
-// The balance and the chests still to open (functions/tigerCoins.js status),
-// over the deals. ctx.coins = { balance, unopened } | null (not loaded / no
-// function): no bar.
+// The balance and the envelopes still to open (functions/tigerCoins.js
+// status), over the deals: one pile — the gift envelopes, then the surprise
+// envelope of each TigerTag+ Certified chip. ctx.coins = { balance, unopened
+// (chips), envelopes (gifts) } | null (not loaded / no function): no bar.
 function coinsBar(ctx) {
   const { t, esc, lang } = ctx, c = ctx.coins;
   if (!c) return "";
+  const pile = (c.unopened || 0) + (c.envelopes?.length || 0);
   return `
     <section class="sqd-coins">
       <span class="tcoin tcoin--big" aria-hidden="true"></span>
@@ -277,16 +279,16 @@ function coinsBar(ctx) {
         <b>${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}</b>
         <small>${esc(t("coinsHint"))}</small>
       </div>
-      ${c.unopened ? `<span class="sqd-coins-chests">${esc(t("coinsChests", { n: c.unopened }))}</span>
+      ${pile ? `<span class="sqd-coins-pile"><span class="tc-env-mini" aria-hidden="true"></span>${esc(t("coinsPile", { n: pile }))}</span>
       <button type="button" class="sqd-open sqd-coins-open" data-coins-open>${esc(t("coinsOpen"))}</button>` : ""}
-      ${c.envelopes?.length ? `<button type="button" class="sqd-open sqd-coins-env" data-env-open><span class="tc-env-mini" aria-hidden="true"></span>${esc(t("coinsEnvelopes", { n: c.envelopes.length }))}</button>` : ""}
       <button type="button" class="sqd-coins-codebtn" data-coins-code aria-haspopup="dialog"><span class="icon icon-gift icon-13" aria-hidden="true"></span>${esc(t("coinsHaveCode"))}</button>
     </section>`;
 }
 
-/** The chests just opened, revealed one after another over the app; the
- *  total counts up. `res` = the "open" answer { opened: [{ rarity, coins }],
- *  total, unopened }. Resolves when the member collects (or asks for more). */
+/** Surprise envelopes just opened, their rarities revealed one after another
+ *  over the app; the total counts up. `res` = { opened: [{ rarity, coins }],
+ *  total, unopened } ("open", or the surprises inside a gift / code). Resolves
+ *  when the member collects (or asks for more). */
 export function showCoinsReveal(ctx, res) {
   const { t, esc, lang } = ctx;
   const ORDER = ["legendary", "epic", "rare", "uncommon", "common"];
@@ -300,9 +302,9 @@ export function showCoinsReveal(ctx, res) {
     <div class="tc-reveal-card" role="dialog" aria-modal="true" aria-label="${esc(t("coinsRevealTitle"))}">
       <h3>${esc(t("coinsRevealTitle"))}</h3>
       <div class="tc-reveal-grid">${shown.map((x, i) => `
-        <div class="tc-chest tc-chest--${x.rarity}" style="--d:${Math.min(i, 40) * 90}ms">
+        <div class="tc-sur tc-sur--${x.rarity}" style="--d:${Math.min(i, 40) * 90}ms">
           <span class="tcoin" aria-hidden="true"></span><b>+${x.coins}</b><small>${esc(t("questsRarity_" + x.rarity))}</small>
-        </div>`).join("")}${rest > 0 ? `<div class="tc-chest tc-chest--more" style="--d:${41 * 90}ms"><b>+${rest}</b></div>` : ""}
+        </div>`).join("")}${rest > 0 ? `<div class="tc-sur tc-sur--more" style="--d:${41 * 90}ms"><b>+${rest}</b></div>` : ""}
       </div>
       <p class="tc-reveal-sum">${counts.map(([r, n]) => `<span class="tc-sum tc-sum--${r}">${n} × ${esc(t("questsRarity_" + r))}</span>`).join("")}</p>
       <p class="tc-reveal-total" data-total="${res.total || 0}">+0 TigerCoins</p>
@@ -313,7 +315,7 @@ export function showCoinsReveal(ctx, res) {
     </div>`;
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add("is-open"));
-  // Count the total up while the chests flip.
+  // Count the total up while the envelopes flip.
   const tot = el.querySelector(".tc-reveal-total"), end = res.total || 0, dur = Math.min(4000, 600 + shown.length * 90), t0 = performance.now();
   const step = now => {
     const k = Math.min(1, (now - t0) / dur);
@@ -334,7 +336,7 @@ export function showCoinsReveal(ctx, res) {
 /** The gift-code modal: a scratch-card key in three boxes of four
  *  (XXXX-XXXX-XXXX). Typing moves to the next box, Backspace on an empty box
  *  goes back, a pasted key (dashes, spaces or not) fills the three. The backend
- *  credits it once per account (coins or bonus chests); its error stays in the
+ *  credits it once per account (coins or surprise envelopes); its error stays in the
  *  modal, a success closes it with a toast. */
 function openCoinsCodeModal(ctx) {
   const { t, esc } = ctx;
@@ -401,14 +403,11 @@ function openCoinsCodeModal(ctx) {
     try {
       const r = await ctx.onRedeemCode(`${v.slice(0, 4)}-${v.slice(4, 8)}-${v.slice(8)}`);
       close();
-      // A shared red envelope: its share and luck rank, in the envelope reveal.
-      if (r.split) {
-        if ((await showEnvelope(ctx, { split: r.split, result: r })) === "chests") ctx.onOpenCoins?.();
-        return;
-      }
-      ctx.toast?.(r.chests
-        ? t("coinsRedeemedChests", { n: r.chests })
-        : t("coinsRedeemed", { n: (r.coins || 0).toLocaleString(ctx.lang) }));
+      // A shared red envelope: its share and luck rank, in the envelope reveal;
+      // surprise envelopes: their rarities; plain coins: a toast.
+      if (r.split) await showEnvelope(ctx, { split: r.split, result: r });
+      else if (r.opened?.length) await revealSurprises(ctx, r);
+      else ctx.toast?.(t("coinsRedeemed", { n: (r.coins || 0).toLocaleString(ctx.lang) }));
     } catch (er) {
       const key = { CODE_EXPIRED: "coinsCodeExpired", CODE_EXHAUSTED: "coinsCodeExhausted", CODE_USED: "coinsCodeUsed" }[er?.message] || "coinsCodeInvalid";
       err.textContent = t(key);
@@ -420,12 +419,16 @@ function openCoinsCodeModal(ctx) {
   boxes[0].focus();
 }
 
-/** One TigerCoins envelope (users/{uid}/envelopes, or a shared red envelope
- *  just redeemed): a red envelope with a gold seal; "Open" calls `open()` (the
- *  backend credits it) and the flap lifts on what it held. `env` = { kind,
- *  message?, coins, chests } with `open`, or { split, result } already opened.
- *  `more` = envelopes still waiting after this one. Resolves "next" (open the
- *  next one), "chests" (it gave chests: open them now) or "done". */
+/** The surprise envelopes inside a gift or a code, revealed like a chip's. */
+const revealSurprises = (ctx, r) =>
+  showCoinsReveal(ctx, { opened: r.opened, total: (r.total || 0) - (r.coins || 0), unopened: 0 });
+
+/** One gift envelope (users/{uid}/envelopes, or a shared red envelope just
+ *  redeemed): a red envelope with a gold seal; "Open" calls `open()` (the
+ *  backend credits it) and the flap lifts on what it held — TigerCoins, or N
+ *  surprise envelopes revealed next. `env` = { kind, message?, coins,
+ *  surprises } with `open`, or { split, result } already opened. `more` =
+ *  envelopes still waiting after this one. Resolves "next" or "done". */
 export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
   const { t, esc, lang } = ctx;
   const msg = env.message ? (env.message[lang] || env.message.en || env.message.fr || "") : "";
@@ -453,11 +456,13 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
   requestAnimationFrame(() => el.classList.add("is-open"));
   const card = el.querySelector(".tc-env-card"), actions = el.querySelector(".tc-reveal-actions");
   return new Promise(resolve => {
+    let opened = null;
     const finish = how => { el.classList.remove("is-open"); setTimeout(() => el.remove(), 200); resolve(how); };
     const reveal = r => {
-      const coins = r.coins || 0, chests = r.chests || 0;
-      el.querySelector(".tc-env-amount").textContent = `+${(chests || coins).toLocaleString(lang)}`;
-      el.querySelector(".tc-env-unit").textContent = chests ? t("envGotChests", { n: chests }) : "TigerCoins";
+      const coins = r.coins || 0, surprises = r.opened?.length || 0;
+      el.querySelector(".tc-env-amount").textContent = `+${(surprises || coins).toLocaleString(lang)}`;
+      el.querySelector(".tc-env-unit").textContent = surprises ? t("envGotSurprises", { n: surprises }) : "TigerCoins";
+      opened = r;
       if (env.split?.rank) {
         const rk = el.querySelector(".tc-env-rank");
         rk.textContent = t("envSplitRank", { rank: env.split.rank, opened: env.split.opened, parts: env.split.parts });
@@ -465,13 +470,21 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
       }
       card.classList.add("is-opened");
       actions.innerHTML = `
-        ${chests ? `<button type="button" class="sqd-open" data-env="chests">${esc(t("coinsOpen"))}</button>` : ""}
-        ${more ? `<button type="button" class="sqd-open" data-env="next">${esc(t("envNext", { n: more }))}</button>` : ""}
-        <button type="button" class="tc-code-cancel" data-env="done">${esc(t("coinsCollect"))}</button>`;
+        ${surprises ? `<button type="button" class="sqd-open" data-env="surprises">${esc(t("envOpenSurprises"))}</button>`
+          : `${more ? `<button type="button" class="sqd-open" data-env="next">${esc(t("envNext", { n: more }))}</button>` : ""}
+        <button type="button" class="tc-code-cancel" data-env="done">${esc(t("coinsCollect"))}</button>`}`;
     };
     if (env.result) reveal(env.result);
     el.addEventListener("click", async e => {
       const b = e.target.closest("[data-env]");
+      if (b?.dataset.env === "surprises") {
+        // The envelope gives way to the rarity reveal of what it held.
+        el.classList.remove("is-open");
+        setTimeout(() => el.remove(), 200);
+        await revealSurprises(ctx, opened);
+        resolve(more ? "next" : "done");
+        return;
+      }
       if (b) { finish(b.dataset.env); return; }
       const go = e.target.closest("[data-env-go]");
       if (!go || go.disabled || !open) return;
@@ -494,11 +507,14 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
   // its focus); the choice lives on the host (ctx.filter = host._sqdFilter).
   const f = ctx.filter || { tab: "all", q: "" };
   const mineN = live.filter(d => { if (d.kind === "announcement") return false; const p = dealParts(ctx, d, "live"); return p.got && !p.used; }).length;
+  const coinN = live.filter(d => d.kind !== "announcement" && d.costCoins > 0).length;
+  const tab = (id, icon, key, n) => `<button type="button" role="tab" class="sqd-tab${f.tab === id ? " is-on" : ""}" data-sqd-tab="${id}" aria-selected="${f.tab === id}">${icon}${esc(t(key))}${n ? `<b>${n}</b>` : ""}</button>`;
   const bar = `
     <div class="sqd-bar" role="search">
       <div class="sqd-tabs" role="tablist">
-        <button type="button" role="tab" class="sqd-tab${f.tab !== "mine" ? " is-on" : ""}" data-sqd-tab="all" aria-selected="${f.tab !== "mine"}"><span class="icon icon-grid icon-13" aria-hidden="true"></span>${esc(t("squadDealsFilterAll"))}</button>
-        <button type="button" role="tab" class="sqd-tab${f.tab === "mine" ? " is-on" : ""}" data-sqd-tab="mine" aria-selected="${f.tab === "mine"}"><span class="icon icon-tag icon-13" aria-hidden="true"></span>${esc(t("squadDealsFilterMine"))}${mineN ? `<b>${mineN}</b>` : ""}</button>
+        ${tab("all", `<span class="icon icon-grid icon-13" aria-hidden="true"></span>`, "squadDealsFilterAll", 0)}
+        ${coinN ? tab("exchange", `<span class="tcoin" aria-hidden="true"></span>`, "squadDealsExchange", 0) : ""}
+        ${tab("mine", `<span class="icon icon-tag icon-13" aria-hidden="true"></span>`, "squadDealsFilterMine", mineN)}
       </div>
       <label class="sqd-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" data-sqd-q value="${esc(f.q)}" placeholder="${esc(t("squadDealsSearch"))}"></label>
     </div>
@@ -536,7 +552,8 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
 }
 const findOpen = (ctx, ...lists) => lists.flat().some(d => d.id === ctx.openId) ? ctx.openId : null;
 
-/** Show / hide the live cards for the filter bar (host._sqdFilter), in place.
+/** Show / hide the live cards for the filter bar (host._sqdFilter), in place:
+ *  "all", "exchange" (the deals paid in TigerCoins) or "mine" (codes in hand).
  *  Announcements show under "All deals" only (the search reads them too). Called by the
  *  host after each paint and by the bar itself. */
 export function applyDealsFilter(host) {
@@ -546,15 +563,16 @@ export function applyDealsFilter(host) {
   if (!grid) return;
   let shown = 0;
   for (const c of grid.querySelectorAll(".sqd-card")) {
-    const partner = c.dataset.ann === "1";   // an announcement: never under "My codes"
-    const ok = partner ? f.tab !== "mine" && (!q || c.dataset.q.includes(q)) : (f.tab !== "mine" || c.dataset.mine === "1") && (!q || c.dataset.q.includes(q));
+    const partner = c.dataset.ann === "1";   // an announcement: under "All deals" only
+    const inTab = f.tab === "mine" ? c.dataset.mine === "1" : f.tab === "exchange" ? c.dataset.coins === "1" : true;
+    const ok = (partner ? f.tab !== "mine" && f.tab !== "exchange" : inTab) && (!q || c.dataset.q.includes(q));
     c.hidden = !ok;
     if (ok && !partner) shown++;
   }
   const none = host.querySelector(".sqd-nomatch");
-  if (none) none.hidden = shown > 0 || (f.tab !== "mine" && !q);
+  if (none) none.hidden = shown > 0 || (f.tab === "all" && !q);
   for (const b of host.querySelectorAll("[data-sqd-tab]")) {
-    const on = b.dataset.sqdTab === (f.tab === "mine" ? "mine" : "all");
+    const on = b.dataset.sqdTab === f.tab;
     b.classList.toggle("is-on", on);
     b.setAttribute("aria-selected", on);
   }
@@ -603,10 +621,8 @@ export function wireDeals(host, ctx) {
   host.addEventListener("click", async e => {
     if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
     if (e.target.closest("[data-coins-code]")) { openCoinsCodeModal(ctx); return; }
-    const env = e.target.closest("[data-env-open]");
-    if (env) { if (!env.disabled) { env.disabled = true; try { await ctx.onOpenEnvelopes(); } finally { env.disabled = false; } } return; }
     const opener = e.target.closest("[data-coins-open]");
-    if (opener) { if (!opener.disabled) { opener.disabled = true; try { await ctx.onOpenCoins(); } finally { opener.disabled = false; } } return; }
+    if (opener) { if (!opener.disabled) { opener.disabled = true; try { await ctx.onOpenEnvelopes(); } finally { opener.disabled = false; } } return; }
     const tab = e.target.closest("[data-sqd-tab]");
     if (tab) { host._sqdFilter.tab = tab.dataset.sqdTab; applyDealsFilter(host); return; }
     const card = e.target.closest(".sqd-card[data-open]");

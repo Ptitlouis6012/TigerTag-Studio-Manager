@@ -2229,6 +2229,7 @@
   "squadDealsErr": "Le tigre a fait tomber le code. Réessaie dans un instant.",
   "squadDealsClose": "Fermer",
   "squadDealsFilterAll": "Toutes les offres",
+  "squadDealsExchange": "Échange",
   "squadDealsFilterMine": "Mes codes",
   "squadDealsSearch": "Rechercher une offre, une marque…",
   "squadDealsNoMatch": "Aucune offre ne correspond.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Offre disponible",
   "squadAnnMore": "En savoir plus",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Ouvrir mes coffres",
-  "coinsChests": {
-    "one": "{{n}} coffre à ouvrir",
-    "other": "{{n}} coffres à ouvrir"
+  "coinsHint": "Chaque puce TigerTag+ Certified vous glisse une enveloppe surprise. Ouvrez-les, cumulez des TigerCoins, échangez-les contre des réductions.",
+  "coinsOpen": "Ouvrir mes enveloppes",
+  "coinsRevealTitle": "Vos enveloppes surprises",
+  "coinsPile": {
+    "one": "{{n}} enveloppe à ouvrir",
+    "other": "{{n}} enveloppes à ouvrir"
   },
   "squadDealsTimeLeft": "Encore {{time}}",
   "squadDealsDHMS": "{{d}} j {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Expiré",
   "squadDealsClaimDays": "Valable {{n}} jours une fois récupéré",
-  "coinsHint": "Chaque puce TigerTag+ Certified est un coffre de TigerCoins. Dépensez-les sur les bons plans qui en demandent.",
-  "coinsRevealTitle": "Vos coffres",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Récupérer",
   "coinsOpenMore": "Ouvrir les suivants",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "J'ai un code",
   "coinsCodePlaceholder": "Code TigerCoins",
   "coinsCodeHint": "Les 12 caractères de votre carte. Tirets facultatifs, chance incluse.",
-  "envGotChests": {
-    "one": "coffre bonus",
-    "other": "coffres bonus"
-  },
   "coinsRedeem": "Valider",
   "coinsRedeemed": "+{{n}} TigerCoins. Quelqu'un vous aime bien.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} coffre bonus. Quelqu’un vous aime bien.",
-    "other": "+{{n}} coffres bonus. Quelqu’un vous aime bien."
-  },
   "coinsCodeInvalid": "Ce code n'ouvre rien. Vérifiez l'orthographe.",
   "coinsCodeExpired": "Ce code a expiré.",
   "coinsCodeExhausted": "Trop tard : ce code a déjà été entièrement utilisé.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Bonus de palier",
   "envDefaultMsg": "La TigerSquad a pensé à vous. Brièvement, mais sincèrement.",
   "envOpen": "L'ouvrir",
+  "envOpenSurprises": "Les ouvrir",
+  "envGotSurprises": {
+    "one": "enveloppe surprise",
+    "other": "enveloppes surprises"
+  },
   "envNext": "Enveloppe suivante ({{n}})",
   "envSplitTitle": "Enveloppe rouge",
-  "envSplitRank": "Rang de chance n° {{rank}} sur {{opened}} pour l'instant · {{parts}} parts en tout",
-  "coinsEnvelopes": {
-    "one": "{{n}} enveloppe à ouvrir",
-    "other": "{{n}} enveloppes à ouvrir"
-  }
+  "envSplitRank": "Rang de chance n° {{rank}} sur {{opened}} pour l'instant · {{parts}} parts en tout"
 }

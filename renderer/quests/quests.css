@@ -1195,7 +1195,8 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-side--ann.is-photo .sqd-side-art .sqd-card-art { background: #fff; }
 
 /* ── TigerCoins (functions/tigerCoins.js) ────────────────────────────────────
-   The coin, the balance bar over the deals, coin prices, and the chest reveal. */
+   The coin, the balance bar over the deals, coin prices, the surprise envelope
+   reveal, the gift-code modal and the gift envelope. */
 .tcoin { display: inline-block; flex-shrink: 0; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px;
   background: radial-gradient(circle at 35% 30%, #fff1b8 0 18%, #ffcf3d 36%, #e89a12 78%, #b86b00);
   box-shadow: inset 0 0 0 1.5px #a35a00, inset 0 0 0 3px rgba(255, 241, 184, .55); }
@@ -1205,7 +1206,8 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-coins-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .sqd-coins-txt b { font: 800 18px var(--qw-mono, monospace); color: #ffd75e; }
 .sqd-coins-txt small { font-size: 12px; color: var(--tsq-muted); }
-.sqd-coins-chests { padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; color: #ffd75e; background: rgba(255, 207, 61, .12); white-space: nowrap; }
+.sqd-coins-pile { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 99px; font-size: 12px; font-weight: 700;
+  color: #ffd75e; background: rgba(255, 207, 61, .12); white-space: nowrap; }
 .sqd-coins-open { white-space: nowrap; }
 .sqd-coins { flex-wrap: wrap; }
 .sqd-coins-codebtn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 10px; white-space: nowrap;
@@ -1242,7 +1244,7 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-spend .tcoin { margin-right: 2px; }
 .sqd-open:disabled { opacity: .45; cursor: not-allowed; }
 .sqd-coins-short { text-align: center; font-size: 12px; color: var(--tsq-muted); }
-/* The reveal: chests flip in one after another, the total counts up. */
+/* The reveal: surprise envelopes flip in one after another, the total counts up. */
 .tc-reveal { position: fixed; inset: 0; z-index: 400; display: grid; place-items: center; background: rgba(5, 7, 12, .72);
   opacity: 0; transition: opacity .2s;
   /* Appended to <body>, outside the Tiger Squad view: carries its dark tokens. */
@@ -1253,20 +1255,23 @@ body.progress-view #gridSortWrap { display: none; }
   border: 1px solid color-mix(in srgb, #ffcf3d 35%, var(--tsq-line, #2a3150)); text-align: center; }
 .tc-reveal-card h3 { margin: 0 0 14px; font: 800 22px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .04em; color: var(--tsq-text, #eef1fb); }
 .tc-reveal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
-.tc-chest { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 6px; border-radius: 12px;
-  background: rgba(255, 255, 255, .04); border: 1px solid var(--rc, #3a4260); color: var(--rc, #9aa3bd);
+.tc-sur { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 6px 26px; border-radius: 12px;
+  background: color-mix(in srgb, var(--rc, #3a4260) 12%, #1b2033); border: 1px solid var(--rc, #3a4260); color: var(--rc, #9aa3bd);
   opacity: 0; transform: rotateY(90deg) scale(.8); animation: tc-flip .45s cubic-bezier(.34, 1.45, .6, 1) var(--d, 0ms) forwards; }
-.tc-chest b { font: 800 16px var(--qw-mono, monospace); color: #ffd75e; }
-.tc-chest small { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.tc-chest--uncommon { --rc: #3ddc84; } .tc-chest--rare { --rc: #3d8bff; } .tc-chest--epic { --rc: #a855f7; }
-.tc-chest--legendary { --rc: #ffb21a; background: rgba(255, 178, 26, .12); box-shadow: 0 0 22px rgba(255, 178, 26, .45); }
-.tc-chest--more { --rc: #3a4260; justify-content: center; }
+/* The red envelope the note came out of, open, at the bottom of each card. */
+.tc-sur::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 20px;
+  background: linear-gradient(160deg, #e3343b, #b5161e); clip-path: polygon(0 0, 50% 55%, 100% 0, 100% 100%, 0 100%); }
+.tc-sur b { font: 800 16px var(--qw-mono, monospace); color: #ffd75e; }
+.tc-sur small { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.tc-sur--uncommon { --rc: #3ddc84; } .tc-sur--rare { --rc: #3d8bff; } .tc-sur--epic { --rc: #a855f7; }
+.tc-sur--legendary { --rc: #ffb21a; box-shadow: 0 0 22px rgba(255, 178, 26, .45); }
+.tc-sur--more { --rc: #3a4260; justify-content: center; }
 @keyframes tc-flip { to { opacity: 1; transform: none; } }
 .tc-reveal-sum { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; margin: 14px 0 4px; font-size: 12px; }
 .tc-sum { color: var(--tsq-muted, #8f97b3); } .tc-sum--uncommon { color: #3ddc84; } .tc-sum--rare { color: #3d8bff; } .tc-sum--epic { color: #a855f7; } .tc-sum--legendary { color: #ffb21a; }
 .tc-reveal-total { margin: 6px 0 16px; font: 800 30px var(--qw-mono, monospace); color: #ffd75e; text-shadow: 0 0 22px rgba(255, 190, 40, .4); }
 .tc-reveal-actions { display: flex; justify-content: center; gap: 10px; }
-@media (prefers-reduced-motion: reduce) { .tc-chest { animation-duration: .01s; } }
+@media (prefers-reduced-motion: reduce) { .tc-sur { animation-duration: .01s; } }
 /* TigerCoins envelope (squad-deals.js showEnvelope): a red envelope with a gold
    seal; opening lifts the flap and slides up the note with what it held. */
 .tc-env-card { width: min(420px, 92vw); padding: 26px 24px 22px; }
@@ -1300,7 +1305,6 @@ body.progress-view #gridSortWrap { display: none; }
   .tc-env-card:not(.is-opened) .tc-env { animation: none; }
   .tc-env-flap, .tc-env-note, .tc-env-seal { transition: none; }
 }
-/* The coins bar's "N envelopes to open" button: a tiny red envelope. */
-.sqd-coins-env { background: #c71f27; white-space: nowrap; }
-.sqd-coins-env:hover { background: #e3343b; }
-.tc-env-mini { width: 14px; height: 11px; border-radius: 2px; background: linear-gradient(160deg, #ffcf3d, #e89a12); box-shadow: inset 0 0 0 1px rgba(122, 10, 16, .4); }
+/* A tiny red envelope with its gold seal (the coins bar's pile). */
+.tc-env-mini { position: relative; width: 12px; height: 15px; flex-shrink: 0; border-radius: 2px; background: linear-gradient(160deg, #e3343b, #b5161e); }
+.tc-env-mini::after { content: ""; position: absolute; left: 50%; top: 38%; width: 5px; height: 5px; border-radius: 50%; transform: translate(-50%, -50%); background: #ffcf3d; }

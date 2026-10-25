@@ -2229,6 +2229,7 @@
   "squadDealsErr": "Tygrys upuścił kod. Spróbuj za chwilę.",
   "squadDealsClose": "Zamknij",
   "squadDealsFilterAll": "Wszystkie oferty",
+  "squadDealsExchange": "Wymiana",
   "squadDealsFilterMine": "Moje kody",
   "squadDealsSearch": "Szukaj oferty, marki…",
   "squadDealsNoMatch": "Brak pasujących ofert.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Oferta dostępna",
   "squadAnnMore": "Dowiedz się więcej",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Otwórz moje skrzynie",
-  "coinsChests": {
-    "one": "{{n}} skrzynia do otwarcia",
-    "other": "{{n}} skrzyń do otwarcia"
+  "coinsHint": "Każdy chip TigerTag+ Certified podrzuca ci kopertę-niespodziankę. Otwieraj, zbieraj TigerCoins, wymieniaj na zniżki.",
+  "coinsOpen": "Otwórz moje koperty",
+  "coinsRevealTitle": "Twoje koperty-niespodzianki",
+  "coinsPile": {
+    "one": "{{n}} koperta do otwarcia",
+    "other": "{{n}} kopert do otwarcia"
   },
   "squadDealsTimeLeft": "Zostało {{time}}",
   "squadDealsDHMS": "{{d}} d {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Wygasło",
   "squadDealsClaimDays": "Ważny {{n}} dni od odebrania",
-  "coinsHint": "Każdy chip TigerTag+ Certified to skrzynia TigerCoins. Wydawaj je na oferty, które ich wymagają.",
-  "coinsRevealTitle": "Twoje skrzynie",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Odbierz",
   "coinsOpenMore": "Otwórz kolejne",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Mam kod",
   "coinsCodePlaceholder": "Kod TigerCoins",
   "coinsCodeHint": "12 znaków z twojej karty. Myślniki opcjonalne, szczęście w zestawie.",
-  "envGotChests": {
-    "one": "skrzynia bonusowa",
-    "other": "skrzyń bonusowych"
-  },
   "coinsRedeem": "Zrealizuj",
   "coinsRedeemed": "+{{n}} TigerCoins. Ktoś cię lubi.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} skrzynia bonusowa. Ktoś cię lubi.",
-    "other": "+{{n}} skrzyń bonusowych. Ktoś cię lubi."
-  },
   "coinsCodeInvalid": "Ten kod nic nie otwiera. Sprawdź pisownię.",
   "coinsCodeExpired": "Ten kod wygasł.",
   "coinsCodeExhausted": "Za późno: ten kod został już wykorzystany.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Bonus za próg",
   "envDefaultMsg": "TigerSquad o tobie pomyślała. Krótko, ale szczerze.",
   "envOpen": "Otwórz",
+  "envOpenSurprises": "Otwórz je",
+  "envGotSurprises": {
+    "one": "koperta-niespodzianka",
+    "other": "kopert-niespodzianek"
+  },
   "envNext": "Następna koperta ({{n}})",
   "envSplitTitle": "Czerwona koperta",
-  "envSplitRank": "Miejsce szczęścia nr {{rank}} z {{opened}} na razie · {{parts}} części łącznie",
-  "coinsEnvelopes": {
-    "one": "{{n}} koperta do otwarcia",
-    "other": "{{n}} kopert do otwarcia"
-  }
+  "envSplitRank": "Miejsce szczęścia nr {{rank}} z {{opened}} na razie · {{parts}} części łącznie"
 }

@@ -2229,6 +2229,7 @@
   "squadDealsErr": "The tiger dropped the code. Try again in a moment.",
   "squadDealsClose": "Close",
   "squadDealsFilterAll": "All deals",
+  "squadDealsExchange": "Exchange",
   "squadDealsFilterMine": "My codes",
   "squadDealsSearch": "Search a deal, a brand…",
   "squadDealsNoMatch": "No deal matches.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Offer available",
   "squadAnnMore": "Learn more",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Open my chests",
-  "coinsChests": {
-    "one": "{{n}} chest to open",
-    "other": "{{n}} chests to open"
+  "coinsHint": "Every TigerTag+ Certified chip slips you a surprise envelope. Open them, pile up TigerCoins, trade them for discounts.",
+  "coinsOpen": "Open my envelopes",
+  "coinsRevealTitle": "Your surprise envelopes",
+  "coinsPile": {
+    "one": "{{n}} envelope to open",
+    "other": "{{n}} envelopes to open"
   },
   "squadDealsTimeLeft": "{{time}} left",
   "squadDealsDHMS": "{{d}} d {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Expired",
   "squadDealsClaimDays": "Valid {{n}} days once you get it",
-  "coinsHint": "Every TigerTag+ Certified chip is a chest of TigerCoins. Spend them on the deals that ask for them.",
-  "coinsRevealTitle": "Your chests",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Collect",
   "coinsOpenMore": "Open the next ones",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "I have a code",
   "coinsCodePlaceholder": "TigerCoins code",
   "coinsCodeHint": "The 12 characters from your card. Dashes optional, luck included.",
-  "envGotChests": {
-    "one": "bonus chest",
-    "other": "bonus chests"
-  },
   "coinsRedeem": "Redeem",
   "coinsRedeemed": "+{{n}} TigerCoins. Somebody likes you.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} bonus chest. Somebody likes you.",
-    "other": "+{{n}} bonus chests. Somebody likes you."
-  },
   "coinsCodeInvalid": "That code opens nothing. Check the spelling.",
   "coinsCodeExpired": "This code has expired.",
   "coinsCodeExhausted": "Too late: this code has been fully claimed.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Milestone bonus",
   "envDefaultMsg": "The TigerSquad was thinking of you. Briefly, but sincerely.",
   "envOpen": "Open it",
+  "envOpenSurprises": "Open them",
+  "envGotSurprises": {
+    "one": "surprise envelope",
+    "other": "surprise envelopes"
+  },
   "envNext": "Next envelope ({{n}})",
   "envSplitTitle": "Red envelope",
-  "envSplitRank": "Luck rank #{{rank}} of {{opened}} so far · {{parts}} shares in all",
-  "coinsEnvelopes": {
-    "one": "{{n}} envelope to open",
-    "other": "{{n}} envelopes to open"
-  }
+  "envSplitRank": "Luck rank #{{rank}} of {{opened}} so far · {{parts}} shares in all"
 }

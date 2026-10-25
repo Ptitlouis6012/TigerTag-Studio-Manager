@@ -2229,6 +2229,7 @@
   "squadDealsErr": "El tigre dejó caer el código. Inténtalo de nuevo en un momento.",
   "squadDealsClose": "Cerrar",
   "squadDealsFilterAll": "Todas las ofertas",
+  "squadDealsExchange": "Canje",
   "squadDealsFilterMine": "Mis códigos",
   "squadDealsSearch": "Buscar una oferta, una marca…",
   "squadDealsNoMatch": "Ninguna oferta coincide.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Oferta disponible",
   "squadAnnMore": "Saber más",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Abrir mis cofres",
-  "coinsChests": {
-    "one": "{{n}} cofre por abrir",
-    "other": "{{n}} cofres por abrir"
+  "coinsHint": "Cada chip TigerTag+ Certified te pasa un sobre sorpresa. Ábrelos, acumula TigerCoins y cámbialos por descuentos.",
+  "coinsOpen": "Abrir mis sobres",
+  "coinsRevealTitle": "Tus sobres sorpresa",
+  "coinsPile": {
+    "one": "{{n}} sobre por abrir",
+    "other": "{{n}} sobres por abrir"
   },
   "squadDealsTimeLeft": "Quedan {{time}}",
   "squadDealsDHMS": "{{d}} d {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Caducado",
   "squadDealsClaimDays": "Válido {{n}} días tras obtenerlo",
-  "coinsHint": "Cada chip TigerTag+ Certified es un cofre de TigerCoins. Gástalos en las ofertas que los piden.",
-  "coinsRevealTitle": "Tus cofres",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Recoger",
   "coinsOpenMore": "Abrir los siguientes",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Tengo un código",
   "coinsCodePlaceholder": "Código TigerCoins",
   "coinsCodeHint": "Los 12 caracteres de tu tarjeta. Guiones opcionales, suerte incluida.",
-  "envGotChests": {
-    "one": "cofre extra",
-    "other": "cofres extra"
-  },
   "coinsRedeem": "Canjear",
   "coinsRedeemed": "+{{n}} TigerCoins. Alguien te aprecia.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} cofre extra. Alguien te aprecia.",
-    "other": "+{{n}} cofres extra. Alguien te aprecia."
-  },
   "coinsCodeInvalid": "Ese código no abre nada. Revisa cómo lo escribiste.",
   "coinsCodeExpired": "Este código ha caducado.",
   "coinsCodeExhausted": "Demasiado tarde: este código ya se agotó.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Bonus de nivel",
   "envDefaultMsg": "La TigerSquad pensó en ti. Brevemente, pero de verdad.",
   "envOpen": "Abrirlo",
+  "envOpenSurprises": "Abrirlos",
+  "envGotSurprises": {
+    "one": "sobre sorpresa",
+    "other": "sobres sorpresa"
+  },
   "envNext": "Siguiente sobre ({{n}})",
   "envSplitTitle": "Sobre rojo",
-  "envSplitRank": "Puesto de suerte n.º {{rank}} de {{opened}} hasta ahora · {{parts}} partes en total",
-  "coinsEnvelopes": {
-    "one": "{{n}} sobre por abrir",
-    "other": "{{n}} sobres por abrir"
-  }
+  "envSplitRank": "Puesto de suerte n.º {{rank}} de {{opened}} hasta ahora · {{parts}} partes en total"
 }

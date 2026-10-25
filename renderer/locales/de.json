@@ -2229,6 +2229,7 @@
   "squadDealsErr": "Der Tiger hat den Code fallen lassen. Versuch es gleich nochmal.",
   "squadDealsClose": "Schließen",
   "squadDealsFilterAll": "Alle Angebote",
+  "squadDealsExchange": "Tausch",
   "squadDealsFilterMine": "Meine Codes",
   "squadDealsSearch": "Angebot oder Marke suchen…",
   "squadDealsNoMatch": "Kein Angebot passt.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Angebot verfügbar",
   "squadAnnMore": "Mehr erfahren",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Meine Truhen öffnen",
-  "coinsChests": {
-    "one": "{{n}} Truhe zu öffnen",
-    "other": "{{n}} Truhen zu öffnen"
+  "coinsHint": "Jeder TigerTag+ Certified-Chip steckt dir einen Überraschungsumschlag zu. Öffne sie, sammle TigerCoins, tausche sie gegen Rabatte.",
+  "coinsOpen": "Meine Umschläge öffnen",
+  "coinsRevealTitle": "Deine Überraschungsumschläge",
+  "coinsPile": {
+    "one": "{{n}} Umschlag zu öffnen",
+    "other": "{{n}} Umschläge zu öffnen"
   },
   "squadDealsTimeLeft": "Noch {{time}}",
   "squadDealsDHMS": "{{d}} T {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Abgelaufen",
   "squadDealsClaimDays": "Gültig {{n}} Tage ab Abruf",
-  "coinsHint": "Jeder TigerTag+-Certified-Chip ist eine Truhe voller TigerCoins. Gib sie für Angebote aus, die welche verlangen.",
-  "coinsRevealTitle": "Deine Truhen",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Einsammeln",
   "coinsOpenMore": "Die nächsten öffnen",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Ich habe einen Code",
   "coinsCodePlaceholder": "TigerCoins-Code",
   "coinsCodeHint": "Die 12 Zeichen von deiner Karte. Bindestriche optional, Glück inklusive.",
-  "envGotChests": {
-    "one": "Bonustruhe",
-    "other": "Bonustruhen"
-  },
   "coinsRedeem": "Einlösen",
   "coinsRedeemed": "+{{n}} TigerCoins. Jemand mag dich.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} Bonustruhe. Jemand mag dich.",
-    "other": "+{{n}} Bonustruhen. Jemand mag dich."
-  },
   "coinsCodeInvalid": "Dieser Code öffnet nichts. Prüf die Schreibweise.",
   "coinsCodeExpired": "Dieser Code ist abgelaufen.",
   "coinsCodeExhausted": "Zu spät: Dieser Code ist aufgebraucht.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Meilenstein-Bonus",
   "envDefaultMsg": "Die TigerSquad hat an dich gedacht. Kurz, aber ehrlich.",
   "envOpen": "Öffnen",
+  "envOpenSurprises": "Öffnen",
+  "envGotSurprises": {
+    "one": "Überraschungsumschlag",
+    "other": "Überraschungsumschläge"
+  },
   "envNext": "Nächster Umschlag ({{n}})",
   "envSplitTitle": "Roter Umschlag",
-  "envSplitRank": "Glücksrang Nr. {{rank}} von bisher {{opened}} · {{parts}} Anteile insgesamt",
-  "coinsEnvelopes": {
-    "one": "{{n}} Umschlag zu öffnen",
-    "other": "{{n}} Umschläge zu öffnen"
-  }
+  "envSplitRank": "Glücksrang Nr. {{rank}} von bisher {{opened}} · {{parts}} Anteile insgesamt"
 }

@@ -2229,6 +2229,7 @@
   "squadDealsErr": "La tigre ha fatto cadere il codice. Riprova tra un attimo.",
   "squadDealsClose": "Chiudi",
   "squadDealsFilterAll": "Tutte le offerte",
+  "squadDealsExchange": "Scambio",
   "squadDealsFilterMine": "I miei codici",
   "squadDealsSearch": "Cerca un’offerta, un marchio…",
   "squadDealsNoMatch": "Nessuna offerta corrisponde.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Offerta disponibile",
   "squadAnnMore": "Scopri di più",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Apri i miei forzieri",
-  "coinsChests": {
-    "one": "{{n}} forziere da aprire",
-    "other": "{{n}} forzieri da aprire"
+  "coinsHint": "Ogni chip TigerTag+ Certified ti passa una busta sorpresa. Aprile, accumula TigerCoins, scambiali con sconti.",
+  "coinsOpen": "Apri le mie buste",
+  "coinsRevealTitle": "Le tue buste sorpresa",
+  "coinsPile": {
+    "one": "{{n}} busta da aprire",
+    "other": "{{n}} buste da aprire"
   },
   "squadDealsTimeLeft": "Ancora {{time}}",
   "squadDealsDHMS": "{{d}} g {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Scaduto",
   "squadDealsClaimDays": "Valido {{n}} giorni dopo averlo ottenuto",
-  "coinsHint": "Ogni chip TigerTag+ Certified è un forziere di TigerCoins. Spendili nelle offerte che li richiedono.",
-  "coinsRevealTitle": "I tuoi forzieri",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Raccogli",
   "coinsOpenMore": "Apri i successivi",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Ho un codice",
   "coinsCodePlaceholder": "Codice TigerCoins",
   "coinsCodeHint": "I 12 caratteri della tua carta. Trattini facoltativi, fortuna inclusa.",
-  "envGotChests": {
-    "one": "forziere bonus",
-    "other": "forzieri bonus"
-  },
   "coinsRedeem": "Riscatta",
   "coinsRedeemed": "+{{n}} TigerCoins. Qualcuno ti vuole bene.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} forziere bonus. Qualcuno ti vuole bene.",
-    "other": "+{{n}} forzieri bonus. Qualcuno ti vuole bene."
-  },
   "coinsCodeInvalid": "Questo codice non apre nulla. Controlla come l'hai scritto.",
   "coinsCodeExpired": "Questo codice è scaduto.",
   "coinsCodeExhausted": "Troppo tardi: questo codice è esaurito.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Bonus traguardo",
   "envDefaultMsg": "La TigerSquad ha pensato a te. Per poco, ma sul serio.",
   "envOpen": "Aprila",
+  "envOpenSurprises": "Aprile",
+  "envGotSurprises": {
+    "one": "busta sorpresa",
+    "other": "buste sorpresa"
+  },
   "envNext": "Busta successiva ({{n}})",
   "envSplitTitle": "Busta rossa",
-  "envSplitRank": "Posizione fortuna n. {{rank}} su {{opened}} finora · {{parts}} quote in tutto",
-  "coinsEnvelopes": {
-    "one": "{{n}} busta da aprire",
-    "other": "{{n}} buste da aprire"
-  }
+  "envSplitRank": "Posizione fortuna n. {{rank}} su {{opened}} finora · {{parts}} quote in tutto"
 }

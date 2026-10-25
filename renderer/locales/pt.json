@@ -2229,6 +2229,7 @@
   "squadDealsErr": "O tigre deixou o código cair. Tente de novo daqui a pouco.",
   "squadDealsClose": "Fechar",
   "squadDealsFilterAll": "Todas as ofertas",
+  "squadDealsExchange": "Troca",
   "squadDealsFilterMine": "Meus códigos",
   "squadDealsSearch": "Buscar uma oferta, uma marca…",
   "squadDealsNoMatch": "Nenhuma oferta corresponde.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Oferta disponível",
   "squadAnnMore": "Saiba mais",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Abrir meus baús",
-  "coinsChests": {
-    "one": "{{n}} baú para abrir",
-    "other": "{{n}} baús para abrir"
+  "coinsHint": "Cada chip TigerTag+ Certified te passa um envelope surpresa. Abra, junte TigerCoins e troque por descontos.",
+  "coinsOpen": "Abrir meus envelopes",
+  "coinsRevealTitle": "Seus envelopes surpresa",
+  "coinsPile": {
+    "one": "{{n}} envelope para abrir",
+    "other": "{{n}} envelopes para abrir"
   },
   "squadDealsTimeLeft": "Faltam {{time}}",
   "squadDealsDHMS": "{{d}} d {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Expirado",
   "squadDealsClaimDays": "Válido por {{n}} dias após pegar",
-  "coinsHint": "Cada chip TigerTag+ Certified é um baú de TigerCoins. Gaste-os nas ofertas que os pedem.",
-  "coinsRevealTitle": "Seus baús",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Pegar",
   "coinsOpenMore": "Abrir os próximos",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "Tenho um código",
   "coinsCodePlaceholder": "Código TigerCoins",
   "coinsCodeHint": "Os 12 caracteres do seu cartão. Hífens opcionais, sorte incluída.",
-  "envGotChests": {
-    "one": "baú bônus",
-    "other": "baús bônus"
-  },
   "coinsRedeem": "Resgatar",
   "coinsRedeemed": "+{{n}} TigerCoins. Alguém gosta de você.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} baú bônus. Alguém gosta de você.",
-    "other": "+{{n}} baús bônus. Alguém gosta de você."
-  },
   "coinsCodeInvalid": "Esse código não abre nada. Confira a digitação.",
   "coinsCodeExpired": "Este código expirou.",
   "coinsCodeExhausted": "Tarde demais: este código já se esgotou.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Bônus de marco",
   "envDefaultMsg": "A TigerSquad pensou em você. Rapidinho, mas de coração.",
   "envOpen": "Abrir",
+  "envOpenSurprises": "Abrir",
+  "envGotSurprises": {
+    "one": "envelope surpresa",
+    "other": "envelopes surpresa"
+  },
   "envNext": "Próximo envelope ({{n}})",
   "envSplitTitle": "Envelope vermelho",
-  "envSplitRank": "Ranking de sorte nº {{rank}} de {{opened}} até agora · {{parts}} partes no total",
-  "coinsEnvelopes": {
-    "one": "{{n}} envelope para abrir",
-    "other": "{{n}} envelopes para abrir"
-  }
+  "envSplitRank": "Ranking de sorte nº {{rank}} de {{opened}} até agora · {{parts}} partes no total"
 }

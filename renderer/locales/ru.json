@@ -2229,6 +2229,7 @@
   "squadDealsErr": "Тигр уронил код. Попробуй ещё раз чуть позже.",
   "squadDealsClose": "Закрыть",
   "squadDealsFilterAll": "Все предложения",
+  "squadDealsExchange": "Обмен",
   "squadDealsFilterMine": "Мои коды",
   "squadDealsSearch": "Найти предложение, бренд…",
   "squadDealsNoMatch": "Ничего не найдено.",
@@ -2245,17 +2246,17 @@
   "squadDealsOfferAvailable": "Доступно",
   "squadAnnMore": "Подробнее",
   "coinsBalance": "{{n}} TigerCoins",
-  "coinsOpen": "Открыть сундуки",
-  "coinsChests": {
-    "one": "{{n}} сундук к открытию",
-    "other": "{{n}} сундуков к открытию"
+  "coinsHint": "Каждый чип TigerTag+ Certified подкидывает вам конверт-сюрприз. Открывайте, копите TigerCoins, меняйте на скидки.",
+  "coinsOpen": "Открыть мои конверты",
+  "coinsRevealTitle": "Ваши конверты-сюрпризы",
+  "coinsPile": {
+    "one": "{{n}} конверт ждёт",
+    "other": "{{n}} конвертов ждут"
   },
   "squadDealsTimeLeft": "Осталось {{time}}",
   "squadDealsDHMS": "{{d}} д {{h}}:{{m}}:{{s}}",
   "squadDealsExpired": "Истекло",
   "squadDealsClaimDays": "Действует {{n}} дн. после получения",
-  "coinsHint": "Каждый чип TigerTag+ Certified — это сундук с TigerCoins. Тратьте их на предложения, которые их требуют.",
-  "coinsRevealTitle": "Ваши сундуки",
   "coinsRevealTotal": "+{{n}} TigerCoins",
   "coinsCollect": "Забрать",
   "coinsOpenMore": "Открыть следующие",
@@ -2265,16 +2266,8 @@
   "coinsHaveCode": "У меня есть код",
   "coinsCodePlaceholder": "Код TigerCoins",
   "coinsCodeHint": "12 символов с вашей карты. Дефисы по желанию, удача в комплекте.",
-  "envGotChests": {
-    "one": "бонусный сундук",
-    "other": "бонусных сундуков"
-  },
   "coinsRedeem": "Активировать",
   "coinsRedeemed": "+{{n}} TigerCoins. Кто-то вас ценит.",
-  "coinsRedeemedChests": {
-    "one": "+{{n}} бонусный сундук. Кто-то вас ценит.",
-    "other": "+{{n}} бонусных сундуков. Кто-то вас ценит."
-  },
   "coinsCodeInvalid": "Этот код ничего не открывает. Проверьте написание.",
   "coinsCodeExpired": "Срок действия кода истёк.",
   "coinsCodeExhausted": "Поздно: код уже полностью использован.",
@@ -2283,11 +2276,12 @@
   "envMilestone": "Бонус за рубеж",
   "envDefaultMsg": "TigerSquad о вас вспомнил. Ненадолго, но искренне.",
   "envOpen": "Открыть",
+  "envOpenSurprises": "Открыть их",
+  "envGotSurprises": {
+    "one": "конверт-сюрприз",
+    "other": "конвертов-сюрпризов"
+  },
   "envNext": "Следующий конверт ({{n}})",
   "envSplitTitle": "Красный конверт",
-  "envSplitRank": "Место по удаче №{{rank}} из {{opened}} пока · всего {{parts}} долей",
-  "coinsEnvelopes": {
-    "one": "{{n}} конверт ждёт",
-    "other": "{{n}} конвертов ждут"
-  }
+  "envSplitRank": "Место по удаче №{{rank}} из {{opened}} пока · всего {{parts}} долей"
 }

@@ -5296,7 +5296,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // to show → "coming soon".
   const _deals = { uid: null, at: 0, docs: [], country: null, xp: 0, coins: null };
   const SQUAD_DEAL_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/squadDeal";
-  // TigerCoins — balance, chests to open, opening (functions/tigerCoins.js).
+  // TigerCoins — balance, envelopes to open, opening (functions/tigerCoins.js).
   const TIGER_COINS_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/tigerCoins";
   async function _tigerCoins(uid, action, extra = {}) {
     const user = fbAuth(uid).currentUser;
@@ -5306,9 +5306,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
     return res.json();
   }
+  // `unopened` = the chips' surprise envelopes, `envelopes` = the gift envelopes.
   const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [] });
-  // Open the chests (100 a call), reveal them, again while the member asks for more.
-  async function _openChests(uid, ctx, after) {
+  // The chips' surprise envelopes (100 a call), revealed, again while the member asks for more.
+  async function _openChipEnvelopes(uid, ctx, after) {
     try {
       for (;;) {
         const r = await _tigerCoins(uid, "open");
@@ -5318,10 +5319,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
     } catch (_) { ctx.toast(t("squadDealsErr")); }
   }
-  // Open the account's envelopes one after another (campaigns, milestone
-  // bonuses — functions/coinEnvelopes.js); chests they gave can be opened next.
-  async function _openEnvelopes(uid, ctx, list, after) {
-    let chests = false;
+  // The gift envelopes one after another (campaigns, milestone bonuses —
+  // functions/coinEnvelopes.js). True when the member went through all of them.
+  async function _openGiftEnvelopes(uid, ctx, list, after) {
     for (let i = 0; i < list.length; i++) {
       const how = await showEnvelope(ctx, list[i], { more: list.length - i - 1, open: async () => {
         const r = await _tigerCoins(uid, "openEnvelope", { id: list[i].id });
@@ -5329,22 +5329,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         after?.();
         return r;
       } });
-      if (how === "chests") { chests = true; break; }
-      if (how !== "next") break;
+      if (how !== "next") return i === list.length - 1;
     }
-    if (chests) await _openChests(uid, ctx, after);
+    return true;
   }
-  // At launch, once per account and session: envelopes waiting → open them.
-  const _envChecked = new Set();
-  async function _checkEnvelopes(uid) {
-    if (_envChecked.has(uid)) return;
-    _envChecked.add(uid);
+  // "Open my envelopes": the gifts first, then the chips' surprise envelopes.
+  async function _openAllEnvelopes(uid, ctx, after) {
+    const gifts = _deals.coins?.envelopes || [];
+    if (gifts.length && !(await _openGiftEnvelopes(uid, ctx, gifts, after))) return;
+    if (_deals.coins?.unopened) await _openChipEnvelopes(uid, ctx, after);
+  }
+  // At launch, once per account and session: gift envelopes waiting → offered.
+  const _giftsOffered = new Set();
+  async function _offerGiftEnvelopes(uid) {
+    if (_giftsOffered.has(uid)) return;
+    _giftsOffered.add(uid);
     const r = await _tigerCoins(uid, "status").catch(() => null);
     if (!r?.envelopes?.length || uid !== state.activeAccountId) return;
     const ctx = { t, esc, lang: state.lang, toast: msg => _flashMessage(msg) };
     const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
     _deals.coins = _coinsOf(r);
-    await _openEnvelopes(uid, ctx, r.envelopes, after);
+    await _openGiftEnvelopes(uid, ctx, r.envelopes, after);
   }
   async function _renderDealsView() {
     const host = $("invDealsView"); if (!host) return;
@@ -5359,8 +5364,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _deals.at = 0;   // reload: the claim (code / used), the pool counters and the coins changed
       await _renderDealsView();
     }, onExpire: () => _renderDealsView(),
-    onOpenCoins: () => _openChests(uid, ctx, paint),
-    onOpenEnvelopes: () => _openEnvelopes(uid, ctx, _deals.coins?.envelopes || [], paint),
+    onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
     // A gift code: credited once per account; the error code reaches the toast.
     onRedeemCode: async (code) => {
       const r = await _tigerCoins(uid, "redeem", { code });
@@ -7702,8 +7706,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // "My requests": the backend reads their GitHub status and raises a
     // notification for any change — once per sign-in, after the app settles.
     setTimeout(() => { if (uid === state.activeAccountId) syncReports().catch(() => {}); }, 8000);
-    // TigerCoins envelopes waiting (a gift, a milestone bonus): offered once the app has settled.
-    setTimeout(() => { if (uid === state.activeAccountId) _checkEnvelopes(uid).catch(() => {}); }, 6000);
+    // TigerCoins gift envelopes waiting (a campaign, a milestone bonus): offered once the app has settled.
+    setTimeout(() => { if (uid === state.activeAccountId) _offerGiftEnvelopes(uid).catch(() => {}); }, 6000);
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
     subscribeScales(uid);// live-sync the user's TigerScale heartbeats
