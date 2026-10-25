@@ -496,7 +496,9 @@ export function questLootHtml() { return lootHtml(); }
 // chips); Feats is one list of row cards. The rarity is carried by the card
 // itself (colour, chip); only legendary cards glow once owned, so the green of
 // Epic stays a rarity, not an "owned" signal.
-const CHIP_IDS = new Set(["chipTag", "chipPlus", "chipCert"]);
+// The chips always read up the range: TigerTag → TigerTag+ → TigerTag+ Certified.
+const CHIP_ORDER = ["chipTag", "chipPlus", "chipCert"];
+const CHIP_IDS = new Set(CHIP_ORDER);
 function lootHtml() {
   const all = (_ctx.loot?.() || []).map(x => ({ ...x, r: rarityOf(x) }));
   const loot = all.filter(x => x.physical), feats = all.filter(x => !x.physical);
@@ -514,7 +516,8 @@ function ladderHtml(items, eyebrowKey, titleKey, countKey, groups) {
   const { t, esc } = _ctx;
   if (!items.length) return "";
   const order = RARITIES.map(r => r[0]);
-  const sorted = [...items].sort((p, q) => order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
+  const sorted = [...items].sort((p, q) => CHIP_IDS.has(p.id) && CHIP_IDS.has(q.id) ? CHIP_ORDER.indexOf(p.id) - CHIP_ORDER.indexOf(q.id)
+    : order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
   const got = sorted.filter(x => x.got).length;
   const xp = sorted.reduce((s, x) => s + earnedOf(x), 0);
   const card = x => `
