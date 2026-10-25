@@ -17,7 +17,7 @@ import {
 import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
-import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
+import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
 import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
 import { openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
@@ -1136,8 +1136,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
      opts.top — also fade the top edge. Off by default: a sticky <thead> already
      covers that edge, and fading it would dim the header itself.
+     opts.head — the selector of the sticky header the top fade starts under
+     ("thead" by default; the Quests / Squad views pass their hero banner).
   */
-  function _wireScrollFade(el, { top = false, threshold = 2 } = {}) {
+  function _wireScrollFade(el, { top = false, threshold = 2, head: headSel = "thead" } = {}) {
     if (!el) return () => {};
     const update = () => {
       el.classList.toggle("can-up", el.scrollTop > threshold);
@@ -1155,7 +1157,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // NB: the app makes the CELLS sticky (`thead th { position: sticky }`), not
       // the <thead> — so the position has to be read off a th, while the height
       // still comes from the thead.
-      const head = el.querySelector("thead");
+      const head = el.querySelector(headSel);
       // Two conventions live in this app: the inventory tables make the header
       // CELLS sticky (`thead th`), the printers table makes the `<thead>` itself
       // sticky (`.pt-head`). Accept either — reading only the cell missed the
@@ -1184,6 +1186,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     el._sfUpdate = update;
     update();
     return update;
+  }
+
+  // The Quests / Squad views: the same top and bottom fade as the inventory,
+  // the top one starting under the sticky hero banner. Their content repaints
+  // on its own (snapshots, timers), so a mutation re-runs the fade (one per frame).
+  const HERO_HEAD = ".qd-hero, .qm-hero, .sqr-hero-host, .sqr-hero";
+  function _wireHeroFade(host) {
+    if (!host) return;
+    _wireScrollFade(host, { top: true, head: HERO_HEAD });
+    if (host._sfMo) return;
+    host._sfMo = new MutationObserver(() => {
+      cancelAnimationFrame(host._sfRaf);
+      host._sfRaf = requestAnimationFrame(() => _wireScrollFade(host, { top: true, head: HERO_HEAD }));
+    });
+    host._sfMo.observe(host, { childList: true, subtree: true });
   }
 
   function esc(s) {
@@ -8891,6 +8908,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       else if (state.viewMode === "squadDeals") _renderDealsView();
       else if (state.viewMode === "squad" || state.viewMode === "squadItems") _renderSquadView();
       else renderQuestsView($("invQuestsView"), state.viewMode === "questsJourney" ? "journey" : "today");
+      for (const id of ["invQuestsView", "invSquadView", "invXpHistView", "invDealsView"]) _wireHeroFade($(id));
       return;
     }
     if (_isCatalogMode(state.viewMode)) {
@@ -39115,23 +39133,51 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     setViewMode("xpHistory");
   }
   // The full page: range, filters, search and page live here across renders.
-  const _xph = { range: "30d", page: 1, filter: { cat: "", dir: "", q: "" } };
+  // `scope`: whose curve — "me", "country" (my league) or "leagues" (the best ones).
+  const _xph = { range: "30d", page: 1, scope: "me", filter: { cat: "", dir: "", q: "" } };
+  // The league curves: squadLeagueHistory/{day} (each country's totals at the end
+  // of a Paris day, server-written) + today's live totals summed from the members'
+  // profiles (the rankings' own read, reused when fresh). Reloaded at most once a minute.
+  const _league = { uid: null, at: 0, days: [], live: null, country: null };
+  async function _loadLeagues(uid) {
+    if (_league.uid === uid && Date.now() - _league.at < 60e3) return;
+    const db = fbDb(uid);
+    const cache = _squadBoardCache?.uid === uid ? _squadBoardCache.members : null;
+    const [hist, members] = await Promise.all([
+      db.collection("squadLeagueHistory").orderBy("day", "desc").limit(400).get().then(q => q.docs.map(d => d.data()).reverse()).catch(() => []),
+      cache || db.collection("userProfiles").orderBy("tigerSquad.since").get().then(q => q.docs.map(d => {
+        const sq = d.get("tigerSquad") || {};
+        return { uid: d.id, xp: Number(sq.xp) || 0, country: /^[A-Z]{2}$/.test(sq.country || "") ? sq.country : null };
+      })).catch(() => []),
+    ]);
+    const live = {};
+    for (const m of members) if (m.country) { const c = (live[m.country] ||= { xp: 0, n: 0 }); c.xp += m.xp; c.n++; }
+    Object.assign(_league, { uid, at: Date.now(), days: hist, live, country: members.find(m => m.uid === uid)?.country || null });
+  }
+  function _xphState() {
+    const host = $("invXpHistView");
+    // The curve is drawn at its card's real width: the main column, i.e. the view
+    // minus the right column (360 + gap) when the layout has two columns.
+    const two = matchMedia("(min-width: 1351px)").matches;
+    const chartW = Math.max(320, (host?.clientWidth || 0) - (two ? 374 : 0) - 34);
+    let names; try { names = new Intl.DisplayNames([state.lang || "en"], { type: "region" }); } catch (_) {}
+    const league = _xph.scope !== "me" && _league.uid === state.activeAccountId
+      ? { by: xpLeagueSeries(_league.days, _league.live, _xph.range), country: _league.country, names: cc => { try { return names?.of(cc) || cc; } catch (_) { return cc; } } }
+      : null;
+    return { ..._xph, chartW, log: _xpLog.log, total: _xpLog.total, league };
+  }
   function _paintXpHistView() {
     const host = $("invXpHistView"); if (!host) return;
     const q = host.querySelector("[data-xph-filter='q']");
     const caret = q && document.activeElement === q ? q.selectionStart : null;
-    // The curve is drawn at its card's real width: the main column, i.e. the view
-    // minus the right column (360 + gap) when the layout has two columns.
-    const two = matchMedia("(min-width: 1351px)").matches;
-    const chartW = Math.max(320, host.clientWidth - (two ? 374 : 0) - 34);
-    host.innerHTML = `<div class="qw">${xpPageHtml(_xphCtx(), { ..._xph, chartW, log: _xpLog.log, total: _xpLog.total })}</div>`;
+    host.innerHTML = `<div class="qw">${xpPageHtml(_xphCtx(), _xphState())}</div>`;
     if (caret != null) { const n = host.querySelector("[data-xph-filter='q']"); n.focus(); n.setSelectionRange(caret, caret); }
   }
   async function _renderXpHistView() {
     const host = $("invXpHistView"); if (!host) return;
     const uid = state.activeAccountId; if (!uid) return;
     if (_xpLog.uid === uid) _paintXpHistView(); else host.innerHTML = _loadingHTML();   // same loader as a friend's stock
-    try { await _loadXpLog(uid, true); } catch (_) {}
+    try { await Promise.all([_loadXpLog(uid, true), _xph.scope !== "me" ? _loadLeagues(uid) : null]); } catch (_) {}
     if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView();
   }
   {
@@ -39139,6 +39185,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     host?.addEventListener("click", e => {
       const r = e.target.closest("[data-xph-range]");
       if (r) { _xph.range = r.dataset.xphRange; _paintXpHistView(); return; }
+      const sc = e.target.closest("[data-xph-scope]");
+      if (sc) {
+        _xph.scope = sc.dataset.xphScope; _paintXpHistView();
+        const uid = state.activeAccountId;
+        if (_xph.scope !== "me" && uid) _loadLeagues(uid).then(() => { if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView(); });
+        return;
+      }
       const p = e.target.closest("[data-xph-page]");
       if (p && !p.disabled) { _xph.page = Number(p.dataset.xphPage) || 1; _paintXpHistView(); host.querySelector(".xph-table-wrap")?.scrollIntoView({ block: "nearest" }); }
     });
@@ -39167,12 +39220,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       let lo = 0, hi = xs.length - 1;                         // binary search: xs ascend
       while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (xs[mid] < px) lo = mid; else hi = mid; }
       const i = Math.abs(xs[lo] - px) <= Math.abs(xs[hi] - px) ? lo : hi;
-      const pts = xpChartSeries(_xpLog.log, _xph.range), h = pts[i];
-      if (!h) return;
+      const html = xpChartTipHtml(_xphCtx(), _xphState(), i);
+      if (!html) return;
       const g = svg.querySelector(".xph-guide"), f = svg.querySelector(".xph-focus");
       g.setAttribute("x1", xs[i]); g.setAttribute("x2", xs[i]); g.setAttribute("visibility", "visible");
       f.setAttribute("cx", xs[i]); f.setAttribute("cy", ys[i]); f.setAttribute("visibility", "visible");
-      tip.innerHTML = xpSampleTipHtml(_xphCtx(), h); tip.hidden = false;
+      tip.innerHTML = html; tip.hidden = false;
       const wrap = svg.parentElement.getBoundingClientRect();
       const cx = box.left - wrap.left + xs[i] / k, cy = box.top - wrap.top + ys[i] / k;
       tip.style.left = `${Math.min(wrap.width - tip.offsetWidth - 4, Math.max(4, cx - tip.offsetWidth / 2))}px`;

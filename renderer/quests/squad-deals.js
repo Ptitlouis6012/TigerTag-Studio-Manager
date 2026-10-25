@@ -669,9 +669,24 @@ export function wireDeals(host, ctx) {
   }, 1000);
   // Side card: a grid card opens its deal (again → closes), × or Esc closes.
   // The open id lives on the host (host._sqdOpen) so a repaint keeps it open.
+  // Switching deals slides the new card in OVER the open one (kept one z slot
+  // under it, .is-under), which then closes without a slide once covered —
+  // the same "new opens, old closes" as a spool's detail panel.
   const setOpen = id => {
+    const prev = host._sqdOpen;
     host._sqdOpen = id || null;
-    for (const el of host.querySelectorAll(".sqd-side")) el.classList.toggle("is-open", el.dataset.side === id);
+    const under = prev && id && prev !== id ? host.querySelector(`.sqd-side.is-open[data-side="${CSS.escape(prev)}"]`) : null;
+    for (const el of host.querySelectorAll(".sqd-side.is-under")) { el.classList.remove("is-open"); requestAnimationFrame(() => el.classList.remove("is-under")); }
+    for (const el of host.querySelectorAll(".sqd-side:not(.is-under)")) el.classList.toggle("is-open", el.dataset.side === id || el === under);
+    if (under) {
+      under.classList.add("is-under");
+      clearTimeout(host._sqdUnderT);
+      // Closed while still under (no transition), back to its slot a frame later.
+      host._sqdUnderT = setTimeout(() => {
+        under.classList.remove("is-open");
+        requestAnimationFrame(() => under.classList.remove("is-under"));
+      }, 260);
+    }
     for (const el of host.querySelectorAll(".sqd-card[data-open]")) el.classList.toggle("is-selected", el.dataset.open === id);
     host.querySelector(".sqd-close-tab")?.classList.toggle("is-open", !!id);
   };

@@ -78,6 +78,8 @@ publicStats/community/history/{YYYY-MM-DD} → one point per day of those totals
                              (both read by the TigerSquad Rankings view, never written by Studio)
 squadRanks/current         → TigerSquad ranks at the start of the Paris day (world, national, countries; uid / country → rank),
                              signed-in read, server-written — the leagues' up / down arrows
+squadLeagueHistory/{day}   → each league's XP and member count at the end of a Paris day (countries: CC → { xp, n }),
+                             signed-in read, server-written — the XP history's "My country" / "Leagues" curves
 squadDeals/{id}            → TigerSquad partner deals (Deals view), member read, written by the TigerHub admin only;
                              squadDeals/{id}/secret/main { code, link } readable only once the member's XP reaches minXp
                              squadDeals/{id}/claims/{uid} { code, used } the member's own acceptance (squadDeal function)

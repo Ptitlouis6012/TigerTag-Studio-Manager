@@ -12,6 +12,12 @@ squadRanks/
                               (Studio compares its live leagues against it: the ▲ / ▼ arrows,
                               places won or lost over 7 rolling days)
 
+squadLeagueHistory/
+  {YYYY-MM-DD}/             — each league's totals at the end of that Paris day (signed-in read,
+                              written only by communityStats; days since 2026-10-11 backfilled)
+    countries   map         — CC → { xp, n } (summed XP, member count)
+                              (Studio's XP history: the "My country" and "Leagues" curves)
+
 squadDeals/
   {dealId}/                 — TigerSquad partner deals (Deals view, quests/squad-deals.js).
                               Read: TigerSquad members only (userProfiles/{uid}.tigerSquad set);

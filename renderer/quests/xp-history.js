@@ -138,10 +138,11 @@ export function pageHtml(ctx, s) {
     </div>
     <section class="xph-card xph-chart-card">
       <header class="xph-head">${icon({ color: "#ff7a1a", icon: "bars" }, 18)}
-        <div><h3>${esc(t("xpEvolution"))}</h3><p>${esc(t("xpEvolutionSub"))}</p></div>
+        <div><h3>${esc(t("xpEvolution"))}</h3><p>${esc(t(SCOPE_SUB[s.scope] || "xpEvolutionSub"))}</p></div>
+        <div class="xph-ranges xph-scopes" role="group">${Object.keys(SCOPE_SUB).map(k => `<button type="button" class="xph-range${s.scope === k ? " is-on" : ""}" data-xph-scope="${k}">${esc(t(SCOPE_LABEL[k]))}</button>`).join("")}</div>
         <div class="xph-ranges" role="group">${Object.keys(RANGES).map(r => `<button type="button" class="xph-range${s.range === r ? " is-on" : ""}" data-xph-range="${r}">${esc(r === "all" ? t("xpRangeAll") : r.toUpperCase())}</button>`).join("")}</div>
       </header>
-      <div class="xph-chart" data-xph-chart>${chartSvg(ctx, log, s.range, s.chartW)}</div>
+      <div class="xph-chart" data-xph-chart>${scopeChart(ctx, s)}</div>
     </section>
     ${breakdownHtml(ctx, log).replace('class="xph-card"', 'class="xph-card xph-break-card"')}
     <section class="xph-card xph-log-card">
@@ -200,7 +201,10 @@ export function chartSeries(log, range) {
   return out;
 }
 export function chartSvg(ctx, log, range, width = 1000) {
-  const pts = chartSeries(log, range);
+  return seriesSvg(ctx, chartSeries(log, range), range, width);
+}
+// One curve of { ms, total } points (the balance, or a league's summed XP).
+function seriesSvg(ctx, pts, range, width = 1000) {
   if (pts.length < 2) return `<p class="xph-empty">${ctx.esc(ctx.t("xpHistoryEmpty"))}</p>`;
   // Drawn at the real pixel width (the host measures it), so text and dots keep their shape.
   const W = Math.max(320, Math.round(width)), H = 230, L = 56, R = 14, T = 14, B = 28;
@@ -245,6 +249,100 @@ export function chartSvg(ctx, log, range, width = 1000) {
     ${xl}</svg>
     <div class="xph-tip" hidden></div>`;
 }
+// ── League curves ────────────────────────────────────────────────────────────
+// The leagues' daily totals (squadLeagueHistory/{day}.countries, server-written
+// at the end of each Paris day) plus today's live totals, as one series per
+// country: { ms, total, n } with ms ≈ the end of that day.
+const SCOPE_SUB = { me: "xpEvolutionSub", country: "xpCountrySub", leagues: "xpLeaguesSub" };
+const SCOPE_LABEL = { me: "xpScopeMe", country: "xpScopeCountry", leagues: "xpScopeLeagues" };
+const LEAGUE_COLORS = ["#3da4f0", "#3ddc84", "#a78bfa", "#f472b6", "#ffc53d"];
+export function leagueSeries(days, live, range) {
+  const since = RANGES[range] ? Date.now() - RANGES[range] * DAY : 0;
+  const rows = days.map(d => ({ ms: Date.parse(`${d.day}T21:59:00Z`), countries: d.countries || {} }));   // 22:59 or 23:59 in Paris: still that day
+  if (live) rows.push({ ms: Date.now(), countries: live });
+  const kept = rows.filter(r => r.ms >= since);
+  const by = {};
+  for (const r of kept) for (const [cc, c] of Object.entries(r.countries)) (by[cc] ||= []).push({ ms: r.ms, total: Number(c.xp) || 0, n: Number(c.n) || 0 });
+  return by;
+}
+function scopeChart(ctx, s) {
+  if (s.scope === "me" || !s.league) return chartSvg(ctx, s.log, s.range, s.chartW);
+  const { by, country, names } = s.league;
+  if (s.scope === "country") {
+    if (!country) return `<p class="xph-empty">${ctx.esc(ctx.t("xpNoCountry"))}</p>`;
+    return seriesSvg(ctx, by[country] || [], s.range, s.chartW);
+  }
+  return multiSvg(ctx, leagueLines(s), s.chartW);
+}
+// Leagues: the five best (by their last total) and mine, mine drawn in orange.
+function leagueLines(s) {
+  const { by, country, names } = s.league;
+  const last = cc => by[cc][by[cc].length - 1]?.total || 0;
+  const top = Object.keys(by).sort((a, b) => last(b) - last(a)).slice(0, 5);
+  if (country && by[country] && !top.includes(country)) top.push(country);
+  let k = 0;
+  return top.map(cc => ({ cc, name: names(cc), pts: by[cc], mine: cc === country, color: cc === country ? "#ff7a1a" : LEAGUE_COLORS[k++ % LEAGUE_COLORS.length] }))
+    .filter(l => l.pts.length >= 2);
+}
+// The tooltip of the curve's i-th point (the host finds i from data-xs).
+export function chartTipHtml(ctx, s, i) {
+  if (s.scope === "me" || !s.league) { const p = chartSeries(s.log, s.range)[i]; return p ? sampleTipHtml(ctx, p) : ""; }
+  const { by, country, names } = s.league;
+  if (s.scope === "country") { const p = by[country]?.[i]; return p ? leagueTipHtml(ctx, p, names(country)) : ""; }
+  const lines = leagueLines(s); if (!lines.length) return "";
+  const ref = lines.reduce((a, l) => (l.pts.length > a.pts.length ? l : a)), ms = ref.pts[i]?.ms;
+  if (!ms) return "";
+  const rows = lines.map(l => ({ name: l.name, color: l.color, total: l.pts.find(p => p.ms === ms)?.total }))
+    .filter(r => r.total != null).sort((a, b) => b.total - a.total);
+  return leaguesTipHtml(ctx, ms, rows);
+}
+// Several curves on one scale (same days), a legend of flags under it.
+function multiSvg(ctx, lines, width = 1000) {
+  if (!lines.length) return `<p class="xph-empty">${ctx.esc(ctx.t("xpHistoryEmpty"))}</p>`;
+  const W = Math.max(320, Math.round(width)), H = 230, L = 56, R = 14, T = 14, B = 28;
+  const all = lines.flatMap(l => l.pts);
+  const t0 = Math.min(...all.map(p => p.ms)), t1 = Math.max(...all.map(p => p.ms));
+  let lo = Math.min(...all.map(p => p.total)), hi = Math.max(...all.map(p => p.total));
+  const pad = Math.max(10, (hi - lo) * .08); lo = Math.max(0, lo - pad); hi += pad;
+  const x = ms => L + (W - L - R) * ((ms - t0) / Math.max(1, t1 - t0));
+  const y = v => T + (H - T - B) * (1 - (v - lo) / Math.max(1, hi - lo));
+  const grid = Array.from({ length: 5 }, (_, i) => {
+    const v = lo + (hi - lo) * i / 4, yy = y(v).toFixed(1);
+    return `<line x1="${L}" x2="${W - R}" y1="${yy}" y2="${yy}" class="xph-grid"/><text x="${L - 8}" y="${yy}" class="xph-ylab">${ctx.fmt(Math.round(v))}</text>`;
+  }).join("");
+  const days = Math.max(2, Math.min(8, Math.floor(W / 140)));
+  const xl = Array.from({ length: days + 1 }, (_, i) => {
+    const ms = t0 + (t1 - t0) * i / days;
+    return `<text x="${x(ms).toFixed(1)}" y="${H - 6}" class="xph-xlab">${ctx.esc(ctx.day(ms))}</text>`;
+  }).join("");
+  // Mine last, so it is drawn over the others.
+  const order = [...lines.filter(l => !l.mine), ...lines.filter(l => l.mine)];
+  const paths = order.map(l => {
+    const P = l.pts.map(p => [x(p.ms), y(p.total)]), [ex, ey] = P[P.length - 1];
+    return `<path d="${smoothPath(P)}" class="xph-mline${l.mine ? " is-mine" : ""}" style="--c:${l.color}"/>
+      <circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="${l.mine ? 4 : 3}" class="xph-mend" style="--c:${l.color}"/>`;
+  }).join("");
+  // The hover walks the longest line's days; the tooltip lists every league that day.
+  const ref = lines.reduce((a, l) => (l.pts.length > a.pts.length ? l : a));
+  const flag = cc => `<img class="xph-flag" src="../assets/svg/flags/${cc.toLowerCase()}.svg" alt="" loading="lazy" decoding="async">`;
+  const legend = lines.map(l => `<span class="xph-leg${l.mine ? " is-mine" : ""}" style="--c:${l.color}">${flag(l.cc)}${ctx.esc(l.name)}<b>${ctx.fmt(l.pts[l.pts.length - 1].total)}</b></span>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" class="xph-svg xph-svg--multi"
+      data-xs="${ref.pts.map(p => x(p.ms).toFixed(1)).join(",")}" data-ys="${ref.pts.map(p => y(p.total).toFixed(1)).join(",")}">
+    ${grid}${paths}
+    <line class="xph-guide" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>
+    <circle class="xph-focus" r="0" cx="0" cy="0" visibility="hidden"/>
+    ${xl}</svg>
+    <div class="xph-mlegend">${legend}</div>
+    <div class="xph-tip" hidden></div>`;
+}
+// Tooltips of the league curves: one league at a point, or every league that day.
+function leagueTipHtml(ctx, p, name) {
+  return `<small>${ctx.esc(name ? `${name} · ` : "")}${ctx.esc(ctx.day(p.ms))}</small><b>${ctx.esc(ctx.fmt(p.total))} XP</b><span>${ctx.esc(ctx.t("xpLeagueMembers", { n: p.n }))}</span>`;
+}
+function leaguesTipHtml(ctx, ms, rows) {
+  return `<small>${ctx.esc(ctx.day(ms))}</small>${rows.map(r => `<span class="xph-tip-row" style="--c:${r.color}"><i></i>${ctx.esc(r.name)}<b>${ctx.esc(ctx.fmt(r.total))}</b></span>`).join("")}`;
+}
+
 /* Smooth curve through the points that never overshoots them (monotone cubic,
    Fritsch–Carlson): a balance that only steps up must not dip between two
    steps. Points sharing an x (same timestamp) are passed straight through. */

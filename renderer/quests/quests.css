@@ -128,6 +128,16 @@ body.progress-view #gridSortWrap { display: none; }
   --hero-desk-hc: var(--hero-desk-h, 26px);
   /* Every hero banner is the same height, in every view. */
   position: relative; height: 150px; background: var(--hero-wall-c); }
+/* The banner stays on screen while its view scrolls (the views are the
+   scroll containers): it sticks to the top, the page sliding under it. The
+   Squad rankings banner sits in a host of its own, which is what sticks. */
+:is(.inv-quests-view, .inv-squad-view) :is(.qd-hero, .qm-hero, .sqr-hero, .sqr-hero-host) { position: sticky; top: 0; z-index: 5; }
+/* What slides under it must not show through its rounded corners: a solid
+   ring of the page colour (8 px covers a 14 px radius's corners) fills them,
+   invisible over the page itself. The rankings host is square: a plain fill. */
+:is(.inv-quests-view, .inv-squad-view) :is(.qd-hero, .qm-hero, .sqr-hero) { box-shadow: 0 0 0 8px var(--bg); }
+.inv-squad-view .sqr-hero-host { background: var(--bg); }
+.inv-squad-view .sqr-hero-host .sqr-hero { position: relative; box-shadow: none; }
 /* Three planes. The scene is a flex item between the title and the card, so
    it takes the room left and shrinks with the window instead of sliding under
    the card. Its own background is the back layer (behind the desk); the desk
@@ -794,6 +804,24 @@ body.progress-view #gridSortWrap { display: none; }
 @keyframes xph-pulse { 50% { transform: scale(1.5); opacity: .25; } }
 @media (prefers-reduced-motion: reduce) { .xph-end-halo { animation: none; } }
 .xph-guide { stroke: rgba(255, 179, 71, .45); stroke-width: 1; stroke-dasharray: 3 4; }
+/* The league curves (scope "My country" / "Leagues"): one line per country in
+   its colour (mine orange, thicker, drawn last), a flag legend under the chart,
+   and a tooltip listing every league that day. */
+.xph-head { flex-wrap: wrap; }
+.xph-scopes .xph-range { min-width: 0; }
+.xph-chart:has(.xph-mlegend) { height: auto; }
+.xph-mline { fill: none; stroke: var(--c); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .85; }
+.xph-mline.is-mine { stroke-width: 3; opacity: 1; filter: drop-shadow(0 0 6px rgba(255, 140, 40, .55)); }
+.xph-mend { fill: var(--c); stroke: #0b0d14; stroke-width: 2; }
+.xph-mlegend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; }
+.xph-leg { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--qw-muted); }
+.xph-leg::before { content: ""; width: 10px; height: 3px; border-radius: 2px; background: var(--c); }
+.xph-leg b { font: 800 12px var(--qw-mono); color: var(--qw-ink); }
+.xph-leg.is-mine { color: var(--qw-ink); }
+.xph-flag { height: 12px; aspect-ratio: 4 / 3; border-radius: 2px; object-fit: cover; }
+.xph-tip .xph-tip-row { display: flex; align-items: center; gap: 6px; font: 600 12px system-ui, sans-serif; color: var(--qw-muted); }
+.xph-tip .xph-tip-row i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.xph-tip .xph-tip-row b { margin-left: auto; padding-left: 12px; font: 800 12px var(--qw-mono); }
 .xph-focus { fill: #fff; stroke: #ff7a1a; stroke-width: 3; filter: drop-shadow(0 0 6px rgba(255, 140, 40, .8)); pointer-events: none; }
 .xph-tip { position: absolute; z-index: 2; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; min-width: 150px; pointer-events: none;
   border-radius: 10px; border: 1px solid var(--qw-line); background: rgba(10, 12, 20, .95); box-shadow: 0 8px 24px rgba(0, 0, 0, .5); font-size: 12.5px; }
@@ -1140,6 +1168,9 @@ body.progress-view #gridSortWrap { display: none; }
   background: var(--tsq-card); border: 1px solid var(--tsq-line); border-right: none; border-radius: 14px 0 0 14px; overflow: hidden auto;
   transform: translateX(100%); visibility: hidden; transition: transform .25s cubic-bezier(.4, 0, .2, 1), visibility 0s .25s, box-shadow .25s; }
 .sqd-side.is-open { transform: none; visibility: visible; transition: transform .25s cubic-bezier(.4, 0, .2, 1), visibility 0s, box-shadow .25s; box-shadow: -8px 0 32px rgba(0, 0, 0, .35); }
+/* The card being covered by the next one: one slot under it, then closed
+   without a slide (it is hidden behind the new card by then). */
+.sqd-side.is-under { z-index: 100; transition: none; }
 .sqd-side-head { padding: 16px 16px 12px; font-size: 15px; font-weight: 700; color: var(--tsq-text); }
 .sqd-side-art { padding: 0 16px; }
 .sqd-side-art .sqd-card-art { border-radius: 12px; overflow: hidden; }
