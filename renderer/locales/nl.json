@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "De TigerSquad dacht aan je. Kort, maar oprecht.",
   "envOpen": "Openen",
   "envOpenSurprises": "Openen",
+  "chestOpen": "Kist openen",
+  "chestInside": {
+    "one": "{{n}} envelop erin",
+    "other": "{{n}} enveloppen erin"
+  },
+  "envGotChests": {
+    "one": "kist",
+    "other": "kisten"
+  },
   "envGotSurprises": {
     "one": "verrassingsenvelop",
     "other": "verrassingsenveloppen"

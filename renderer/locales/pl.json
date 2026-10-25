@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "TigerSquad o tobie pomyślała. Krótko, ale szczerze.",
   "envOpen": "Otwórz",
   "envOpenSurprises": "Otwórz je",
+  "chestOpen": "Otwórz skrzynię",
+  "chestInside": {
+    "one": "{{n}} koperta w środku",
+    "other": "{{n}} kopert w środku"
+  },
+  "envGotChests": {
+    "one": "skrzynia",
+    "other": "skrzyń"
+  },
   "envGotSurprises": {
     "one": "koperta-niespodzianka",
     "other": "kopert-niespodzianek"

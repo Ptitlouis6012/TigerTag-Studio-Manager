@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "TigerSquad о вас вспомнил. Ненадолго, но искренне.",
   "envOpen": "Открыть",
   "envOpenSurprises": "Открыть их",
+  "chestOpen": "Открыть сундук",
+  "chestInside": {
+    "one": "внутри {{n}} конверт",
+    "other": "внутри {{n}} конвертов"
+  },
+  "envGotChests": {
+    "one": "сундук",
+    "other": "сундуков"
+  },
   "envGotSurprises": {
     "one": "конверт-сюрприз",
     "other": "конвертов-сюрпризов"

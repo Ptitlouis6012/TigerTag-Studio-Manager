@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "La TigerSquad a pensé à vous. Brièvement, mais sincèrement.",
   "envOpen": "L'ouvrir",
   "envOpenSurprises": "Les ouvrir",
+  "chestOpen": "Ouvrir le coffre",
+  "chestInside": {
+    "one": "{{n}} enveloppe à l’intérieur",
+    "other": "{{n}} enveloppes à l’intérieur"
+  },
+  "envGotChests": {
+    "one": "coffre",
+    "other": "coffres"
+  },
   "envGotSurprises": {
     "one": "enveloppe surprise",
     "other": "enveloppes surprises"

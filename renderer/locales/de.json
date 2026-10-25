@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "Die TigerSquad hat an dich gedacht. Kurz, aber ehrlich.",
   "envOpen": "Öffnen",
   "envOpenSurprises": "Öffnen",
+  "chestOpen": "Truhe öffnen",
+  "chestInside": {
+    "one": "{{n}} Umschlag darin",
+    "other": "{{n}} Umschläge darin"
+  },
+  "envGotChests": {
+    "one": "Truhe",
+    "other": "Truhen"
+  },
   "envGotSurprises": {
     "one": "Überraschungsumschlag",
     "other": "Überraschungsumschläge"

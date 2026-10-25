@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "A TigerSquad pensou em si. Rapidamente, mas a sério.",
   "envOpen": "Abrir",
   "envOpenSurprises": "Abri-los",
+  "chestOpen": "Abrir o baú",
+  "chestInside": {
+    "one": "{{n}} envelope lá dentro",
+    "other": "{{n}} envelopes lá dentro"
+  },
+  "envGotChests": {
+    "one": "baú",
+    "other": "baús"
+  },
   "envGotSurprises": {
     "one": "envelope surpresa",
     "other": "envelopes surpresa"

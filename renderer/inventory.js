@@ -18,7 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
-import { applyDealsFilter, dealsViewHtml, showCoinsReveal, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, openChests, showCoinsReveal, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -5306,8 +5306,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
     return res.json();
   }
-  // `unopened` = the chips' surprise envelopes, `envelopes` = the gift envelopes.
-  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [] });
+  // `unopened` = the chips' surprise envelopes, `envelopes` = the gift envelopes, `chests` = the chests.
+  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [] });
+  // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
+  const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg),
+    openChest: async id => {
+      const r = await _tigerCoins(uid, "openChest", { id });
+      _deals.coins = _coinsOf(r);
+      after?.();
+      return r;
+    } });
   // The chips' surprise envelopes (100 a call), revealed, again while the member asks for more.
   async function _openChipEnvelopes(uid, ctx, after) {
     try {
@@ -5333,10 +5341,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     return true;
   }
-  // "Open my envelopes": the gifts first, then the chips' surprise envelopes.
+  // "Open my envelopes": the gifts first, then the chests, then the chips' surprise envelopes.
   async function _openAllEnvelopes(uid, ctx, after) {
     const gifts = _deals.coins?.envelopes || [];
     if (gifts.length && !(await _openGiftEnvelopes(uid, ctx, gifts, after))) return;
+    const chests = _deals.coins?.chests || [];
+    if (chests.length && !(await openChests(ctx, chests))) return;
     if (_deals.coins?.unopened) await _openChipEnvelopes(uid, ctx, after);
   }
   // At launch, once per account and session: gift envelopes waiting → offered.
@@ -5346,8 +5356,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _giftsOffered.add(uid);
     const r = await _tigerCoins(uid, "status").catch(() => null);
     if (!r?.envelopes?.length || uid !== state.activeAccountId) return;
-    const ctx = { t, esc, lang: state.lang, toast: msg => _flashMessage(msg) };
     const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
+    const ctx = _coinsCtx(uid, after);
     _deals.coins = _coinsOf(r);
     await _openGiftEnvelopes(uid, ctx, r.envelopes, after);
   }
@@ -5365,6 +5375,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await _renderDealsView();
     }, onExpire: () => _renderDealsView(),
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
+    openChest: id => _coinsCtx(uid, paint).openChest(id),
     // A gift code: credited once per account; the error code reaches the toast.
     onRedeemCode: async (code) => {
       const r = await _tigerCoins(uid, "redeem", { code });

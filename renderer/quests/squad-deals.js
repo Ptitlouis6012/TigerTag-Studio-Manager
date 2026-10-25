@@ -265,13 +265,14 @@ function annSide(ctx, d) {
 
 // ── TigerCoins ──────────────────────────────────────────────────────────────
 // The balance and the envelopes still to open (functions/tigerCoins.js
-// status), over the deals: one pile — the gift envelopes, then the surprise
-// envelope of each TigerTag+ Certified chip. ctx.coins = { balance, unopened
-// (chips), envelopes (gifts) } | null (not loaded / no function): no bar.
+// status), over the deals: one pile — the gift envelopes, the chests, then the
+// surprise envelope of each TigerTag+ Certified chip. ctx.coins = { balance,
+// unopened (chips), envelopes (gifts), chests } | null (not loaded / no
+// function): no bar.
 function coinsBar(ctx) {
   const { t, esc, lang } = ctx, c = ctx.coins;
   if (!c) return "";
-  const pile = (c.unopened || 0) + (c.envelopes?.length || 0);
+  const pile = (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0);
   return `
     <section class="sqd-coins">
       <span class="tcoin tcoin--big" aria-hidden="true"></span>
@@ -406,6 +407,7 @@ function openCoinsCodeModal(ctx) {
       // A shared red envelope: its share and luck rank, in the envelope reveal;
       // surprise envelopes: their rarities; plain coins: a toast.
       if (r.split) await showEnvelope(ctx, { split: r.split, result: r });
+      else if (r.chests?.length) await openChests(ctx, r.chests);
       else if (r.opened?.length) await revealSurprises(ctx, r);
       else ctx.toast?.(t("coinsRedeemed", { n: (r.coins || 0).toLocaleString(ctx.lang) }));
     } catch (er) {
@@ -423,10 +425,71 @@ function openCoinsCodeModal(ctx) {
 const revealSurprises = (ctx, r) =>
   showCoinsReveal(ctx, { opened: r.opened, total: (r.total || 0) - (r.coins || 0), unopened: 0 });
 
+const chestName = (ctx, c) => (c?.name && (c.name[ctx.lang] || c.name.en || c.name.fr)) || "";
+
+/** One chest (users/{uid}/chests): a box in its type's colour; "Open the
+ *  chest" calls `open()` (the backend draws its envelopes), the lid lifts, then
+ *  its envelopes are revealed with their rarities. `chest` = { id, name, color,
+ *  envelopes }. Resolves "next" or "done" (`more` = chests still waiting). */
+export function showChest(ctx, chest, { open, more = 0 } = {}) {
+  const { t, esc } = ctx;
+  const name = chestName(ctx, chest);
+  const el = document.createElement("div");
+  el.className = "tc-reveal tc-chestm";
+  el.innerHTML = `
+    <div class="tc-reveal-card tc-chest-card" role="dialog" aria-modal="true" aria-label="${esc(name)}" style="--cc:${esc(chest.color || "#ffb21a")}">
+      <h3>${esc(name)}</h3>
+      <p class="tc-env-msg">${esc(t("chestInside", { n: chest.envelopes || 0 }))}</p>
+      <div class="tc-chest" aria-hidden="true">
+        <span class="tc-chest-glow"></span>
+        <span class="tc-chest-body"><span class="tc-chest-lock"></span></span>
+        <span class="tc-chest-lid"></span>
+      </div>
+      <p class="tc-code-err" role="alert" hidden></p>
+      <div class="tc-reveal-actions">
+        <button type="button" class="sqd-open" data-chest-go>${esc(t("chestOpen"))}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("is-open"));
+  const card = el.querySelector(".tc-chest-card");
+  return new Promise(resolve => {
+    el.addEventListener("click", async e => {
+      const go = e.target.closest("[data-chest-go]");
+      if (!go || go.disabled) return;
+      go.disabled = true;
+      try {
+        const r = await open();
+        card.classList.add("is-opened");
+        // The lid lifts, the light spills out, then the envelopes come out.
+        await new Promise(res => setTimeout(res, 900));
+        el.classList.remove("is-open");
+        setTimeout(() => el.remove(), 200);
+        await revealSurprises(ctx, { ...r, coins: 0 });
+        resolve(more ? "next" : "done");
+      } catch (_) {
+        const er = el.querySelector(".tc-code-err");
+        er.textContent = t("squadDealsErr");
+        er.hidden = false;
+        go.disabled = false;
+      }
+    });
+  });
+}
+
+/** Opens chests one after another (the pile, a gift or a code that gave
+ *  several); `ctx.openChest(id)` asks the backend. Resolves true when all were opened. */
+export async function openChests(ctx, list) {
+  for (let i = 0; i < list.length; i++) {
+    if ((await showChest(ctx, list[i], { more: list.length - i - 1, open: () => ctx.openChest(list[i].id) })) !== "next") return i === list.length - 1;
+  }
+  return true;
+}
+
 /** One gift envelope (users/{uid}/envelopes, or a shared red envelope just
  *  redeemed): a red envelope with a gold seal; "Open" calls `open()` (the
- *  backend credits it) and the flap lifts on what it held — TigerCoins, or N
- *  surprise envelopes revealed next. `env` = { kind, message?, coins,
+ *  backend credits it) and the flap lifts on what it held — TigerCoins, N
+ *  surprise envelopes revealed next, or N chests opened next. `env` = { kind, message?, coins,
  *  surprises } with `open`, or { split, result } already opened. `more` =
  *  envelopes still waiting after this one. Resolves "next" or "done". */
 export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
@@ -459,9 +522,10 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
     let opened = null;
     const finish = how => { el.classList.remove("is-open"); setTimeout(() => el.remove(), 200); resolve(how); };
     const reveal = r => {
-      const coins = r.coins || 0, surprises = r.opened?.length || 0;
-      el.querySelector(".tc-env-amount").textContent = `+${(surprises || coins).toLocaleString(lang)}`;
-      el.querySelector(".tc-env-unit").textContent = surprises ? t("envGotSurprises", { n: surprises }) : "TigerCoins";
+      const coins = r.coins || 0, surprises = r.opened?.length || 0, chests = r.chests?.length || 0;
+      el.querySelector(".tc-env-amount").textContent = `+${(chests || surprises || coins).toLocaleString(lang)}`;
+      el.querySelector(".tc-env-unit").textContent = chests ? `${t("envGotChests", { n: chests })} ${chestName(ctx, r.chests[0])}`
+        : surprises ? t("envGotSurprises", { n: surprises }) : "TigerCoins";
       opened = r;
       if (env.split?.rank) {
         const rk = el.querySelector(".tc-env-rank");
@@ -470,7 +534,7 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
       }
       card.classList.add("is-opened");
       actions.innerHTML = `
-        ${surprises ? `<button type="button" class="sqd-open" data-env="surprises">${esc(t("envOpenSurprises"))}</button>`
+        ${chests || surprises ? `<button type="button" class="sqd-open" data-env="surprises">${esc(t("envOpenSurprises"))}</button>`
           : `${more ? `<button type="button" class="sqd-open" data-env="next">${esc(t("envNext", { n: more }))}</button>` : ""}
         <button type="button" class="tc-code-cancel" data-env="done">${esc(t("coinsCollect"))}</button>`}`;
     };
@@ -478,10 +542,11 @@ export function showEnvelope(ctx, env, { open = null, more = 0 } = {}) {
     el.addEventListener("click", async e => {
       const b = e.target.closest("[data-env]");
       if (b?.dataset.env === "surprises") {
-        // The envelope gives way to the rarity reveal of what it held.
+        // The envelope gives way to what it held: its chests, or the rarity reveal.
         el.classList.remove("is-open");
         setTimeout(() => el.remove(), 200);
-        await revealSurprises(ctx, opened);
+        if (opened.chests?.length) await openChests(ctx, opened.chests);
+        else await revealSurprises(ctx, opened);
         resolve(more ? "next" : "done");
         return;
       }

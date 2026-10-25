@@ -2277,6 +2277,15 @@
   "envDefaultMsg": "La TigerSquad ha pensato a te. Per poco, ma sul serio.",
   "envOpen": "Aprila",
   "envOpenSurprises": "Aprile",
+  "chestOpen": "Apri il forziere",
+  "chestInside": {
+    "one": "{{n}} busta dentro",
+    "other": "{{n}} buste dentro"
+  },
+  "envGotChests": {
+    "one": "forziere",
+    "other": "forzieri"
+  },
   "envGotSurprises": {
     "one": "busta sorpresa",
     "other": "buste sorpresa"
