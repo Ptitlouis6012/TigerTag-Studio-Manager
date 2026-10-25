@@ -1335,3 +1335,64 @@ body.progress-view #gridSortWrap { display: none; }
   .tc-chest-card:not(.is-opened) .tc-chest { animation: none; }
   .tc-chest-lid, .tc-chest-glow { transition: none; }
 }
+/* TigerCoins pulls (quests/coin-pull.js), gacha style: one big envelope at a
+   time; its glow climbs the rarity ladder (data-r 0 → 4) before it opens. */
+.tp { --r0: #9aa3bd; --r1: #3ddc84; --r2: #3d8bff; --r3: #a855f7; --r4: #ffb21a; }
+.tc-reveal.tp { background: rgba(3, 4, 8, .9); }
+/* The stage: a dark panel with a soft spotlight, like the other TigerCoins modals. */
+.tp-box { width: min(520px, 94vw); display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; user-select: none;
+  padding: 16px 20px 22px; border-radius: 20px; border: 1px solid color-mix(in srgb, #ffcf3d 30%, var(--tsq-line));
+  background: radial-gradient(ellipse at 50% 45%, #232a45 0%, #121624 60%, #0b0d14 100%); overflow: hidden; }
+.tp-top { align-self: stretch; display: flex; align-items: center; justify-content: space-between; min-height: 36px; }
+.tp-count { font: 800 14px var(--qw-mono, monospace); color: #ffd75e; letter-spacing: .04em; }
+.tp-stage { position: relative; width: 100%; height: 360px; display: grid; place-items: center; }
+.tp-hint { margin: 0; font-size: 12.5px; color: var(--tsq-muted); }
+.tp-card { position: relative; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer;
+  --rc: var(--r0); }
+.tp-card[data-r="1"] { --rc: var(--r1); } .tp-card[data-r="2"] { --rc: var(--r2); }
+.tp-card[data-r="3"] { --rc: var(--r3); } .tp-card[data-r="4"] { --rc: var(--r4); }
+/* The glow behind the envelope, in the rarity reached so far. */
+.tp-card::before { content: ""; position: absolute; inset: -70px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in srgb, var(--rc) 55%, transparent), transparent 62%);
+  opacity: .55; transition: opacity .25s; }
+.tp-card.is-step .tp-env { animation: tp-step .28s ease-out; }
+.tp-card.is-step::before { animation: tp-flare .28s ease-out; }
+@keyframes tp-step { 40% { transform: scale(1.06) rotate(-1.5deg); } }
+@keyframes tp-flare { 0% { opacity: 1; transform: scale(1.15); } }
+.tp-env { position: relative; display: block; width: 190px; height: 230px; perspective: 700px; }
+.tp-card.is-opened .tc-env-flap { transform: rotateX(180deg); z-index: 0; opacity: 0; }
+.tp-card.is-opened .tc-env-seal { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+.tp-card.is-opened .tc-env-note { transform: translateY(-46%); box-shadow: 0 0 0 3px var(--rc), 0 0 30px var(--rc); }
+.tp-card.is-opened::before { opacity: .9; }
+.tp-label { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); margin: 0; white-space: nowrap;
+  font: 900 22px var(--sqr-display, system-ui); text-transform: uppercase; letter-spacing: .12em; color: var(--rc);
+  text-shadow: 0 0 18px var(--rc); opacity: 0; transition: opacity .3s .25s; }
+.tp-card.is-opened .tp-label { opacity: 1; }
+/* Particles, as many as the envelope is rare. */
+.tp-spark { position: absolute; left: 50%; top: 45%; width: 8px; height: 8px; border-radius: 50%; pointer-events: none;
+  background: var(--rc); box-shadow: 0 0 10px var(--rc); transform: translate(-50%, -50%) scale(var(--s));
+  animation: tp-spark 1.2s cubic-bezier(.2, .8, .3, 1) var(--dl) forwards; }
+@keyframes tp-spark { to { transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(0); opacity: 0; } }
+/* A legendary: the stage flashes gold and rays turn behind the envelope. */
+.tp-stage.is-legend::before { content: ""; position: absolute; inset: -40px; pointer-events: none; border-radius: 50%;
+  background: repeating-conic-gradient(rgba(255, 190, 40, .28) 0 8deg, transparent 8deg 22deg);
+  mask: radial-gradient(circle, #000 20%, transparent 70%); animation: tp-rays 6s linear infinite; }
+.tp-stage.is-legend::after { content: ""; position: fixed; inset: 0; pointer-events: none; background: rgba(255, 210, 90, .55); animation: tp-flash .7s ease-out forwards; }
+@keyframes tp-rays { to { transform: rotate(360deg); } }
+@keyframes tp-flash { to { opacity: 0; } }
+/* The pile's envelope: hold it — the ring fills, the envelope trembles. */
+.tp-pile { width: 190px; height: 230px; min-height: 0; animation: tc-env-wiggle 2.6s ease-in-out infinite; }
+.tp-pile.is-holding { animation: tp-tremble .12s linear infinite; }
+@keyframes tp-tremble { 25% { transform: translate(-1px, 1px) rotate(-.6deg); } 75% { transform: translate(1px, -1px) rotate(.6deg); } }
+.tp-ring { position: absolute; inset: -26px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(#ffcf3d calc(var(--hold, 0) * 360deg), transparent 0);
+  mask: radial-gradient(circle, transparent 62%, #000 63%, #000 66%, transparent 67%); }
+/* Held buttons: the fill sweeps while the button is held. */
+.tp-hold { position: relative; overflow: hidden; }
+.tp-hold > span:not(.tp-fill) { position: relative; }
+.tp-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--hold, 0) * 100%); background: rgba(255, 255, 255, .28); pointer-events: none; }
+.tp-ten { background: linear-gradient(135deg, #a855f7, #ff8a2e); }
+.tp-sum .tc-reveal-grid { margin-bottom: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .tp-pile, .tp-pile.is-holding, .tp-card.is-step .tp-env, .tp-stage.is-legend::before { animation: none; }
+}

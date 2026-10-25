@@ -2278,6 +2278,16 @@
   "envOpen": "Abrir",
   "envOpenSurprises": "Abri-los",
   "chestOpen": "Abrir o baú",
+  "pullHold": "Mantenha premido para abrir",
+  "pullOne": "Abrir ×1",
+  "pullMany": "Abrir ×{{n}}",
+  "pullAgain": "Outra vez ×{{n}}",
+  "pullSkip": "Saltar",
+  "pullTapNext": "Toque para continuar",
+  "pullLeft": {
+    "one": "{{n}} envelope restante",
+    "other": "{{n}} envelopes restantes"
+  },
   "chestInside": {
     "one": "{{n}} envelope lá dentro",
     "other": "{{n}} envelopes lá dentro"

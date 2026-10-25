@@ -2278,6 +2278,16 @@
   "envOpen": "Abrirlo",
   "envOpenSurprises": "Abrirlos",
   "chestOpen": "Abrir el cofre",
+  "pullHold": "Mantén pulsado para abrir",
+  "pullOne": "Abrir ×1",
+  "pullMany": "Abrir ×{{n}}",
+  "pullAgain": "Otra vez ×{{n}}",
+  "pullSkip": "Saltar",
+  "pullTapNext": "Toca para continuar",
+  "pullLeft": {
+    "one": "Queda {{n}} sobre",
+    "other": "Quedan {{n}} sobres"
+  },
   "chestInside": {
     "one": "{{n}} sobre dentro",
     "other": "{{n}} sobres dentro"

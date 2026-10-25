@@ -2278,6 +2278,16 @@
   "envOpen": "Openen",
   "envOpenSurprises": "Openen",
   "chestOpen": "Kist openen",
+  "pullHold": "Ingedrukt houden om te openen",
+  "pullOne": "Openen ×1",
+  "pullMany": "Openen ×{{n}}",
+  "pullAgain": "Nog eens ×{{n}}",
+  "pullSkip": "Overslaan",
+  "pullTapNext": "Tik om door te gaan",
+  "pullLeft": {
+    "one": "Nog {{n}} envelop",
+    "other": "Nog {{n}} enveloppen"
+  },
   "chestInside": {
     "one": "{{n}} envelop erin",
     "other": "{{n}} enveloppen erin"

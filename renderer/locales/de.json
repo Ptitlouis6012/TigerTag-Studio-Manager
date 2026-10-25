@@ -2278,6 +2278,16 @@
   "envOpen": "Öffnen",
   "envOpenSurprises": "Öffnen",
   "chestOpen": "Truhe öffnen",
+  "pullHold": "Gedrückt halten zum Öffnen",
+  "pullOne": "Öffnen ×1",
+  "pullMany": "Öffnen ×{{n}}",
+  "pullAgain": "Nochmal ×{{n}}",
+  "pullSkip": "Überspringen",
+  "pullTapNext": "Tippen zum Fortfahren",
+  "pullLeft": {
+    "one": "Noch {{n}} Umschlag",
+    "other": "Noch {{n}} Umschläge"
+  },
   "chestInside": {
     "one": "{{n}} Umschlag darin",
     "other": "{{n}} Umschläge darin"

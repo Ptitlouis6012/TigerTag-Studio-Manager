@@ -18,7 +18,8 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartSeries as xpChartSeries, sampleTipHtml as xpSampleTipHtml } from './quests/xp-history.js';
-import { applyDealsFilter, dealsViewHtml, openChests, showCoinsReveal, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -5316,16 +5317,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       after?.();
       return r;
     } });
-  // The chips' surprise envelopes (100 a call), revealed, again while the member asks for more.
-  async function _openChipEnvelopes(uid, ctx, after) {
-    try {
-      for (;;) {
-        const r = await _tigerCoins(uid, "open");
-        _deals.coins = _coinsOf(r);
-        after?.();
-        if (!r.opened?.length || (await showCoinsReveal(ctx, r)) !== "more") break;
-      }
-    } catch (_) { ctx.toast(t("squadDealsErr")); }
+  // The chips' surprise envelopes, gacha style: pulls of 1 or 10, each held
+  // to open and revealed one envelope at a time (quests/coin-pull.js).
+  function _openChipEnvelopes(uid, ctx, after) {
+    return openPullStage(ctx, { left: _deals.coins?.unopened || 0, pull: async n => {
+      const r = await _tigerCoins(uid, "open", { count: n });
+      _deals.coins = _coinsOf(r);
+      after?.();
+      return r;
+    } });
   }
   // The gift envelopes one after another (campaigns, milestone bonuses —
   // functions/coinEnvelopes.js). True when the member went through all of them.

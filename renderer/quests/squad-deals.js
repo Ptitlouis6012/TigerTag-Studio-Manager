@@ -17,6 +17,8 @@
 // The link is in secret/main, which the rules give only to a member whose XP
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
+import { revealPulls } from './coin-pull.js';
+
 // A text field is a plain string or a { lang: text } map (en as fallback).
 const pick = (v, lang) => (v && typeof v === "object" ? v[lang] || v.en || Object.values(v)[0] || "" : v || "");
 const ms = v => (v?.toMillis ? v.toMillis() : typeof v === "number" ? v : v ? Date.parse(v) || null : null);
@@ -286,54 +288,6 @@ function coinsBar(ctx) {
     </section>`;
 }
 
-/** Surprise envelopes just opened, their rarities revealed one after another
- *  over the app; the total counts up. `res` = { opened: [{ rarity, coins }],
- *  total, unopened } ("open", or the surprises inside a gift / code). Resolves
- *  when the member collects (or asks for more). */
-export function showCoinsReveal(ctx, res) {
-  const { t, esc, lang } = ctx;
-  const ORDER = ["legendary", "epic", "rare", "uncommon", "common"];
-  // The rarest first, so the best surprise is not lost at the end of a long row.
-  const list = [...(res.opened || [])].sort((a, b) => ORDER.indexOf(a.rarity) - ORDER.indexOf(b.rarity) || b.coins - a.coins);
-  const shown = list.slice(0, 60), rest = list.length - shown.length;
-  const counts = ORDER.map(r => [r, list.filter(x => x.rarity === r).length]).filter(([, n]) => n);
-  const el = document.createElement("div");
-  el.className = "tc-reveal";
-  el.innerHTML = `
-    <div class="tc-reveal-card" role="dialog" aria-modal="true" aria-label="${esc(t("coinsRevealTitle"))}">
-      <h3>${esc(t("coinsRevealTitle"))}</h3>
-      <div class="tc-reveal-grid">${shown.map((x, i) => `
-        <div class="tc-sur tc-sur--${x.rarity}" style="--d:${Math.min(i, 40) * 90}ms">
-          <span class="tcoin" aria-hidden="true"></span><b>+${x.coins}</b><small>${esc(t("questsRarity_" + x.rarity))}</small>
-        </div>`).join("")}${rest > 0 ? `<div class="tc-sur tc-sur--more" style="--d:${41 * 90}ms"><b>+${rest}</b></div>` : ""}
-      </div>
-      <p class="tc-reveal-sum">${counts.map(([r, n]) => `<span class="tc-sum tc-sum--${r}">${n} × ${esc(t("questsRarity_" + r))}</span>`).join("")}</p>
-      <p class="tc-reveal-total" data-total="${res.total || 0}">+0 TigerCoins</p>
-      <div class="tc-reveal-actions">
-        ${res.unopened ? `<button type="button" class="sqd-open" data-more>${esc(t("coinsOpenMore"))} (${res.unopened})</button>` : ""}
-        <button type="button" class="sqd-open" data-collect>${esc(t("coinsCollect"))}</button>
-      </div>
-    </div>`;
-  document.body.appendChild(el);
-  requestAnimationFrame(() => el.classList.add("is-open"));
-  // Count the total up while the envelopes flip.
-  const tot = el.querySelector(".tc-reveal-total"), end = res.total || 0, dur = Math.min(4000, 600 + shown.length * 90), t0 = performance.now();
-  const step = now => {
-    const k = Math.min(1, (now - t0) / dur);
-    tot.textContent = t("coinsRevealTotal", { n: Math.round(end * (1 - Math.pow(1 - k, 3))).toLocaleString(lang) });
-    if (k < 1 && el.isConnected) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-  return new Promise(resolve => {
-    el.addEventListener("click", e => {
-      const more = e.target.closest("[data-more]"), done = e.target.closest("[data-collect]");
-      if (!more && !done) return;
-      el.remove();
-      resolve(more ? "more" : "done");
-    });
-  });
-}
-
 /** The gift-code modal: a scratch-card key in three boxes of four
  *  (XXXX-XXXX-XXXX). Typing moves to the next box, Backspace on an empty box
  *  goes back, a pasted key (dashes, spaces or not) fills the three. The backend
@@ -421,9 +375,9 @@ function openCoinsCodeModal(ctx) {
   boxes[0].focus();
 }
 
-/** The surprise envelopes inside a gift or a code, revealed like a chip's. */
-const revealSurprises = (ctx, r) =>
-  showCoinsReveal(ctx, { opened: r.opened, total: (r.total || 0) - (r.coins || 0), unopened: 0 });
+/** The surprise envelopes inside a gift, a chest or a code, revealed one by
+ *  one like a pull (coin-pull.js). */
+const revealSurprises = (ctx, r) => revealPulls(ctx, r.opened);
 
 const chestName = (ctx, c) => (c?.name && (c.name[ctx.lang] || c.name.en || c.name.fr)) || "";
 
