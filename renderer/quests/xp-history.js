@@ -125,7 +125,7 @@ export function pageHtml(ctx, s) {
   const from = rows.length ? (page - 1) * PAGE_SIZE + 1 : 0, to = Math.min(rows.length, page * PAGE_SIZE);
   return `
     <section class="qm-hero xph-hero">
-      <div class="qm-hero-txt"><span class="qw-eyebrow">TigerSquad</span>
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("xpHistoryTitle"))}</h2><p>${esc(t("xpHistorySub"))}</p></div>
       <div class="hero-scene" aria-hidden="true"></div>
     </section>

@@ -490,7 +490,7 @@ function untilMidnight() {
 // variable, so it resolves from quests.css (renderer/quests/), hence ../../.
 const RARITIES = [["legendary", 800], ["epic", 300], ["rare", 100], ["uncommon", 20], ["common", 0]];
 export function questLootHtml() { return lootHtml(); }
-// The Grimoire: two panels side by side — Loot (the physical items: devices,
+// The Maker's workshop (formerly the Grimoire): two panels side by side — Loot (the physical items: devices,
 // chips, printers) and Feats (the rewarded actions: friends, links, updates…).
 // Loot is split in three groups (legendary relics as large showcase tiles, gear,
 // chips); Feats is one list of row cards. The rarity is carried by the card

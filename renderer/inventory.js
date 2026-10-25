@@ -5039,7 +5039,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const sTier = _ownSquadTier();
     const sGoal = sTier === "bronze" ? [state.tigerTagCount || 0, 20, "silver"] : sTier === "gold" ? [state.certifiedPlusCount || 0, 50, "platinum"]
       : sTier === "platinum" ? [1, 1, null] : [0, 1, null];
-    // Hover name: just "The hero's grimoire" (the bar shows the progress).
+    // Hover name: just "The Maker's workshop" (the bar shows the progress).
     _setBar($("vtgSquadItems"), Math.min(100, sGoal[0] / sGoal[1] * 100), t("squadGrimoireSub"));
     const sWrap = $("vtgSquad");
     if (sWrap) {
@@ -5315,7 +5315,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await _renderDealsView();
     }, onExpire: () => _renderDealsView() };
     wireDeals(host, ctx);
-    const paint = () => { if (state.viewMode === "squadDeals") host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0 }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country)); };
+    const paint = () => {
+      if (state.viewMode !== "squadDeals") return;
+      host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0, openId: host._sqdOpen, loading: _deals.uid !== uid }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country));
+      _setupCloseTabHold(host);   // the side card's » tab: long press closes every side card
+      // "I used it" moves the deal to the history for good: held 1.2 s, not clicked.
+      host.querySelectorAll(".sqd-mark").forEach(b => setupHoldToConfirm(b, 1200, () => {
+        b.disabled = true;
+        ctx.onAction("used", b.dataset.deal).catch(() => { b.disabled = false; ctx.toast(t("squadDealsErr")); });
+      }, { hint: true }));
+    };
     paint();
     if (_deals.uid === uid && Date.now() - _deals.at < 60e3) return;
     try {
@@ -22784,14 +22793,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ($("fseRawPanel")?.classList.contains("open"))      closeFsRaw();
     if ($("fseExplorerPanel")?.classList.contains("open")) closeFsExplorer();
     if ($("settingsPanel")?.classList.contains("open"))   closeSettings();
+    $("invDealsView")?._sqdSetOpen?.(null);              // the Deals side card (quests/squad-deals.js)
     _closeAddPrinterFlow();
   }
   // Each `»` close tab: a quick click closes its own panel (existing handlers);
   // a long press (HOLD_MS) closes ALL side cards, with a vertical fill animation
   // in the tab. To disable this feature, comment out _setupCloseTabHold() below.
+  // A view that renders its own tab (the Deals side card) calls it again with
+  // its host after each paint; a tab already wired is skipped.
   const CLOSE_TAB_HOLD_MS = 500;
-  function _setupCloseTabHold() {
-    document.querySelectorAll(".pp-close-tab").forEach(tab => {
+  function _setupCloseTabHold(root = document) {
+    root.querySelectorAll(".pp-close-tab").forEach(tab => {
       if (tab._holdWired) return;
       tab._holdWired = true;
       const glyph = (tab.textContent || "»").trim() || "»";

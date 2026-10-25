@@ -3490,7 +3490,9 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   opacity: 0; transform: translateY(4px); transition: opacity .15s, transform .15s; pointer-events: none;
 }
 .pp-cam-full:hover > .cam-cap-bar, .pp-cam-full.cam-recording > .cam-cap-bar { opacity: 1; transform: none; pointer-events: auto; }
-.pp-cam-full.cam-snap-hide > .cam-cap-bar { opacity: 0 !important; }
+/* Hidden at once for a window capture (cross-origin stream, e.g. Elegoo CC2):
+   no fade, or the capture, taken two frames later, still shows the buttons. */
+.pp-cam-full.pp-cam-full.cam-snap-hide > .cam-cap-bar { opacity: 0; visibility: hidden; transition: none; }
 /* The camera wall is drawn at full size then scaled (--plan-z): undo it so the
    buttons keep their real on-screen size at any zoom. */
 .cam-wall--plan .cam-cap-bar { zoom: calc(1 / var(--plan-z, 1)); }

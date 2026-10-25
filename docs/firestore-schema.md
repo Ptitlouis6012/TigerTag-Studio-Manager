@@ -4,11 +4,13 @@
 
 ```
 squadRanks/
-  current/                  — TigerSquad ranks at the start of the Paris day (signed-in read,
-                              written only by the backend's communityStats on a new day)
-    day         string      — YYYY-MM-DD (Europe/Paris)
+  {YYYY-MM-DD}/             — TigerSquad ranks at the start of each of the last 7 Paris days
+                              (signed-in read, written only by the backend's communityStats)
+  current/                  — a copy of the one taken 7 days ago, set on each new day
+    day         string      — YYYY-MM-DD (Europe/Paris) it was set; baseDay: the day of its ranks
     world       map         — uid → rank; national: CC → { uid → rank }; countries: CC → rank
-                              (Studio compares its live leagues against it: the ▲ / ▼ arrows)
+                              (Studio compares its live leagues against it: the ▲ / ▼ arrows,
+                              places won or lost over 7 rolling days)
 
 squadDeals/
   {dealId}/                 — TigerSquad partner deals (Deals view, quests/squad-deals.js).

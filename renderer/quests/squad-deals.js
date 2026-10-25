@@ -54,21 +54,59 @@ function countdown(t, left) {
   return d ? t("squadDealsDHMS", { d, h: p(h), m: p(m), s: p(s) }) : `${p(h)}:${p(m)}:${p(s)}`;
 }
 
-function dealCard(ctx, d, section) {
+// The badge already shows the discount on the illustration: a title ending
+// with it ("Polo TigerTag -10 %") drops that ending ("Polo TigerTag").
+const stripDiscount = s => s.replace(/\s*[-−–]\s*\d+(?:[.,]\d+)?\s*%\s*$/, "") || s;
+
+// Everything a deal shows, computed once for its grid card and its side card.
+function dealParts(ctx, d, section) {
   const { t, esc, lang, xp = 0 } = ctx;
   const claim = d.claim, used = claim?.used === true;
   const exp = claimExpiry(d), expired = !used && !!exp && Date.now() > exp;
   const code = expired ? "" : claim?.code || "";   // an expired code disappears
   const locked = section === "live" && !claim && (d.minXp || 0) > xp;
   const unique = d.codeMode === "unique", left = Math.max(0, (d.stock || 0) - (d.claimed || 0));
-  const title = pick(d.title, lang), desc = pick(d.description, lang);
-  const to = ms(d.endAt);
   const link = d.secret?.link || "", safeLink = /^https:\/\//i.test(link) ? link : "";
   const safeImg = /^https:\/\//i.test(d.image || "") ? d.image : "";
   const tag = used ? ["is-used", "check", "squadDealsUsed"] : expired ? ["is-ended", "clock", "squadDealsExpired"]
     : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
+  const timer = code && exp && !used && section === "live"
+    ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
+  const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
+        ${d.badge ? `<span class="sqd-card-badge">${esc(pick(d.badge, lang))}</span>` : ""}${timer}`;
+  const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
+  return { claim, used, exp, code, locked, unique, left, safeLink, tag, art, partner,
+    title: d.badge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
+}
+
+// The grid card: illustration, partner, title and one state line — the
+// description and every action are in the side card it opens.
+function dealCard(ctx, d, section) {
+  const { t, esc, lang, xp = 0 } = ctx;
+  const p = dealParts(ctx, d, section);
+  const state = p.locked ? `<span class="sqd-card-state is-locked"><span class="icon icon-lock icon-12" aria-hidden="true"></span>${esc(t("squadDealsToGo", { xp: Math.max(0, (d.minXp || 0) - xp).toLocaleString(lang) }))}</span>`
+    : p.code && section !== "ended" ? `<span class="sqd-card-state is-code"><span class="icon icon-check icon-12" aria-hidden="true"></span><b>${esc(p.code)}</b></span>`
+    : "";
+  return `
+    <article class="sqd-card${p.locked ? " is-locked" : ""}${p.tag ? " " + p.tag[0] : ""}${ctx.openId === d.id ? " is-selected" : ""}" data-open="${esc(d.id)}" tabindex="0" role="button" aria-label="${esc(p.title)}">
+      <div class="sqd-card-art">${p.art}</div>
+      <div class="sqd-card-body">
+        ${p.partner}
+        <h3>${esc(p.title)}</h3>
+        ${state}
+      </div>
+    </article>`;
+}
+
+// The side card (right, like a spool's detail panel): the whole deal and its
+// actions. One per deal in the page; the open one carries `is-open` (kept
+// across repaints through ctx.openId). Closed by the app's » tab on its left
+// edge (.pp-close-tab, one for the view), the grid card again, or Esc.
+function dealSide(ctx, d, section) {
+  const { t, esc, lang, xp = 0 } = ctx;
+  const p = dealParts(ctx, d, section);
   let actions = "";
-  if (locked) actions = `
+  if (p.locked) actions = `
         <div class="sqd-lock">
           <span class="sqd-lock-head"><span class="icon icon-lock icon-13" aria-hidden="true"></span><b>${esc(t("squadDealsLocked", { xp: (d.minXp || 0).toLocaleString(lang) }))}</b></span>
           <span class="sqd-lock-bar" style="--p:${Math.min(100, Math.round(xp / Math.max(1, d.minXp || 1) * 100))}%"></span>
@@ -76,53 +114,72 @@ function dealCard(ctx, d, section) {
         </div>`;
   else if (section !== "ended") actions = `
         <div class="sqd-card-actions">
-          ${!code ? (unique && !left ? `<span class="sqd-left">${esc(t("squadDealsSoldOut"))}</span>` : `<button type="button" class="sqd-open sqd-get" data-deal="${esc(d.id)}">${esc(t("squadDealsGet"))}</button>
-            ${unique ? `<span class="sqd-left">${esc(t("squadDealsLeft", { n: left.toLocaleString(lang) }))}</span>` : ""}`) : ""}
-          ${code ? `<button type="button" class="sqd-code" data-code="${esc(code)}" aria-label="${esc(t("squadDealsCopy"))}"><b>${esc(code)}</b><span class="icon icon-copy icon-13" aria-hidden="true"></span></button>` : ""}
-          ${code && safeLink ? `<a class="sqd-open" href="${esc(safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
-          ${code && !used && section === "live" ? `<button type="button" class="sqd-mark" data-deal="${esc(d.id)}"><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(t("squadDealsMarkUsed"))}</button>` : ""}
+          ${!p.code ? (p.unique && !p.left ? `<span class="sqd-left">${esc(t("squadDealsSoldOut"))}</span>` : `<button type="button" class="sqd-open sqd-get" data-deal="${esc(d.id)}">${esc(t("squadDealsGet"))}</button>
+            ${p.unique ? `<span class="sqd-left">${esc(t("squadDealsLeft", { n: p.left.toLocaleString(lang) }))}</span>` : ""}`) : ""}
+          ${p.code ? `<button type="button" class="sqd-code" data-code="${esc(p.code)}" aria-label="${esc(t("squadDealsCopy"))}"><b>${esc(p.code)}</b><span class="icon icon-copy icon-13" aria-hidden="true"></span></button>` : ""}
+          ${p.code && p.safeLink ? `<a class="sqd-open" href="${esc(p.safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
+          ${p.code && !p.used && section === "live" ? `<button type="button" class="sqd-mark" data-deal="${esc(d.id)}"><span class="hold-progress" aria-hidden="true"></span><span class="icon icon-check icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsMarkUsed"))}</span></button>` : ""}
         </div>
-        ${code && exp && !used && section === "live" ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : ""}
-        ${!claim && d.claimDays && section === "live" && !locked ? `<small class="sqd-claimdays">${esc(t("squadDealsClaimDays", { n: d.claimDays }))}</small>` : ""}`;
+        ${!p.claim && d.claimDays && section === "live" ? `<small class="sqd-claimdays">${esc(t("squadDealsClaimDays", { n: d.claimDays }))}</small>` : ""}`;
   return `
-    <article class="sqd-card${locked ? " is-locked" : ""}${tag ? " " + tag[0] : ""}">
-      <div class="sqd-card-art">${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
-        ${d.badge ? `<span class="sqd-card-badge">${esc(pick(d.badge, lang))}</span>` : ""}</div>
-      <div class="sqd-card-body">
-        ${d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : ""}
-        <h3>${esc(title)}</h3>
-        ${desc ? `<p>${esc(desc)}</p>` : ""}
+    <aside class="sqd-side${ctx.openId === d.id ? " is-open" : ""}${p.locked ? " is-locked" : ""}" data-side="${esc(d.id)}" aria-label="${esc(p.title)}">
+      <div class="sqd-card-art">${p.art}</div>
+      <div class="sqd-side-body">
+        ${p.partner}
+        <h2>${esc(p.title)}</h2>
+        ${p.desc ? `<p>${esc(p.desc)}</p>` : ""}
         <div class="sqd-card-meta">
-          ${to && section === "live" ? `<span><span class="icon icon-clock icon-12" aria-hidden="true"></span>${esc(t("squadDealsUntil", { date: new Date(to).toLocaleDateString(lang) }))}</span>` : ""}
+          ${p.to && section === "live" ? `<span><span class="icon icon-clock icon-12" aria-hidden="true"></span>${esc(t("squadDealsUntil", { date: new Date(p.to).toLocaleDateString(lang) }))}</span>` : ""}
           ${!(d.countries || []).length ? `<span><span class="icon icon-globe icon-12" aria-hidden="true"></span>${esc(t("squadDealsWorld"))}</span>` : ""}
         </div>${actions}
       </div>
-    </article>`;
+    </aside>`;
 }
 
 /** The whole view: hero banner, then the live deals ("coming soon" when there
  *  is none), the member's Archived history and the ended deals. */
+// The last card of the live deals: a brand that wants its offer here writes to
+// the TigerSystem team (the public contact address, as on tigersystem.io).
+const PARTNER_MAIL = "tigertag@tigertag.io";
+function pitchCard(ctx) {
+  const { t, esc } = ctx;
+  const href = `mailto:${PARTNER_MAIL}?subject=${encodeURIComponent(t("squadDealsPitchSubject"))}`;
+  return `
+    <article class="sqd-card sqd-pitch">
+      <div class="sqd-card-art"><span class="icon icon-send" aria-hidden="true"></span></div>
+      <div class="sqd-card-body">
+        <span class="sqd-card-partner">${esc(t("squadDealsPitchKicker"))}</span>
+        <h3>${esc(t("squadDealsPitchTitle"))}</h3>
+        <div class="sqd-card-actions"><a class="sqd-open" href="${esc(href)}">${esc(t("squadDealsPitchCta"))}<span class="icon icon-mail icon-12" aria-hidden="true"></span></a></div>
+      </div>
+    </article>`;
+}
+
 export function dealsViewHtml(ctx, { live, history, ended }) {
   const { t, esc } = ctx;
   const group = (list, section, key) => list.length ? `
     ${key ? `<h3 class="sqd-arch-h">${esc(t(key))} <span>${list.length}</span></h3>` : ""}
-    <div class="sqd-grid${key ? " sqd-grid--arch" : ""}">${list.map(d => dealCard(ctx, d, section)).join("")}</div>` : "";
-  const body = live.length || history.length || ended.length ? `
-    ${live.length ? group(live, "live") : `<section class="sqd-soon sqd-soon--slim"><h3>${esc(t("squadDealsSoon"))}</h3><p>${esc(t("squadDealsSoonBody"))}</p></section>`}
-    ${group(history, "history", "squadDealsArchived")}
-    ${group(ended, "ended", "squadDealsEndedTitle")}` : `
-    <section class="sqd-soon">
-      <span class="sqd-soon-ic" aria-hidden="true"><span class="icon icon-percent"></span></span>
+    <div class="sqd-grid${key ? " sqd-grid--arch" : ""}">${list.map(d => dealCard(ctx, d, section)).join("")}${section === "live" ? pitchCard(ctx) : ""}</div>
+    ${list.map(d => dealSide(ctx, d, section)).join("")}` : "";
+  // No live deal: "coming soon", then the brand card on its own.
+  const soon = slim => `
+    <section class="sqd-soon${slim ? " sqd-soon--slim" : ""}">
+      ${slim ? "" : `<span class="sqd-soon-ic" aria-hidden="true"><span class="icon icon-percent"></span></span>`}
       <h3>${esc(t("squadDealsSoon"))}</h3>
       <p>${esc(t("squadDealsSoonBody"))}</p>
-    </section>`;
+    </section>
+    <div class="sqd-grid">${pitchCard(ctx)}</div>`;
+  // First load for this account: shimmering placeholder cards, as in the other views.
+  const body = ctx.loading ? `
+    <div class="sqd-grid" aria-busy="true">${Array.from({ length: 8 }, () => `<div class="sqd-card sqd-card--skel"><span class="sqr-skel sqd-skel-art"></span><span class="sqr-skel sqd-skel-line"></span><span class="sqr-skel sqd-skel-line is-short"></span></div>`).join("")}</div>`
+    : live.length || history.length || ended.length ? `
+    ${live.length ? group(live, "live") : soon(true)}
+    ${group(history, "history", "squadDealsArchived")}
+    ${group(ended, "ended", "squadDealsEndedTitle")}` : soon(false);
   return `
     <section class="sqr-hero sqd-hero">
-      <div class="sqr-hero-txt">
-        <h2><span>TIGER</span><span class="sqr-hero-orange">SQUAD</span></h2>
-        <p class="sqr-hero-sub">${esc(t("squadDeals"))}</p>
-        <p class="sqr-hero-tag"><span class="icon icon-percent icon-14" aria-hidden="true"></span>${esc(t("squadDealsSub"))}</p>
-      </div>
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
+        <h2>${esc(t("squadDeals"))}</h2><p>${esc(t("squadDealsSub"))}</p></div>
       <div class="sqd-scene" aria-hidden="true">
         <span class="sqd-coin sqd-coin--a">%</span>
         <span class="sqi-tiger">
@@ -132,8 +189,10 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
         <span class="sqd-coin sqd-coin--b">%</span>
       </div>
     </section>
-    ${body}`;
+    ${body}
+    <button type="button" class="pp-close-tab sqd-close-tab${ctx.openId && ctx.openId === findOpen(ctx, live, history, ended) ? " is-open" : ""}" aria-label="${esc(t("squadDealsClose"))}"><span class="cttab-glyph">»</span></button>`;
 }
+const findOpen = (ctx, ...lists) => lists.flat().some(d => d.id === ctx.openId) ? ctx.openId : null;
 
 /** Copy-code, "Get my code" and "I used it": one delegated listener on the
  *  view host; the two server actions go through ctx.onAction(action, dealId). */
@@ -152,12 +211,33 @@ export function wireDeals(host, ctx) {
       el.lastElementChild.textContent = c.t("squadDealsTimeLeft", { time: countdown(c.t, left) });
     }
   }, 1000);
+  // Side card: a grid card opens its deal (again → closes), × or Esc closes.
+  // The open id lives on the host (host._sqdOpen) so a repaint keeps it open.
+  const setOpen = id => {
+    host._sqdOpen = id || null;
+    for (const el of host.querySelectorAll(".sqd-side")) el.classList.toggle("is-open", el.dataset.side === id);
+    for (const el of host.querySelectorAll(".sqd-card[data-open]")) el.classList.toggle("is-selected", el.dataset.open === id);
+    host.querySelector(".sqd-close-tab")?.classList.toggle("is-open", !!id);
+  };
+  host._sqdSetOpen = setOpen;   // the app's "close every side card" (long press on a » tab)
+  document.addEventListener("keydown", e => {
+    if (!host._sqdOpen || host.classList.contains("hidden")) return;
+    if (e.key === "Escape") setOpen(null);
+  });
+  host.addEventListener("keydown", e => {
+    const card = (e.key === "Enter" || e.key === " ") && e.target.closest?.(".sqd-card[data-open]");
+    if (card) { e.preventDefault(); setOpen(host._sqdOpen === card.dataset.open ? null : card.dataset.open); }
+  });
   host.addEventListener("click", async e => {
-    const act = e.target.closest(".sqd-get, .sqd-mark");
+    if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
+    const card = e.target.closest(".sqd-card[data-open]");
+    if (card) { setOpen(host._sqdOpen === card.dataset.open ? null : card.dataset.open); return; }
+    // "I used it" is a hold (the host wires it after each paint), not a click.
+    const act = e.target.closest(".sqd-get");
     if (act) {
       if (act.disabled) return;
       act.disabled = true;
-      try { await ctx.onAction(act.classList.contains("sqd-get") ? "claim" : "used", act.dataset.deal); }
+      try { await ctx.onAction("claim", act.dataset.deal); }
       catch (_) { act.disabled = false; ctx.toast?.(ctx.t("squadDealsErr")); }
       return;
     }

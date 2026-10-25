@@ -53,21 +53,20 @@ function ranks(ctx, members) {
     natRank: me && cc ? nat.indexOf(me) + 1 : 0 };
 }
 
-// Rank movement since the start of the day: the server writes the leagues'
-// ranks at the first minute of each Paris day (squadRanks/current, see the
-// backend's communityStats), the host passes it as ctx.rankBase, and each row
-// shows the difference with its live rank: ▲ / ▼ with the places, a grey dash
-// when it holds the same place. Not in the morning's ranks (new today, or no
-// baseline at all) → null, nothing shown.
+// Rank movement over 7 rolling days: the server files the leagues' ranks at
+// the first minute of each Paris day and keeps the one taken 7 days ago in
+// squadRanks/current (see the backend's communityStats); the host passes it as
+// ctx.rankBase, and a row that moved shows the difference with its live rank:
+// ▲ / ▼ with the places, the meaning in a hover bubble. Same place, or not in
+// those ranks (joined since, or no baseline at all) → nothing shown.
 function rankMoves(base, ids) {
   const now = {};
   ids.forEach((id, i) => { now[id] = i + 1; });
   return id => (base && base[id] && now[id] ? base[id] - now[id] : null);
 }
 const ARROW = up => `<svg viewBox="0 0 10 8" aria-hidden="true"><path d="${up ? "M5 0 10 8H0z" : "M5 8 0 0h10z"}"/></svg>`;
-const moveHtml = d => d == null ? ""
-  : d === 0 ? `<small class="sqr-move is-same" aria-hidden="true"><i></i></small>`
-  : `<small class="sqr-move ${d > 0 ? "is-up" : "is-down"}">${ARROW(d > 0)}${Math.abs(d)}</small>`;
+const moveHtml = (t, d) => !d ? ""
+  : `<small class="sqr-move ${d > 0 ? "is-up" : "is-down"}" data-tip="${t(d > 0 ? "squadMoveUp" : "squadMoveDown", { n: Math.abs(d) })}" tabindex="0">${ARROW(d > 0)}${Math.abs(d)}</small>`;
 
 // A country shown like a member: a round "avatar" with its flag inside
 // (assets/svg/flags, flag-icons 1x1), instead of an emoji.
@@ -93,11 +92,8 @@ export function squadItemsHeroHtml(ctx, owned = {}, nextCard = "") {
       aria-label="${esc(t(`xpAch_${x.id}`))}${owned[x.id] ? "" : " — " + esc(t("questsLocked2"))}">`;
   return `
     <section class="sqr-hero sqi-hero">
-      <div class="sqr-hero-txt">
-        <h2><span>TIGER</span><span class="sqr-hero-orange">SQUAD</span></h2>
-        <p class="sqr-hero-sub">${esc(t("squadGrimoireSub"))}</p>
-        <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("squadLegendaryCount", { n, total: LEGENDARY.length }))}</p>
-      </div>
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
+        <h2>${esc(t("squadGrimoireSub"))}</h2><p>${esc(t("squadLegendaryCount", { n, total: LEGENDARY.length }))}</p></div>
       <div class="sqi-scene">
         ${LEGENDARY.filter(x => x.side === "l").map(item).join("")}
         <span class="sqi-tiger" aria-hidden="true">
@@ -160,11 +156,8 @@ export function squadHeroHtml(ctx, members) {
       </div>`;
   return `
     <section class="sqr-hero">
-      <div class="sqr-hero-txt">
-        <h2><span>TIGER</span><span class="sqr-hero-orange">SQUAD</span></h2>
-        <p class="sqr-hero-sub">${esc(t("squadHeroSub"))}</p>
-        <p class="sqr-hero-tag"><span class="icon icon-star-fill icon-14" aria-hidden="true"></span>${esc(t("squadHeroTagline"))}</p>
-      </div>
+      <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
+        <h2>${esc(t("squadHeroSub"))}</h2><p>${esc(t("squadHeroTagline"))}</p></div>
       <div class="hero-scene" aria-hidden="true"></div>
       ${members.length ? card : ""}
     </section>`;
@@ -256,7 +249,7 @@ function leaguesHtml(ctx, members, loading) {
       <span class="sqr-av">${ctx.avatar(m)}</span>
       <span class="sqr-name"><b>${esc(m.name)}${withFlag && m.country ? ` <span class="sqr-mini">${flagAv(m.country, 14)}<small>${rankNo(r.world.filter(x => x.country === m.country).indexOf(m) + 1)}</small></span>` : ""}</b>
         <small class="sq-${m.tier}">${esc(ctx.tierLabel(m.tier))}</small></span>
-      <span class="sqr-xp">${esc(fmt(m.xp))} XP${moveHtml(mv(m.uid))}</span></li>`;
+      <span class="sqr-xp">${esc(fmt(m.xp))} XP${moveHtml(t, mv(m.uid))}</span></li>`;
   };
   // A country's row in its flag's colours (FLAG_COLORS, read from the bundled flags).
   const flagVars = cc => {
@@ -268,7 +261,7 @@ function leaguesHtml(ctx, members, loading) {
     <li class="sqr-row${c.cc === r.cc ? " is-me" : ""}${FLAG_COLORS[c.cc] ? " has-flag" : ""}"${flagVars(c.cc)}>${rankCell(i)}
       <span class="sqr-av" aria-hidden="true">${flagAv(c.cc, 34, i + 1)}</span>
       <span class="sqr-name"><b>${esc(ctx.cname(c.cc))}</b><small>${esc(t("squadMembers", { n: c.n }))}</small></span>
-      <span class="sqr-xp">${esc(fmt(c.xp))} XP${moveHtml(mvC(c.cc))}</span></li>`;
+      <span class="sqr-xp">${esc(fmt(c.xp))} XP${moveHtml(t, mvC(c.cc))}</span></li>`;
   const globe = `<span class="icon icon-globe icon-24"></span>`;
   return `
     <div class="sqr-boards">

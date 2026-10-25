@@ -369,11 +369,11 @@ body.progress-view #gridSortWrap { display: none; }
   /* Reserve the tigers and the trophy only: the card may cover the printer. */
   --hero-scene-w: 312px;
   padding-bottom: calc(var(--hero-desk-hc) + 6px); }
+/* Tiger Squad banners use the Tiger Quests title block (.qm-hero-txt: eyebrow
+   pill, big title, spaced subtitle); they sit outside .qw, so they carry the
+   variables that block reads. */
+.sqr-hero { --qw-display: var(--sqr-display); --qw-bg: #0b0d14; --qw-tiger: #ff7a1a; }
 .sqr-hero h2 { margin: 0; font: 800 52px/0.95 var(--sqr-display); letter-spacing: .01em; color: #fff; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
-.sqr-hero-orange { color: var(--tsq-orange); }
-.sqr-hero-sub { margin: 6px 0 0; font: 700 14px var(--sqr-display); letter-spacing: .42em; text-transform: uppercase; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
-.sqr-hero-tag { display: flex; align-items: center; gap: 8px; margin: 6px 0 0; font-size: 13px; font-weight: 600; color: #e9ecf7; text-shadow: 0 1px 3px #000, 0 0 12px #000; }
-.sqr-hero-tag .icon { background: var(--sqr-gold); }
 .sqr-join { height: 34px; padding: 0 16px; border: none; border-radius: 9px; cursor: pointer; font: 800 13px inherit; color: #17120e; background: linear-gradient(180deg, #ff8a2e, #ff6f12); }
 
 .squad-board--inline .sqb-tabs { background: #121624; }
@@ -520,8 +520,15 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-move { display: inline-flex; align-items: center; gap: 3px; font: 800 11px var(--sqr-mono); }
 .sqr-move svg { width: 9px; height: 7px; fill: currentColor; }
 .sqr-move.is-up { color: #34d399; }
-.sqr-move.is-down { color: #f87171; } .sqr-move.is-same { color: var(--tsq-muted, #8c95a8); }
-.sqr-move.is-same i { display: block; width: 9px; height: 2px; border-radius: 1px; background: currentColor; opacity: .7; margin: 3px 0; } .sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
+.sqr-move.is-down { color: #f87171; }
+/* "Up 2 places in 7 days": instant bubble left of the arrow (no title= tooltip). */
+.sqr-move { position: relative; cursor: default; outline: none; }
+.sqr-move::after { content: attr(data-tip); position: absolute; right: calc(100% + 8px); top: 50%; transform: translate(3px, -50%);
+  padding: 5px 9px; border-radius: 7px; background: #0b0e17; border: 1px solid var(--tsq-line); color: var(--tsq-text);
+  font: 600 11px var(--qw-font, system-ui); white-space: nowrap; text-shadow: none; box-shadow: 0 6px 18px rgba(0, 0, 0, .35);
+  opacity: 0; pointer-events: none; z-index: 5; transition: opacity .12s ease, transform .12s ease; }
+.sqr-move:hover::after, .sqr-move:focus-visible::after { opacity: 1; transform: translate(0, -50%); }
+.sqr-mini small { margin-left: 2px; font-size: 11px; color: var(--tsq-muted); }
 .sqr-xp { font: 800 14px var(--sqr-mono); color: var(--tsq-text); white-space: nowrap; }
 .sqr-gap { text-align: center; color: var(--tsq-muted); line-height: .6; }
 /* The account's own row when it ranks below the cut: a dashed top edge marks the skipped rows. */
@@ -751,6 +758,8 @@ body.progress-view #gridSortWrap { display: none; }
    coins, logbook and hourglass on the desk (one layer, waist cut on the desk line). */
 .xph-hero { --hero-scene: url("../../assets/img/quests/xp-history-scene.webp");
   --hero-front: none; --hero-sink: 5px; --hero-scene-pos: right; --hero-scene-w: 440px; }
+/* The Tiger Squad banners' top padding, so its title sits exactly where it does on the leagues / Grimoire / Deals. */
+.qm-hero.xph-hero { padding-top: 8px; }
 .xph-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .xph-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--qw-line);
   background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); min-width: 0; }
@@ -989,6 +998,9 @@ body.progress-view #gridSortWrap { display: none; }
    Same hero as the Grimoire (wall, desk, the tiger behind it) with two glowing
    "%" coins on the desk; then the partner offers as cards, or "coming soon". */
 .sqd-view { display: flex; flex-direction: column; gap: 14px; }
+/* The view scrolls: its blocks keep their height (the banner was squeezed to
+   ~40 px once the deal cards filled the column). */
+.sqd-view > * { flex-shrink: 0; }
 .sqd-hero .sqd-scene { position: relative; flex: 1 1 auto; align-self: stretch; display: flex; align-items: flex-end; justify-content: center;
   gap: 18px; margin-bottom: calc(-6px - var(--hero-sink, 4px)); min-width: 0; padding-right: 24px; }
 .sqd-hero > .sqd-scene.sqd-scene { z-index: auto; }
@@ -1009,31 +1021,35 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-soon h3 { margin: 0; font: 800 26px var(--sqr-display); letter-spacing: .04em; text-transform: uppercase; color: var(--tsq-text); }
 .sqd-soon p { margin: 0; max-width: 460px; color: var(--tsq-muted); font-size: 14px; line-height: 1.5; }
 
-.sqd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+/* Offer cards, one format for all (like the filament cards): a fixed width
+   range, a square illustration showing the product whole on white, every row
+   as tall as the tallest card, one-line title, three-line description. */
+.sqd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 185px)); grid-auto-rows: 1fr; gap: 10px; }
 .sqd-card { display: flex; flex-direction: column; border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden; background: var(--tsq-card);
   transition: border-color .2s, transform .2s; }
 .sqd-card:hover { border-color: color-mix(in srgb, var(--tsq-orange) 60%, var(--tsq-line)); transform: translateY(-2px); }
-.sqd-card-art { position: relative; aspect-ratio: 16 / 7; display: grid; place-items: center;
+.sqd-card-art { position: relative; aspect-ratio: 1; flex-shrink: 0; display: grid; place-items: center;
   background: linear-gradient(135deg, color-mix(in srgb, var(--tsq-orange) 22%, var(--tsq-bg2)), var(--tsq-bg2)); }
-.sqd-card-art img { width: 100%; height: 100%; object-fit: cover; }
+.sqd-card-art img { width: 100%; height: 100%; object-fit: contain; background: #fff; }
 .sqd-card-art > .icon { width: 44px; height: 44px; background: var(--tsq-orange); }
-.sqd-card-badge { position: absolute; top: 10px; right: 10px; padding: 4px 10px; border-radius: 99px; font: 800 13px var(--qw-mono, monospace);
+.sqd-card-badge { position: absolute; top: 7px; right: 7px; padding: 5px 11px; border-radius: 99px; font: 800 17px/1 var(--qw-mono, monospace);
   color: #fff; background: var(--tsq-orange); box-shadow: 0 2px 10px rgba(0, 0, 0, .35); }
-.sqd-card-body { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 16px; flex: 1; }
+.sqd-card-body { display: flex; flex-direction: column; gap: 4px; padding: 9px 10px 10px; flex: 1; }
 .sqd-card-partner { font: 700 11px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-orange); }
-.sqd-card-body h3 { margin: 0; font-size: 17px; color: var(--tsq-text); }
-.sqd-card-body p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--tsq-muted); white-space: pre-line; }
+.sqd-card-body h3 { margin: 0; font-size: 14px; line-height: 1.3; color: var(--tsq-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqd-card-body p { margin: 0; font-size: 11.5px; line-height: 1.4; color: var(--tsq-muted); white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(3 * 1.4em); }
 .sqd-card-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--tsq-muted); }
 .sqd-card-meta > span { display: inline-flex; align-items: center; gap: 5px; }
 .sqd-card-meta .icon { background: var(--tsq-muted); }
-.sqd-card-actions { margin-top: auto; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
-.sqd-code { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 9px; cursor: pointer;
+.sqd-card-actions { margin-top: auto; padding-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+.sqd-code { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 9px; cursor: pointer;
   border: 1px dashed color-mix(in srgb, var(--tsq-orange) 70%, transparent); background: color-mix(in srgb, var(--tsq-orange) 10%, transparent); color: var(--tsq-text); }
-.sqd-code b { font: 800 14px var(--qw-mono, monospace); letter-spacing: .08em; }
+.sqd-code b { font: 800 11px var(--qw-mono, monospace); letter-spacing: .02em; white-space: nowrap; }
 .sqd-code .icon { background: var(--tsq-orange); }
 .sqd-code.is-copied { border-style: solid; border-color: var(--qw-ok, #3ad07a); }
 .sqd-code.is-copied .icon { background: var(--qw-ok, #3ad07a); }
-.sqd-open { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 9px; font-weight: 700; font-size: 13px;
+.sqd-open { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 9px; font-weight: 700; font-size: 12.5px;
   color: #fff; background: var(--tsq-orange); text-decoration: none; }
 .sqd-open .icon { background: #fff; }
 /* A deal above the member's XP: no code, no link — the XP still to earn. */
@@ -1051,6 +1067,9 @@ body.progress-view #gridSortWrap { display: none; }
   border: 1px solid var(--tsq-line); background: transparent; color: var(--tsq-muted); }
 .sqd-mark:hover { color: var(--tsq-text); border-color: var(--qw-ok, #3ad07a); }
 .sqd-mark .icon { background: currentColor; }
+.sqd-mark { position: relative; overflow: hidden; user-select: none; }
+.sqd-mark > :not(.hold-progress) { position: relative; z-index: 1; }
+.sqd-mark .hold-progress { background: var(--qw-ok, #3ad07a); opacity: .3; }
 .sqd-get:disabled, .sqd-mark:disabled { opacity: .5; cursor: progress; }
 .sqd-arch-h { margin: 8px 0 0; font: 700 13px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-muted); }
 .sqd-arch-h span { margin-left: 6px; padding: 1px 8px; border-radius: 99px; background: rgba(255, 255, 255, .06); }
@@ -1068,7 +1087,41 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-soon--slim { padding: 22px 24px; }
 .sqd-soon--slim h3 { font-size: 18px; }
 /* Claimed code countdown (claimDays) and the "valid N days once you get it" hint. */
-.sqd-timer { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-top: 2px; padding: 4px 10px; white-space: nowrap; border-radius: 99px;
-  font: 700 12px var(--qw-mono, monospace); color: var(--tsq-orange); background: color-mix(in srgb, var(--tsq-orange) 12%, transparent); font-variant-numeric: tabular-nums; }
+/* The countdown sits on the illustration, bottom left (dark pill: readable on the white product shot). */
+.sqd-timer { position: absolute; left: 7px; bottom: 7px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; white-space: nowrap; border-radius: 99px;
+  font: 700 11px var(--qw-mono, monospace); color: var(--tsq-orange); background: rgba(12, 14, 22, .86); box-shadow: 0 2px 8px rgba(0, 0, 0, .3); font-variant-numeric: tabular-nums; }
 .sqd-timer .icon { background: currentColor; }
 .sqd-claimdays { font-size: 11.5px; color: var(--tsq-muted); }
+/* Grid card = a button opening the side card; the open deal's card stays lit. */
+.sqd-card[data-open] { cursor: pointer; outline: none; }
+.sqd-card[data-open]:focus-visible, .sqd-card.is-selected { border-color: var(--tsq-orange); box-shadow: 0 0 0 1px var(--tsq-orange); }
+.sqd-card-state { display: inline-flex; align-items: center; gap: 5px; margin-top: auto; padding-top: 4px; font-size: 11.5px; color: var(--tsq-muted); min-width: 0; }
+.sqd-card-state .icon { flex-shrink: 0; background: currentColor; }
+.sqd-card-state b { font: 800 11px var(--qw-mono, monospace); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sqd-card-state.is-code { color: var(--qw-ok, #3ad07a); }
+.sqd-card-state.is-locked { color: var(--tsq-orange); }
+.sqd-card--skel { gap: 8px; padding-bottom: 12px; }
+.sqd-card--skel .sqr-skel { display: block; border-radius: 0; }
+.sqd-skel-art { aspect-ratio: 1; }
+.sqd-skel-line.sqd-skel-line { height: 12px; margin: 0 10px; border-radius: 6px; }
+.sqd-skel-line.is-short { width: 55%; }
+/* Side card — slides in from the right like a spool's detail panel. */
+.sqd-side { position: fixed; top: 8px; right: 0; bottom: 8px; z-index: 101; width: 340px; max-width: 95vw; display: flex; flex-direction: column;
+  background: var(--tsq-card); border: 1px solid var(--tsq-line); border-right: none; border-radius: 14px 0 0 14px; overflow: hidden auto;
+  transform: translateX(100%); visibility: hidden; transition: transform .25s cubic-bezier(.4, 0, .2, 1), visibility 0s .25s, box-shadow .25s; }
+.sqd-side.is-open { transform: none; visibility: visible; transition: transform .25s cubic-bezier(.4, 0, .2, 1), visibility 0s, box-shadow .25s; box-shadow: -8px 0 32px rgba(0, 0, 0, .35); }
+.sqd-side > .sqd-card-art { border-bottom: 1px solid var(--tsq-line); }
+.sqd-side .sqd-card-badge { top: 12px; right: 12px; font-size: 20px; padding: 6px 13px; }
+.sqd-side .sqd-timer { left: 12px; bottom: 12px; font-size: 12px; padding: 5px 10px; }
+.sqd-side.is-locked > .sqd-card-art { filter: grayscale(.7) brightness(.7); }
+/* The app's » close tab (.pp-close-tab), riding the side card's left edge. */
+.sqd-close-tab.sqd-close-tab { right: -36px; opacity: 0; pointer-events: none;
+  transition: right .25s cubic-bezier(.4, 0, .2, 1), opacity .2s, background .15s, width .15s, height .2s cubic-bezier(.34, 1.45, .6, 1); }
+.sqd-close-tab.sqd-close-tab.is-open { right: min(340px, 95vw); opacity: 1; pointer-events: auto; }
+.sqd-side-body { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px 18px; }
+.sqd-side-body h2 { margin: 0; font-size: 19px; text-transform: none; letter-spacing: 0; line-height: 1.25; color: var(--tsq-text); }
+.sqd-side-body p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--tsq-muted); white-space: pre-line; }
+.sqd-side-body .sqd-card-actions { margin-top: 6px; }
+/* "You are a brand?" — the last card: contact the team to join the deals. */
+.sqd-pitch { border-style: dashed; border-color: color-mix(in srgb, var(--tsq-orange) 45%, var(--tsq-line)); }
+.sqd-pitch .sqd-card-art > .icon { width: 46px; height: 46px; }
