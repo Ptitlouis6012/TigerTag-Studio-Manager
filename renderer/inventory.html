@@ -2309,56 +2309,86 @@
   <div class="modal-card idm-card" role="dialog" aria-modal="true" aria-labelledby="idmTitle">
     <div class="idm-head"><h3 id="idmTitle" data-i18n="eacIdentTitle">Edit my profile</h3>
       <button class="modal-close" id="identityClose" aria-label="Close">✕</button></div>
-    <div class="idm-avatar-row">
-      <div class="eac-avatar idm-avatar" id="idmAvatar"></div>
-          <div class="idm-photo-btns">
-            <button class="ghost sm idm-btn" id="avatarMenuChange">
-              <span class="icon icon-edit icon-13"></span>
-              <span data-i18n="avatarChangeOpt">Change avatar</span>
-            </button>
-            <button class="ghost sm idm-btn idm-btn--danger idm-btn--icon" id="avatarMenuRemove" data-i18n-aria="avatarRemoveOpt" aria-label="Remove avatar" hidden>
-              <span class="hold-progress"></span>
-              <span class="icon icon-trash icon-14"></span>
-            </button>
+    <div class="idm-body">
+      <section class="idm-sec">
+        <h4 class="idm-sec-title" data-i18n="idmPhotoTitle">Profile photo</h4>
+        <div class="idm-photo">
+          <div class="eac-avatar idm-avatar" id="idmAvatar"></div>
+          <div class="idm-photo-side">
+            <b class="idm-name" id="idmName"></b>
+            <div class="idm-photo-btns">
+              <button class="ghost sm idm-btn idm-btn--change" id="avatarMenuChange">
+                <span class="icon icon-image icon-14"></span>
+                <span data-i18n="avatarChangeOpt">Change avatar</span>
+              </button>
+              <button class="ghost sm idm-btn idm-btn--danger idm-btn--icon" id="avatarMenuRemove" data-i18n-aria="avatarRemoveOpt" aria-label="Remove avatar" hidden>
+                <span class="hold-progress"></span>
+                <span class="icon icon-trash icon-14"></span>
+              </button>
+            </div>
           </div>
+        </div>
+        <div id="eacAvatarResult" class="eac-avatar-result"></div>
+      </section>
 
-    </div>
-    <div id="eacAvatarResult" class="eac-avatar-result"></div>
-
-    <div class="idm-field">
-        <div class="eac-field-label" data-i18n="displayNameLabel">Display name</div>
-        <div class="eac-name-row">
-          <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="40" placeholder="—" autocomplete="off" />
-          <button class="ghost sm eac-name-save" id="btnSaveDisplayName">
-            <span class="icon icon-check icon-13"></span>
+      <section class="idm-sec">
+        <h4 class="idm-sec-title"><label for="eacDisplayNameInput" data-i18n="displayNameLabel">Display name</label></h4>
+        <div class="eac-name-row idm-name-group">
+          <input class="eac-name-input" id="eacDisplayNameInput" type="text" maxlength="40" placeholder="—" autocomplete="off" readonly />
+          <button class="eac-name-save" id="btnSaveDisplayName" data-i18n-aria="idmNameEdit" aria-label="Edit the display name">
+            <span class="icon icon-edit icon-14" id="idmNameBtnIcon"></span>
           </button>
         </div>
         <div id="eacNameResult" class="eac-inline-result"></div>
+      </section>
+
+      <section class="idm-sec">
+        <div class="idm-sec-row">
+          <h4 class="idm-sec-title"><span data-i18n="eacThemeColor">Theme colour</span>
+            <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacThemeColorTip" data-tip="Colours your avatar, your header and your banners — and what friends see when they visit." data-i18n-aria="eacThemeColor"><span class="icon icon-info icon-13"></span></span></h4>
+          <span class="idm-color-name"><i id="idmColorDot"></i><span id="idmColorName"></span></span>
+        </div>
+        <div class="eac-swatches idm-swatches" id="eacSwatches">
+          <button class="eac-swatch" data-color="orange" style="--sw:linear-gradient(135deg,#f97316,#fb923c)" data-i18n-aria="themeColor_orange" aria-label="Orange"></button>
+          <button class="eac-swatch" data-color="amber" style="--sw:linear-gradient(135deg,#d97706,#f59e0b)" data-i18n-aria="themeColor_amber" aria-label="Amber"></button>
+          <button class="eac-swatch" data-color="yellow" style="--sw:linear-gradient(135deg,#ca8a04,#eab308)" data-i18n-aria="themeColor_yellow" aria-label="Yellow"></button>
+          <button class="eac-swatch" data-color="lime" style="--sw:linear-gradient(135deg,#65a30d,#84cc16)" data-i18n-aria="themeColor_lime" aria-label="Lime"></button>
+          <button class="eac-swatch" data-color="green" style="--sw:linear-gradient(135deg,#16a34a,#22c55e)" data-i18n-aria="themeColor_green" aria-label="Green"></button>
+          <button class="eac-swatch" data-color="teal" style="--sw:linear-gradient(135deg,#0d9488,#14b8a6)" data-i18n-aria="themeColor_teal" aria-label="Teal"></button>
+          <button class="eac-swatch" data-color="sky" style="--sw:linear-gradient(135deg,#0284c7,#0ea5e9)" data-i18n-aria="themeColor_sky" aria-label="Sky"></button>
+          <button class="eac-swatch" data-color="blue" style="--sw:linear-gradient(135deg,#2563eb,#3b82f6)" data-i18n-aria="themeColor_blue" aria-label="Blue"></button>
+          <button class="eac-swatch" data-color="violet" style="--sw:linear-gradient(135deg,#7c3aed,#8b5cf6)" data-i18n-aria="themeColor_violet" aria-label="Violet"></button>
+          <button class="eac-swatch" data-color="fuchsia" style="--sw:linear-gradient(135deg,#c026d3,#d946ef)" data-i18n-aria="themeColor_fuchsia" aria-label="Fuchsia"></button>
+          <button class="eac-swatch" data-color="rose" style="--sw:linear-gradient(135deg,#e11d48,#f43f5e)" data-i18n-aria="themeColor_rose" aria-label="Rose"></button>
+          <button class="eac-swatch" data-color="red" style="--sw:linear-gradient(135deg,#dc2626,#ef4444)" data-i18n-aria="themeColor_red" aria-label="Red"></button>
+          <button class="eac-swatch" data-color="slate" style="--sw:linear-gradient(135deg,#475569,#64748b)" data-i18n-aria="themeColor_slate" aria-label="Slate"></button>
+          <label class="eac-swatch eac-swatch-custom" id="eacSwatchCustom" data-i18n-aria="themeColor_custom" aria-label="Custom">
+            <input type="color" id="eacCustomColor" tabindex="-1" />
+            <span class="icon icon-palette icon-16"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="idm-sec idm-preview">
+        <h4 class="idm-eyebrow" data-i18n="idmPreview">Live preview</h4>
+        <div class="idm-mini" aria-hidden="true">
+          <div class="idm-mini-head">
+            <span class="eac-avatar idm-mini-av" id="idmPrevAvatar"></span>
+            <b id="idmPrevName"></b>
+            <span class="idm-mini-chip">★ XP</span>
+          </div>
+          <div class="idm-mini-banner">
+            <span class="idm-mini-title"><span>TIGER</span> <span class="idm-mini-orange">SQUAD</span></span>
+            <span class="idm-mini-tiger">
+              <img class="idm-mini-tiger-back" src="../assets/img/tigersquad/legendary/tiger.webp" alt="">
+              <img class="idm-mini-tiger-front" src="../assets/img/tigersquad/legendary/tiger-front.webp" alt="">
+            </span>
+            <span class="idm-mini-desk"></span>
+          </div>
+        </div>
+      </section>
     </div>
-    <div class="idm-field">
-      <div class="eac-field-label"><span data-i18n="eacThemeColor">Theme colour</span>
-        <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacThemeColorTip" data-tip="Colours your avatar, your header and your banners — and what friends see when they visit." data-i18n-aria="eacThemeColor"><span class="icon icon-info icon-13"></span></span></div>
-      <div class="eac-swatches" id="eacSwatches">
-        <button class="eac-swatch" data-color="orange"  style="background:linear-gradient(135deg,#f97316,#fb923c)"  title="Orange"></button>
-        <button class="eac-swatch" data-color="amber"   style="background:linear-gradient(135deg,#d97706,#f59e0b)"  title="Amber"></button>
-        <button class="eac-swatch" data-color="yellow"  style="background:linear-gradient(135deg,#ca8a04,#eab308)"  title="Yellow"></button>
-        <button class="eac-swatch" data-color="lime"    style="background:linear-gradient(135deg,#65a30d,#84cc16)"  title="Lime"></button>
-        <button class="eac-swatch" data-color="green"   style="background:linear-gradient(135deg,#16a34a,#22c55e)"  title="Green"></button>
-        <button class="eac-swatch" data-color="teal"    style="background:linear-gradient(135deg,#0d9488,#14b8a6)"  title="Teal"></button>
-        <button class="eac-swatch" data-color="sky"     style="background:linear-gradient(135deg,#0284c7,#0ea5e9)"  title="Sky"></button>
-        <button class="eac-swatch" data-color="blue"    style="background:linear-gradient(135deg,#2563eb,#3b82f6)"  title="Blue"></button>
-        <button class="eac-swatch" data-color="violet"  style="background:linear-gradient(135deg,#7c3aed,#8b5cf6)"  title="Violet"></button>
-        <button class="eac-swatch" data-color="fuchsia" style="background:linear-gradient(135deg,#c026d3,#d946ef)"  title="Fuchsia"></button>
-        <button class="eac-swatch" data-color="rose"    style="background:linear-gradient(135deg,#e11d48,#f43f5e)"  title="Rose"></button>
-        <button class="eac-swatch" data-color="red"     style="background:linear-gradient(135deg,#dc2626,#ef4444)"  title="Red"></button>
-        <button class="eac-swatch" data-color="slate"   style="background:linear-gradient(135deg,#475569,#64748b)"  title="Slate"></button>
-        <label class="eac-swatch eac-swatch-custom" id="eacSwatchCustom" title="Custom color">
-          <input type="color" id="eacCustomColor" tabindex="-1" />
-          <span class="icon icon-palette icon-13"></span>
-        </label>
-      </div>
-    </div>
-    <div class="idm-foot"><button class="primary sm" id="identityDone" data-i18n="idmDone">Done</button></div>
+    <div class="idm-foot"><button class="primary idm-done" id="identityDone" data-i18n="idmDone">Done</button></div>
   </div>
 </div>
 <div class="modal-overlay" id="avatarCropOverlay">

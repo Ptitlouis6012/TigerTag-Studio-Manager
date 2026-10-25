@@ -22,9 +22,13 @@ squadDeals/
     partner, title, description, badge  string — badge e.g. "-15%"
     image       string      — https only
     minXp       number      — XP needed to unlock the code and the link (0 = every member)
-    secret/main             — { code, link }: read only by a member whose tigerSquad.xp
+    claimDays   number      — days a claimed code stays usable (0 = no limit); the app counts down
+    secret/main             — { link }: read only by a member whose tigerSquad.xp
                               reaches minXp (rules); below it the deal shows locked
-    claims/{uid}            — { code, at, used, usedAt }: the member's own acceptance, written
+    private/main            — { code }: the shared code, server-only (given by squadDeal)
+    claims/{uid}            — { code, at, expiresAt?, used, usedAt }: the member's own acceptance
+                              (expiresAt = at + claimDays: past it the code is hidden and the
+                              deal shows "Expired" in Archived), written
                               by the backend squadDeal function ("Get my code" / "I used it")
     codes/{autoId}          — { code, uid, at }: single-use pool, server-only
     startAt, endAt timestamp? — the window; the app hides a deal outside it

@@ -45,40 +45,37 @@ const signed = (ctx, d) => `${d > 0 ? "+" : "−"}${ctx.fmt(Math.abs(d))}`;
 export function breakdownHtml(ctx, log, days = 30) {
   const { t, esc } = ctx;
   const since = Date.now() - days * DAY;
+  // Gains only: the losses (taken-back XP) are not shown in the ring or legend.
   const sums = new Map();
-  let lost = 0;
   for (const h of log) {
-    if (msOf(h) < since || !h.delta) continue;
-    if (h.delta < 0) { lost += h.delta; continue; }
+    if (msOf(h) < since || !h.delta || h.delta < 0) continue;
     const c = catOf(h.key);
     sums.set(c.id, (sums.get(c.id) || 0) + h.delta);
   }
   const parts = XP_CATS.filter(c => sums.get(c.id)).map(c => ({ c, v: sums.get(c.id) })).sort((a, b) => b.v - a.v);
-  if (lost) parts.push({ c: ADJUST, v: lost });
-  const net = parts.reduce((a, p) => a + p.v, 0);
   const span = parts.reduce((a, p) => a + Math.abs(p.v), 0);
-  // The ring: one arc per category, sized by its share of all movement (gains
-  // and losses alike), with a hairline gap between arcs.
+  // The ring: one arc per category, sized by its share of the XP gained, with a
+  // hairline gap between arcs.
   const R = 52, C = 2 * Math.PI * R;
   let at = 0;
-  const arcs = span ? parts.map(p => {
+  // Hovering an arc or its legend row lifts that arc and dims the others
+  // (quests.css .xph-ring-row, matched by data-i).
+  const arcs = span ? parts.map((p, i) => {
     const len = Math.abs(p.v) / span * C, gap = parts.length > 1 ? Math.min(3, len / 3) : 0;
-    const arc = `<circle r="${R}" cx="64" cy="64" fill="none" stroke="${p.c.color}" stroke-width="16"
+    const arc = `<circle data-i="${i}" style="color:${p.c.color}" r="${R}" cx="64" cy="64" fill="none" stroke="${p.c.color}" stroke-width="16"
       stroke-dasharray="${Math.max(0, len - gap)} ${C}" stroke-dashoffset="${-at}" transform="rotate(-90 64 64)"/>`;
     at += len;
     return arc;
   }).join("") : `<circle r="${R}" cx="64" cy="64" fill="none" stroke="#262c3d" stroke-width="16"/>`;
-  const legend = parts.map(p => `
-    <li><span class="xph-dot" style="--c:${p.c.color}"></span><span>${esc(t("xpCat_" + p.c.id))}</span>
+  const legend = parts.map((p, i) => `
+    <li data-i="${i}"><span class="xph-dot" style="--c:${p.c.color}"></span><span>${esc(t("xpCat_" + p.c.id))}</span>
       <b class="${p.v < 0 ? "is-down" : "is-up"}">${signed(ctx, p.v)}</b></li>`).join("");
   return `
     <section class="xph-card">
       <header class="xph-head">${icon({ color: "#ff7a1a", icon: "bars" }, 18)}
         <div><h3>${esc(t("xpBreakdown"))}</h3><p>${esc(t("xpBreakdownSub"))}</p></div></header>
       <div class="xph-ring-row">
-        <div class="xph-ring"><svg viewBox="0 0 128 128" aria-hidden="true">${arcs}</svg>
-          <div class="xph-ring-mid"><b class="${net < 0 ? "is-down" : "is-up"}">${net ? signed(ctx, net) : "0"}</b><span>XP</span>
-            <small>${esc(t("xpNetDays", { n: days }))}</small></div></div>
+        <div class="xph-ring"><svg viewBox="0 0 128 128" aria-hidden="true">${arcs}</svg></div>
         ${parts.length ? `<ul class="xph-legend">${legend}</ul>` : `<p class="xph-empty">${esc(t("xpHistoryEmpty"))}</p>`}
       </div>
     </section>`;

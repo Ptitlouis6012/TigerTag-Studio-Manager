@@ -20,6 +20,15 @@
 // A text field is a plain string or a { lang: text } map (en as fallback).
 const pick = (v, lang) => (v && typeof v === "object" ? v[lang] || v.en || Object.values(v)[0] || "" : v || "");
 const ms = v => (v?.toMillis ? v.toMillis() : typeof v === "number" ? v : v ? Date.parse(v) || null : null);
+// When the member's claimed code stops being usable: claims/{uid}.expiresAt
+// (set by the squadDeal function from the deal's claimDays); a claim made
+// before expiresAt existed gets claim time + claimDays. null = no limit.
+export function claimExpiry(d) {
+  const c = d.claim; if (!c) return null;
+  if (c.expiresAt) return ms(c.expiresAt);
+  return d.claimDays && ms(c.at) ? ms(c.at) + d.claimDays * 864e5 : null;
+}
+const isExpired = (d, now) => { const e = claimExpiry(d); return !!e && now > e && !d.claim?.used; };
 const byOrder = (a, b) => (a.order ?? 999) - (b.order ?? 999) || (ms(a.endAt) || Infinity) - (ms(b.endAt) || Infinity);
 
 /** The member's deals in their three sections. */
@@ -28,7 +37,7 @@ export function sortDeals(docs, country, now = Date.now()) {
   for (const d of docs) {
     if (d.status !== "active" && d.status !== "archived") continue;
     const to = ms(d.endAt), over = d.status === "archived" || (to && now > to);
-    if (d.claim) { (d.claim.used || over ? history : live).push(d); continue; }
+    if (d.claim) { (d.claim.used || over || isExpired(d, now) ? history : live).push(d); continue; }
     const cc = Array.isArray(d.countries) ? d.countries : [];
     if (cc.length && !(country && cc.includes(country))) continue;
     const from = ms(d.startAt);
@@ -38,16 +47,26 @@ export function sortDeals(docs, country, now = Date.now()) {
   return { live: live.sort(byOrder), history: history.sort(byOrder), ended: ended.sort(byOrder) };
 }
 
+// "4 d 23:12:05" — the time left on a claimed code.
+function countdown(t, left) {
+  const sec = Math.max(0, Math.floor(left / 1000)), p = n => String(n).padStart(2, "0");
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return d ? t("squadDealsDHMS", { d, h: p(h), m: p(m), s: p(s) }) : `${p(h)}:${p(m)}:${p(s)}`;
+}
+
 function dealCard(ctx, d, section) {
   const { t, esc, lang, xp = 0 } = ctx;
-  const claim = d.claim, used = claim?.used === true, code = claim?.code || "";
+  const claim = d.claim, used = claim?.used === true;
+  const exp = claimExpiry(d), expired = !used && !!exp && Date.now() > exp;
+  const code = expired ? "" : claim?.code || "";   // an expired code disappears
   const locked = section === "live" && !claim && (d.minXp || 0) > xp;
   const unique = d.codeMode === "unique", left = Math.max(0, (d.stock || 0) - (d.claimed || 0));
   const title = pick(d.title, lang), desc = pick(d.description, lang);
   const to = ms(d.endAt);
   const link = d.secret?.link || "", safeLink = /^https:\/\//i.test(link) ? link : "";
   const safeImg = /^https:\/\//i.test(d.image || "") ? d.image : "";
-  const tag = used ? ["is-used", "check", "squadDealsUsed"] : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
+  const tag = used ? ["is-used", "check", "squadDealsUsed"] : expired ? ["is-ended", "clock", "squadDealsExpired"]
+    : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
   let actions = "";
   if (locked) actions = `
         <div class="sqd-lock">
@@ -62,7 +81,9 @@ function dealCard(ctx, d, section) {
           ${code ? `<button type="button" class="sqd-code" data-code="${esc(code)}" aria-label="${esc(t("squadDealsCopy"))}"><b>${esc(code)}</b><span class="icon icon-copy icon-13" aria-hidden="true"></span></button>` : ""}
           ${code && safeLink ? `<a class="sqd-open" href="${esc(safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
           ${code && !used && section === "live" ? `<button type="button" class="sqd-mark" data-deal="${esc(d.id)}"><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(t("squadDealsMarkUsed"))}</button>` : ""}
-        </div>`;
+        </div>
+        ${code && exp && !used && section === "live" ? `<div class="sqd-timer" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : ""}
+        ${!claim && d.claimDays && section === "live" && !locked ? `<small class="sqd-claimdays">${esc(t("squadDealsClaimDays", { n: d.claimDays }))}</small>` : ""}`;
   return `
     <article class="sqd-card${locked ? " is-locked" : ""}${tag ? " " + tag[0] : ""}">
       <div class="sqd-card-art">${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
@@ -117,8 +138,20 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
 /** Copy-code, "Get my code" and "I used it": one delegated listener on the
  *  view host; the two server actions go through ctx.onAction(action, dealId). */
 export function wireDeals(host, ctx) {
+  host._sqdCtx = ctx;
   if (host._sqdWired) return;
   host._sqdWired = true;
+  // The countdowns tick every second while the view is shown; one that
+  // reaches zero repaints the view (the code goes, the deal moves to Archived).
+  setInterval(() => {
+    if (!host.isConnected || host.classList.contains("hidden")) return;
+    const c = host._sqdCtx;
+    for (const el of host.querySelectorAll(".sqd-timer[data-exp]")) {
+      const left = Number(el.dataset.exp) - Date.now();
+      if (left <= 0) { c.onExpire?.(); return; }
+      el.lastElementChild.textContent = c.t("squadDealsTimeLeft", { time: countdown(c.t, left) });
+    }
+  }, 1000);
   host.addEventListener("click", async e => {
     const act = e.target.closest(".sqd-get, .sqd-mark");
     if (act) {

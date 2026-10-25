@@ -213,10 +213,10 @@ body.progress-view #gridSortWrap { display: none; }
 .qd-row { --cat: var(--qw-tiger); display: grid; grid-template-columns: 52px minmax(0, 1fr) 128px 40px minmax(80px, 150px) 70px 150px; gap: 14px; align-items: center;
   padding: 10px 16px 10px 12px; border: 1px solid var(--qw-line); border-radius: 12px; background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); }
 .qd-cat-quick { --cat: #3ddc84; } .qd-cat-exploration { --cat: #3fa4ff; } .qd-cat-challenge { --cat: #b46bff; }
-.qd-ic { width: 52px; height: 52px; display: grid; place-items: center; border-radius: 12px; border: 1px solid color-mix(in srgb, var(--qw-tiger) 60%, transparent);
-  background: radial-gradient(circle at 50% 35%, rgba(255, 122, 26, .25), rgba(255, 122, 26, .05)); }
-.qd-ic .icon { background: var(--qw-tiger2); }
-.qd-mask { width: 30px; height: 30px; background: var(--qw-tiger2); -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
+/* The mission icon: bare and white — no tile around it (lighter rows). */
+.qd-ic { width: 40px; height: 52px; display: grid; place-items: center; }
+.qd-ic .icon { width: 24px; height: 24px; background: #fff; }
+.qd-mask { width: 30px; height: 30px; background: #fff; -webkit-mask: var(--ico) center / contain no-repeat; mask: var(--ico) center / contain no-repeat; }
 .qd-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .qd-title b { font-size: 15px; color: var(--qw-ink); }
 .qd-title small { font-size: 13px; color: var(--qw-muted); }
@@ -696,10 +696,49 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-ring-row { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 14px; align-items: center; }
 .xph-ring { position: relative; width: 136px; height: 136px; }
 .xph-ring svg { width: 100%; height: 100%; }
-.xph-ring-mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05; }
-.xph-ring-mid b { font: 800 19px var(--qw-mono); }
-.xph-ring-mid span { font: 800 14px var(--qw-display); color: var(--qw-ink); }
-.xph-ring-mid small { margin-top: 3px; font-size: 10px; color: var(--qw-muted); }
+/* Hover an arc or its legend row: that arc swells and glows, the others fade;
+   the legend row lights up (pairs matched by data-i, up to 12 categories). */
+.xph-ring svg { overflow: visible; }
+.xph-ring circle[data-i] { cursor: pointer; transition: stroke-width .25s cubic-bezier(.2, .8, .2, 1.3), opacity .2s, filter .25s; }
+.xph-legend li[data-i] { cursor: default; padding: 2px 6px; margin: -2px -6px; border-radius: 6px; transition: background .2s, opacity .2s; }
+.xph-ring-row:has([data-i]:hover) [data-i] { opacity: .35; }
+.xph-ring-row:has([data-i="0"]:hover) [data-i="0"],
+.xph-ring-row:has([data-i="1"]:hover) [data-i="1"],
+.xph-ring-row:has([data-i="2"]:hover) [data-i="2"],
+.xph-ring-row:has([data-i="3"]:hover) [data-i="3"],
+.xph-ring-row:has([data-i="4"]:hover) [data-i="4"],
+.xph-ring-row:has([data-i="5"]:hover) [data-i="5"],
+.xph-ring-row:has([data-i="6"]:hover) [data-i="6"],
+.xph-ring-row:has([data-i="7"]:hover) [data-i="7"],
+.xph-ring-row:has([data-i="8"]:hover) [data-i="8"],
+.xph-ring-row:has([data-i="9"]:hover) [data-i="9"],
+.xph-ring-row:has([data-i="10"]:hover) [data-i="10"],
+.xph-ring-row:has([data-i="11"]:hover) [data-i="11"] { opacity: 1; }
+.xph-ring-row:has([data-i="0"]:hover) circle[data-i="0"],
+.xph-ring-row:has([data-i="1"]:hover) circle[data-i="1"],
+.xph-ring-row:has([data-i="2"]:hover) circle[data-i="2"],
+.xph-ring-row:has([data-i="3"]:hover) circle[data-i="3"],
+.xph-ring-row:has([data-i="4"]:hover) circle[data-i="4"],
+.xph-ring-row:has([data-i="5"]:hover) circle[data-i="5"],
+.xph-ring-row:has([data-i="6"]:hover) circle[data-i="6"],
+.xph-ring-row:has([data-i="7"]:hover) circle[data-i="7"],
+.xph-ring-row:has([data-i="8"]:hover) circle[data-i="8"],
+.xph-ring-row:has([data-i="9"]:hover) circle[data-i="9"],
+.xph-ring-row:has([data-i="10"]:hover) circle[data-i="10"],
+.xph-ring-row:has([data-i="11"]:hover) circle[data-i="11"] { stroke-width: 22; filter: drop-shadow(0 0 6px currentColor) brightness(1.15); }
+.xph-ring-row:has([data-i="0"]:hover) li[data-i="0"],
+.xph-ring-row:has([data-i="1"]:hover) li[data-i="1"],
+.xph-ring-row:has([data-i="2"]:hover) li[data-i="2"],
+.xph-ring-row:has([data-i="3"]:hover) li[data-i="3"],
+.xph-ring-row:has([data-i="4"]:hover) li[data-i="4"],
+.xph-ring-row:has([data-i="5"]:hover) li[data-i="5"],
+.xph-ring-row:has([data-i="6"]:hover) li[data-i="6"],
+.xph-ring-row:has([data-i="7"]:hover) li[data-i="7"],
+.xph-ring-row:has([data-i="8"]:hover) li[data-i="8"],
+.xph-ring-row:has([data-i="9"]:hover) li[data-i="9"],
+.xph-ring-row:has([data-i="10"]:hover) li[data-i="10"],
+.xph-ring-row:has([data-i="11"]:hover) li[data-i="11"] { background: rgba(255, 255, 255, .06); }
+@media (prefers-reduced-motion: reduce) { .xph-ring circle[data-i] { transition: none; } }
 .xph-legend { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
 .xph-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-size: 13px; color: var(--qw-ink); }
 .xph-legend b { font: 800 13px var(--qw-mono); }
@@ -1028,3 +1067,8 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-card.is-ended .sqd-used-tag { color: var(--tsq-muted); background: rgba(255, 255, 255, .06); }
 .sqd-soon--slim { padding: 22px 24px; }
 .sqd-soon--slim h3 { font-size: 18px; }
+/* Claimed code countdown (claimDays) and the "valid N days once you get it" hint. */
+.sqd-timer { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin-top: 2px; padding: 4px 10px; white-space: nowrap; border-radius: 99px;
+  font: 700 12px var(--qw-mono, monospace); color: var(--tsq-orange); background: color-mix(in srgb, var(--tsq-orange) 12%, transparent); font-variant-numeric: tabular-nums; }
+.sqd-timer .icon { background: currentColor; }
+.sqd-claimdays { font-size: 11.5px; color: var(--tsq-muted); }

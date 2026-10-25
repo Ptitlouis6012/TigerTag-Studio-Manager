@@ -5241,34 +5241,91 @@ body.ttag-dragging .ttag-drop-hint { display: flex; }
 #editAccountModalOverlay .eac-mcp-grant-name { grid-column: 1; grid-row: 1; align-self: center; }
 #editAccountModalOverlay .eac-mcp-grant .eac-mcp-cut { grid-column: 2; grid-row: 1; }
 #editAccountModalOverlay .eac-mcp-grant-meta { grid-column: 1 / -1; grid-row: 2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Edit my profile (#identityOverlay) — avatar, display name, theme colour. */
-#identityOverlay .idm-card { width: 440px; max-width: calc(100vw - 32px); padding: 18px 20px; display: flex; flex-direction: column; gap: 16px; }
-#identityOverlay .idm-head { display: flex; align-items: center; justify-content: space-between; }
-#identityOverlay .idm-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+/* Edit my profile (#identityOverlay) — layout from a ChatGPT review: four
+   cards (photo, display name, theme colour, live preview) and a footer.
+   480 px wide; the body scrolls when the window is short. */
+#identityOverlay .idm-card { width: 480px; max-width: calc(100vw - 32px); max-height: calc(100vh - 32px); padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+#identityOverlay .idm-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 14px; }
+#identityOverlay .idm-head h3 { margin: 0; font-size: 18px; font-weight: 700; color: var(--text); }
 #identityOverlay .idm-head .modal-close { position: static; }
-#identityOverlay .idm-avatar-row { display: flex; align-items: center; gap: 16px; }
-#identityOverlay .idm-avatar { width: 76px; height: 76px; font-size: 26px; cursor: default; }
-#identityOverlay .idm-photo-btns { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
-#identityOverlay .idm-btn { display: inline-flex; align-items: center; gap: 6px; }
+#identityOverlay .idm-body { display: flex; flex-direction: column; gap: 12px; padding: 0 24px 18px; overflow-y: auto; min-height: 0; }
+#identityOverlay .idm-sec { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); display: flex; flex-direction: column; gap: 10px; }
+#identityOverlay .idm-sec-title { margin: 0; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--text); }
+#identityOverlay .idm-sec-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+#identityOverlay .idm-hint { font-size: 11.5px; color: var(--muted); }
+/* Photo: avatar left, the name and its two actions on the right. */
+#identityOverlay .idm-photo { display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 18px; align-items: center; }
+#identityOverlay .idm-avatar { width: 88px; height: 88px; font-size: 30px; cursor: default; box-shadow: 0 0 0 3px var(--surface-2), 0 0 0 5px var(--idm-c, var(--primary)), 0 0 22px color-mix(in srgb, var(--idm-c, var(--primary)) 45%, transparent); }
+#identityOverlay .idm-photo-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+#identityOverlay .idm-name { font-size: 16px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#identityOverlay .idm-photo-btns { display: flex; align-items: center; gap: 8px; }
+#identityOverlay .idm-btn { display: inline-flex; align-items: center; gap: 8px; height: 34px; border-radius: 9px; }
+#identityOverlay .idm-btn--change { padding: 0 12px; border: 1px solid color-mix(in srgb, var(--primary) 70%, transparent); color: var(--text); }
+#identityOverlay .idm-btn--change .icon { background: var(--text); }
+#identityOverlay .idm-btn--change:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); }
 #identityOverlay .idm-btn--danger { color: var(--danger); } #identityOverlay .idm-btn--danger .icon { background: var(--danger); }
 /* Remove photo: the trash icon alone, square, held 1.5 s (hold fill inside). */
-#identityOverlay .idm-btn--icon { position: relative; overflow: hidden; justify-content: center; width: 34px; aspect-ratio: 1; padding: 0; }
+#identityOverlay .idm-btn--icon { position: relative; overflow: hidden; justify-content: center; width: 34px; padding: 0; border: 1px solid var(--border); }
 #identityOverlay .idm-btn--icon .icon { position: relative; z-index: 1; }
 #identityOverlay .eac-avatar-result:empty { display: none; }
-#identityOverlay .idm-field { display: flex; flex-direction: column; gap: 7px; }
-#identityOverlay .eac-field-label { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--faint); }
-#identityOverlay .eac-name-row { display: flex; gap: 6px; }
-#identityOverlay .eac-name-input { flex: 1; min-width: 0; padding: 8px 11px; font-size: 13px; border-radius: 9px; }
-#identityOverlay .eac-name-save { width: 34px; height: 34px; border-radius: 9px; transition: background .18s, border-color .18s; }
-#identityOverlay .eac-name-save.is-ok { background: var(--success); border-color: var(--success); }
-#identityOverlay .eac-name-save.is-ok .icon { background-color: var(--on-accent); }
-#identityOverlay .eac-name-save.is-err { border-color: var(--danger); animation: eacSaveShake .38s; }
+/* Display name: field and check as one control. */
+#identityOverlay .idm-name-group { display: flex; gap: 0; height: 40px; border: 1px solid var(--border); border-radius: 9px; overflow: hidden; background: var(--bg); }
+#identityOverlay .eac-name-input { flex: 1; min-width: 0; padding: 0 12px; font-size: 13.5px; border: 0; border-radius: 0; background: transparent; }
+#identityOverlay .eac-name-input:focus { outline: none; box-shadow: none; }
+#identityOverlay .eac-name-save { flex: 0 0 44px; height: 100%; border: 0; border-left: 1px solid var(--border); border-radius: 0; cursor: pointer; display: grid; place-items: center; background: transparent; transition: background .18s, filter .18s; }
+#identityOverlay .eac-name-save .icon { background: var(--muted); }
+#identityOverlay .eac-name-save:hover .icon { background: var(--text); }
+/* Read-only until the pen is pressed: no caret, plain text look. Editing →
+   orange frame and the orange check. */
+#identityOverlay .eac-name-input[readonly] { cursor: default; color: var(--text); }
+#identityOverlay .idm-name-group.is-editing { border-color: var(--primary); }
+#identityOverlay .idm-name-group.is-editing .eac-name-save { background: var(--primary); border-left-color: var(--primary); }
+#identityOverlay .idm-name-group.is-editing .eac-name-save .icon { background: var(--on-accent); }
+#identityOverlay .eac-name-save:hover { filter: brightness(1.1); }
+#identityOverlay .eac-name-save.is-ok { background: var(--success); }
+#identityOverlay .eac-name-save.is-err { background: var(--danger); animation: eacSaveShake .38s; }
 #identityOverlay .eac-name-save.is-busy { opacity: .5; pointer-events: none; }
-#identityOverlay .eac-swatches { margin-top: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-#identityOverlay .eac-swatch { flex: 0 0 auto; width: 32px; height: 32px; aspect-ratio: auto; }
-#identityOverlay .eac-swatch[data-color] { border-color: var(--ink-10); }
-#identityOverlay .eac-swatch[data-color].active { border-color: var(--text); }
-#identityOverlay .idm-foot { display: flex; justify-content: flex-end; }
+#identityOverlay .eac-inline-result:empty { display: none; }
+/* Theme colour: the chosen colour's name top right, 7 × 2 tiles. */
+#identityOverlay .idm-color-name { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--muted); }
+#identityOverlay .idm-color-name i { width: 12px; height: 12px; border-radius: 50%; background: var(--idm-c, var(--primary)); }
+#identityOverlay .idm-swatches { margin: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px 8px; justify-items: center; }
+/* Plain colour dots (no tile around them); the chosen one gets a white ring and a check. */
+#identityOverlay .idm-swatches .eac-swatch { position: relative; width: 32px; height: 32px; aspect-ratio: auto; border-radius: 50%; border: 0; padding: 0; background: var(--sw); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15); transform: none; transition: transform .15s, box-shadow .15s; }
+#identityOverlay .idm-swatches .eac-swatch:hover { transform: scale(1.12); }
+#identityOverlay .idm-swatches .eac-swatch[data-color].active { transform: none; box-shadow: 0 0 0 2px var(--surface-2), 0 0 0 4px #fff; }
+#identityOverlay .idm-swatches .eac-swatch[data-color].active::after { content: ""; position: absolute; inset: 0; margin: auto; width: 14px; height: 14px; background: #fff;
+  -webkit-mask: url('../../assets/svg/icons/icon_check.svg') center / contain no-repeat; mask: url('../../assets/svg/icons/icon_check.svg') center / contain no-repeat; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6)); }
+/* Custom colour: a full colour wheel the size of the other dots (a dashed
+   outline read smaller), the palette icon on it; chosen → the white ring. */
+#identityOverlay .idm-swatches .eac-swatch-custom { display: grid; place-items: center; border: 0 !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .15) !important;
+  background: conic-gradient(#ef4444, #f59e0b, #eab308, #22c55e, #14b8a6, #3b82f6, #8b5cf6, #d946ef, #ef4444) !important; }
+#identityOverlay .idm-swatches .eac-swatch-custom .icon { width: 16px; height: 16px; background: #fff; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .7)); }
+#identityOverlay .idm-swatches .eac-swatch-custom.active { box-shadow: 0 0 0 2px var(--surface-2), 0 0 0 4px #fff !important; }
+/* Live preview: a mini header and a mini Tiger Squad banner in the theme
+   colour (the app's own --theme-tint / --hero-wall, set by _applyThemeColor). */
+#identityOverlay .idm-preview { gap: 8px; }
+#identityOverlay .idm-eyebrow { margin: 0; font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+#identityOverlay .idm-mini { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--bg); }
+#identityOverlay .idm-mini-head { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 10px; background: var(--theme-tint, var(--surface)); }
+#identityOverlay .idm-mini-av { width: 24px; height: 24px; font-size: 10px; cursor: default; }
+#identityOverlay .idm-mini-head b { font-size: 12px; color: #fff; }
+#identityOverlay .idm-mini-chip { margin-left: auto; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; color: #ffb347; background: rgba(0, 0, 0, .3); }
+#identityOverlay .idm-mini-banner { position: relative; height: 70px; margin: 8px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; padding: 0 14px 10px;
+  background: var(--hero-wall, linear-gradient(115deg, #3a1d2a, #1a1d33)); }
+/* The banners' desk and tiger, in miniature: the tiger stands BEHIND the desk
+   (its cut waist hidden by it) and rests its paws ON it — two layers, like
+   the Tiger Squad heroes (tiger.webp behind, tiger-front.webp = paws over). */
+#identityOverlay .idm-mini-desk { position: absolute; left: 0; right: 0; bottom: 0; height: 12px; z-index: 1;
+  background: linear-gradient(180deg, #d27a35 0 3px, #b8662b 3px 7px, #8a4a1e 7px); }
+#identityOverlay .idm-mini-tiger { position: absolute; right: 16px; bottom: 5px; height: 62px; aspect-ratio: 1226 / 802; }
+#identityOverlay .idm-mini-tiger img { position: absolute; inset: 0; width: 100%; height: 100%; }
+#identityOverlay .idm-mini-tiger-back { z-index: 0; }
+#identityOverlay .idm-mini-tiger-front { z-index: 2; }
+#identityOverlay .idm-mini-title { position: relative; z-index: 1; font: 800 20px/1 "Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", system-ui, sans-serif; color: #fff; text-shadow: 0 2px 4px #000; letter-spacing: .02em; }
+#identityOverlay .idm-mini-orange { color: var(--primary); }
+#identityOverlay .idm-foot { display: flex; justify-content: flex-end; padding: 14px 24px; border-top: 1px solid var(--border); }
+#identityOverlay .idm-done { min-width: 104px; height: 36px; }
 /* The pen beside the name in My profile. */
 .eac-ident-edit { display: inline-grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
 .eac-ident-edit .icon { background: var(--muted); }

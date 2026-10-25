@@ -85,6 +85,7 @@ real-hardware testing).
 | Explorer 3 | 1250 | 100 | Social | friends (3) · visits to friends' stocks (5) · share a public list · make your profile public · add a social link |
 | Explorer 4 | 1600 | 125 | Chip workshop | recycle a chip · initialise a chip (TigerTag Init) · program TigerTag chips (10) · own TigerTag+ chips (3) · read a chip with the NFC tester |
 | Explorer 5 | 2000 | 150 | Collector | brands explored in the catalogue (10) · different materials owned (5) · prints finished at 100 % (10) · spools in racks (50) · daily quest 7 days in a row |
+| Explorer ★ (secret) | — | 200 | Under the hood — revealed once Explorer 1–5 are won | change a friend's place in your list · turn on the AI assistant · turn on debug mode · daily quests 10 days in a row · lock a slot in a rack |
 
 Ranks (role · world), icons in the app: 1 Discovery · Base camp 🏕️, 2 Explorer · The hills 🌄,
 3 Mountaineer · The mountains 🏔️, 4 Nomad · The deserts 🏜️, 5 Boatman · The rivers 🛶, 6 Navigator ·

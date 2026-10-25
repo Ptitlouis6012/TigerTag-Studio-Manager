@@ -4518,6 +4518,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("eacAvatarResult").textContent = "";
     $("eacDisplayNameInput").value = _editingAccount.displayName || "";
     $("eacNameResult").textContent = "";
+    _setNameEditing(false);
     const isCustom = _editingAccount?.color === "custom";
     if (isCustom && _editingAccount.customColor) {
       $("eacCustomColor").value = _editingAccount.customColor;
@@ -5034,12 +5035,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (qWrap && !qWrap.hidden && qWasHidden) { qWrap.dataset.shown = "1"; requestAnimationFrame(() => _positionViewIndicators(true)); }
     // TigerSquad group: Rankings · Items · History. Items carries the progress to the
     // next squad level (Bronze → 20 TigerTag chips, Gold → 50 Certified; Silver's step
-    // is a donation, nothing to count); the figures are in its hover name.
+    // is a donation, nothing to count) in its bar.
     const sTier = _ownSquadTier();
     const sGoal = sTier === "bronze" ? [state.tigerTagCount || 0, 20, "silver"] : sTier === "gold" ? [state.certifiedPlusCount || 0, 50, "platinum"]
       : sTier === "platinum" ? [1, 1, null] : [0, 1, null];
-    _setBar($("vtgSquadItems"), Math.min(100, sGoal[0] / sGoal[1] * 100),
-      sGoal[2] ? `${t("squadItems")} · ${t("xpNextTitle", { tier: squadTierLabel(sGoal[2]) })} ${Math.min(sGoal[0], sGoal[1])}/${sGoal[1]}` : t("squadItems"));
+    // Hover name: just "The hero's grimoire" (the bar shows the progress).
+    _setBar($("vtgSquadItems"), Math.min(100, sGoal[0] / sGoal[1] * 100), t("squadGrimoireSub"));
     const sWrap = $("vtgSquad");
     if (sWrap) {
       // A friend's view keeps the group with Rankings only, seen as the friend
@@ -5312,7 +5313,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
       _deals.at = 0;   // reload: the claim (code / used) and the pool counters changed
       await _renderDealsView();
-    } };
+    }, onExpire: () => _renderDealsView() };
     wireDeals(host, ctx);
     const paint = () => { if (state.viewMode === "squadDeals") host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0 }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country)); };
     paint();
@@ -6133,10 +6134,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // display name and theme colour in a window of their own, so the My profile
   // panel keeps the room for everything else. The controls inside keep their
   // ids — the handlers below and further down are the panel's own.
+  // Paints everything in "Edit my profile" that follows the account: the
+  // avatar (+ its ring in the theme colour), the name beside it, the chosen
+  // colour's name and the live preview's mini avatar and name.
   function _paintIdmAvatar() {
     const el = $("idmAvatar"); if (!el) return;
-    paintAvatar(el, _editingAccount || activeAccount());
+    const acc = _editingAccount || activeAccount();
+    paintAvatar(el, acc);
     if (state.photoURL) _renderAvatarPhotoOverlay(el, state.photoURL);
+    const prev = $("idmPrevAvatar");
+    if (prev) { paintAvatar(prev, acc); if (state.photoURL) _renderAvatarPhotoOverlay(prev, state.photoURL); }
+    const name = acc?.displayName || state.displayName || "";
+    if ($("idmName")) $("idmName").textContent = name;
+    if ($("idmPrevName")) $("idmPrevName").textContent = name;
+    const custom = acc?.color === "custom";
+    const key = custom ? "custom" : (acc?.color || "orange");
+    if ($("idmColorName")) $("idmColorName").textContent = t(`themeColor_${key}`);
+    $("identityOverlay")?.style.setProperty("--idm-c", getAccShadow(acc) || "var(--primary)");
+    if ($("idmColorDot")) $("idmColorDot").style.background = getAccGradient(acc);
   }
   function openIdentityModal() {
     // Opened on its own (header avatar, profile panel closed): edit the active
@@ -6150,12 +6165,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("identityOverlay")?.classList.add("open");
   }
   function closeIdentityModal() { $("identityOverlay")?.classList.remove("open"); }
+  // The name beside the photo and in the preview follow the field as you type.
+  $("eacDisplayNameInput")?.addEventListener("input", e => {
+    const v = e.target.value.trim() || (_editingAccount?.displayName || "");
+    if ($("idmName")) $("idmName").textContent = v;
+    if ($("idmPrevName")) $("idmPrevName").textContent = v;
+  });
   $("eacAvatar")?.addEventListener("click", e => { e.stopPropagation(); openIdentityModal(); });
   $("eacIdentEdit")?.addEventListener("click", e => { e.stopPropagation(); openIdentityModal(); });
   $("identityClose")?.addEventListener("click", closeIdentityModal);
   $("identityDone")?.addEventListener("click", closeIdentityModal);
-  $("identityOverlay")?.addEventListener("click", e => { if (e.target.id === "identityOverlay") closeIdentityModal(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && $("identityOverlay")?.classList.contains("open")) closeIdentityModal(); });
+  // The photo cropper opens over this window: its Escape / backdrop clicks are
+  // its own, never a reason to leave "Edit my profile".
+  const _cropperOpen = () => $("avatarCropOverlay")?.classList.contains("open");
+  $("identityOverlay")?.addEventListener("click", e => { if (e.target.id === "identityOverlay" && !_cropperOpen()) closeIdentityModal(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !_cropperOpen() && $("identityOverlay")?.classList.contains("open")) closeIdentityModal(); });
   // Close the menu on outside click or Escape — standard popover UX.
   document.addEventListener("click", e => {
     if (!$("avatarMenu")?.classList.contains("open")) return;
@@ -6174,6 +6198,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("avatarMenuChange")?.addEventListener("click", async e => {
     e.stopPropagation();
     _closeAvatarMenu();
+    // Picked, cropped, uploaded or cancelled: the user comes back to "Edit my
+    // profile" if they started from it.
+    const fromIdentity = $("identityOverlay")?.classList.contains("open");
+    try { await _changeAvatarFromPanel(); }
+    finally { if (fromIdentity) $("identityOverlay")?.classList.add("open"); }
+  });
+  async function _changeAvatarFromPanel() {
     const res = $("eacAvatarResult");
     // Pick + crop + upload — failures surface in the result line.
     const file = await _pickAvatarFile();
@@ -6187,7 +6218,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     try {
       const url = await uploadCroppedAvatar(cropped.blob, cropped.contentType);
       _renderAvatarPhotoOverlay($("eacAvatar"), url); _renderAvatarPhotoOverlay($("idmAvatar"), url);
-      $("avatarMenuRemove").hidden = false;
+      $("avatarMenuRemove").hidden = false; _paintIdmAvatar();
       res.style.color = "var(--success)"; res.textContent = t("avatarUploadOk");
       setTimeout(() => { res.textContent = ""; }, 2000);
     } catch (e) {
@@ -6195,8 +6226,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       res.style.color = "var(--danger)";
       res.textContent = e?.code ? profileErrorText(e) : t(e.message === "too-large" ? "avatarTooLarge" : "avatarUploadFailed");
     }
-  });
-  // Remove the photo: a trash button held 1.5 s (hold-to-confirm), not a click.
+  }
+  // Remove the photo: a trash button held 1.5 s (hold-to-confirm), not a click;
+  // hovering it shows "Hold 1.5 s to confirm" (the shared hold bubble).
   setupHoldToConfirm($("avatarMenuRemove"), 1500, async () => {
     _closeAvatarMenu();
     const res = $("eacAvatarResult");
@@ -6204,14 +6236,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     try {
       await removeCustomAvatar();
       _renderAvatarPhotoOverlay($("eacAvatar"), null); _renderAvatarPhotoOverlay($("idmAvatar"), null);
-      $("avatarMenuRemove").hidden = true;
+      $("avatarMenuRemove").hidden = true; _paintIdmAvatar();
       res.style.color = "var(--success)"; res.textContent = t("avatarRemoveOk");
       setTimeout(() => { res.textContent = ""; }, 2000);
     } catch (e) {
       console.warn("[avatar.remove]", e);
       res.style.color = "var(--danger)"; res.textContent = e?.code ? profileErrorText(e) : t("avatarRemoveFailed");
     }
-  });
+  }, { hint: true });
 
   // Open/close the popover. "Remove" is gated on state.photoURL so the
   // menu shows only the relevant options. If there's no photo, only
@@ -6240,7 +6272,22 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     b._flashT = setTimeout(() => b.classList.remove("is-ok", "is-err"), kind === "ok" ? 1200 : 700);
   }
 
-  // Save display name
+  // The display name is read-only until the pen is pressed: the pen turns into
+  // the check, the field opens; the check saves and closes it (Enter too),
+  // Escape gives the old name back. Reopening the window starts read-only.
+  let _nameEditing = false;
+  function _setNameEditing(on) {
+    _nameEditing = on;
+    const input = $("eacDisplayNameInput"), btn = $("btnSaveDisplayName"), ic = $("idmNameBtnIcon");
+    if (!input || !btn) return;
+    input.readOnly = !on;
+    btn.closest(".eac-name-row")?.classList.toggle("is-editing", on);
+    ic?.classList.toggle("icon-edit", !on); ic?.classList.toggle("icon-check", on);
+    btn.setAttribute("aria-label", t(on ? "btnSave" : "idmNameEdit"));
+    if (on) { input.focus(); input.select(); }
+    else { input.setSelectionRange(0, 0); input.blur(); }
+  }
+  // Save display name — resolves true when the name is saved (or unchanged).
   async function saveDisplayName() {
     if (!_editingAccount) return;
     const newName = $("eacDisplayNameInput").value.trim();
@@ -6250,7 +6297,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _flashNameSave("err"); return;
     }
     if (newName === (_editingAccount.displayName || "")) {
-      res.textContent = ""; _flashNameSave("ok"); return;
+      res.textContent = ""; _flashNameSave("ok"); return true;
     }
     res.textContent = ""; _flashNameSave("busy");
     try {
@@ -6274,13 +6321,25 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
       renderAccountDropdown();
       res.textContent = ""; _flashNameSave("ok");
+      return true;
     } catch (e) {
       res.style.color = "var(--danger)"; res.textContent = profileErrorText(e);
       _flashNameSave("err");
     }
   }
-  $("btnSaveDisplayName").addEventListener("click", saveDisplayName);
-  $("eacDisplayNameInput").addEventListener("keydown", e => { if (e.key === "Enter") saveDisplayName(); });
+  const _saveAndClose = async () => { if (await saveDisplayName()) _setNameEditing(false); };
+  $("btnSaveDisplayName").addEventListener("click", () => { if (_nameEditing) _saveAndClose(); else _setNameEditing(true); });
+  $("eacDisplayNameInput").addEventListener("keydown", e => {
+    if (!_nameEditing) return;
+    if (e.key === "Enter") _saveAndClose();
+    else if (e.key === "Escape") {
+      e.stopPropagation();   // cancels the edit, not the window
+      $("eacDisplayNameInput").value = _editingAccount?.displayName || "";
+      $("eacDisplayNameInput").dispatchEvent(new Event("input"));
+      $("eacNameResult").textContent = "";
+      _setNameEditing(false);
+    }
+  });
 
   $("eacSquadToggle").addEventListener("change", e => _setSupportPublicly(e.target.checked, e.target));
   $("eacSquadCountry")?.addEventListener("change", e => _setSquadCountry(e.target.value));
@@ -15411,6 +15470,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   async function _catViewProductCard(it) {
     if (!it) return;
+    // Opening a product of a brand counts as finding that brand (daily quest
+    // "Find a <brand> filament", Explorer 5 brands) — not only the Brand filter.
+    const brandId = _catByName("brand", it.brand, ["name"]);
+    if (brandId) questBump(`brand_${brandId}`);
     let api = _catDetailCache.get(String(it.id));
     if (!api) {
       _catViewShowProduct(it, _catApiFromItem(it));
@@ -24228,6 +24291,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (to < 0) to = arr.length;
     if (targetUid && !before) to += 1;
     arr.splice(to, 0, moved);
+    const changed = to !== from;   // dropped back in place → nothing changed
     arr.forEach((f, i) => { f.sortRank = i; });   // optimistic — snapshot echo confirms
     state.friends = arr;
     _cacheFriends(uid, arr);
@@ -24238,6 +24302,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       arr.forEach((f, i) => batch.set(
         db.collection("users").doc(uid).collection("friends").doc(f.uid), { sortRank: i }, { merge: true }));
       await batch.commit();
+      // Tiger Quests: a friend moved in your list (Explorer secret mission).
+      if (changed) questBump("friendReorder");
     } catch (e) { console.warn("[friends] reorder persist failed:", e?.message); }
   }
   // Wire drag-to-reorder once on the persistent Friends-panel list container
@@ -33488,6 +33554,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         lockedSlots: next,
         lastUpdate: firebase.firestore.FieldValue.serverTimestamp(),
       });
+    // Tiger Quests (Explorer secret mission): a slot locked, not unlocked.
+    if (next.length > cur.length) questBump("rackSlotLock");
   }
   // Lock every slot in a rack (used by the kebab "Lock all" menu item).
   async function lockAllSlots(rackId) {
@@ -33507,6 +33575,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         lockedSlots: all,
         lastUpdate: firebase.firestore.FieldValue.serverTimestamp(),
       });
+    if (all.length) questBump("rackSlotLock");   // Explorer secret mission, like one slot
   }
   async function unlockAllSlots(rackId) {
     const user = fbAuth().currentUser;
@@ -38013,13 +38082,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
   });
 
-  // Friend-view banner "Share" button — copies the VISITED friend's invite link
-  // (their publicKey) so you can pass a public person on to your other friends.
+  // Banner "Share" button — copies the shown invite link: in a friend's view the
+  // VISITED friend's (their publicKey, to pass a public person on), at home yours.
   $("friendViewBanner")?.addEventListener("click", e => {
     const b = e.target.closest("[data-friend-invite]");
     if (!b) return;
     const link = _friendShareUrl(b.dataset.friendInvite);
     // Same "Copied!" flash pill as copying a SKU / EAN (rises + fades over the button).
+    // Deliberately NOT the "Share your friend link" quest: that one is done from
+    // the Friends menu (its "Share link" button), to make people open it.
     navigator.clipboard.writeText(link).then(() => _flashCopied(b));
   });
 
@@ -40569,6 +40640,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       state.isAdmin      = data.roles === "admin";
       state.debugEnabled = !!data.Debug;
       applyDebugMode();
+      // Tiger Quests (Explorer secret mission): debug mode turned on, ever.
+      if (state.debugEnabled) questGauge("debugMode", 1);
 
       // Generate publicKey + privateKey on first login if missing
       const keysUpdate = {};
@@ -41975,6 +42048,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const paint = () => {
       const on = !!cfg?.enabled;
       tog.checked = on;
+      // Tiger Quests (Explorer secret mission): an AI assistant allowed, ever.
+      if (on) questGauge("aiAssistant", 1);
       // Always shown, greyed and inert while off — you see what turning it on unlocks.
       const block = $("eacMcpOn");
       block.classList.toggle("is-off", !on);
