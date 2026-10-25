@@ -1770,9 +1770,13 @@
 <!-- RFID Tag Tester Modal -->
 <div class="modal-overlay" id="rfidTestOverlay">
   <div class="modal-card rfid-test-card">
-    <div class="modal-header">
-      <span class="modal-title">NFC Tag Tester</span>
-      <button class="panel-close" id="rfidTestClose">✕</button>
+    <div class="rfid-head">
+      <span class="rfid-head-ic" aria-hidden="true"><span class="rfid-test-icon"></span></span>
+      <div class="rfid-head-txt">
+        <h3>NFC tag tester</h3>
+        <p>Place a chip on a reader, then read what it holds.</p>
+      </div>
+      <button class="panel-close" id="rfidTestClose" aria-label="Close"><span class="icon icon-close icon-14"></span></button>
     </div>
     <!-- One column per reader — populated dynamically by JS -->
     <div class="rfid-columns" id="rfidColumns"></div>

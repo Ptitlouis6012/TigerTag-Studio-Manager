@@ -22931,7 +22931,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("fseRawOverlay")?.addEventListener("click", closeFsRaw);
 
   /* ── RFID tester modal ── */
-  initRfidTester();
+  // The tester shows the chip's IDs as names, through the reference tables.
+  initRfidTester({ label: (table, id) => { const x = (state.db[table] || []).find(r => r.id === id); return x ? (x.name || x.label) : null; } });
 
   /* ── diagnostic / report-problem modal ── */
   $("btnReportProblem")?.addEventListener("click", openDiagnosticModal);
