@@ -5830,10 +5830,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const ranks = SQUAD_TIERS.map(r => tigerSquadRankBadgeHTML({
       rank: r, label: squadTierLabel(r), description: t(`squadRank_${r}`), assetSrc: SQUAD_ASSETS[r],
     })).join(`<li class="tsq-rank-arrow" aria-hidden="true"><span class="icon icon-arrow-r icon-12"></span></li>`);
-    // What joining unlocks: one tile per space, with that space's own art.
-    const unlock = (kind, img, title, body) => `
-        <li class="tsq-unlock tsq-unlock--${kind}">
-          <span class="tsq-unlock-art"><img src="../assets/img/${img}" alt="" aria-hidden="true"></span>
+    const perk = (kind, icon, title, body) => `
+        <li class="tsq-perk tsq-perk--${kind}">
+          <span class="tsq-perk-ic"><img src="../assets/img/tigersquad/perk-${icon}.svg" alt="" aria-hidden="true"></span>
           <b>${esc(t(title))}</b><span>${esc(t(body))}</span>
         </li>`;
     const wallUrl = `https://tigersystem.io/${state.lang || "en"}/tigersquad`;
@@ -5843,14 +5842,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <h2 class="tsq-title" id="squadInviteTitle">${esc(t("squadInvTitle")).replace("TigerSquad", '<span class="tsq-grad">TigerSquad</span>')}</h2>
         <p class="tsq-sub">${esc(t("squadInvSub"))}</p>
         <p class="tsq-desc" id="squadInviteDesc">${esc(t("squadInvDesc"))}</p>
-        <p class="tsq-xp-chip"><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true">${esc(t("squadPerkXpTitle"))}</p>
-        <h3 class="tsq-unlocks-h">${esc(t("squadUnlocks"))}</h3>
-        <ul class="tsq-unlocks">
-          ${unlock("leagues", "tigersquad/tigersquad-scene-v3.webp", "squadHeroSub", "squadUnlockLeaguesBody")}
-          ${unlock("deals", "tigersquad/deals-scene.webp", "squadDeals", "squadUnlockDealsBody")}
-          ${unlock("items", "tigersquad/legendary/tigerscale-flat2.webp", "squadItems", "squadUnlockItemsBody")}
-          ${unlock("history", "quests/xp-history-scene.webp", "xpHistoryTitle", "squadUnlockHistoryBody")}
-          ${unlock("envelopes", "tigercoins/envelope.webp", "squadUnlockEnvTitle", "squadUnlockEnvBody")}
+        <ul class="tsq-perks">
+          ${perk("xp", "gift", "squadPerkXpTitle", "squadPerkXpBody")}
+          ${perk("badges", "badges", "squadPerkBadgesTitle", "squadPerkBadgesBody")}
+          ${perk("support", "heart", "squadPerkSupportTitle", "squadPerkSupportBody")}
         </ul>
         <section class="tsq-adventure">
           <div class="tsq-adv-head">
