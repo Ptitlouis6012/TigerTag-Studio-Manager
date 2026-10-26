@@ -19,7 +19,7 @@ import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTi
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
 import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, showEnvelopeGift, sortDeals, wireDeals } from './quests/squad-deals.js';
-import { openPullStage } from './quests/coin-pull.js';
+import { closePullStages, openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
 
@@ -4300,23 +4300,31 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // + the TigerSquad, owned when the server's split gives it XP.
     loot: () => {
       const b = state.xpBreakdown || {};
-      const IMG = { tigerScale: "icon_tigerscale_3d", tigerSpool: "icon_tigerspool_3d", tigerTouch: "icon_tigertouch_3d",
-                    tigerPod: "Icon_tigerpod_3d", td1s: "Icon_td1s_3d", mobileApp: "icon_mobile_app" };
+      // `art`: the item's illustration (assets/img/tigersquad/, docs/ART-DIRECTION.md);
+      // `img`: an assets/svg/icons/ mask for an item that has no illustration (none today).
+      const ART = { tigerScale: "loot/tigerscale", tigerSpool: "loot/tigerspool", tigerTouch: "loot/tigertouch",
+                    tigerPod: "loot/tigerpod", td1s: "loot/td1s", usbScale: "loot/usb-scale", rfidReader: "loot/rfid-reader", printer: "loot/printer",
+                    chipTag: "loot/chip", chipPlus: "loot/chip", chipCert: "loot/chip-cert",   // TigerTag and TigerTag+ share one chip
+                    mobileApp: "feats/mobile-app", squad: "tigersquad-gold", updates: "../notifications/update", speedrun: "feats/speedrun",
+                    firstRack: "feats/first-rack", firstList: "feats/first-list", friend: "feats/friends", photo: "feats/photo",
+                    social: "feats/social", link: "feats/community" };
+      const artOf = id => ART[id] ? `../assets/img/tigersquad/${ART[id]}.webp` : null;
+      const IMG = {};
       const ICON = { usbScale: "scale", rfidReader: "tag", printer: "printer", firstRack: "rack-grid", firstList: "list",
                      friend: "user", photo: "image", social: "link", link: "community" };
       // Physical things you own (devices, chips, printers) vs what you do in the
       // app (friends, links, lists…): the Items view shows them in two tables.
       const PHYSICAL = new Set(["chips", "tigerScale", "tigerSpool", "tigerTouch", "tigerPod", "td1s", "usbScale", "rfidReader", "printer"]);
-      // TigerTag chips: three common items, one per type, each physical chip (UID)
+      // TigerTag chips: three items (Certified uncommon, the others common), one per type, each physical chip (UID)
       // counted once in its CURRENT type (backend breakdown chips.tag / plus / cert):
       // a chip re-programmed or certified moves to the other item with its XP.
       const c = b.chips || {};
-      const chipItem = (id, n, per, label) => ({ id, physical: true, rarity: "common", n, per, xp: 0, got: n > 0,
-        label, hint: t("xpChipTypeHint", { xp: per }), icon: "tag", value: t("questsXpEarned", { xp: (n * per).toLocaleString(state.lang) }) });
+      const chipItem = (id, n, per, label, rarity = "common") => ({ id, physical: true, rarity, n, per, xp: 0, got: n > 0,
+        label, hint: t("xpChipTypeHint", { xp: per }), icon: "tag", art: artOf(id) });
       const chips = [
         chipItem("chipTag", c.tag ?? Math.max(0, (c.n || 0) - (state.certifiedPlusCount || 0)), 1, "TigerTag"),
         chipItem("chipPlus", c.plus || 0, 2, "TigerTag+"),
-        chipItem("chipCert", c.cert ?? (state.certifiedPlusCount || 0), 10, "TigerTag+ Certified"),
+        chipItem("chipCert", c.cert ?? (state.certifiedPlusCount || 0), 10, "TigerTag+ Certified", "uncommon"),
       ];
       // App updates: +50 XP per new released version installed, +50 more within 3
       // days of its release (backend quests.js UPDATE) — profile & community table.
@@ -4325,14 +4333,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const updN = b.updates?.n || 0, runN = Math.max(0, Math.round(((b.updates?.xp || 0) - 50 * updN) / 50));
       const upd = [
         { id: "updates", physical: false, rarity: "uncommon", n: updN, per: 50, xp: 0, got: updN > 0,
-          label: t("xpAch_updates"), hint: t("xpUpdatesHint"), icon: "download" },
+          label: t("xpAch_updates"), hint: t("xpUpdatesHint"), icon: "download", art: artOf("updates") },
         { id: "speedrun", physical: false, rarity: "uncommon", n: runN, per: 50, xp: 0, got: runN > 0,
-          label: "Speedrun", hint: t("xpSpeedrunHint"), icon: "bolt" },
+          label: "Speedrun", hint: t("xpSpeedrunHint"), icon: "bolt", art: artOf("speedrun") },
       ];
       return [...chips, ...upd, ...[...XP_ACHIEVEMENTS, { id: "squad", xp: SQUAD_XP }].map(a => ({
         id: a.id, physical: PHYSICAL.has(a.id), xp: a.xp || 0, per: a.per || 0, n: b[a.id]?.n || 0, got: (b[a.id]?.xp || 0) > 0,
         label: t(a.id === "squad" ? "xpPart_squad" : `xpAch_${a.id}`), hint: a.id === "squad" ? "" : t(`xpAchHint_${a.id}`),
-        img: IMG[a.id] ? `${IMG[a.id]}.svg` : null, icon: ICON[a.id] || null,
+        art: artOf(a.id), img: IMG[a.id] ? `${IMG[a.id]}.svg` : null, icon: ICON[a.id] || null,
       }))];
     },
   });
@@ -5215,11 +5223,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state.squadCountry = cc || null;
     fbDb(uid).collection("users").doc(uid).set({ squadCountry: cc || FV.delete() }, { merge: true }).catch(() => {});
   }
+  // Membership is checked on entry (_squadGate) AND whenever it may have changed
+  // (left the squad, another account, the user doc landed): a non-member is moved
+  // out of the squad views and any envelope stage closes.
+  function _enforceSquadGate() {
+    if (state.friendView || state.supportPublicly) return;
+    closePullStages();
+    if (["squad", "squadItems", "xpHistory", "squadDeals"].includes(state.viewMode)) setViewMode("questsToday");
+  }
+  // The squad-only actions (open, give an envelope) offer to join instead.
+  const _squadOnly = () => { if (state.supportPublicly) return true; _openSquadInvite(); return false; };
   function _setSupportPublicly(on, input) {
     const uid = state.activeAccountId; if (!uid) return;
     // Leaving the squad lifts any "Later": the invite comes back at the next start.
     if (!on) { try { localStorage.removeItem(_squadInviteKey(uid)); } catch {} }
-    state.supportPublicly = on; renderSupporterBadge(); renderFriendBanner();
+    state.supportPublicly = on; renderSupporterBadge(); renderFriendBanner(); _enforceSquadGate();
     // Returned so a caller can wait for the real write (the invite's join button).
     return fbDb(uid).collection("users").doc(uid).set({ supportPublicly: on }, { merge: true })
       .then(() => true)
@@ -5378,6 +5396,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // A gift envelope can also go, unopened, to a friend ("Give to a friend"
   // under the pile, today's allowance by TigerSquad level).
   async function _openAllEnvelopes(uid, ctx, after) {
+    if (!_squadOnly()) return;
     if (document.querySelector(".tc-reveal")) return;   // an opening is already on screen
     const set = r => { _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins)); after?.(); };
     const pull = async n => {
@@ -5471,7 +5490,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null,
         coins: coins ? _coinsOf(coins) : null });
       _paintDealsBadge(_envCount(_deals.coins));
-    } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, country: state.squadCountry || null }); }
+    } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, coins: null, country: state.squadCountry || null }); }
     paint();
   }
   // Community pulse for the Rankings view: the public totals the TigerHub page
@@ -5632,7 +5651,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           : squadHeroHtml(rctx, members);
         const rk = card.querySelector(".sqr-host"), ranked = which === "countries", legendary = which === "ach";
         rk.hidden = !(ranked || legendary); card.querySelector(".sqb-cols").hidden = ranked || legendary;
-        card.querySelector(".sqb-wall").hidden = !(ranked || legendary);
+        card.querySelector(".sqb-wall").hidden = !ranked;   // the wall-of-fame link: League only, not the Workshop
         if (ranked) {
           rk.innerHTML = squadRankingsHtml(rctx, { members, loading, pulse: _squadPulse.pulse, history: _squadPulse.history });
           _rollPulse(rk, fmt);
@@ -6001,20 +6020,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       return n;
     } catch (_) { return NaN; }
   }
-  // "407 XP · 19 certified TigerTag+" in My profile → TigerSquad.
+  // The XP changed: repaint the header's supporter badge (it carries the XP and the rank).
   function _renderSquadXp() {
     try { renderSupporterBadge(); } catch (_) {}
-    const el = $("eacSquadXp"); if (!el) return;
-    if (state.xpPoints == null) { el.classList.add("hidden"); return; }
-    el.textContent = t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 });
-    el.classList.remove("hidden");
-    el.classList.toggle("is-link", !!_ownSquadTier());   // a member opens the rankings from here
-    // Members: append the world rank once it is known ("· #3 worldwide of 9").
-    _squadRank().then(r => {
-      if (!r || !el.isConnected) return;
-      // The rank on a line of its own — a planned break, not "sur 152" wrapping alone.
-      el.innerHTML = `<span>${esc(t("squadXpLine", { xp: state.xpPoints.toLocaleString(state.lang), n: state.certifiedPlusCount || 0 }))}</span><span>${esc(t("squadRankLine", { rank: r.rank, total: r.total }))}</span>`;
-    });
   }
   const XP_COUNT_VERSION = 2;   // matches the server's counting rules (supportWebhooks.js)
   const _xpRecountAsked = new Set();   // per account, once a session
@@ -6478,7 +6486,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   $("eacSquadToggle").addEventListener("change", e => _setSupportPublicly(e.target.checked, e.target));
   $("eacSquadCountry")?.addEventListener("change", e => _setSquadCountry(e.target.value));
-  $("eacSquadXp")?.addEventListener("click", () => { if (_ownSquadTier()) _openSquadView("countries"); });
   $("eacDebugToggle").addEventListener("change", async () => {
     const enabled = $("eacDebugToggle").checked;
     state.debugEnabled = enabled;
@@ -8059,6 +8066,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     _closeAllSideCards();   // unified: never carry an open spool/group card across views
     _clearSearchFilters();
+    // The Deals cache (coins, envelopes) belongs to the previous account.
+    Object.assign(_deals, { uid: null, at: 0, docs: [], xp: 0, coins: null });
+    _paintDealsBadge(0); closePullStages();
     // Check if the target account has an active named Firebase session
     let targetUser = null;
     try { targetUser = firebase.app(id).auth().currentUser; } catch (_) {}
@@ -38618,6 +38628,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _giverAvatar = n => userAvatar({ uid: n.fromUid, displayName: n.fromName, photoURL: n.photoURL || null, color: n.color || null }, "sb-friend-avatar");
   // The modal of one "envelope_gift" notification (a click on it in the bell).
   function _showEnvelopeGiftNotif(id) {
+    if (!_squadOnly()) return;
     const n = (state.notifications || []).find(x => x.id === id);
     if (!n) { setViewMode("squadDeals"); return; }
     showEnvelopeGift({ t, esc }, { name: _shortName(n.fromName, n.fromUid),
@@ -39143,8 +39154,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       switch (cardEl.dataset.ncAct) {
         case "gift": _showEnvelopeGiftNotif(arg); break;
         case "envelopes": _openEnvelopesNow(); break;
-        case "xp": openXpHistory(); break;
-        case "progress": _openSquadView("ach"); break;
+        case "xp": if (_squadOnly()) openXpHistory(); break;
+        case "progress": if (_squadOnly()) _openSquadView("ach"); break;
         case "friend": { const f = (state.friends || []).find(x => x.uid === arg); switchToFriendView(arg, f?.displayName || "", f?.color || null); break; }
         case "whatsnew": openWhatsNew(arg || undefined, { manual: true }); break;
         case "report": openReport({ tab: "mine" }); break;
@@ -39200,7 +39211,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // given (functions/tigerCoins.js giveEnvelope; a held button sends).
   let _giveTipT = 0;
   async function _giveEnvelopeTo(friendUid = null, anchor = null) {
-    const uid = state.activeAccountId; if (!uid) return;
+    const uid = state.activeAccountId; if (!uid || !_squadOnly()) return;
     const pool = friendUid ? (state.friends || []).filter(x => x.uid === friendUid) : (state.friends || []);
     // Nothing to give: the app's info bubble over the button says why (a toast when called without one).
     const say = msg => {
@@ -39225,7 +39236,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // "Open my envelopes" from a notification: the Deals view and the opening
   // stage at once (the pile read first when the Deals have not loaded it yet).
   async function _openEnvelopesNow() {
-    const uid = state.activeAccountId; if (!uid) return;
+    const uid = state.activeAccountId; if (!uid || !_squadOnly()) return;
     setViewMode("squadDeals");
     if (!_deals.coins) { try { _deals.coins = _coinsOf(await _tigerCoins(uid, "status")); } catch (_) { return; } }
     const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
@@ -40185,7 +40196,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // No cache for this account (first time here): never keep the PREVIOUS
       // account's supporter badges on screen until syncUserDoc lands.
       state.supporter = false; state.supportPublicly = false; state.squadTier = null; state.xpPoints = null; state.certifiedPlusCount = null;
-      try { renderSupporterBadge(); } catch {}
+      try { renderSupporterBadge(); _enforceSquadGate(); } catch {}
       return;
     }
     state.isAdmin      = c.roles === "admin";
@@ -40990,6 +41001,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // Never counted, or counted under older rules (v2: inventory spools count too) → ask the server once.
       if (state.xpPoints == null || data.xpCountVersion !== XP_COUNT_VERSION) _requestXpRecount();
       if ($("eacSquadToggle")) $("eacSquadToggle").checked = state.supportPublicly;   // My profile may already be open
+      _enforceSquadGate();
       _subscribeOwnSquad(uid);
       _maybeInviteSquad();
       renderSupporterBadge();
@@ -42430,10 +42442,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       copyT = setTimeout(() => { copyBtn.textContent = t("copyLabel"); copyBtn.classList.remove("is-done"); }, 1800);
     });
     // The wiki has a French edition; every other language reads the English one.
-    $("btnMcpWebHowto").addEventListener("click", () => {
-      const url = state.lang === "fr" ? MCP_HOSTED_GUIDE.replace(".io/", ".io/fr/") : MCP_HOSTED_GUIDE;
-      window.electronAPI?.openExternal(url);
-    });
+    const guideUrl = (anchor = "") => (state.lang === "fr" ? MCP_HOSTED_GUIDE.replace(".io/", ".io/fr/") : MCP_HOSTED_GUIDE) + anchor;
+    $("btnMcpWebHowto").addEventListener("click", () => window.electronAPI?.openExternal(guideUrl()));
+    // An assistant tile: the address is copied, and the guide opens on that assistant's steps.
+    const GUIDE_ANCHOR = { claude: { en: "#claude-web-desktop-mobile", fr: "#claude-web-bureau-mobile" }, chatgpt: { en: "#chatgpt", fr: "#chatgpt" },
+      grok: { en: "#grok", fr: "#grok" }, lechat: { en: "#le-chat-mistral", fr: "#le-chat-mistral" } };
+    document.querySelectorAll("#eacMcpWeb [data-mcp-web]").forEach(btn => btn.addEventListener("click", async () => {
+      try { await navigator.clipboard.writeText($("eacMcpWebUrl").textContent.trim()); } catch (_) {}
+      const a = GUIDE_ANCHOR[btn.dataset.mcpWeb];
+      window.electronAPI?.openExternal(guideUrl(state.lang === "fr" ? a.fr : a.en));
+      _flashMessage(t("eacMcpWebCopiedFor", { app: btn.dataset.mcpApp }));
+    }));
     const idToken = () => firebase.app(state.activeAccountId).auth().currentUser?.getIdToken();
     const line = (key, kind) => { list.innerHTML = `<div class="eac-mcp-grants-note"${kind ? ` data-kind="${kind}"` : ""}>${esc(t(key))}</div>`; };
     const day = (iso) => { const d = iso ? new Date(iso) : null; return d && !isNaN(d) ? d.toLocaleDateString(state.lang) : "—"; };

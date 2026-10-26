@@ -1235,6 +1235,8 @@
   /* 38px min-height rather than padding: rows keep a steady rhythm whether they
      hold a 22px toggle, a 30px segmented control or a plain line of text. */
   #editAccountModalOverlay .eac-row { padding: 0; min-height: 38px; }
+  /* Rows holding a select or a segmented control are as tall as the row: keep air between them. */
+  #editAccountModalOverlay .eac-row + .eac-row, #editAccountModalOverlay .eac-row + .hidden + .eac-row { margin-top: 8px; }
   #editAccountModalOverlay .eac-row-label {
     font-size: 14px; font-weight: 400; color: var(--text);
     display: inline-flex; align-items: center; gap: 6px;
@@ -1276,6 +1278,12 @@
   .eac-mcp-logo--claude { background-color: #D97757; -webkit-mask-image: url('../../assets/svg/brands/claude.svg'); }
   .eac-mcp-logo--cursor { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/brands/cursor.svg'); }
   .eac-mcp-logo--vscode { background-color: #007ACC; -webkit-mask-image: url('../../assets/svg/brands/vscode.svg'); }
+  .eac-mcp-logo--chatgpt { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/brands/chatgpt.svg'); }
+  .eac-mcp-logo--grok { background-color: var(--text); -webkit-mask-image: url('../../assets/svg/brands/grok.svg'); }
+  /* Mistral's logo is multicoloured: drawn as an image, not a tinted mask. */
+  .eac-mcp-logo--mistral { background: url('../../assets/svg/brands/mistral.svg') center / contain no-repeat; }
+  /* Online connector card: one tile per web assistant (the explanation is in the title's info bubble). */
+  #editAccountModalOverlay .eac-mcp-apps--web { grid-template-columns: repeat(4, 1fr); margin: 10px 0 8px; }
   #editAccountModalOverlay .eac-mcp-foot {
     display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
   }
@@ -5233,7 +5241,6 @@ body.ttag-dragging .ttag-drop-hint { display: flex; }
 #editAccountModalOverlay .eac-row:has(.eac-squad-label) { align-items: flex-start; }
 #editAccountModalOverlay .eac-row:has(.eac-squad-label) .eac-toggle { margin-top: 2px; }
 #editAccountModalOverlay .eac-squad-label.eac-squad-label { flex-direction: column; align-items: flex-start; gap: 3px; }
-#editAccountModalOverlay .eac-squad-xp > span { display: block; }
 /* Colour strip a touch quieter: 16 px dots, the custom picker a little larger. */
 #editAccountModalOverlay .eac-hero .eac-swatch { width: 16px; height: 16px; }
 #editAccountModalOverlay .eac-hero .eac-swatch-custom { width: 22px; height: 22px; }

@@ -384,6 +384,11 @@ body.progress-view #gridSortWrap { display: none; }
    variables that block reads. */
 .sqr-hero { --qw-display: var(--sqr-display); --qw-bg: #0b0d14; --qw-tiger: #ff7a1a; }
 .sqr-hero h2 { margin: 0; font: 800 52px/0.95 var(--sqr-display); letter-spacing: .01em; color: #fff; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
+/* Every Tiger Squad banner keeps its title and tagline on one line, shrinking
+   with the banner: wrapped, they pushed the eyebrow and the tagline out of it. */
+.sqr-hero .qm-hero-txt { flex: 0 1 auto; min-width: 0; }
+.sqr-hero h2 { white-space: nowrap; font-size: clamp(28px, 3.4cqi, 52px); }
+.sqr-hero .qm-hero-txt p { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: clamp(11px, 1.15cqi, 14px); letter-spacing: clamp(.2em, .03cqi, .42em); }
 .sqr-join { height: 34px; padding: 0 16px; border: none; border-radius: 9px; cursor: pointer; font: 800 13px inherit; color: #17120e; background: linear-gradient(180deg, #ff8a2e, #ff6f12); }
 
 .squad-board--inline .sqb-tabs { background: #121624; }
@@ -673,7 +678,8 @@ body.progress-view #gridSortWrap { display: none; }
   .sqr-hero .sqr-card { grid-template-areas: "me"; }
   .sqr-hero .sqr-card-ranks { display: none; }
 }
-@container (max-width: 730px) { .sqr-hero:not(.qd-hero) > .hero-scene { display: none; } }
+/* The one-line title needs the room: the scene leaves first (the rank card / coins stay). */
+@container (max-width: 1000px) { .sqr-hero:not(.qd-hero) > .hero-scene { display: none; } }
 @container (max-width: 960px) { .qm-hero > .qm-hero-card { display: none; } }
 @container (max-width: 715px) { .qm-hero:not(.qd-hero) > .hero-scene { display: none; } }
 @container (max-width: 765px) { .qd-hero > .hero-scene { display: none; } }
@@ -897,42 +903,23 @@ body.progress-view #gridSortWrap { display: none; }
 .sqi-item--tigerspool-flat2 { height: 92px; }
 .sqi-item--tigertouch-flat3 { height: 70px; }
 .sqi-item--tigerpod-flat2 { height: 96px; }
-@container (max-width: 900px) { .sqi-hero .sqi-item--tigerspool-flat2, .sqi-hero .sqi-item--tigerpod-flat2 { display: none; } }
+/* Narrower: the devices go first (two, then all), the tiger and the next-level card stay. */
+@container (max-width: 1380px) { .sqi-hero .sqi-item--tigerspool-flat2, .sqi-hero .sqi-item--tigerpod-flat2 { display: none; } }
+@container (max-width: 1180px) { .sqi-hero .sqi-item { display: none; } }
 @container (max-width: 640px) { .sqi-hero .sqi-scene { display: none; } }
-/* Items view — two panels of rarity cards (lootHtml / ladderHtml). The rarity
-   is the card's own colour (--c: Diablo — legendary orange, epic green, rare
-   yellow, uncommon blue, common white); owned cards glow, the rest are dimmed
+/* Items view — two panels (lootHtml / ladderHtml). The rarity is the item's
+   own colour (--c: Diablo — legendary orange, epic green, rare yellow, uncommon
+   blue, common white); owned legendary relics glow, items not owned are dimmed
    with a lock. Side by side on wide windows, stacked below 1300 px. */
 .qw-ladders { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
 @media (min-width: 1300px) { .qw-ladders { grid-template-columns: 1fr 1fr; } }
-.qw-ladders .qw-ladder { margin: 0; }
+/* The two columns sit straight on the page (no panel behind them): lighter, the items carry the colour. */
+.qw-ladders .qw-ladder.qw-panel { margin: 0; padding: 4px 0 0; background: none; border: 0; clip-path: none; box-shadow: none; }
+.qw-ladders { gap: 28px; }
 .qw-ladder-sum { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .qw-ladder-sum b { font: 800 20px var(--qw-mono); color: var(--qw-ink); }
 .qw-ladder-sum span { font: 700 12px var(--qw-mono); color: var(--qw-tiger2); }
 .qw-ladders .qw-quest-head { display: flex; align-items: flex-end; gap: 12px; }
-.qw-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
-.qw-card { --c: #e2e2e2; position: relative; display: flex; flex-direction: column; gap: 4px; padding: 12px 12px 10px; border-radius: 12px; min-height: 132px;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--c) 9%, transparent), rgba(0, 0, 0, .25) 60%);
-  border: 1px solid color-mix(in srgb, var(--c) 22%, var(--qw-line)); border-top: 3px solid color-mix(in srgb, var(--c) 40%, transparent);
-  opacity: .58; transition: border-color .2s, box-shadow .2s, opacity .2s; }
-.qw-card--legendary { --c: #ff8000; } .qw-card--epic { --c: #1eff4a; } .qw-card--rare { --c: #ffe94a; } .qw-card--uncommon { --c: #6e8cff; }
-.qw-card.is-got { opacity: 1; border-color: color-mix(in srgb, var(--c) 55%, var(--qw-line)); border-top-color: var(--c); }
-/* Only a legendary relic glows once owned. */
-.qw-card--legendary.is-got { box-shadow: 0 0 18px color-mix(in srgb, var(--c) 22%, transparent), inset 0 0 22px color-mix(in srgb, var(--c) 12%, transparent); }
-.qw-card:hover { border-color: color-mix(in srgb, var(--c) 80%, var(--qw-line)); }
-.qw-card-ic { width: 40px; height: 40px; display: grid; place-items: center; margin-bottom: 2px; }
-.qw-card-ic .icon { width: 26px; height: 26px; background: var(--c); }
-.qw-card-n { position: absolute; top: 10px; right: 10px; padding: 2px 8px; border-radius: 99px; font: 800 12px var(--qw-mono); color: var(--qw-ink);
-  background: color-mix(in srgb, var(--c) 22%, rgba(0, 0, 0, .4)); }
-.qw-card-name { font-size: 14px; color: var(--qw-ink); line-height: 1.25; }
-.qw-card-hint { font-size: 11.5px; line-height: 1.35; color: var(--qw-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.qw-card-foot { margin-top: auto; padding-top: 6px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 2px 6px; }
-.qw-card-rar { white-space: nowrap; }
-.qw-card-rar { font: 700 10px var(--qw-display); text-transform: uppercase; letter-spacing: .1em; color: var(--c); }
-.qw-card-xp { display: inline-flex; align-items: center; gap: 4px; font: 700 12px var(--qw-mono); color: var(--c); white-space: nowrap; }
-.qw-card-xp .icon-check { background: var(--qw-ok); } .qw-card-xp .icon-lock { background: var(--qw-muted); }
-/* Grimoire groups: relics as showcase tiles, gear as small tiles, chips and
-   feats as row cards (icon left, text, rarity + XP underneath). */
 .qw-ladder-sum { min-width: min(46%, 280px); }
 .qw-ladder-sum b { font-size: 16px; }
 .qw-ladder-bar { align-self: stretch; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, .08); overflow: hidden; position: relative; }
@@ -941,18 +928,65 @@ body.progress-view #gridSortWrap { display: none; }
 .qw-group + .qw-group { margin-top: 6px; }
 .qw-group-h { margin: 0; font: 700 13px var(--qw-display); color: var(--qw-tiger2); letter-spacing: .02em; }
 .qw-group-h span { color: var(--qw-muted); font-weight: 600; }
-.qw-cards--relics, .qw-cards--gear { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.qw-cards--relics .qw-card { min-height: 160px; }
-.qw-cards--relics .qw-card-ic, .qw-cards--relics .qw-item-mask { width: 60px; height: 60px; }
-.qw-cards--gear .qw-card { min-height: 118px; }
-.qw-cards--chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.qw-cards--rows { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-@media (max-width: 760px) { .qw-cards--relics, .qw-cards--gear { grid-template-columns: repeat(2, minmax(0, 1fr)); } .qw-cards--chips, .qw-cards--rows { grid-template-columns: 1fr; } }
-.qw-cards--chips .qw-card, .qw-cards--rows .qw-card { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: 1fr auto; column-gap: 12px; min-height: 96px; align-items: center; }
-.qw-cards--chips .qw-card-ic, .qw-cards--rows .qw-card-ic { grid-row: 1 / 3; margin: 0; }
-.qw-cards--chips .qw-card-txt, .qw-cards--rows .qw-card-txt { padding-right: 34px; }
-.qw-cards--chips .qw-card-foot, .qw-cards--rows .qw-card-foot { grid-column: 2; padding-top: 4px; }
-.qw-card-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+/* Loot tiles (relics large, gear 4 across, chips 3 across) and Feats rows
+   (art · name + hint · ×N · rarity · XP · status, every column always present). */
+.qw-r--legendary { --c: #ff8000; } .qw-r--epic { --c: #1eff4a; } .qw-r--rare { --c: #ffe94a; } .qw-r--uncommon { --c: #6e8cff; } .qw-r--common { --c: #e2e2e2; }
+.qw-tiles { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.qw-tiles--chips { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .qw-tiles, .qw-tiles--chips { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.qw-tile { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; padding: 10px 8px 10px; border-radius: 12px; text-align: center;
+  background: rgba(0, 0, 0, .22); border: 1.5px solid color-mix(in srgb, var(--c) 30%, var(--qw-line)); transition: border-color .2s, transform .2s; }
+.qw-tile.is-got { border-color: color-mix(in srgb, var(--c) 65%, transparent); }
+.qw-tile:hover { border-color: var(--c); transform: translateY(-3px); box-shadow: 0 6px 16px -8px var(--c); }
+/* Hovered: the art hops (a sound plays with it, quests/index.js). */
+@media (prefers-reduced-motion: no-preference) {
+  .qw-tile:hover .qw-tile-art img { animation: qw-hop .55s cubic-bezier(.3, 1.6, .5, 1); }
+}
+@keyframes qw-hop { 0% { transform: none; } 40% { transform: translateY(-7px) rotate(-6deg) scale(1.1); } 70% { transform: translateY(0) rotate(3deg); } 100% { transform: none; } }
+.qw-tile-art { position: relative; width: 68px; height: 68px; display: grid; place-items: center; }
+.qw-tile-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .45)); }
+.qw-tile-art .icon { width: 28px; height: 28px; background: var(--c); }
+.qw-tile-name { max-width: 100%; margin-top: 2px; font-size: 13px; color: var(--qw-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qw-tiles--relics .qw-tile { padding: 12px 8px; border-width: 2px; background: radial-gradient(110% 70% at 50% 0%, color-mix(in srgb, var(--c) 18%, transparent), transparent 70%), rgba(0, 0, 0, .22); }
+.qw-tiles--relics .qw-tile.is-got { box-shadow: 0 0 22px -8px var(--c); }
+.qw-tiles--relics .qw-tile-art { width: 92px; height: 92px; }
+/* Gear is mostly wide objects (scale, sensor): a wider box so they read as large as the round chips. */
+.qw-tiles--gear .qw-tile-art { width: 96px; height: 72px; }
+.qw-tiles--relics .qw-tile-name { font-size: 14px; }
+/* Not owned yet: the name and rarity dimmed. */
+.qw-tile:not(.is-got) .qw-tile-name, .qw-tile:not(.is-got) .qw-rar { opacity: .55; }
+/* Not owned yet: the art as a black silhouette, like the banner's devices. */
+.qw-tile:not(.is-got) .qw-tile-art { filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .5)); opacity: .7; }
+.qw-n { position: absolute; top: 6px; right: 6px; padding: 1px 7px; border-radius: 99px; font: 800 11px var(--qw-mono); color: #0f1117; background: var(--c); }
+.qw-rar { font: 700 10px var(--qw-display); text-transform: uppercase; letter-spacing: .12em; color: var(--c); white-space: nowrap; }
+.qw-pts { display: inline-flex; align-items: center; justify-content: center; gap: 4px; margin-top: 3px; padding: 2px 9px; border-radius: 99px;
+  font: 800 11.5px var(--qw-mono); color: var(--qw-tiger2); background: rgba(255, 255, 255, .06); white-space: nowrap; }
+.qw-pts .icon { background: var(--qw-muted); }
+/* On a tile the XP rides the card's top edge, centred and overhanging (like the Deals badges). */
+.qw-tiles { row-gap: 18px; padding-top: 10px; }
+.qw-tile { padding-top: 16px; }
+.qw-tile .qw-pts { position: absolute; top: 0; left: 50%; translate: -50% -50%; z-index: 1; margin: 0; padding: 3px 11px;
+  border: 1.5px solid color-mix(in srgb, var(--c) 65%, transparent); background: #161b2c; box-shadow: 0 2px 6px rgba(0, 0, 0, .4); }
+.qw-tile.is-got .qw-pts { color: #0f1117; background: var(--c); border-color: var(--c); }
+.qw-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.qw-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) 40px auto 104px 20px; align-items: center; gap: 10px; padding: 7px 12px 7px 8px; border-radius: 11px;
+  background: rgba(0, 0, 0, .22); border: 1px solid var(--qw-line); border-left: 3px solid var(--c); transition: border-color .2s; }
+.qw-row:hover { border-color: color-mix(in srgb, var(--c) 60%, var(--qw-line)); border-left-color: var(--c); }
+.qw-row:not(.is-got) { opacity: .55; border-left-style: dashed; }
+.qw-row:not(.is-got) .qw-row-art { filter: grayscale(1); }
+.qw-row-art { width: 38px; height: 38px; display: grid; place-items: center; }
+.qw-row-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.qw-row-art .icon { width: 22px; height: 22px; background: var(--c); }
+.qw-row-art .qw-item-mask { width: 26px; height: 26px; }
+.qw-row-txt { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.qw-row-txt b { font-size: 13.5px; color: var(--qw-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qw-row-txt small { font-size: 11.5px; color: var(--qw-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qw-cnt { justify-self: end; font: 800 11px var(--qw-mono); color: var(--qw-muted); }
+.qw-cnt:not(:empty) { padding: 1px 7px; border-radius: 99px; background: rgba(255, 255, 255, .08); }
+.qw-row .qw-rar { justify-self: end; }
+.qw-row .qw-pts { margin: 0; }
+.qw-st { display: grid; place-items: center; }
+.qw-st .icon-check { background: var(--qw-ok); } .qw-st .icon-lock { background: var(--qw-muted); }
 /* Secret bonus mission (a `secret` level, shown once its rank's other levels are
    won): the sixth card of the row, purple and gold, with a "Secret mission" tag
    and a soft pulse when it appears. */
@@ -1011,7 +1045,7 @@ body.progress-view #gridSortWrap { display: none; }
 @media (prefers-reduced-motion: reduce) { .qm-secret-wrap > .qm-card.is-won, .qm-secret-wrap > .qm-card.is-won::after { animation: none; } }
 /* Items banner — the next squad level in the right card (same frame as the
    Rankings card): badges, title, progress, the how in one short line. */
-.sqr-card.sqi-next { display: block; width: 360px; max-width: 40%; padding: 10px 14px; }
+.sqr-card.sqi-next { display: block; flex-shrink: 0; width: 340px; max-width: 34%; padding: 10px 14px; }
 .sqi-next .sqb-next { display: flex; align-items: center; gap: 12px; padding: 0; border: 0; background: none; }
 .sqi-next .sqb-next-badge { width: 42px; height: 42px; }
 .sqi-next .sqb-next-body { gap: 4px; }
@@ -1019,7 +1053,7 @@ body.progress-view #gridSortWrap { display: none; }
 .sqi-next .sqb-next-body p { font-size: 11.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .sqi-next .sqb-next-alt { display: none !important; }
 .sqi-next .sqb-next-cta { align-self: flex-start; padding: 4px 10px; font-size: 12px; }
-@container (max-width: 1100px) { .sqi-hero .sqr-card.sqi-next { display: none; } }
+@container (max-width: 980px) { .sqi-hero .sqr-card.sqi-next { display: none; } }
 
 /* ── Tiger Squad Deals (quests/squad-deals.js) ───────────────────────────────
    Same hero as the Grimoire (wall, desk, the tiger behind it) with two glowing

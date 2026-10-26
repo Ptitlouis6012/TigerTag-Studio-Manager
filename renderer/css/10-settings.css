@@ -663,7 +663,6 @@
 .sq-gold     { --sq-a: #FFD600; --sq-b: #FF9F1C; --sq-ink: #1a1205; }
 .sq-platinum { --sq-a: #6CB8FF; --sq-b: #2F6FE0; --sq-ink: #0b1630; }   /* the blue of the Platinum crystals */
 
-.eac-squad-xp { margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--text); }
 .eac-squad-label.eac-squad-label, .eac-squad-label > * { text-align: left; align-self: flex-start; }
 /* Avatars sized in % of their container (my own banner's edit button) keep it through the heart wrapper. */
 .fvb-avatar-edit .av-squad-host { width: 100%; height: 100%; }
@@ -995,8 +994,7 @@
 .sqb-empty { padding: 18px; text-align: center; font-size: 13px; color: var(--tsq-muted); }
 .sqb-wall { align-self: center; border: none; background: none; color: var(--tsq-muted); font-family: inherit; font-size: 12.5px; cursor: pointer; }
 .sqb-wall:hover { color: var(--tsq-orange); text-decoration: underline; }
-.eac-squad-xp.is-link { cursor: pointer; }
-.eac-squad-xp.is-link:hover { color: var(--primary); text-decoration: underline; }
+.sqb-wall[hidden] { display: none; }   /* the global button rule sets display: flex */
 .sqb-row { text-align: left; }
 .sqb-name { align-items: flex-start; }
 .sqb-n1 { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

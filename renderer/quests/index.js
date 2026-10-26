@@ -30,6 +30,8 @@ const RANKS = 20;                      // ranks announced in the app; the server
 const rankIcon = n => `<span class="qm-rank-ic" style="--ico:url('../../assets/svg/ranks/rank-${String(n).padStart(2, "0")}.svg')" aria-hidden="true"></span>`;
 const RANK_IDS = { discovery: 1, explorer: 2 };
 
+import { sfx } from "./coin-sound.js";
+
 let _ctx = null;
 let _uid = null;
 let _unsubs = [];
@@ -484,16 +486,24 @@ function untilMidnight() {
 
 // Loot: every XP item the account can own, by rarity — legendary on top
 // (Tiger devices). Owned items glow; the rest show what they are worth.
-// ctx.loot() → [{ id, label, hint, xp, per, n, got, img?, icon?, rarity?, value? }] from the host
-// (rarity forces the rung, value replaces the "+XP" text);
+// ctx.loot() → [{ id, label, hint, xp, per, n, got, art?, img?, icon?, rarity? }] from the host
+// (rarity forces the rung); `art` is an illustration path (from inventory.html);
 // `img` is a file of assets/svg/icons/ drawn as a mask — the url() sits in a CSS
 // variable, so it resolves from quests.css (renderer/quests/), hence ../../.
 const RARITIES = [["legendary", 800], ["epic", 300], ["rare", 100], ["uncommon", 20], ["common", 0]];
 export function questLootHtml() { return lootHtml(); }
+// Loot tiles answer the pointer: the art hops (quests.css) and a soft note plays,
+// higher with the rarity. One delegated listener for every Workshop render.
+const RARITY_STEP = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+document.addEventListener("pointerover", e => {
+  const tile = e.target.closest?.(".qw-tile");
+  if (!tile || tile.contains(e.relatedTarget)) return;
+  sfx.hover(RARITY_STEP[tile.dataset.r] ?? 0);
+});
 // The Maker's workshop (formerly the Grimoire): two panels side by side — Loot (the physical items: devices,
 // chips, printers) and Feats (the rewarded actions: friends, links, updates…).
 // Loot is split in three groups (legendary relics as large showcase tiles, gear,
-// chips); Feats is one list of row cards. The rarity is carried by the card
+// chips); Feats is one list of rows. The rarity is carried by the card
 // itself (colour, chip); only legendary cards glow once owned, so the green of
 // Epic stays a rarity, not an "owned" signal.
 // The chips always read up the range: TigerTag → TigerTag+ → TigerTag+ Certified.
@@ -520,22 +530,40 @@ function ladderHtml(items, eyebrowKey, titleKey, countKey, groups) {
     : order.indexOf(p.r) - order.indexOf(q.r) || earnedOf(q) - earnedOf(p));
   const got = sorted.filter(x => x.got).length;
   const xp = sorted.reduce((s, x) => s + earnedOf(x), 0);
-  const card = x => `
-    <article class="qw-card qw-card--${x.r}${x.got ? " is-got" : ""}">
-      <span class="qw-card-ic" aria-hidden="true">${x.img ? `<span class="qw-item-mask" style="--ico:url('../../assets/svg/icons/${x.img}')"></span>` : `<span class="icon icon-${x.icon || "star-fill"} icon-20"></span>`}</span>
-      ${x.per && x.n ? `<span class="qw-card-n">×${x.n}</span>` : ""}
-      <span class="qw-card-txt"><b class="qw-card-name">${esc(x.label)}</b>
-      <small class="qw-card-hint">${esc(x.hint || "")}</small></span>
-      <span class="qw-card-foot">
-        <span class="qw-card-rar">${esc(t(`questsRarity_${x.r}`))}</span>
-        <span class="qw-card-xp">${x.got ? `<span class="icon icon-check icon-12" aria-hidden="true"></span>` : `<span class="icon icon-lock icon-11" aria-hidden="true"></span>`}${esc(x.value || (x.per ? t("xpPerItem", { xp: x.per }) : `+${x.xp} XP`))}</span>
-      </span>
+  // The XP pill: what the item brought (×N items: their total), or what it is worth.
+  const pts = x => x.per ? (x.n ? `+${earnedOf(x).toLocaleString()} XP` : t("xpPerItem", { xp: x.per })) : `+${x.xp.toLocaleString()} XP`;
+  // Illustration (`art`), else the svg mask (`img`), else an app icon.
+  const art = x => x.art ? `<img src="${x.art}" alt="" loading="lazy" draggable="false">`
+    : x.img ? `<span class="qw-item-mask" style="--ico:url('../../assets/svg/icons/${x.img}')"></span>`
+    : `<span class="icon icon-${x.icon || "star-fill"} icon-20"></span>`;
+  const rar = x => `<span class="qw-rar">${esc(t(`questsRarity_${x.r}`))}</span>`;
+  const status = x => x.got ? `<span class="icon icon-check icon-14" aria-hidden="true"></span>` : `<span class="icon icon-lock icon-12" aria-hidden="true"></span>`;
+  // Loot: a showcase tile (legendary relics larger); Feats: one row per action,
+  // every column always present so the rows line up (an empty ×N cell included).
+  const tile = x => `
+    <article class="qw-tile qw-r--${x.r}${x.got ? " is-got" : ""}" data-r="${x.r}" aria-label="${esc(`${x.label} — ${x.hint || ""}`)}">
+      ${x.per && x.n ? `<span class="qw-n">×${x.n}</span>` : ""}
+      <span class="qw-tile-art" aria-hidden="true">${art(x)}</span>
+      <b class="qw-tile-name">${esc(x.label)}</b>
+      ${x.r === "legendary" ? "" : rar(x)}
+      <span class="qw-pts">${x.got ? "" : `<span class="icon icon-lock icon-10" aria-hidden="true"></span>`}${esc(pts(x))}</span>
     </article>`;
+  const row = x => `
+    <li class="qw-row qw-r--${x.r}${x.got ? " is-got" : ""}">
+      <span class="qw-row-art" aria-hidden="true">${art(x)}</span>
+      <span class="qw-row-txt"><b>${esc(x.label)}</b>${x.hint ? `<small>${esc(x.hint)}</small>` : ""}</span>
+      <span class="qw-cnt">${x.per && x.n ? `×${x.n}` : ""}</span>
+      ${rar(x)}
+      <span class="qw-pts">${esc(pts(x))}</span>
+      <span class="qw-st">${status(x)}</span>
+    </li>`;
   const group = ([key, keep, layout]) => {
     const list = sorted.filter(keep);
     if (!list.length) return "";
-    const head = key ? `<h3 class="qw-group-h">${esc(t(key))}${layout === "relics" ? ` <span>· ${list.filter(x => x.got).length} / ${list.length}</span>` : ""}</h3>` : "";
-    return `<div class="qw-group">${head}<div class="qw-cards qw-cards--${layout}">${list.map(card).join("")}</div></div>`;
+    const head = key ? `<h3 class="qw-group-h">${esc(t(key))} <span>· ${list.filter(x => x.got).length} / ${list.length}</span></h3>` : "";
+    const body = layout === "rows" ? `<ul class="qw-rows">${list.map(row).join("")}</ul>`
+      : `<div class="qw-tiles qw-tiles--${layout}">${list.map(tile).join("")}</div>`;
+    return `<div class="qw-group">${head}${body}</div>`;
   };
   const pct = Math.round(got / sorted.length * 100);
   return `

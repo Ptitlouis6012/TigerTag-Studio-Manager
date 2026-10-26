@@ -65,9 +65,10 @@ depend on the local toggle and is never greyed: it works without Studio.
 
 | Element | What happens |
 |---|---|
+| **Claude / ChatGPT / Grok / Le Chat** tiles | copy the address and open that assistant's section of the guide (`#claude-web-desktop-mobile`, `#chatgpt`, `#grok`, `#le-chat-mistral`; French anchors on `/fr/`), with a toast |
 | Address + **Copy** | copies `https://mcp.tigersystem.io/mcp`, to paste as a custom connector in Claude.ai / ChatGPT / Codex / Cursor |
 | **How to connect** | opens the public guide externally — `wiki.tigersystem.io/guides/connect-an-ai-assistant/` (`/fr/` edition when Studio is in French) |
-| One-line difference | local = only while Studio is open, sees live printer state; online = anywhere without Studio, no live printer state |
+| Info bubbles | on the online card's title: what it is (`eacMcpWebSub`); on the local "AI assistants" card's title: local = only while Studio is open, sees live printer state; online = anywhere without Studio, no live printer state (`eacMcpWebDiff`) |
 | **Connected online assistants** | `GET https://tigersystem.io/api/account/mcp-grants` with the signed-in account's Firebase ID token → one row per grant (name, connected date, last used) |
 | **Cut access** (hold 1.5 s) | `DELETE …/mcp-grants?id=<id>` — 204 or 404 both remove the row |
 

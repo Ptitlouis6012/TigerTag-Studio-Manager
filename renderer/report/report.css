@@ -565,11 +565,13 @@
 .rep-squad--in .rep-coffee-cta.rep-coffee-cta { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .rep-squad--in .rep-coffee-cta.rep-coffee-cta:hover { background: var(--surface-2); filter: none; }
 
-/* Step 1 — which part of the ecosystem: the topic cards, in the brand orange,
-   each with the product's own artwork. */
+/* Step 1 — which part of the ecosystem: the topic cards, each with the
+   product's own artwork in white on the orange-tinted tile. */
 .rep-step-title { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 4px 2px -2px; }
 .rep-kind-card--product { --ki: var(--primary); --kt: color-mix(in srgb, var(--primary) 14%, var(--surface-2)); }
-.rep-kind-card--product .rep-target-ico { width: 36px; height: 36px; background-color: var(--primary); transition: transform 180ms; }
+.rep-kind-card--product .rep-target-ico { width: 36px; height: 36px; background-color: var(--on-accent); transition: transform 180ms; }
+/* White artwork: the light theme's pale tile turns into a filled orange one so it still reads. */
+:root:not([data-theme="dark"]) .rep-kind-card--product { --kt: var(--primary); }
 .rep-kind-card--product:hover .rep-target-ico { transform: scale(1.06); }
 /* Step 2 — the product picked, as a way back. */
 .rep-picked.rep-picked {

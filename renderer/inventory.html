@@ -2099,6 +2099,24 @@
       </section>
 
 
+      <!-- Community, right under the profile: the TigerSquad toggle and its flag. -->
+      <section class="eac-group">
+        <h3 class="eac-card-title"><span class="icon icon-heart icon-14" aria-hidden="true"></span><span data-i18n="eacGroupCommunity">Community</span></h3>
+        <div class="eac-row">
+          <span class="eac-row-label eac-squad-label">
+            <span data-i18n="squadJoin">Join the TigerSquad</span>
+          </span>
+          <label class="eac-toggle">
+            <input type="checkbox" id="eacSquadToggle" />
+            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
+          </label>
+        </div>
+        <!-- The flag your XP counts for in the TigerSquad countries ranking. -->
+        <div class="eac-row">
+          <span class="eac-row-label" data-i18n="squadCountryLabel">Your flag</span>
+          <select id="eacSquadCountry"></select>
+        </div>
+      </section>
       <section class="eac-group">
         <h3 class="eac-card-title"><span class="icon icon-settings icon-14" aria-hidden="true"></span><span data-i18n="eacGroupPrefs">Preferences</span></h3>
         <div class="eac-row">
@@ -2207,7 +2225,7 @@
       <div class="eac-col">
       <!-- ── AI assistants (local MCP server, read-only) — per profile ── -->
       <section class="eac-group" id="eacMcpGroup">
-        <h3 class="eac-card-title"><span class="icon icon-sparkle icon-14" aria-hidden="true"></span><span data-i18n="stgMcpTitle">AI assistants</span></h3>
+        <h3 class="eac-card-title"><span class="icon icon-sparkle icon-14" aria-hidden="true"></span><span data-i18n="stgMcpTitle">AI assistants</span> <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebDiff" data-tip="On this computer: only while Studio is open, but it sees your printers live. Online: works anywhere without Studio, minus the live printer view." data-i18n-aria="stgMcpTitle"><span class="icon icon-info icon-13"></span></span></h3>
         <div class="eac-row">
           <span class="eac-row-label">
             <span data-i18n="eacMcpRow">Let an AI read my inventory</span>
@@ -2247,7 +2265,22 @@
 
       <!-- Hosted connector (Tiger Hub) — independent of the local toggle above -->
       <section class="eac-group eac-mcp-web" id="eacMcpWeb">
-        <h3 class="eac-card-title"><span class="icon icon-globe icon-14" aria-hidden="true"></span><span data-i18n="eacMcpWebTitle">From the web and your phone</span> <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebSub" data-tip="Claude.ai, ChatGPT and their phone apps can read your stock too — nothing to install, just add this address as a custom connector." data-i18n-aria="eacMcpWebTitle"><span class="icon icon-info icon-13"></span></span></h3>
+        <h3 class="eac-card-title"><span class="icon icon-globe icon-14" aria-hidden="true"></span><span data-i18n="eacMcpWebTitle">From the web and your phone</span> <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebSub" data-tip="On the web or in their phone apps, these assistants can read your stock too — nothing to install: add this address as a custom connector." data-i18n-aria="eacMcpWebTitle"><span class="icon icon-info icon-13"></span></span></h3>
+        <!-- One tile per assistant: copies the address and opens that assistant's section of the guide. -->
+        <div class="eac-mcp-apps eac-mcp-apps--web">
+          <button type="button" class="eac-mcp-app" data-mcp-web="claude" data-mcp-app="Claude">
+            <span class="eac-mcp-logo eac-mcp-logo--claude" aria-hidden="true"></span><span class="eac-mcp-name">Claude</span>
+          </button>
+          <button type="button" class="eac-mcp-app" data-mcp-web="chatgpt" data-mcp-app="ChatGPT">
+            <span class="eac-mcp-logo eac-mcp-logo--chatgpt" aria-hidden="true"></span><span class="eac-mcp-name">ChatGPT</span>
+          </button>
+          <button type="button" class="eac-mcp-app" data-mcp-web="grok" data-mcp-app="Grok">
+            <span class="eac-mcp-logo eac-mcp-logo--grok" aria-hidden="true"></span><span class="eac-mcp-name">Grok</span>
+          </button>
+          <button type="button" class="eac-mcp-app" data-mcp-web="lechat" data-mcp-app="Le Chat">
+            <span class="eac-mcp-logo eac-mcp-logo--mistral" aria-hidden="true"></span><span class="eac-mcp-name">Le Chat</span>
+          </button>
+        </div>
         <div class="eac-mcp-url">
             <code id="eacMcpWebUrl">https://mcp.tigersystem.io/mcp</code>
             <button type="button" class="eac-mcp-copy" id="btnMcpWebCopy" data-i18n="copyLabel">Copy</button>
@@ -2257,7 +2290,6 @@
             <span data-i18n="eacMcpWebHowto">How to connect</span>
             <span class="icon icon-arrow-r icon-11" aria-hidden="true"></span>
           </button>
-          <span class="eac-info" tabindex="0" role="button" data-i18n-tip="eacMcpWebDiff" data-tip="On this computer: only while Studio is open, but it sees your printers live. Online: works anywhere without Studio, minus the live printer view." data-i18n-aria="eacMcpWebTitle"><span class="icon icon-info icon-13"></span></span>
         </div>
       </section>
 
@@ -2268,25 +2300,6 @@
         <div class="eac-mcp-grants" id="eacMcpGrants"></div>
       </section>
 
-      <!-- Community sits in the right column: the left one grows with the social links (up to 5). -->
-      <section class="eac-group">
-        <h3 class="eac-card-title"><span class="icon icon-heart icon-14" aria-hidden="true"></span><span data-i18n="eacGroupCommunity">Community</span></h3>
-        <div class="eac-row">
-          <span class="eac-row-label eac-squad-label">
-            <span data-i18n="squadJoin">Join the TigerSquad</span>
-            <span class="eac-squad-xp hidden" id="eacSquadXp"></span>
-          </span>
-          <label class="eac-toggle">
-            <input type="checkbox" id="eacSquadToggle" />
-            <span class="eac-toggle-track"><span class="eac-toggle-thumb"></span></span>
-          </label>
-        </div>
-        <!-- The flag your XP counts for in the TigerSquad countries ranking. -->
-        <div class="eac-row">
-          <span class="eac-row-label" data-i18n="squadCountryLabel">Your flag</span>
-          <select id="eacSquadCountry"></select>
-        </div>
-      </section>
 
       </div>
       </div>

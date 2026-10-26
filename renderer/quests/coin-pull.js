@@ -46,6 +46,8 @@ function closeOverlay(el) {
   el.classList.remove("is-open");
   setTimeout(() => el.remove(), 220);
 }
+// Closes every open stage at once (the account left the squad, or another account took over).
+export function closePullStages() { document.querySelectorAll(".tc-reveal").forEach(closeOverlay); }
 
 // The stage frame (floating over the dimmed app, no panel): the sound toggle,
 // the stage with its spotlight and effects canvas, the footer. A click outside

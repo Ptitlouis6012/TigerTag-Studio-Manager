@@ -62,7 +62,7 @@ const kindOf = id => KINDS.find(k => k.id === id) || null;
 // repo (backend: TARGETS in reportIssue.js, a closed list). Catalogue fixes and
 // new brands are always Studio's, so the choice is not offered for them.
 const TARGETS = [
-  { id: "studio",     label: "Tiger Studio", icon: "icon_tigerstudio.svg" },   // the app icon's tiger head
+  { id: "studio",     label: "Tiger Studio", icon: "../logos/tigersystem-icon-framed-white.svg" },   // the TigerSystem framed tiger
   { id: "tigertouch", label: "Tiger Touch",  icon: "icon_tigertouch_3d.svg" },
   { id: "tigerpod",   label: "Tiger POD",    icon: "Icon_tigerpod_3d.svg" },
   { id: "tigerscale", label: "Tiger Scale",  icon: "icon_tigerscale_3d.svg" },
@@ -71,7 +71,8 @@ const TARGETS = [
   { id: "mobile",     label: "TigerTag RFID Connect", icon: "icon_mobile_app.svg", private: true },
 ];
 const targetable = kind => kind && kind !== "catalog" && kind !== "brand";
-// A product's artwork, tinted (resolved against report.css, where var() is used).
+// A product's artwork, tinted (resolved against report.css, where var() is used);
+// `icon` is relative to assets/svg/icons/.
 const targetIco = x => `<span class="rep-target-ico" style="--ico:url('../../assets/svg/icons/${x.icon}')"></span>`;
 const MAX_IMAGES = 5;          // images + PDFs + JSON files together
 const MAX_PDF_BYTES = 5 * 1024 * 1024;

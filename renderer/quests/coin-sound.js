@@ -158,6 +158,13 @@ export function ambientStop() { amb?.stop(); amb = null; }
 
 export const sfx = {
   tick() { tone("sine", 520, 520, 0.04, { vol: 0.15 }); },
+  // Hovering a Workshop item: a short rising note, higher with the rarity (0 common → 4 legendary);
+  // a legendary one gets a sparkle on top.
+  hover(r = 0) {
+    const f = [392, 440, 523, 659, 784][r] || 392;
+    tone("sine", f, f * 1.5, 0.08, { vol: 0.12 });
+    if (r >= 4) tone("sine", f * 2, f * 2, 0.12, { at: 0.06, vol: 0.06 });
+  },
   ready() { tone("triangle", 620, 620, 0.09, { vol: 0.3 }); tone("triangle", 930, 930, 0.09, { vol: 0.2 }); },
   crack() { noise(0.11, { vol: 0.5, from: 2400, to: 600, type: "lowpass" }); tone("sine", 110, 70, 0.11, { vol: 0.5 }); },
   flap() { noise(0.18, { vol: 0.25, from: 900, to: 300 }); },
