@@ -2,13 +2,9 @@
 <svg id="Calque_2" data-name="Calque 2" xmlns="http://www.w3.org/2000/svg" viewBox="46.19 46.19 938.39 938.39">
   <defs>
     <style>
-      .cls-1 {
-        fill: #000c0f;
-      }
+      .cls-1 { fill: none; }
 
-      .cls-2 {
-        fill: #fff;
-      }
+      .cls-2 { fill: #fff; }
     </style>
   </defs>
   <g id="Calque_1-2" data-name="Calque 1">

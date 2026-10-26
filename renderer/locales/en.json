@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Add a friend to give them an envelope.",
   "envGiveShort": "Give",
   "envGiveSent": "Envelope given to {{name}}!",
-  "envGiveNoGift": "No gift envelope to give: only envelopes you received as a gift can be passed on.",
+  "envGiveNoGift": "You have no envelope to give.",
   "friendGiveEnvelope": "Give an envelope",
   "friendGiveEnvelopeSub": "To a friend",
   "envFromFriend": "An envelope from {{name}}",

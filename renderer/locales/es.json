@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Añade un amigo para regalarle un sobre.",
   "envGiveShort": "Regalar",
   "envGiveSent": "¡Sobre regalado a {{name}}!",
-  "envGiveNoGift": "No tienes sobres de regalo para dar: solo se pueden pasar los recibidos como regalo.",
+  "envGiveNoGift": "No tienes ningún sobre para regalar.",
   "friendGiveEnvelope": "Regalar un sobre",
   "friendGiveEnvelopeSub": "A un amigo",
   "envFromFriend": "Un sobre de {{name}}",

@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Dodaj znajomego, aby podarować mu kopertę.",
   "envGiveShort": "Podaruj",
   "envGiveSent": "Koperta podarowana {{name}}!",
-  "envGiveNoGift": "Brak koperty prezentowej do podarowania: przekazać można tylko otrzymane w prezencie.",
+  "envGiveNoGift": "Nie masz koperty do podarowania.",
   "friendGiveEnvelope": "Podaruj kopertę",
   "friendGiveEnvelopeSub": "Znajomemu",
   "envFromFriend": "Koperta od {{name}}",

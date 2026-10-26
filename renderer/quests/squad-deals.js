@@ -18,7 +18,7 @@
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
 import { revealPulls } from './coin-pull.js';
-import { ambientStart, ambientStop } from './coin-sound.js';
+import { ambientStart, ambientStop, sfx } from './coin-sound.js';
 
 // A text field is a plain string or a { lang: text } map (en as fallback).
 const pick = (v, lang) => (v && typeof v === "object" ? v[lang] || v.en || Object.values(v)[0] || "" : v || "");
@@ -104,15 +104,16 @@ function dealParts(ctx, d, section) {
     : section !== "live" ? ["is-ended", "clock", "squadDealsEnded"] : null;
   const timer = got && exp && !used && section === "live"
     ? `<div class="sqd-timer${exp - Date.now() < SOON_MS ? " is-soon" : ""}" data-exp="${exp}"><span class="icon icon-clock icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsTimeLeft", { time: countdown(t, exp - Date.now()) }))}</span></div>` : "";
-  // A deal paid in TigerCoins with no badge of its own reads "Free" (never "0 €"),
-  // and so does a badge set to "free" in TigerHub (a gift: "5 € on us" is free,
-  // not "-5 €") — shown in the reader's language.
-  // hideBadge (set in TigerHub): the picture already says it, no badge at all.
+  // The badge (TigerHub sets it: automatic, "free" or a custom text):
+  //   "free" → "Free", nothing given away for it (a gift: "5 € on us");
+  //   empty on a deal paid in TigerCoins → "Exchange" with the coin;
+  //   a custom text ("-15 %", "+300 XP") as is; hideBadge → none.
   const freeBadge = FREE_BADGE.test(String(pick(d.badge, lang) || "").trim());
-  const free = freeBadge || (!d.badge && d.costCoins > 0);
-  const badge = d.hideBadge ? "" : free ? t("squadDealsFree") : d.badge ? pick(d.badge, lang) : "";
+  const exchange = !d.badge && d.costCoins > 0;
+  const badge = d.hideBadge ? "" : freeBadge ? t("squadDealsFree") : exchange ? t("squadDealsExchange") : d.badge ? pick(d.badge, lang) : "";
+  const kind = freeBadge ? "is-free" : exchange ? "is-coins" : badgeKind(badge);
   const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
-        ${badge ? `<span class="sqd-card-badge ${badgeKind(badge, free)}">${esc(badge)}</span>` : ""}${timer}`;
+        ${badge ? `<span class="sqd-card-badge ${kind}">${exchange ? `<span class="tcoin" aria-hidden="true"></span>` : ""}${esc(badge)}</span>` : ""}${timer}`;
   const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
@@ -390,7 +391,7 @@ function openEnvelopeHelp(ctx) {
       <div class="tcx-main">
         <div class="tcx-plaque"><h3>${esc(t("envHelpTitle"))}</h3></div>
         <ul class="tch-list">
-          ${row(`<img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt="">`, "envHelpChip", "envHelpChipSub")}
+          ${row(`<img src="../assets/svg/logos/tigersystem-icon-framed-white.svg" alt="">`, "envHelpChip", "envHelpChipSub")}
           ${row(`<img src="../assets/img/tigercoins/gift-v2.webp" alt="">`, "envHelpCode", "envHelpCodeSub")}
           ${row(`<span class="tch-duo"><span class="icon icon-discord" aria-hidden="true"></span><span class="icon icon-mail" aria-hidden="true"></span></span>`, "envHelpMail", "envHelpMailSub")}
           ${row(`<img src="../assets/img/tigercoins/crown.webp" alt="">`, "envHelpBonus", "envHelpBonusSub")}
@@ -406,6 +407,8 @@ function openEnvelopeHelp(ctx) {
   document.addEventListener("keydown", onKey, true);
   el.addEventListener("mousedown", e => { if (e.target === el) close(); });
   el.querySelector("[data-code]").addEventListener("click", () => { close(); setTimeout(() => openCoinsCodeModal(ctx), 180); });
+  // Hovering a way to get envelopes: its art hops (CSS) and a short tick plays.
+  el.querySelectorAll(".tch-list li").forEach(li => li.addEventListener("pointerenter", () => sfx.tick()));
 }
 
 /** The gift-code modal ("Gift code", generic: a code gives coins, envelopes or
@@ -440,7 +443,7 @@ function openCoinsCodeModal(ctx) {
       </div>
       <ul class="tcx-srcs">
         ${src(`<span class="icon icon-discord" aria-hidden="true"></span>`, "codeSrcDiscord", "codeSrcDiscordSub")}
-        ${src(`<img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt="">`, "codeSrcRfid", "codeSrcRfidSub")}
+        ${src(`<img src="../assets/svg/logos/tigersystem-icon-framed-white.svg" alt="">`, "codeSrcRfid", "codeSrcRfidSub")}
         ${src(`<span class="icon icon-card" aria-hidden="true"></span>`, "codeSrcCard", "codeSrcCardSub")}
         ${src(`<img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">`, "codeSrcShared", "codeSrcSharedSub")}
       </ul>
@@ -764,7 +767,7 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadDeals"))}</h2><p>${esc(t("squadDealsSub"))}</p></div>
       <div class="hero-scene" aria-hidden="true"></div>
-      ${ctx.loading ? `<div class="sqr-card sqd-coins sqd-coins--skel" aria-hidden="true"><span class="sqr-skel"></span></div>` : coinsBar(ctx)}
+      ${ctx.loading ? "" : coinsBar(ctx)}
     </section>
     ${body}
     <button type="button" class="pp-close-tab sqd-close-tab${ctx.openId && ctx.openId === findOpen(ctx, live, history, ended) ? " is-open" : ""}" aria-label="${esc(t("squadDealsClose"))}"><span class="cttab-glyph">»</span></button>`;

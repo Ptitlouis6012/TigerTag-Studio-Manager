@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "添加好友后才能送红包。",
   "envGiveShort": "赠送",
   "envGiveSent": "红包已送给 {{name}}！",
-  "envGiveNoGift": "暂无可赠送的礼物红包：只有收到的礼物红包可以转送。",
+  "envGiveNoGift": "你没有可赠送的红包。",
   "friendGiveEnvelope": "送一个红包",
   "friendGiveEnvelopeSub": "送给好友",
   "envFromFriend": "来自 {{name}} 的红包",

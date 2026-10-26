@@ -3421,6 +3421,10 @@
   }
   #toolInfoPop:not(.pop-below)::after { top: 100%; margin-top: -1px; border-top-color: var(--dark-surface); }
   #toolInfoPop.pop-below::after     { bottom: 100%; margin-bottom: -1px; border-bottom-color: var(--dark-surface); }
+  /* An error ("nothing to give"…): the same bubble, in red. */
+  #toolInfoPop.is-error { background: #e5484d; color: #fff; }
+  #toolInfoPop.is-error:not(.pop-below)::after { border-top-color: #e5484d; }
+  #toolInfoPop.is-error.pop-below::after { border-bottom-color: #e5484d; }
   #toolInfoPop.is-measuring { opacity: 0; }        /* laid out for measuring, still hidden */
   #toolInfoPop.is-open { opacity: 1; animation: ttipPop .16s cubic-bezier(.34,1.45,.5,1); }
   @keyframes ttipPop { from { transform: scale(.82); } to { transform: scale(1); } }

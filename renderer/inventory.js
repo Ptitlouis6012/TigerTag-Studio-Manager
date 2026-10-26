@@ -38217,7 +38217,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("btnAddFriend").addEventListener("click", openAddFriendModal);
   // Support the project → open the official goodies shop in the browser
   // (mirrors the sidebar Shop button).
-  $("btnGiveEnvelope")?.addEventListener("click", () => _giveEnvelopeTo());   // a gift envelope to a friend
+  $("btnGiveEnvelope")?.addEventListener("click", e => _giveEnvelopeTo(null, e.currentTarget));   // a gift envelope to a friend
   $("btnGoodiesShop")?.addEventListener("click", () =>
     window.electronAPI?.openExternal("https://shop.tigersystem.io/collections/tigertag-rfid-maker"));
 
@@ -39052,7 +39052,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       } else if (n.type === "envelope_chip") {
         // TigerTag+ Certified chips counted today = surprise envelopes (supportWebhooks.js syncChip).
         items.push({ kind: "envelopes", at, html: card({ ...base, kind: "envelopes", accent: NOTIF_ACCENT.envelope, clickable: true,
-          art: `<img src="../assets/img/tigercoins/envelope.webp" alt=""><span class="nc-art-av nc-art-logo"><img src="../assets/svg/logos/tigersystem-icon-framed.svg" alt=""></span>`,
+          art: `<img src="../assets/img/tigercoins/envelope.webp" alt=""><span class="nc-art-av nc-art-logo"><img src="../assets/svg/logos/tigersystem-icon-framed-white.svg" alt=""></span>`,
           title: t("notifEnvelopeChip", { n: Number(n.data?.n) || 1 }), text: t("notifEnvelopeChipText"),
           act: { id: "envelopes", icon: "mail", label: t("notifActOpenEnvelopes") } }) });
       } else if (n.type === "supporter_thanks") {
@@ -39203,15 +39203,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // From the Friends panel ("Give an envelope"): the oldest gift envelope, the
   // give picker over every friend — or one already picked when `friendUid` is
   // given (functions/tigerCoins.js giveEnvelope; a held button sends).
-  async function _giveEnvelopeTo(friendUid = null) {
+  let _giveTipT = 0;
+  async function _giveEnvelopeTo(friendUid = null, anchor = null) {
     const uid = state.activeAccountId; if (!uid) return;
     const pool = friendUid ? (state.friends || []).filter(x => x.uid === friendUid) : (state.friends || []);
-    if (!pool.length) { _flashMessage(t("envGiveNoFriends")); return; }
+    // Nothing to give: the app's info bubble over the button says why (a toast when called without one).
+    const say = msg => {
+      if (!anchor) { _flashMessage(msg); return; }
+      _showToolInfoTip(anchor, msg);
+      const tip = document.getElementById("toolInfoPop"); tip?.classList.add("is-error");
+      clearTimeout(_giveTipT);
+      _giveTipT = setTimeout(() => { _hideToolInfoTip(); tip?.classList.remove("is-error"); }, 3500);
+    };
+    if (!pool.length) { say(t("envGiveNoFriends")); return; }
     let c;
     try { c = _coinsOf(await _tigerCoins(uid, "status")); } catch (_) { _flashMessage(t("squadDealsErr")); return; }
     _deals.coins = c; _paintDealsBadge(_envCount(c));
     const env = c.envelopes?.[0], g = c.gifts;
-    if (!env || !g?.max) { _flashMessage(t("envGiveNoGift")); return; }
+    if (!env || !g?.max) { say(t("envGiveNoGift")); return; }
     await showEnvelope(_coinsCtx(uid), env, { giveOnly: true, give: {
       left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "", picked: friendUid,
       friends: pool.map(f => ({ uid: f.uid, name: _shortName(f.displayName, f.uid), avatar: userAvatar(f, "sqb-avatar") })),

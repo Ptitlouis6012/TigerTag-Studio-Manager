@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Добавь друга, чтобы подарить ему конверт.",
   "envGiveShort": "Подарить",
   "envGiveSent": "Конверт подарен {{name}}!",
-  "envGiveNoGift": "Нет подарочных конвертов: передать можно только полученные в подарок.",
+  "envGiveNoGift": "У тебя нет конверта, чтобы подарить.",
   "friendGiveEnvelope": "Подарить конверт",
   "friendGiveEnvelopeSub": "Другу",
   "envFromFriend": "Конверт от {{name}}",

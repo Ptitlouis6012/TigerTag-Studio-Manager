@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Voeg een vriend toe om hem een envelop te geven.",
   "envGiveShort": "Geven",
   "envGiveSent": "Envelop gegeven aan {{name}}!",
-  "envGiveNoGift": "Geen cadeau-envelop om te geven: alleen gekregen enveloppen kun je doorgeven.",
+  "envGiveNoGift": "Je hebt geen envelop om te geven.",
   "friendGiveEnvelope": "Een envelop geven",
   "friendGiveEnvelopeSub": "Aan een vriend",
   "envFromFriend": "Een envelop van {{name}}",

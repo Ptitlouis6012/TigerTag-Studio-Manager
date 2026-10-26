@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Adiciona um amigo para lhe oferecer um envelope.",
   "envGiveShort": "Oferecer",
   "envGiveSent": "Envelope oferecido a {{name}}!",
-  "envGiveNoGift": "Nenhum envelope de oferta para dar: só os recebidos como oferta podem ser passados.",
+  "envGiveNoGift": "Não tens envelopes para oferecer.",
   "friendGiveEnvelope": "Oferecer um envelope",
   "friendGiveEnvelopeSub": "A um amigo",
   "envFromFriend": "Um envelope de {{name}}",

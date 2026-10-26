@@ -1047,8 +1047,16 @@ body.progress-view #gridSortWrap { display: none; }
    range, a square illustration showing the product whole on white, the cards
    of a row as tall as each other, one-line title, three-line description. */
 .sqd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(165px, 185px)); gap: 10px; }
-.sqd-card { display: flex; flex-direction: column; border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden; background: var(--tsq-card);
+/* The card no longer clips (its badge overhangs the top edge): the picture
+   clips itself on the card's top corners instead. */
+.sqd-card { position: relative; display: flex; flex-direction: column; border: 1px solid var(--tsq-line); border-radius: 14px; overflow: visible; background: var(--tsq-card);
   transition: border-color .2s, transform .2s; }
+.sqd-card > .sqd-card-art { border-radius: 13px 13px 0 0; overflow: hidden; }
+.sqd-card > .sqd-card-art:has(> .sqd-card-badge) { overflow: visible; }
+.sqd-card > .sqd-card-art > img { border-radius: 13px 13px 0 0; }
+/* The badge: centred on the card's top edge, half outside. */
+.sqd-grid .sqd-card { margin-top: 12px; }
+.sqd-card .sqd-card-badge { top: -12px; left: 50%; right: auto; translate: -50% 0; z-index: 2; white-space: nowrap; }
 .sqd-card:hover { border-color: color-mix(in srgb, var(--tsq-orange) 60%, var(--tsq-line)); transform: translateY(-2px); }
 .sqd-card-art { position: relative; aspect-ratio: 1; flex-shrink: 0; display: grid; place-items: center;
   background: linear-gradient(135deg, color-mix(in srgb, var(--tsq-orange) 22%, var(--tsq-bg2)), var(--tsq-bg2)); }
@@ -1061,6 +1069,10 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-card-badge.is-amount { background: #e3343b; }
 .sqd-card-badge.is-xp { background: #1fa85c; box-shadow: 0 2px 10px rgba(0, 0, 0, .35), 0 0 14px rgba(61, 220, 132, .45); }
 .sqd-card-badge.is-free { background: #111318; color: #ffd75e; box-shadow: inset 0 0 0 2px #ffcf3d, 0 2px 10px rgba(0, 0, 0, .35), 0 0 14px rgba(255, 207, 61, .35); }
+/* Paid in TigerCoins: "Exchange" with the coin, gold like the coins. */
+.sqd-card-badge.is-coins { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(180deg, #ffcf3d, #f5a300); color: #1a0f04;
+  font-family: var(--qw-display, system-ui); font-size: 15px; letter-spacing: .02em; text-transform: uppercase; }
+.sqd-card-badge.is-coins .tcoin { width: 18px; height: 18px; }
 .sqd-card-body { display: flex; flex-direction: column; gap: 4px; padding: 9px 10px 10px; flex: 1; }
 .sqd-card-partner { font: 700 11px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-orange); }
 .sqd-card-body h3 { margin: 0; font-size: 14px; line-height: 1.3; color: var(--tsq-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1168,7 +1180,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-skel-line.sqd-skel-line.is-kicker { width: 38%; height: 8px; margin-top: 4px; }
 .sqd-skel-line.sqd-skel-line.is-bar { height: 4px; margin-top: 6px; }
 .sqd-bar.is-skel { opacity: .55; }
-.sqd-coins--skel .sqr-skel { display: block; width: 110px; height: 40px; border-radius: 10px; }
 /* Side card — slides in from the right like a spool's detail panel. */
 .sqd-side { position: fixed; top: 8px; right: 0; bottom: 8px; z-index: 101; width: 380px; max-width: 95vw; display: flex; flex-direction: column;
   background: var(--tsq-card); border: 1px solid var(--tsq-line); border-right: none; border-radius: 14px 0 0 14px; overflow: hidden auto;
@@ -1748,7 +1759,6 @@ body.progress-view #gridSortWrap { display: none; }
 .tch-ic { display: grid; place-items: center; width: 44px; height: 44px; flex-shrink: 0; color: #ffcf3d; }
 .tch-ic .icon { width: 28px; height: 28px; background: currentColor; }
 .tch-ic img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .45)); }
-.tch-ic img[src$=".svg"] { border-radius: 9px; }   /* the TigerTag logo tile */
 /* Discord and e-mail: the two icons, one over the other's corner. */
 .tch-duo { position: relative; width: 40px; height: 40px; }
 .tch-duo .icon { position: absolute; width: 24px; height: 24px; }
@@ -1756,7 +1766,11 @@ body.progress-view #gridSortWrap { display: none; }
 .tch-duo .icon-mail { right: 0; bottom: 2px; background: #ffcf3d; }
 .tch-list b { display: block; font-size: 14px; color: #fff; }
 .tch-list small { font-size: 12.5px; color: #b9c2e0; }
-@media (prefers-reduced-motion: reduce) { .tch-env { animation: none; } }
+.tch-list li { transition: border-color .15s, background-color .15s; }
+.tch-list li:hover { border-color: rgba(255, 207, 61, .6); background: rgba(255, 207, 61, .06); }
+.tch-list li:hover .tch-ic > * { animation: tch-hop .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes tch-hop { 0% { transform: none; } 40% { transform: translateY(-5px) rotate(-8deg) scale(1.12); } 70% { transform: translateY(0) rotate(4deg); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .tch-env, .tch-list li:hover .tch-ic > * { animation: none; } }
 /* "You got an envelope!" (showEnvelopeGift): who gave it, their avatar as in
    the friends bar, no frame around them. */
 .tcg-from { display: flex; align-items: center; gap: 14px; margin: 0; text-align: left; }
@@ -1787,7 +1801,7 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx-srcs li + li { border-left: 1px solid rgba(255, 255, 255, .08); }
 .tcx-src-ic { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; }
 .tcx-src-ic .icon { width: 30px; height: 30px; }
-.tcx-src-ic img { width: 30px; height: 30px; object-fit: contain; border-radius: 7px; }
+.tcx-src-ic img { width: 30px; height: 30px; object-fit: contain; }
 .tcx-src-ic .icon-discord { background: #5865f2; }
 .tcx-src-ic .icon-nfc { background: #7aa2ff; height: 22px; }
 .tcx-src-ic .icon-card { background: #ffd75e; }

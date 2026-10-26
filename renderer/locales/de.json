@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Füge einen Freund hinzu, um ihm einen Umschlag zu schenken.",
   "envGiveShort": "Schenken",
   "envGiveSent": "Umschlag an {{name}} verschenkt!",
-  "envGiveNoGift": "Kein Geschenkumschlag zum Verschenken: Nur geschenkte Umschläge lassen sich weitergeben.",
+  "envGiveNoGift": "Du hast keinen Umschlag zum Verschenken.",
   "friendGiveEnvelope": "Einen Umschlag schenken",
   "friendGiveEnvelopeSub": "An einen Freund",
   "envFromFriend": "Ein Umschlag von {{name}}",

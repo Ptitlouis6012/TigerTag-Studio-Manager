@@ -2335,7 +2335,7 @@
   "envGiveNoFriends": "Ajoutez un ami pour lui offrir une enveloppe.",
   "envGiveShort": "Offrir",
   "envGiveSent": "Enveloppe offerte à {{name}} !",
-  "envGiveNoGift": "Aucune enveloppe cadeau à offrir : seules celles reçues en cadeau peuvent être transmises.",
+  "envGiveNoGift": "Tu n’as pas d’enveloppe à offrir.",
   "friendGiveEnvelope": "Offrir une enveloppe",
   "friendGiveEnvelopeSub": "À un ami",
   "envFromFriend": "Une enveloppe de {{name}}",
