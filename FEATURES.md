@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.43.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.44.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -163,6 +163,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - "Buy me a coffee" support nudges at four entry points using the official brand assets (v2.5.0).
 - Persistent, cross-device notification feed — Firestore-backed events (starting with low-stock), 40-entry cap, "Mark all read", no delete (v2.6.0).
 - App-update notice promoted to a cloud event (persists, syncs across devices, one-click Restart on the downloading device) (v2.7.0).
+- Notification centre redesigned — 520 px, tabs with unread counts (Envelopes, Squad, System, Stock), cards grouped by day and tinted by kind that open their destination, every low-stock spool folded into one card, illustrated community nudges (v2.44.0).
 
 ## QR codes & sharing
 
@@ -277,6 +278,10 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **Tiger Quests** — daily quests (open the app + four missions drawn by the server each day, a full-set chest with a jackpot animation, a 5-day streak bonus, next-draw countdown, stats) and tutorial missions (20-chapter map; Discovery and Explorer built, five levels of five missions each with an illustration and a level bonus), counted from the app's batched action counters; Demo printers earn nothing (v2.43.0).
 - **TigerSquad view** — a view of the main area: Rankings with three leagues side by side (countries with flag avatars and medal rings, your country, makers worldwide), daily rank arrows from a server baseline, the live Community pulse (total XP, spools, printers with rolling counters and sparklines), and Items, every XP item on a rarity ladder (v2.43.0).
 - **XP history page** — total / gained / lost / activities tiles, the XP balance curve over 7D / 30D / 90D / All, the 30-day breakdown ring by category and the full activity log with category, gain / loss filters and search (v2.43.0).
+- **Deals** — partner offers for TigerSquad members (`squadDeals`, managed from the TigerHub admin): shared, single-use or link-only codes, a per-deal countdown once claimed, stock gauges, "I used it" history, All / My codes / Exchange tabs with search, announcements (QR codes for the mobile app), the partner's site clickable for every member with its clicks counted (v2.44.0).
+- **TigerCoins and envelopes** — a surprise envelope per TigerTag+ Certified chip, gift envelopes (campaigns, milestones, gift codes, shared red envelopes) and chests, all opened in one animated stage (×1 / ×10, five rarities); coins traded in the Exchange tab; envelopes given to friends with a daily allowance by TigerSquad level; hidden easter-egg envelopes in the banners (v2.44.0).
+- **Maker's Workshop** — the Items view redrawn: illustrated loot (legendary relics, gear, chips) and feats rows, a banner with the four legendary devices lit once owned (v2.44.0).
+- **XP history scopes** — your curve, your country's league or the top leagues side by side (v2.44.0).
 
 ## Feedback & requests
 
@@ -329,6 +334,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - Choice persisted three ways, each with its own job: `localStorage` for an offline cold start, `users/{uid}.studioTheme` so it follows the account across machines, and `telemetry/studio.theme` as usage data for the Hub's dark/light split (v2.18.0).
 - Design-token layer — ~75 semantic tokens plus a dark override, an "ink ladder" whose polarity flips with the theme, and `--on-accent` for the fixed-polarity case (a label on a filled button stays white in both themes) (v2.18.0).
 - `npm run theme:check` guards it: fails on any raw colour or any `var(--x)` naming an undeclared variable (v2.18.0).
+- **Edit my profile** window (photo, display name, theme colour, live preview); the theme colour tints the header and the hero banners, and a friend's colour in their view (v2.44.0).
 
 ## Internationalization (i18n)
 
@@ -341,6 +347,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 
 - **Local read-only MCP server** — Claude, Cursor and VS Code can read the account (inventory, racks, printers, devices, wishlists, friends' shared stock, data history) through 14 tools with decoded values and a built-in field notice; per-profile opt-in in *My profile*, one-click install per app, hold-to-renew key, credentials never exposed (v2.32.0).
 - **Online connector** — *My profile* presents the Tiger Hub's hosted server (`mcp.tigersystem.io`) for Claude.ai, ChatGPT and phone apps, with no Studio running: address + copy, the guide, and the online assistants connected to the account, each with a hold-to-cut button (v2.34.0).
+- Online connector tiles for Claude, ChatGPT, Grok and Le Chat in My profile, each copying the address and opening its section of the setup guide (v2.44.0).
 
 ## Dev tooling
 

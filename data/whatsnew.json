@@ -1,4 +1,270 @@
 {
+  "2.44.0": {
+    "date": "2026-10-26",
+    "items": [
+      {
+        "icon": "percent",
+        "title": {
+          "en": "Deals",
+          "fr": "Bons plans",
+          "de": "Angebote",
+          "es": "Ofertas",
+          "it": "Offerte",
+          "zh": "优惠",
+          "pt": "Ofertas",
+          "pt-pt": "Ofertas",
+          "pl": "Okazje",
+          "ru": "Скидки",
+          "nl": "Deals"
+        },
+        "body": {
+          "en": "Partner offers for squad members. Grab your code, use it, tick it off. Your wallet sends its regards.",
+          "fr": "Des offres partenaires pour les membres de la squad. Prends ton code, utilise-le, coche-le. Ton porte-monnaie te salue.",
+          "de": "Partnerangebote für Squad-Mitglieder. Code holen, einlösen, abhaken. Dein Geldbeutel lässt grüßen.",
+          "es": "Ofertas de socios para los miembros de la squad. Coge tu código, úsalo, márcalo. Tu cartera te lo agradece.",
+          "it": "Offerte dei partner per i membri della squad. Prendi il codice, usalo, spuntalo. Il portafoglio ringrazia.",
+          "zh": "专属 squad 成员的合作伙伴优惠。领码、使用、勾选完成。你的钱包向你致意。",
+          "pt": "Ofertas de parceiros para membros da squad. Pegue seu código, use, marque como usado. Sua carteira agradece.",
+          "pt-pt": "Ofertas de parceiros para membros da squad. Pega no teu código, usa-o, marca-o. A tua carteira agradece.",
+          "pl": "Oferty partnerów dla członków squadu. Weź kod, użyj go, odhacz. Portfel pozdrawia.",
+          "ru": "Предложения партнёров для участников squad. Забери код, используй, отметь. Кошелёк передаёт привет.",
+          "nl": "Partneraanbiedingen voor squadleden. Pak je code, gebruik hem, vink hem af. Je portemonnee doet de groeten."
+        }
+      },
+      {
+        "icon": "gift",
+        "title": {
+          "en": "Envelopes and TigerCoins",
+          "fr": "Enveloppes et TigerCoins",
+          "de": "Umschläge und TigerCoins",
+          "es": "Sobres y TigerCoins",
+          "it": "Buste e TigerCoins",
+          "zh": "红包与 TigerCoins",
+          "pt": "Envelopes e TigerCoins",
+          "pt-pt": "Envelopes e TigerCoins",
+          "pl": "Koperty i TigerCoins",
+          "ru": "Конверты и TigerCoins",
+          "nl": "Enveloppen en TigerCoins"
+        },
+        "body": {
+          "en": "Every certified chip you scan hides an envelope. Hold to open, hope for gold, trade the coins for deals. Totally calm about it.",
+          "fr": "Chaque puce certifiée scannée cache une enveloppe. Maintiens pour ouvrir, prie pour du doré, échange les coins contre des offres. Tranquille.",
+          "de": "Jeder gescannte zertifizierte Chip versteckt einen Umschlag. Gedrückt halten, auf Gold hoffen, Coins gegen Angebote tauschen. Ganz entspannt.",
+          "es": "Cada chip certificado que escaneas esconde un sobre. Mantén para abrir, reza por el dorado, cambia las monedas por ofertas. Con calma.",
+          "it": "Ogni chip certificato scansionato nasconde una busta. Tieni premuto, spera nell’oro, scambia i coin con le offerte. Tranquillissimo.",
+          "zh": "每扫描一颗认证芯片就藏着一个红包。长按打开，祈祷出金，用金币兑换优惠。淡定。",
+          "pt": "Cada chip certificado escaneado esconde um envelope. Segure para abrir, torça pelo dourado, troque as moedas por ofertas. Na boa.",
+          "pt-pt": "Cada chip certificado digitalizado esconde um envelope. Mantém para abrir, reza pelo dourado, troca as moedas por ofertas. Na boa.",
+          "pl": "Każdy zeskanowany certyfikowany chip skrywa kopertę. Przytrzymaj, licz na złoto, wymień monety na okazje. Spokojnie.",
+          "ru": "Каждый отсканированный сертифицированный чип прячет конверт. Удерживай, надейся на золото, меняй монеты на скидки. Спокойно.",
+          "nl": "Elke gescande gecertificeerde chip verstopt een envelop. Vasthouden, hopen op goud, munten inruilen voor deals. Rustig aan."
+        }
+      },
+      {
+        "icon": "heart",
+        "title": {
+          "en": "Give an envelope",
+          "fr": "Offre une enveloppe",
+          "de": "Einen Umschlag verschenken",
+          "es": "Regala un sobre",
+          "it": "Regala una busta",
+          "zh": "送出红包",
+          "pt": "Dê um envelope",
+          "pt-pt": "Oferece um envelope",
+          "pl": "Podaruj kopertę",
+          "ru": "Подари конверт",
+          "nl": "Geef een envelop"
+        },
+        "body": {
+          "en": "Got a spare envelope? Hold “Give” and a friend gets it. Generosity, now with a daily limit.",
+          "fr": "Une enveloppe en trop ? Maintiens « Offrir » et un ami la reçoit. La générosité, avec une limite par jour.",
+          "de": "Ein Umschlag zu viel? „Verschenken“ gedrückt halten und ein Freund bekommt ihn. Großzügigkeit, jetzt mit Tageslimit.",
+          "es": "¿Te sobra un sobre? Mantén «Regalar» y un amigo lo recibe. Generosidad, ahora con límite diario.",
+          "it": "Una busta in più? Tieni premuto «Regala» e arriva a un amico. Generosità, ora con limite giornaliero.",
+          "zh": "多了个红包？长按「送出」，好友就能收到。慷慨，现已设每日上限。",
+          "pt": "Sobrou um envelope? Segure “Dar” e um amigo recebe. Generosidade, agora com limite diário.",
+          "pt-pt": "Sobrou um envelope? Mantém “Oferecer” e um amigo recebe-o. Generosidade, agora com limite diário.",
+          "pl": "Masz zbędną kopertę? Przytrzymaj „Podaruj” i dostanie ją znajomy. Hojność, teraz z dziennym limitem.",
+          "ru": "Лишний конверт? Удерживай «Подарить» — и он у друга. Щедрость, теперь с дневным лимитом.",
+          "nl": "Envelop over? Houd „Geven” ingedrukt en een vriend krijgt hem. Vrijgevigheid, nu met daglimiet."
+        }
+      },
+      {
+        "icon": "bell",
+        "title": {
+          "en": "A tidier notification centre",
+          "fr": "Un centre de notifications rangé",
+          "de": "Ein aufgeräumtes Benachrichtigungscenter",
+          "es": "Un centro de notificaciones ordenado",
+          "it": "Un centro notifiche in ordine",
+          "zh": "更整洁的通知中心",
+          "pt": "Uma central de notificações arrumada",
+          "pt-pt": "Um centro de notificações arrumado",
+          "pl": "Uporządkowane centrum powiadomień",
+          "ru": "Аккуратный центр уведомлений",
+          "nl": "Een opgeruimd meldingencentrum"
+        },
+        "body": {
+          "en": "Tabs, days, and every almost-empty spool in one card. Click a card, land where it matters.",
+          "fr": "Des onglets, des jours, et toutes les bobines presque vides dans une seule carte. Clique une carte, tu arrives au bon endroit.",
+          "de": "Tabs, Tage und alle fast leeren Spulen in einer Karte. Karte anklicken, direkt am richtigen Ort.",
+          "es": "Pestañas, días y todas las bobinas casi vacías en una sola tarjeta. Pulsa una tarjeta y llegas donde importa.",
+          "it": "Schede, giorni e tutte le bobine quasi vuote in una sola card. Clicca e arrivi dove serve.",
+          "zh": "分类标签、按日期分组，所有快用完的线盘集中在一张卡片里。点卡片，直达目的地。",
+          "pt": "Abas, dias e todas as bobinas quase vazias num só cartão. Clique e vá direto ao ponto.",
+          "pt-pt": "Separadores, dias e todas as bobinas quase vazias num só cartão. Clica e vais direto ao ponto.",
+          "pl": "Zakładki, dni i wszystkie prawie puste szpule w jednej karcie. Kliknij i jesteś tam, gdzie trzeba.",
+          "ru": "Вкладки, дни и все почти пустые катушки в одной карточке. Нажми — и ты на месте.",
+          "nl": "Tabbladen, dagen en elke bijna lege spoel in één kaart. Klik en je bent waar het telt."
+        }
+      },
+      {
+        "icon": "star-fill",
+        "title": {
+          "en": "The Maker's Workshop",
+          "fr": "L'Atelier du Maker",
+          "de": "Die Maker-Werkstatt",
+          "es": "El Taller del Maker",
+          "it": "L'Officina del Maker",
+          "zh": "Maker 工坊",
+          "pt": "A Oficina do Maker",
+          "pt-pt": "A Oficina do Maker",
+          "pl": "Warsztat Makera",
+          "ru": "Мастерская мейкера",
+          "nl": "De Maker-werkplaats"
+        },
+        "body": {
+          "en": "Your loot and feats, freshly illustrated. Legendary gear lights up once it's yours. Rumour says it hides things.",
+          "fr": "Ton butin et tes hauts faits, tout juste illustrés. Le matériel légendaire s’allume quand il est à toi. La rumeur dit qu’il cache des choses.",
+          "de": "Deine Beute und Erfolge, frisch illustriert. Legendäre Ausrüstung leuchtet, sobald sie dir gehört. Gerüchten zufolge versteckt sie etwas.",
+          "es": "Tu botín y tus hazañas, recién ilustrados. El equipo legendario se ilumina cuando es tuyo. Dicen que esconde cosas.",
+          "it": "Il tuo bottino e le tue imprese, appena illustrati. L’equipaggiamento leggendario si accende quando è tuo. Si dice nasconda qualcosa.",
+          "zh": "你的战利品与成就，全新插画。传说装备到手即点亮。据说里面藏着东西。",
+          "pt": "Seu butim e suas façanhas, com ilustrações novinhas. O equipamento lendário acende quando é seu. Dizem que esconde coisas.",
+          "pt-pt": "O teu saque e os teus feitos, com ilustrações novas. O equipamento lendário acende quando é teu. Dizem que esconde coisas.",
+          "pl": "Twoje łupy i wyczyny, świeżo zilustrowane. Legendarny sprzęt świeci, gdy jest twój. Podobno coś skrywa.",
+          "ru": "Твоя добыча и подвиги — с новыми иллюстрациями. Легендарное снаряжение светится, когда оно твоё. Говорят, оно что-то прячет.",
+          "nl": "Je buit en prestaties, vers geïllustreerd. Legendarische spullen lichten op zodra ze van jou zijn. Naar verluidt verstoppen ze iets."
+        }
+      },
+      {
+        "icon": "bars",
+        "title": {
+          "en": "XP history: you vs the world",
+          "fr": "Historique XP : toi contre le monde",
+          "de": "XP-Verlauf: du gegen die Welt",
+          "es": "Historial de XP: tú contra el mundo",
+          "it": "Storico XP: tu contro il mondo",
+          "zh": "XP 历史：你 vs 全世界",
+          "pt": "Histórico de XP: você contra o mundo",
+          "pt-pt": "Histórico de XP: tu contra o mundo",
+          "pl": "Historia XP: ty kontra świat",
+          "ru": "История XP: ты против мира",
+          "nl": "XP-geschiedenis: jij tegen de wereld"
+        },
+        "body": {
+          "en": "Put your curve next to your country's and the top leagues'. Healthy competition. Mostly.",
+          "fr": "Mets ta courbe à côté de celle de ton pays et des meilleures ligues. Une saine compétition. En gros.",
+          "de": "Leg deine Kurve neben die deines Landes und der besten Ligen. Gesunder Wettbewerb. Meistens.",
+          "es": "Pon tu curva junto a la de tu país y las mejores ligas. Competencia sana. Más o menos.",
+          "it": "Metti la tua curva accanto a quella del tuo paese e delle migliori leghe. Sana competizione. Più o meno.",
+          "zh": "把你的曲线和你的国家、顶尖联赛放在一起比。良性竞争。大概吧。",
+          "pt": "Coloque sua curva ao lado da do seu país e das melhores ligas. Competição saudável. Quase sempre.",
+          "pt-pt": "Põe a tua curva ao lado da do teu país e das melhores ligas. Competição saudável. Quase sempre.",
+          "pl": "Zestaw swoją krzywą z krzywą swojego kraju i najlepszych lig. Zdrowa rywalizacja. Zazwyczaj.",
+          "ru": "Сравни свою кривую со страной и лучшими лигами. Здоровая конкуренция. В основном.",
+          "nl": "Zet je curve naast die van je land en de beste competities. Gezonde concurrentie. Meestal."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Your colour, everywhere",
+          "fr": "Ta couleur, partout",
+          "de": "Deine Farbe, überall",
+          "es": "Tu color, en todas partes",
+          "it": "Il tuo colore, ovunque",
+          "zh": "你的颜色，无处不在",
+          "pt": "Sua cor, em todo lugar",
+          "pt-pt": "A tua cor, em todo o lado",
+          "pl": "Twój kolor, wszędzie",
+          "ru": "Твой цвет — везде",
+          "nl": "Jouw kleur, overal"
+        },
+        "body": {
+          "en": "Edit your photo, name and theme colour in one window. Your colour now tints the header and banners. Very you.",
+          "fr": "Modifie ta photo, ton pseudo et ta couleur dans une seule fenêtre. Ta couleur teinte maintenant l’en-tête et les bandeaux. Très toi.",
+          "de": "Foto, Name und Themenfarbe in einem Fenster bearbeiten. Deine Farbe färbt jetzt Kopfzeile und Banner. Sehr du.",
+          "es": "Edita tu foto, nombre y color en una sola ventana. Tu color tiñe ahora la cabecera y los banners. Muy tú.",
+          "it": "Modifica foto, nome e colore in un’unica finestra. Il tuo colore ora tinge l’intestazione e i banner. Molto te.",
+          "zh": "在一个窗口里编辑头像、昵称和主题色。你的颜色现在会点缀顶部栏和横幅。很有你的风格。",
+          "pt": "Edite foto, nome e cor numa só janela. Sua cor agora tinge o cabeçalho e os banners. A sua cara.",
+          "pt-pt": "Edita a foto, o nome e a cor numa só janela. A tua cor tinge agora o cabeçalho e os banners. A tua cara.",
+          "pl": "Edytuj zdjęcie, nazwę i kolor w jednym oknie. Twój kolor barwi teraz nagłówek i banery. Bardzo w twoim stylu.",
+          "ru": "Фото, имя и цвет темы — в одном окне. Твой цвет теперь окрашивает шапку и баннеры. Очень в твоём стиле.",
+          "nl": "Bewerk je foto, naam en themakleur in één venster. Je kleur kleurt nu de kop en de banners. Helemaal jij."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "More AI assistants",
+          "fr": "Plus d'assistants IA",
+          "de": "Mehr KI-Assistenten",
+          "es": "Más asistentes de IA",
+          "it": "Più assistenti IA",
+          "zh": "更多 AI 助手",
+          "pt": "Mais assistentes de IA",
+          "pt-pt": "Mais assistentes de IA",
+          "pl": "Więcej asystentów AI",
+          "ru": "Больше ИИ-ассистентов",
+          "nl": "Meer AI-assistenten"
+        },
+        "body": {
+          "en": "Claude, ChatGPT, Grok or Le Chat can read your stock from the web. Pick one, follow the guide, ask away.",
+          "fr": "Claude, ChatGPT, Grok ou Le Chat peuvent lire ton stock depuis le web. Choisis-en un, suis le guide, pose tes questions.",
+          "de": "Claude, ChatGPT, Grok oder Le Chat lesen deinen Bestand aus dem Web. Einen wählen, Anleitung folgen, losfragen.",
+          "es": "Claude, ChatGPT, Grok o Le Chat pueden leer tu stock desde la web. Elige uno, sigue la guía y pregunta.",
+          "it": "Claude, ChatGPT, Grok o Le Chat possono leggere il tuo stock dal web. Scegline uno, segui la guida, chiedi pure.",
+          "zh": "Claude、ChatGPT、Grok 或 Le Chat 都能从网页读取你的库存。选一个，照着指南来，尽管问。",
+          "pt": "Claude, ChatGPT, Grok ou Le Chat podem ler seu estoque pela web. Escolha um, siga o guia e pergunte.",
+          "pt-pt": "Claude, ChatGPT, Grok ou Le Chat podem ler o teu stock pela web. Escolhe um, segue o guia e pergunta.",
+          "pl": "Claude, ChatGPT, Grok lub Le Chat mogą czytać twój stan z sieci. Wybierz, idź za przewodnikiem, pytaj.",
+          "ru": "Claude, ChatGPT, Grok или Le Chat читают твой склад из веба. Выбери, следуй инструкции, спрашивай.",
+          "nl": "Claude, ChatGPT, Grok of Le Chat lezen je voorraad via het web. Kies er één, volg de gids, vraag maar raak."
+        }
+      },
+      {
+        "icon": "compass",
+        "title": {
+          "en": "Two secret missions",
+          "fr": "Deux missions secrètes",
+          "de": "Zwei geheime Missionen",
+          "es": "Dos misiones secretas",
+          "it": "Due missioni segrete",
+          "zh": "两个秘密任务",
+          "pt": "Duas missões secretas",
+          "pt-pt": "Duas missões secretas",
+          "pl": "Dwie tajne misje",
+          "ru": "Две секретные миссии",
+          "nl": "Twee geheime missies"
+        },
+        "body": {
+          "en": "Finish a chapter and a hidden level shows up. We won't say more. That's the point.",
+          "fr": "Termine un chapitre et un niveau caché apparaît. On n’en dira pas plus. C’est le principe.",
+          "de": "Schließ ein Kapitel ab und ein verstecktes Level taucht auf. Mehr verraten wir nicht. Das ist der Sinn.",
+          "es": "Termina un capítulo y aparece un nivel oculto. No diremos más. De eso se trata.",
+          "it": "Finisci un capitolo e spunta un livello nascosto. Non diciamo altro. È questo il bello.",
+          "zh": "完成一个章节，隐藏关卡就会出现。我们不多说了。这就是重点。",
+          "pt": "Termine um capítulo e um nível escondido aparece. Não vamos dizer mais. É essa a graça.",
+          "pt-pt": "Termina um capítulo e aparece um nível escondido. Não dizemos mais. É essa a graça.",
+          "pl": "Ukończ rozdział, a pojawi się ukryty poziom. Więcej nie powiemy. O to chodzi.",
+          "ru": "Пройди главу — и появится скрытый уровень. Больше ни слова. В этом и смысл.",
+          "nl": "Rond een hoofdstuk af en er duikt een verborgen level op. Meer zeggen we niet. Dat is het punt."
+        }
+      }
+    ]
+  },
   "2.43.0": {
     "date": "2026-10-24",
     "items": [

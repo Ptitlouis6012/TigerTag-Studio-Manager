@@ -196,7 +196,10 @@ Organize your filament collection into physical racks — drag spools onto slots
 - XP for exploring the ecosystem too — friends, printers, a TigerScale, the phone app and more
 - Rankings: three leagues side by side — countries, your country and makers worldwide — with daily up / down arrows and the live community pulse
 - Tiger Quests: daily quests with a bonus chest and streaks, and tutorial missions that show you around the app for XP
-- Your XP history: a balance curve, the breakdown by category and every transaction
+- Your XP history: a balance curve (yours, your country's or the top leagues'), the breakdown by category and every transaction
+- Deals: partner offers for squad members — get your code, use it, keep your history
+- TigerCoins and envelopes: each certified TigerTag+ chip hides an envelope; open them, win TigerCoins, trade them for deals, give envelopes to your friends
+- The Maker's Workshop: your loot and feats, from common to legendary
 
 ### ⚖ Sensors & Devices
 
