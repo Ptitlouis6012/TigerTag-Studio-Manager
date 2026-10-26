@@ -5451,6 +5451,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _deals.at = 0;   // reload: the claim (code / used), the pool counters and the coins changed
       await _renderDealsView();
     }, onExpire: () => _renderDealsView(),
+    // The partner's site opened from a deal: counted server-side (raw total), never awaited.
+    onPartnerClick: async dealId => {
+      try {
+        const user = fbAuth(uid).currentUser;
+        await fetch(SQUAD_DEAL_URL, { method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+          body: JSON.stringify({ action: "partnerClick", dealId }) });
+      } catch (_) {}
+    },
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
     eggFound: egg => (_deals.coins?.eggs || []).includes(egg),
     // An easter egg found (squad-deals.js openEnvelopeHelp): the server adds its

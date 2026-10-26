@@ -1109,6 +1109,11 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-card-badge.is-coins .tcoin { width: 18px; height: 18px; }
 .sqd-card-body { display: flex; flex-direction: column; gap: 4px; padding: 9px 10px 10px; flex: 1; }
 .sqd-card-partner { font: 700 11px var(--sqr-display); letter-spacing: .14em; text-transform: uppercase; color: var(--tsq-orange); }
+/* The partner's site (partnerUrl): the name is a link, an arrow after it. */
+.sqd-partner-link { display: inline-flex; align-items: center; gap: 3px; color: inherit; text-decoration: none; cursor: pointer; }
+.sqd-partner-link .icon { background: currentColor; opacity: .7; transition: transform .15s, opacity .15s; }
+.sqd-partner-link:hover { text-decoration: underline; text-underline-offset: 2px; }
+.sqd-partner-link:hover .icon { opacity: 1; transform: translate(1px, -1px); }
 .sqd-card-body h3 { margin: 0; font-size: 14px; line-height: 1.3; color: var(--tsq-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sqd-card-body p { margin: 0; font-size: 11.5px; line-height: 1.4; color: var(--tsq-muted); white-space: pre-line;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(3 * 1.4em); }

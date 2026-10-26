@@ -114,7 +114,13 @@ function dealParts(ctx, d, section) {
   const kind = freeBadge ? "is-free" : exchange ? "is-coins" : badgeKind(badge);
   const art = `${safeImg ? `<img src="${esc(safeImg)}" alt="" loading="lazy">` : `<span class="icon icon-percent" aria-hidden="true"></span>`}
         ${badge ? `<span class="sqd-card-badge ${kind}">${exchange ? `<span class="tcoin" aria-hidden="true"></span>` : ""}${esc(badge)}</span>` : ""}${timer}`;
-  const partner = d.partner || tag ? `<span class="sqd-card-partner">${esc(d.partner || "")}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
+  // The partner's site (public partnerUrl): its name is a link for every member,
+  // claimed or not; each click is counted (ctx.onPartnerClick → squadDeal "partnerClick").
+  const site = /^https:\/\//i.test(d.partnerUrl || "") ? d.partnerUrl : "";
+  const partnerName = d.partner && site
+    ? `<a class="sqd-partner-link" href="${esc(site)}" target="_blank" rel="noopener" data-partner-click="${esc(d.id)}">${esc(d.partner)}<span class="icon icon-arrow-up-right icon-10" aria-hidden="true"></span></a>`
+    : esc(d.partner || "");
+  const partner = d.partner || tag ? `<span class="sqd-card-partner">${partnerName}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
   return { claim, used, exp, code, got, linkOnly, locked, unique, left, safeLink, tag, art, partner, cost, afford, coinsShort: Math.max(0, cost - coins),
@@ -865,7 +871,7 @@ export function wireDeals(host, ctx) {
     if (e.key === "Escape") setOpen(null);
   });
   host.addEventListener("keydown", e => {
-    const card = (e.key === "Enter" || e.key === " ") && e.target.closest?.(".sqd-card[data-open]");
+    const card = (e.key === "Enter" || e.key === " ") && !e.target.closest?.("a") && e.target.closest?.(".sqd-card[data-open]");
     if (card) { e.preventDefault(); setOpen(host._sqdOpen === card.dataset.open ? null : card.dataset.open); }
   });
   host._sqdFilter ||= { tab: "all", q: "" };
@@ -875,6 +881,9 @@ export function wireDeals(host, ctx) {
     applyDealsFilter(host);
   });
   host.addEventListener("click", async e => {
+    // The partner's site: the link opens itself; the click is counted, the card does not toggle.
+    const site = e.target.closest("[data-partner-click]");
+    if (site) { ctx.onPartnerClick?.(site.dataset.partnerClick); return; }
     if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
     if (e.target.closest("[data-coins-code]")) { openCoinsCodeModal(ctx); return; }
     if (e.target.closest("[data-coins-help]")) { openEnvelopeHelp(ctx); return; }
