@@ -218,6 +218,15 @@ users/
         createdAt   timestamp
         lastUsedAt  timestamp
 
+    cameras/                  — external IP cameras (NOT printers): a picture and nothing else
+      {cameraId}/             — one document per camera (Studio only; owner-write, no rule change)
+        name        string
+        protocol    string    — "rtsp" | "mjpeg" | "webrtc" (WHEP)
+        url         string    — the stream address, rtsp(s):// or http(s)://
+        username    string?   — optional login, never shown or logged
+        password    string?
+        createdAt, updatedAt  timestamp
+
     printers/
       {brand}/                — brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic.
                               The brand doc itself is a FIELDLESS parent (only holds

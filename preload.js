@@ -86,6 +86,15 @@ contextBridge.exposeInMainWorld('prusa', {
   onCamFrame:   (cb)             => ipcRenderer.on('prusa:cam-frame', (_, key, buf) => cb(key, buf)),
 });
 
+// External IP cameras (renderer/ext-cam) — ffmpeg in main, JPEG frames back.
+contextBridge.exposeInMainWorld('extCam', {
+  start:    (opts)  => ipcRenderer.send('extcam:start', opts),
+  stop:     (key)   => ipcRenderer.send('extcam:stop', key),
+  test:     (opts)  => ipcRenderer.invoke('extcam:test', opts),
+  onFrame:  (cb)    => ipcRenderer.on('extcam:frame',  (_, key, buf)    => cb(key, buf)),
+  onStatus: (cb)    => ipcRenderer.on('extcam:status', (_, key, status) => cb(key, status)),
+});
+
 contextBridge.exposeInMainWorld('bambulab', {
   connect:    (opts) => ipcRenderer.send('bambulab:connect',    opts),
   disconnect: (key)  => ipcRenderer.send('bambulab:disconnect', key),

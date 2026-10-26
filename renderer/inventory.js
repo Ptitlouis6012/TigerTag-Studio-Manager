@@ -78,6 +78,7 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
+import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection } from './ext-cam/ext-cam.js';
 // Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
 import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
 import { betaBadgeInlineHtml } from './printers/beta-badge.js';
@@ -25045,6 +25046,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function subscribePrinters(uid) {
     unsubscribePrinters();
+    extCamSubscribe(uid);   // external IP cameras live in their own collection, not with the printers
     // Per-brand cache keyed by brand id; flattened into state.printers on every snapshot.
     const cache = Object.fromEntries(PRINTER_BRANDS.map(b => [b, []]));
     // Track which Elegoo printer keys are currently auto-connected so we can
@@ -25213,6 +25215,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   function unsubscribePrinters() {
+    extCamUnsubscribe();
     if (Array.isArray(state.unsubPrinters)) {
       for (const fn of state.unsubPrinters) { try { fn(); } catch (_) {} }
     }
@@ -26368,7 +26371,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _prevPlanImgs.length = 0;
 
     if (_printerSub === "table") { _renderPrinterTable(host); return; }
-    if (_printerSub === "cam")   { _renderPrinterCam(host);   return; }
+    if (_printerSub === "cam")   { _renderPrinterCam(host); mountExtCamSection(host); return; }
 
     // Auto-connect all printers so job status data is available in the grid.
     // All connect functions are idempotent — no-op if already connected or
@@ -30135,6 +30138,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   _printerCtx.isDebugEnabled      = () => !!state.debugEnabled;
   _printerCtx.updatePrinterModel  = (printer, modelId) => persistPrinterModel(printer, modelId);
   _printerCtx.applyTranslations   = () => applyTranslations();
+  initExtCam({
+    db: uid => fbDb(uid),
+    uid: () => state.activeAccountId,
+    // A camera added / edited / deleted redraws the wall only while it is on screen.
+    onChange: () => { if (state.viewMode === "printer-cam") renderPrintersView(); },
+  });
   // Persist an Anycubic CLOUD printer (provisioned via the slicer). Keyed by
   // cloudPrinterId so re-provisioning upserts (refreshing the token) instead of
   // creating duplicates. The token/email are denormalised onto the doc so the
@@ -32301,7 +32310,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
         </button>`;
     }).join("");
-    _renderDemoPrinterRows(list);
+    // The demo section is filled in async; the cameras section goes after it.
+    _renderDemoPrinterRows(list).finally(() => _renderExtCamPickerRows(list));
     list.querySelectorAll(".pba-brand[data-brand]").forEach(btn => {
       btn.addEventListener("click", () => {
         const brand = btn.dataset.brand;
@@ -32373,6 +32383,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       e.currentTarget.classList.add("pba-brand--selected");
       _closeOpenPbaCard?.();
       openDemoPicker();
+    });
+  }
+  // "External cameras" — a camera that is not a printer (renderer/ext-cam). The
+  // row opens the add card; ffmpeg lives in the desktop app, so the web build
+  // (no `window.extCam`) does not offer it.
+  function _renderExtCamPickerRows(list) {
+    if (!window.extCam || list.querySelector(".pba-extcam-head")) return;
+    list.insertAdjacentHTML("beforeend", `
+      <div class="pba-demo-head pba-extcam-head">${esc(t("extCamPickerHead"))}</div>
+      <button type="button" class="pba-brand" id="pbaExtCamPick">
+        <span class="pba-demo-logo"><span class="icon icon-camera icon-20"></span></span>
+        <span class="pba-brand-text">
+          <span class="pba-brand-label">${esc(t("extCamPickerRow"))}</span>
+          <span class="pba-brand-conn">RTSP · MJPEG · WebRTC</span>
+        </span>
+        <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
+      </button>`);
+    list.querySelector("#pbaExtCamPick")?.addEventListener("click", e => {
+      list.querySelectorAll(".pba-brand--selected").forEach(b => b.classList.remove("pba-brand--selected"));
+      e.currentTarget.classList.add("pba-brand--selected");
+      _closeOpenPbaCard();
+      openExtCamAddFlow();
     });
   }
   // Brands the simulator plays, in the picker's order.
