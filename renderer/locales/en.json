@@ -2335,6 +2335,7 @@
   "envGiveShort": "Give",
   "envGiveSent": "Envelope given to {{name}}!",
   "envGiveNoGift": "You have no envelope to give.",
+  "eggFound": "Already found that one. Nice try.",
   "friendGiveEnvelope": "Give an envelope",
   "friendGiveEnvelopeSub": "To a friend",
   "envFromFriend": "An envelope from {{name}}",

@@ -199,7 +199,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## Inventory render (L7877-13560)
+## Inventory render (L7877-13800)
 | L | What | Anchors |
 |---|---|---|
 | 5054-5268 | **`renderInventory()`** — welcome card, rack-view priority, table/grid dispatch | `renderInventory` |
@@ -211,7 +211,7 @@ Manual spool creation: full chip-schema editor with bottom-sheets. All helpers p
 
 ---
 
-## RFID encode / burn modal — cem (L12607-14100)
+## RFID encode / burn modal — cem (L12607-14400)
 | L | What | Anchors |
 |---|---|---|
 | 5880-5970 | **`_burnRfid(r)`** — writes a chip from a row | `_burnRfid` |

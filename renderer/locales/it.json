@@ -2335,6 +2335,7 @@
   "envGiveShort": "Regala",
   "envGiveSent": "Busta regalata a {{name}}!",
   "envGiveNoGift": "Non hai buste da regalare.",
+  "eggFound": "Già trovato. Bel tentativo.",
   "friendGiveEnvelope": "Regala una busta",
   "friendGiveEnvelopeSub": "A un amico",
   "envFromFriend": "Una busta da {{name}}",

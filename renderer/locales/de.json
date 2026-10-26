@@ -2335,6 +2335,7 @@
   "envGiveShort": "Schenken",
   "envGiveSent": "Umschlag an {{name}} verschenkt!",
   "envGiveNoGift": "Du hast keinen Umschlag zum Verschenken.",
+  "eggFound": "Schon gefunden. Netter Versuch.",
   "friendGiveEnvelope": "Einen Umschlag schenken",
   "friendGiveEnvelopeSub": "An einen Freund",
   "envFromFriend": "Ein Umschlag von {{name}}",

@@ -388,6 +388,7 @@ function openEnvelopeHelp(ctx) {
   el.innerHTML = `
     <div class="tc-reveal-card tc-code-card tcx tcx--help" role="dialog" aria-modal="true" aria-label="${esc(t("envHelpTitle"))}">
       <img class="tch-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      ${ctx.eggFound?.("envHelp") ? "" : `<span class="tch-glints" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`}
       <div class="tcx-main">
         <div class="tcx-plaque"><h3>${esc(t("envHelpTitle"))}</h3></div>
         <ul class="tch-list">
@@ -409,6 +410,23 @@ function openEnvelopeHelp(ctx) {
   el.querySelector("[data-code]").addEventListener("click", () => { close(); setTimeout(() => openCoinsCodeModal(ctx), 180); });
   // Hovering a way to get envelopes: its art hops (CSS) and a short tick plays.
   el.querySelectorAll(".tch-list li").forEach(li => li.addEventListener("pointerenter", () => sfx.tick()));
+  // Easter egg: three quick clicks on the envelope (each one shakes it with a tick)
+  // and the server gives one common envelope, once per account (tigerCoins.js EGGS);
+  // the window closes and the pile opens (ctx.easterEgg).
+  const egg = el.querySelector(".tch-env");
+  let taps = 0, tapT = null, busy = false;
+  egg.addEventListener("animationend", e => { if (e.animationName === "tch-tap") egg.classList.remove("is-tapped"); });
+  egg.addEventListener("click", async () => {
+    if (busy || !ctx.easterEgg) return;
+    egg.classList.remove("is-tapped"); void egg.offsetWidth; egg.classList.add("is-tapped");
+    sfx.tick();
+    clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 900);
+    if (++taps < 3) return;
+    taps = 0; busy = true;
+    try { await ctx.easterEgg("envHelp", close); el.querySelector(".tch-glints")?.remove(); }
+    catch (e) { ctx.toast?.(t(e?.message === "EGG_FOUND" ? "eggFound" : "squadDealsErr")); }
+    busy = false;
+  });
 }
 
 /** The gift-code modal ("Gift code", generic: a code gives coins, envelopes or

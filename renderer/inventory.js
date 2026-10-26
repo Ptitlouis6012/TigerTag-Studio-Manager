@@ -4821,26 +4821,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _communityPending(c) {
     return !state[c.seen] && _communityDelayElapsed(c.delayDays);
   }
+  // `art`: the notification card's illustration, assets/img/notifications/<art>.webp
+  // (docs/ART-DIRECTION.md), drawn by _communityArt.
   const COMMUNITY = {
     wiki: {
       url: "https://wiki.tigersystem.io/",
       btnId: "sbWikiBtn", seen: "wikiSeen", clickedAt: "wikiClickedAt",
-      icon: "book", titleKey: "notifWikiTitle", textKey: "notifWikiText",
+      icon: "book", titleKey: "notifWikiTitle", textKey: "notifWikiText", art: "community-wiki",
     },
     discord: {
       url: "https://discord.gg/3Qv5TSqnJH",
       btnId: "sbDiscordBtn", seen: "discordSeen", clickedAt: "discordClickedAt",
-      icon: "discord", titleKey: "notifDiscordTitle", textKey: "notifDiscordText",
+      icon: "discord", titleKey: "notifDiscordTitle", textKey: "notifDiscordText", art: "community-discord",
     },
     github: {
       url: "https://github.com/TigerTag-Project/TigerTag-Studio-Manager/",
       btnId: "sbGithubBtn", seen: "githubSeen", clickedAt: "githubClickedAt",
-      icon: "github", titleKey: "notifGithubTitle", textKey: "notifGithubText",
+      icon: "github", titleKey: "notifGithubTitle", textKey: "notifGithubText", art: "community-github",
     },
     makerworld: {
       url: "https://makerworld.com/fr/@TigerTag/upload",
       btnId: "sbMakerWorldBtn", seen: "makerworldSeen", clickedAt: "makerworldClickedAt",
-      icon: "package", titleKey: "notifMakerworldTitle", textKey: "notifMakerworldText",
+      icon: "package", titleKey: "notifMakerworldTitle", textKey: "notifMakerworldText", art: "community-makerworld",
     },
     // "Buy me a coffee" support nudge — unlike the others it only surfaces its
     // notification + sidebar badge after the user has been around for a few
@@ -4849,11 +4851,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     coffee: {
       url: COFFEE_URL,
       btnId: "sbCoffeeBtn", seen: "coffeeSeen", clickedAt: "coffeeClickedAt",
-      icon: "coffee", titleKey: "notifCoffeeTitle", textKey: "notifCoffeeText",
+      icon: "coffee", titleKey: "notifCoffeeTitle", textKey: "notifCoffeeText", art: "community-coffee",
       delayDays: 3,
     },
   };
 
+  const _communityArt = action => COMMUNITY[action]?.art ? `<img src="../assets/img/notifications/${COMMUNITY[action].art}.webp" alt="">` : "";
   // Toggle each button's "1" badge based on whether its nudge is still pending.
   function renderCommunityBadges() {
     for (const k in COMMUNITY) {
@@ -4893,6 +4896,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const c = COMMUNITY[k];
     if (!c) return;
     _markCommunitySeen(k);
+    // Support: the platform chooser (Buy Me a Coffee / Ko-fi / PayPal), anchored
+    // to the sidebar's coffee button, never one platform imposed.
+    if (k === "coffee") { const b = $("sbCoffeeBtn"); _openCoffee(b ? { currentTarget: b } : null); return; }
     window.open(c.url);
   }
   // Clicking the sidebar button → open the notification center while the nudge is
@@ -5375,7 +5381,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     el.hidden = !n;
   }
   // `gifts` = today's allowance of envelopes to give friends ({ left, max, tier }).
-  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null });
+  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null, eggs: r.eggs || [] });
   // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
   const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg), hold: setupHoldToConfirm,
     openChest: async id => {
@@ -5446,6 +5452,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await _renderDealsView();
     }, onExpire: () => _renderDealsView(),
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
+    eggFound: egg => (_deals.coins?.eggs || []).includes(egg),
+    // An easter egg found (squad-deals.js openEnvelopeHelp): the server adds its
+    // envelope to the pile, the help window closes and the pile opens.
+    easterEgg: async (egg, closeHelp) => {
+      const r = await _tigerCoins(uid, "easterEgg", { egg });
+      _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
+      paint();
+      closeHelp?.();
+      setTimeout(() => _openAllEnvelopes(uid, ctx, paint), 260);
+      return r;
+    },
     qr: url => _makeQrDataUrl(url, { size: 264, margin: 2, fg: "#111318", bg: "#ffffff", logo: false }),   // black on white: always scans
     openChest: id => _coinsCtx(uid, paint).openChest(id),
     // A gift code: credited once per account; the error code reaches the toast.
@@ -39031,9 +39048,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const clickable = isCommunity || n.action === "avatar" || isFw || n.action === "report";
       const art = n.img ? `<img src="${esc(n.img)}" alt="" onerror="this.style.display='none'">`
         : (n.brand && _BRAND_HAS_LOGO.has(n.brand)) ? `<span class="notif-ic notif-ic--bare"><span class="pt-thumb-logo" data-brand="${esc(n.brand)}"></span></span>`
-        : n.action === "coffee" ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt=""></span>`
+        : isCommunity ? _communityArt(n.action)
         : n.action === "restart" || n.action === "update" || (!n.icon && !isCommunity) || n.icon === "refresh" ? `<img src="../assets/img/notifications/update.webp" alt="">`   // app update (docs/ART-DIRECTION.md)
-        : icon(n.icon || "refresh", isCommunity ? ` notif-ic--${n.action}` : "");
+        : icon(n.icon || "refresh");
       const accent = n.action === "report" ? NOTIF_ACCENT.report : isCommunity ? NOTIF_ACCENT.community : n.action === "restart" || isFw ? NOTIF_ACCENT.update : NOTIF_ACCENT.system;
       items.push({ kind: "system", at: Date.now(), html: card({ kind: "system", accent, clickable,
         attrs: `data-local-id="${esc(n.id)}"${clickable && n.action !== "report" && !isCommunity ? ` data-local-action="${esc(n.action)}"` : ""}`,
@@ -39086,9 +39103,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const action = n.action || "";
         const canRestart = action === "whatsnew" && _updateReadyVersion && n.data?.version === _updateReadyVersion;
         const art = n.data?.img ? `<img src="${esc(n.data.img)}" alt="" onerror="this.style.display='none'">`
-          : action === "coffee" ? `<span class="notif-ic notif-ic--coffee"><img class="notif-coffee-img" src="../assets/svg/logos/logo_buy_me_coffee.svg" alt=""></span>`
+          : COMMUNITY[action] ? _communityArt(action)
           : action === "whatsnew" ? `<img src="../assets/img/notifications/update.webp" alt="">`   // a new version (docs/ART-DIRECTION.md)
-          : icon(n.icon || "bell", COMMUNITY[action] ? ` notif-ic--${action}` : "");
+          : icon(n.icon || "bell");
         items.push({ kind: "system", at, html: card({ ...base, kind: "system", accent: action === "whatsnew" ? NOTIF_ACCENT.update : COMMUNITY[action] ? NOTIF_ACCENT.community : NOTIF_ACCENT.system,
           clickable: !!action, attrs: `data-id="${esc(n.id)}"${action && action !== "whatsnew" && !COMMUNITY[action] ? ` data-notif-action="${esc(action)}" data-notif-key="${esc(n.data?.key || "")}" data-notif-version="${esc(n.data?.version || "")}"` : ""}`,
           art, title: n.title, text: n.text,

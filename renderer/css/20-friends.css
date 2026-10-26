@@ -363,14 +363,6 @@
   .notif-ic--req-done .icon  { background: #2f9e44; }
   .notif-ic--req-in_progress .icon { background: #f08c00; }
   .notif-ic--req-declined .icon, .notif-ic--req-cancelled .icon { background: var(--muted); }
-  /* Community nudges — the real app-icon look: brand-coloured rounded square,
-     white logo filling the box (Discord purple, GitHub slate, MakerWorld teal). */
-  .notif-ic--wiki       { background: var(--primary); border-color: var(--primary); } /* ours — follows the theme */
-  .notif-ic--discord    { background: #5865F2; border-color: #5865F2; }
-  .notif-ic--github     { background: #2d333b; border-color: #2d333b; }
-  .notif-ic--makerworld { background: #00BCA0; border-color: #00BCA0; }
-  .notif-ic--shop       { background: #5e8e3e; border-color: #5e8e3e; } /* Shopify green */
-  .notif-ic--coffee     { background: #FFDD00; border-color: #FFDD00; } /* Buy Me a Coffee yellow */
   /* Low-stock alert — amber circle, white box icon. */
   .notif-ic--lowstock { background: var(--warning); border-color: var(--warning); }
   .notif-ic--lowstock .icon { background: var(--on-accent); }
@@ -379,17 +371,6 @@
      not the circular chip the other notif icons use. */
   .notif-ic--img { padding: 0; overflow: hidden; background: var(--surface-2); border-radius: 9px; }
   .notif-ic--img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .notif-ic--wiki, .notif-ic--discord, .notif-ic--github, .notif-ic--makerworld, .notif-ic--shop, .notif-ic--coffee { border-radius: 10px; }
-  /* The glyph is --on-accent (fixed-polarity white), NOT --surface: --surface is
-     white only in light mode and #171a22 in dark, so the logo went black on its
-     brand colour there — on all five chips, not just the newest. --on-accent is
-     the token for "sits ON a filled colour", which is what these are; the sidebar
-     buttons already use it, which is why they looked right in both themes. */
-  .notif-ic--wiki .icon, .notif-ic--discord .icon, .notif-ic--github .icon, .notif-ic--makerworld .icon, .notif-ic--shop .icon {
-    background: var(--on-accent); width: 24px; height: 24px;
-  }
-  /* Official Buy Me a Coffee cup (our own SVG) on the yellow square. */
-  .notif-ic--coffee .notif-coffee-img { width: 26px; height: 26px; display: block; }
   /* Printer-brand notice — the machine "speaking": white chip + tinted brand
      logo, matching the printer list's brand badge. The logo's colour + mask
      come from .pt-thumb-logo[data-brand] (40-printers.css). */

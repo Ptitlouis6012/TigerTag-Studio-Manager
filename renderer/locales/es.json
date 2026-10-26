@@ -2335,6 +2335,7 @@
   "envGiveShort": "Regalar",
   "envGiveSent": "¡Sobre regalado a {{name}}!",
   "envGiveNoGift": "No tienes ningún sobre para regalar.",
+  "eggFound": "Ya lo encontraste. Buen intento.",
   "friendGiveEnvelope": "Regalar un sobre",
   "friendGiveEnvelopeSub": "A un amigo",
   "envFromFriend": "Un sobre de {{name}}",

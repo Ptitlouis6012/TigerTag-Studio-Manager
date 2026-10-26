@@ -2335,6 +2335,7 @@
   "envGiveShort": "Geven",
   "envGiveSent": "Envelop gegeven aan {{name}}!",
   "envGiveNoGift": "Je hebt geen envelop om te geven.",
+  "eggFound": "Die heb je al gevonden. Goed geprobeerd.",
   "friendGiveEnvelope": "Een envelop geven",
   "friendGiveEnvelopeSub": "Aan een vriend",
   "envFromFriend": "Een envelop van {{name}}",

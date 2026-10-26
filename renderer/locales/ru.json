@@ -2335,6 +2335,7 @@
   "envGiveShort": "Подарить",
   "envGiveSent": "Конверт подарен {{name}}!",
   "envGiveNoGift": "У тебя нет конверта, чтобы подарить.",
+  "eggFound": "Это уже найдено. Хорошая попытка.",
   "friendGiveEnvelope": "Подарить конверт",
   "friendGiveEnvelopeSub": "Другу",
   "envFromFriend": "Конверт от {{name}}",

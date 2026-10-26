@@ -2335,6 +2335,7 @@
   "envGiveShort": "赠送",
   "envGiveSent": "红包已送给 {{name}}！",
   "envGiveNoGift": "你没有可赠送的红包。",
+  "eggFound": "这个你已经找到过了。试得不错。",
   "friendGiveEnvelope": "送一个红包",
   "friendGiveEnvelopeSub": "送给好友",
   "envFromFriend": "来自 {{name}} 的红包",

@@ -492,11 +492,11 @@ function untilMidnight() {
 // variable, so it resolves from quests.css (renderer/quests/), hence ../../.
 const RARITIES = [["legendary", 800], ["epic", 300], ["rare", 100], ["uncommon", 20], ["common", 0]];
 export function questLootHtml() { return lootHtml(); }
-// Loot tiles answer the pointer: the art hops (quests.css) and a soft note plays,
+// Loot tiles and Feats rows answer the pointer: the art hops (quests.css) and a soft note plays,
 // higher with the rarity. One delegated listener for every Workshop render.
 const RARITY_STEP = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
 document.addEventListener("pointerover", e => {
-  const tile = e.target.closest?.(".qw-tile");
+  const tile = e.target.closest?.(".qw-tile, .qw-row");
   if (!tile || tile.contains(e.relatedTarget)) return;
   sfx.hover(RARITY_STEP[tile.dataset.r] ?? 0);
 });
@@ -549,7 +549,7 @@ function ladderHtml(items, eyebrowKey, titleKey, countKey, groups) {
       <span class="qw-pts">${x.got ? "" : `<span class="icon icon-lock icon-10" aria-hidden="true"></span>`}${esc(pts(x))}</span>
     </article>`;
   const row = x => `
-    <li class="qw-row qw-r--${x.r}${x.got ? " is-got" : ""}">
+    <li class="qw-row qw-r--${x.r}${x.got ? " is-got" : ""}" data-r="${x.r}">
       <span class="qw-row-art" aria-hidden="true">${art(x)}</span>
       <span class="qw-row-txt"><b>${esc(x.label)}</b>${x.hint ? `<small>${esc(x.hint)}</small>` : ""}</span>
       <span class="qw-cnt">${x.per && x.n ? `×${x.n}` : ""}</span>

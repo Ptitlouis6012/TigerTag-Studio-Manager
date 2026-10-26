@@ -2335,6 +2335,7 @@
   "envGiveShort": "Podaruj",
   "envGiveSent": "Koperta podarowana {{name}}!",
   "envGiveNoGift": "Nie masz koperty do podarowania.",
+  "eggFound": "To już znalezione. Niezła próba.",
   "friendGiveEnvelope": "Podaruj kopertę",
   "friendGiveEnvelopeSub": "Znajomemu",
   "envFromFriend": "Koperta od {{name}}",
