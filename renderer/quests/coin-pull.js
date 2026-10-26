@@ -52,7 +52,7 @@ function closeOverlay(el) {
 // the envelope, the cards and the buttons leaves (see onOutside).
 function frame(el, ctx) {
   const { t, esc } = ctx;
-  el.classList.remove("is-recap");   // a new round shows its banners again
+  el.classList.remove("is-recap", "is-leaving");   // a new round shows its banners again
   el.innerHTML = `
     <div class="tpx" role="dialog" aria-modal="true" aria-label="${esc(t("coinsRevealTitle"))}">
       <div class="tpx-head">
@@ -376,6 +376,9 @@ async function afterReveal(ctx, f, list) {
   await wait(700);
   const el = f.foot.closest(".tc-reveal");
   await new Promise(resolve => { el.onclick = () => { el.onclick = null; resolve(); }; });
+  // The reveal fades out before the next envelope comes in (no hard cut).
+  el.classList.add("is-leaving");
+  await wait(380);
 }
 
 /** What a chest, a gift or a code gave (`opened` = [{ rarity, coins }]),
