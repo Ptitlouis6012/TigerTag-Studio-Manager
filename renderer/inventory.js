@@ -18,7 +18,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
-import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, showEnvelopeGift, sortDeals, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, showEnvelopeGift, sortDeals, tapEgg, wireDeals } from './quests/squad-deals.js';
 import { closePullStages, openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
@@ -5668,13 +5668,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // quests/squad-rankings.js layout (My rank, Community pulse, three leagues).
       if (host) {
         const rctx = _squadRankCtx(viewer, cname, fmt, myCountry());
-        // Items has its own banner: the tiger and the four legendary devices, lit when owned.
+        // Items has its own banner: the tiger and the four legendary devices, lit when owned,
+        // each owned one hiding an easter-egg envelope (eggFound: the found ones are gone;
+        // unknown until the TigerCoins status is loaded once).
         const xb = state.xpBreakdown || {}, got = id => (xb[id]?.xp || 0) > 0;
+        if ((which === "ach" || which === "countries") && !_deals.coins && viewer === uid && !card._eggLoad) {
+          card._eggLoad = _tigerCoins(uid, "status").then(r => { _deals.coins = _coinsOf(r); if (card.isConnected) render(_squadViewTab); }).catch(() => {});
+        }
+        const eggFound = viewer === uid && _deals.coins ? egg => (_deals.coins.eggs || []).includes(egg) : null;
         card.querySelector(".sqr-hero-host").innerHTML = which === "ach"
           ? squadItemsHeroHtml(rctx, { tigerScale: got("tigerScale"), tigerSpool: got("tigerSpool"), tigerTouch: got("tigerTouch"), tigerPod: got("tigerPod") },
               // The next squad level rides in the banner's right card, like the other heroes' cards.
-              mine ? _squadNextLevelHTML(mine.breakdown, fmt).trim().replace(/^<li/, "<div").replace(/<\/li>$/, "</div>") : "")
-          : squadHeroHtml(rctx, members);
+              mine ? _squadNextLevelHTML(mine.breakdown, fmt).trim().replace(/^<li/, "<div").replace(/<\/li>$/, "</div>") : "",
+              eggFound)
+          : squadHeroHtml(rctx, members, eggFound);
         const rk = card.querySelector(".sqr-host"), ranked = which === "countries", legendary = which === "ach";
         rk.hidden = !(ranked || legendary); card.querySelector(".sqb-cols").hidden = ranked || legendary;
         card.querySelector(".sqb-wall").hidden = !ranked;   // the wall-of-fame link: League only, not the Workshop
@@ -5730,6 +5737,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     };
     const onKey = e => { if (e.key === "Escape" && !_supportMenu && performance.now() - _supportClosedAt > 250) close(); };
     card.addEventListener("click", e => {
+      // An easter-egg envelope behind a legendary device: three quick clicks (tapEgg).
+      const eggSpot = e.target.closest("[data-egg]");
+      if (eggSpot) {
+        tapEgg(eggSpot, eggSpot.dataset.egg, { t, toast: msg => _flashMessage(msg),
+          easterEgg: async (egg, onFound) => {
+            const r = await _tigerCoins(uid, "easterEgg", { egg });
+            _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
+            onFound?.();
+            const after = () => { if (card.isConnected) render(_squadViewTab); };
+            after();
+            setTimeout(() => _openAllEnvelopes(uid, _coinsCtx(uid, after), after), 260);
+            return r;
+          } }, card);
+        return;
+      }
       const all = e.target.closest("[data-sqr-all]");
       if (all) { toggleLeague(all.dataset.sqrAll); render("countries"); return; }
       const tabBtn = e.target.closest(".sqb-tab");
@@ -39409,6 +39431,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         if (_xph.scope !== "me" && uid) _loadLeagues(uid).then(() => { if (state.viewMode === "xpHistory" && uid === state.activeAccountId) _paintXpHistView(); });
         return;
       }
+      const hg = e.target.closest("[data-xph-hourglass]");
+      if (hg) { hg.classList.toggle("is-flipped"); return; }   // the banner's hourglass turns over
       const p = e.target.closest("[data-xph-page]");
       if (p && !p.disabled) { _xph.page = Number(p.dataset.xphPage) || 1; _paintXpHistView(); host.querySelector(".xph-table-wrap")?.scrollIntoView({ block: "nearest" }); }
     });

@@ -78,6 +78,11 @@ Use these colours; a new colour is a desaturated or shadow variant of one of the
   (test by shrinking it).
 - **Scenes / banners**: objects grouped on one invisible floor line at the bottom, characters cut
   at the waist behind the desk (see the generate-asset skill for the banner format).
+- **Banners are delivered as separate elements**: one transparent PNG per object (the tiger, the
+  bag, the coins…), generated on one sheet with lots of space between them, cut by connected
+  components, then placed and lightly animated in CSS — reference: the Deals banner
+  (`assets/img/tigersquad/deals-hero/`), assembled by `renderer/quests/hero-layers.js` (`heroLayersHtml`: a back plane behind the desk for a waist-cut character, a front plane for what stands on it) and placed per banner in `quests.css` (`.<hero> .hl--<name>`). An object a character
+  holds or leans on stays in the character's layer.
 - **Always a real transparent background** (alpha 0) — check with `sharp(...).stats()`
   (`isOpaque: false`). No checkerboard, no white box, no floor band.
 - **No text** in the art (titles are HTML, translated in 11 locales). Exception: "XP" on the XP badge.

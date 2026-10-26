@@ -16,6 +16,8 @@
  *           brandLabel(id), lang, squadXp (number|null), myCountry }
  */
 import { FLAG_COLORS } from './flag-colors.js';
+import { heroLayersHtml } from './hero-layers.js';
+import { sfx } from './coin-sound.js';
 
 // THE rank number ("#4"), one look wherever a rank is written: league rank
 // columns, the national "#1" beside a maker's flag, the rank card, the full
@@ -78,38 +80,42 @@ const flagAv = (cc, size, podium = 0) => /^[a-z]{2}$/i.test(cc || "")
   : "";
 
 // ── Items hero ───────────────────────────────────────────────────────────────
-// The Items view's banner: the tiger in its setup with the four LEGENDARY
-// devices on the desk, drawn in the banners' mascot style from the real
-// products (assets/img/tigersquad/legendary/*-flat2.webp).
-// Each is a black silhouette until the account owns it, then lit.
+// The Items view's banner (hero-layers.js): the tiger in the TigerTag cap, arms
+// open, still behind the desk (assets/img/tigersquad/workshop-hero/), and the four
+// LEGENDARY devices on the desk (assets/img/tigersquad/legendary/*-flat*.webp),
+// each a black silhouette until the account owns it, then lit. Behind each OWNED
+// device an easter-egg envelope peeks out (ws<Device>, three quick clicks — the
+// host's tapEgg; the server checks the device is owned); `eggFound(id)` hides the
+// found ones, and no envelope is drawn until it is known (null).
 // `owned` = { tigerScale, tigerSpool, tigerTouch, tigerPod } booleans.
 const LEGENDARY = [
   { id: "tigerScale", img: "tigerscale-flat2", side: "l" }, { id: "tigerSpool", img: "tigerspool-flat2", side: "l" },
   { id: "tigerTouch", img: "tigertouch-flat3", side: "r" }, { id: "tigerPod", img: "tigerpod-flat2", side: "r" },
 ];
-export function squadItemsHeroHtml(ctx, owned = {}, nextCard = "") {
+export function squadItemsHeroHtml(ctx, owned = {}, nextCard = "", eggFound = null) {
   const { t, esc } = ctx;
   const n = LEGENDARY.filter(x => owned[x.id]).length;
-  const item = x => `<img class="sqi-item sqi-item--${x.img}${owned[x.id] ? " is-on" : ""}" src="../assets/img/tigersquad/legendary/${x.img}.webp" alt=""
-      aria-label="${esc(t(`xpAch_${x.id}`))}${owned[x.id] ? "" : " — " + esc(t("questsLocked2"))}">`;
+  const item = x => ({ html: `<img class="hl hl--${x.img} sqi-item${owned[x.id] ? " is-on" : ""}" src="../assets/img/tigersquad/legendary/${x.img}.webp" alt=""
+      aria-label="${esc(t(`xpAch_${x.id}`))}${owned[x.id] ? "" : " — " + esc(t("questsLocked2"))}" draggable="false">` });
   return `
     <section class="sqr-hero sqi-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadGrimoireSub"))}</h2><p>${esc(t("squadLegendaryCount", { n, total: LEGENDARY.length }))}</p></div>
-      <div class="sqi-scene">
-        ${LEGENDARY.filter(x => x.side === "l").map(item).join("")}
-        <span class="sqi-tiger" aria-hidden="true">
-          <img class="sqi-tiger-back" src="../assets/img/tigersquad/legendary/tiger.webp" alt="">
-          <img class="sqi-tiger-front" src="../assets/img/tigersquad/legendary/tiger-front.webp" alt="">
-        </span>
-        ${LEGENDARY.filter(x => x.side === "r").map(item).join("")}
-      </div>
+      <div class="sqi-scene">${heroLayersHtml("../assets/img/tigersquad/", {
+        back: [{ name: "workshop-hero/tiger", cls: "ws-tiger" }],
+        front: LEGENDARY.flatMap(x => {
+          const egg = `ws${x.id[0].toUpperCase()}${x.id.slice(1)}`;
+          const hidden = owned[x.id] && eggFound && !eggFound(egg)
+            ? [{ html: `<img class="hl hl--egg hl--egg-${x.img}" data-egg="${egg}" src="../assets/img/tigercoins/envelope.webp" alt="" draggable="false">` }] : [];
+          return [...hidden, item(x)];   // drawn first: the device covers most of it
+        }),
+      })}</div>
       ${nextCard ? `<div class="sqr-card sqi-next">${nextCard}</div>` : ""}
     </section>`;
 }
 
 // ── Hero ─────────────────────────────────────────────────────────────────────
-export function squadHeroHtml(ctx, members) {
+export function squadHeroHtml(ctx, members, eggFound = null) {
   const { t, esc, fmt } = ctx;
   const r = ranks(ctx, members);
   // The account's rank card (the one place the page shows it): who, league, XP,
@@ -125,13 +131,12 @@ export function squadHeroHtml(ctx, members) {
         <span class="sqr-bar" aria-hidden="true"><i style="width:${Math.max(2, Math.min(100, Math.round(r.me.xp / Math.max(1, rival.xp) * 100)))}%"></i></span>
       </div>` : `
       <div class="sqr-rival-row is-top" aria-label="${esc(label)}">${badge}${MEDAL1}<b>${esc(t("squadTopShort"))}</b></div>`;
-  const tied = r.me ? r.world.find(m => m !== r.me && m.xp === r.me.xp) : null;
   const card = r.me ? `
       <div class="sqr-card sq-${r.me.tier}">
         <div class="sqr-card-me">
           <span class="sqr-card-av">${ctx.avatar(r.me)}</span>
           <span class="sqr-card-head"><b class="sqr-card-name">${esc(r.me.name)}</b>
-            <span class="sqr-card-league"><img src="../assets/img/tigersquad/tigersquad-${r.me.tier}.webp" alt="">${esc(t("squadLeagueName", { tier: ctx.tierLabel(r.me.tier) }))}</span>
+            <span class="sqr-card-league">${esc(t("squadLeagueName", { tier: ctx.tierLabel(r.me.tier) }))}</span>
             <b class="sqr-card-xp">${esc(fmt(r.me.xp))} XP</b></span>
         </div>
         <div class="sqr-card-ranks">
@@ -146,7 +151,6 @@ export function squadHeroHtml(ctx, members) {
                leader's line shows the medal and "Number one" in place of a rival. */""}
           ${r.natRank ? rivalRow(`<span class="sqr-rival-badge">${flagAv(r.cc, 20)}</span>`, aboveNat, t("squadInCountry", { country: ctx.cname(r.cc) })) : ""}
           ${rivalRow(`<span class="sqr-rival-badge">${worldAv(20)}</span>`, above, t("squadWorldwide"))}
-          ${tied ? `<small class="sqr-muted">${esc(t("squadTiedWith", { name: tied.name }))}</small>` : ""}
         </div>
       </div>`
     : `
@@ -160,10 +164,31 @@ export function squadHeroHtml(ctx, members) {
     <section class="sqr-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadHeroSub"))}</h2><p>${esc(t("squadHeroTagline"))}</p></div>
-      <div class="hero-scene" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">${leagueScene(eggFound)}</div>
       ${members.length ? card : ""}
     </section>`;
 }
+
+// The League banner scene (hero-layers.js): three tigers with their silver, gold
+// and bronze medals behind the desk (still), their resting paws in front of it,
+// the trophy, the printer and the stars on the desk. The trophy is also an easter
+// egg (leagueTrophy, no envelope shown: three quick clicks on the cup — the host's
+// tapEgg); `eggFound(id)` drops its data-egg once found, unknown → none (null).
+const leagueScene = eggFound => heroLayersHtml("../assets/img/tigersquad/league-hero/", {
+  back: ["tiger-silver", "tiger-gold", "tiger-bronze"],
+  front: ["tiger-gold-paws", "tiger-bronze-paws",
+    { html: `<img class="hl hl--trophy" data-trophy${eggFound && !eggFound("leagueTrophy") ? ` data-egg="leagueTrophy"` : ""} src="../assets/img/tigersquad/league-hero/trophy.webp" alt="" draggable="false">` }, "printer", ...[1, 2, 3, 4].map(i => ({ name: "star", cls: `spark hl--spark${i}` }))],
+});
+
+// The League trophy celebrates on a click: it jumps and shines (quests.css
+// .is-cheering) with a little fanfare. One delegated listener, every render.
+document.addEventListener("click", e => {
+  const cup = e.target.closest?.("[data-trophy]");
+  if (!cup || cup.classList.contains("is-cheering")) return;
+  cup.classList.add("is-cheering");
+  sfx.rarity(2);
+  cup.addEventListener("animationend", () => cup.classList.remove("is-cheering"), { once: true });
+});
 
 // ── Rankings tab ─────────────────────────────────────────────────────────────
 export function squadRankingsHtml(ctx, { members, loading, pulse, history }) {

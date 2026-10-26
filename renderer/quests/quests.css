@@ -166,7 +166,7 @@ body.progress-view #gridSortWrap { display: none; }
   right: auto; left: max(0px, calc(50% - var(--hero-art-w) / 2)); background-position: left bottom;
   width: min(var(--hero-art-w), calc(100% * var(--hero-art-ratio))); }
 /* Narrow banners, in steps — each hero is its own size container. */
-.qd-hero, .qm-hero, .sqr-hero { container-type: inline-size; }
+.qd-hero, .qm-hero, .sqr-hero { container: hero / inline-size; }   /* named: rules inside a layered scene (itself a size container) can still ask the banner */
 .qd-hero > :not(.hero-scene), .qm-hero > :not(.hero-scene), .sqr-hero > :not(.hero-scene) { position: relative; z-index: 3; }
 /* Banner: the Missions hero (.qm-hero) — same markup, size and type — with the
    daily scene on the right (the Missions scene sits in the middle). */
@@ -374,8 +374,7 @@ body.progress-view #gridSortWrap { display: none; }
 
 .sqr-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 8px 18px 8px 28px;
   border: 1px solid var(--tsq-line); border-radius: 14px; overflow: hidden; }
-.sqr-hero:not(.qd-hero) { --hero-scene: url("../../assets/img/tigersquad/tigersquad-scene-v3.webp");
-  --hero-front: url("../../assets/img/tigersquad/tigersquad-scene-v3-front-v2.webp"); --hero-sink: 6px; --hero-art-w: 420px; --hero-art-ratio: 1.346;
+.sqr-hero:not(.qd-hero) { --hero-scene: none; --hero-front: none; --hero-sink: 6px; --hero-art-w: 560px; --hero-art-ratio: 1.8; --hl-ratio: 4.2;
   /* Reserve the tigers and the trophy only: the card may cover the printer. */
   --hero-scene-w: 312px;
   padding-bottom: calc(var(--hero-desk-hc) + 6px); }
@@ -421,7 +420,6 @@ body.progress-view #gridSortWrap { display: none; }
 .sqr-card-head { display: flex; flex-direction: column; gap: 1px; }
 .sqr-card-name { font-size: 15px; font-weight: 700; color: #fff; white-space: nowrap; }
 .sqr-card-league { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: 800; color: var(--sq-a, var(--sqr-gold)); white-space: nowrap; }
-.sqr-card-league img { width: 18px; height: 18px; object-fit: contain; }
 .sqr-card-xp { font-size: 18px; font-weight: 800; line-height: 1.15; letter-spacing: -.01em; color: #fff; white-space: nowrap; }
 .sqr-card-ic { justify-self: center; display: grid; place-items: center; font-size: 20px; line-height: 1; }
 .sqr-card-rank { font-size: 13px; color: #e9ecf7; white-space: nowrap; }
@@ -768,10 +766,32 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-break-card .xph-legend li { font-size: 12.5px; gap: 7px; }
 
 /* Full page */
-/* XP History: its own scene — the tiger pointing at its rising XP curve, star
-   coins, logbook and hourglass on the desk (one layer, waist cut on the desk line). */
-.xph-hero { --hero-scene: url("../../assets/img/quests/xp-history-scene.webp");
-  --hero-front: none; --hero-sink: 5px; --hero-scene-pos: right; --hero-scene-w: 440px; }
+/* XP History: its own scene — the tiger in the TigerTag cap pointing at its
+   rising XP curve, star coins, logbook and hourglass on the desk — one layer per
+   object (hero-layers.js, assets/img/quests/xph-hero/), a 2.92 : 1 box pinned right. */
+.xph-hero { --hero-scene: none; --hero-front: none; --hero-sink: 5px; --hero-scene-w: 560px; --hl-ratio: 3.4; }
+.xph-hero .hl-box { left: auto; right: 24px; }   /* pinned right, off the banner's edge */
+/* Widths follow from the heights (height % × the image's ratio ÷ 3.4), laid out
+   without overlap: monitor 0–25, tiger 24–56 (its paw on the screen's edge),
+   coins 58–72, book 73–91, hourglass 92–99. */
+.xph-hero .hl--monitor { left: 0; height: 74%; }
+/* The tiger (TigerTag cap from the real cap's photo) in two layers of the same
+   size and place: the body behind the desk (its rows end on the waist cut), the
+   resting paw in front of it. The cut is 4.26 % above the images' bottom, so both
+   move down by that much + 2 px: the cut lands just under the desk's top edge and
+   the paw rests on the desk. */
+.xph-hero .hl--tiger, .xph-hero .hl--tiger-paw { left: 25.5%; height: 80%; translate: 0 calc(4.26% - 6px); }   /* raised 8 px on request: the waist cut shows just above the desk */
+.xph-hero .hl--coins { left: 58%; height: 42%; }
+.xph-hero .hl--book { left: 73%; height: 44%; }
+/* The hourglass turns over on a click (data-xph-hourglass): a half turn around
+   its middle, with a little bounce; it stays turned until the next click. */
+.xph-hero .hl--hourglass { left: 92%; height: 40%; pointer-events: auto; cursor: pointer; transform-origin: 50% 50%;
+  transition: rotate .7s cubic-bezier(.34, 1.4, .64, 1); }
+.xph-hero .hl--hourglass.is-flipped { rotate: 180deg; }
+.xph-hero .hl--spark1 { left: 19%; bottom: 80%; } .xph-hero .hl--spark2 { left: 62%; bottom: 62%; } .xph-hero .hl--spark3 { left: 87%; bottom: 66%; }
+@media (prefers-reduced-motion: no-preference) {
+  .xph-hero .hl--coins { animation: hl-float 2.6s ease-in-out infinite; }
+}
 /* The Tiger Squad banners' top padding, so its title sits exactly where it does on the leagues / Grimoire / Deals. */
 .qm-hero.xph-hero { padding-top: 8px; }
 .xph-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
@@ -863,6 +883,8 @@ body.progress-view #gridSortWrap { display: none; }
 /* Next rival, one line per league (country, world): badge, avatar, name + XP to go, a thin bar. */
 .sqr-card-rival .sqr-rival-row { display: grid; grid-template-columns: 16px 24px minmax(0, 1fr); column-gap: 6px; row-gap: 3px; align-items: center; }
 .sqr-rival-row .sqb-avatar { width: 24px; height: 24px; }
+/* Air between the league badge (flag / globe) and the rival's avatar. */
+.sqr-rival-row > :first-child { margin-right: 5px; }
 .sqr-rival-row .av-squad-heart { display: none; }
 .sqr-rival-row .sqr-rival-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
 .sqr-rival-row .sqr-rival-txt b { font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -883,29 +905,31 @@ body.progress-view #gridSortWrap { display: none; }
 .sqb-medal-1 .sqr-no, .sqb-medal-2 .sqr-no, .sqb-medal-3 .sqr-no { color: inherit; }   /* the full list keeps its podium tints */
 .sqr-card-rank .sqr-no { font-size: 13px; }
 .fvb-xp-n .sqr-no { font-size: inherit; text-shadow: none; }
-/* Items banner: the tiger in its setup, the four legendary devices on the desk —
-   a black silhouette until owned, then lit with the legendary glow. Same height,
-   wall and desk as every hero (.sqr-hero); the row sits on the desk line. */
-.sqi-hero .sqi-scene { position: relative; z-index: 2; flex: 1 1 auto; align-self: stretch; display: flex; align-items: flex-end; justify-content: center;
-  gap: 14px; margin-bottom: calc(-6px - var(--hero-sink, 4px)); min-width: 0; padding-right: 24px; }
-/* The tiger stands BEHIND the desk (its belly hidden by the desk, z 1) and
-   rests its paws ON it: a second layer with the paws only sits over the desk.
-   The scene must not be a stacking context for that, hence z-index: auto. */
-.sqi-hero > .sqi-scene.sqi-scene { z-index: auto; }
-.sqi-tiger { position: relative; flex-shrink: 0; height: 126px; aspect-ratio: 1226 / 802; margin: 0 6px; top: 0; }   /* like the Tiger Squad hero: the waist cut sits just under the desk top, paws resting on it */
-.sqi-tiger img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.sqi-tiger-back { z-index: 0; }
-.sqi-tiger-front { z-index: 2; }
-.sqi-item { position: relative; z-index: 2; transform: translateY(3px); }   /* bases on the desk top stripe, like the Tiger Squad printer */
-.sqi-item { flex-shrink: 0; transition: filter .3s, opacity .3s; filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .5)); opacity: .7; }
+/* Items banner (squadItemsHeroHtml, hero-layers.js, a 5.4 : 1 box centred in the
+   room between the title and the next-level card): the tiger in the TigerTag cap
+   behind the desk, still, its bottom outline 1 px above the desk's top edge (the
+   box sits 5 px into the desk); the scale and spool on its left, the Touch and
+   the POD on its right, standing on the desk — a black silhouette until owned,
+   then lit with the legendary glow. */
+.sqi-hero { --hl-ratio: 5.4; --hero-art-w: 780px; --hero-art-ratio: 1; }
+.sqi-hero .sqi-scene { position: relative; flex: 1 1 auto; align-self: stretch; min-width: 0; margin-bottom: calc(-6px - var(--hero-sink, 4px)); }
+.sqi-hero > .sqi-scene.sqi-scene { z-index: auto; }   /* not a stacking context: the tiger's plane goes under the desk */
+.sqi-hero .hl--ws-tiger { left: 34.7%; height: 100%; translate: 0 -6px; }
+.sqi-hero .hl--tigerscale-flat2 { left: 0; height: 74%; }
+.sqi-hero .hl--tigerspool-flat2 { left: 15%; height: 70%; }
+.sqi-hero .hl--tigertouch-flat3 { left: 72.5%; height: 52%; }
+.sqi-hero .hl--tigerpod-flat2 { left: 91%; height: 72%; }
+/* Easter-egg envelopes peeking from behind each owned device (squadItemsHeroHtml),
+   tilted, the top third showing; clickable but no pointer cursor (a secret). */
+.sqi-hero .hl--egg { height: 30%; pointer-events: auto; }
+.sqi-hero .hl--egg-tigerscale-flat2 { left: 1.3%; bottom: 50%; rotate: -16deg; }
+.sqi-hero .hl--egg-tigerspool-flat2 { left: 23.5%; bottom: 38%; rotate: 12deg; }
+.sqi-hero .hl--egg-tigertouch-flat3 { left: 78%; bottom: 34%; rotate: 16deg; }
+.sqi-hero .hl--egg-tigerpod-flat2 { left: 89.8%; bottom: 48%; rotate: -14deg; }
+.sqi-item { transition: filter .3s, opacity .3s; filter: brightness(0) drop-shadow(0 0 1px rgba(255, 255, 255, .5)); opacity: .7; }
 .sqi-item.is-on { opacity: 1; filter: drop-shadow(0 0 10px rgba(255, 138, 0, .65)) drop-shadow(0 0 2px rgba(255, 200, 120, .8)); }
-.sqi-item--tigerscale-flat2 { height: 100px; }
-.sqi-item--tigerspool-flat2 { height: 92px; }
-.sqi-item--tigertouch-flat3 { height: 70px; }
-.sqi-item--tigerpod-flat2 { height: 96px; }
-/* Narrower: the devices go first (two, then all), the tiger and the next-level card stay. */
-@container (max-width: 1380px) { .sqi-hero .sqi-item--tigerspool-flat2, .sqi-hero .sqi-item--tigerpod-flat2 { display: none; } }
-@container (max-width: 1180px) { .sqi-hero .sqi-item { display: none; } }
+/* Narrower: the devices go, the tiger and the next-level card stay. */
+@container hero (max-width: 1180px) { .sqi-hero .sqi-item { display: none; } }
 @container (max-width: 640px) { .sqi-hero .sqi-scene { display: none; } }
 /* Items view — two panels (lootHtml / ladderHtml). The rarity is the item's
    own colour (--c: Diablo — legendary orange, epic green, rare yellow, uncommon
@@ -1062,11 +1086,78 @@ body.progress-view #gridSortWrap { display: none; }
 /* The view scrolls: its blocks keep their height (the banner was squeezed to
    ~40 px once the deal cards filled the column). */
 .sqd-view > * { flex-shrink: 0; }
-/* Deals banner scene: the tiger behind the desk, paws on a gift, between a
-   shopping bag, % coins, coupons and a globe with pins (one transparent layer,
-   cut at the waist on the desk line — assets-src/img/tigersquad/deals-scene.png). */
-.sqr-hero.sqd-hero { --hero-scene: url("../../assets/img/tigersquad/deals-scene.webp"); --hero-front: none;
-  --hero-sink: 4px; --hero-art-w: 440px; --hero-art-ratio: 1; --hero-scene-w: 440px; }
+/* Banner scenes from separate layers (hero-layers.js): two planes with the same
+   geometry — the back one under the desk (z auto: the desk's z 1 covers a
+   character's waist cut), the front one over it (z 2: objects stand ON the desk).
+   The box keeps the banner's proportions (--hl-ratio), as big as the room allows;
+   every object sits at the bottom, its base 3 px into the desk's 6 px top stripe,
+   placed and sized in % of the box per banner (.<hero> .hl--<name>). */
+.hl-scene { position: absolute; inset: 0; container-type: size; pointer-events: none; z-index: 2; }
+.hl-scene.hl-scene--back { z-index: auto; }
+.sqr-hero .hl-scene { right: auto; left: max(0px, calc(50% - var(--hero-art-w) / 2)); width: min(var(--hero-art-w), calc(100% * var(--hero-art-ratio, 1))); }
+.hl-box { position: absolute; left: 0; bottom: 0; width: min(100cqw, calc(100cqh * var(--hl-ratio, 2.7))); aspect-ratio: var(--hl-ratio, 2.7); }
+.hl { position: absolute; bottom: 0; translate: 0 3px; height: auto; transform-origin: 50% 100%; }
+.hl--spark { height: 12%; }
+/* Light life (chosen by the founder): characters stay still; objects float,
+   sway or rock a little; sparkles twinkle one after the other. */
+@media (prefers-reduced-motion: no-preference) {
+  .hl--spark { transform-origin: 50% 50%; animation: hl-twinkle 2.4s ease-in-out infinite; }
+  .hl--spark2 { animation-delay: .8s; } .hl--spark3 { animation-delay: 1.6s; }
+}
+@keyframes hl-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4%); } }
+@keyframes hl-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes hl-rock { 0%, 100% { transform: rotate(0); } 50% { transform: rotate(-2deg); } }
+@keyframes hl-twinkle { 0%, 100% { transform: scale(.55) rotate(0); opacity: .35; } 50% { transform: scale(1) rotate(25deg); opacity: 1; } }
+/* League banner scene (squad-rankings.js LEAGUE_SCENE, a 4.2 : 1 box): the silver,
+   gold and bronze tigers behind the desk (still), each moved down by the height
+   of its paws under the waist cut (gold 4.02 %, bronze 4.53 %) − 6 px (the box
+   itself sits 5 px into the desk) so the cut sits 1 px ABOVE the desk's top edge:
+   the black outline under the belly shows, the tigers stand behind the desk; their paw layers, same size and place,
+   rest on the desk in front of it. Then the trophy, the printer, four stars. */
+.sqr-hero:not(.sqd-hero) .hl--tiger-silver { left: 0; height: 86%; translate: 0 -6px; }
+.sqr-hero:not(.sqd-hero) .hl--tiger-gold, .sqr-hero:not(.sqd-hero) .hl--tiger-gold-paws { left: 20%; height: 96%; translate: 0 calc(4.02% - 6px); }
+.sqr-hero:not(.sqd-hero) .hl--trophy { left: 41.5%; height: 50%; pointer-events: auto; cursor: pointer; }
+/* Clicked (data-trophy): a jump with a spin and a golden flash. */
+.sqr-hero:not(.sqd-hero) .hl--trophy.hl--trophy.is-cheering { animation: hl-cheer .9s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes hl-cheer {
+  0% { transform: none; filter: none; }
+  30% { transform: translateY(-34%) rotate(-10deg) scale(1.15); filter: drop-shadow(0 0 10px #ffd75e) brightness(1.25); }
+  55% { transform: translateY(-34%) rotate(10deg) scale(1.15); filter: drop-shadow(0 0 14px #ffb21a) brightness(1.3); }
+  80% { transform: translateY(0) scale(.95, 1.05); filter: drop-shadow(0 0 6px #ffd75e); }
+  100% { transform: none; filter: none; } }
+.sqr-hero:not(.sqd-hero) .hl--tiger-bronze, .sqr-hero:not(.sqd-hero) .hl--tiger-bronze-paws { left: 51%; height: 86%; translate: 0 calc(4.53% - 6px); }
+.sqr-hero:not(.sqd-hero) .hl--printer { left: 73.5%; height: 76%; }
+.sqr-hero:not(.sqd-hero) .hl--spark { height: 11%; }
+.sqr-hero:not(.sqd-hero) .hl--spark1 { left: 6%; bottom: 82%; } .sqr-hero:not(.sqd-hero) .hl--spark2 { left: 15%; bottom: 90%; }
+.sqr-hero:not(.sqd-hero) .hl--spark3 { left: 45%; bottom: 76%; } .sqr-hero:not(.sqd-hero) .hl--spark4 { left: 70%; bottom: 84%; }
+@media (prefers-reduced-motion: no-preference) {
+  .sqr-hero:not(.sqd-hero) .hl--trophy { animation: hl-rock 4s ease-in-out infinite; }
+  .sqr-hero .hl--spark4 { transform-origin: 50% 50%; animation: hl-twinkle 2.4s ease-in-out 1.2s infinite; }
+}
+/* Deals banner scene: the tiger behind the desk in the TigerTag cap, a gift
+   beside him, a shopping bag, % coins, coupons and a globe with pins — one
+   transparent layer per object (assets/img/tigersquad/deals-hero/). */
+.sqr-hero.sqd-hero { --hero-scene: none; --hero-front: none;
+  --hero-sink: 4px; --hero-art-w: 560px; --hero-art-ratio: 1; --hero-scene-w: 560px; }
+/* Deals scene objects (dealsSceneHtml, a 3.4 : 1 box): bag, coins, the gift
+   BESIDE the tiger, the tiger (behind the desk), tickets, globe, sparkles. */
+.sqd-hero { --hl-ratio: 3.4; }
+.sqd-hero .hl--bag { left: 0; height: 72%; }
+.sqd-hero .hl--coins { left: 15%; height: 40%; }
+.sqd-hero .hl--gift { left: 26%; height: 34%; }
+.sqd-hero .hl--tiger { left: 37%; height: 84%; translate: 0 6px; bottom: 6%; }   /* raised: only the waist cut goes behind the desk */
+.sqd-hero .hl--tickets { left: 71%; height: 54%; }
+.sqd-hero .hl--globe { left: 84%; height: 57%; }
+.sqd-hero .hl--spark1 { left: 12%; bottom: 74%; } .sqd-hero .hl--spark2 { left: 30%; bottom: 52%; } .sqd-hero .hl--spark3 { left: 74%; bottom: 72%; }
+/* Easter egg (dealsBanner): a red envelope peeking from behind the gift, the one
+   clickable layer; no pointer cursor — it stays a secret. Each click shakes it. */
+.sqd-hero .hl--egg { left: 27.5%; bottom: 14%; height: 28%; rotate: 14deg; pointer-events: auto; }
+.hl--egg.is-tapped { animation: tch-tap .35s ease; }
+@media (prefers-reduced-motion: no-preference) {
+  .sqd-hero .hl--coins { animation: hl-float 2.6s ease-in-out infinite; }
+  .sqd-hero .hl--globe { transform-origin: 50% 60%; animation: hl-sway 5s ease-in-out infinite; }
+  .sqd-hero .hl--tickets { animation: hl-rock 4s ease-in-out infinite; }
+}
 
 .sqd-soon { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 48px 24px;
   border: 1px dashed color-mix(in srgb, var(--tsq-orange) 45%, var(--tsq-line)); border-radius: 14px;
@@ -1114,6 +1205,14 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-partner-link .icon { background: currentColor; opacity: .7; transition: transform .15s, opacity .15s; }
 .sqd-partner-link:hover { text-decoration: underline; text-underline-offset: 2px; }
 .sqd-partner-link:hover .icon { opacity: 1; transform: translate(1px, -1px); }
+/* Side card: the partner's site, a blue call to action (the header's Share blue,
+   --info) for every member — distinct from the orange "get my code". */
+.sqd-partner-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; border-radius: 10px; text-decoration: none;
+  font-size: 13px; font-weight: 700; color: var(--on-accent); border: 0; background: var(--info);
+  transition: filter .15s, transform .15s; }
+.sqd-partner-btn .icon { background: currentColor; }
+.sqd-partner-btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.sqd-partner-btn:active { transform: translateY(0); }
 .sqd-card-body h3 { margin: 0; font-size: 14px; line-height: 1.3; color: var(--tsq-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sqd-card-body p { margin: 0; font-size: 11.5px; line-height: 1.4; color: var(--tsq-muted); white-space: pre-line;
   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: calc(3 * 1.4em); }
@@ -1213,7 +1312,7 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-card[hidden], .sqd-nomatch[hidden] { display: none; }
 .sqd-card--skel { gap: 8px; padding-bottom: 12px; }
 .sqd-card--skel .sqr-skel { display: block; border-radius: 0; }
-.sqd-skel-art { aspect-ratio: 1; }
+.sqd-card--skel .sqd-skel-art { aspect-ratio: 1; border-radius: 13px 13px 0 0; }   /* the card no longer clips (its badge overhangs): the art rounds its own top corners */
 .sqd-skel-line.sqd-skel-line { height: 12px; margin: 0 10px; border-radius: 6px; }
 .sqd-skel-line.is-short { width: 55%; }
 .sqd-skel-line.sqd-skel-line.is-kicker { width: 38%; height: 8px; margin-top: 4px; }
@@ -1231,9 +1330,10 @@ body.progress-view #gridSortWrap { display: none; }
    side cards live inside the view, so the fade would cut through them: no fade
    while one is open. */
 .inv-squad-view.sqd-view.scroll-fade:has(.sqd-side.is-open) { -webkit-mask-image: none; mask-image: none; }
-.sqd-side-head { padding: 16px 16px 12px; font-size: 15px; font-weight: 700; color: var(--tsq-text); }
-.sqd-side-art { padding: 0 16px; }
-.sqd-side-art .sqd-card-art { border-radius: 12px; overflow: hidden; }
+/* The picture runs edge to edge from the top of the side card (like a spool's
+   detail panel); the card's own rounded corner and overflow clip it. */
+.sqd-side-art { padding: 0; }
+.sqd-side-art .sqd-card-art { border-radius: 0; overflow: hidden; }
 .sqd-side .sqd-card-badge { top: 12px; right: 12px; font-size: 20px; padding: 6px 13px; }
 .sqd-side .sqd-timer { left: 12px; bottom: 12px; font-size: 12px; padding: 5px 10px; }
 .sqd-side.is-locked .sqd-side-art .sqd-card-art { filter: grayscale(.7) brightness(.7); }
@@ -1791,6 +1891,14 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx--help .tcx-plaque h3 { font-size: 24px; white-space: normal; }
 /* The envelope rises from BEHIND the card (z-index -1: under the card, over the dim). */
 .tch-env { position: absolute; left: 50%; top: -112px; z-index: -1; width: 140px; translate: -50% 0; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .55)); animation: tcx-gift 2.4s ease-in-out infinite; }
+/* Help window: the frame bobs (tcx-gift) and gives the perspective; the envelope
+   inside turns toward the mouse (coin-pull.js tilt sets --rx / --ry). */
+.tch-env-tilt { position: absolute; left: 50%; top: -112px; z-index: -1; width: 140px; aspect-ratio: 1; translate: -50% 0; perspective: 600px;
+  animation: tcx-gift 2.4s ease-in-out infinite; }
+.tch-env-tilt .tch-env { position: static; display: block; width: 100%; translate: none; animation: none;
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .18s ease-out; }
+.tch-env-tilt .tch-env:not(.is-tilted) { transition: transform .6s cubic-bezier(.2, 1.4, .4, 1); }
+.tch-env-tilt .tch-env.is-tapped { animation: tch-tap .35s ease; }
 /* The easter egg (openEnvelopeHelp): each click shakes the envelope. No pointer cursor — it stays a secret. */
 .tch-env.is-tapped { animation: tch-tap .35s ease; }
 /* Not found yet: loot glints twinkle around the envelope (Diablo-style), one after the other. */
@@ -1823,7 +1931,7 @@ body.progress-view #gridSortWrap { display: none; }
 .tch-list li:hover { border-color: rgba(255, 207, 61, .6); background: rgba(255, 207, 61, .06); }
 .tch-list li:hover .tch-ic > * { animation: tch-hop .5s cubic-bezier(.3, 1.6, .5, 1); }
 @keyframes tch-hop { 0% { transform: none; } 40% { transform: translateY(-5px) rotate(-8deg) scale(1.12); } 70% { transform: translateY(0) rotate(4deg); } 100% { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .tch-env, .tch-list li:hover .tch-ic > * { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tch-env, .tch-env-tilt, .tch-list li:hover .tch-ic > * { animation: none; } }
 /* "You got an envelope!" (showEnvelopeGift): who gave it, their avatar as in
    the friends bar, no frame around them. */
 .tcg-from { display: flex; align-items: center; gap: 14px; margin: 0; text-align: left; }

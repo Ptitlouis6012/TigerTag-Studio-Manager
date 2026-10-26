@@ -6,6 +6,7 @@
  * (renderer/inventory.js, _renderXpHistView) loads the log,
  * renders, and wires the controls through the data-xph-* attributes.
  */
+import { heroLayersHtml } from './hero-layers.js';
 
 // The log's keys (the xpBreakdown parts) grouped into the categories the user
 // reads. Losses are shown in their category in the log; the breakdown ring
@@ -127,7 +128,13 @@ export function pageHtml(ctx, s) {
     <section class="qm-hero xph-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("xpHistoryTitle"))}</h2><p>${esc(t("xpHistorySub"))}</p></div>
-      <div class="hero-scene" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">${heroLayersHtml("../assets/img/quests/xph-hero/", {
+        // The tiger behind the desk, still; its resting paw on the desk, in front of it.
+        back: ["tiger"],
+        front: ["monitor", "tiger-paw", "coins", "book",
+          // Clickable: it turns over (the host toggles .is-flipped, quests.css).
+          { html: `<img class="hl hl--hourglass" data-xph-hourglass src="../assets/img/quests/xph-hero/hourglass.webp" alt="" draggable="false">` }, ...[1, 2, 3].map(i => ({ name: "sparkle", cls: `spark hl--spark${i}` }))],
+      })}</div>
     </section>
     <div class="xph-board">
     <div class="xph-tiles">

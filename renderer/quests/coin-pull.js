@@ -170,7 +170,7 @@ async function flyCoins(fromEl) {
 // The envelope (or the card) follows the mouse: it tilts in 3D towards the
 // pointer and a glare moves with it (--rx / --ry / --gx / --gy on `el`, eased
 // by a CSS transition); back to rest when the pointer leaves `area`.
-function tilt(area, el, max = 16) {
+export function tilt(area, el, max = 16) {
   if (reduced() || !el) return;
   const move = e => {
     if (!el.isConnected) return;

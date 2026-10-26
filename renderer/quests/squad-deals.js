@@ -17,7 +17,8 @@
 // The link is in secret/main, which the rules give only to a member whose XP
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
-import { revealPulls } from './coin-pull.js';
+import { revealPulls, tilt } from './coin-pull.js';
+import { heroLayersHtml } from './hero-layers.js';
 import { ambientStart, ambientStop, sfx } from './coin-sound.js';
 
 // A text field is a plain string or a { lang: text } map (en as fallback).
@@ -123,7 +124,7 @@ function dealParts(ctx, d, section) {
   const partner = d.partner || tag ? `<span class="sqd-card-partner">${partnerName}${tag ? `<span class="sqd-used-tag"><span class="icon icon-${tag[1]} icon-11" aria-hidden="true"></span>${esc(t(tag[2]))}</span>` : ""}</span>` : "";
   // costCoins: the deal is paid in TigerCoins (functions/tigerCoins.js, squadDeals.js).
   const cost = Math.max(0, Number(d.costCoins) || 0), coins = ctx.coins?.balance ?? 0, afford = !cost || coins >= cost;
-  return { claim, used, exp, code, got, linkOnly, locked, unique, left, safeLink, tag, art, partner, cost, afford, coinsShort: Math.max(0, cost - coins),
+  return { claim, used, exp, code, got, linkOnly, locked, unique, left, safeLink, site, tag, art, partner, cost, afford, coinsShort: Math.max(0, cost - coins),
     title: d.badge && !d.hideBadge && !freeBadge ? stripDiscount(pick(d.title, lang)) : pick(d.title, lang), desc: pick(d.description, lang), to: ms(d.endAt) };
 }
 
@@ -187,12 +188,12 @@ function dealSide(ctx, d, section) {
           ${p.code ? (p.used || section !== "live" ? `<div class="sqd-code-row is-spent"><code aria-hidden="true">********</code></div>`
             : `<div class="sqd-code-row"><code>${esc(p.code)}</code><button type="button" class="sqd-code" data-code="${esc(p.code)}"><span class="icon icon-copy icon-13" aria-hidden="true"></span><span class="sqd-code-lbl">${esc(t("squadDealsCopyBtn"))}</span></button></div>`) : ""}
           ${p.got && p.safeLink && !p.used && section === "live" ? `<a class="sqd-open sqd-wide" href="${esc(p.safeLink)}" target="_blank" rel="noopener">${esc(t("squadDealsOpen"))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
+          ${p.site && d.partner ? `<a class="sqd-partner-btn sqd-wide" href="${esc(p.site)}" target="_blank" rel="noopener" data-partner-click="${esc(d.id)}"><span class="icon icon-globe icon-13" aria-hidden="true"></span>${esc(t("squadDealsVisitSite", { name: d.partner }))}<span class="icon icon-arrow-up-right icon-12" aria-hidden="true"></span></a>` : ""}
           ${p.got && !p.used && section === "live" ? `<button type="button" class="sqd-mark sqd-wide" data-deal="${esc(d.id)}"><span class="hold-progress" aria-hidden="true"></span><span class="icon icon-check icon-12" aria-hidden="true"></span><span>${esc(t("squadDealsMarkUsed"))}</span></button>` : ""}
         </div>`;
   const foot = section === "live" && !p.used && d.claimDays ? `<small class="sqd-side-foot"><span class="icon icon-clock icon-12" aria-hidden="true"></span>${esc(t("squadDealsClaimDays", { n: d.claimDays }))}</small>` : "";
   return `
     <aside class="sqd-side${ctx.openId === d.id ? " is-open" : ""}${p.locked ? " is-locked" : ""}" data-side="${esc(d.id)}" aria-label="${esc(p.title)}">
-      <header class="sqd-side-head">${esc(t("squadDealsDetail"))}</header>
       <div class="sqd-side-art"><div class="sqd-card-art">${p.art}</div></div>
       <div class="sqd-side-body">
         ${p.partner}
@@ -315,9 +316,9 @@ function annSide(ctx, d) {
   const label = pick(d.ctaLabel, lang);
   return `
     <aside class="sqd-side sqd-side--ann${d.imageOnWhite ? " is-photo" : ""}${ctx.openId === d.id ? " is-open" : ""}" data-side="${esc(d.id)}" aria-label="${esc(title)}">
-      <header class="sqd-side-head">${esc(pick(d.kicker, lang) || title)}</header>
       ${img ? `<div class="sqd-side-art"><div class="sqd-card-art">${annArt(ctx, d)}</div></div>` : ""}
       <div class="sqd-side-body">
+        ${pick(d.kicker, lang) ? `<span class="sqd-card-partner">${esc(pick(d.kicker, lang))}</span>` : ""}
         <h2>${esc(title)}</h2>
         ${mdLite(esc, pick(d.body, lang) || pick(d.description, lang))}
         ${d.appLinks ? appsBlock(ctx, d.appLinks) : ""}
@@ -393,7 +394,7 @@ function openEnvelopeHelp(ctx) {
   const row = (art, title, sub) => `<li><span class="tch-ic">${art}</span><span><b>${esc(t(title))}</b><small>${esc(t(sub))}</small></span></li>`;
   el.innerHTML = `
     <div class="tc-reveal-card tc-code-card tcx tcx--help" role="dialog" aria-modal="true" aria-label="${esc(t("envHelpTitle"))}">
-      <img class="tch-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      <span class="tch-env-tilt"><img class="tch-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true"></span>
       ${ctx.eggFound?.("envHelp") ? "" : `<span class="tch-glints" aria-hidden="true"><i></i><i></i><i></i><i></i></span>`}
       <div class="tcx-main">
         <div class="tcx-plaque"><h3>${esc(t("envHelpTitle"))}</h3></div>
@@ -416,23 +417,29 @@ function openEnvelopeHelp(ctx) {
   el.querySelector("[data-code]").addEventListener("click", () => { close(); setTimeout(() => openCoinsCodeModal(ctx), 180); });
   // Hovering a way to get envelopes: its art hops (CSS) and a short tick plays.
   el.querySelectorAll(".tch-list li").forEach(li => li.addEventListener("pointerenter", () => sfx.tick()));
-  // Easter egg: three quick clicks on the envelope (each one shakes it with a tick)
-  // and the server gives one common envelope, once per account (tigerCoins.js EGGS);
-  // the window closes and the pile opens (ctx.easterEgg).
+  // The envelope turns toward the mouse, like the pile in the opening stage (coin-pull.js tilt).
+  tilt(el, el.querySelector(".tch-env"), 18);
+  // Easter egg: three quick clicks on the envelope; found → the window closes and the pile opens.
   const egg = el.querySelector(".tch-env");
-  let taps = 0, tapT = null, busy = false;
-  egg.addEventListener("animationend", e => { if (e.animationName === "tch-tap") egg.classList.remove("is-tapped"); });
-  egg.addEventListener("click", async () => {
-    if (busy || !ctx.easterEgg) return;
-    egg.classList.remove("is-tapped"); void egg.offsetWidth; egg.classList.add("is-tapped");
-    sfx.tick();
-    clearTimeout(tapT); tapT = setTimeout(() => { taps = 0; }, 900);
-    if (++taps < 3) return;
-    taps = 0; busy = true;
-    try { await ctx.easterEgg("envHelp", close); el.querySelector(".tch-glints")?.remove(); }
-    catch (e) { ctx.toast?.(t(e?.message === "EGG_FOUND" ? "eggFound" : "squadDealsErr")); }
-    busy = false;
-  });
+  egg.addEventListener("click", () => tapEgg(egg, "envHelp", ctx, el, () => { el.querySelector(".tch-glints")?.remove(); close(); }));
+}
+
+// Easter eggs (tigerCoins.js EGGS): three quick clicks on the hidden spot, each one
+// shaking it with a tick; the third asks the server, which gives one envelope once
+// per account (ctx.easterEgg opens the pile; already found → toast "eggFound").
+// `store` keeps the click count across repaints of the spot.
+export function tapEgg(spot, egg, ctx, store, onFound) {
+  const s = store._egg ||= { taps: 0, t: null, busy: false };
+  if (s.busy || !ctx.easterEgg) return;
+  spot.addEventListener("animationend", e => { if (e.animationName === "tch-tap") spot.classList.remove("is-tapped"); }, { once: true });
+  spot.classList.remove("is-tapped"); void spot.offsetWidth; spot.classList.add("is-tapped");
+  sfx.tick();
+  clearTimeout(s.t); s.t = setTimeout(() => { s.taps = 0; }, 900);
+  if (++s.taps < 3) return;
+  s.taps = 0; s.busy = true;
+  ctx.easterEgg(egg, onFound)
+    .catch(e => ctx.toast?.(ctx.t(e?.message === "EGG_FOUND" ? "eggFound" : "squadDealsErr")))
+    .finally(() => { s.busy = false; });
 }
 
 /** The gift-code modal ("Gift code", generic: a code gives coins, envelopes or
@@ -740,6 +747,16 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
   });
 }
 
+// The Deals banner scene (hero-layers.js): BEHIND the desk the tiger, ON it the
+// bag, the easter-egg envelope peeking from behind the gift (dealsBanner, tapEgg —
+// gone once found), coins, globe, gift, tickets and three sparkles.
+const dealsSceneHtml = ctx => heroLayersHtml("../assets/img/tigersquad/deals-hero/", {
+  back: ["tiger"],
+  front: ["bag", ...(ctx.eggFound?.("dealsBanner") ? []
+    : [{ html: `<img class="hl hl--egg" data-egg="dealsBanner" src="../assets/img/tigercoins/envelope.webp" alt="" draggable="false">` }]),
+  "coins", "globe", "gift", "tickets", ...[1, 2, 3].map(i => ({ name: "sparkle", cls: `spark hl--spark${i}` }))],
+});
+
 export function dealsViewHtml(ctx, { live, history, ended }) {
   const { t, esc } = ctx;
   // Filter bar over the live deals: all / my codes (claimed, not used yet) and a
@@ -790,7 +807,7 @@ export function dealsViewHtml(ctx, { live, history, ended }) {
     <section class="sqr-hero sqd-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("squadBrand"))}</span>
         <h2>${esc(t("squadDeals"))}</h2><p>${esc(t("squadDealsSub"))}</p></div>
-      <div class="hero-scene" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">${dealsSceneHtml(ctx)}</div>
       ${ctx.loading ? "" : coinsBar(ctx)}
     </section>
     ${body}
@@ -847,20 +864,38 @@ export function wireDeals(host, ctx) {
   // Switching deals slides the new card in OVER the open one (kept one z slot
   // under it, .is-under), which then closes without a slide once covered —
   // the same "new opens, old closes" as a spool's detail panel.
+  // A covered card leaves: closed while still under (no transition), the closed
+  // state forced into the style BEFORE it leaves its under slot — otherwise both
+  // changes land in the same style pass, with the transition back on, and the
+  // card slides out on top of the one just opened.
+  const closeUnder = el => { el.classList.remove("is-open"); void el.offsetWidth; el.classList.remove("is-under"); };
   const setOpen = id => {
     const prev = host._sqdOpen;
     host._sqdOpen = id || null;
-    const under = prev && id && prev !== id ? host.querySelector(`.sqd-side.is-open[data-side="${CSS.escape(prev)}"]`) : null;
-    for (const el of host.querySelectorAll(".sqd-side.is-under")) { el.classList.remove("is-open"); requestAnimationFrame(() => el.classList.remove("is-under")); }
-    for (const el of host.querySelectorAll(".sqd-side:not(.is-under)")) el.classList.toggle("is-open", el.dataset.side === id || el === under);
+    clearTimeout(host._sqdUnderT);
+    const sides = [...host.querySelectorAll(".sqd-side")];
+    const target = id ? sides.find(el => el.dataset.side === id) : null;
+    const under = prev && target && prev !== id ? sides.find(el => el.dataset.side === prev && el.classList.contains("is-open")) : null;
+    // The card opened always slides in OVER the one that was there, which then
+    // vanishes behind it, unseen. A card still covered can be the one picked again
+    // (back and forth between two deals): it is closed at once while hidden, then
+    // slides in on top like any opening. Any other covered card closes under
+    // cover (no slide), then leaves its slot.
+    for (const el of sides) {
+      if (el === target) {
+        if (el.classList.contains("is-under")) {
+          el.classList.remove("is-open"); void el.offsetWidth;   // closed, no transition (still under)
+          el.classList.remove("is-under"); void el.offsetWidth;  // back to its slot, transition on
+        }
+        el.classList.add("is-open");
+      }
+      else if (el === under) el.classList.add("is-under");
+      else if (el.classList.contains("is-under")) closeUnder(el);
+      else el.classList.remove("is-open");
+    }
     if (under) {
-      under.classList.add("is-under");
-      clearTimeout(host._sqdUnderT);
-      // Closed while still under (no transition), back to its slot a frame later.
-      host._sqdUnderT = setTimeout(() => {
-        under.classList.remove("is-open");
-        requestAnimationFrame(() => under.classList.remove("is-under"));
-      }, 260);
+      // Once the new card covers it, it closes unseen behind it.
+      host._sqdUnderT = setTimeout(() => { if (host._sqdOpen !== under.dataset.side) closeUnder(under); }, 260);
     }
     for (const el of host.querySelectorAll(".sqd-card[data-open]")) el.classList.toggle("is-selected", el.dataset.open === id);
     host.querySelector(".sqd-close-tab")?.classList.toggle("is-open", !!id);
@@ -881,6 +916,8 @@ export function wireDeals(host, ctx) {
     applyDealsFilter(host);
   });
   host.addEventListener("click", async e => {
+    const eggSpot = e.target.closest("[data-egg]");
+    if (eggSpot) { tapEgg(eggSpot, eggSpot.dataset.egg, ctx, host); return; }
     // The partner's site: the link opens itself; the click is counted, the card does not toggle.
     const site = e.target.closest("[data-partner-click]");
     if (site) { ctx.onPartnerClick?.(site.dataset.partnerClick); return; }
