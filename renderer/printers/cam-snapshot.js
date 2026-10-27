@@ -22,11 +22,12 @@
  * from the JPEG; the video from the stream (ffmpeg copies it), or, when the camera
  * does not serve one, from the JPEG read over and over.
  *
- * VIDEO — always from the SOURCE, never re-encoded from the page:
+ * VIDEO — from the SOURCE whenever the camera allows it, not re-encoded from the page:
  *   - the camera's own URL (an http MJPEG, a Bambu RTSPS H.264 that main is not
  *     already reading) → ffmpeg in main copies the stream untouched;
- *   - a stream main already reads for the picture (Bambu RTSPS, `liveKey`) → its
- *     frames are copied into a .mov as they arrive, no second connection;
+ *   - a stream main already reads for the picture (Bambu RTSPS, `liveKey`) → the
+ *     MJPEG frames it decodes for display are copied into a .mov as they arrive
+ *     (the one exception: a second connection is cut by the printer);
  *   - a camera that only serves refreshed stills (Snapmaker U1 stock firmware)
  *     → main reads it as fast as it refreshes ("poll:" URL), frames untouched;
  *   - original JPEG frames pushed into an <img> as blob: URLs (FlashForge,

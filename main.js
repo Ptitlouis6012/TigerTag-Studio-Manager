@@ -4144,12 +4144,13 @@ let _ffmpegBin = null;
 // id being the printer's MAC, else its serial, else its record id — so a
 // printer keeps its history whatever its IP or name becomes. printer.json in
 // each folder records who it is and every name / IP / model it has had.
-// Videos are taken from the SOURCE, never from what the page displays:
+// Videos are taken from the SOURCE whenever the camera allows it:
 //   url    — ffmpeg reads the camera itself and copies its stream untouched
 //            (rtsp/rtsps H.264 → .mp4, http MJPEG → .mov)
-//   tap    — the live stream main already reads for the picture (Bambu RTSPS) is
-//            copied into a .mov as it goes: a camera allows ONE connection, a second
-//            one for the recording was cut by the printer and disturbed the picture
+//   tap    — the exception: the MJPEG frames main already decodes for the picture
+//            (Bambu RTSPS) are copied into a .mov as they go, i.e. what is displayed,
+//            not the camera's H.264. A camera allows ONE connection: a second one for
+//            the recording was cut by the printer and disturbed the picture
 //   frames — original JPEG frames pushed one by one, muxed untouched at their
 //            real timing (.mov, MJPEG)
 //   blob   — a recording made in the renderer from a MediaStream (WebRTC / FLV)
@@ -4212,7 +4213,9 @@ let _ffmpegBin = null;
   // tap: the live stream main already reads for the picture (Bambu RTSPS). Its frames are
   // piped into ffmpeg, which copies them into a .mov; no second connection to the camera.
   ipcMain.handle('cam:rec-tap-start', (_e, { id, printer, key } = {}) => {
-    if (!_ffmpegBin || !_camLive.has(key) || recs.has(id)) return { ok: false, error: 'nostream' };
+    if (!_ffmpegBin) return { ok: false, error: 'ffmpeg' };
+    if (recs.has(id)) return { ok: false, error: 'busy' };
+    if (!_camLive.has(key)) return { ok: false, error: 'nostream' };
     const dir = capDir(printer), file = path.join(sub(dir, 'Videos'), `${stamp()}.mov`);
     let proc;
     try {
@@ -4228,8 +4231,9 @@ let _ffmpegBin = null;
     const taps = _camTaps.get(key) || new Set();
     taps.add(tap);
     _camTaps.set(key, taps);
-    proc.on('close', () => { taps.delete(tap); if (!taps.size) _camTaps.delete(key); });
-    recs.set(id, { proc, dir, file, err: () => err, tap: true });
+    const untap = () => { taps.delete(tap); if (!taps.size && _camTaps.get(key) === taps) _camTaps.delete(key); };
+    proc.on('close', untap);
+    recs.set(id, { proc, dir, file, err: () => err, tap: true, untap });
     return { ok: true };
   });
 
@@ -4323,7 +4327,8 @@ let _ffmpegBin = null;
     if (r.polling) { r.polling = false; await new Promise(res => setTimeout(res, 300)); }
     if (r.proc) {
       // A tap's stdin carries the pictures: closing it ends the file; for the others 'q' asks ffmpeg to finish.
-      try { r.tap ? r.proc.stdin.end() : r.proc.stdin.write('q'); } catch (_) {}
+      // Unhooked first, so no picture is written after the end.
+      try { if (r.tap) { r.untap(); r.proc.stdin.end(); } else r.proc.stdin.write('q'); } catch (_) {}
       await new Promise(res => { const k = setTimeout(() => { try { r.proc.kill('SIGINT'); } catch (_) {} res(); }, 6000); r.proc.on('close', () => { clearTimeout(k); res(); }); });
       const ok = fs.existsSync(r.file) && fs.statSync(r.file).size > 1000;
       if (!ok) { try { fs.unlinkSync(r.file); } catch (_) {} return { ok: false, error: (r.err() || 'empty').slice(0, 200) }; }
@@ -4577,7 +4582,7 @@ let _ffmpegBin = null;
         '-probesize', '32',
         '-analyzeduration', '0',
         /* Pictures are dated by the moment they ARRIVE, not by the printer's RTP clock.
-           Measured on a P2S: after a recording, the `fps=30` below began to write 110 MB/s
+           Measured on Windows with a P2S (never seen on macOS, an X1C there is fine): after a recording, the `fps=30` below began to write 110 MB/s
            (a normal stream is 2-4) at 45-50 % of the processor, minutes on end, filling
            the main process with duplicates — `fps` repeats frames to fill a jump forward
            in the stream's timestamps, so one jump in the camera's clock became thousands
