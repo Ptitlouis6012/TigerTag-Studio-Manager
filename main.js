@@ -4636,8 +4636,9 @@ let _ffmpegBin = null;
   });
 
   // ── External IP cameras (renderer/ext-cam) — NOT printers ───────────────────
-  // Any RTSP(S) stream, or an MJPEG/HTTP stream that needs a login, is read by
-  // ffmpeg and cut into JPEG frames, same pipeline as the Prusa camera above.
+  // Any RTSP(S) or MJPEG/HTTP stream is read by ffmpeg and cut into JPEG frames,
+  // same pipeline as the Prusa camera above (MJPEG too: a fetch from the page is
+  // blocked by CORS on most cameras).
   // The address is checked here (rtsp/rtsps/http/https only, ffmpeg gets an
   // argument array, never a shell) and the login is put into the URL here so it
   // never travels anywhere else. ffmpeg's messages echo the URL: they are

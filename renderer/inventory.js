@@ -80,8 +80,9 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
-import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection,
-         extCamBoardObj, extCamMaxZ, extCamBoardSave, extCamBoardCardsHtml, wireExtCamBoard } from './ext-cam/ext-cam.js';
+import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, openExtCamEditor,
+         extCamBoardObj, extCamMaxZ, extCamBoardSave, extCamBoardCardsHtml, wireExtCamBoard,
+         EXTCAM_BRAND, extCamWallItems, extCamProtoLabel, extCamWallHtml, wireExtCamWall, extCamWallSave } from './ext-cam/ext-cam.js';
 // Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
 import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
 import { betaBadgeInlineHtml } from './printers/beta-badge.js';
@@ -26606,7 +26607,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _prevPlanImgs.length = 0;
 
     if (_printerSub === "table") { _renderPrinterTable(host); return; }
-    if (_printerSub === "cam")   { _renderPrinterCam(host); mountExtCamSection(host); return; }
+    if (_printerSub === "cam")   { _renderPrinterCam(host); return; }
 
     // Auto-connect all printers so job status data is available in the grid.
     // All connect functions are idempotent — no-op if already connected or
@@ -27260,6 +27261,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _camHtmlMap.set(`${p.brand}:${p.id}`, html);
       return true;
     });
+    /* External IP cameras are cards of the wall like the printers' (renderer/
+       ext-cam): an item shaped like a printer (`extcam:<id>`), always "online" —
+       a camera with no picture says so on its own card. */
+    extCamWallItems().forEach(c => {
+      _camHtmlMap.set(_printerKey(c), extCamWallHtml(c));
+      _onlinePrinters.push(c);
+    });
     /* A CAMERA THAT HAS BEEN PLACED KEEPS ITS PLACE. A wall that dropped a card
        the moment its machine went quiet destroyed the arrangement it was there
        to hold: come back after a printer slept and the others had closed the gap
@@ -27318,6 +27326,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
            it MOVES existing cards and never recreates one, which is the whole
            reason this patch path exists: a rebuild would restart every stream. */
         _layoutCamWall(existingWall);
+        wireExtCamWall(existingWall);
         return;
       }
     }
@@ -27336,7 +27345,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const camCards = _wallPrinters.map((p, idx) => {
       const camHtml = _camHtmlMap.get(`${p.brand}:${p.id}`)
         || `<div class="cam-wall-offline"><span class="icon icon-eye-off icon-24"></span></div>`;
-      const meta    = PRINTER_BRAND_META[p.brand] || { label: p.brand, accent: "#888" };
+      const meta    = p.brand === EXTCAM_BRAND ? { label: extCamProtoLabel(p), accent: "var(--info)" }
+                    : PRINTER_BRAND_META[p.brand] || { label: p.brand, accent: "#888" };
       const ckey    = `${p.brand}:${p.id}`;
       const csize   = p.camSize || _camSizes.get(ckey) || "1x";
       const sizeCls = csize === "sm" ? " cam-wall-card--sm" : csize === "2x" ? " cam-wall-card--2x" : csize === "fs" ? " cam-wall-card--fs" : "";
@@ -27401,6 +27411,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Cam view — see #camWallDetachTop. No in-wall toolbar anymore.)
 
     _layoutCamWall(host.querySelector(".cam-wall"));
+    wireExtCamWall(host.querySelector(".cam-wall"));
     wireCamWallPlan(host);
   }
 
@@ -27507,7 +27518,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
          printer board needed: a snapshot arriving in between would redraw the
          wall from coordinates the user has already moved on from. */
       await Promise.all(gg.items.map(i => {
-        const p = state.printers.find(v => _printerKey(v) === i.k);
+        const p = _camWallFind(i.k);
         return p ? _camWallSave(p, parseFloat(i.el.style.left) || 0, parseFloat(i.el.style.top) || 0) : null;
       }));
       /* Dropped LAST means dropped ON TOP, for good: the save above gave each
@@ -27516,7 +27527,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       gg.items.forEach(i => {
         _camHeld.delete(i.k);
         i.el.classList.remove("is-plan-dragging");
-        const p = state.printers.find(v => _printerKey(v) === i.k);
+        const p = _camWallFind(i.k);
         i.el.style.zIndex = String((p && _camWallZ(p)) || i.z0 || 1);
       });
     };
@@ -27562,7 +27573,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       document.body.classList.remove("is-plan-grabbing");
       host.classList.remove("is-plan-moving");
       r.card.classList.remove("is-resizing");
-      const p = state.printers.find(v => _printerKey(v) === r.key);
+      const p = _camWallFind(r.key);
       if (p) await _camWallSave(p, parseFloat(r.card.style.left) || 0,
                                   parseFloat(r.card.style.top) || 0,
                                   _camWallZ(p) || _camNextZ(),
@@ -27585,7 +27596,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       itemSel: ".cam-wall-card[data-cam-key]",
       blockSel: ".cam-wall-card",
       keyOf: el => el.dataset.camKey,
-      posOf: k => { const p = state.printers.find(v => _printerKey(v) === k); return p ? _camWallPos(p) : null; },
+      posOf: k => { const p = _camWallFind(k); return p ? _camWallPos(p) : null; },
       zoomOf: () => _camZoom,
       enabled: () => _camArrange,
       sel: _camSel,
@@ -27702,10 +27713,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return Number.isFinite(w) ? Math.max(CAM_W_MIN, Math.min(CAM_W_MAX, w)) : CAM_W_DEF;
   };
   const _camWallZ = p => Number.isFinite(p?.camWallPlan?.z) ? p.camWallPlan.z : 0;
+  /* What a wall card stands for: a printer, or an external IP camera shaped like
+     one (renderer/ext-cam, `extcam:<id>`) — the wall treats both the same. */
+  const _camWallItems = () => [...state.printers, ...extCamWallItems()];
+  const _camWallFind  = key => _camWallItems().find(v => _printerKey(v) === key) || null;
   const _camNextZ = () =>
-    1 + state.printers.reduce((m, p) => Math.max(m, _camWallZ(p)), 0);
+    1 + _camWallItems().reduce((m, p) => Math.max(m, _camWallZ(p)), 0);
   async function _camWallSave(printer, x, y, z = _camNextZ(), w = _camWallW(printer)) {
     const plan = { x, y, z, w };
+    if (printer.brand === EXTCAM_BRAND) return extCamWallSave(printer.id, plan);
     const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
     if (live) live.camWallPlan = plan;            // optimistic: no render wait
     const uid = state.activeAccountId;
@@ -27742,7 +27758,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         el.style.position = el.style.left = el.style.top = el.style.width = el.style.zIndex = "";
         return;
       }
-      const p = state.printers.find(v => _printerKey(v) === key);
+      const p = _camWallFind(key);
       el.style.position = "absolute";
       if (p && !_camResizing.has(key)) el.style.width = _camWallW(p) + "px";
     });
@@ -27750,7 +27766,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const key = el.dataset.camKey; if (!key) return;
       if (el.classList.contains("cam-wall-card--fs")) return;   // not on the plan
       if (_camHeld.has(key)) return;               // in the user's hand
-      const p = state.printers.find(v => _printerKey(v) === key);
+      const p = _camWallFind(key);
       const pos = p ? _camWallPos(p) : null;
       if (!pos) { orphans.push({ el, p }); return; }
       el.style.left = pos.x + "px";
@@ -29854,6 +29870,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         _setCamSize(camCard, "1x");
         return;
       }
+      if (camCard.dataset.brand === EXTCAM_BRAND) { openExtCamEditor(camCard.dataset.id); return; }
       openPrinterDetail(camCard.dataset.brand, camCard.dataset.id);
       return;
     }

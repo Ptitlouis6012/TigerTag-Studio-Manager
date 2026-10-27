@@ -3570,32 +3570,8 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .pba-toggle-row { padding: 4px 8px; }
 
 /* ── External IP cameras (renderer/ext-cam) ─────────────────────────────────
-   A section under the camera wall: plain 16:9 cards, same look as the wall's
-   (head floats over the picture and shows on hover). Not part of the plan —
-   a camera here is not a printer and has no stored position. */
-.ext-cam-section { padding: 18px 16px 24px; }
-.ext-cam-head {
-  margin: 0 4px 10px; font-size: 11px; font-weight: 700; letter-spacing: .06em;
-  text-transform: uppercase; color: var(--muted);
-}
-.ext-cam-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.xc-card {
-  position: relative; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius); overflow: hidden; transition: border-color .15s;
-}
-.xc-card:hover { border-color: var(--info); }
-.xc-head {
-  position: absolute; top: 0; left: 0; right: 0; z-index: 3;
-  display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-  background: linear-gradient(to bottom, var(--media-scrim) 0%, transparent 100%);
-  opacity: 0; transition: opacity .18s;
-}
-.xc-card:hover .xc-head, .xc-card:focus-within .xc-head { opacity: 1; }
-.xc-name { font-weight: 500; font-size: 13px; color: var(--on-dark); min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.xc-proto {
-  font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: var(--on-dark);
-  padding: 2px 6px; border-radius: 4px; background: color-mix(in srgb, var(--on-dark) 18%, transparent);
-}
+   Cards of the camera wall like a printer's (the wall draws the card, this is
+   the picture inside it) and cards on the printers board. */
 .xc-gear { display: inline-flex; padding: 4px; border: none; border-radius: 6px; background: color-mix(in srgb, var(--on-dark) 18%, transparent); cursor: pointer; }
 .xc-gear:hover { background: color-mix(in srgb, var(--on-dark) 32%, transparent); }
 .xc-gear .icon { background-color: var(--on-dark); }
@@ -3606,8 +3582,8 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
   align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--on-dark);
 }
 .xc-overlay .icon { background-color: var(--muted); opacity: .6; }
-.xc-card[data-state="connecting"] .xc-overlay--connecting,
-.xc-card[data-state="error"] .xc-overlay--error,
+.cam-wall-card[data-state="connecting"] .xc-overlay--connecting,
+.cam-wall-card[data-state="error"] .xc-overlay--error,
 .xc-board-card[data-state="connecting"] .xc-overlay--connecting,
 .xc-board-card[data-state="error"] .xc-overlay--error { display: flex; }
 /* An <img> with no address yet is drawn by Chromium as a broken image: a light
@@ -3615,16 +3591,6 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 .xc-media:not([src]) { visibility: hidden; }
 
 /* Add / edit card */
-/* Password with an eye: the stored login is the user's, shown on demand. */
-.xc-pass-wrap { position: relative; display: block; }
-.xc-pass-wrap .pba-input { padding-right: 40px; }
-.xc-pass-eye.xc-pass-eye {
-  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-  display: grid; place-items: center; width: 30px; height: 30px; padding: 0;
-  border: 0; border-radius: 8px; background: transparent; cursor: pointer;
-}
-.xc-pass-eye .icon { background: var(--muted); }
-.xc-pass-eye:hover .icon, .xc-pass-eye[aria-pressed="true"] .icon { background: var(--primary); }
 .xc-seg { display: flex; gap: 6px; }
 .xc-seg button {
   flex: 1; height: 32px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);

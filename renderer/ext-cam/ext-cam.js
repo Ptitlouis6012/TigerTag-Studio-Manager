@@ -9,12 +9,15 @@
  *                `printers/`, so it never counts as one.
  *   • Add/edit — one side card (`#xcOverlay`), opened from the brand picker's
  *                "External cameras" row or from a camera's gear on the wall.
- *   • Display  — a section under the camera wall (`mountExtCamSection`) and cards
- *                placed on the printers board (`extCamBoardCardsHtml`, moved like
- *                a machine; the position is `boardPlan` on the camera's document).
+ *   • Display  — cards of the camera wall like any printer's (`extCamWallItems`,
+ *                `extCamWallHtml`; place `camWallPlan`) and cards on the printers
+ *                board (`extCamBoardCardsHtml`, moved like a machine; place
+ *                `boardPlan`) — both on the camera's own document.
  *   • Streams  — three readers, picked by `protocol`:
- *       mjpeg  → the shared mux (`cam_manager.js`); with a login → ffmpeg in main
- *       rtsp   → ffmpeg in main (`extcam:*` IPC, JPEG frames back)
+ *       rtsp, mjpeg → ffmpeg in main (`extcam:*` IPC, JPEG frames back). MJPEG
+ *                too: read from the page, a camera that sends no CORS header —
+ *                most IP cameras, the Elegoo CC2's — is blocked by the browser
+ *                ("Failed to fetch"); ffmpeg in main has no such limit.
  *       webrtc → WHEP in the renderer (POST an SDP offer, read the SDP answer)
  *
  * The login is stored in clear in the camera's (owner-only) document — the user
@@ -23,10 +26,9 @@
  * log line.
  *
  * Entry points (called by inventory.js): initExtCam, extCamSubscribe,
- * extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection.
+ * extCamUnsubscribe, openExtCamAddFlow, extCamWallItems / extCamWallHtml / wireExtCamWall.
  */
 import { ctx } from "../printers/context.js";
-import { camStart, camStop, camSubscribe, camUnsubscribe } from "../printers/cam_manager.js";
 
 const PROTOCOLS = ["rtsp", "mjpeg", "webrtc"];
 const PLACEHOLDER = {
@@ -89,13 +91,13 @@ function placeBoardCards() {
 }
 
 // ── Readers ──────────────────────────────────────────────────────────────────
-// key → { kind: "mux" | "ff" | "rtc", els: Set<HTMLElement>, pc?, last?, retry? }
+// key → { kind: "ff" | "rtc", els: Set<HTMLElement>, pc?, last?, retry? }
 const _run = new Map();
 let _sweeper = 0;
 const camKey = id => `ext:${id}`;
 
 function setState(el, state) {
-  const card = el.closest(".xc-card, .xc-board-card");
+  const card = el.closest(".xc-board-card, .cam-wall-card");
   if (card) card.dataset.state = state;
 }
 
@@ -109,7 +111,7 @@ function setAll(r, state) {
 /* A camera that has shown nothing 10 s after it was asked is OFFLINE as far as
    the card is concerned (grey); it keeps trying, and the first picture makes it
    live. Without this a camera that is switched off stayed "connecting" for ever
-   — the mux and ffmpeg both retry silently. */
+   — ffmpeg and WHEP both retry silently. */
 function armWatch(key, r) {
   r.watch = setTimeout(() => { if (_run.get(key) === r && !r.live) setAll(r, "error"); }, 10000);
 }
@@ -134,7 +136,6 @@ function stopKey(key) {
   clearTimeout(r.retry);
   clearTimeout(r.watch);
   clearTimeout(r.discT);
-  if (r.kind === "mux") { r.els.forEach(el => camUnsubscribe(key, el)); camStop(key); }
   if (r.kind === "ff")  { try { window.extCam?.stop(key); } catch (_) {} if (r.last) URL.revokeObjectURL(r.last); if (r.next) URL.revokeObjectURL(r.next); }
   if (r.kind === "rtc") { try { r.pc?.close(); } catch (_) {} r.els.forEach(el => { el.srcObject = null; }); }
 }
@@ -270,8 +271,7 @@ function attachStream(cam, el) {
   if (r && r.sig !== streamSig(cam)) { stopKey(key); r = null; }
   if (r) {
     r.els.add(el);
-    if (r.kind === "mux") camSubscribe(key, el);
-    else if (r.kind === "ff" && r.last) el.src = r.last;
+    if (r.kind === "ff" && r.last) el.src = r.last;
     else if (r.kind === "rtc" && r.stream) { el.srcObject = r.stream; el.play().catch(() => {}); }
     setState(el, r.state || "connecting");
     return;
@@ -281,14 +281,6 @@ function attachStream(cam, el) {
     _run.set(key, r);
     armWatch(key, r);
     startRtc(cam, r);
-    return;
-  }
-  if (cam.protocol === "mjpeg" && !cam.username) {
-    const m = { kind: "mux", sig: streamSig(cam), els: new Set([el]), live: false, state: "connecting" };
-    _run.set(key, m);
-    armWatch(key, m);
-    camStart(key, cam.url);
-    camSubscribe(key, el);
     return;
   }
   if (!window.extCam) { setState(el, "error"); return; }
@@ -318,7 +310,7 @@ function watchLive(cam, el) {
 }
 
 function wireCards(root) {
-  root.querySelectorAll(".xc-card, .xc-board-card").forEach(card => {
+  root.querySelectorAll(".xc-board-card").forEach(card => {
     const cam = _cams.find(c => c.id === card.dataset.id);
     const el = card.querySelector(".xc-media");
     if (!cam || !el) return;
@@ -329,69 +321,56 @@ function wireCards(root) {
     b.addEventListener("click", () => openExtCamEditor(_cams.find(c => c.id === b.dataset.xcEdit))));
 }
 
-// ── Wall section ─────────────────────────────────────────────────────────────
 const protoLabel = p => (p === "rtsp" ? "RTSP" : p === "mjpeg" ? "MJPEG" : "WebRTC");
-// Change detection for the wall section — kept on the element as a JS property,
-// never an attribute: it covers the login (a change restarts the stream), and an
-// attribute would put the password in the DOM.
-const signature = () => _cams.map(streamSig).map((s, i) => _cams[i].id + "|" + _cams[i].name + "|" + s).join("\n");
 
-function cardHtml(c) {
+// ── On the camera wall ───────────────────────────────────────────────────────
+/* An external camera is a card of the wall like any printer's: the wall draws
+   it, places it, moves it, resizes it and puts it fullscreen through the same
+   code, given an item shaped like a printer — `brand: "extcam"`, so its key is
+   `extcam:<id>`. Its place is `camWallPlan` on the camera's own document. */
+export const EXTCAM_BRAND = "extcam";
+export const extCamWallItems = () => _cams.map(c => ({
+  brand: EXTCAM_BRAND, id: c.id, printerName: c.name || "", camWallPlan: c.camWallPlan,
+  protocol: c.protocol,
+}));
+export const extCamProtoLabel = item => protoLabel(item?.protocol);
+
+/** The picture part of a wall card (the wall draws the card around it). */
+export function extCamWallHtml(item) {
   const { esc, t } = ctx;
-  const media = c.protocol === "webrtc"
+  const media = item.protocol === "webrtc"
     ? `<video class="xc-media" muted playsinline autoplay></video>`
     : `<img class="xc-media" alt="" draggable="false"/>`;
   return `
-    <div class="xc-card" data-id="${esc(c.id)}" data-state="connecting">
-      <div class="xc-head">
-        <span class="xc-name">${esc(c.name || "")}</span>
-        <span class="xc-proto">${esc(protoLabel(c.protocol))}</span>
-        <button type="button" class="xc-gear" data-xc-edit="${esc(c.id)}" aria-label="${esc(t("extCamEditTitle"))}">
-          <span class="icon icon-settings icon-14"></span>
-        </button>
-      </div>
-      <div class="xc-view">
-        ${media}
-        <div class="xc-overlay xc-overlay--connecting">${esc(t("extCamConnecting"))}</div>
-        <div class="xc-overlay xc-overlay--error"><span class="icon icon-eye-off icon-24"></span>${esc(t("extCamNoSignal"))}</div>
-      </div>
+    <div class="xc-view xc-wall-view" data-xc-id="${esc(item.id)}">
+      ${media}
+      <div class="xc-overlay xc-overlay--connecting">${esc(t("extCamConnecting"))}</div>
+      <div class="xc-overlay xc-overlay--error"><span class="icon icon-eye-off icon-24"></span>${esc(t("extCamNoSignal"))}</div>
     </div>`;
 }
 
-/**
- * Puts the "External cameras" section under the camera wall (or alone when no
- * printer camera is online). Signature guard: the same cameras leave the live
- * streams untouched; only a change rebuilds the section.
- */
-export function mountExtCamSection(host) {
-  let sec = host.querySelector(".ext-cam-section");
-  if (!_cams.length) { if (sec) sec.remove(); pruneStreams(); return; }
-  const sig = signature();
-  // Same cameras: nothing to rebuild, but a stream the sweeper stopped while the
-  // view was hidden is started again.
-  if (sec && sec._xcSig === sig) { wireCardsStreams(sec); return; }
-  host.querySelector(":scope > .printers-empty-card")?.remove();
-  sec?.remove();
+/** After the wall is drawn or patched: attach every external camera's stream. */
+export function wireExtCamWall(container) {
+  if (!container) return;
+  container.querySelectorAll(".xc-wall-view[data-xc-id]").forEach(v => {
+    const cam = _cams.find(c => c.id === v.dataset.xcId);
+    const el = v.querySelector(".xc-media");
+    if (!cam || !el) return;
+    const card = v.closest(".cam-wall-card");
+    if (card && !card.dataset.state) card.dataset.state = "connecting";
+    watchLive(cam, el);
+    attachStream(cam, el);
+  });
   pruneStreams();
-  let scroll = host.querySelector(".cam-scroll");
-  if (!scroll) { scroll = document.createElement("div"); scroll.className = "printers-scroll cam-scroll"; host.appendChild(scroll); }
-  sec = document.createElement("section");
-  sec.className = "ext-cam-section";
-  sec._xcSig = sig;
-  sec.innerHTML = `
-    <div class="ext-cam-head">${ctx.esc(ctx.t("extCamTitle"))}</div>
-    <div class="ext-cam-grid">${_cams.map(cardHtml).join("")}</div>`;
-  scroll.appendChild(sec);
-  wireCards(sec);
 }
 
-// Re-attach streams only (the edit buttons of an unchanged section are still wired).
-function wireCardsStreams(root) {
-  root.querySelectorAll(".xc-card, .xc-board-card").forEach(card => {
-    const cam = _cams.find(c => c.id === card.dataset.id);
-    const el = card.querySelector(".xc-media");
-    if (cam && el) attachStream(cam, el);
-  });
+export async function extCamWallSave(id, plan) {
+  const live = _cams.find(c => c.id === id);
+  if (live) live.camWallPlan = plan;               // optimistic: no render wait
+  const col = colRef();
+  if (!col) return;
+  try { await col.doc(id).set({ camWallPlan: plan }, { merge: true }); }
+  catch (e) { console.warn("[ext-cam] wall position save failed:", e?.code || e?.message); }
 }
 
 // ── On the printers board ────────────────────────────────────────────────────
@@ -499,10 +478,15 @@ function ensureDOM() {
       </div>
       <div class="pba-field">
         <span class="pba-field-label" data-i18n="extCamPass">Password (optional)</span>
-        <span class="xc-pass-wrap">
+        <div class="pba-input-wrap">
           <input type="password" id="xcPass" class="pba-input" autocomplete="new-password"/>
-          <button type="button" class="xc-pass-eye" id="xcPassEye" data-i18n-aria="extCamShowPass" aria-label="Show password" aria-pressed="false"><span class="icon icon-eye-on icon-14"></span></button>
-        </span>
+          <button type="button" class="pba-input-eye" id="xcPassEye" data-i18n-aria="extCamShowPass" aria-label="Show password" aria-pressed="false">
+            <span class="pba-eye-stack" aria-hidden="true">
+              <span class="icon icon-eye-on icon-14 pba-eye-icon pba-eye-icon--on"></span>
+              <span class="icon icon-eye-off icon-14 pba-eye-icon pba-eye-icon--off"></span>
+            </span>
+          </button>
+        </div>
       </div>
       <div class="pba-error" id="xcError" hidden></div>
       <div class="xc-test" id="xcTest" hidden></div>
@@ -628,7 +612,7 @@ function setPassVisible(on) {
   $("xcPass").type = on ? "text" : "password";
   const eye = $("xcPassEye");
   eye.setAttribute("aria-pressed", String(on));
-  eye.querySelector(".icon").className = `icon icon-${on ? "eye-off" : "eye-on"} icon-14`;
+  eye.classList.toggle("pba-input-eye--on", on);
 }
 
 function closeCard() { $("xcOverlay")?.classList.remove("open"); if ($("xcPass")) { setPassVisible(false); $("xcPass").value = ""; } }
@@ -669,4 +653,8 @@ function open(cam) {
 }
 
 export function openExtCamAddFlow() { open(null); }
-export function openExtCamEditor(cam) { if (cam) open(cam); }
+/** By the camera itself, or by its id (a wall card only knows the id). */
+export function openExtCamEditor(camOrId) {
+  const cam = typeof camOrId === "string" ? _cams.find(c => c.id === camOrId) : camOrId;
+  if (cam) open(cam);
+}
