@@ -899,26 +899,6 @@
   .inv-search-add:hover { background: var(--primary-hover); }
   .inv-search-add:hover .icon { background: var(--on-accent); }
   .inv-search-add:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  /* The add menu, hung under the "+" rather than opening a side card: two
-     choices and one line of consequence each do not need a panel. */
-  .search-add-menu {
-    position: absolute; top: calc(100% + 8px); left: 0; z-index: 60;
-    min-width: 200px; padding: 6px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 14px; box-shadow: 0 14px 34px rgba(0,0,0,.5);
-  }
-  .search-add-menu[hidden] { display: none; }
-  .search-add-item {
-    display: flex; align-items: center; justify-content: flex-start; gap: 10px; width: 100%;
-    padding: 8px 12px; border: 0; border-radius: 9px;
-    white-space: nowrap;
-    background: transparent; color: var(--text);
-    font-family: inherit; font-size: 13px; text-align: left; cursor: pointer;
-    transition: background .12s;
-  }
-  .search-add-item:hover { background: var(--surface-2); }
-  .search-add-item .icon { background: var(--muted); flex-shrink: 0; transition: background .12s; }
-  .search-add-item:hover .icon { background: var(--primary); }
 
   .inv-search input:focus {
     background: var(--surface);
@@ -2416,7 +2396,45 @@
     0%, 100% { box-shadow: 0 0 0 0   color-mix(in srgb, var(--violet) 50%, transparent); }
     50%       { box-shadow: 0 0 0 6px color-mix(in srgb, var(--violet) 0%, transparent); }
   }
-  .cloud-encode-text { color: var(--violet) !important; }
+  /* Burning a chipless material is a gain, like linking a third-party Tag
+     (rfid_protocol/linked): the same success green — banner, text and pill. */
+  .cloud-encode-banner.cloud-encode-banner { background: color-mix(in srgb, var(--success) 12%, transparent); }
+  .cloud-encode-banner .cloud-encode-text.cloud-encode-text { color: var(--success); font-weight: 600; }
+  .cloud-encode-banner .chip-encode-btn.chip-encode-btn { color: var(--success); border-color: color-mix(in srgb, var(--success) 55%, transparent); background: transparent; }
+  .cloud-encode-banner .chip-encode-btn.chip-encode-active { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: var(--success); }
+  .cloud-encode-banner .chip-encode-btn.chip-encode-btn:hover { background: var(--success); color: var(--on-accent); border-color: var(--success); }
+  /* Reader present: the banner itself is the (held) button, square like the
+     panel's other bands, with a green fill. */
+  .cloud-encode-banner--hold.cloud-encode-banner--hold { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 58px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; text-align: left; font: inherit; cursor: pointer; }
+  .cloud-encode-banner--hold > :not(.hold-progress) { position: relative; z-index: 1; }
+  .cloud-encode-banner--hold .tool-info { margin-left: auto; }
+  /* "Burning" feel: a glint sweeps across the band, the TigerTag logo glows, and
+     while held the fill's leading edge burns bright. */
+  .cloud-encode-banner--hold .hold-progress {
+    background: linear-gradient(90deg, color-mix(in srgb, var(--success) 18%, transparent), color-mix(in srgb, var(--success) 50%, transparent));
+    opacity: 1;
+    box-shadow: 6px 0 14px color-mix(in srgb, var(--success) 70%, transparent);
+  }
+  .cloud-encode-banner--hold::after {
+    content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--success) 22%, transparent) 50%, transparent 65%);
+    transform: translateX(-100%);
+    animation: cloud-burn-sweep 2.6s ease-in-out infinite;
+  }
+  .cloud-encode-banner--hold .rfid-material-icon { animation: cloud-burn-glow 2s ease-in-out infinite; }
+  .cloud-encode-banner--hold:hover .rfid-material-icon { animation-duration: .9s; }
+  @keyframes cloud-burn-sweep { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
+  @keyframes cloud-burn-glow {
+    0%, 100% { filter: drop-shadow(0 0 0 transparent); }
+    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--success) 85%, transparent)); }
+  }
+  /* While held (and confirming), only the burning fill glows: the sweep and the
+     logo pulse stand down. */
+  .cloud-encode-banner--hold:is(.is-holding, .is-confirming)::after { animation: none; opacity: 0; }
+  .cloud-encode-banner--hold:is(.is-holding, .is-confirming) .rfid-material-icon { animation: none; filter: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .cloud-encode-banner--hold::after, .cloud-encode-banner--hold .rfid-material-icon { animation: none; }
+  }
   /* Ghost pill — no reader connected (TigerPOD discovery) */
   .chip-encode-btn {
     font-size: 11px; padding: 4px 10px; border-radius: 999px;
@@ -2470,7 +2488,7 @@
   .panel-row .pv { font-weight: 500; text-align: right; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
   /* Badge-valued row (e.g. "Type de tag" → tier badge + backup shield) — align
      the pill to the right, vertically centred with the key. */
-  .panel-row .pv-badge { display: inline-flex; align-items: center; gap: 4px; }
+  .panel-row .pv-badge { display: inline-flex; align-items: center; justify-content: flex-end; gap: 4px; }
   .panel-row .pv a { color: var(--primary); text-decoration: none; }
   .panel-row .pv a:hover { text-decoration: underline; }
   /* Value cell that is itself a link (e.g. Product ID → tigertag.io). */

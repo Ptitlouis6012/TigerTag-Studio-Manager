@@ -1,6 +1,7 @@
+import { decimalSpoolIdToHex, repairTruncatedNtagUid, isDecimalSpoolId, planTruncatedUidRepair } from './uid-repair.js';
 // ── RFID TigerTag tester modal ────────────────────────────────────────────
 import { initRfidTester } from './rfid_protocol/tigertag/index.js';
-import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice } from './rfid_protocol/linked/index.js';
+import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice, closeChipLink, wireSearchBox, linkOfferHtml, wireLinkOffer, openAddChooser } from './rfid_protocol/linked/index.js';
 
 // ── Offline timezone → country (telemetry, no IP geolocation) ──────────────
 import { tzToCountry, COUNTRY_CODES } from './tz-country.js';
@@ -1789,7 +1790,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const mat = materialFull(data.id_material);
     return {
       spoolId: String(spoolId),
-      uid: data.uid != null ? String(data.uid) : String(spoolId),
+      // A truncated NTAG uid (issue #146) reads as the repaired one, so search, twin
+      // pairing and scale lookups match the real chip before the repair re-keys the doc.
+      uid: (u => repairTruncatedNtagUid(u) || u)(data.uid != null ? String(data.uid) : String(spoolId)),
       material: mat ? mat.label : (data.material || data.series || "-"),
       materialData: mat,
       brand: brandName(data.id_brand),
@@ -1867,7 +1870,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         food:    data.LinkFOOD    && data.LinkFOOD    !== "--" ? data.LinkFOOD    : null,
       },
       td: data.TD != null ? data.TD : null,
-      twinUid: data.twin_tag_uid || null,
+      // A truncated NTAG pointer (issue #146) resolves to the repaired id right away,
+      // before maybeRepairTruncatedSpoolIds has rewritten it.
+      twinUid: data.twin_tag_uid ? (repairTruncatedNtagUid(data.twin_tag_uid) || data.twin_tag_uid) : null,
       containerId: data.container_id || null,
       // Storage location — new shape is `rack: { id, level, position }`,
       // legacy docs still have flat `rack_id` / `level` / `position`. We
@@ -3197,6 +3202,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // card, reorder, pickers, notifs).
     try { closeMaterialSourcePicker(); } catch (_) {}
     try { closeCatalogPick(); } catch (_) {}
+    try { closeChipLink(); } catch (_) {}
     try { closeDetail(); } catch (_) {}
     try { _closeGroupPanel(); } catch (_) {}
     try { closeProductCard(); } catch (_) {}
@@ -3378,12 +3384,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("addProductOverlay")?.classList.add("open");
     // » close tab at the panel's left edge, like every other side card.
     _setTab($("addProductCloseTab"), true, $("addProductPanel")?.offsetWidth || 0, $("addProductPanel"));
+    _syncPanels();   // the new-chip chooser, when up, tucks to its left
     setTimeout(() => $("adpBrand")?.focus(), 80);
   }
 
   function closeAddProductPanel() {
     $("addProductPanel")?.classList.remove("open");
     $("addProductOverlay")?.classList.remove("open");
+    _syncPanels();
     _setTab($("addProductCloseTab"), false, 0, $("addProductPanel"));
     _pendingCloudId = null;
   }
@@ -4357,9 +4365,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // One weight write per pose: POD mode applies silently (UID = certainty),
   // side-card mode shows an inline confirm in the panel's WEIGHT section.
   // Linked chips — third-party RFID chips mapped to a spool (docs/LINKED-CHIPS.md).
-  initLinkedChips({ t, esc, state, fbDb, colorBg, thumbHTML, openDetail, setupHoldToConfirm,
+  initLinkedChips({ t, esc, state, fbDb, colorBg, thumbHTML, gridCard: r => _gridCardInnerHTML(r), enhanceSelect: el => _enhanceSelect(el), openDetail,
+    openSpool: id => { openDetail(id, { animateSwap: true }); _syncGroupPanelToSpool(id); },
+    groupItems: rows => groupRows(rows, { force: true }), groupCard: g => _groupGridCardInnerHTML(g),
+    openGroup: key => { closeDetail(); _openGroupPanel(key); }, setupHoldToConfirm,
     toast: msg => _flashMessage(msg), reportError, onChange: () => { if (state.selected) refreshOpenDetail?.(); },
-    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), syncPanels: () => _syncPanels() });
+    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), syncPanels: () => _syncPanels(), clearSide: () => _clearSideForChip(), closeAllSide: () => _closeAllSidePanels(),
+    showTip: el => _showToolInfoTip(el), hideTip: () => _hideToolInfoTip(),
+    clearCreate: () => { closeCatalogPick(); if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); if ($("addProductPanel")?.classList.contains("open")) _adpCloseAllSheetsAndPanel(); } });
+  $("chipLinkClose")?.addEventListener("click", () => closeChipLink());
+  $("chipLinkCloseTab")?.addEventListener("click", () => closeChipLink());
   $("chipChoiceClose")?.addEventListener("click", () => closeChipChoice());
   $("chipChoiceCloseTab")?.addEventListener("click", () => closeChipChoice());
 
@@ -6892,8 +6907,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      The legacy mobile app (still in production at the time this code was
      written) creates `inventory/{spoolId}` doc ids in DECIMAL big-endian
      form, e.g. "8307741719072896". The canonical format going forward is
-     HEX uppercase, no separators, e.g. "1D895E7C004A80". Both forms decode
-     to the same integer.
+     HEX uppercase, no separators, padded to whole bytes, e.g. "1D895E7C004A80"
+     or "04D8593DD42A81" (a 7-byte NTAG always keeps its leading 0 — issue #146).
+     Both forms decode to the same integer.
 
      SHARED RESPONSIBILITY — every TigerTag client that has write access and
      sees a decimal-format inventory doc converts it to hex on the fly:
@@ -6946,17 +6962,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   let   _uidMigrationUserAccepted     = false;
   let   _uidMigrationDeferredThisSession = false;
   let   _uidMigrationConfirmOpen      = false;
-  // Pure decimal string check. We exclude leading zeros (other than the
-  // standalone "0") because a real BigInt's toString() never has them —
-  // a leading zero would mean someone wrote a malformed id we shouldn't
-  // touch.
-  function isDecimalSpoolId(id) {
-    return typeof id === "string" && /^\d+$/.test(id) && (id === "0" || id[0] !== "0");
-  }
-  function decimalSpoolIdToHex(decimal) {
-    try { return BigInt(decimal).toString(16).toUpperCase(); }
-    catch { return null; }
-  }
+  // isDecimalSpoolId / decimalSpoolIdToHex live in ./uid-repair.js (pure, tested by
+  // scripts/test-uid-repair.mjs). The conversion pads to whole bytes: every TigerTag chip is
+  // a 7-byte NTAG starting with 0x04, and the unpadded `toString(16)` used until v2.44.1 dropped
+  // that 0 (issue #146) — "4D8593DD42A81" instead of "04D8593DD42A81". Ids already truncated
+  // are re-keyed by maybeRepairTruncatedSpoolIds below; the mobile app does the same.
 
   /* ── Rack-shape migration — flat → nested `rack` object ────────────────
      Same UX pattern as the UID migration: consent modal (Update now /
@@ -7455,6 +7465,64 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       + (reverseTwins.size ? ` (twins retargeted: ${reverseTwins.size})` : ""));
   }
 
+  /* ── Truncated NTAG id repair (issue #146) ────────────────────────────
+     The decimal → hex migration before v2.44.1 dropped the leading 0 of 0x04,
+     so a spool was re-keyed "4D8593DD42A81" instead of "04D8593DD42A81" and every
+     scan / TigerScale lookup missed it. Silent, idempotent, owner only:
+       - truncated doc → "0" + id; its data win when the target is absent or older
+         (`updatedAt`, else `last_update`), otherwise the target is kept as is; the
+         truncated doc is deleted either way — ONE atomic batch per spool;
+       - a doc that keeps its id but points at a truncated twin → pointer only;
+       - uidMigrationMap entries whose `hex_uid` is truncated → repaired.
+     The plan itself is pure (planTruncatedUidRepair, ./uid-repair.js) and mirrors
+     the mobile app's FilamentInventoryService.repairTruncatedUids(). */
+  let _uidRepairRunning = false;
+  let _uidRepairMapDone = null;   // owner uid whose uidMigrationMap was swept this session
+  function maybeRepairTruncatedSpoolIds(ownerUid) {
+    if (state.friendView || !ownerUid || !state.inventory || _uidRepairRunning) return;
+    const plan = planTruncatedUidRepair(state.inventory);
+    const mapPending = _uidRepairMapDone !== ownerUid;
+    if (!plan.renames.length && !Object.keys(plan.twinFixes).length && !mapPending) return;
+    _uidRepairRunning = true;
+    repairTruncatedSpoolIds(ownerUid, plan, mapPending)
+      .catch(e => console.warn("[uidRepair] failed", e.code || e.message))
+      .finally(() => { _uidRepairRunning = false; });
+  }
+  async function repairTruncatedSpoolIds(ownerUid, plan, sweepMap) {
+    const db     = fbDb(ownerUid);
+    const invRef = db.collection("users").doc(ownerUid).collection("inventory");
+    const FV     = firebase.firestore.FieldValue;
+    for (const r of plan.renames) {
+      const batch = db.batch();
+      if (r.write) batch.set(invRef.doc(r.to), { ...r.write, updatedAt: FV.serverTimestamp() }, { merge: true });
+      batch.delete(invRef.doc(r.from));
+      await batch.commit();
+      console.log(`[uidRepair] ${r.from} → ${r.to}${r.write ? "" : " (newer doc kept)"}`);
+    }
+    const commitChunked = async ops => {
+      for (let i = 0; i < ops.length; i += 400) {
+        const batch = db.batch();
+        ops.slice(i, i + 400).forEach(op => op(batch));
+        await batch.commit();
+      }
+    };
+    await commitChunked(Object.entries(plan.twinFixes)
+      .map(([id, twin]) => b => b.update(invRef.doc(id), { twin_tag_uid: twin })));
+    if (sweepMap) {
+      const mapSnap = await db.collection("users").doc(ownerUid).collection("uidMigrationMap").get();
+      const fixes = [];
+      mapSnap.forEach(d => {
+        const fixed = repairTruncatedNtagUid(d.data()?.hex_uid);
+        if (fixed) fixes.push(b => b.update(d.ref, { hex_uid: fixed }));
+      });
+      await commitChunked(fixes);
+      _uidRepairMapDone = ownerUid;
+      if (fixes.length) console.log(`[uidRepair] uidMigrationMap: ${fixes.length} hex_uid repaired`);
+    }
+    const n = plan.renames.length + Object.keys(plan.twinFixes).length;
+    if (n) console.log(`[uidRepair] repaired ${n} truncated uid(s)`);
+  }
+
   async function migrateOneSpoolDecimalToHex(ownerUid, decimalId) {
     const hexId = decimalSpoolIdToHex(decimalId);
     if (!hexId) {
@@ -7672,6 +7740,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // and migrates it in the background. Idempotent + safe vs
         // concurrent mobile-app writes (see the function header).
         maybeMigrateDecimalSpoolIds(uid);
+        // SILENT repair of NTAG ids truncated by the old decimal → hex conversion
+        // (issue #146) — a fix, not a migration: no consent modal. Server snapshots
+        // only: the plan needs the authoritative inventory.
+        if (!snapshot.metadata.fromCache) maybeRepairTruncatedSpoolIds(uid);
         // Lazy, SILENT migration of chipless spool ids `CLOUD_` → `TigerData_`.
         // Same streaming pattern, no consent modal (invisible id rename).
         maybeMigrateCloudToTigerData(uid);
@@ -13571,57 +13643,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      duplicating its handler means the inline "+" follows it wherever it goes —
      Material, Device or Rack depending on the view — with nothing to keep in
      step. */
-  /* In the material views the "+" offers the CHOICE straight away — catalogue or
-     by hand — instead of opening a side card whose only job was to ask that
-     question. Everywhere else it still delegates to the header button, which
-     means something different there (a printer brand, a new rack), so the two
-     can never drift apart. */
-  function closeSearchAddMenu() {
-    const m = $("searchAddMenu"); if (!m || m.hidden) return;
-    m.hidden = true;
-    $("searchAddBtn")?.setAttribute("aria-expanded", "false");
-  }
-  function openSearchAddMenu() {
-    const m = $("searchAddMenu"); if (!m) return;
-    // The label alone. Two choices whose names already say what they do do not
-    // need a sentence each — the explanation belongs where the choice is hard.
-    m.innerHTML = MAT_SOURCES.map(src => `
-      <button type="button" class="search-add-item" role="menuitem" data-src="${src.id}">
-        <span class="icon icon-${src.icon} icon-14" aria-hidden="true"></span>
-        <span>${esc(t(src.label))}</span>
-      </button>`).join("");
-    m.hidden = false;
-    $("searchAddBtn")?.setAttribute("aria-expanded", "true");
-  }
-  $("searchAddBtn")?.addEventListener("click", e => {
+  /* In the material views the "+" opens the same side card as a chip placed on
+     the reader (rfid_protocol/linked): the rail of choices, the catalogue view
+     already open beside it. Everywhere else it means something different (a
+     printer brand, a new rack). */
+  $("searchAddBtn")?.addEventListener("click", () => {
     // Multi-purpose, dispatching by current view — this is the app's ONE add
     // button now, the header's "+ Material" having been folded into it:
     //   - Printer modes (grid / table / cam) → brand picker → add printer
     //   - Storage (rack) mode                 → new rack modal
-    //   - Everything else                     → the two material sources below
+    //   - Everything else                     → the add-material side card
     if (_isPrinterMode(state.viewMode)) { openPrinterBrandPicker(); return; }
     if (state.viewMode === "rack")      { openRackEditModal(null);  return; }
     if (!state.activeAccountId) {
       try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
       return;
     }
-    e.stopPropagation();
-    $("searchAddMenu")?.hidden === false ? closeSearchAddMenu() : openSearchAddMenu();
+    openAddChooser();
   });
-  $("searchAddMenu")?.addEventListener("click", e => {
-    const it = e.target.closest?.(".search-add-item"); if (!it) return;
-    closeSearchAddMenu();
-    // Catalogue always lands on the GRID, whatever layout the inventory was in —
-    // picking a product you have never seen is a visual task.
-    if (it.dataset.src === "matSourceChoiceCatalogue") setViewMode("catalogGrid");
-    else openAddProductPanel();
-  });
-  document.addEventListener("click", e => {
-    if (e.target.closest?.("#searchAddMenu, #searchAddBtn")) return;
-    closeSearchAddMenu();
-  });
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSearchAddMenu(); });
-  document.addEventListener("scroll", closeSearchAddMenu, true);
   $("searchInv").addEventListener("input", e => {
     const v = e.target.value;
     state.search = v.trim();
@@ -13939,13 +13978,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   async function _openCreatedSpool(cloudId) {
+    closeChipChoice();   // the spool it was opened for now exists
     const t0 = Date.now();
     while (!state.inventory[cloudId] && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
     const row = state.rows.find(x => x.spoolId === cloudId);
     if (!row) return;
     // Created from the linked-chips window: the maker's chips get linked and
     // there is nothing to burn.
-    if (await linkPendingTo(cloudId)) { openDetail(cloudId); return; }
+    if (await linkPendingTo(cloudId)) { _closeAllSidePanels(); openDetail(cloudId); return; }
     openDetail(cloudId);
     if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
@@ -13959,8 +13999,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (row?.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
 
-  function openEncodeModal(r) {
+  // `auto`: opened by the held "Burn the TigerTag" banner — the hold WAS the
+  // confirmation, so the burn starts by itself as soon as the gate opens (every
+  // reader holds a chip, all of them checked blank). A chip with data on it still
+  // waits for the explicit overwrite toggle + Burn.
+  let _cemAuto = false;
+  function openEncodeModal(r, { auto = false } = {}) {
     if (!HAS_NATIVE || !r?.isCloud) return;
+    _cemAuto = !!auto;
     _cemRow = r; _cemMode = "encode"; _cemState = "confirm"; _cemAborted = false;
     _cemChip = new Map(); _cemBlank = new Map(); _cemTargets = [];
     const ow = $("cemOwToggle"); if (ow) ow.checked = false;
@@ -13986,6 +14032,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function closeEncodeModal() {
     // Closing = user abort. A write already in flight finishes but no migration runs.
     _cemAborted = true;
+    _cemAuto = false;
     $("cloudEncodeOverlay")?.classList.remove("open");
     _cemRow = null; _cemState = "confirm";
   }
@@ -14153,6 +14200,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       burnBtn.classList.toggle("hidden", isReset);
       burnBtn.closest(".cem-actions")?.classList.toggle("cem-invisible", burning);
     }
+    if (_cemAuto && _cemMode === "encode" && _cemState === "confirm" && gateReady && !nonBlank
+        && present.every(p => _cemBlank.get(p.readerName) === true)) {
+      _cemAuto = false;
+      setTimeout(() => { if (_cemState === "confirm" && _encodeModalOpen()) _cemStartBurn(); }, 250);
+    }
     if (resetBtn) {
       resetBtn.disabled = !gateReady;
       resetBtn.classList.toggle("hidden", !isReset);
@@ -14251,8 +14303,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       await _cemMigrate(r, cloudDoc, burned, timestamp);
       _cemBeep(true);
       closeEncodeModal();
-      // The TigerData card just lost its doc — swap it for the new chip spool's
-      // card (same spool, now a TigerTag / TigerTag+) instead of closing it.
+      // Done: every side card closes (new-chip card, group, catalogue…) and the
+      // spool just burned — now a TigerTag / TigerTag+ — opens on its own.
+      _closeAllSidePanels();
       _openSpoolWhenReady(burned[0].uid);
     } catch (e) {
       console.error("[encodeModal] migration failed:", e);
@@ -15159,15 +15212,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      `id_tigertag` deliberately keeps the chipless nonce — this spool has no
      chip, so it must not carry the TigerTag+ id.
   */
-  async function _catalogCreate(productId, { msgEl = null } = {}) {
+  async function _catalogCreate(productId, { keepLink = false } = {}) {
     if (_catalogBusy) return;
     const uid = state.activeAccountId;
     if (!uid || state.friendView) return;
-    // Only the catalogue pick card (opened from the new-chip window) carries
-    // waiting chips to link.
-    if (!msgEl) clearPendingLink();
+    // Only a creation started from the new-chip card carries waiting chips.
+    if (!keepLink) clearPendingLink();
     // Feedback goes to whichever surface the user actually triggered this from.
-    const res$ = msgEl || $("pcCatMsg") || $("roSaveResult");
+    const res$ = $("pcCatMsg") || $("roSaveResult");
     _catalogSetBusy(true);
     try {
       // The one network call of this path — the same detail endpoint the
@@ -15192,8 +15244,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       bumpStudioCounters({ cloudPlusAddedTotal: 1 });
       // The product card has done its job: close it and open the new spool's
       // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
-      if (msgEl) closeCatalogPick();
-      else if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
+      if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
       _openCreatedSpool(cloudId);
     } catch (e) {
       console.error("[catalog] create failed:", e);
@@ -15215,19 +15266,36 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* ── Catalogue pick — side card ─────────────────────────────────────────────
      "From the catalogue" of the new-chip window (rfid_protocol/linked): a brand
      select + the catalogue view's own search (`_catalogFilter`: words, SKU,
-     barcode, product id), one tap on a product creates the TigerData+
-     (`_catalogCreate`), which then links the waiting maker's chips or offers the
-     burn onto the blank chip (`_openCreatedSpool`). */
+     barcode, product id). A tap opens the product's catalogue card beside it
+     (`_catViewProductCard`), as the catalogue view does; its "+ Inventory"
+     creates the TigerData+ (`_catalogCreate`, keepLink), which then links the
+     waiting maker's chips or offers the burn onto the blank chip
+     (`_openCreatedSpool`). */
   const CAT_PICK_MAX = 80;
+  let _cpkSelectedId = null;   // the product whose card the pick list opened
+  // A chip placed on the reader is a new task: it takes the right edge, like
+  // "Add product" does, instead of stacking on whatever spool card was open.
+  function _clearSideForChip() {
+    if ($("notifPanel")?.classList.contains("open"))       closeNotifs();
+    if ($("matSourcePanel")?.classList.contains("open"))   closeMaterialSourcePicker();
+    closeCatalogPick();
+    closeChipLink();
+    if ($("addProductPanel")?.classList.contains("open"))  _adpCloseAllSheetsAndPanel();
+    if ($("containerPanel")?.classList.contains("open"))   closeContainerPicker();
+    if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
+    if ($("reorderPanel")?.classList.contains("open"))     closeReorderPanel();
+    if ($("detailPanel")?.classList.contains("open"))      closeDetail();
+    if ($("groupPanel")?.classList.contains("open"))       _closeGroupPanel();
+  }
   function openCatalogPick() {
     if (!state.activeAccountId || state.friendView) return;
     clearPendingLink();
-    try { closeMaterialSourcePicker(); } catch (_) {}
-    try { closeDetail(); } catch (_) {}
-    try { closeProductCard(); } catch (_) {}
-    try { closeReorderPanel(); } catch (_) {}
+    _clearSideForChip();
     _catalogLoadCacheIfNeeded();
-    _catalogSync().then(() => { if ($("catalogPickPanel")?.classList.contains("open")) _catalogPickFill(); }).catch(() => {});
+    // Refill only when the sync actually brought a new index — a second build
+    // of the list mid-slide made the card jump into place instead of sliding.
+    const idxBefore = _catalogIndex;
+    _catalogSync().then(() => { if (_catalogIndex !== idxBefore && $("catalogPickPanel")?.classList.contains("open")) _catalogPickFill(); }).catch(() => {});
     const brand = $("cpkBrand");
     if (brand) {
       const n = new Map();
@@ -15238,8 +15306,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _enhanceSelect(brand);
       brand._cselRefresh?.();
     }
-    if ($("cpkSearch")) $("cpkSearch").value = "";
-    if ($("cpkMsg")) $("cpkMsg").innerHTML = "";
+    if ($("cpkSearch")) { $("cpkSearch").value = ""; $("cpkSearch").dispatchEvent(new Event("input")); }
     _catalogPickFill();
     $("catalogPickPanel")?.classList.add("open");
     _syncPanels();
@@ -15268,15 +15335,22 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }).join("") : `<p class="cpk-empty">${esc(t("catEmptyTitle"))}</p>`;
   }
   $("cpkSearch")?.addEventListener("input", () => _catalogPickFill());
+  if ($("catalogPickPanel")) wireSearchBox($("catalogPickPanel"));
   $("cpkBrand")?.addEventListener("change", () => _catalogPickFill());
   $("catalogPickClose")?.addEventListener("click", closeCatalogPick);
   $("catalogPickCloseTab")?.addEventListener("click", closeCatalogPick);
-  $("cpkList")?.addEventListener("click", async e => {
+  // A tap opens the product's catalogue card beside the chooser, exactly as in
+  // the catalogue view; its "+ Inventory" creates the TigerData+ (and links the
+  // waiting chips). Nothing is created by the tap itself.
+  $("cpkList")?.addEventListener("click", e => {
     const b = e.target.closest?.("[data-cpk-id]");
-    if (!b || _catalogBusy) return;
-    b.classList.add("is-busy");
-    await _catalogCreate(b.dataset.cpkId, { msgEl: $("cpkMsg") });
-    b.classList.remove("is-busy");
+    if (!b) return;
+    const it = _catalogIndex.find(x => String(x.it.id) === b.dataset.cpkId)?.it;
+    if (!it) return;
+    $("cpkList").querySelectorAll(".cpk-row.is-selected").forEach(x => x.classList.remove("is-selected"));
+    b.classList.add("is-selected");
+    _cpkSelectedId = String(it.id);
+    _catViewProductCard(it, { fromPick: true });
   });
 
 
@@ -15776,7 +15850,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       },
     };
   }
-  async function _catViewProductCard(it) {
+  async function _catViewProductCard(it, { fromPick = false } = {}) {
     if (!it) return;
     // Opening a product of a brand counts as finding that brand (daily quest
     // "Find a <brand> filament", Explorer 5 brands) — not only the Brand filter.
@@ -15792,7 +15866,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     // The selection may have moved (or been cleared) while the fetch was in
     // flight — don't yank the card onto a product the user has left behind.
-    if (String(it.id) !== String(_catViewSelectedId)) return;
+    // The catalogue pick card (new-chip chooser) keeps its own selection.
+    if (String(it.id) !== String(fromPick ? _cpkSelectedId : _catViewSelectedId)) return;
     _catViewShowProduct(it, api);
   }
   function _catViewShowProduct(it, api) {
@@ -17988,18 +18063,31 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _setTab($("matSourceCloseTab"), msOpen, msRight + msW, msp);
     // Catalogue pick (new-chip window) — same slot as the source picker, which
     // it closes on open.
+    // The new-chip card borrows these cards into its own pane (rfid_protocol/
+    // linked): a borrowed card is laid out by that pane, not by the cascade.
+    const ccp = $("chipChoicePanel");
+    const borrowed = el => !!el && !!ccp?.contains(el);
     const ckp = $("catalogPickPanel");
-    const ckOpen = !!ckp?.classList.contains("open");
+    const ckOpen = !!ckp?.classList.contains("open") && !borrowed(ckp);
+    // Link grid (new-chip chooser → "Link to my inventory") — the same slot.
+    const clp = $("chipLinkPanel");
+    const clOpen = !!clp?.classList.contains("open") && !borrowed(clp);
+    const clRight = clOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    if (clp) clp.style.right = clRight ? `${clRight}px` : "";
+    _setTab($("chipLinkCloseTab"), clOpen, clRight + (clOpen ? clp.offsetWidth : 0), clp);
     const ckRight = ckOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
     if (ckp) ckp.style.right = ckRight ? `${ckRight}px` : "";
     _setTab($("catalogPickCloseTab"), ckOpen, ckRight + (ckOpen ? ckp.offsetWidth : 0), ckp);
-    // New-chip side card (rfid_protocol/linked) — the same slot again: it closes
-    // itself before opening either of the two above.
-    const ccp = $("chipChoicePanel");
+    // New-chip side card (rfid_protocol/linked) — the same slot again. Its pane
+    // holds the chosen card; one opened outside it would push it left (nextW).
     const ccOpen = !!ccp?.classList.contains("open");
-    const ccRight = ccOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    const adp = $("addProductPanel");
+    const nextW = (ckOpen ? ckp.offsetWidth : 0) + (clOpen ? clp.offsetWidth : 0) + (adp?.classList.contains("open") && !borrowed(adp) ? adp.offsetWidth : 0);
+    const ccRight = ccOpen ? (baseRight + detailW + cppW + gpW + pcW + roW + nextW) : 0;
     if (ccp) ccp.style.right = ccRight ? `${ccRight}px` : "";
     _setTab($("chipChoiceCloseTab"), ccOpen, ccRight + (ccOpen ? ccp.offsetWidth : 0), ccp);
+    // Only the new-chip card's own » shows while it is up.
+    if (ccOpen) ["catalogPickCloseTab", "chipLinkCloseTab", "addProductCloseTab"].forEach(id => { if ($(id)) $(id).hidden = true; });
     _setTab($("productCardCloseTab"), pcOpen, pcRight + pcW, pcp);
     _setTab($("reorderCloseTab"), roOpen, roRight + roW, rop);
     _setTab($("detailCloseTab"),     dOpen, matRight + detailW, dp);
@@ -19586,12 +19674,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // mismatch, and does the verified surgical re-write. (openUpdateModal falls
     // back to the POD modal itself when no reader is present.)
     $("chipUpdateBanner")?.addEventListener("click", () => openUpdateModal(r));
+    wireLinkOffer($("detailPanel"));
     // Cloud encode banner — open the guided encode modal when a reader is
     // connected (it handles the presence gate itself); otherwise guide to POD.
-    $("cloudEncodeBanner")?.addEventListener("click", () => {
-      if (state.nfcReaderCount > 0) openEncodeModal(r);
-      else openTigerPodModal();
-    });
+    const _ceb = $("cloudEncodeBanner");
+    // The ⓘ explains, it never starts the hold (the bubble itself is the shared
+    // .tool-info hover, which the hold hint already stands aside for).
+    _ceb?.querySelector(".tool-info")?.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); });
+    _ceb?.querySelector(".tool-info")?.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); });
+    if (_ceb?.classList.contains("cloud-encode-banner--hold")) setupHoldToConfirm(_ceb, 1500, () => openEncodeModal(r, { auto: true }), { hint: true });
+    else _ceb?.addEventListener("click", () => openTigerPodModal());
     // Tags — Shopify-style inline editor (input + custom autocomplete dropdown
     // with create + toggles, chips below, pencil → "Add tags" modal). Firestore
     // writes are twin-mirrored; chips update in place. See _wireTagEditor.
@@ -20510,6 +20602,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // A Search row/card that opened this stays highlighted otherwise, pointing at
     // a panel that is no longer there. No-op everywhere else (nothing selected).
     _catViewClearSelection();
+    $("cpkList")?.querySelectorAll(".cpk-row.is-selected").forEach(x => x.classList.remove("is-selected"));
   }
   // Is the full product sheet (#reorderPanel) open on this product?
   function _reorderShows(hash) {
@@ -21932,7 +22025,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const cat = e.target.closest("[data-pc-cat]");
     if (cat && _productCardData?.catalogItem) {
       const p = _productCardData, act = cat.dataset.pcCat;
-      if (act === "inv")  { if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id)); return; }
+      // Opened from the new-chip card's catalogue: the chips waiting there are
+      // linked to what this creates.
+      if (act === "inv")  { if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id), { keepLink: !!$("chipChoicePanel")?.classList.contains("open") }); return; }
       if (act === "list") { _openAddToListMenu(cat, p.id, p.catalogRow || null); return; }
       if (act === "cart") { _toggleProductCardFlag("liked").catch(err => reportError("catalogCard.cart", err)); return; }
       if (act === "fav")  { _toggleProductCardFlag("favorite").catch(err => reportError("catalogCard.fav", err)); return; }
@@ -22474,19 +22569,35 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </div>
       </div>`;
 
-    let chipBannerHtml = "";
-    if (r.isCloud) {
+    // While the new-chip card's link grid is up, the spool card offers to link
+    // the detected chips (rfid_protocol/linked) — ahead of every other banner.
+    let chipBannerHtml = linkOfferHtml(r);
+    if (chipBannerHtml) {
+      // (wired by wireLinkOffer after render)
+    } else if (r.isCloud) {
       // Cloud spool — never has a physical chip yet. Show a persistent encode CTA.
       // When a reader with a card is present: primary "Encode →" button.
       // Otherwise: ghost "TigerPOD →" button that links to the product page.
       const hasCard = HAS_NATIVE && (state.nfcCardPresent?.size ?? 0) > 0;
-      chipBannerHtml = `
+      // A reader is there: the whole banner is the button, held 1.5 s with a
+      // green fill — the same gesture as linking a third-party Tag
+      // (rfid_protocol/linked). No reader: the TigerPOD discovery pill.
+      // Named after what it becomes: a TigerData burns to a TigerTag, a
+      // TigerData+ to a TigerTag+ — the ⓘ says the data go INTO the chip.
+      const burnTier = r.isCloudPlus ? "TigerTag+" : "TigerTag";
+      const burnInfo = esc(t("cloudEncodeInfo", { tier: burnTier }));
+      const burnInfoHtml = `<span class="tool-info" data-tip="${burnInfo}" aria-label="${burnInfo}"><span class="icon icon-info icon-13"></span></span>`;
+      chipBannerHtml = state.nfcReaderCount > 0 ? `
+        <button type="button" class="chip-update-banner cloud-encode-banner cloud-encode-banner--hold" id="cloudEncodeBanner" data-hold-tip="cloudEncodeHoldTip">
+          <span class="hold-progress" aria-hidden="true"></span>
+          <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
+          <span class="chip-update-text cloud-encode-text">${esc(t("cloudEncodeTitle", { tier: burnTier }))}</span>
+          ${burnInfoHtml}
+        </button>` : `
         <div class="chip-update-banner cloud-encode-banner" id="cloudEncodeBanner">
           <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
-          <span class="chip-update-text cloud-encode-text">${t("cloudNotEncoded")}</span>
-          <span class="chip-encode-btn ${hasCard ? "chip-encode-active" : ""}">
-            ${hasCard ? t("encodeCloudBtn") : t("tigerPodDiscover")}
-          </span>
+          <span class="chip-update-text cloud-encode-text">${esc(t("cloudEncodeTitle", { tier: burnTier }))}</span>
+          <span class="chip-encode-btn ${hasCard ? "chip-encode-active" : ""}">${t("tigerPodDiscover")}</span>
         </div>`;
     } else if (r.needUpdateAt) {
       chipBannerHtml = `
@@ -41736,10 +41847,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         const blanks = allScans.filter(isBlank).length;
         // Skip it while the guided Cloud→chip encode modal is up (the user is
         // presenting a blank chip on purpose) or a creation is already open.
+        // A creation card opened by hand blocks it; one opened by the chooser
+        // (still up beside it) does not — that chooser is simply refreshed.
+        const chooserUp = $("chipChoicePanel")?.classList.contains("open");
         if (blanks && !state.friendView && !_encodeModalOpen()
-            && !$("addProductPanel")?.classList.contains("open")
-            && !$("catalogPickPanel")?.classList.contains("open")
-            && !$("chipChoicePanel")?.classList.contains("open")) {
+            && (chooserUp || (!$("addProductPanel")?.classList.contains("open")
+                              && !$("catalogPickPanel")?.classList.contains("open")))) {
+          // An open new-chip card (a maker's chip seen before) is replaced: the
+          // chip on the reader now is this blank one.
           openBlankChipWindow(blanks);
         }
         return;

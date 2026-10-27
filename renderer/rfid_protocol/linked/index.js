@@ -6,12 +6,14 @@
  * users/{uid}/rfidAliases/{UID_HEX} { spoolId, chip, vendor, linkedAt }. Scanning
  * it then opens that spool. Phase 1: Studio only.
  *
- *   initLinkedChips({ t, esc, state, fbDb, thumbHTML, openDetail, setupHoldToConfirm,
+ *   initLinkedChips({ t, esc, state, fbDb, thumbHTML, gridCard, openDetail, setupHoldToConfirm,
  *                     toast, reportError, onChange, openCatalogue, openManual })
  *   linkedChipsSignIn(uid) / linkedChipsSignOut()   — follow the account's aliases
  *   onForeignChip({ readerName, uid, chip })        — a scan (buffered 1.5 s)
  *   linkPendingTo(spoolId) / clearPendingLink()     — after a creation started from the window
  *   openBlankChipWindow(n) / closeChipChoice()      — a blank NTAG: catalogue or manual (side card)
+ *   openAddChooser()                                — the search bar's "+": the same card, no chip
+ *   closeChipLink()                                 — the link grid side card
  *   linkedChipsHtml(row) / wireLinkedChips(root)    — the detail panel's section
  */
 
@@ -22,6 +24,7 @@ const aliases = new Map();   // UID_HEX → { spoolId, chip, vendor }
 const buffer = new Map();    // readerName → { uid, chip }
 let bufferTimer = null;
 let pending = null;          // { chips, until } — chips waiting for a spool being created
+let offer = null;            // { chips } — the link grid is up: spool cards offer to link them
 
 const UID_RE = /^[0-9A-F]{8,20}$/;
 const norm = u => String(u || "").replace(/[^0-9a-f]/gi, "").toUpperCase();
@@ -39,7 +42,7 @@ export function linkedChipsSignIn(uid) {
 }
 export function linkedChipsSignOut() {
   try { unsub?.(); } catch (_) {}
-  unsub = null; accountUid = null; aliases.clear(); buffer.clear(); pending = null;
+  unsub = null; accountUid = null; aliases.clear(); buffer.clear(); pending = null; offer = null;
 }
 
 const ref = u => ctx.fbDb(accountUid).collection("users").doc(accountUid).collection("rfidAliases").doc(u);
@@ -125,7 +128,7 @@ export async function linkPendingTo(spoolId) {
   if (!p || Date.now() > p.until || !accountUid) return false;
   const row = rowById(spoolId);
   if (!row) return false;
-  try { await link(p.chips, row); ctx.toast?.(ctx.t("linkedChipDone")); return true; }
+  try { await link(p.chips, row); closeChipChoice(); ctx.toast?.(ctx.t("linkedChipDone")); return true; }
   catch (e) { ctx.reportError?.("linkedChips.linkPending", e); return false; }
 }
 /** A creation started anywhere else must not pick up chips left waiting. */
@@ -139,116 +142,269 @@ export function openBlankChipWindow(count = 1) {
 
 function openLinkWindow(chips) { openChipWindow(chips, "foreign"); }
 
+/** The "+" of the search bar: the same card, no chip — catalogue / manually. */
+export function openAddChooser() {
+  if (!accountUid) return;
+  openChipWindow([], "add");
+}
+
 function openChipWindow(chips, kind) {
   const { t, esc } = ctx;
   const foreign = kind === "foreign";
-  // A side card (#chipChoicePanel, inventory.html), in the cascade like the
-  // "+ Material" source picker.
+  // ONE side card (#chipChoicePanel, inventory.html): a rail of square choices,
+  // and the chosen view (catalogue pick, Add product or the link grid — 400 px)
+  // in the pane beside it (embed).
   const el = document.getElementById("chipChoicePanel");
   if (!el) return;
-  el.querySelector("#chipChoiceTitle").textContent = t(foreign ? "linkedChipTitle" : "linkedChipBlankTitle");
-  el.querySelector("#chipChoiceSub").textContent = chips.length > 1 ? t("linkedChipFoundMany", { n: chips.length }) : t("linkedChipFound");
+  if (!el.classList.contains("open")) ctx.clearSide?.();
+  closeChipLink();
+  el.querySelector("#chipChoiceTitle").textContent = t("linkedChipTitle");
   const body = el.querySelector("#chipChoiceBody");
-  const back = el.querySelector("#chipChoiceBack");
-  back.setAttribute("aria-label", t("linkedChipBack"));
-  const close = () => { closeChipChoice(); };
   el._lcClick && el.removeEventListener("click", el._lcClick);
-  const tile = (id, icon, label) => `
+  // ⓘ: the same hover bubble as the toolbox and the "+ Material" picker.
+  const tile = (id, icon, label, tip) => `
     <button type="button" class="lc-choice" data-lc-go="${id}">
-      <span class="lc-choice-ic"><span class="icon icon-${icon} icon-18" aria-hidden="true"></span></span>
+      <span class="tool-info" data-tip="${esc(tip)}" aria-label="${esc(tip)}"><span class="icon icon-info icon-13"></span></span>
+      <span class="lc-choice-ic"><span class="icon icon-${icon} icon-32" aria-hidden="true"></span></span>
       <b>${esc(label)}</b>
-      <span class="icon icon-chevron-r icon-13" aria-hidden="true"></span>
     </button>`;
-  const create = `${tile("catalogue", "search", t("linkedChipAddCatalogue"))}${tile("manual", "edit", t("linkedChipAddManual"))}`;
-  const steps = {
-    start: () => `<div class="lc-choices">${create}${foreign ? tile("pick", "link", t("linkedChipExisting")) : ""}</div>`,
-    create: () => `<div class="lc-choices">${create}</div>`,
-    pick: () => `<label class="lc-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" data-lc-q placeholder="${esc(t("linkedChipSearch"))}"></label>
-      <div class="lc-grid" data-lc-list></div>`,
-  };
-  const trail = [];
-  const go = (step, push = true) => {
-    if (push && body.dataset.step) trail.push(body.dataset.step);
-    body.dataset.step = step;
-    body.innerHTML = steps[step]();
-    back.hidden = step === "start";
-    el.classList.toggle("lc-panel--wide", step === "pick");
-    ctx.syncPanels?.();
-    body.classList.remove("lc-in"); void body.offsetWidth; body.classList.add("lc-in");
-    if (step === "pick") wirePicker();
-  };
+  ctx.hideTip?.();
+  body.innerHTML = `<div class="lc-choices">${tile("catalogue", "search", t("linkedChipAddCatalogue"), t("linkedChipCatalogueTip"))}${tile("manual", "edit", t("linkedChipAddManual"), t("linkedChipManualTip"))}${kind !== "add" ? tile("pick", "link", t("linkedChipExisting"), t(foreign ? "linkedChipLinkTip" : "linkedChipLinkBlankTip")) : ""}</div>`;
+  body.classList.remove("lc-in"); void body.offsetWidth; body.classList.add("lc-in");
 
+  const NEXT = { pick: "chipLinkPanel", catalogue: "catalogPickPanel", manual: "addProductPanel" };
+  const choose = to => {
+    ctx.hideTip?.();
+    // Into the pane BEFORE it opens: opened outside it, the card would count as
+    // a neighbour for a frame and push the whole card left (_syncPanels).
+    adopt(document.getElementById(NEXT[to]));
+    if (to === "pick") openChipLink(chips, kind);
+    else {
+      closeChipLink();
+      // Opening a creation panel clears any waiting chips, so set them after.
+      if (to === "catalogue") ctx.openCatalogue(); else ctx.openManual();
+      pending = foreign ? { chips, until: Date.now() + 15 * 60e3 } : null;
+    }
+    embed(document.getElementById(NEXT[to]));
+    // Last: closing the previous view clears the selected look.
+    body.querySelectorAll(".lc-choice").forEach(x => x.classList.toggle("is-active", x.dataset.lcGo === to));
+  };
   el._lcClick = e => {
-    if (e.target.closest("#chipChoiceBack")) return go(trail.pop() || "start", false);
     const b = e.target.closest("[data-lc-go]");
-    if (!b) return;
-    const to = b.dataset.lcGo;
-    if (to === "pick" || to === "create") return go(to);
-    close();
-    // Opening a creation panel clears any waiting chips, so set them after.
-    if (to === "catalogue") ctx.openCatalogue(); else ctx.openManual();
-    pending = foreign ? { chips, until: Date.now() + 15 * 60e3 } : null;
+    if (b) choose(b.dataset.lcGo);
   };
   el.addEventListener("click", el._lcClick);
-
-  function wirePicker() {
-    // One entry per physical spool: a twin pair shows once.
-    const seen = new Set();
-    // Spools that already carry a linked chip are left out (a chip points to one spool).
-    const spools = (ctx.state.rows || []).filter(r => !r.deleted && !r.isFriend).filter(r => {
-      const tw = twinOf(r);
-      const key = tw ? [r.spoolId, tw.spoolId].sort().join("|") : r.spoolId;
-      if (seen.has(key)) return false;
-      seen.add(key); return !linkedChipsOf(r).length;
-    });
-    const text = r => [r.brand, r.material, r.colorName].filter(s => s && s !== "-").join(" ").toLowerCase();
-    const list = body.querySelector("[data-lc-list]");
-    const newTile = `
-      <button type="button" class="lc-gcard lc-gcard--new" data-lc-go="create">
-        <span class="lc-gcard-img"><span class="icon icon-plus icon-24" aria-hidden="true"></span></span>
-        <span class="lc-gcard-title">${esc(t("linkedChipNew"))}</span>
-      </button>`;
-    const paint = q => {
-      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-      const rows = spools.filter(r => words.every(w => text(r).includes(w))).slice(0, 120);
-      list.innerHTML = newTile + rows.map(r => `
-        <button type="button" class="lc-gcard" data-lc-spool="${esc(r.spoolId)}">
-          <span class="lc-gcard-img">${ctx.thumbHTML(r, 128, { badges: false })}</span>
-          <span class="lc-gcard-title">${esc(r.brand || "—")}</span>
-          <span class="lc-gcard-sub">${esc([r.material, r.colorName].filter(s => s && s !== "-").join(" · "))}</span>
-        </button>`).join("") + (rows.length ? "" : `<p class="lc-grid-empty">${esc(t("linkedChipNone"))}</p>`);
-    };
-    paint("");
-    body.querySelector("[data-lc-q]").addEventListener("input", e => paint(e.target.value));
-    setTimeout(() => body.querySelector("[data-lc-q]")?.focus(), 60);
-    list.addEventListener("click", async e => {
-      const b = e.target.closest("[data-lc-spool]");
-      if (!b || b.classList.contains("is-loading")) return;
-      const row = spools.find(r => r.spoolId === b.dataset.lcSpool);
-      if (!row) return;
-      b.classList.add("is-loading");
-      try {
-        await link(chips, row);
-        close();
-        ctx.toast?.(t("linkedChipDone"));
-        ctx.openDetail(row.spoolId, { animateSwap: true });
-      } catch (err) {
-        b.classList.remove("is-loading");
-        ctx.reportError?.("linkedChips.link", err);
-        ctx.toast?.(t("squadDealsErr"));
-      }
-    });
+  if (!body._lcTips) {
+    body._lcTips = true;
+    body.addEventListener("mouseover", e => { const i = e.target.closest?.(".tool-info"); if (i) ctx.showTip?.(i); });
+    body.addEventListener("mouseout", e => { const i = e.target.closest?.(".tool-info"); if (i && !i.contains(e.relatedTarget)) ctx.hideTip?.(); });
+    // The ⓘ sits inside the choice button: pressing it must not pick that choice.
+    const swallow = e => { if (e.target.closest?.(".tool-info")) { e.stopPropagation(); e.preventDefault(); } };
+    body.addEventListener("pointerdown", swallow, true);
+    body.addEventListener("click", swallow, true);
   }
-  delete body.dataset.step;
-  go("start");
   el.classList.add("open");
   ctx.syncPanels?.();
+  // Nine times out of ten the material is in the catalogue: open it straight
+  // away; the other choices stay one tap away.
+  choose("catalogue");
 }
 
 export function closeChipChoice() {
   const el = document.getElementById("chipChoicePanel");
   if (!el?.classList.contains("open")) return;
-  el.classList.remove("open", "lc-panel--wide");
+  ctx.hideTip?.();
+  el.classList.remove("open");
+  closeChipLink();
+  ctx.clearCreate?.();
+  // Hand the borrowed cards back once the card has slid out.
+  setTimeout(() => { if (!el.classList.contains("open")) unembedAll(); }, 280);
+  ctx.syncPanels?.();
+}
+
+// ── The pane: the chosen card, borrowed ─────────────────────────────────────
+// The catalogue pick, Add product and link grid stay the app's own cards (their
+// ids, listeners and save logic untouched); while chosen, the element is moved
+// into #chipChoicePane, where linked.css lays it out as the right half of the
+// one card. It goes back to its own place when another view is chosen or the
+// card closes.
+const homes = new Map();   // element → { parent, next }
+function embed(card) {
+  const pane = document.getElementById("chipChoicePane");
+  if (!card || !pane) return;
+  // The new view slides in OVER the one shown, which is then dropped at once
+  // behind it — its own slide-out would never be seen.
+  const prev = [...pane.children].filter(c => c !== card);
+  prev.forEach(c => c.classList.add("lc-leaving"));
+  card.classList.remove("lc-leaving");
+  adopt(card);
+  // Every choice — even the one already shown — slides its view in from the right.
+  // Parked off to the right first, and the slide started two frames later: a
+  // view that builds a long list (the catalogue) would otherwise spend the
+  // slide's first frames rendering and simply appear in place.
+  card.classList.remove("lc-enter");
+  card.classList.add("lc-pre");
+  clearTimeout(card._lcEnterT);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    card.classList.remove("lc-pre");
+    void card.offsetWidth;
+    card.classList.add("lc-enter");
+    card._lcEnterT = setTimeout(() => {
+      prev.forEach(c => { if (c.classList.contains("lc-leaving")) { c.classList.remove("lc-leaving"); unembed(c); } });
+      card.classList.remove("lc-enter");
+    }, 300);
+  }));
+  // Inside the card there is no click-outside to catch: Add product's overlay
+  // would only close it behind the user's back.
+  document.getElementById("addProductOverlay")?.classList.remove("open");
+  ctx.syncPanels?.();
+}
+function adopt(card) {
+  const pane = document.getElementById("chipChoicePane");
+  if (!card || !pane || card.parentElement === pane) return;
+  homes.set(card, { parent: card.parentElement, next: card.nextSibling });
+  pane.appendChild(card);
+}
+function unembed(card) {
+  const h = homes.get(card);
+  if (!h) return;
+  card.classList.remove("lc-leaving", "lc-enter", "lc-pre");
+  homes.delete(card);
+  h.parent.insertBefore(card, h.next && h.next.parentElement === h.parent ? h.next : null);
+}
+function unembedAll() { for (const c of [...homes.keys()]) unembed(c); }
+
+// ── The link grid (#chipLinkPanel) ──────────────────────────────────────────
+// The materials that have no linked chip yet (a twin pair once).
+// A maker's chip: the materials with no linked chip yet (linked by UID, the
+// banner in their spool card). A blank NTAG: the chipless materials (TigerData /
+// TigerData+) — their spool card's own "burn" banner writes them onto it.
+function openChipLink(chips, kind = "foreign") {
+  const { t, esc } = ctx;
+  const el = document.getElementById("chipLinkPanel");
+  if (!el) return;
+  ctx.clearCreate?.();
+  el.querySelector("#chipLinkTitle").textContent = t("linkedChipExisting");
+  const body = el.querySelector("#chipLinkBody");
+  body.innerHTML = `<div class="lc-filters">
+      <span class="lc-qbox"><input type="text" data-lc-q placeholder="${esc(t("linkedChipSearch"))}"><button type="button" class="inv-search-clear" data-lc-qclear hidden aria-label="${esc(t("clearSearch"))}"><span class="icon icon-close icon-13" aria-hidden="true"></span></button><span class="icon icon-search icon-13" aria-hidden="true"></span></span>
+      <select data-lc-brand data-csel-short="thBrand"></select>
+    </div>
+    <div class="lc-grid" data-lc-list></div>`;
+  const seen = new Set();
+  const spools = (ctx.state.rows || []).filter(r => !r.deleted && !r.isFriend).filter(r => {
+    const tw = twinOf(r);
+    const key = tw ? [r.spoolId, tw.spoolId].sort().join("|") : r.spoolId;
+    if (seen.has(key)) return false;
+    seen.add(key); return kind === "foreign" ? !linkedChipsOf(r).length : !!r.isCloud;
+  });
+  const text = r => [r.brand, r.material, r.colorName].filter(s => s && s !== "-").join(" ").toLowerCase();
+  const list = body.querySelector("[data-lc-list]");
+  // Brand filter: the brands of these materials, with their counts.
+  const brandSel = body.querySelector("[data-lc-brand]");
+  const counts = new Map();
+  for (const r of spools) if (r.brand && r.brand !== "-") counts.set(r.brand, (counts.get(r.brand) || 0) + 1);
+  brandSel.innerHTML = `<option value="">${esc(t("filterAllBrands"))}</option>` +
+    [...counts].sort((a, b) => a[0].localeCompare(b[0])).map(([b, n]) => `<option value="${esc(b)}">${esc(b)} (${n})</option>`).join("");
+  ctx.enhanceSelect?.(brandSel);
+  const qInput = body.querySelector("[data-lc-q]");
+  const paint = () => {
+    const words = qInput.value.toLowerCase().split(/\s+/).filter(Boolean);
+    const brand = brandSel.value;
+    const rows = spools.filter(r => (!brand || r.brand === brand) && words.every(w => text(r).includes(w))).slice(0, 200);
+    // The inventory grid's own cards (ctx.gridCard / ctx.groupCard), grouped the
+    // same way: identical copies are ONE deck card, as in the inventory.
+    const items = ctx.groupItems ? ctx.groupItems(rows) : rows.map(row => ({ type: "single", row }));
+    list.innerHTML = items.map(it => it.type === "group"
+      ? `<div class="spool-card group-card lc-spool" role="button" tabindex="0" data-lc-group="${esc(it.key)}">${ctx.groupCard(it)}</div>`
+      : `<div class="spool-card lc-spool" role="button" tabindex="0" data-lc-spool="${esc(it.row.spoolId)}">${ctx.gridCard(it.row)}</div>`).join("")
+      + (rows.length ? "" : `<p class="lc-grid-empty">${esc(t("linkedChipNone"))}</p>`);
+  };
+  paint();
+  qInput.addEventListener("input", paint);
+  wireSearchBox(body);
+  brandSel.addEventListener("change", paint);
+  // A tap opens the material exactly as a tap in the inventory does (its spool
+  // card, and its group deck when it has copies); the spool card then carries a
+  // "Link the detected chips" banner (linkOfferHtml) — the link is made there,
+  // on purpose, never by the tap itself.
+  list.addEventListener("click", e => {
+    const b = e.target.closest("[data-lc-spool], [data-lc-group]");
+    if (!b) return;
+    list.querySelectorAll(".lc-spool.is-selected").forEach(x => x.classList.remove("is-selected"));
+    b.classList.add("is-selected");
+    // A deck opens its group card (pick the copy there), a single its spool card.
+    if (b.dataset.lcGroup) ctx.openGroup?.(b.dataset.lcGroup);
+    else ctx.openSpool?.(b.dataset.lcSpool);
+  });
+  offer = kind === "foreign" ? { chips } : null;
+  el.classList.add("open");
+  ctx.syncPanels?.();
+  setTimeout(() => body.querySelector("[data-lc-q]")?.focus(), 80);
+}
+
+/** A search pill (.lc-qbox): the magnifier on the right turns into a clear ✕
+ *  while there is text. Shared with the catalogue pick card. */
+export function wireSearchBox(root) {
+  root.querySelectorAll(".lc-qbox").forEach(box => {
+    if (box._lcWired) return;
+    box._lcWired = true;
+    const input = box.querySelector("input"), clear = box.querySelector("[data-lc-qclear]");
+    const sync = () => { clear.hidden = !input.value; };
+    input.addEventListener("input", sync);
+    clear.addEventListener("click", () => { input.value = ""; input.dispatchEvent(new Event("input", { bubbles: true })); input.focus(); });
+    sync();
+  });
+}
+
+/** The spool card's banner while the link grid is up (a material without
+ *  linked chips): the whole banner is the button — held 1.5 s, with the
+ *  .hold-progress fill, it links the detected chips to this material. */
+export function linkOfferHtml(row) {
+  if (!offer || !row || row.deleted || row.isFriend || linkedChipsOf(row).length) return "";
+  const { t, esc } = ctx;
+  return `
+    <button type="button" class="chip-update-banner lc-offer-banner" id="lcOfferBanner" data-lc-offer="${esc(row.spoolId)}" data-hold-tip="linkedChipOfferTip">
+      <span class="hold-progress" aria-hidden="true"></span>
+      <span class="lc-offer-ic"><span class="icon icon-link icon-18" aria-hidden="true"></span></span>
+      <span class="chip-update-text">${esc(offer.chips.length > 1 ? t("linkedChipOfferMany", { n: offer.chips.length }) : t("linkedChipOffer"))}</span>
+      <span class="tool-info" data-tip="${esc(t("linkedChipOfferInfo"))}" aria-label="${esc(t("linkedChipOfferInfo"))}"><span class="icon icon-info icon-13"></span></span>
+    </button>`;
+}
+export function wireLinkOffer(root) {
+  const btn = root?.querySelector("[data-lc-offer]");
+  if (!btn || btn._lcWired) return;
+  btn._lcWired = true;
+  // The ⓘ explains, it never starts the hold.
+  const info = btn.querySelector(".tool-info");
+  if (info) {
+    info.addEventListener("mouseenter", () => ctx.showTip?.(info));
+    info.addEventListener("mouseleave", () => ctx.hideTip?.());
+    for (const ev of ["pointerdown", "mousedown", "touchstart", "click"]) info.addEventListener(ev, e => { e.stopPropagation(); e.preventDefault(); });
+  }
+  ctx.setupHoldToConfirm(btn, 1500, async () => {
+    const row = rowById(btn.dataset.lcOffer);
+    if (!offer || !row) return;
+    try {
+      await link(offer.chips, row);
+      // Done: every side card closes, then the linked material's card opens alone.
+      closeChipChoice();
+      ctx.closeAllSide?.();
+      ctx.toast?.(ctx.t("linkedChipDone"));
+      setTimeout(() => ctx.openDetail(row.spoolId), 280);
+    } catch (err) {
+      ctx.reportError?.("linkedChips.link", err);
+      ctx.toast?.(ctx.t("squadDealsErr"));
+    }
+  }, { hint: true });
+}
+
+export function closeChipLink() {
+  offer = null;
+  const el = document.getElementById("chipLinkPanel");
+  if (!el?.classList.contains("open")) return;
+  el.classList.remove("open");
+  document.querySelectorAll("#chipChoiceBody .lc-choice.is-active").forEach(x => x.classList.remove("is-active"));
   ctx.syncPanels?.();
 }
 
@@ -257,16 +413,17 @@ export function linkedChipsHtml(row) {
   const { t, esc } = ctx;
   const chips = linkedChipsOf(row);
   if (!chips.length) return "";
+  // The chips of one material go together (both flanges of a spool): one held
+  // button unlinks them all — never one chip on its own.
   return `
     <div class="lc-section">
       <div class="lc-section-h"><span class="icon icon-nfc icon-13" aria-hidden="true"></span>${esc(t("linkedChipsTitle"))}</div>
-      ${chips.map(c => `
-        <div class="lc-linked">
-          <code>${esc(c.uid)}</code>
-          <button type="button" class="lc-unlink" data-lc-unlink="${esc(c.uid)}" data-hold-tip="linkedChipUnlinkTip">
-            <span class="hold-progress" aria-hidden="true"></span><span>${esc(t("linkedChipUnlink"))}</span>
-          </button>
-        </div>`).join("")}
+      <div class="lc-linked">
+        <span class="lc-linked-uids">${chips.map(c => `<code>${esc(c.uid)}</code>`).join("")}</span>
+        <button type="button" class="lc-unlink" data-lc-unlink="${esc(chips.map(c => c.uid).join(","))}" data-hold-tip="linkedChipUnlinkTip">
+          <span class="hold-progress" aria-hidden="true"></span><span>${esc(t("linkedChipUnlink"))}</span>
+        </button>
+      </div>
     </div>`;
 }
 
@@ -275,8 +432,15 @@ export function wireLinkedChips(root) {
     if (b._lcWired) return;
     b._lcWired = true;
     ctx.setupHoldToConfirm(b, 1200, async () => {
-      try { await unlinkChip(b.dataset.lcUnlink); b.closest(".lc-linked")?.remove(); ctx.onChange?.(); }
-      catch (e) { ctx.reportError?.("linkedChips.unlink", e); ctx.toast?.(ctx.t("squadDealsErr")); }
+      try {
+        const uids = b.dataset.lcUnlink.split(",").filter(Boolean);
+        const batch = ctx.fbDb(accountUid).batch();
+        uids.forEach(u => batch.delete(ref(u)));
+        await batch.commit();
+        uids.forEach(u => aliases.delete(u));
+        b.closest(".lc-section")?.remove();
+        ctx.onChange?.();
+      } catch (e) { ctx.reportError?.("linkedChips.unlink", e); ctx.toast?.(ctx.t("squadDealsErr")); }
     }, { hint: true });
   });
 }

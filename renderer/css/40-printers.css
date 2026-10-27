@@ -849,26 +849,14 @@
   /* Catalogue pick (new-chip window → "From the catalogue"): same slot and
      ladder rung as the source picker, which it replaces when it opens. */
   #catalogPickPanel {
-    width: min(420px, 92vw);
+    width: 400px; max-width: 95vw;
     z-index: 97;
     display: flex; flex-direction: column;
   }
-  .cpk-controls { display: flex; gap: 8px; padding: 6px 22px 12px; }
-  .cpk-controls .csel { flex: 0 0 38%; min-width: 0; }
-  .cpk-search {
-    flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px;
-    height: 36px; padding: 0 10px; border-radius: 10px;
-    background: var(--surface-2); border: 1px solid var(--border);
-  }
-  .cpk-search:focus-within { border-color: var(--primary); }
-  .cpk-search .icon { background: var(--muted); }
-  .cpk-search input {
-    flex: 1; min-width: 0; height: 34px; padding: 0; border: 0;
-    background: none; box-shadow: none; outline: none;
-    color: var(--text); font: inherit; font-size: 13px;
-  }
-  #cpkMsg:empty { display: none; }
-  #cpkMsg { padding: 0 22px 8px; }
+  /* Search pill then the brand filter on one line — the link grid's layout. */
+  .cpk-controls { display: flex; align-items: center; gap: 8px; padding: 6px 22px 12px; }
+  .cpk-controls .cpk-search { order: -1; flex: 1; }
+  .cpk-controls .csel { flex: 0 0 auto; max-width: 45%; }
   .cpk-list {
     flex: 1; min-height: 0; overflow: auto; scrollbar-width: none;
     display: flex; flex-direction: column; gap: 6px; padding: 2px 22px 18px;
@@ -882,7 +870,7 @@
   }
   .cpk-row.cpk-row:hover { border-color: var(--primary); transform: translateY(-1px); }
   .cpk-row .cv-thumb { border-radius: 10px; }
-  .cpk-row.is-busy { opacity: .5; pointer-events: none; }
+  .cpk-row.cpk-row.is-selected { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--surface-2)); }
   .cpk-row-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
   .cpk-row-txt b, .cpk-row-txt small { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .cpk-row-txt b { font-size: 13.5px; }

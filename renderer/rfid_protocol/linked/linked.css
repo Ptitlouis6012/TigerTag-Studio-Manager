@@ -1,48 +1,104 @@
 /* Linked chips (rfid_protocol/linked/index.js, docs/LINKED-CHIPS.md): the
    new-chip side card (#chipChoicePanel) and the detail panel's section. */
-/* z 97: the bottom of the side-card ladder, like the "+ Material" source picker. */
-#chipChoicePanel { width: min(400px, 92vw); z-index: 97; display: flex; flex-direction: column; transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s, right .25s cubic-bezier(.4,0,.2,1), width .25s ease; }
-#chipChoicePanel.lc-panel--wide { width: min(560px, 92vw); }
-#chipChoicePanel .pba-header { gap: 10px; align-items: flex-start; }
-#chipChoicePanel .lc-back { margin-top: 2px; flex-shrink: 0; }
+/* One card: the rail of square choices (212 px) + the pane (400 px) that holds
+   the chosen view. z 101: above Add product's click-outside overlay (z 100). */
+#chipChoicePanel { width: 612px; max-width: 98vw; z-index: 101; display: flex; flex-direction: row; }
+.lc-rail { flex: 0 0 212px; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+/* clip, not hidden: a hidden overflow is a scroll box, and focusing the incoming
+   view's search field scrolled it into place at once, killing the slide. */
+.lc-pane { flex: 1; min-width: 0; position: relative; overflow: clip; }
+/* A borrowed card fills the pane: no fixed position, slide, shadow or corners
+   of its own (id selectors — each card sets these by id). */
+#chipChoicePane > #chipLinkPanel,
+#chipChoicePane > #catalogPickPanel,
+#chipChoicePane > #addProductPanel {
+  position: absolute; inset: 0; right: 0; top: 0; bottom: 0;
+  width: 100%; max-width: none; height: 100%;
+  transform: none; transition: none; box-shadow: none; border-radius: 0; z-index: 2;
+}
+#chipChoicePane > .detail-panel:not(.open):not(.lc-leaving) { display: none; }
+/* View switch: the incoming card slides in over the outgoing one. */
+#chipChoicePane > #chipLinkPanel.lc-leaving,
+#chipChoicePane > #catalogPickPanel.lc-leaving,
+#chipChoicePane > #addProductPanel.lc-leaving { z-index: 1; pointer-events: none; }
+#chipChoicePane > .detail-panel.lc-enter { animation: lc-slide .26s cubic-bezier(.4,0,.2,1) both; box-shadow: -8px 0 24px rgba(0,0,0,.35); }
+#chipChoicePane > .detail-panel.lc-pre { visibility: hidden; }
+@keyframes lc-slide { from { transform: translateX(100%); } to { transform: none; } }
+/* The card's own ✕ goes: the rail's ✕ closes the whole card. */
+#chipChoicePane .panel-close, #chipChoicePane #addProductClose { display: none; }
+#chipLinkPanel { width: 400px; max-width: 95vw; z-index: 97; display: flex; flex-direction: column; }
+#chipChoicePanel .pba-header { gap: 10px; align-items: flex-start; padding-left: 18px; padding-right: 14px; }
+#chipChoicePanel .pba-title { font-size: 15px; line-height: 1.3; }
 #chipChoicePanel .pba-header-text { flex: 1; min-width: 0; text-align: left; }
-.lc-body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 22px 18px; overflow: hidden; }
-.lc-choices { display: flex; flex-direction: column; gap: 8px; }
-.lc-choice.lc-choice { display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 12px; height: auto; min-height: 64px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
-.lc-choice.lc-choice:hover { border-color: var(--primary); transform: translateY(-1px); }
-.lc-choice.lc-choice:active { transform: scale(.99); }
-.lc-choice b { font-size: 14px; }
-.lc-choice > .icon { background: var(--muted); }
-.lc-back.lc-back { display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border-radius: 9px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; }
-.lc-back[hidden] { display: none; }
-.lc-back .icon { background: var(--text); }
+.lc-body { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 8px 18px 18px; overflow: auto; scrollbar-width: none; }
+.lc-choices { display: flex; flex-direction: column; gap: 10px; }
+.lc-choice.lc-choice { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; height: auto; aspect-ratio: 1; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); text-align: center; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
+.lc-choice.lc-choice:hover { border-color: var(--primary); transform: translateY(-2px); }
+.lc-choice.lc-choice:active { transform: scale(.98); }
+.lc-choice.lc-choice.is-active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--surface-2)); }
+.lc-choice b { font-size: 13.5px; line-height: 1.3; }
+.lc-choice .tool-info { position: absolute; top: 8px; right: 8px; }
 .lc-in { animation: lc-in .22s ease both; }
 @keyframes lc-in { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: none; } }
-.lc-choice-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--surface); }
+.lc-choice-ic { display: grid; place-items: center; width: 40px; height: 40px; }
 .lc-choice-ic .icon { background: var(--primary); }
 
-.lc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); align-content: start; gap: 10px; overflow: auto; padding: 2px; scrollbar-width: none; }
+/* Same track as the inventory grid (.inv-grid) — its own spool cards. */
+.lc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: min-content; align-content: start; gap: 8px; overflow: auto; padding: 2px; scrollbar-width: none; }
 .lc-grid::-webkit-scrollbar { display: none; }
-.lc-gcard.lc-gcard { display: flex; flex-direction: column; align-items: stretch; gap: 2px; height: auto; padding: 8px 8px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); text-align: left; cursor: pointer; transition: border-color .15s, transform .15s; }
-.lc-gcard.lc-gcard:hover { border-color: var(--primary); transform: translateY(-2px); }
-.lc-gcard.is-loading { opacity: .5; pointer-events: none; }
-.lc-gcard-img { display: grid; place-items: center; aspect-ratio: 1; margin-bottom: 6px; border-radius: 9px; overflow: hidden; background: var(--surface); }
-.lc-gcard-img .thumb-wrap, .lc-gcard-img .thumb, .lc-gcard-img .thumb-color { width: 100%; height: 100%; object-fit: cover; border-radius: 9px; }
-.lc-gcard-title { overflow: hidden; font-size: 13px; font-weight: 700; white-space: nowrap; text-overflow: ellipsis; }
-.lc-gcard-sub { overflow: hidden; font-size: 11.5px; color: var(--muted); white-space: nowrap; text-overflow: ellipsis; }
-.lc-gcard--new .lc-gcard-img { border: 1.5px dashed var(--border); background: none; }
-.lc-gcard--new .icon { background: var(--primary); }
-.lc-gcard--new .lc-gcard-title { color: var(--primary); white-space: normal; }
+.lc-spool.is-loading { opacity: .5; pointer-events: none; }
 .lc-grid-empty { grid-column: 1 / -1; margin: 12px 0; font-size: 13px; color: var(--muted); text-align: center; }
-.lc-search { display: flex; align-items: center; gap: 8px; padding: 0 10px; height: 36px; margin-bottom: 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); }
-.lc-search .icon { background: var(--muted); }
-.lc-search:focus-within { border-color: var(--primary); }
-.lc-search input.lc-search-input, .lc-search input { flex: 1; min-width: 0; height: 34px; padding: 0; border: 0; background: none; box-shadow: none; outline: none; color: var(--text); font: inherit; font-size: 13px; }
+.lc-filters { display: flex; gap: 8px; margin-bottom: 8px; }
+.lc-filters .lc-qbox { flex: 1; }
+/* Search pill — the brand dropdown's look (40 px, round, surface-2), the
+   magnifier on the right, swapped for the clear ✕ while there is text. */
+.lc-qbox { position: relative; display: block; min-width: 0; }
+/* Id-scoped too: the side cards' own input rules are id-scoped and otherwise
+   draw a box inside the pill. */
+.lc-qbox input, .lc-qbox input:focus, #catalogPickPanel .lc-qbox input, #catalogPickPanel .lc-qbox input:focus, #chipLinkPanel .lc-qbox input, #chipLinkPanel .lc-qbox input:focus { width: 100%; height: 40px; margin: 0; padding: 0 38px 0 16px; box-sizing: border-box; border-radius: 999px; border: 1px solid var(--border); background: var(--surface-2); box-shadow: none; outline: none; color: var(--text); font: inherit; font-size: 13px; }
+#catalogPickPanel .lc-qbox input:focus, #chipLinkPanel .lc-qbox input:focus, .lc-qbox input:focus { border-color: var(--primary); }
+.lc-qbox > .icon-search { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); background: var(--muted); pointer-events: none; }
+.lc-qbox .inv-search-clear { right: 10px; }
+.lc-qbox:has(.inv-search-clear:not([hidden])) > .icon-search { display: none; }
+.lc-filters .csel { flex: 0 0 auto; max-width: 45%; }
 
 .lc-section { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
 .lc-section-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .lc-section-h .icon { background: var(--muted); }
 .lc-linked { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 6px 10px; border-radius: 10px; background: var(--surface-2); }
+.lc-linked-uids { display: flex; flex-wrap: wrap; gap: 4px 10px; min-width: 0; }
 .lc-linked code { font: 700 12px ui-monospace, monospace; color: var(--text); }
 .lc-unlink.lc-unlink { position: relative; overflow: hidden; height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
 .lc-unlink.lc-unlink:hover { border-color: var(--danger); }
+.lc-spool.is-selected { outline: 2px solid var(--primary); outline-offset: -1px; }
+.lc-offer-ic { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; }
+.lc-offer-ic .icon { background: var(--primary); }
+.lc-offer-banner.lc-offer-banner { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 58px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; text-align: left; font: inherit; cursor: pointer; }
+.lc-offer-banner > :not(.hold-progress) { position: relative; z-index: 1; }
+/* A link is a gain, not a warning: success green, not the alert amber of the
+   other chip banners, and a green fill instead of the red delete fill. */
+#lcOfferBanner.lc-offer-banner { background: color-mix(in srgb, var(--success) 12%, transparent); }
+#lcOfferBanner .chip-update-text { color: var(--success); font-weight: 600; }
+#lcOfferBanner .lc-offer-ic .icon { background: var(--success); }
+/* Same "burning" feel as the burn banner (70-detail-misc.css, cloud-burn-*): a
+   glint sweeps across, the link icon glows, the held fill's leading edge burns
+   bright — and while held only the fill stays lit. */
+#lcOfferBanner .hold-progress {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--success) 18%, transparent), color-mix(in srgb, var(--success) 50%, transparent));
+  opacity: 1;
+  box-shadow: 6px 0 14px color-mix(in srgb, var(--success) 70%, transparent);
+}
+#lcOfferBanner::after {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--success) 22%, transparent) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: cloud-burn-sweep 2.6s ease-in-out infinite;
+}
+#lcOfferBanner .lc-offer-ic .icon { animation: cloud-burn-glow 2s ease-in-out infinite; }
+#lcOfferBanner:hover .lc-offer-ic .icon { animation-duration: .9s; }
+#lcOfferBanner:is(.is-holding, .is-confirming)::after { animation: none; opacity: 0; }
+#lcOfferBanner:is(.is-holding, .is-confirming) .lc-offer-ic .icon { animation: none; filter: none; }
+@media (prefers-reduced-motion: reduce) {
+  #lcOfferBanner::after, #lcOfferBanner .lc-offer-ic .icon { animation: none; }
+}
+#lcOfferBanner .tool-info { margin-left: auto; }

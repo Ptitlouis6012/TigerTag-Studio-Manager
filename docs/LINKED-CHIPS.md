@@ -47,25 +47,26 @@ the chip is next resolved).
 2. Scans within 1.5 s are buffered (the TigerPOD's two readers see both flanges'
    chips at once).
 3. Any of them already linked → the spool opens, like a TigerTag scan.
-4. None linked → the **new-chip side card** (`#chipChoicePanel`), minimal on purpose (no UID, no chip type):
-   "Proprietary RFID chip detected", "I spotted N chips on this spool", three tiles:
+4. None linked → the **new-chip side card** (`#chipChoicePanel`: a rail of choices, the chosen view in the pane beside it), minimal on purpose (no UID, no chip type); "Add from the catalogue" is opened straight away (most materials are in it):
+   "What would you like to do?", three choices:
    - **Add from the catalogue** → the catalogue pick side card (brand + the catalogue
-     search: words, SKU, barcode); a tap creates a TigerData+.
+     search: words, SKU, barcode); a tap opens the product's catalogue card, whose "+ Inventory" creates a TigerData+.
    - **Add manually** → the usual "Add product" panel; saving creates a TigerData.
    - In both cases the chips wait 15 min (`linkPendingTo`) and are linked to the
      spool when it is saved; no burn is offered then. Any other creation clears them
      (`clearPendingLink`).
    - **Link to my inventory** → a grid of the spools that have no linked chip yet
-     (twin pairs shown once, search on brand, material, colour), led by a
-     **New material** tile (→ catalogue / manually). Picking a spool links every
-     chip of the scan to it and opens it.
+     (twin pairs shown once, search on brand, material, colour), drawn as the
+     inventory grid's cards. A tap opens the material as in the inventory; its spool
+     card then shows "Link the detected chips" with a Link button, which links every
+     chip of the scan to it.
 
    The same side card opens for a **blank NTAG** (TigerTag Init or an erased / empty-NDEF
-   chip, `_chipIsWritableBlank`), titled "Blank chip detected", with the catalogue and
+   chip, `_chipIsWritableBlank`), with the same title and the catalogue and
    manual tiles only: the created spool is then offered for burning onto that chip,
    as before. It replaces the "Add product" panel that used to open straight away.
 5. The spool's detail panel lists its **linked chips** (its own and its twin's), each
-   with a held "Unlink" (1.2 s).
+   with ONE held "Unlink" (1.2 s) that removes every chip of the material together — never one chip on its own.
 
 ## Later phases
 

@@ -347,11 +347,6 @@
             <span class="icon icon-close icon-13" aria-hidden="true"></span>
           </button>
           <span class="icon icon-search icon-13"></span>
-          <!-- The two ways to add material, offered right under the "+" instead
-               of in a side card: pick it from the official catalogue, or type it
-               in yourself. Filled by the renderer from the same source list the
-               side card used, so the wording lives in one place. -->
-          <div class="search-add-menu" id="searchAddMenu" hidden role="menu"></div>
         </div>
         <div class="inv-filter-group">
           <!-- Product-flag quick filters: ❤ wishlist / ★ liked (mutually exclusive) —
@@ -2943,24 +2938,38 @@
 </aside>
 
 <!-- New-chip side card (rfid_protocol/linked): a blank NTAG or a maker's chip
-     was placed — catalogue / manually / link to the inventory. Filled by
-     openChipWindow; title and subtitle are set per chip. -->
+     was placed. ONE card: the rail of choices on the left (catalogue /
+     manually / link to the inventory), the chosen view in the pane on the
+     right — the catalogue pick, Add product and link grid cards below are
+     moved into the pane while chosen (openChipWindow → embed). -->
 <button class="pp-close-tab" id="chipChoiceCloseTab" aria-label="Close" hidden>»</button>
 <aside class="detail-panel pba-panel lc-panel" id="chipChoicePanel">
-  <div class="pba-header">
-    <button type="button" class="lc-back" id="chipChoiceBack" hidden aria-label="Back"><span class="icon icon-chevron-l icon-14" aria-hidden="true"></span></button>
-    <div class="pba-header-text">
-      <div class="pba-title" id="chipChoiceTitle"></div>
-      <div class="pba-sub lc-found" id="chipChoiceSub"></div>
+  <div class="lc-rail">
+    <div class="pba-header">
+      <div class="pba-header-text">
+        <div class="pba-title" id="chipChoiceTitle" data-i18n="linkedChipTitle">What would you like to do?</div>
+      </div>
+      <button class="panel-close" id="chipChoiceClose">✕</button>
     </div>
-    <button class="panel-close" id="chipChoiceClose">✕</button>
+    <div class="lc-body" id="chipChoiceBody"></div>
   </div>
-  <div class="lc-body" id="chipChoiceBody"></div>
+  <div class="lc-pane" id="chipChoicePane"></div>
+</aside>
+
+<!-- Link grid — "Link to my inventory" of the new-chip chooser: the materials
+     with no linked chip yet; picking one links the scanned chips to it. -->
+<button class="pp-close-tab" id="chipLinkCloseTab" aria-label="Close" hidden>»</button>
+<aside class="detail-panel pba-panel lc-link-panel" id="chipLinkPanel">
+  <div class="pba-header">
+    <div class="pba-header-text"><div class="pba-title" id="chipLinkTitle" data-i18n="linkedChipExisting">Link to my inventory</div></div>
+    <button class="panel-close" id="chipLinkClose">✕</button>
+  </div>
+  <div class="lc-body" id="chipLinkBody"></div>
 </aside>
 
 <!-- Catalogue pick — "From the catalogue" of the new-chip window
-     (rfid_protocol/linked): brand + the catalogue search, one tap creates the
-     TigerData+ (openCatalogPick in inventory.js). -->
+     (rfid_protocol/linked): brand + the catalogue search, a tap opens the
+     product's catalogue card, whose "+ Inventory" creates it (openCatalogPick). -->
 <button class="pp-close-tab" id="catalogPickCloseTab" aria-label="Close" hidden>»</button>
 <aside class="detail-panel pba-panel cat-pick-panel" id="catalogPickPanel">
   <div class="pba-header">
@@ -2972,9 +2981,8 @@
   </div>
   <div class="cpk-controls">
     <select id="cpkBrand" data-csel-short="thBrand"></select>
-    <label class="cpk-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" id="cpkSearch" data-i18n-placeholder="catPickSearch" placeholder="Name, material, colour, SKU, barcode…"></label>
+    <span class="lc-qbox cpk-search"><input type="text" id="cpkSearch" data-i18n-placeholder="catPickSearch" placeholder="Name, material, colour, SKU, barcode…"><button type="button" class="inv-search-clear" data-lc-qclear hidden aria-label="Clear search" data-i18n-aria="clearSearch"><span class="icon icon-close icon-13" aria-hidden="true"></span></button><span class="icon icon-search icon-13" aria-hidden="true"></span></span>
   </div>
-  <div id="cpkMsg"></div>
   <div class="cpk-list" id="cpkList"></div>
 </aside>
 
