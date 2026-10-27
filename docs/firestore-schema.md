@@ -228,6 +228,18 @@ users/
         createdAt   timestamp
         lastUsedAt  timestamp
 
+    devices/                  — devices that are NOT printers (Studio). Owner-only, fixed shape
+      {deviceId}/             — one document per device; `type` says which (backend firestore.rules)
+        type        string    — "camera" (external IP camera: a picture and nothing else)
+        name        string    — 1–40 chars
+        protocol    string    — "rtsp" | "mjpeg" | "webrtc" (WHEP)
+        url         string    — the stream address, rtsp(s):// or http(s)://
+        username    string?   — optional login, ≤ 128 chars
+        password    string?   — stored in clear on purpose (the owner reads back what they typed);
+                                never rendered outside the editor's eye toggle, masked in MCP output
+        boardPlan   map?      — { x, y, z }: where its card sits on the printers board
+        createdAt, updatedAt  timestamp
+
     printers/
       {brand}/                — brand = bambulab | creality | elegoo | flashforge | snapmaker | anycubic.
                               The brand doc itself is a FIELDLESS parent (only holds

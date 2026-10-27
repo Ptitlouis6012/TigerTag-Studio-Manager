@@ -242,6 +242,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **Snapmaker U1 camera on the stock firmware** — no Paxx needed: the printer's own monitor is woken over Moonraker and shown as 1080p stills at ~1 fps on every surface (side card, camera wall, cards); Paxx keeps its WebRTC live video (v2.33.0).
 - **Camera photos and videos** — hovering any printer camera (side card or camera wall) offers photo, record (10 min cap) and the printer's capture folder; photos at the stream's native resolution, videos taken from the source without re-encoding where the transport allows (Bambu RTSPS, MJPEG, Snapmaker stills, WebRTC via MediaRecorder); filed per printer under `Pictures/Tiger Studio/Captures/` with a `printer.json` keeping its names and IPs (v2.43.0).
 - **Start the camera automatically** — per-printer setting (`camAutoStart`): an online printer's board camera starts without a click, including one that comes online later (v2.43.0).
+- **External IP cameras** — a camera that is not a printer: "Add a 3D printer" → External cameras → IP camera, with a name, a protocol (RTSP, MJPEG or WebRTC/WHEP), an address and an optional login, plus a Test button that fetches one picture before saving; shown in a section under the camera wall and as cards on the printers board, moved, selected and zoomed like a machine (grey dot offline, blue while connecting, green live); stored in `users/{uid}/devices` (`type: "camera"`, owner-only rule) (`renderer/ext-cam/ext-cam.js`).
 
 ## Sensors & devices
 

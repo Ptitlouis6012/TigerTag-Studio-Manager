@@ -80,6 +80,8 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
+import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection,
+         extCamBoardObj, extCamMaxZ, extCamBoardSave, extCamBoardCardsHtml, wireExtCamBoard } from './ext-cam/ext-cam.js';
 // Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
 import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
 import { betaBadgeInlineHtml } from './printers/beta-badge.js';
@@ -25279,6 +25281,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function subscribePrinters(uid) {
     unsubscribePrinters();
+    extCamSubscribe(uid);   // external IP cameras live in their own collection, not with the printers
     // Per-brand cache keyed by brand id; flattened into state.printers on every snapshot.
     const cache = Object.fromEntries(PRINTER_BRANDS.map(b => [b, []]));
     // Track which Elegoo printer keys are currently auto-connected so we can
@@ -25447,6 +25450,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   function unsubscribePrinters() {
+    extCamUnsubscribe();
     if (Array.isArray(state.unsubPrinters)) {
       for (const fn of state.unsubPrinters) { try { fn(); } catch (_) {} }
     }
@@ -26602,7 +26606,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _prevPlanImgs.length = 0;
 
     if (_printerSub === "table") { _renderPrinterTable(host); return; }
-    if (_printerSub === "cam")   { _renderPrinterCam(host);   return; }
+    if (_printerSub === "cam")   { _renderPrinterCam(host); mountExtCamSection(host); return; }
 
     // Auto-connect all printers so job status data is available in the grid.
     // All connect functions are idempotent — no-op if already connected or
@@ -26774,7 +26778,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const cards = _orderedPrinters.map(p => _safe(_makeCard, p)).join("")
                 + _orderedPrinters.map(p => _safe(_makeUnitWidgets, p)).join("")
                 + SIMPLE_WIDGETS.map(w =>
-                    _orderedPrinters.map(p => _safe(w.render, p)).join("")).join("");
+                    _orderedPrinters.map(p => _safe(w.render, p)).join("")).join("")
+                + (() => { try { return extCamBoardCardsHtml(); } catch (e) { console.warn("[ext-cam] board cards failed", e); return ""; } })();   // external cameras: board objects of their own
 
 
     /* The board lives in its own scroller: the cards are placed in plan
@@ -26813,6 +26818,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (_plan) SIMPLE_WIDGETS.forEach(w => { try { w.wire?.(_plan); } catch (e) { console.warn("[board] wire failed for", w.kind, e); } });
     }
     wirePrinterPlanDrag(host);
+    wireExtCamBoard(host.querySelector(".printers-grid"));
     wirePlanPan(host.querySelector(".printers-scroll"), ".printer-card");
     wirePrinterZoom(host);
     wirePrinterArrange(host);
@@ -28143,6 +28149,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const unitsAreSplit = p => p?.unitsSplit === true;
   function _boardObj(boardId) {
     if (!boardId) return null;
+    { const cam = extCamBoardObj(boardId); if (cam) return cam; }   // an external camera: { cam, p: null, unit: null }
     if (boardId.startsWith(UNIT_PREFIX)) {
       const rest = boardId.slice(UNIT_PREFIX.length);
       const cut = rest.lastIndexOf(":");
@@ -28220,7 +28227,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                  y: Math.max(0, Math.round(parseFloat(el.style.top) || 0)) };
       }
     }
-    const raw = o.unit ? _unitPlan(o) : printerPlanPos(o.p);
+    const raw = o.cam ? o.cam.boardPlan : o.unit ? _unitPlan(o) : printerPlanPos(o.p);
     const q = _settledPlan(boardId, raw);
     return (q && Number.isFinite(q.x) && Number.isFinite(q.y))
       ? { x: Math.max(0, Math.round(q.x)), y: Math.max(0, Math.round(q.y)) } : null;
@@ -28228,6 +28235,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function boardZ(boardId) {
     const o = _boardObj(boardId);
     if (!o) return 0;
+    if (o.cam) return Number.isFinite(o.cam.boardPlan?.z) ? o.cam.boardPlan.z : 0;
     if (!o.unit) return printerPlanZ(o.p);
     return Number.isFinite(_unitPlan(o)?.z) ? _unitPlan(o).z : 0;
   }
@@ -28244,7 +28252,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     for (const u of Object.values(p.units || {}))
       n = Math.max(n, Number.isFinite(u?.planPrinters?.z) ? u.planPrinters.z : 0);
     return n;
-  }, 0) + 1;
+  }, extCamMaxZ()) + 1;
   async function saveUnitPlanPos(printer, unitKey, x, y, z = nextBoardZ()) {
     const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
     const grouped = unitKey === "*";
@@ -28272,7 +28280,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!o) return Promise.resolve();
     const mine = { x, y, z };
     _rememberPlan(boardId, mine);
-    const done = o.unit ? saveUnitPlanPos(o.p, o.unit, x, y, z)
+    const done = o.cam  ? extCamBoardSave(o.cam, x, y, z)
+               : o.unit ? saveUnitPlanPos(o.p, o.unit, x, y, z)
                         : savePrinterPlanPos(o.p, x, y, z);
     // Confirmed by the server → the record can be trusted again for this one.
     return Promise.resolve(done).finally(() => {
@@ -28330,7 +28339,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function clusterOf(boardId) {
     const o = _boardObj(boardId);
-    if (!o) return null;
+    if (!o || o.cam) return null;
     if (!o.unit)            return o.p.planCluster || null;
     if (o.unit === "*")     return o.p.unitsPlanCluster || null;
     const w = _widgetByTag(o.unit);
@@ -28367,7 +28376,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const perDoc = new Map();
     boardIds.forEach(id => {
       const o = _boardObj(id);
-      if (!o) return;
+      if (!o || o.cam) return;
       const key = _printerKey(o.p);
       const e = perDoc.get(key) || { p: o.p, patch: {} };
       if (!o.unit) {                                     // the machine's card
@@ -28632,6 +28641,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ? planFreeSpot(container, { x: anchor.x, y: anchor.y }, el.offsetWidth, el.offsetHeight, id)
           : planStackUnder(container, owner, new Set(p_ ? _printerBoardIds(p_) : []),
                            el.offsetWidth, el.offsetHeight, id));
+      } else if (_own && _own.cam) {
+        // An external camera takes the first free place in reading order, like a new machine.
+        ({ x, y } = planFreeSlot(container, el.offsetWidth, el.offsetHeight, _rowWidth, new Set([id])));
       } else if (_own && _own.p) {
         /* A new MACHINE: room for the card plus the widgets still waiting to
            stack under it, at the first free place in reading order. */
@@ -30369,6 +30381,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   _printerCtx.isDebugEnabled      = () => !!state.debugEnabled;
   _printerCtx.updatePrinterModel  = (printer, modelId) => persistPrinterModel(printer, modelId);
   _printerCtx.applyTranslations   = () => applyTranslations();
+  initExtCam({
+    db: uid => fbDb(uid),
+    uid: () => state.activeAccountId,
+    // A camera added / edited / deleted redraws the board or the wall, only while one is on screen.
+    onChange: () => { if (state.viewMode === "printer" || state.viewMode === "printer-cam") renderPrintersView(); },
+  });
   // Persist an Anycubic CLOUD printer (provisioned via the slicer). Keyed by
   // cloudPrinterId so re-provisioning upserts (refreshing the token) instead of
   // creating duplicates. The token/email are denormalised onto the doc so the
@@ -32535,7 +32553,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
         </button>`;
     }).join("");
-    _renderDemoPrinterRows(list);
+    // The demo section is filled in async; the cameras section goes after it.
+    _renderDemoPrinterRows(list).finally(() => _renderExtCamPickerRows(list));
     list.querySelectorAll(".pba-brand[data-brand]").forEach(btn => {
       btn.addEventListener("click", () => {
         const brand = btn.dataset.brand;
@@ -32607,6 +32626,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       e.currentTarget.classList.add("pba-brand--selected");
       _closeOpenPbaCard?.();
       openDemoPicker();
+    });
+  }
+  // "External cameras" — a camera that is not a printer (renderer/ext-cam). The
+  // row opens the add card; ffmpeg lives in the desktop app, so the web build
+  // (no `window.extCam`) does not offer it.
+  function _renderExtCamPickerRows(list) {
+    if (!window.extCam || list.querySelector(".pba-extcam-head")) return;
+    list.insertAdjacentHTML("beforeend", `
+      <div class="pba-demo-head pba-extcam-head">${esc(t("extCamPickerHead"))}</div>
+      <button type="button" class="pba-brand" id="pbaExtCamPick">
+        <span class="pba-demo-logo"><span class="icon icon-camera icon-20"></span></span>
+        <span class="pba-brand-text">
+          <span class="pba-brand-label">${esc(t("extCamPickerRow"))}</span>
+          <span class="pba-brand-conn">RTSP · MJPEG · WebRTC</span>
+        </span>
+        <span class="icon icon-chevron-r icon-14 pba-brand-chev"></span>
+      </button>`);
+    list.querySelector("#pbaExtCamPick")?.addEventListener("click", e => {
+      list.querySelectorAll(".pba-brand--selected").forEach(b => b.classList.remove("pba-brand--selected"));
+      e.currentTarget.classList.add("pba-brand--selected");
+      _closeOpenPbaCard();
+      openExtCamAddFlow();
     });
   }
   // Brands the simulator plays, in the picker's order.
@@ -42380,6 +42421,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function _mcpPlain(v, depth = 0) {
     if (v == null || depth > 12) return v ?? null;
+    // A login typed into an address (rtsp://user:pass@host — external cameras) is
+    // a credential too, whatever the field is called.
+    if (typeof v === "string") return v.replace(/(\/\/)[^/@\s]+@/g, "$1[redacted]@");
     if (typeof v !== "object") return v;
     if (typeof v.toDate === "function") { try { return v.toDate().toISOString(); } catch (_) { return null; } }
     if (typeof v.path === "string" && typeof v.id === "string" && v.firestore) return { ref: v.path };

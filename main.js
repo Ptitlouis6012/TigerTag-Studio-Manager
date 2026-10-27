@@ -4634,6 +4634,150 @@ let _ffmpegBin = null;
     const p = _prusaRtspProcs.get(key);
     if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _prusaRtspProcs.delete(key); }
   });
+
+  // ── External IP cameras (renderer/ext-cam) — NOT printers ───────────────────
+  // Any RTSP(S) stream, or an MJPEG/HTTP stream that needs a login, is read by
+  // ffmpeg and cut into JPEG frames, same pipeline as the Prusa camera above.
+  // The address is checked here (rtsp/rtsps/http/https only, ffmpeg gets an
+  // argument array, never a shell) and the login is put into the URL here so it
+  // never travels anywhere else. ffmpeg's messages echo the URL: they are
+  // masked before they reach the log, and the URL itself is never logged.
+  const _extCamProcs = new Map();
+  app.on('will-quit', () => {
+    for (const p of _extCamProcs.values()) { p._stopped = true; try { p.kill(); } catch (_) {} }
+    _extCamProcs.clear();
+  });
+  const _extCamUrl = (url, username, password) => {
+    try {
+      const u = new URL(String(url || '').trim());
+      if (!/^(rtsp|rtsps|http|https):$/.test(u.protocol) || !u.hostname) return null;
+      if (username) { u.username = String(username); u.password = String(password || ''); }
+      return u.toString();
+    } catch (_) { return null; }
+  };
+  // RTSP describes its streams in the SDP, so — like the Bambu and Prusa readers —
+  // ffmpeg is told not to probe: probing waits for ~0.5 s of video before the
+  // first picture. A plain HTTP stream has no such description and still needs it.
+  // -flush_packets 1 hands each JPEG to the pipe as it is finished instead of
+  // when the next one starts filling the buffer.
+  // RTSP over TCP delivers the pictures in bursts (a lost packet holds up everything
+  // behind it): measured on a Tapo C110, gaps up to 585 ms against 142 ms over UDP.
+  // So a plain rtsp:// stream starts on UDP and falls back to TCP if nothing arrives.
+  // -protocol_whitelist: ffmpeg follows what a stream answers (redirects, HLS
+  // playlists…); a user-typed address must never let it open a local file or
+  // another protocol — only the transports these cameras actually use.
+  const _extCamArgs = (url, tail, transport = 'tcp') => [
+    '-loglevel', 'error',
+    '-protocol_whitelist', /^rtsps?:/i.test(url) ? 'rtsp,rtsps,rtp,srtp,udp,tcp,tls' : 'http,https,tcp,tls,crypto',
+    ...(/^rtsps?:/i.test(url)
+      // max_delay / reorder_queue_size 0: no RTP jitter buffer (ffmpeg's default holds ~0.5 s
+      // of UDP packets back to put them in order — a LAN camera does not need it).
+      ? ['-rtsp_transport', transport, '-probesize', '32', '-analyzeduration', '0', '-max_delay', '0', '-reorder_queue_size', '0']
+      : ['-probesize', '500000', '-analyzeduration', '500000']),
+    '-fflags', 'nobuffer', '-flags', 'low_delay',
+    '-i', url, '-an', ...tail, '-f', 'image2pipe', '-vcodec', 'mjpeg', '-qscale:v', '4', '-flush_packets', '1', 'pipe:1',
+  ];
+  const _extCamMask = s => String(s).replace(/\/\/[^/@\s]*@/g, '//***@');
+  // A page reload keeps the same webContents (not destroyed), so its readers
+  // would go on decoding for nobody: kill this page's readers when it reloads.
+  const _extCamHooked = new WeakSet();
+  const _extCamHookSender = sender => {
+    if (_extCamHooked.has(sender)) return;
+    _extCamHooked.add(sender);
+    sender.on('did-start-loading', () => {
+      for (const [k, p] of _extCamProcs) {
+        if (p._sender !== sender) continue;
+        p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {}
+        _extCamProcs.delete(k);
+      }
+    });
+  };
+  ipcMain.on('extcam:start', (event, { key, url, username, password }) => {
+    _extCamHookSender(event.sender);
+    const prev = _extCamProcs.get(key);
+    if (prev) { prev._stopped = true; try { prev.kill('SIGTERM'); } catch (_) {} _extCamProcs.delete(key); }
+    const full = _extCamUrl(url, username, password);
+    if (!_ffmpegBin || !full || typeof key !== 'string') { if (!event.sender.isDestroyed()) event.sender.send('extcam:status', key, 'error'); return; }
+    let restarts = 0, gotFrame = false;
+    let transport = /^rtsp:/i.test(full) ? 'udp' : 'tcp';
+    const MAX_RESTARTS = 10;
+    const launch = () => {
+      if (event.sender.isDestroyed()) return;
+      let proc;
+      try { proc = spawn(_ffmpegBin, _extCamArgs(full, ['-vf', "fps=10,scale='min(1280,iw)':-2"], transport), { stdio: ['ignore', 'pipe', 'pipe'] }); }
+      catch (err) { console.error(`[ext-cam:${key}] cannot start ffmpeg:`, err?.message || err); return; }
+      proc._stopped = false;
+      proc._sender = event.sender;
+      _extCamProcs.set(key, proc);
+      if (transport === 'udp') {
+        // UDP can be silently blocked (firewall, VPN): no picture in 6 s → TCP.
+        proc._udpTimer = setTimeout(() => {
+          if (gotFrame || proc._stopped || _extCamProcs.get(key) !== proc) return;
+          proc._stopped = true; try { proc.kill('SIGTERM'); } catch (_) {}
+          transport = 'tcp';
+          launch();
+        }, 6000);
+      }
+      proc.stderr.on('data', chunk => {
+        const msg = _extCamMask(chunk.toString().trim());
+        if (msg) console.error(`[ext-cam:${key}]`, msg);
+        if (/401 Unauthorized|403 Forbidden/i.test(msg)) proc._refused = true;
+      });
+      proc.stdout.on('data', _jpegSplitter(frame => {
+        if (event.sender.isDestroyed()) return;
+        proc._hadFrame = true;
+        if (!gotFrame) { gotFrame = true; restarts = 0; clearTimeout(proc._udpTimer); event.sender.send('extcam:status', key, 'live'); }
+        event.sender.send('extcam:frame', key, frame);
+      }));
+      proc.on('close', code => {
+        clearTimeout(proc._udpTimer);
+        if (_extCamProcs.get(key) === proc) _extCamProcs.delete(key);
+        if (proc._stopped || event.sender.isDestroyed()) return;
+        gotFrame = false;
+        if (!proc._refused) event.sender.send('extcam:status', key, 'error');   // offline now; the retries go on
+        // A refused login is never retried: cameras lock an address out after a few
+        // wrong attempts, and trying again with the same login can only make it worse.
+        if (proc._refused) { event.sender.send('extcam:status', key, 'error'); return; }
+        // UDP that ended before its first picture (blocked, or ffmpeg gave up before
+        // the 6 s timer) → the next try goes over TCP, instead of ten more on UDP.
+        if (transport === 'udp' && !proc._hadFrame) transport = 'tcp';
+        if (restarts < MAX_RESTARTS) { restarts++; setTimeout(launch, Math.min(1500 * restarts, 12000)); }
+        else { console.warn(`[ext-cam:${key}] gave up after ${MAX_RESTARTS} restarts (last code ${code})`); event.sender.send('extcam:status', key, 'error'); }
+      });
+      proc.on('error', err => {
+        console.error(`[ext-cam:${key}] spawn error:`, err.message);
+        if (_extCamProcs.get(key) === proc) _extCamProcs.delete(key);
+      });
+    };
+    launch();
+  });
+  ipcMain.on('extcam:stop', (_evt, key) => {
+    const p = _extCamProcs.get(key);
+    if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _extCamProcs.delete(key); }
+  });
+  // One frame, to tell the user whether the address and login work BEFORE the
+  // camera is saved. Answers with a short code the renderer turns into words.
+  ipcMain.handle('extcam:test', (_evt, { url, username, password }) => new Promise(resolve => {
+    const full = _extCamUrl(url, username, password);
+    if (!full) return resolve({ ok: false, code: 'badUrl' });
+    if (!_ffmpegBin) return resolve({ ok: false, code: 'noFfmpeg' });
+    let proc, out = Buffer.alloc(0), err = '', done = false;
+    const finish = r => { if (done) return; done = true; clearTimeout(timer); try { proc?.kill('SIGKILL'); } catch (_) {} resolve(r); };
+    const timer = setTimeout(() => finish({ ok: false, code: 'timeout' }), 12000);
+    try { proc = spawn(_ffmpegBin, _extCamArgs(full, ['-frames:v', '1']), { stdio: ['ignore', 'pipe', 'pipe'] }); }
+    catch (_) { return finish({ ok: false, code: 'noFfmpeg' }); }
+    proc.stdout.on('data', c => { if (out.length < 8 * 1024 * 1024) out = Buffer.concat([out, c]); });
+    proc.stderr.on('data', c => { if (err.length < 4000) err += c.toString(); });
+    proc.on('error', () => finish({ ok: false, code: 'noFfmpeg' }));
+    proc.on('close', () => {
+      if (out.length > 2 && out.indexOf(_SOI) >= 0 && out.indexOf(_EOI) > 0) return finish({ ok: true });
+      const e = err.toLowerCase();
+      finish({ ok: false, code: /401|unauthori|403|forbidden|authorization/.test(e) ? 'auth'
+        : /404|not found/.test(e) ? 'notFound'
+        : /refused|timed out|no route|unreachable|could not resolve|name or service|network is/.test(e) ? 'unreachable'
+        : 'noImage' });
+    });
+  }));
 }
 
 // ── Bambu Lab CLOUD — REST (api.bambulab.com) + ONE shared cloud MQTT client ──
