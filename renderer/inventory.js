@@ -14019,6 +14019,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _cemChip = new Map(); _cemBlank = new Map(); _cemTargets = [];
     const ow = $("cemOwToggle"); if (ow) ow.checked = false;
     $("cloudEncodeOverlay")?.classList.add("open");
+    _cpAskYieldToBurn();
     _cemRender();
     _cemBlankCheck();   // read present chips to detect non-blank → overwrite warning
   }
@@ -22492,7 +22493,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           </div>
           ${state.friendView ? "" : `<button id="btnChangeContainerCard" class="cc-edit" title="${t("btnChangeContainer")}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`}
         </div>
-      </div>` : "";
+      </div>` : (state.friendView || r.deleted) ? "" : `
+      <div class="panel-section cc-section">
+        <div class="panel-label">${esc(t("detContainer"))}</div>
+        <button type="button" class="storage-loc-row storage-loc-row--clickable" id="btnChangeContainerCard">
+          <span class="icon icon-scale icon-14"></span>
+          <span class="storage-loc-rack">${esc(t("containerPickerTitle"))}</span>
+          <span class="storage-loc-locate icon icon-chevron-r icon-13" aria-hidden="true"></span>
+        </button>
+      </div>`;   // no container yet: the only way to set one once the post-create question is gone
 
     // aspects + badges — all chips in one wrapping row beside the color circle
     const aspectChips = [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None");
@@ -23597,6 +23606,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // picker narrowed to the candidates, with a line saying why.
   const _cpAskQueue = [];
   let _cpAskBusy = false;
+  let _cpAskShown = null;   // the job whose question is on screen
   function _queueContainerAsk(spoolId, choice) { _cpAskQueue.push({ spoolId, choice }); _cpAskNext(); }
   async function _cpAskNext() {
     if (_cpAskBusy) return;
@@ -23606,13 +23616,33 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const t0 = Date.now();
     let row = null;
     while (!(row = state.rows.find(x => x.spoolId === job.spoolId)) && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 100));
+    // The burn window opens right after a creation: asking behind it hides the
+    // question, and a burn replaces this doc by the chips' own (asked in turn).
+    // A question already on screen when it opens is put back (_cpAskYieldToBurn).
+    while (row && _encodeModalOpen()) {
+      await new Promise(r => setTimeout(r, 300));
+      row = state.rows.find(x => x.spoolId === job.spoolId);
+    }
     if (!row || row.containerId) { _cpAskBusy = false; _cpAskNext(); return; }
     if (state.selected !== job.spoolId) openDetail(job.spoolId);
+    _cpAskShown = job;
     openContainerPicker(row, {
       only: job.choice.ask.map(c => c.id),
       hint: t(job.choice.hint, { brand: v(row.brand) !== "-" ? row.brand : "" }),
-      onClose: () => { _cpAskBusy = false; setTimeout(_cpAskNext, 300); },
+      onClose: () => { _cpAskShown = null; _cpAskBusy = false; setTimeout(_cpAskNext, 300); },
     });
+  }
+  // The burn window opened over a question already on screen: put the question
+  // away and ask it again once the window is gone (_cpAskNext waits for that).
+  function _cpAskYieldToBurn() {
+    const job = _cpAskShown;
+    if (!job || !$("containerPanel")?.classList.contains("open")) return;
+    _cpAskShown = null;
+    _cpOnClose = null;
+    closeContainerPicker();
+    _cpAskQueue.unshift(job);
+    _cpAskBusy = false;
+    _cpAskNext();
   }
 
   async function autoAssignMissingContainers(uid, inventoryRaw) {

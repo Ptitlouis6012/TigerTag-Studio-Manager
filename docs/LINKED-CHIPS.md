@@ -58,21 +58,48 @@ the chip is next resolved).
    - **Link to my inventory** → a grid of the spools that have no linked chip yet
      (twin pairs shown once, search on brand, material, colour), drawn as the
      inventory grid's cards. A tap opens the material as in the inventory; its spool
-     card then shows "Link the detected chips" with a Link button, which links every
-     chip of the scan to it.
+     card then shows a held banner (1.5 s), "Link the proprietary third-party Tag" /
+     "Link the N proprietary third-party Tags", which links every chip of the scan to it.
+     Nothing is written into the chips.
+
+   After a link (or a burn) succeeds, every side card closes and the material opens alone.
 
    The same side card opens for a **blank NTAG** (TigerTag Init or an erased / empty-NDEF
-   chip, `_chipIsWritableBlank`), with the same title and the catalogue and
-   manual tiles only: the created spool is then offered for burning onto that chip,
-   as before. It replaces the "Add product" panel that used to open straight away.
+   chip, `_chipIsWritableBlank`) with the same three choices: a created spool is
+   offered for burning onto that chip, and "Link to my inventory" lists the TigerData /
+   TigerData+ spools, whose card then offers the burn. The search bar's "+" opens it
+   too, without the Link choice.
 5. The spool's detail panel lists its **linked chips** (its own and its twin's), each
    with ONE held "Unlink" (1.2 s) that removes every chip of the material together — never one chip on its own.
 
+## Phase 2 — resolving a linked chip outside Studio
+
+Every client follows the same rule: a UID that names no inventory doc is looked up in
+`rfidAliases/{UID}`, and its `spoolId` is used from then on as if the spool's own chip
+had been read (metadata, container, twin, weight).
+
+- **TigerScale V3 firmware** (shipped in v3.11.0, `resolveLinkedChipUid()`): only a
+  4-byte UID triggers the lookup; a 7-byte TigerTag UID never does. It reads
+  `rfidAliases/{UID}` (field mask `spoolId`, 4 s timeout) where the UID leaves the
+  reader, so both flange chips of a Bambu Lab spool resolve to the same id and count
+  as one spool, never as a twin pair. A link is cached in RAM for 10 min, a miss or
+  a network error for 60 s, so a link made in Studio is picked up within a minute.
+  A linked spool's brand, material and colour are read fresh from its inventory doc,
+  never from the chip, which has no TigerTag pages. A `spoolId` outside
+  `[A-Za-z0-9_-]` is refused. Verified on a V3 with two Bambu Lab chips.
+- **`setSpoolWeightByRfid`** (backend, deployed): when no inventory doc has the
+  given id, it follows `rfidAliases/{ID.toUpperCase()}` and updates that spool (and
+  its twin). The response adds `spool_id` (the doc actually updated) and
+  `linked_chip` (the chip UID it was reached through, or `null`); `deviceLogs`
+  records `linkedChip`.
+- **Still to do:** the mobile app (TigerTag Connect) and the Tiger Touch firmware.
+- **Known limits:** the PN532 reads a chip only in front of an antenna, so a spool
+  sometimes has to be turned; the first lookup of an unknown 4-byte UID can block
+  the scale's loop for up to 4 s. NTAG third-party chips (Anycubic ACE, ELEGOO
+  Canvas, OpenSpool) are not linkable yet.
+
 ## Later phases
 
-- **Phase 2 — ecosystem:** `setSpoolWeightByRfid` (TigerScale), the mobile app and the
-  Tiger Touch firmware resolve linked chips too (read `rfidAliases/{UID}` when no
-  inventory doc matches).
 - **Phase 3 — optional, founder's call:** read the maker's chip content (Bambu Lab's
   format is documented publicly by the community) to prefill material, colour and
   weight and offer the matching catalogue product.
