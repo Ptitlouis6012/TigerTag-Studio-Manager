@@ -4218,7 +4218,10 @@ let _ffmpegBin = null;
   // poll: a camera that only serves refreshed stills (Snapmaker U1 stock
   // firmware, monitor.jpg) — read here as fast as it refreshes, each new frame
   // kept untouched with its real time (what the page shows is slower).
-  ipcMain.handle('cam:rec-poll-start', (_e, { id, printer, url } = {}) => {
+  // `everyMs` (optional): a camera whose still is LIVE (Paxx) would otherwise be read in a
+  // tight loop; the stock U1 refreshes at ~1 fps and needs none.
+  ipcMain.handle('cam:rec-poll-start', (_e, { id, printer, url, everyMs } = {}) => {
+    const pace = Number.isFinite(everyMs) ? Math.min(Math.max(everyMs, 0), 2000) : 0;
     if (!okUrl(url) || !/^https?:/.test(url) || recs.has(id)) return { ok: false, error: 'url' };
     const dir = capDir(printer), tmp = fs.mkdtempSync(path.join(app.getPath('temp'), 'tt-rec-'));
     const r = { dir, tmp, frames: [], file: path.join(sub(dir, 'Videos'), `${stamp()}.mov`), polling: true };
@@ -4238,10 +4241,37 @@ let _ffmpegBin = null;
             fs.writeFileSync(f, buf);
             r.frames.push([f, (Date.now() - t0) / 1000]);
           }
+          if (pace) await new Promise(res => setTimeout(res, pace));
         } catch (_) { await new Promise(res => setTimeout(res, 200)); }
       }
     })();
     return { ok: true };
+  });
+
+  // A camera's own still / stream read HERE, not in the page: a fetch from the page
+  // is cross-origin and most cameras send no CORS header (Paxx's nginx does not),
+  // so it failed — the photo never came and the stream was never found, which is
+  // what left the video on the slow still fall-back.
+  ipcMain.handle('cam:fetch-still', async (_e, { url } = {}) => {
+    if (!okUrl(url) || !/^https?:/.test(url)) return { ok: false };
+    const ctl = new AbortController(); const k = setTimeout(() => ctl.abort(), 5000);
+    try {
+      const res = await fetch(`${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`, { signal: ctl.signal, cache: 'no-store' });
+      if (!res.ok) return { ok: false };
+      const buf = Buffer.from(await res.arrayBuffer());
+      const type = (res.headers.get('content-type') || 'image/jpeg').split(';')[0];
+      return buf.length > 100 ? { ok: true, dataUrl: `data:${type};base64,${buf.toString('base64')}` } : { ok: false };
+    } catch (_) { return { ok: false }; }
+    finally { clearTimeout(k); }
+  });
+  ipcMain.handle('cam:probe-stream', async (_e, { url } = {}) => {
+    if (!okUrl(url) || !/^https?:/.test(url)) return false;
+    const ctl = new AbortController(); const k = setTimeout(() => ctl.abort(), 4000);
+    try {
+      const res = await fetch(url, { signal: ctl.signal, cache: 'no-store' });
+      return res.ok && /multipart|mjpe?g|image\/jpeg/i.test(res.headers.get('content-type') || '');
+    } catch (_) { return false; }
+    finally { clearTimeout(k); ctl.abort(); }
   });
 
   // blob: a MediaRecorder file from the renderer.

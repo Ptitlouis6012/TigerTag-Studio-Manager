@@ -47,8 +47,14 @@ export function renderSnapCamBanner(p) {
       ${LOADING_OVERLAY}
     </div>`;
   }
+  /* The Paxx firmware also serves the camera outside its player page: a JPEG
+     (/webcam/snapshot.jpg, enabled by default) and an MJPEG stream
+     (/webcam/stream.mjpg, from the same camera service). The player page is an
+     iframe the capture bar cannot read, so the photo is taken from the still and
+     the video from the stream, falling back on the still (cam-snapshot.js). */
   return `
-    <div class="pp-cam-full pp-cam-loading">
+    <div class="pp-cam-full pp-cam-loading" data-cam-snap="${ctx.esc(`http://${conn.ip}/webcam/snapshot.jpg`)}"
+         data-cam-stream="${ctx.esc(`http://${conn.ip}/webcam/stream.mjpg`)}">
       <iframe class="snap-camera-frame" src="${ctx.esc(`http://${conn.ip}/webcam/webrtc`)}"
               sandbox="allow-scripts allow-same-origin"
               loading="lazy" referrerpolicy="no-referrer"

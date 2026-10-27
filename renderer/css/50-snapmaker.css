@@ -577,6 +577,12 @@
     40%           { opacity: 1;   transform: scale(1);   }
   }
 
+  /* On the camera wall the player page is a picture, like every other brand's:
+     a click on it must reach the card and open the printer's side card. An
+     iframe takes its pointer events for itself and never hands them to the page
+     around it, so the card never heard the click. The player's own controls stay
+     usable in the side card. */
+  .cam-wall-card .snap-camera-frame { pointer-events: none; }
   /* Snapmaker — WebRTC iframe (Crowsnest player, port 80 /webcam/webrtc).
      Crowsnest is responsive: its page fills the iframe viewport naturally.
      Positioned absolute so it covers the full .pp-cam-full box. */

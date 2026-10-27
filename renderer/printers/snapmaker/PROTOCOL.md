@@ -958,6 +958,34 @@ error → no camera block. The still loop (`widget_camera.js`) runs only while a
 feed is on screen and stops 12 s after the last one leaves, so the wake-ups stop
 and the camera returns to idle on its own.
 
+### 11.5 Paxx firmware — the player is an iframe: photo and video from its still
+
+On the Paxx extended firmware the camera is declared to Moonraker (`[webcam case]`)
+and Studio shows its WebRTC page (`/webcam/webrtc`) in an `<iframe>`. The page
+inside is another document: Studio can neither draw its picture into a canvas nor
+record its stream, and a click on it never reaches the card around it. Two things
+follow (`widget_camera.js`, `cam-snapshot.js`, `50-snapmaker.css`):
+
+- On the camera wall the iframe takes no pointer events (`pointer-events: none`),
+  so a click on the card opens the printer's side card like every other brand's.
+  The player's own controls stay usable in the side card.
+- The iframe's host carries `data-cam-snap`, `http://<IP>/webcam/snapshot.jpg` (a
+  1080p JPEG the Paxx firmware serves by default, from its `[webcam case]`
+  `snapshot_url`), and `data-cam-stream`, `http://<IP>/webcam/stream.mjpg`: the
+  camera service (paxx12's `v4l2-mpp`, `stream-http`) serves `/snapshot.jpg`,
+  `/stream.mjpg` and `/stream.h264` behind the same nginx prefix as `/webrtc` and
+  `/player`. The capture bar takes the photo from the JPEG as sent. The video is the
+  MJPEG stream copied by ffmpeg when a request for it answers with a stream (headers
+  probed first — by main, like the photo: the camera sends no CORS header, so a fetch
+  from the page fails); otherwise it is built from the JPEG by the same "poll" recorder as
+  the stock firmware's stills, read every 200 ms. A series of stills runs at whatever
+  pace the printer can encode them (slow, a few per second at best): that is the
+  fall-back, not the aim.
+
+The camera's own RTSP stream (`rtsp://<IP>:8554/stream`, off by default on Paxx) and
+`/stream.h264` are not used. The WebRTC signalling of the player page is not WHEP (a
+JSON exchange in which the server makes the offer), so Studio does not open it itself.
+
 The `camera` file root also holds the print timelapses (`<job>_<time>.mp4` +
 `.jpg` cover), readable at `/server/files/camera/<name>`.
 
