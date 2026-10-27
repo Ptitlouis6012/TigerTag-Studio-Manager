@@ -4576,6 +4576,13 @@ let _ffmpegBin = null;
         '-flags', 'low_delay',
         '-probesize', '32',
         '-analyzeduration', '0',
+        /* Pictures are dated by the moment they ARRIVE, not by the printer's RTP clock.
+           Measured on a P2S: after a recording, the `fps=30` below began to write 110 MB/s
+           (a normal stream is 2-4) at 45-50 % of the processor, minutes on end, filling
+           the main process with duplicates — `fps` repeats frames to fill a jump forward
+           in the stream's timestamps, so one jump in the camera's clock became thousands
+           of copies. Dated on arrival, a gap can never be longer than the real stall. */
+        '-use_wallclock_as_timestamps', '1',
         // No -tls_verify: the rtsp demuxer in older ffmpeg (e.g. the bundled
         // ffmpeg-static 6.0) doesn't expose it → "Option tls_verify not found".
         // The tls protocol defaults to verify=0 anyway, so the printer's
