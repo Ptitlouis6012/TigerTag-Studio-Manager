@@ -16,6 +16,12 @@
  * out of a capture of the window. Saved, then shown in the shared preview
  * (IoT/tigertouch/panel.js `showScreenshot`: Save a copy / Copy / Report / Retake).
  *
+ * A camera shown as a page in an <iframe> (Snapmaker U1 on the Paxx firmware) has
+ * nothing the page can read: its host carries `data-cam-snap`, the URL of the
+ * camera's own JPEG, and `data-cam-stream`, its MJPEG stream. The photo is taken
+ * from the JPEG; the video from the stream (ffmpeg copies it), or, when the camera
+ * does not serve one, from the JPEG read over and over.
+ *
  * VIDEO — always from the SOURCE, never re-encoded from the page:
  *   - the camera's own URL (Bambu RTSPS H.264, an http MJPEG) → ffmpeg in main
  *     copies the stream untouched;
@@ -37,6 +43,19 @@ import { questBump } from "../quests/index.js";
 let _ctx = null;
 const _recs = new Map();   // host → recording state
 const MAX_REC_MS = 10 * 60 * 1000;
+// A live still (Paxx) is read at this pace; a stock U1 refreshes its own at ~1 fps.
+const SNAP_POLL_MS = 200;
+
+/** Does this URL answer with a real MJPEG stream? Headers are enough: the body is dropped. */
+async function probeStream(url) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 4000);
+  try {
+    const res = await fetch(url, { signal: ctl.signal, cache: "no-store" });
+    return res.ok && /multipart|mjpe?g|image\/jpeg/i.test(res.headers.get("content-type") || "");
+  } catch (_) { return false; }
+  finally { clearTimeout(timer); ctl.abort(); }
+}
 
 function mediaOf(host) {
   let best = null, area = 0;
@@ -49,8 +68,22 @@ function mediaOf(host) {
 
 // ── Photo ──────────────────────────────────────────────────────────────────
 
+/** The camera's own JPEG, as sent. */
+async function grabSnapshot(url) {
+  try {
+    const res = await fetch(`${url}${url.includes("?") ? "&" : "?"}t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) return { ok: false, error: "nomedia" };
+    const blob = await res.blob();
+    const dataUrl = await new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = no; fr.readAsDataURL(blob); });
+    const img = new Image();
+    await new Promise(r => { img.onload = img.onerror = r; img.src = dataUrl; });
+    return img.naturalWidth ? { ok: true, dataUrl, w: img.naturalWidth, h: img.naturalHeight } : { ok: false, error: "nomedia" };
+  } catch (_) { return { ok: false, error: "nomedia" }; }
+}
+
 async function grab(host) {
   const m = mediaOf(host);
+  if (!m && host.dataset.camSnap) return grabSnapshot(host.dataset.camSnap);
   if (!m) return { ok: false, error: "nomedia" };
   const w = m.naturalWidth || m.videoWidth || m.width, h = m.naturalHeight || m.videoHeight || m.height;
   if (w && h) {
@@ -105,14 +138,17 @@ async function takePhoto(host) {
 const recId = () => `rec-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 async function startRec(host) {
-  const p = _ctx.printerForHost(host), m = mediaOf(host);
-  if (!p || !m) return;
+  const p = _ctx.printerForHost(host), m = mediaOf(host), snap = host.dataset.camSnap;
+  if (!p || (!m && !snap)) return;
   const info = _ctx.printerInfo(p), id = recId();
   const rec = { id, info, started: Date.now(), stop: null };
 
-  const url = _ctx.sourceUrl(p, m);
+  // An iframe's picture: the camera's own stream when it serves one, else its still.
+  const stream = host.dataset.camStream;
+  const url = m ? _ctx.sourceUrl(p, m)
+    : (stream && await probeStream(stream)) ? stream : `poll:${snap}`;
   if (url?.startsWith("poll:")) {
-    const r = await window.camCapture.recPollStart(id, info, url.slice(5));
+    const r = await window.camCapture.recPollStart(id, info, url.slice(5), m ? 0 : SNAP_POLL_MS);
     if (!r?.ok) return _ctx.toast?.(_ctx.t("camRecFailed"));
     rec.stop = () => window.camCapture.recStop(id);
   } else if (url) {
@@ -229,7 +265,7 @@ export function initCamSnapshot(ctx) {
   // brand's own markup untouched.
   document.addEventListener("mouseover", e => {
     const host = e.target.closest?.(".pp-cam-full");
-    if (host && mediaOf(host)) addButtons(host);
+    if (host && (mediaOf(host) || host.dataset.camSnap)) addButtons(host);
   });
   document.addEventListener("click", e => {
     const b = e.target.closest?.("[data-cam-cap]");

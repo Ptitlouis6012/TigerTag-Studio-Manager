@@ -241,6 +241,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - Creality single shared `RTCPeerConnection` across every surface that shows its camera (v1.8.2).
 - **Snapmaker U1 camera on the stock firmware** — no Paxx needed: the printer's own monitor is woken over Moonraker and shown as 1080p stills at ~1 fps on every surface (side card, camera wall, cards); Paxx keeps its WebRTC live video (v2.33.0).
 - **Camera photos and videos** — hovering any printer camera (side card or camera wall) offers photo, record (10 min cap) and the printer's capture folder; photos at the stream's native resolution, videos taken from the source without re-encoding where the transport allows (Bambu RTSPS, MJPEG, Snapmaker stills, WebRTC via MediaRecorder); filed per printer under `Pictures/Tiger Studio/Captures/` with a `printer.json` keeping its names and IPs (v2.43.0).
+- **Snapmaker U1 on the Paxx firmware** — the camera wall card opens the printer's side card on a click (its player page no longer swallows it), and the photo / record / folder bar appears on it, taking the photo from the camera's own JPEG (`/webcam/snapshot.jpg`) and the video from its MJPEG stream (`/webcam/stream.mjpg`, copied untouched), falling back on the JPEG read every 200 ms.
 - **Start the camera automatically** — per-printer setting (`camAutoStart`): an online printer's board camera starts without a click, including one that comes online later (v2.43.0).
 
 ## Sensors & devices

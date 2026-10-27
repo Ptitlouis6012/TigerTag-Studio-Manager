@@ -4212,7 +4212,10 @@ let _ffmpegBin = null;
   // poll: a camera that only serves refreshed stills (Snapmaker U1 stock
   // firmware, monitor.jpg) — read here as fast as it refreshes, each new frame
   // kept untouched with its real time (what the page shows is slower).
-  ipcMain.handle('cam:rec-poll-start', (_e, { id, printer, url } = {}) => {
+  // `everyMs` (optional): a camera whose still is LIVE (Paxx) would otherwise be read in a
+  // tight loop; the stock U1 refreshes at ~1 fps and needs none.
+  ipcMain.handle('cam:rec-poll-start', (_e, { id, printer, url, everyMs } = {}) => {
+    const pace = Number.isFinite(everyMs) ? Math.min(Math.max(everyMs, 0), 2000) : 0;
     if (!okUrl(url) || !/^https?:/.test(url) || recs.has(id)) return { ok: false, error: 'url' };
     const dir = capDir(printer), tmp = fs.mkdtempSync(path.join(app.getPath('temp'), 'tt-rec-'));
     const r = { dir, tmp, frames: [], file: path.join(sub(dir, 'Videos'), `${stamp()}.mov`), polling: true };
@@ -4232,6 +4235,7 @@ let _ffmpegBin = null;
             fs.writeFileSync(f, buf);
             r.frames.push([f, (Date.now() - t0) / 1000]);
           }
+          if (pace) await new Promise(res => setTimeout(res, pace));
         } catch (_) { await new Promise(res => setTimeout(res, 200)); }
       }
     })();
