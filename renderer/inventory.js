@@ -78,7 +78,8 @@ import {
 } from './printers/prusa/index.js';
 import { renderPrusaCamBanner, renderPrusaCamWallBanner, prusaCamStopAll } from './printers/prusa/widget_camera.js';
 import { openPrusaAddFlow } from './printers/prusa/add-flow.js';
-import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection } from './ext-cam/ext-cam.js';
+import { initExtCam, extCamSubscribe, extCamUnsubscribe, openExtCamAddFlow, mountExtCamSection,
+         extCamBoardObj, extCamMaxZ, extCamBoardSave, extCamBoardCardsHtml, wireExtCamBoard } from './ext-cam/ext-cam.js';
 // Self-contained printer plugins (renderer/printers/<id>/plugin.js) — see docs/PRINTER-PLUGINS.md.
 import { printerPlugin, printerPlugins, printerPluginIds, mergePluginStrings } from './printers/plugins.js';
 import { betaBadgeInlineHtml } from './printers/beta-badge.js';
@@ -26543,7 +26544,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const cards = _orderedPrinters.map(p => _safe(_makeCard, p)).join("")
                 + _orderedPrinters.map(p => _safe(_makeUnitWidgets, p)).join("")
                 + SIMPLE_WIDGETS.map(w =>
-                    _orderedPrinters.map(p => _safe(w.render, p)).join("")).join("");
+                    _orderedPrinters.map(p => _safe(w.render, p)).join("")).join("")
+                + (() => { try { return extCamBoardCardsHtml(); } catch (e) { console.warn("[ext-cam] board cards failed", e); return ""; } })();   // external cameras: board objects of their own
 
 
     /* The board lives in its own scroller: the cards are placed in plan
@@ -26582,6 +26584,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (_plan) SIMPLE_WIDGETS.forEach(w => { try { w.wire?.(_plan); } catch (e) { console.warn("[board] wire failed for", w.kind, e); } });
     }
     wirePrinterPlanDrag(host);
+    wireExtCamBoard(host.querySelector(".printers-grid"));
     wirePlanPan(host.querySelector(".printers-scroll"), ".printer-card");
     wirePrinterZoom(host);
     wirePrinterArrange(host);
@@ -27912,6 +27915,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const unitsAreSplit = p => p?.unitsSplit === true;
   function _boardObj(boardId) {
     if (!boardId) return null;
+    { const cam = extCamBoardObj(boardId); if (cam) return cam; }   // an external camera: { cam, p: null, unit: null }
     if (boardId.startsWith(UNIT_PREFIX)) {
       const rest = boardId.slice(UNIT_PREFIX.length);
       const cut = rest.lastIndexOf(":");
@@ -27989,7 +27993,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
                  y: Math.max(0, Math.round(parseFloat(el.style.top) || 0)) };
       }
     }
-    const raw = o.unit ? _unitPlan(o) : printerPlanPos(o.p);
+    const raw = o.cam ? o.cam.boardPlan : o.unit ? _unitPlan(o) : printerPlanPos(o.p);
     const q = _settledPlan(boardId, raw);
     return (q && Number.isFinite(q.x) && Number.isFinite(q.y))
       ? { x: Math.max(0, Math.round(q.x)), y: Math.max(0, Math.round(q.y)) } : null;
@@ -27997,6 +28001,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function boardZ(boardId) {
     const o = _boardObj(boardId);
     if (!o) return 0;
+    if (o.cam) return Number.isFinite(o.cam.boardPlan?.z) ? o.cam.boardPlan.z : 0;
     if (!o.unit) return printerPlanZ(o.p);
     return Number.isFinite(_unitPlan(o)?.z) ? _unitPlan(o).z : 0;
   }
@@ -28013,7 +28018,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     for (const u of Object.values(p.units || {}))
       n = Math.max(n, Number.isFinite(u?.planPrinters?.z) ? u.planPrinters.z : 0);
     return n;
-  }, 0) + 1;
+  }, extCamMaxZ()) + 1;
   async function saveUnitPlanPos(printer, unitKey, x, y, z = nextBoardZ()) {
     const live = state.printers.find(v => _printerKey(v) === _printerKey(printer));
     const grouped = unitKey === "*";
@@ -28041,7 +28046,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!o) return Promise.resolve();
     const mine = { x, y, z };
     _rememberPlan(boardId, mine);
-    const done = o.unit ? saveUnitPlanPos(o.p, o.unit, x, y, z)
+    const done = o.cam  ? extCamBoardSave(o.cam, x, y, z)
+               : o.unit ? saveUnitPlanPos(o.p, o.unit, x, y, z)
                         : savePrinterPlanPos(o.p, x, y, z);
     // Confirmed by the server → the record can be trusted again for this one.
     return Promise.resolve(done).finally(() => {
@@ -28099,7 +28105,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function clusterOf(boardId) {
     const o = _boardObj(boardId);
-    if (!o) return null;
+    if (!o || o.cam) return null;
     if (!o.unit)            return o.p.planCluster || null;
     if (o.unit === "*")     return o.p.unitsPlanCluster || null;
     const w = _widgetByTag(o.unit);
@@ -28136,7 +28142,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const perDoc = new Map();
     boardIds.forEach(id => {
       const o = _boardObj(id);
-      if (!o) return;
+      if (!o || o.cam) return;
       const key = _printerKey(o.p);
       const e = perDoc.get(key) || { p: o.p, patch: {} };
       if (!o.unit) {                                     // the machine's card
@@ -28401,6 +28407,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           ? planFreeSpot(container, { x: anchor.x, y: anchor.y }, el.offsetWidth, el.offsetHeight, id)
           : planStackUnder(container, owner, new Set(p_ ? _printerBoardIds(p_) : []),
                            el.offsetWidth, el.offsetHeight, id));
+      } else if (_own && _own.cam) {
+        // An external camera takes the first free place in reading order, like a new machine.
+        ({ x, y } = planFreeSlot(container, el.offsetWidth, el.offsetHeight, _rowWidth, new Set([id])));
       } else if (_own && _own.p) {
         /* A new MACHINE: room for the card plus the widgets still waiting to
            stack under it, at the first free place in reading order. */
@@ -30141,8 +30150,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   initExtCam({
     db: uid => fbDb(uid),
     uid: () => state.activeAccountId,
-    // A camera added / edited / deleted redraws the wall only while it is on screen.
-    onChange: () => { if (state.viewMode === "printer-cam") renderPrintersView(); },
+    // A camera added / edited / deleted redraws the board or the wall, only while one is on screen.
+    onChange: () => { if (state.viewMode === "printer" || state.viewMode === "printer-cam") renderPrintersView(); },
   });
   // Persist an Anycubic CLOUD printer (provisioned via the slicer). Keyed by
   // cloudPrinterId so re-provisioning upserts (refreshing the token) instead of

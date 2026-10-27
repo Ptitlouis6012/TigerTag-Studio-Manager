@@ -6,7 +6,9 @@
  *                of `users/{uid}/**`): { name, protocol, url, username, password }.
  *   • Add/edit — one side card (`#xcOverlay`), opened from the brand picker's
  *                "External cameras" row or from a camera's gear on the wall.
- *   • Display  — a section under the camera wall (`mountExtCamSection`).
+ *   • Display  — a section under the camera wall (`mountExtCamSection`) and cards
+ *                placed on the printers board (`extCamBoardCardsHtml`, moved like
+ *                a machine; the position is `boardPlan` on the camera's document).
  *   • Streams  — three readers, picked by `protocol`:
  *       mjpeg  → the shared mux (`cam_manager.js`); with a login → ffmpeg in main
  *       rtsp   → ffmpeg in main (`extcam:*` IPC, JPEG frames back)
@@ -66,16 +68,32 @@ let _sweeper = 0;
 const camKey = id => `ext:${id}`;
 
 function setState(el, state) {
-  const card = el.closest(".xc-card");
+  const card = el.closest(".xc-card, .xc-board-card");
   if (card) card.dataset.state = state;
+}
+
+/** Every element showing this camera takes the state, and the stream remembers it. */
+function setAll(r, state) {
+  r.state = state;
+  r.live = state === "live";
+  r.els.forEach(el => setState(el, state));
+}
+
+/* A camera that has shown nothing 10 s after it was asked is OFFLINE as far as
+   the card is concerned (grey); it keeps trying, and the first picture makes it
+   live. Without this a camera that is switched off stayed "connecting" for ever
+   — the mux and ffmpeg both retry silently. */
+function armWatch(key, r) {
+  r.watch = setTimeout(() => { if (_run.get(key) === r && !r.live) setAll(r, "error"); }, 10000);
 }
 
 function ensureSweeper() {
   if (_sweeper) return;
-  // A card that left the page (view change, rebuild) takes its stream with it.
+  // A card that left the page or is no longer shown (view change, rebuild) takes
+  // its stream with it; the next render attaches it again.
   _sweeper = setInterval(() => {
     for (const [key, r] of _run) {
-      r.els.forEach(el => { if (!el.isConnected) r.els.delete(el); });
+      r.els.forEach(el => { if (!el.isConnected || !el.getClientRects().length) r.els.delete(el); });
       if (!r.els.size) stopKey(key);
     }
     if (!_run.size) { clearInterval(_sweeper); _sweeper = 0; }
@@ -87,6 +105,7 @@ function stopKey(key) {
   if (!r) return;
   _run.delete(key);
   clearTimeout(r.retry);
+  clearTimeout(r.watch);
   if (r.kind === "mux") { r.els.forEach(el => camUnsubscribe(key, el)); camStop(key); }
   if (r.kind === "ff")  { try { window.extCam?.stop(key); } catch (_) {} if (r.last) URL.revokeObjectURL(r.last); if (r.next) URL.revokeObjectURL(r.next); }
   if (r.kind === "rtc") { try { r.pc?.close(); } catch (_) {} r.els.forEach(el => { el.srcObject = null; }); }
@@ -109,7 +128,7 @@ function wireFfmpegFeed() {
   });
   window.extCam.onStatus((key, status) => {
     const r = _run.get(key);
-    if (r) r.els.forEach(el => setState(el, status === "live" ? "live" : "error"));
+    if (r) setAll(r, status === "live" ? "live" : "error");
   });
 }
 
@@ -139,10 +158,10 @@ const basicAuth = cam => cam.username
   ? { Authorization: "Basic " + btoa(unescape(encodeURIComponent(`${cam.username}:${cam.password || ""}`))) } : {};
 
 /** WHEP: one offer, one answer. Resolves once the browser has the answer set. */
-async function whepConnect(cam, video) {
+async function whepConnect(cam, onStream) {
   const pc = new RTCPeerConnection();
   pc.addTransceiver("video", { direction: "recvonly" });
-  pc.ontrack = e => { video.srcObject = e.streams[0]; video.play().catch(() => {}); };
+  pc.ontrack = e => onStream(e.streams[0]);
   const offer = await pc.createOffer();
   await pc.setLocalDescription(offer);
   // The offer is sent whole: wait for local candidates, but never for long.
@@ -162,47 +181,108 @@ async function whepConnect(cam, video) {
   return pc;
 }
 
-function startRtc(cam, video) {
+function startRtc(cam, r) {
   const key = camKey(cam.id);
-  const r = { kind: "rtc", els: new Set([video]), pc: null, retry: 0 };
-  _run.set(key, r);
+  const show = stream => {
+    r.stream = stream;
+    r.els.forEach(el => { el.srcObject = stream; el.play().catch(() => {}); });
+  };
   const attempt = async () => {
     if (_run.get(key) !== r) return;
-    setState(video, "connecting");
+    if (!r.failed) setAll(r, "connecting");
     try {
-      r.pc = await whepConnect(cam, video);
+      r.pc = await whepConnect(cam, show);
       r.pc.addEventListener("connectionstatechange", () => {
-        const s = r.pc?.connectionState;
-        if (s === "failed" || s === "disconnected" || s === "closed") {
+        const st = r.pc?.connectionState;
+        if (st === "failed" || st === "disconnected" || st === "closed") {
           if (_run.get(key) !== r) return;
-          setState(video, "error");
+          r.failed = true;
+          setAll(r, "error");
           r.retry = setTimeout(attempt, 4000);
         }
       });
     } catch (_) {
       if (_run.get(key) !== r) return;
-      setState(video, "error");
+      r.failed = true;
+      setAll(r, "error");
       r.retry = setTimeout(attempt, 6000);
     }
   };
   attempt();
 }
 
-/** Starts the right reader for `cam` on the card's picture element. */
-function startStream(cam, el) {
+const streamSig = c => [c.protocol, c.url, c.username, c.password].join("|");
+
+/**
+ * Shows camera `cam` on `el`. The reader is started only when that camera is not
+ * already running with the same settings: the printers board is rebuilt whenever
+ * its shape changes, and a rebuild must not restart ffmpeg — the new picture
+ * element is attached to the stream that is already there.
+ */
+function attachStream(cam, el) {
   const key = camKey(cam.id);
   ensureSweeper();
-  if (cam.protocol === "webrtc") { startRtc(cam, el); return; }
+  let r = _run.get(key);
+  if (r && r.sig !== streamSig(cam)) { stopKey(key); r = null; }
+  if (r) {
+    r.els.add(el);
+    if (r.kind === "mux") camSubscribe(key, el);
+    else if (r.kind === "ff" && r.last) el.src = r.last;
+    else if (r.kind === "rtc" && r.stream) { el.srcObject = r.stream; el.play().catch(() => {}); }
+    setState(el, r.state || "connecting");
+    return;
+  }
+  if (cam.protocol === "webrtc") {
+    r = { kind: "rtc", sig: streamSig(cam), els: new Set([el]), pc: null, stream: null, retry: 0, live: false, state: "connecting" };
+    _run.set(key, r);
+    armWatch(key, r);
+    startRtc(cam, r);
+    return;
+  }
   if (cam.protocol === "mjpeg" && !cam.username) {
-    _run.set(key, { kind: "mux", els: new Set([el]) });
+    const m = { kind: "mux", sig: streamSig(cam), els: new Set([el]), live: false, state: "connecting" };
+    _run.set(key, m);
+    armWatch(key, m);
     camStart(key, cam.url);
     camSubscribe(key, el);
     return;
   }
   if (!window.extCam) { setState(el, "error"); return; }
   wireFfmpegFeed();
-  _run.set(key, { kind: "ff", els: new Set([el]), last: null });
+  const f = { kind: "ff", sig: streamSig(cam), els: new Set([el]), last: null, live: false, state: "connecting" };
+  _run.set(key, f);
+  armWatch(key, f);
   window.extCam.start({ key, url: cam.url, username: cam.username || "", password: cam.password || "" });
+}
+
+/** Stops the readers of cameras that were deleted or whose settings changed. */
+function pruneStreams() {
+  for (const [key, r] of _run) {
+    const cam = _cams.find(c => camKey(c.id) === key);
+    if (!cam || r.sig !== streamSig(cam)) stopKey(key);
+  }
+}
+
+/** The picture arriving is what turns "connecting" into "live". */
+function watchLive(cam, el) {
+  if (el.dataset.xcWired) return;
+  el.dataset.xcWired = "1";
+  el.addEventListener(el.tagName === "VIDEO" ? "playing" : "load", () => {
+    const r = _run.get(camKey(cam.id));
+    if (r) setAll(r, "live"); else setState(el, "live");
+  });
+}
+
+function wireCards(root) {
+  root.querySelectorAll(".xc-card, .xc-board-card").forEach(card => {
+    const cam = _cams.find(c => c.id === card.dataset.id);
+    const el = card.querySelector(".xc-media");
+    if (!cam || !el) return;
+    watchLive(cam, el);
+    attachStream(cam, el);
+  });
+  root.querySelectorAll("[data-xc-edit]").forEach(b =>
+    b.addEventListener("click", () => openExtCamEditor(_cams.find(c => c.id === b.dataset.xcEdit))));
 }
 
 // ── Wall section ─────────────────────────────────────────────────────────────
@@ -238,12 +318,14 @@ function cardHtml(c) {
  */
 export function mountExtCamSection(host) {
   let sec = host.querySelector(".ext-cam-section");
-  if (!_cams.length) { if (sec) { releaseAll(); sec.remove(); } return; }
+  if (!_cams.length) { if (sec) sec.remove(); pruneStreams(); return; }
   const sig = signature();
-  if (sec && sec.dataset.sig === sig) return;
+  // Same cameras: nothing to rebuild, but a stream the sweeper stopped while the
+  // view was hidden is started again.
+  if (sec && sec.dataset.sig === sig) { wireCardsStreams(sec); return; }
   host.querySelector(":scope > .printers-empty-card")?.remove();
-  releaseAll();
   sec?.remove();
+  pruneStreams();
   let scroll = host.querySelector(".cam-scroll");
   if (!scroll) { scroll = document.createElement("div"); scroll.className = "printers-scroll cam-scroll"; host.appendChild(scroll); }
   sec = document.createElement("section");
@@ -253,16 +335,79 @@ export function mountExtCamSection(host) {
     <div class="ext-cam-head">${ctx.esc(ctx.t("extCamTitle"))}</div>
     <div class="ext-cam-grid">${_cams.map(cardHtml).join("")}</div>`;
   scroll.appendChild(sec);
-  sec.querySelectorAll("[data-xc-edit]").forEach(b =>
-    b.addEventListener("click", () => openExtCamEditor(_cams.find(c => c.id === b.dataset.xcEdit))));
-  sec.querySelectorAll(".xc-card").forEach(card => {
+  wireCards(sec);
+}
+
+// Re-attach streams only (the edit buttons of an unchanged section are still wired).
+function wireCardsStreams(root) {
+  root.querySelectorAll(".xc-card, .xc-board-card").forEach(card => {
     const cam = _cams.find(c => c.id === card.dataset.id);
     const el = card.querySelector(".xc-media");
-    if (!cam || !el) return;
-    // The picture arriving is what turns "connecting" into "live".
-    el.addEventListener(el.tagName === "VIDEO" ? "playing" : "load", () => setState(el, "live"));
-    startStream(cam, el);
+    if (cam && el) attachStream(cam, el);
   });
+}
+
+// ── On the printers board ────────────────────────────────────────────────────
+/* A camera is a board OBJECT like a machine: it has an id (`extcam:<id>`), a
+   position, a depth, and is carried by the board's own drag, selection and
+   zoom. Everything the board asks of "an object" is answered here, so the
+   board's code only has to ask — it never learns what a camera is. The position
+   lives on the camera's document (`boardPlan`), never on a printer. */
+const BOARD_PREFIX = "extcam:";
+
+export function extCamBoardObj(boardId) {
+  if (typeof boardId !== "string" || !boardId.startsWith(BOARD_PREFIX)) return null;
+  const cam = _cams.find(c => c.id === boardId.slice(BOARD_PREFIX.length));
+  return cam ? { cam, p: null, unit: null } : null;
+}
+
+export const extCamMaxZ = () =>
+  _cams.reduce((m, c) => Math.max(m, Number.isFinite(c.boardPlan?.z) ? c.boardPlan.z : 0), 0);
+
+export async function extCamBoardSave(cam, x, y, z) {
+  const live = _cams.find(c => c.id === cam.id);
+  if (live) live.boardPlan = { x, y, z };          // optimistic: no render wait
+  const col = colRef();
+  if (!col) return;
+  try { await col.doc(cam.id).set({ boardPlan: { x, y, z } }, { merge: true }); }
+  catch (e) { console.warn("[ext-cam] board position save failed:", e?.code || e?.message); }
+}
+
+function boardCardHtml(c) {
+  const { esc, t } = ctx;
+  const media = c.protocol === "webrtc"
+    ? `<video class="xc-media" muted playsinline autoplay></video>`
+    : `<img class="xc-media" alt="" draggable="false"/>`;
+  return `
+    <div class="xc-board-card" data-board-id="${esc(BOARD_PREFIX + c.id)}" data-id="${esc(c.id)}" data-state="connecting">
+      <div class="rp-rack-head printer-card-head">
+        <div class="rp-rack-info">
+          <div class="printer-card-name">
+            <span class="printer-card-name-dot" aria-hidden="true"></span>
+            <span class="printer-card-name-txt">${esc(c.name || "")}</span>
+          </div>
+        </div>
+        <div class="rp-rack-actions">
+          <button class="rp-rack-btn rp-rack-move" data-action="move" aria-label="${esc(t("actionMove"))}"><span class="icon icon-move icon-18"></span></button>
+          <button class="rp-rack-btn xc-gear" data-xc-edit="${esc(c.id)}" aria-label="${esc(t("extCamEditTitle"))}"><span class="icon icon-settings icon-18"></span></button>
+        </div>
+      </div>
+      <div class="xc-view">
+        ${media}
+        <div class="xc-overlay xc-overlay--connecting">${esc(t("extCamConnecting"))}</div>
+        <div class="xc-overlay xc-overlay--error"><span class="icon icon-eye-off icon-24"></span>${esc(t("extCamNoSignal"))}</div>
+      </div>
+    </div>`;
+}
+
+/** The cameras' cards, to be appended to the board's own cards. */
+export const extCamBoardCardsHtml = () => _cams.map(boardCardHtml).join("");
+
+/** After the board is drawn: gear buttons, and the streams (attached, not restarted). */
+export function wireExtCamBoard(container) {
+  if (!container) return;
+  wireCards(container);
+  pruneStreams();
 }
 
 // ── Add / edit card ──────────────────────────────────────────────────────────
@@ -381,7 +526,7 @@ async function testConnection() {
       const video = document.createElement("video");
       let pc;
       try {
-        pc = await whepConnect(f, video);
+        pc = await whepConnect(f, stream => { video.srcObject = stream; });
         await new Promise((res, rej) => {
           const to = setTimeout(() => rej(new Error("noImage")), 8000);
           video.addEventListener("loadeddata", () => { clearTimeout(to); res(); }, { once: true });

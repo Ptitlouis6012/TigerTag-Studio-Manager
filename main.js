@@ -4707,6 +4707,7 @@ let _ffmpegBin = null;
         if (_extCamProcs.get(key) === proc) _extCamProcs.delete(key);
         if (proc._stopped || event.sender.isDestroyed()) return;
         gotFrame = false;
+        if (!proc._refused) event.sender.send('extcam:status', key, 'error');   // offline now; the retries go on
         // A refused login is never retried: cameras lock an address out after a few
         // wrong attempts, and trying again with the same login can only make it worse.
         if (proc._refused) { event.sender.send('extcam:status', key, 'error'); return; }

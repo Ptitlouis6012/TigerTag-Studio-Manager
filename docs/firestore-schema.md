@@ -225,6 +225,7 @@ users/
         url         string    — the stream address, rtsp(s):// or http(s)://
         username    string?   — optional login, never shown or logged
         password    string?
+        boardPlan   map?      — { x, y, z }: where its card sits on the printers board
         createdAt, updatedAt  timestamp
 
     printers/

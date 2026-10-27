@@ -3577,7 +3577,12 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 }
 .xc-overlay .icon { background-color: var(--muted); opacity: .6; }
 .xc-card[data-state="connecting"] .xc-overlay--connecting,
-.xc-card[data-state="error"] .xc-overlay--error { display: flex; }
+.xc-card[data-state="error"] .xc-overlay--error,
+.xc-board-card[data-state="connecting"] .xc-overlay--connecting,
+.xc-board-card[data-state="error"] .xc-overlay--error { display: flex; }
+/* An <img> with no address yet is drawn by Chromium as a broken image: a light
+   frame round the black picture. Nothing to show until the first picture. */
+.xc-media:not([src]) { visibility: hidden; }
 
 /* Add / edit card */
 .xc-seg { display: flex; gap: 6px; }
@@ -3596,3 +3601,44 @@ details[open] .pba-step-chev { transform: rotate(90deg); }
 #xcOverlay .pba-footer { flex-wrap: nowrap; }
 #xcOverlay .pba-footer .adf-btn { white-space: nowrap; flex: 0 0 auto; padding-left: 12px; padding-right: 12px; }
 #xcOverlay .pba-footer #xcSave { flex: 1 1 auto; justify-content: center; }
+
+/* ── External cameras on the printers board ──────────────────────────────────
+   A board object like a machine's card: placed by the board's own layout, moved
+   by its handle (or anywhere in Arrange), selected by the sweep. Same width as a
+   machine, the picture 16:9 under a one-line head. */
+.printers-grid--plan .xc-board-card {
+  position: absolute; margin: 0; width: var(--board-card-w);
+  display: flex; flex-direction: column; gap: 10px; padding: 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  transition: border-color .15s;
+}
+.printers-grid--plan .xc-board-card:hover { border-color: var(--info); }
+#invPrinterView.is-plan-edit .printers-grid--plan .xc-board-card { cursor: grab; }
+/* The head is a machine's head (name + status dot, same classes). The dot says
+   where the camera stands: grey when it is offline (no signal), blue while it
+   connects, green once the picture is live. */
+.xc-board-card[data-state="connecting"] .printer-card-name-dot {
+  background: var(--info);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--info) 18%, transparent);
+  animation: xc-dot-pulse 1.8s ease-in-out 3;
+}
+.xc-board-card[data-state="live"] .printer-card-name-dot {
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+  animation: printer-name-dot-pulse 1.8s ease-in-out 3;
+}
+@keyframes xc-dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 50%, transparent); }
+  50%      { box-shadow: 0 0 0 5px color-mix(in srgb, var(--info) 0%, transparent); }
+}
+.xc-board-card .xc-view { border-radius: 6px; overflow: hidden; }
+.printers-grid--plan .xc-board-card .rp-rack-btn { opacity: 0; transition: opacity .15s, background .15s; }
+.printers-grid--plan .xc-board-card:hover .rp-rack-btn,
+.printers-grid--plan .xc-board-card .rp-rack-btn:focus-visible { opacity: 1; }
+.printers-grid--plan .xc-board-card .rp-rack-move { cursor: grab; }
+.printers-grid--plan .xc-board-card.is-plan-dragging {
+  cursor: grabbing; box-shadow: 0 14px 34px rgba(0,0,0,.45);
+  outline: 2px solid var(--primary); outline-offset: 2px;
+}
+.printers-grid--plan .xc-board-card.is-plan-selected { outline: 2px solid var(--primary); outline-offset: 2px; }
+.printers-grid--plan .xc-board-card.is-plan-overlapping { outline: 2px solid var(--danger); outline-offset: 2px; }
