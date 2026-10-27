@@ -4284,6 +4284,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (p.brand === "snapmaker" && media?.tagName === "IMG" && p.ip)
         return `poll:http://${String(p.ip).replace(/^https?:\/\//, "").replace(/\/.*$/, "")}:7125/server/files/camera/monitor.jpg`;
       const src = media?.tagName === "IMG" ? (media.currentSrc || media.src || "") : "";
+      /* Elegoo: the page's own <img> IS the stream, whatever its address looks like. A CC2 serves
+         `?action=stream`, which the pattern below knows; a CC1 serves `http://<ip>:3031/video`, which it
+         did not — so the recording fell to the frame-by-frame path, which waits for the <img>'s src to
+         change (a stream's never does), got nothing, and reported "didn't let itself be filmed". */
+      if (p.brand === "elegoo" && /^https?:\/\//.test(src)) return src;
       return /^https?:\/\//.test(src) && /action=stream|\.mjpe?g|\/stream/i.test(src) ? src : null;
     },
   });
