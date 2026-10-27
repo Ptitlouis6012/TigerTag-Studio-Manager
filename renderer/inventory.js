@@ -957,6 +957,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* Press-and-hold "destructive action" pattern — replaces a confirm() popup.
      User must hold the button for `durationMs` ms; the inner .hold-progress
      fills left→right during the hold. Releasing early cancels & rolls back. */
+  // "+ Material" (add another spool of this material) is held, not clicked: one
+  // stray click used to mint a spool. Same hold on the grouped-spools card, the
+  // spool card and the product card.
+  const ADDMAT_HOLD_MS = 1000;
+  const ADDMAT_INNER = `<span class="hold-progress hold-progress--primary" aria-hidden="true"></span><span class="icon icon-plus icon-16"></span>`;
   function setupHoldToConfirm(btn, durationMs, onConfirm, { hint = false } = {}) {
     if (!btn) return;
     // Opt-in hover bubble saying the button must be HELD. People click, see
@@ -11736,12 +11741,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           row.appendChild(infoBtn);
           // "+ Material" — create a new (cloud) spool of this material, the same
           // action as the reorder card's `roCreateCloud`. Owner-only.
-          const addBtn = mkBtn("flag-toggle--addmat gp-flag-addmat", `<span class="icon icon-plus icon-16"></span>`, t("productCreateCloudTip"), t("productCreateCloud"));
-          addBtn.addEventListener("click", async () => {
+          const addBtn = mkBtn("flag-toggle--addmat gp-flag-addmat", ADDMAT_INNER, "", t("productCreateCloud"));
+          addBtn.removeAttribute("data-tip");
+          addBtn.dataset.holdTip = "productCreateCloudTip";
+          setupHoldToConfirm(addBtn, ADDMAT_HOLD_MS, async () => {
             try { setLoading(addBtn, true); await _createCloudFromProduct(g.rep); }
             catch (e) { reportError("gp.createCloud", e); }
             finally { setLoading(addBtn, false); }
-          });
+          }, { hint: true });
           row.appendChild(addBtn);
         }
         // Add to cart / "To order" (❤ liked flag).
@@ -19482,6 +19489,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // Toggle button highlight
       $("wbModeNet")  ?.classList.toggle("active", !isGross);
       $("wbModeGross")?.classList.toggle("active",  isGross);
+      _wbMoveThumb();
       // Input bounds — gross can go up to capacity + container, net stops at cap.
       const inp = $("wbInlineInput");
       if (inp) {
@@ -19490,22 +19498,31 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
       _wbUpdateHint();
     }
-    // Live tooltip on the Balance pill — always shows the conversion math, in
-    // both modes, so the user can verify what will be written to Firestore at
-    // any time:
-    //   - No container set → "No container — net = balance"
-    //   - Net mode    (input is net)     → net stays the input value
-    //   - Balance mode (input is gross)  → net = max(0, input − cw)
-    // Browser shows it on hover after ~500 ms. Recomputed on every input event
-    // and on every mode switch.
+    // The line under the Net / On scale switch, shown in "On scale" mode only:
+    // what is subtracted and the net that will be saved, recomputed as the user
+    // types — or, with no container, that the reading is taken as it is.
+    // The selected-segment highlight is one element that slides under the active
+    // button (labels differ in width per language, so it is measured). Placed
+    // without animation the first time the editor opens.
+    let _wbThumbPlaced = false;
+    function _wbMoveThumb() {
+      const thumb = $("wbModeThumb");
+      const btn = $("wbModeGross")?.classList.contains("active") ? $("wbModeGross") : $("wbModeNet");
+      if (!thumb || !btn || !btn.offsetWidth) return;
+      thumb.classList.toggle("no-anim", !_wbThumbPlaced);
+      thumb.style.width = btn.offsetWidth + "px";
+      thumb.style.transform = `translateX(${btn.offsetLeft - 2}px)`;
+      if (!_wbThumbPlaced) { void thumb.offsetWidth; thumb.classList.remove("no-anim"); _wbThumbPlaced = true; }
+    }
     function _wbUpdateHint() {
-      const btn = $("wbModeGross"); if (!btn) return;
-      if (_wbCw <= 0) { btn.title = t("wbModeHintNoContainer"); return; }
-      const inp = $("wbInlineInput");
-      const raw = Number(inp?.value) || 0;
-      const isGross = btn.classList.contains("active");
-      const net = isGross ? Math.max(0, raw - _wbCw) : raw;
-      btn.title = t("wbModeHintGross", { net, cw: _wbCw });
+      const hint = $("wbModeHint"); if (!hint) return;
+      const isGross = $("wbModeGross")?.classList.contains("active");
+      if (!isGross) { hint.textContent = ""; return; }
+      if (_wbCw <= 0) { hint.textContent = t("wbModeHintNoContainer"); return; }
+      const raw = Number($("wbInlineInput")?.value) || 0;
+      const net = Math.max(0, raw - _wbCw);
+      // The result is set in bold: placeholder through t(), escaped, then swapped.
+      hint.innerHTML = esc(t("wbModeHintScale", { cw: _wbCw, net: "\u0000" })).replace("\u0000", `<strong>${net}</strong>`);
     }
     function _wbSeedInputForMode(mode) {
       // Seed the input with the relevant current value so the user starts from
@@ -19522,8 +19539,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // the input-clamping landed) so the slate is clean on every open.
       const res = $("panelWeightResult"); if (res) res.innerHTML = "";
       $("sliderDisplay").classList.add("hidden");
-      $("wbEditOpen").classList.add("hidden");
+      $("wbLen")?.classList.add("hidden");
       $("wbInlineEdit").classList.remove("hidden");
+      // Edit mode swaps contents in place, at the same height: nothing below moves.
+      $("wbInlineEdit").closest(".weight-bar-wrap")?.classList.add("is-editing");
       const mode = _wbGetMode();
       _wbApplyMode(mode);
       _wbSeedInputForMode(mode);
@@ -19533,8 +19552,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     function closeInlineEdit() {
       $("sliderDisplay").classList.remove("hidden");
-      $("wbEditOpen").classList.remove("hidden");
+      $("wbLen")?.classList.remove("hidden");
       $("wbInlineEdit").classList.add("hidden");
+      $("wbInlineEdit").closest(".weight-bar-wrap")?.classList.remove("is-editing");
     }
     function confirmInlineEdit() {
       const mode = _wbGetMode();
@@ -19609,7 +19629,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // of truth, can't desync. If a snapshot arrives mid-drag, the patch
     // forces release via a one-tick `disabled` toggle.
 
-    $("wbEditOpen").addEventListener("click", openInlineEdit);
+    // The pencil stays in place while editing: a second click closes the editor.
+    $("wbEditOpen").addEventListener("click", () =>
+      $("wbInlineEdit").classList.contains("hidden") ? openInlineEdit() : closeInlineEdit());
+    $("sliderDisplay").addEventListener("click", openInlineEdit);   // the number edits itself too
     $("wbInlineConfirm").addEventListener("click", confirmInlineEdit);
     $("wbInlineCancel").addEventListener("click", closeInlineEdit);
     $("wbInlineInput").addEventListener("keydown", e => {
@@ -21531,7 +21554,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // "+ Material" and the ❤/★/list toggles live in the panel HEADER (left of the
     // ✕), not the body head. "+" comes first, like on the spool detail card.
     const addBtn = state.friendView ? ""
-      : `<button type="button" class="flag-toggle flag-toggle--addmat" id="roCreateCloud"${p.catalogItem ? ` data-cat-add="${esc(String(p.catalogItem.id))}"` : ""} data-tip="${esc(t("productCreateCloudTip"))}" aria-label="${esc(t("productCreateCloud"))}"><span class="icon icon-plus icon-16"></span></button>`;
+      : `<button type="button" class="flag-toggle flag-toggle--addmat" id="roCreateCloud"${p.catalogItem ? ` data-cat-add="${esc(String(p.catalogItem.id))}"` : ""} data-hold-tip="productCreateCloudTip" data-hold-ms="${ADDMAT_HOLD_MS}" aria-label="${esc(t("productCreateCloud"))}">${ADDMAT_INNER}</button>`;
     const hf = $("roHeaderFlags"); if (hf) hf.innerHTML = addBtn + _flagTogglesHTML(r);
     _wireReorderPanel(r);
     _reorderUpdateDerived();
@@ -21699,7 +21722,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // ❤ Liked / ★ Favorite toggles are handled by the delegated `.flag-toggle`
     // click listener (wired once), so no per-render wiring here.
     // Create a TigerData spool of this product (from the live spool, else the seed).
-    $("roCreateCloud")?.addEventListener("click", async () => {
+    setupHoldToConfirm($("roCreateCloud"), ADDMAT_HOLD_MS, async () => {
       const btn = $("roCreateCloud");
       // A catalogue preview has no spool to copy yet: _catalogCreate fetches the
       // product and mints a TigerData+ (and opens the new spool's own card).
@@ -21711,7 +21734,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         toast($("roSaveResult"), made ? "ok" : "bad", made ? t("productCloudCreated") : t("networkError"));
       } catch (e) { toast($("roSaveResult"), "bad", e.message || t("networkError")); }
       finally { setLoading(btn, false); }
-    });
+    }, { hint: true });
   }
 
   // The two Liked ❤ / Favorite ★ toggle buttons — reused by the product card AND
@@ -22086,20 +22109,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // "+ Material" in the spool detail panel — same action as the product card's and
   // the grouped-spools card's: add another spool of this material, then open the
   // grouped-spools card on it so you SEE what you just created. Delegated for the
-  // same reason as the flags above (the row is swapped surgically on refresh).
-  document.addEventListener("click", async e => {
-    const btn = e.target.closest(".flag-toggle[data-dp-addmat]");
-    if (!btn) return;
-    const r = (state.rows || []).find(x => x.spoolId === state.selected);
-    if (!r) return;
-    try {
-      setLoading(btn, true);
-      await _createCloudFromProduct(r);
-      _revealAddedSpool(_spoolGroupKey(r));
-    }
-    catch (err) { reportError("detail.createCloud", err); }
-    finally { setLoading(btn, false); }
-  });
+  // same reason as the flags above (the row is swapped surgically on refresh):
+  // each new button is wired for the hold the first time the pointer reaches it.
+  document.addEventListener("pointerover", e => {
+    const btn = e.target.closest?.(".flag-toggle[data-dp-addmat]");
+    if (!btn || btn.dataset.holdWired) return;
+    btn.dataset.holdWired = "1";
+    setupHoldToConfirm(btn, ADDMAT_HOLD_MS, async () => {
+      const r = (state.rows || []).find(x => x.spoolId === state.selected);
+      if (!r) return;
+      try {
+        setLoading(btn, true);
+        await _createCloudFromProduct(r);
+        _revealAddedSpool(_spoolGroupKey(r));
+      }
+      catch (err) { reportError("detail.createCloud", err); }
+      finally { setLoading(btn, false); }
+    }, { hint: true });
+  }, true);
 
   // Shopping in the spool detail panel — has a shop → go there; has none → the
   // Reorder card, already focused on the field that would create one, so the
@@ -22274,20 +22301,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         <div class="weight-bar-wrap">
           <div class="wb-labels">
             <div class="wb-val-group">
-              <div class="wb-val" id="sliderDisplay">${curW}<span>g</span></div>
-              ${filamentLengthText(r, curW) ? `<span class="wb-len" id="wbLen">${filamentLengthText(r, curW)}</span>` : ""}
-              <button id="wbEditOpen" class="wb-edit-open" title="${t("btnEditManually")}">
+              <button id="wbEditOpen" class="wb-edit-open" aria-label="${esc(t("btnEditManually"))}">
                 <span class="icon icon-edit icon-13"></span>
               </button>
+              <div class="wb-val" id="sliderDisplay">${curW}<span>g</span></div>
+              ${filamentLengthText(r, curW) ? `<span class="wb-len" id="wbLen">${filamentLengthText(r, curW)}</span>` : ""}
               <div class="wb-inline-edit hidden" id="wbInlineEdit">
                 <div class="wb-inline-row">
-                  <input type="number" id="wbInlineInput" min="0" max="${cap}" step="1" value="${curW}" />
-                  <button id="wbInlineConfirm" class="wb-inline-ok" title="Confirm">✓</button>
-                  <button id="wbInlineCancel" class="wb-inline-cancel" title="Cancel">✕</button>
-                  <div class="wb-mode-toggle" id="wbModeToggle">
-                    <button type="button" class="wb-mode-btn active" data-mode="net" id="wbModeNet" title="${t('wbModeNetTitle')}">${t('wbModeNet')}</button>
-                    <button type="button" class="wb-mode-btn"        data-mode="gross" id="wbModeGross" title="${t('wbModeGrossTitle')}">${t('wbModeGross')}</button>
-                  </div>
+                  <label class="wb-inline-field">
+                    <input type="number" id="wbInlineInput" min="0" max="${cap}" step="1" value="${curW}" />
+                    <span class="wb-inline-unit" aria-hidden="true">g</span>
+                  </label>
+                  <button id="wbInlineConfirm" class="wb-inline-ok" aria-label="${esc(t("btnSave"))}"><span class="icon icon-check icon-13"></span></button>
+                  <button id="wbInlineCancel" class="wb-inline-cancel" aria-label="${esc(t("btnCancel"))}"><span class="icon icon-close icon-13"></span></button>
                 </div>
               </div>
             </div>
@@ -22297,8 +22323,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             <div class="wb-fill" id="wbFill" style="width:${pctFill}%;background:${fillBarColor(pctFill)}"></div>
             <input type="range" id="weightSlider" min="0" max="${cap}" step="1" value="${curW}" />
           </div>
-          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:5px">
+          <div class="wb-minmax">
             <span>0 g</span><span>${cap} g</span>
+          </div>
+          <!-- Editing: the switch and its hint take the slider's place, same height. -->
+          <div class="wb-edit-bottom">
+            <div class="wb-mode-toggle" id="wbModeToggle">
+              <span class="wb-mode-thumb" id="wbModeThumb" aria-hidden="true"></span>
+              <button type="button" class="wb-mode-btn active" data-mode="net" id="wbModeNet" aria-label="${esc(t("wbModeNetTitle"))}">${t('wbModeNet')}</button>
+              <button type="button" class="wb-mode-btn"        data-mode="gross" id="wbModeGross" aria-label="${esc(t("wbModeGrossTitle"))}">${t('wbModeGross')}</button>
+            </div>
+            <div class="wb-mode-hint" id="wbModeHint"></div>
           </div>
         </div>
 
@@ -22591,7 +22626,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // left leading nowhere. "+ Material" stays owner-only.
     const dpBuyUrl = ((state.friendView ? _friendProductFor(r) : _getProduct(r))?.buyUrl || "").trim();
     const dpAddBtn = state.friendView ? "" :
-      `<button type="button" class="flag-toggle flag-toggle--addmat" data-dp-addmat="1" data-tip="${esc(t("productCreateCloudTip"))}" aria-label="${esc(t("productCreateCloud"))}"><span class="icon icon-plus icon-16"></span></button>`;
+      `<button type="button" class="flag-toggle flag-toggle--addmat" data-dp-addmat="1" data-hold-tip="productCreateCloudTip" data-hold-ms="${ADDMAT_HOLD_MS}" aria-label="${esc(t("productCreateCloud"))}">${ADDMAT_INNER}</button>`;
     const dpBuyBtn = (state.friendView && !dpBuyUrl) ? "" :
       `<button type="button" class="flag-toggle flag-toggle--buy${dpBuyUrl ? " is-buy" : ""}" data-dp-buy="1" data-tip="${
         esc(dpBuyUrl ? _buyHost(dpBuyUrl) : t("reorderAddLink"))
