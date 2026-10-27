@@ -10,7 +10,7 @@ It is neutral and agnostic by design: TigerTag takes no side between filament br
 distributors. The protocol is open and anyone can build a different ecosystem on it; nothing in this repo is a
 prerequisite for doing so.
 
-Current version: **2.44.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
+Current version: **2.45.0** — macOS (Intel + Apple Silicon, signed & notarized), Windows, Linux.
 
 ## Architecture
 
@@ -153,6 +153,8 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
   /containerOverrides/{id} → per-account container calibration { containerWeight?, favorite? } — overrides the
                                bundled catalogue weight at resolution time, never mutates it;
                                `favorite: true` puts a MasterSpool first when a refill asks for its container
+  /rfidAliases/{UID_HEX}   → linked third-party chips (Bambu Lab, Creality… MIFARE Classic) → { spoolId, chip, vendor, linkedAt }
+  /devices/{id}            → non-printer devices: type "camera" = external IP camera (owner-only, login in clear for the owner)
   /rfidList/{chipUid}      → physical chips seen by this account (firstSeen; a `backup` hex dump
                                means TigerTag+)
   /rfidAliases/{UID_HEX}   → a third-party chip (Bambu Lab, Creality… MIFARE Classic) linked to one spool
@@ -300,7 +302,7 @@ All brands: printer discovery (mDNS + port scan + manual IP), camera widget; fil
 npm run i18n:add -- myKey --after existingKey en="..." fr="..." de="..." es="..." it="..." zh="..." pt="..." pt-pt="..." pl="..." ru="..." nl="..."
 npm run i18n:check   # validates consistency (also runs as pre-commit hook)
 ```
-2322 keys × 11 locales as of v2.44.1
+2322 keys × 11 locales as of v2.45.0
 
 ## CSS conventions
 

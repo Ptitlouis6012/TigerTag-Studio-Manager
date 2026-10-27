@@ -130,6 +130,7 @@ The **TigerTag SDK** is the low-level library that handles all NFC chip operatio
 - **One action row on every card** — the product card, the spool detail and the stack of identical spools all offer the same buttons, including a shopping button that opens the shop when the filament has a buy link (and takes you to where you'd add one when it hasn't)
 - **Multi-select** — tick several spools (or printers) and delete them together, with a hold-to-confirm
 - **Create and write the chip in one go** *(new in 2.31.0)* — with a TigerPOD or ACR122U reader plugged in, adding a material goes straight on to writing its NFC chip: a TigerTag by hand, a TigerTag+ from the catalogue
+- **Link the chips already on your spools** *(new in 2.45.0)* — a Bambu Lab or Creality spool placed on the reader is linked to your material by its chip's ID (nothing written into it); from then on, placing it opens it like a TigerTag
 - **Guided chip update** — a step-by-step panel to re-write an existing chip: place it on the reader, UID-match check, verified write
 - **Export / import `.ttag` files** — back up a spool or a whole selection to a portable file, keep it, carry it on a USB stick or share it, then import it back anywhere. Works for TigerData, TigerTag and TigerTag+ alike; import through a validate → preview → accept flow and choose **Restore** (put everything back exactly as it was) or **Import** (fresh spools you own). Pull in several files at once by browsing, pasting a link, or dragging them onto the window
 - **Find a colour by pointing at it** — a rainbow bar and a white-to-black bar with a window you drag along them; spools in range stay lit and the rest fade, so you see *where* that orange actually sits. Works in Inventory, Favorites, the Catalogue and Storage alike
@@ -160,6 +161,8 @@ Every brand at a glance:
 Each brand supports: filament edit per slot, printer discovery (mDNS + port-scan + Add by IP), camera widget. When a scan finds several machines, **tick the ones you want and add them all in one go**. A **FlashForge Creator 5 / 5 Pro** tells you whether it runs the official Cloud + LAN firmware and hands you the latest version for your model *(new in 2.30.0)*.
 
 The **Snapmaker U1** shows its camera even on the original Snapmaker firmware (about one picture a second, enough to watch a print); with the Paxx extended firmware it is smooth live video *(new in 2.33.0)*.
+
+**Any IP camera on the wall** *(new in 2.45.0)* — add a workshop camera, a second angle on a printer or the one watching your front door (RTSP, MJPEG or WebRTC) from *Add a 3D printer → External cameras*; it sits on the camera wall and the printers board like a printer's camera.
 
 The **printers table** shows, per printer: a live **print preview** (the model on the bed), the current job, and an **"Ends at"** column with the wall-clock finish time — plus per-printer **tags** and a search bar with **Brand / State / Tags** filters to manage a whole fleet.
 

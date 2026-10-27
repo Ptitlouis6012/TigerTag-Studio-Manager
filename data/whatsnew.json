@@ -1,4 +1,154 @@
 {
+  "2.45.0": {
+    "date": "2026-10-27",
+    "items": [
+      {
+        "icon": "link",
+        "title": {
+          "en": "Bambu Lab and Creality chips, adopted",
+          "fr": "Puces Bambu Lab et Creality, adoptées",
+          "de": "Bambu-Lab- und Creality-Chips, adoptiert",
+          "es": "Chips de Bambu Lab y Creality, adoptados",
+          "it": "Chip Bambu Lab e Creality, adottati",
+          "zh": "Bambu Lab 与 Creality 芯片，收编",
+          "pt": "Chips Bambu Lab e Creality, adotados",
+          "pt-pt": "Chips Bambu Lab e Creality, adotados",
+          "pl": "Chipy Bambu Lab i Creality, adoptowane",
+          "ru": "Чипы Bambu Lab и Creality — теперь свои",
+          "nl": "Bambu Lab- en Creality-chips, geadopteerd"
+        },
+        "body": {
+          "en": "Put a Bambu Lab or Creality spool on the TigerPOD and link its chips to your material. Next time, the spool opens by itself. Their chips stay untouched — we just remember their face.",
+          "fr": "Pose une bobine Bambu Lab ou Creality sur le TigerPOD et lie ses puces à ton matériau. La prochaine fois, elle s’ouvre toute seule. On ne touche pas à leurs puces : on retient juste leur tête.",
+          "de": "Leg eine Bambu-Lab- oder Creality-Spule auf den TigerPOD und verknüpfe ihre Chips mit deinem Material. Beim nächsten Mal öffnet sie sich von selbst. Die Chips bleiben unberührt — wir merken uns nur ihr Gesicht.",
+          "es": "Pon una bobina Bambu Lab o Creality en el TigerPOD y vincula sus chips a tu material. La próxima vez se abre sola. Sus chips quedan intactos: solo recordamos su cara.",
+          "it": "Appoggia una bobina Bambu Lab o Creality sul TigerPOD e collega i suoi chip al tuo materiale. La prossima volta si apre da sola. I chip restano intatti: ci ricordiamo solo la loro faccia.",
+          "zh": "把 Bambu Lab 或 Creality 料盘放到 TigerPOD 上，将芯片关联到你的材料。下次它会自己打开。芯片原封不动——我们只是记住了它们的脸。",
+          "pt": "Coloque um carretel Bambu Lab ou Creality no TigerPOD e vincule os chips ao seu material. Da próxima vez, ele abre sozinho. Os chips ficam intactos: só lembramos da cara deles.",
+          "pt-pt": "Põe uma bobina Bambu Lab ou Creality no TigerPOD e associa os chips ao teu material. Da próxima vez, abre sozinha. Os chips ficam intactos: só nos lembramos da cara deles.",
+          "pl": "Połóż szpulę Bambu Lab lub Creality na TigerPOD i powiąż jej chipy z materiałem. Następnym razem otworzy się sama. Chipy zostają nietknięte — po prostu pamiętamy ich twarz.",
+          "ru": "Положи катушку Bambu Lab или Creality на TigerPOD и привяжи её чипы к материалу. В следующий раз она откроется сама. Чипы мы не трогаем — просто запоминаем их в лицо.",
+          "nl": "Leg een Bambu Lab- of Creality-spoel op de TigerPOD en koppel de chips aan je materiaal. De volgende keer opent hij vanzelf. Hun chips blijven onaangeroerd — we onthouden alleen hun gezicht."
+        }
+      },
+      {
+        "icon": "plus",
+        "title": {
+          "en": "One window to add a material",
+          "fr": "Une seule fenêtre pour ajouter un matériau",
+          "de": "Ein Fenster, um Material hinzuzufügen",
+          "es": "Una sola ventana para añadir material",
+          "it": "Una sola finestra per aggiungere materiale",
+          "zh": "一个窗口添加材料",
+          "pt": "Uma janela para adicionar material",
+          "pt-pt": "Uma janela para adicionar material",
+          "pl": "Jedno okno do dodawania materiału",
+          "ru": "Одно окно, чтобы добавить материал",
+          "nl": "Eén venster om materiaal toe te voegen"
+        },
+        "body": {
+          "en": "Blank tag, mystery chip or the + button: catalogue, by hand or link to your stock, side by side. The catalogue is already open, because let’s be honest, that’s where you were going.",
+          "fr": "Tag vierge, puce mystère ou bouton + : catalogue, à la main ou lien vers ton stock, côte à côte. Le catalogue est déjà ouvert, parce que soyons honnêtes, c’est là que tu allais.",
+          "de": "Leerer Tag, mysteriöser Chip oder der +-Knopf: Katalog, von Hand oder mit deinem Bestand verknüpfen, nebeneinander. Der Katalog ist schon offen — da wolltest du eh hin.",
+          "es": "Tag virgen, chip misterioso o el botón +: catálogo, a mano o vincular a tu stock, lado a lado. El catálogo ya está abierto, porque seamos sinceros, ibas ahí.",
+          "it": "Tag vergine, chip misterioso o il tasto +: catalogo, a mano o collega al tuo magazzino, fianco a fianco. Il catalogo è già aperto, perché diciamolo, stavi andando lì.",
+          "zh": "空白标签、神秘芯片或 + 按钮：目录、手动添加或关联库存，一字排开。目录已经打开了——说实话，你本来就要去那儿。",
+          "pt": "Tag virgem, chip misterioso ou o botão +: catálogo, à mão ou vincular ao seu estoque, lado a lado. O catálogo já está aberto, porque sejamos sinceros, você ia pra lá.",
+          "pt-pt": "Tag virgem, chip misterioso ou o botão +: catálogo, à mão ou associar ao teu stock, lado a lado. O catálogo já está aberto, porque sejamos honestos, ias para lá.",
+          "pl": "Pusty tag, tajemniczy chip albo przycisk +: katalog, ręcznie lub powiązanie z magazynem, obok siebie. Katalog jest już otwarty, bo bądźmy szczerzy, tam właśnie szedłeś.",
+          "ru": "Пустая метка, загадочный чип или кнопка +: каталог, вручную или связь со складом — рядом. Каталог уже открыт: будем честны, ты всё равно туда шёл.",
+          "nl": "Lege tag, mysterieuze chip of de +-knop: catalogus, met de hand of koppelen aan je voorraad, naast elkaar. De catalogus staat al open, want laten we eerlijk zijn, daar ging je toch heen."
+        }
+      },
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "Burn in one hold",
+          "fr": "Grave d’un seul appui",
+          "de": "Brennen mit einem Druck",
+          "es": "Graba de una pulsación",
+          "it": "Scrivi con una pressione",
+          "zh": "按住一次即可写入",
+          "pt": "Grave com um toque",
+          "pt-pt": "Grava com um toque",
+          "pl": "Wypal jednym przytrzymaniem",
+          "ru": "Запись одним нажатием",
+          "nl": "Branden met één keer vasthouden"
+        },
+        "body": {
+          "en": "Hold “Burn the TigerTag” on a material: chips in place, it burns by itself. It even glows a bit. Dramatic, but efficient.",
+          "fr": "Maintiens « Graver le TigerTag » sur un matériau : puces en place, ça grave tout seul. Ça brille même un peu. Dramatique, mais efficace.",
+          "de": "Halte „TigerTag brennen“ auf einem Material gedrückt: Chips liegen, es brennt von selbst. Es leuchtet sogar ein bisschen. Dramatisch, aber effizient.",
+          "es": "Mantén «Grabar el TigerTag» en un material: chips en su sitio, se graba solo. Hasta brilla un poco. Dramático, pero eficaz.",
+          "it": "Tieni premuto «Scrivi il TigerTag» su un materiale: chip al loro posto, si scrive da solo. Brilla pure un po’. Drammatico, ma efficace.",
+          "zh": "在材料上按住「写入 TigerTag」：芯片就位，自动写入。还会发点光。有点戏剧化，但很高效。",
+          "pt": "Segure «Gravar o TigerTag» num material: chips no lugar, grava sozinho. Até brilha um pouco. Dramático, mas eficiente.",
+          "pt-pt": "Mantém «Gravar o TigerTag» num material: chips no sítio, grava sozinho. Até brilha um bocadinho. Dramático, mas eficaz.",
+          "pl": "Przytrzymaj „Zapisz TigerTag” na materiale: chipy na miejscu, zapisuje się samo. Nawet trochę świeci. Dramatycznie, ale skutecznie.",
+          "ru": "Удерживай «Записать TigerTag» на материале: чипы на месте — запись идёт сама. Даже немного светится. Драматично, но эффективно.",
+          "nl": "Houd „TigerTag branden” ingedrukt op een materiaal: chips op hun plek, hij brandt vanzelf. Hij gloeit zelfs een beetje. Dramatisch, maar efficiënt."
+        }
+      },
+      {
+        "icon": "camera",
+        "title": {
+          "en": "Any IP camera on your wall",
+          "fr": "N’importe quelle caméra IP sur ton mur",
+          "de": "Jede IP-Kamera an deiner Wand",
+          "es": "Cualquier cámara IP en tu muro",
+          "it": "Qualsiasi telecamera IP sulla tua parete",
+          "zh": "任意 IP 摄像头上墙",
+          "pt": "Qualquer câmera IP no seu mural",
+          "pt-pt": "Qualquer câmara IP no teu mural",
+          "pl": "Dowolna kamera IP na twojej ścianie",
+          "ru": "Любая IP-камера на твоей стене",
+          "nl": "Elke IP-camera op je muur"
+        },
+        "body": {
+          "en": "Workshop cam, a second angle on a printer, or the one watching the parcel at your door: add it next to your printers. Your 3D prints and your deliveries, finally under the same roof.",
+          "fr": "Caméra d’atelier, deuxième angle sur une imprimante, ou celle qui surveille le colis devant ta porte : ajoute-la à côté de tes imprimantes. Tes impressions et tes livraisons, enfin sous le même toit.",
+          "de": "Werkstattkamera, ein zweiter Blick auf einen Drucker oder die, die das Paket vor deiner Tür bewacht: füg sie neben deinen Druckern hinzu. Deine Drucke und deine Lieferungen, endlich unter einem Dach.",
+          "es": "Cámara del taller, un segundo ángulo de una impresora o la que vigila el paquete en tu puerta: añádela junto a tus impresoras. Tus impresiones y tus entregas, por fin bajo el mismo techo.",
+          "it": "Telecamera dell’officina, un secondo angolo su una stampante o quella che sorveglia il pacco davanti alla porta: aggiungila accanto alle stampanti. Stampe e consegne, finalmente sotto lo stesso tetto.",
+          "zh": "工作室摄像头、打印机的第二视角，或盯着门口包裹的那台：把它加到打印机旁边。你的打印和快递，终于同框。",
+          "pt": "Câmera da oficina, um segundo ângulo de uma impressora ou a que vigia a encomenda na porta: adicione ao lado das impressoras. Suas impressões e entregas, enfim sob o mesmo teto.",
+          "pt-pt": "Câmara da oficina, um segundo ângulo de uma impressora ou a que vigia a encomenda à porta: adiciona-a ao lado das impressoras. As tuas impressões e entregas, finalmente sob o mesmo teto.",
+          "pl": "Kamera w warsztacie, drugi kąt na drukarkę albo ta, która pilnuje paczki pod drzwiami: dodaj ją obok drukarek. Twoje wydruki i dostawy, wreszcie pod jednym dachem.",
+          "ru": "Камера в мастерской, второй ракурс на принтер или та, что следит за посылкой у двери: добавь её рядом с принтерами. Печать и доставки наконец под одной крышей.",
+          "nl": "Werkplaatscamera, een tweede blik op een printer of die het pakket voor je deur bewaakt: zet hem naast je printers. Je prints en je leveringen, eindelijk onder één dak."
+        }
+      },
+      {
+        "icon": "coins",
+        "title": {
+          "en": "Where did my TigerCoins go?",
+          "fr": "Où sont passés mes TigerCoins ?",
+          "de": "Wo sind meine TigerCoins hin?",
+          "es": "¿Dónde están mis TigerCoins?",
+          "it": "Dove sono finiti i miei TigerCoins?",
+          "zh": "我的 TigerCoins 去哪了？",
+          "pt": "Cadê meus TigerCoins?",
+          "pt-pt": "Onde foram parar os meus TigerCoins?",
+          "pl": "Gdzie się podziały moje TigerCoins?",
+          "ru": "Куда делись мои TigerCoins?",
+          "nl": "Waar zijn mijn TigerCoins gebleven?"
+        },
+        "body": {
+          "en": "Click your balance: every coin won, spent or given, day by day. No more mysteries, only receipts.",
+          "fr": "Clique sur ton solde : chaque coin gagné, dépensé ou offert, jour par jour. Fini les mystères, place aux reçus.",
+          "de": "Klick auf deinen Kontostand: jede gewonnene, ausgegebene oder verschenkte Münze, Tag für Tag. Keine Rätsel mehr, nur Belege.",
+          "es": "Pulsa tu saldo: cada moneda ganada, gastada o regalada, día a día. Se acabaron los misterios, solo recibos.",
+          "it": "Clicca sul saldo: ogni moneta vinta, spesa o regalata, giorno per giorno. Niente più misteri, solo ricevute.",
+          "zh": "点击你的余额：每一枚赢得、花掉或送出的币，按天列出。不再有谜团，只有收据。",
+          "pt": "Clique no seu saldo: cada moeda ganha, gasta ou dada, dia a dia. Chega de mistérios, só recibos.",
+          "pt-pt": "Clica no teu saldo: cada moeda ganha, gasta ou oferecida, dia a dia. Acabaram os mistérios, só recibos.",
+          "pl": "Kliknij saldo: każda wygrana, wydana lub podarowana moneta, dzień po dniu. Koniec tajemnic, same paragony.",
+          "ru": "Нажми на баланс: каждая монета — выигранная, потраченная или подаренная, по дням. Никаких загадок, только чеки.",
+          "nl": "Klik op je saldo: elke munt gewonnen, uitgegeven of weggegeven, dag voor dag. Geen mysteries meer, alleen bonnetjes."
+        }
+      }
+    ]
+  },
   "2.44.0": {
     "date": "2026-10-26",
     "items": [

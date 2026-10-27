@@ -174,7 +174,7 @@ body.progress-view #gridSortWrap { display: none; }
    image ends on the waist cut: −6 px puts it just over the desk top), the cork
    board hanging behind it on the wall, the compass and the scroll, the printer. */
 .qm-hero:not(.qd-hero):not(.xph-hero) .hl-box { left: 50%; translate: -50% 0; }   /* centred between the title and the level card */
-.qm-hero:not(.qd-hero):not(.xph-hero) .hl--tiger { left: 0; height: 94%; }
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--tiger { left: 0; height: 94%; translate: 0 -4px; }   /* its bottom on the desk's top edge */
 .qm-hero:not(.qd-hero):not(.xph-hero) .hl--board { left: 31%; bottom: 28%; height: 64%; translate: none; }
 .qm-hero:not(.qd-hero):not(.xph-hero) .hl--compass { left: 36%; height: 30%; }
 .qm-hero:not(.qd-hero):not(.xph-hero) .hl--scroll { left: 45%; height: 20%; }
@@ -805,7 +805,7 @@ body.progress-view #gridSortWrap { display: none; }
    resting paw in front of it. The cut is 4.26 % above the images' bottom, so both
    move down by that much + 2 px: the cut lands just under the desk's top edge and
    the paw rests on the desk. */
-.xph-hero .hl--tiger { left: 27%; height: 78%; }
+.xph-hero .hl--tiger { left: 27%; height: 78%; translate: 0 -1px; }   /* 4 px up from the plane's 3 px */
 .xph-hero .hl--coins { left: 61%; height: 42%; }
 .xph-hero .hl--book { left: 75%; height: 44%; }
 /* The hourglass turns over on a click (data-xph-hourglass): a half turn around
@@ -1141,6 +1141,10 @@ body.progress-view #gridSortWrap { display: none; }
    rest on the desk in front of it. Then the trophy, the printer, four stars. */
 .sqr-hero:not(.sqd-hero) .hl--tiger-silver { left: 0; height: 86%; }
 .sqr-hero:not(.sqd-hero) .hl--tiger-gold { left: 20%; height: 98%; }
+/* The silver tiger ends on the desk's top edge; the gold and bronze ones' paws,
+   drawn under their cut, rest on it. */
+.sqr-hero:not(.sqd-hero) .hl--tiger-silver { translate: 0 -6px; }
+.sqr-hero:not(.sqd-hero) :is(.hl--tiger-gold, .hl--tiger-bronze) { translate: 0 -2px; }
 .sqr-hero:not(.sqd-hero) .hl--trophy { left: 41.5%; height: 50%; pointer-events: auto; cursor: pointer; }
 /* Clicked (data-trophy): a jump with a spin and a golden flash. */
 .sqr-hero:not(.sqd-hero) .hl--trophy.hl--trophy.is-cheering { animation: hl-cheer .9s cubic-bezier(.3, 1.4, .5, 1); }
