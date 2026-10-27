@@ -155,6 +155,10 @@ users/{uid}                → { displayName, email, publicKey, privateKey, isPu
                                `favorite: true` puts a MasterSpool first when a refill asks for its container
   /rfidList/{chipUid}      → physical chips seen by this account (firstSeen; a `backup` hex dump
                                means TigerTag+)
+  /rfidAliases/{UID_HEX}   → a third-party chip (Bambu Lab, Creality… MIFARE Classic) linked to one spool
+                             { spoolId, chip, vendor, linkedAt } — docs/LINKED-CHIPS.md
+  /coinLog/{entryId}       → every TigerCoins movement (opened, spent, given, received), read by the
+                             TigerCoins history; server-written
   /notifications/{id}      → friend-to-friend notifications (field-whitelisted in the rules)
   /apps/studio             → per-app state flags (e.g. the onboarding version already run)
 ```

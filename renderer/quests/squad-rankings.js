@@ -170,13 +170,12 @@ export function squadHeroHtml(ctx, members, eggFound = null) {
 }
 
 // The League banner scene (hero-layers.js): three tigers with their silver, gold
-// and bronze medals behind the desk (still), their resting paws in front of it,
+// and bronze medals, each one picture standing on the desk (still), paws on it,
 // the trophy, the printer and the stars on the desk. The trophy is also an easter
 // egg (leagueTrophy, no envelope shown: three quick clicks on the cup — the host's
 // tapEgg); `eggFound(id)` drops its data-egg once found, unknown → none (null).
 const leagueScene = eggFound => heroLayersHtml("../assets/img/tigersquad/league-hero/", {
-  back: ["tiger-silver", "tiger-gold", "tiger-bronze"],
-  front: ["tiger-gold-paws", "tiger-bronze-paws",
+  front: ["tiger-silver", { name: "tiger-gold-one", cls: "tiger-gold" }, { name: "tiger-bronze-one", cls: "tiger-bronze" },
     { html: `<img class="hl hl--trophy" data-trophy${eggFound && !eggFound("leagueTrophy") ? ` data-egg="leagueTrophy"` : ""} src="../assets/img/tigersquad/league-hero/trophy.webp" alt="" draggable="false">` }, "printer", ...[1, 2, 3, 4].map(i => ({ name: "star", cls: `spark hl--spark${i}` }))],
 });
 

@@ -47,6 +47,48 @@ function closeOverlay(el) {
   setTimeout(() => el.remove(), 220);
 }
 // Closes every open stage at once (the account left the squad, or another account took over).
+// A discovery the member did not ask for by clicking it (an easter egg found by
+// rapid clicks, a friend's envelope arriving) must not be skipped by the clicks
+// still coming: the overlay swallows every pointer and key press for `ms`.
+export function guardInput(el, ms = 2000) {
+  const until = performance.now() + ms;
+  const stop = e => { if (performance.now() < until) { e.stopImmediatePropagation(); e.preventDefault(); } };
+  for (const type of ["pointerdown", "mousedown", "mouseup", "click", "pointerup"]) el.addEventListener(type, stop, true);
+  const key = e => { if (performance.now() < until && el.isConnected) { e.stopImmediatePropagation(); e.preventDefault(); } };
+  document.addEventListener("keydown", key, true);
+  setTimeout(() => document.removeEventListener("keydown", key, true), ms + 50);
+}
+// An easter egg found: a secret's own moment before the pile opens — the room
+// dims, golden rays turn, the envelope flies out of its hiding place (`from`, a
+// DOMRect) to the centre and swells, sparks burst, "Secret found!" lands with a
+// fanfare; ~2.4 s, every click swallowed, then it fades and resolves.
+export function celebrateEgg(ctx, from) {
+  const { t, esc } = ctx;
+  return new Promise(resolve => {
+    warmSound();
+    const el = document.createElement("div");
+    el.className = "egg-fx";
+    const x = from ? from.left + from.width / 2 : innerWidth / 2, y = from ? from.top + from.height / 2 : innerHeight / 2;
+    el.style.setProperty("--fx", `${x - innerWidth / 2}px`);
+    el.style.setProperty("--fy", `${y - innerHeight / 2}px`);
+    const sparks = Array.from({ length: 18 }, (_, i) => `<i style="--a:${i * 20}deg;--d:${110 + (i % 3) * 40}px;--s:${8 + (i % 4) * 3}px"></i>`).join("");
+    el.innerHTML = `
+      <div class="egg-fx-rays" aria-hidden="true"></div>
+      <div class="egg-fx-stage">
+        <span class="egg-fx-sparks" aria-hidden="true">${sparks}</span>
+        <img class="egg-fx-env" src="${IMG}envelope.webp" alt="" aria-hidden="true">
+      </div>
+      <div class="egg-fx-text" role="status"><b>${esc(t("eggFoundTitle"))}</b><small>${esc(t("eggFoundSub"))}</small></div>`;
+    document.body.appendChild(el);
+    guardInput(el, 2600);
+    requestAnimationFrame(() => el.classList.add("is-on"));
+    setTimeout(() => { sfx.impact?.(3); }, 450);
+    setTimeout(() => { sfx.rarity?.(4); }, 700);
+    const quick = reduced() ? 1200 : 2400;
+    setTimeout(() => { el.classList.add("is-out"); setTimeout(() => { el.remove(); resolve(); }, 350); }, quick);
+  });
+}
+
 export function closePullStages() { document.querySelectorAll(".tc-reveal").forEach(closeOverlay); }
 
 // The stage frame (floating over the dimmed app, no panel): the sound toggle,
@@ -404,9 +446,10 @@ export async function revealPulls(ctx, opened) {
 /* `gift` (gift envelopes in the pile): { count() → n, run() → the new pile size
    or null } — a small "Give to a friend (n)" under the pile; run() opens the
    friend picker over the stage, the stage then redraws its pile. */
-export async function openPullStage(ctx, { left, pull, gift = null }) {
+export async function openPullStage(ctx, { left, pull, gift = null, guard = 0 }) {
   const { t, esc } = ctx;
   const el = overlay();
+  if (guard) guardInput(el, guard);   // opened by an easter egg: the clicks still coming must not skip it
   // The envelope pile has its own background music while the stage is open.
   el.dataset.ambient = "1";
   ambientStart();

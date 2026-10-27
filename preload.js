@@ -254,6 +254,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onRfidCardPresent: (callback) =>
     ipcRenderer.on('rfid-card-present', (_, data) => callback(data)),
 
+  // A chip that is not a TigerTag (no readable user pages) — callback({ readerName, uid, chip })
+  onRfidForeignChip: (callback) =>
+    ipcRenderer.on('rfid-foreign-chip', (_, data) => callback(data)),
+
   // Full parsed tag from auto-read on card placement — callback(tagData)
   onRfidTagScanned: (callback) =>
     ipcRenderer.on('rfid-tag-scanned', (_, tagData) => callback(tagData)),

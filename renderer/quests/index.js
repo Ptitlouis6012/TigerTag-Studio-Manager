@@ -31,6 +31,22 @@ const rankIcon = n => `<span class="qm-rank-ic" style="--ico:url('../../assets/s
 const RANK_IDS = { discovery: 1, explorer: 2 };
 
 import { sfx } from "./coin-sound.js";
+import { heroLayersHtml } from "./hero-layers.js";
+
+// The Today banner scene (hero-layers.js): the tiger in the TigerTag cap dreaming,
+// one picture standing on the desk with its paw resting on it, its light-bulb thought, the
+// plant, the laptop, the printer and the spool shelf on the desk.
+const DAILY_SCENE = heroLayersHtml("../assets/img/quests/daily-hero/", {
+  front: ["plant", "laptop", { name: "tiger-one", cls: "tiger" }, "bubble", "printer", { name: "shelf-v2", cls: "shelf" }],
+});
+
+// The Missions banner scene: the explorer tiger (backpack, map, TigerTag cap)
+// on the desk pointing at the cork board of the journey (on the wall, behind), the compass and the
+// map scroll on the desk, the printer finishing a trophy.
+const MISSIONS_SCENE = heroLayersHtml("../assets/img/quests/missions-hero/", {
+  back: ["board"],   // on the wall, behind the tiger's pointing paw
+  front: ["tiger", "compass", "scroll", "printer"],
+});
 
 let _ctx = null;
 let _uid = null;
@@ -417,7 +433,7 @@ function todayHtml() {
     <section class="qm-hero qd-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
         <h2>${esc(t("questsDailyHeading"))}</h2><p>${esc(t("questsCaption"))}</p></div>
-      <div class="hero-scene" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">${DAILY_SCENE}</div>
     </section>
     <div class="qd-grid">
       <div class="qd-main">
@@ -645,7 +661,7 @@ function journeyHtml() {
     <section class="qm-hero">
       <div class="qm-hero-txt"><span class="qw-eyebrow">${esc(t("questsTitle"))}</span>
         <h2>${esc(t("questsJourney"))}</h2><p>${esc(t("squadHeroTagline"))}</p></div>
-      <div class="hero-scene" aria-hidden="true"></div>
+      <div class="hero-scene" aria-hidden="true">${MISSIONS_SCENE}</div>
       <div class="qm-hero-card">
         <b>${rankIcon(cur)} ${esc(t(`questRank_${cur}`))} · ${esc(t(`questWorld_${cur}`))}</b>
         <span>${esc(t("questsLevelsDone", { n: wonIn(cur), total: curLv.length }))}</span>

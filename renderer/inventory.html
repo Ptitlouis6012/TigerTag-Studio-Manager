@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="printers/prusa/prusa.css" />
 <link rel="stylesheet" href="css/60-modals.css" />
 <link rel="stylesheet" href="rfid_protocol/tigertag/modal.css" />
+<link rel="stylesheet" href="rfid_protocol/linked/linked.css" />
 <link rel="stylesheet" href="css/70-detail-misc.css" />
 <link rel="stylesheet" href="IoT/tigerscale/tigerscale.css" />
 <link rel="stylesheet" href="IoT/tigerspool/tigerspool.css" />
@@ -2939,6 +2940,42 @@
        bubble, and `data-tip` carries plain text, which applyTranslations cannot
        reach — rendering on open keeps them in the current language. -->
   <div class="pba-brands" id="matSourceList"></div>
+</aside>
+
+<!-- New-chip side card (rfid_protocol/linked): a blank NTAG or a maker's chip
+     was placed — catalogue / manually / link to the inventory. Filled by
+     openChipWindow; title and subtitle are set per chip. -->
+<button class="pp-close-tab" id="chipChoiceCloseTab" aria-label="Close" hidden>»</button>
+<aside class="detail-panel pba-panel lc-panel" id="chipChoicePanel">
+  <div class="pba-header">
+    <button type="button" class="lc-back" id="chipChoiceBack" hidden aria-label="Back"><span class="icon icon-chevron-l icon-14" aria-hidden="true"></span></button>
+    <div class="pba-header-text">
+      <div class="pba-title" id="chipChoiceTitle"></div>
+      <div class="pba-sub lc-found" id="chipChoiceSub"></div>
+    </div>
+    <button class="panel-close" id="chipChoiceClose">✕</button>
+  </div>
+  <div class="lc-body" id="chipChoiceBody"></div>
+</aside>
+
+<!-- Catalogue pick — "From the catalogue" of the new-chip window
+     (rfid_protocol/linked): brand + the catalogue search, one tap creates the
+     TigerData+ (openCatalogPick in inventory.js). -->
+<button class="pp-close-tab" id="catalogPickCloseTab" aria-label="Close" hidden>»</button>
+<aside class="detail-panel pba-panel cat-pick-panel" id="catalogPickPanel">
+  <div class="pba-header">
+    <div class="pba-header-text">
+      <div class="pba-title" data-i18n="matSourceCatalogue">From Catalogue</div>
+      <div class="pba-sub" data-i18n="matSourceCatalogueHint">Find the real product — everything is filled in for you</div>
+    </div>
+    <button class="panel-close" id="catalogPickClose">✕</button>
+  </div>
+  <div class="cpk-controls">
+    <select id="cpkBrand" data-csel-short="thBrand"></select>
+    <label class="cpk-search"><span class="icon icon-search icon-13" aria-hidden="true"></span><input type="search" id="cpkSearch" data-i18n-placeholder="catPickSearch" placeholder="Name, material, colour, SKU, barcode…"></label>
+  </div>
+  <div id="cpkMsg"></div>
+  <div class="cpk-list" id="cpkList"></div>
 </aside>
 
 <div class="panel-overlay" id="addProductOverlay"></div>

@@ -183,6 +183,16 @@ users/
                                 UID + product id, so a clone is detectable
                                 (invalid signature) — the backup opens no new risk
 
+    rfidAliases/
+      {UID_HEX}/             — a THIRD-PARTY RFID chip (Bambu Lab, Creality… MIFARE
+                              Classic) linked to one spool (docs/LINKED-CHIPS.md).
+                              Owner-only, fixed shape. One chip → one spool; a spool
+                              may have several (one per flange). No XP.
+        spoolId     string    — the inventory doc it points to (twin: tag_index 1, else the smaller UID)
+        chip        string    — "mifare1k" | "mifare4k" | "unknown" (reader's ATR)
+        vendor      string    — "bambu" | "creality" | "unknown"
+        linkedAt    timestamp
+
     products/
       {keyHash}/             — one doc per PRODUCT IDENTITY (keyHash = hash of the
                               product signature, NOT a spoolId), so the info applies

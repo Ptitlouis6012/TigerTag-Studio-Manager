@@ -105,7 +105,10 @@ function startNFC() {
       } catch (_) {
         // Read failed — emit uid only; main process handles graceful fallback
       }
-      process.parentPort.postMessage({ type: 'card', readerName: name, uid, rawPagesHex });
+      // The ATR names the card type (PC/SC part 3: bytes 13-14 — 0x0001 MIFARE Classic 1K,
+      // 0x0002 4K); main.js uses it for chips that are not TigerTags (docs/LINKED-CHIPS.md).
+      const atr = card.atr ? Buffer.from(card.atr).toString('hex') : null;
+      process.parentPort.postMessage({ type: 'card', readerName: name, uid, rawPagesHex, atr });
     });
 
     // Card removed

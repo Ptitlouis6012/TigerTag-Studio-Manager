@@ -701,6 +701,12 @@ async function _onNfcMessage(msg) {
         }
       } else {
         console.log(`[NFC] Card present on ${msg.readerName} — uid: ${uid} (no dump)`);
+        // Not a TigerTag (a maker's MIFARE Classic chip — Bambu Lab, Creality…): the
+        // renderer may have it linked to a spool (docs/LINKED-CHIPS.md).
+        const atr = String(msg.atr || '').toLowerCase();
+        const card = atr.length >= 30 ? atr.slice(26, 30) : '';
+        const chip = card === '0001' ? 'mifare1k' : card === '0002' ? 'mifare4k' : 'unknown';
+        mainWindow?.webContents.send('rfid-foreign-chip', { readerName: msg.readerName, uid, chip });
       }
       break;
     }

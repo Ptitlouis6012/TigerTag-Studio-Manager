@@ -1,5 +1,6 @@
 // ── RFID TigerTag tester modal ────────────────────────────────────────────
 import { initRfidTester } from './rfid_protocol/tigertag/index.js';
+import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice } from './rfid_protocol/linked/index.js';
 
 // ── Offline timezone → country (telemetry, no IP geolocation) ──────────────
 import { tzToCountry, COUNTRY_CODES } from './tz-country.js';
@@ -2027,6 +2028,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function setDisconnected() {
     state.displayName = null; state.keyValid = null;
     questsSignOut();
+    linkedChipsSignOut();
     _stopSquadPulse();
     _mcpSyncAccount(null);                    // nobody signed in → MCP server off
     state.photoURL = null;  // clear custom avatar → sign-in placeholder shows
@@ -3153,6 +3155,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("matSourceCloseTab")?.addEventListener("click", closeMaterialSourcePicker);
   document.addEventListener("keydown", e => {
     if (e.key === "Escape" && $("matSourcePanel")?.classList.contains("open")) closeMaterialSourcePicker();
+    if (e.key === "Escape" && $("catalogPickPanel")?.classList.contains("open")) closeCatalogPick();
+    if (e.key === "Escape" && $("chipChoicePanel")?.classList.contains("open")) closeChipChoice();
   });
   // Delegated on the container: the rows are re-rendered on every open.
   $("matSourceList")?.addEventListener("click", e => {
@@ -3185,10 +3189,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       return;
     }
 
+    // Chips left waiting by the new-chip window are only for the creation it
+    // starts (it sets them right after this call).
+    clearPendingLink();
     // "Add product" takes over the right side — close every other side card first
-    // (source picker, spool detail, grouped-spools card, product card, reorder,
-    // pickers, notifs).
+    // (source picker, catalogue pick, spool detail, grouped-spools card, product
+    // card, reorder, pickers, notifs).
     try { closeMaterialSourcePicker(); } catch (_) {}
+    try { closeCatalogPick(); } catch (_) {}
     try { closeDetail(); } catch (_) {}
     try { _closeGroupPanel(); } catch (_) {}
     try { closeProductCard(); } catch (_) {}
@@ -4348,6 +4356,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // ── USB scale (Dymo) module init ───────────────────────────────────────
   // One weight write per pose: POD mode applies silently (UID = certainty),
   // side-card mode shows an inline confirm in the panel's WEIGHT section.
+  // Linked chips — third-party RFID chips mapped to a spool (docs/LINKED-CHIPS.md).
+  initLinkedChips({ t, esc, state, fbDb, colorBg, thumbHTML, openDetail, setupHoldToConfirm,
+    toast: msg => _flashMessage(msg), reportError, onChange: () => { if (state.selected) refreshOpenDetail?.(); },
+    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), syncPanels: () => _syncPanels() });
+  $("chipChoiceClose")?.addEventListener("click", () => closeChipChoice());
+  $("chipChoiceCloseTab")?.addEventListener("click", () => closeChipChoice());
+
   initUsbScale({
     state,
     t,
@@ -5381,7 +5396,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     el.hidden = !n;
   }
   // `gifts` = today's allowance of envelopes to give friends ({ left, max, tier }).
-  const _coinsOf = r => ({ balance: r.balance, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null, eggs: r.eggs || [] });
+  const _coinsOf = r => ({ balance: r.balance, earned: r.earned || 0, spent: r.spent || 0, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null, eggs: r.eggs || [] });
   // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
   const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg), hold: setupHoldToConfirm,
     openChest: async id => {
@@ -5401,7 +5416,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // chips'; the chests (in the pile, or just won) open when the stage closes.
   // A gift envelope can also go, unopened, to a friend ("Give to a friend"
   // under the pile, today's allowance by TigerSquad level).
-  async function _openAllEnvelopes(uid, ctx, after) {
+  // opts.guard (ms): the stage ignores input that long — set when an easter egg opens it.
+  async function _openAllEnvelopes(uid, ctx, after, opts = {}) {
     if (!_squadOnly()) return;
     if (document.querySelector(".tc-reveal")) return;   // an opening is already on screen
     const set = r => { _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins)); after?.(); };
@@ -5434,7 +5450,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         return _pileSize();
       },
     };
-    if (_pileSize()) await openPullStage(ctx, { left: _pileSize(), pull, gift });
+    if (_pileSize()) await openPullStage(ctx, { left: _pileSize(), pull, gift, guard: opts.guard || 0 });
     const chests = _deals.coins?.chests || [];
     if (chests.length) await openChests(ctx, chests);
   }
@@ -5462,6 +5478,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     },
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
     eggFound: egg => (_deals.coins?.eggs || []).includes(egg),
+    getCoins: () => _deals.coins,   // the latest balance (earned / spent / balance) for the history's summary
+    // TigerCoins history (squad-deals.js openCoinsHistory): the account's coinLog, newest first.
+    coinHistory: async () => (await fbDb(uid).collection("users").doc(uid).collection("coinLog").orderBy("at", "desc").limit(300).get())
+      .docs.map(d => ({ ...d.data(), at: d.get("at")?.toMillis?.() || 0 })),
+    friendName: fuid => (state.friends || []).find(f => f.uid === fuid)?.displayName || "",
+    dealTitle: id => { const d = (_deals.docs || []).find(x => x.id === id); const tt = d?.title; return !tt ? "" : typeof tt === "string" ? tt : tt[state.lang] || tt.en || Object.values(tt)[0] || ""; },
+    loadingHTML: () => _loadingHTML(),
     // An easter egg found (squad-deals.js openEnvelopeHelp): the server adds its
     // envelope to the pile, the help window closes and the pile opens.
     easterEgg: async (egg, closeHelp) => {
@@ -5469,8 +5492,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
       paint();
       closeHelp?.();
-      setTimeout(() => _openAllEnvelopes(uid, ctx, paint), 260);
-      return r;
+      return { ...r, open: () => _openAllEnvelopes(uid, ctx, paint, { guard: 1200 }) };   // tapEgg opens it after the celebration
     },
     qr: url => _makeQrDataUrl(url, { size: 264, margin: 2, fg: "#111318", bg: "#ffffff", logo: false }),   // black on white: always scans
     openChest: id => _coinsCtx(uid, paint).openChest(id),
@@ -5740,15 +5762,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // An easter-egg envelope behind a legendary device: three quick clicks (tapEgg).
       const eggSpot = e.target.closest("[data-egg]");
       if (eggSpot) {
-        tapEgg(eggSpot, eggSpot.dataset.egg, { t, toast: msg => _flashMessage(msg),
+        tapEgg(eggSpot, eggSpot.dataset.egg, { t, esc, toast: msg => _flashMessage(msg),   // esc: the celebration writes its texts
           easterEgg: async (egg, onFound) => {
             const r = await _tigerCoins(uid, "easterEgg", { egg });
             _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
             onFound?.();
             const after = () => { if (card.isConnected) render(_squadViewTab); };
             after();
-            setTimeout(() => _openAllEnvelopes(uid, _coinsCtx(uid, after), after), 260);
-            return r;
+            return { ...r, open: () => _openAllEnvelopes(uid, _coinsCtx(uid, after), after, { guard: 1200 }) };
           } }, card);
         return;
       }
@@ -7820,6 +7841,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     syncUserDoc(uid);
     questsSignIn(uid);
     hydratePodSignal(uid);   // seed state.hasPod + lifetime rfidReadersMax from telemetry/studio
+    linkedChipsSignIn(uid);  // third-party chips linked to spools (docs/LINKED-CHIPS.md)
     subscribeFriendRequests(uid);
     subscribeFriends(uid);  // live-sync friends (add/remove on the fly, both sides) + per-friend avatar/name listeners
     subscribeNotifications(uid);  // live notification center (general notifs + unread badge)
@@ -13921,6 +13943,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     while (!state.inventory[cloudId] && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
     const row = state.rows.find(x => x.spoolId === cloudId);
     if (!row) return;
+    // Created from the linked-chips window: the maker's chips get linked and
+    // there is nothing to burn.
+    if (await linkPendingTo(cloudId)) { openDetail(cloudId); return; }
     openDetail(cloudId);
     if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
   }
@@ -13978,6 +14003,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .filter(n => state.nfcCardPresent.has(n))
       .map(n => ({ readerName: n, uid: state.nfcCardPresent.get(n)?.uid || null }));
   }
+
+  // A 4-byte UID is a MIFARE Classic (a maker's chip — Bambu Lab, Creality…):
+  // TigerTags are NTAG (7-byte UID) and nothing can be burned onto it.
+  const _cemChipIncompatible = uid => { const u = String(uid || "").replace(/[^0-9a-f]/gi, ""); return u.length > 0 && u.length <= 8; };
 
   // Is this chip free to burn without losing anything? `hex` = the user pages
   // from page 4. Three shapes carry nothing worth keeping:
@@ -14049,6 +14078,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // a foreign chip is a "mismatch" (red) so the user knows to swap it.
         if (!hasReader) st = "none";
         else if (!card) st = "waiting";
+        else if (_cemChipIncompatible(card.uid)) st = "incompatible";
         else st = (isUpdate && !_ownsUid(card.uid)) ? "mismatch" : "ready";
       }
       st = st || "waiting";
@@ -14056,6 +14086,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       return `<div class="cem-chip cem-chip--${st}">
         ${numBadge}
         <div class="cem-chip-logo"></div>
+        ${st === "incompatible" ? `<span class="cem-chip-note">${esc(t("encIncompatibleChip"))}</span>` : ""}
       </div>`;
     }).join("");
     const chipsEl = $("cemChips"); if (chipsEl) chipsEl.innerHTML = cards;
@@ -14064,12 +14095,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // _cemBlank holds true for a BLANK chip — warn when one is NOT (it was inverted).
     const nonBlank = present.some(p => _cemBlank.get(p.readerName) === false);
     const sameUid  = present.length === 2 && present[0].uid && present[0].uid === present[1].uid;
+    const anyIncompatible = present.some(p => _cemChipIncompatible(p.uid));
     // Update mode: enable only when ALL of this spool's chips are present AND no
     // foreign (mismatch) chip is on any reader.
     const anyMismatch   = isUpdate && present.some(p => !_ownsUid(p.uid));
     const allOwnPresent = isUpdate && spoolUids.length > 0
       && spoolUids.every(u => present.some(p => String(p.uid || "").toUpperCase() === u));
-    const gateReady = isUpdate
+    const gateReady = anyIncompatible ? false : isUpdate
       ? (!burning && allOwnPresent && !anyMismatch)
       : (!burning && readers.length >= 1 && present.length === readers.length && !sameUid
          && (!nonBlank || $("cemOwToggle")?.checked));
@@ -14102,11 +14134,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const isErr = _cemState === "failed" || sameUid || anyMismatch;
       hintEl.textContent =
         _cemState === "failed" ? t("encFailed")
+        : anyIncompatible && !burning ? t("encIncompatible")
         : anyMismatch          ? t("encMismatch")
         : sameUid              ? t("encSameUid")
         : readers.length === 0 ? t("encNoReader")
         :                        t("encPlaceChips");
-      hintEl.classList.toggle("cem-hint--fail", isErr);
+      hintEl.classList.toggle("cem-hint--fail", isErr && !(anyIncompatible && !burning && _cemState !== "failed"));
+      hintEl.classList.toggle("cem-hint--warn", anyIncompatible && !burning && _cemState !== "failed");
     }
     // Burn button (Cancel removed — close via the ✕ or the backdrop). The whole
     // actions row is hidden during the burn so there's no dead button.
@@ -15125,12 +15159,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      `id_tigertag` deliberately keeps the chipless nonce — this spool has no
      chip, so it must not carry the TigerTag+ id.
   */
-  async function _catalogCreate(productId) {
+  async function _catalogCreate(productId, { msgEl = null } = {}) {
     if (_catalogBusy) return;
     const uid = state.activeAccountId;
     if (!uid || state.friendView) return;
+    // Only the catalogue pick card (opened from the new-chip window) carries
+    // waiting chips to link.
+    if (!msgEl) clearPendingLink();
     // Feedback goes to whichever surface the user actually triggered this from.
-    const res$ = $("pcCatMsg") || $("roSaveResult");
+    const res$ = msgEl || $("pcCatMsg") || $("roSaveResult");
     _catalogSetBusy(true);
     try {
       // The one network call of this path — the same detail endpoint the
@@ -15155,7 +15192,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       bumpStudioCounters({ cloudPlusAddedTotal: 1 });
       // The product card has done its job: close it and open the new spool's
       // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
-      if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
+      if (msgEl) closeCatalogPick();
+      else if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
       _openCreatedSpool(cloudId);
     } catch (e) {
       console.error("[catalog] create failed:", e);
@@ -15173,6 +15211,73 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const btn = $("pcCatAdd") || $("roCreateCloud");
     if (btn) { btn.disabled = !!busy; btn.classList.toggle("is-busy", !!busy); }
   }
+
+  /* ── Catalogue pick — side card ─────────────────────────────────────────────
+     "From the catalogue" of the new-chip window (rfid_protocol/linked): a brand
+     select + the catalogue view's own search (`_catalogFilter`: words, SKU,
+     barcode, product id), one tap on a product creates the TigerData+
+     (`_catalogCreate`), which then links the waiting maker's chips or offers the
+     burn onto the blank chip (`_openCreatedSpool`). */
+  const CAT_PICK_MAX = 80;
+  function openCatalogPick() {
+    if (!state.activeAccountId || state.friendView) return;
+    clearPendingLink();
+    try { closeMaterialSourcePicker(); } catch (_) {}
+    try { closeDetail(); } catch (_) {}
+    try { closeProductCard(); } catch (_) {}
+    try { closeReorderPanel(); } catch (_) {}
+    _catalogLoadCacheIfNeeded();
+    _catalogSync().then(() => { if ($("catalogPickPanel")?.classList.contains("open")) _catalogPickFill(); }).catch(() => {});
+    const brand = $("cpkBrand");
+    if (brand) {
+      const n = new Map();
+      for (const e of _catalogIndex) if (e.it.brand) n.set(e.it.brand, (n.get(e.it.brand) || 0) + 1);
+      brand.innerHTML = `<option value="">${esc(t("filterAllBrands"))}</option>` +
+        [...n].sort((a, b) => a[0].localeCompare(b[0])).map(([v, c]) => `<option value="${esc(v)}">${esc(v)} (${c})</option>`).join("");
+      brand.value = "";
+      _enhanceSelect(brand);
+      brand._cselRefresh?.();
+    }
+    if ($("cpkSearch")) $("cpkSearch").value = "";
+    if ($("cpkMsg")) $("cpkMsg").innerHTML = "";
+    _catalogPickFill();
+    $("catalogPickPanel")?.classList.add("open");
+    _syncPanels();
+    setTimeout(() => $("cpkSearch")?.focus(), 80);
+  }
+  function closeCatalogPick() {
+    if (!$("catalogPickPanel")?.classList.contains("open")) return;
+    $("catalogPickPanel").classList.remove("open");
+    _syncPanels();
+  }
+  function _catalogPickFill() {
+    const list = $("cpkList");
+    if (!list) return;
+    const hits = _catalogFilter($("cpkSearch")?.value, $("cpkBrand")?.value || "", "")
+      .filter(_catIsCreatable).slice(0, CAT_PICK_MAX);
+    list.innerHTML = hits.length ? hits.map(it => {
+      const r = _catViewAsRow(it);
+      return `
+        <button type="button" class="cpk-row" data-cpk-id="${esc(String(it.id))}">
+          ${_catThumbHTML(r, 44)}
+          <span class="cpk-row-txt">
+            <b>${esc(String(it._name || it.title || "—"))}</b>
+            <small>${esc([it.brand, it.material, it.measure].filter(Boolean).join(" · "))}</small>
+          </span>
+        </button>`;
+    }).join("") : `<p class="cpk-empty">${esc(t("catEmptyTitle"))}</p>`;
+  }
+  $("cpkSearch")?.addEventListener("input", () => _catalogPickFill());
+  $("cpkBrand")?.addEventListener("change", () => _catalogPickFill());
+  $("catalogPickClose")?.addEventListener("click", closeCatalogPick);
+  $("catalogPickCloseTab")?.addEventListener("click", closeCatalogPick);
+  $("cpkList")?.addEventListener("click", async e => {
+    const b = e.target.closest?.("[data-cpk-id]");
+    if (!b || _catalogBusy) return;
+    b.classList.add("is-busy");
+    await _catalogCreate(b.dataset.cpkId, { msgEl: $("cpkMsg") });
+    b.classList.remove("is-busy");
+  });
 
 
   /* ══ Search views — the official catalogue as a first-class grid / table ════
@@ -17881,6 +17986,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const msRight = msOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
     if (msp) msp.style.right = msRight ? `${msRight}px` : "";
     _setTab($("matSourceCloseTab"), msOpen, msRight + msW, msp);
+    // Catalogue pick (new-chip window) — same slot as the source picker, which
+    // it closes on open.
+    const ckp = $("catalogPickPanel");
+    const ckOpen = !!ckp?.classList.contains("open");
+    const ckRight = ckOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    if (ckp) ckp.style.right = ckRight ? `${ckRight}px` : "";
+    _setTab($("catalogPickCloseTab"), ckOpen, ckRight + (ckOpen ? ckp.offsetWidth : 0), ckp);
+    // New-chip side card (rfid_protocol/linked) — the same slot again: it closes
+    // itself before opening either of the two above.
+    const ccp = $("chipChoicePanel");
+    const ccOpen = !!ccp?.classList.contains("open");
+    const ccRight = ccOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    if (ccp) ccp.style.right = ccRight ? `${ccRight}px` : "";
+    _setTab($("chipChoiceCloseTab"), ccOpen, ccRight + (ccOpen ? ccp.offsetWidth : 0), ccp);
     _setTab($("productCardCloseTab"), pcOpen, pcRight + pcW, pcp);
     _setTab($("reorderCloseTab"), roOpen, roRight + roW, rop);
     _setTab($("detailCloseTab"),     dOpen, matRight + detailW, dp);
@@ -18987,6 +19106,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (url) window.electronAPI?.openExternal(_normalizeBuyUrl(url));
       else openReorderPanel(r);
     });
+    wireLinkedChips($("detailPanel"));   // linked third-party chips: held "Unlink"
     // Twin link / debug-only unlink.
     $("btnTwinLink")?.addEventListener("click", () => openTwinLinkPicker(r));
     setupHoldToConfirm($("btnTwinUnlink"), 1500, async () => {
@@ -19716,7 +19836,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   // ── Usage telemetry — fire-and-forget, one write per session per milestone ──
   let _telTd1s    = false;  // have we already recorded TD1s usage this session?
-  let _telRfidMax = 0;      // highest RFID reader count recorded this session
+  let _telRfidMax = 0;      // highest RFID reader count recorded for the active account (reset by hydratePodSignal)
 
   function _recordUsage(fields) {
     const uid = state.activeAccountId;
@@ -22763,6 +22883,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <div class="panel-section panel-section--toolbox">
             <div class="panel-label">${esc(t("toolboxTitle"))}</div>
             <div class="toolbox-list">${rowsHtml}</div>
+            ${state.friendView ? "" : linkedChipsHtml(r)}
           </div>`;
       })()}
       ${state.debugEnabled ? `
@@ -22976,6 +23097,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _closeAllSidePanels() {
     if ($("notifPanel")?.classList.contains("open"))      closeNotifs();
     if ($("matSourcePanel")?.classList.contains("open"))  closeMaterialSourcePicker();
+    closeCatalogPick();
+    closeChipChoice();
     if ($("containerPanel")?.classList.contains("open"))  closeContainerPicker();
     if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
     if ($("reorderPanel")?.classList.contains("open"))    closeReorderPanel();
@@ -40417,7 +40540,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         .collection("telemetry").doc("studio").get()).data() || {};
       if (uid !== state.activeAccountId) return;
       state.hasPod = !!cur.hasPod;
-      _telRfidMax  = Math.max(_telRfidMax, +cur.rfidReadersMax || 0);
+      // THIS account's stored max — not the session's: a count recorded on another
+      // account must not stop this one from recording its own (TigerPOD = 2 readers).
+      _telRfidMax  = +cur.rfidReadersMax || 0;
       // Telemetry is a fire-and-forget read at connect. If the debug modal was
       // opened before it landed, it showed the pre-hydration defaults (max 0,
       // hasPod false) — repaint it now with the loaded values (no-op if closed).
@@ -41545,6 +41670,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       }
     });
 
+    // A chip that is not a TigerTag (Bambu Lab, Creality…): open the spool it is
+    // linked to, or offer to link it (rfid_protocol/linked, docs/LINKED-CHIPS.md).
+    window.electronAPI.onRfidForeignChip?.(data => {
+      if (_encodeModalOpen() || state.friendView) return;
+      onForeignChip(data);
+    });
+
     // Legacy uid event — open detail if already in inventory
     window.electronAPI.onRfid((uid) => {
       if (_encodeModalOpen()) return;   // don't pop a side-card over the encode modal
@@ -41591,21 +41723,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const user = fbAuth().currentUser;
       if (!user) return;
 
-      // Init chips carry no material/brand yet. If a blank TigerTag Init chip is
-      // on the reader (formatted to TigerTag Init: id_tigertag 0x6C41A2E1,
-      // id_product 0), jump straight to "+ Material" so the user can assign a
-      // material to it — instead of silently ignoring the scan.
+      // Blank chips carry no material/brand yet: a TigerTag Init chip
+      // (id_tigertag 0x6C41A2E1, id_product 0) or an erased / empty-NDEF NTAG
+      // (_chipIsWritableBlank). Ask what to make of it — catalogue or by hand —
+      // instead of silently ignoring the scan (rfid_protocol/linked).
       const allScans   = [...scans.values()];
       const validScans = allScans.filter(td => td.id_material || td.id_brand);
       if (validScans.length === 0) {
         const TIGERTAG_INIT_ID = 0x6C41A2E1; // ID_TIGERTAG_INIT (SDK)
-        const isInit = td => Number(td.id_product) === 0 && Number(td.id_tigertag) === TIGERTAG_INIT_ID;
-        // Skip the auto-open while the guided Cloud→chip encode modal is up: there
-        // the user is deliberately presenting a blank Init chip to encode it, so
-        // popping "+ Material" over the modal would fight that flow.
-        if (allScans.some(isInit) && !state.friendView && !_encodeModalOpen()
-            && !$("addProductPanel")?.classList.contains("open")) {
-          try { openAddProductPanel(); } catch (_) {}
+        const isBlank = td => (Number(td.id_product) === 0 && Number(td.id_tigertag) === TIGERTAG_INIT_ID)
+          || (td._rawPagesHex != null && _chipIsWritableBlank(td._rawPagesHex));
+        const blanks = allScans.filter(isBlank).length;
+        // Skip it while the guided Cloud→chip encode modal is up (the user is
+        // presenting a blank chip on purpose) or a creation is already open.
+        if (blanks && !state.friendView && !_encodeModalOpen()
+            && !$("addProductPanel")?.classList.contains("open")
+            && !$("catalogPickPanel")?.classList.contains("open")
+            && !$("chipChoicePanel")?.classList.contains("open")) {
+          openBlankChipWindow(blanks);
         }
         return;
       }

@@ -17,7 +17,7 @@
 // The link is in secret/main, which the rules give only to a member whose XP
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
-import { revealPulls, tilt } from './coin-pull.js';
+import { celebrateEgg, guardInput, revealPulls, tilt } from './coin-pull.js';
 import { heroLayersHtml } from './hero-layers.js';
 import { ambientStart, ambientStop, sfx } from './coin-sound.js';
 
@@ -342,9 +342,9 @@ function coinsBar(ctx) {
   // (opens them) and a plain gift icon (a code). Full texts in the accessible names.
   return `
     <div class="sqd-coins-wrap" role="group" aria-label="${esc(t("coinsHint"))}">
-      <div class="sqr-card sqd-coins">
-        <b class="sqd-coins-bal" aria-label="${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}">${(c.balance || 0).toLocaleString(lang)}<span class="tcoin tcoin--big" aria-hidden="true"></span></b>
-      </div>
+      <button type="button" class="sqr-card sqd-coins" data-coins-history aria-haspopup="dialog" aria-label="${esc(t("coinHistTitle"))} — ${esc(t("coinsBalance", { n: (c.balance || 0).toLocaleString(lang) }))}">
+        <b class="sqd-coins-bal">${(c.balance || 0).toLocaleString(lang)}<span class="tcoin tcoin--big" aria-hidden="true"></span></b>
+      </button>
       <div class="sqd-coins-acts">
         ${/* Always there: with envelopes it opens them (and calls for a click); at 0 it says how to get some. */""}
         ${pile ? `<button type="button" class="sqd-coins-env" data-coins-open aria-label="${esc(t("coinsOpen"))} — ${esc(t("coinsPile", { n: pile }))}"><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">${pile}</button>`
@@ -352,6 +352,80 @@ function coinsBar(ctx) {
         <button type="button" class="sqd-coins-gift" data-coins-code aria-haspopup="dialog" aria-label="${esc(t("coinsHaveCode"))}"><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true"></button>
       </div>
     </div>`;
+}
+
+/** TigerCoins history (the balance card on the Deals banner opens it): every
+ *  movement of users/{uid}/coinLog (functions/tigerCoins.js, squadDeals.js) —
+ *  envelopes opened (chips', gifts, chests), gift codes, deals exchanged,
+ *  envelopes given / received — newest first, grouped by day, with earned /
+ *  spent / balance on top and All / Earned / Spent / Gifts tabs. The host loads
+ *  the log (ctx.coinHistory() → [{ kind, delta, count, surprises, chests,
+ *  dealId, to, from, at (ms) }]) and names friends and deals (ctx.friendName,
+ *  ctx.dealTitle). Esc or a click beside it closes. */
+export async function openCoinsHistory(ctx) {
+  const { t, esc, lang } = ctx;
+  if (document.querySelector(".tc-hist")) return;
+  const c = ctx.getCoins?.() || ctx.coins || {};
+  const el = document.createElement("div");
+  el.className = "tc-reveal tc-hist";
+  const n = v => (v || 0).toLocaleString(lang);
+  el.innerHTML = `
+    <div class="tc-reveal-card tc-code-card tcx tcx--help tcx--hist" role="dialog" aria-modal="true" aria-label="${esc(t("coinHistTitle"))}">
+      <img class="tch-env" src="../assets/img/tigercoins/coin.webp" alt="" aria-hidden="true">
+      <div class="tcx-main">
+        <div class="tcx-plaque"><h3>${esc(t("coinHistTitle"))}</h3></div>
+        <div class="tch-sum">
+          <span><small>${esc(t("coinHistEarned"))}</small><b class="is-up">+${n(c.earned)}</b></span>
+          <span><small>${esc(t("coinHistSpent"))}</small><b class="is-down">−${n(c.spent)}</b></span>
+          <span><small>${esc(t("coinHistBalance"))}</small><b>${n(c.balance)}<span class="tcoin" aria-hidden="true"></span></b></span>
+        </div>
+        <div class="tch-tabs" role="tablist">${["all", "up", "down", "gift"].map((k, i) =>
+          `<button type="button" role="tab" class="tch-tab${i ? "" : " is-on"}" data-hist-tab="${k}">${esc(t(`coinHistTab_${k}`))}</button>`).join("")}</div>
+        <div class="tch-log" aria-live="polite">${ctx.loadingHTML ? ctx.loadingHTML() : "…"}</div>
+      </div>
+    </div>`;
+  document.body.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("is-open"));
+  const close = () => { el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); };
+  const onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close(); } };
+  document.addEventListener("keydown", onKey, true);
+  el.addEventListener("mousedown", e => { if (e.target === el) close(); });
+  let rows = [];
+  try { rows = await ctx.coinHistory(); } catch (_) { rows = null; }
+  const ART = { open: "envelope", envelope: "envelope", chest: "envelope", gift: "gift-v2", spend: "coin", envelopeGiven: "envelope", envelopeReceived: "envelope" };
+  const label = r => r.kind === "open" ? t("coinLog_open", { n: r.count || 1 })
+    : r.kind === "chest" ? t("coinLog_chest", { n: r.count || 0 })
+    : r.kind === "envelope" ? t("coinLog_envelope")
+    : r.kind === "gift" ? t("coinLog_gift")
+    : r.kind === "spend" ? t("coinLog_spend", { deal: ctx.dealTitle?.(r.dealId) || "—" })
+    : r.kind === "envelopeGiven" ? t("coinLog_given", { name: ctx.friendName?.(r.to) || "—" })
+    : r.kind === "envelopeReceived" ? t("coinLog_received", { name: ctx.friendName?.(r.from) || "—" })
+    : r.kind;
+  const sub = r => [r.surprises ? t("coinLog_surprises", { n: r.surprises }) : "", r.chests ? t("coinLog_chests", { n: r.chests }) : "",
+    new Date(r.at).toLocaleTimeString(lang, { hour: "2-digit", minute: "2-digit" })].filter(Boolean).join(" · ");
+  const dayKey = ms => { const d = new Date(ms), now = new Date(); const d0 = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    return ms >= d0 ? t("notifToday") : ms >= d0 - 864e5 ? t("notifYesterday") : d.toLocaleDateString(lang, { weekday: "long", day: "numeric", month: "long" }); };
+  const keep = { all: () => true, up: r => r.delta > 0, down: r => r.delta < 0, gift: r => r.kind === "envelopeGiven" || r.kind === "envelopeReceived" };
+  const paint = tab => {
+    const log = el.querySelector(".tch-log");
+    if (rows === null) { log.innerHTML = `<p class="tch-empty">${esc(t("squadDealsErr"))}</p>`; return; }
+    const list = rows.filter(keep[tab]);
+    if (!list.length) { log.innerHTML = `<p class="tch-empty">${esc(t("coinHistEmpty"))}</p>`; return; }
+    let day = "";
+    log.innerHTML = list.map(r => {
+      const d = dayKey(r.at), head = d !== day ? `<h4 class="tch-day">${esc(d)}</h4>` : "";
+      day = d;
+      const amt = r.delta > 0 ? `<b class="tch-amt is-up">+${n(r.delta)}</b>` : r.delta < 0 ? `<b class="tch-amt is-down">−${n(-r.delta)}</b>` : `<b class="tch-amt">—</b>`;
+      return `${head}<div class="tch-row"><img src="../assets/img/tigercoins/${ART[r.kind] || "coin"}.webp" alt="" aria-hidden="true">
+        <span><b>${esc(label(r))}</b><small>${esc(sub(r))}</small></span>${amt}</div>`;
+    }).join("");
+  };
+  paint("all");
+  el.addEventListener("click", e => {
+    const tab = e.target.closest("[data-hist-tab]"); if (!tab) return;
+    el.querySelectorAll(".tch-tab").forEach(b => b.classList.toggle("is-on", b === tab));
+    paint(tab.dataset.histTab);
+  });
 }
 
 /** "You got an envelope!": a friend gave one (functions/tigerCoins.js
@@ -376,6 +450,7 @@ export function showEnvelopeGift(ctx, { name, avatar }) {
     const close = how => { el.classList.remove("is-open"); document.removeEventListener("keydown", onKey, true); setTimeout(() => el.remove(), 200); resolve(how); };
     const onKey = e => { if (e.key === "Escape") { e.stopPropagation(); close("close"); } };
     document.addEventListener("keydown", onKey, true);
+    guardInput(el, 2000);   // it arrives on its own: 2 s before a stray click or key can close it
     el.addEventListener("mousedown", e => { if (e.target === el) close("close"); });   // no × : a click beside it or Esc closes
     el.querySelector("[data-see]").addEventListener("click", () => close("see"));
   });
@@ -437,7 +512,11 @@ export function tapEgg(spot, egg, ctx, store, onFound) {
   clearTimeout(s.t); s.t = setTimeout(() => { s.taps = 0; }, 900);
   if (++s.taps < 3) return;
   s.taps = 0; s.busy = true;
+  // Where it was found (taken now: the spot may disappear once found) — the
+  // celebration's envelope flies out from there, then the pile opens.
+  const from = spot.getBoundingClientRect();
   ctx.easterEgg(egg, onFound)
+    .then(async r => { await celebrateEgg(ctx, from); r?.open?.(); })
     .catch(e => ctx.toast?.(ctx.t(e?.message === "EGG_FOUND" ? "eggFound" : "squadDealsErr")))
     .finally(() => { s.busy = false; });
 }
@@ -923,6 +1002,7 @@ export function wireDeals(host, ctx) {
     if (site) { ctx.onPartnerClick?.(site.dataset.partnerClick); return; }
     if (e.target.closest(".sqd-close-tab")) { setOpen(null); return; }
     if (e.target.closest("[data-coins-code]")) { openCoinsCodeModal(ctx); return; }
+    if (e.target.closest("[data-coins-history]")) { openCoinsHistory(ctx); return; }
     if (e.target.closest("[data-coins-help]")) { openEnvelopeHelp(ctx); return; }
     const ch = e.target.closest("[data-app-ch]");
     if (ch) { ch.closest(".sqd-apps").dataset.ch = ch.dataset.appCh; return; }

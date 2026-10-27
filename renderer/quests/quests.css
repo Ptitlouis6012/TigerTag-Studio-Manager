@@ -114,7 +114,7 @@ body.progress-view #gridSortWrap { display: none; }
   filter: drop-shadow(0 0 6px color-mix(in srgb, var(--c) 55%, transparent)); }
 
 /* ── Today: the daily quests screen (renderer/quests/index.js todayHtml) ──
-   Banner (assets/img/quests/daily-quests-scene.webp on a CSS wall + desk), progress + full-set
+   Banner (DAILY_SCENE layers, assets/img/quests/daily-hero/, on a CSS wall + desk), progress + full-set
    chest, quest rows, side column. Same dark game world as the presentation. */
 .qd { display: flex; flex-direction: column; gap: 14px; }
 /* Hero banners (Today, Missions, TigerSquad): each artwork is a transparent
@@ -170,7 +170,32 @@ body.progress-view #gridSortWrap { display: none; }
 .qd-hero > :not(.hero-scene), .qm-hero > :not(.hero-scene), .sqr-hero > :not(.hero-scene) { position: relative; z-index: 3; }
 /* Banner: the Missions hero (.qm-hero) — same markup, size and type — with the
    daily scene on the right (the Missions scene sits in the middle). */
-.qm-hero.qd-hero { --hero-scene: url("../../assets/img/quests/daily-quests-scene.webp"); --hero-scene-pos: right; --hero-scene-w: 430px; }
+/* Missions scene (MISSIONS_SCENE, a 3.4 : 1 box): the tiger behind the desk (its
+   image ends on the waist cut: −6 px puts it just over the desk top), the cork
+   board hanging behind it on the wall, the compass and the scroll, the printer. */
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl-box { left: 50%; translate: -50% 0; }   /* centred between the title and the level card */
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--tiger { left: 0; height: 94%; }
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--board { left: 31%; bottom: 28%; height: 64%; translate: none; }
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--compass { left: 36%; height: 30%; }
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--scroll { left: 45%; height: 20%; }
+.qm-hero:not(.qd-hero):not(.xph-hero) .hl--printer { left: 63%; height: 74%; }
+@media (prefers-reduced-motion: no-preference) {
+  .qm-hero:not(.qd-hero):not(.xph-hero) .hl--compass { transform-origin: 50% 60%; animation: hl-sway 5s ease-in-out infinite; }
+}
+.qm-hero.qd-hero { --hero-scene: none; --hero-front: none; --hero-scene-w: 640px; --hl-ratio: 4.4; }
+/* Today scene (DAILY_SCENE, a 4.4 : 1 box pinned right): plant, laptop, the tiger
+   (one picture) standing on the desk with its paw resting on it, the thought bubble
+   floating, the printer, the spool shelf. Widths follow from the heights (h × ratio ÷ 4.4). */
+.qd-hero .hl-box { left: auto; right: 24px; }
+.qd-hero .hl--plant { left: 0; height: 56%; }
+.qd-hero .hl--laptop { left: 8.5%; height: 31%; }
+.qd-hero .hl--tiger { left: 23%; height: 92%; }
+.qd-hero .hl--bubble { left: 41%; bottom: 62%; height: 36%; translate: none; }
+.qd-hero .hl--printer { left: 52%; height: 74%; }
+.qd-hero .hl--shelf { left: 79.5%; height: 98%; }
+@media (prefers-reduced-motion: no-preference) {
+  .qd-hero .hl--bubble { animation: hl-float 3s ease-in-out infinite; }
+}
 .qd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 25%); gap: 14px; align-items: start; }
 .qd-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .qd-card { position: relative; background: linear-gradient(180deg, var(--qw-panel2), var(--qw-panel)); border: 1px solid var(--qw-line); border-radius: 12px; padding: 14px 16px; }
@@ -568,7 +593,7 @@ body.progress-view #gridSortWrap { display: none; }
 /* ── Missions (journey): hero, chapter row, chapter heading, illustrated level cards ── */
 .qm-hero { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 18px 12px 28px;
   border: 1px solid var(--qw-line); border-radius: 14px; overflow: hidden;
-  --hero-scene: url("../../assets/img/quests/missions-scene.webp"); --hero-scene-w: 330px;
+  --hero-scene: none; --hero-front: none; --hero-scene-w: 620px; --hl-ratio: 3.4;
   padding-bottom: calc(var(--hero-desk-hc) + 6px); }
 .qm-hero-txt { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .qm-hero-txt h2 { font-size: 52px; line-height: .95; text-shadow: 0 2px 6px #000, 0 0 30px rgba(255, 122, 26, .35); }
@@ -772,17 +797,17 @@ body.progress-view #gridSortWrap { display: none; }
 .xph-hero { --hero-scene: none; --hero-front: none; --hero-sink: 5px; --hero-scene-w: 560px; --hl-ratio: 3.4; }
 .xph-hero .hl-box { left: auto; right: 24px; }   /* pinned right, off the banner's edge */
 /* Widths follow from the heights (height % × the image's ratio ÷ 3.4), laid out
-   without overlap: monitor 0–25, tiger 24–56 (its paw on the screen's edge),
-   coins 58–72, book 73–91, hourglass 92–99. */
+   without overlap: monitor 0–25, tiger 27–59 (its finger on the screen's edge),
+   coins 61–75, book 75–93, hourglass 92–99. */
 .xph-hero .hl--monitor { left: 0; height: 74%; }
 /* The tiger (TigerTag cap from the real cap's photo) in two layers of the same
    size and place: the body behind the desk (its rows end on the waist cut), the
    resting paw in front of it. The cut is 4.26 % above the images' bottom, so both
    move down by that much + 2 px: the cut lands just under the desk's top edge and
    the paw rests on the desk. */
-.xph-hero .hl--tiger, .xph-hero .hl--tiger-paw { left: 25.5%; height: 80%; translate: 0 calc(4.26% - 6px); }   /* raised 8 px on request: the waist cut shows just above the desk */
-.xph-hero .hl--coins { left: 58%; height: 42%; }
-.xph-hero .hl--book { left: 73%; height: 44%; }
+.xph-hero .hl--tiger { left: 27%; height: 78%; }
+.xph-hero .hl--coins { left: 61%; height: 42%; }
+.xph-hero .hl--book { left: 75%; height: 44%; }
 /* The hourglass turns over on a click (data-xph-hourglass): a half turn around
    its middle, with a little bounce; it stays turned until the next click. */
 .xph-hero .hl--hourglass { left: 92%; height: 40%; pointer-events: auto; cursor: pointer; transform-origin: 50% 50%;
@@ -1114,8 +1139,8 @@ body.progress-view #gridSortWrap { display: none; }
    itself sits 5 px into the desk) so the cut sits 1 px ABOVE the desk's top edge:
    the black outline under the belly shows, the tigers stand behind the desk; their paw layers, same size and place,
    rest on the desk in front of it. Then the trophy, the printer, four stars. */
-.sqr-hero:not(.sqd-hero) .hl--tiger-silver { left: 0; height: 86%; translate: 0 -6px; }
-.sqr-hero:not(.sqd-hero) .hl--tiger-gold, .sqr-hero:not(.sqd-hero) .hl--tiger-gold-paws { left: 20%; height: 96%; translate: 0 calc(4.02% - 6px); }
+.sqr-hero:not(.sqd-hero) .hl--tiger-silver { left: 0; height: 86%; }
+.sqr-hero:not(.sqd-hero) .hl--tiger-gold { left: 20%; height: 98%; }
 .sqr-hero:not(.sqd-hero) .hl--trophy { left: 41.5%; height: 50%; pointer-events: auto; cursor: pointer; }
 /* Clicked (data-trophy): a jump with a spin and a golden flash. */
 .sqr-hero:not(.sqd-hero) .hl--trophy.hl--trophy.is-cheering { animation: hl-cheer .9s cubic-bezier(.3, 1.4, .5, 1); }
@@ -1125,7 +1150,7 @@ body.progress-view #gridSortWrap { display: none; }
   55% { transform: translateY(-34%) rotate(10deg) scale(1.15); filter: drop-shadow(0 0 14px #ffb21a) brightness(1.3); }
   80% { transform: translateY(0) scale(.95, 1.05); filter: drop-shadow(0 0 6px #ffd75e); }
   100% { transform: none; filter: none; } }
-.sqr-hero:not(.sqd-hero) .hl--tiger-bronze, .sqr-hero:not(.sqd-hero) .hl--tiger-bronze-paws { left: 51%; height: 86%; translate: 0 calc(4.53% - 6px); }
+.sqr-hero:not(.sqd-hero) .hl--tiger-bronze { left: 51%; height: 88%; }
 .sqr-hero:not(.sqd-hero) .hl--printer { left: 73.5%; height: 76%; }
 .sqr-hero:not(.sqd-hero) .hl--spark { height: 11%; }
 .sqr-hero:not(.sqd-hero) .hl--spark1 { left: 6%; bottom: 82%; } .sqr-hero:not(.sqd-hero) .hl--spark2 { left: 15%; bottom: 90%; }
@@ -2001,3 +2026,60 @@ body.progress-view #gridSortWrap { display: none; }
   .tc-reveal.tp.is-leaving > * { transition: opacity .2s; transform: none; }
   .tc-reveal.tp .tpx-pile { animation: none; }
 }
+/* Easter egg found (coin-pull.js celebrateEgg): the room dims, gold rays turn,
+   the envelope flies from where it hid (--fx / --fy from the centre) and swells,
+   sparks burst, "Secret found!" lands; ~2.4 s, then it fades out. */
+.egg-fx { position: fixed; inset: 0; z-index: 10050; display: grid; place-items: center; pointer-events: auto;
+  background: radial-gradient(circle at 50% 46%, rgba(40, 24, 6, .55), rgba(5, 6, 12, .88) 70%); opacity: 0; transition: opacity .3s; }
+.egg-fx.is-on { opacity: 1; }
+.egg-fx.is-out { opacity: 0; }
+.egg-fx-rays { position: absolute; left: 50%; top: 46%; width: 160vmax; aspect-ratio: 1; translate: -50% -50%; opacity: 0;
+  background: repeating-conic-gradient(rgba(255, 210, 90, .22) 0 6deg, transparent 6deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 0 8%, transparent 32%); mask: radial-gradient(circle, #000 0 8%, transparent 32%); }
+.egg-fx.is-on .egg-fx-rays { animation: egg-rays 2.4s ease-out forwards; }
+@keyframes egg-rays { 0% { opacity: 0; rotate: 0deg; } 25% { opacity: 1; } 100% { opacity: .8; rotate: 60deg; } }
+.egg-fx-stage { position: relative; display: grid; place-items: center; margin-top: -8vh; }
+.egg-fx-env { width: 180px; filter: drop-shadow(0 0 30px rgba(255, 200, 80, .8)) drop-shadow(0 18px 24px rgba(0, 0, 0, .6));
+  translate: var(--fx) var(--fy); scale: .25; opacity: 0; }
+.egg-fx.is-on .egg-fx-env { animation: egg-fly .7s cubic-bezier(.3, 1.3, .5, 1) forwards, egg-bob 1.6s ease-in-out .7s infinite; }
+@keyframes egg-fly { 0% { translate: var(--fx) var(--fy); scale: .25; opacity: 1; rotate: -30deg; } 100% { translate: 0 0; scale: 1; opacity: 1; rotate: 0deg; } }
+@keyframes egg-bob { 0%, 100% { translate: 0 0; rotate: -3deg; } 50% { translate: 0 -10px; rotate: 3deg; } }
+.egg-fx-sparks { position: absolute; inset: 0; display: grid; place-items: center; }
+.egg-fx-sparks i { position: absolute; width: var(--s); aspect-ratio: 1; background: #ffe7a0;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); filter: drop-shadow(0 0 6px #ffb21a); opacity: 0; }
+.egg-fx.is-on .egg-fx-sparks i { animation: egg-spark 1.1s cubic-bezier(.2, .8, .3, 1) .55s forwards; }
+@keyframes egg-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(.4); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(1.2); } }
+.egg-fx-text { position: absolute; top: calc(46% + 120px); display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center;
+  opacity: 0; translate: 0 16px; }
+.egg-fx.is-on .egg-fx-text { animation: egg-text .5s cubic-bezier(.3, 1.4, .5, 1) .6s forwards; }
+@keyframes egg-text { to { opacity: 1; translate: 0 0; } }
+.egg-fx-text b { font: 900 44px/1 var(--qw-display, var(--sqr-display, sans-serif)); text-transform: uppercase; letter-spacing: .02em; color: #ffd75e;
+  text-shadow: 0 3px 0 #8a4a10, 0 0 24px rgba(255, 178, 26, .8); }
+.egg-fx-text small { font-size: 15px; font-weight: 700; color: #f3e6c8; text-shadow: 0 1px 4px #000; }
+@media (prefers-reduced-motion: reduce) { .egg-fx.egg-fx.is-on * { animation: none; } .egg-fx.egg-fx .egg-fx-env, .egg-fx.egg-fx .egg-fx-text { translate: 0 0; scale: 1; opacity: 1; } }
+
+/* TigerCoins history (squad-deals.js openCoinsHistory): the help window's frame,
+   wider, the coin rising behind it; earned / spent / balance, tabs, a scrolling
+   log grouped by day. The banner's balance card opens it. */
+.sqd-coins.sqd-coins { cursor: pointer; font: inherit; color: inherit; height: auto; transition: border-color .15s, transform .15s; }
+.sqd-coins.sqd-coins:hover { border-color: var(--sqr-gold, #ffc53d); transform: translateY(-1px); }
+.tc-code-card.tcx.tcx--hist { width: min(620px, 94vw); }
+.tcx--hist .tch-env { width: 110px; top: -96px; }
+.tch-sum { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tch-sum > span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px; border-radius: 12px; background: rgba(11, 14, 28, .6); border: 1px solid rgba(255, 207, 61, .22); }
+.tch-sum small { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9aa3c2; }
+.tch-sum b { display: inline-flex; align-items: center; gap: 5px; font: 800 18px var(--qw-mono, ui-monospace, monospace); color: #fff; }
+.tch-sum .is-up, .tch-amt.is-up { color: #3ddc84; }
+.tch-sum .is-down, .tch-amt.is-down { color: #ff6b6b; }
+.tch-tabs { display: flex; gap: 6px; width: 100%; }
+.tch-tab.tch-tab { flex: 1; height: 32px; border-radius: 9px; border: 1px solid rgba(255, 207, 61, .22); background: rgba(11, 14, 28, .5); color: #c9d0e6; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.tch-tab.tch-tab.is-on { background: #ffcf3d; border-color: #ffcf3d; color: #1a1205; }
+.tch-log { width: 100%; max-height: min(46vh, 380px); overflow: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.tch-log::-webkit-scrollbar { display: none; }
+.tch-day { margin: 6px 2px 0; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #ffcf3d; }
+.tch-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(11, 14, 28, .6); border: 1px solid rgba(255, 207, 61, .14); }
+.tch-row img { width: 30px; height: 30px; object-fit: contain; }
+.tch-row b { display: block; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tch-row small { font-size: 11.5px; color: #9aa3c2; }
+.tch-amt { font: 800 14px var(--qw-mono, ui-monospace, monospace); color: #9aa3c2; }
+.tch-empty { margin: 16px 0; text-align: center; color: #9aa3c2; }

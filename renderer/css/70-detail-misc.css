@@ -1878,7 +1878,8 @@
      timing, crossfading instead of showing through the half-transparent photo.
      Instant on a normal load, like the photo itself. */
   .spool-card .card-img-color-placeholder:has(> .card-img--overlay.img-loaded) > img:first-child,
-  .inv-catalog-view :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo { opacity: 0; }
+  .inv-catalog-view :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo,
+  .cpk-list :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo { opacity: 0; }
   body.photos-held .spool-card .card-img-color-placeholder:has(> .card-img--overlay.img-loaded) > img:first-child,
   body.photos-held .inv-catalog-view :has(> .cv-thumb-img.img-loaded) > .cv-thumb-logo { opacity: 1; transition: opacity .35s ease; }
   body.photos-fade-in .spool-card .card-img-color-placeholder > img:first-child,
@@ -4851,22 +4852,26 @@ body.catalog-filters .cv-count { display: inline-flex; align-items: center; }
 /* Catalogue row thumbnail — colour underneath, photo on top. The colour is the
    element's own background so it paints before the image arrives (and remains
    if the image errors out and removes itself). */
-.inv-catalog-view .cv-thumb {
+.inv-catalog-view .cv-thumb,
+.cpk-list .cv-thumb {
   position: relative; display: inline-block; flex: 0 0 auto;
   border-radius: 6px; overflow: hidden; vertical-align: middle;
 }
 /* Full opacity, like every other TigerTag watermark (table thumb, grid card,
    side-card illustration). This one was the odd one out at .55. */
-.inv-catalog-view .cv-thumb-logo {
+.inv-catalog-view .cv-thumb-logo,
+.cpk-list .cv-thumb-logo {
   position: absolute; top: 8%; right: 8%; width: 42%;
 }
-.inv-catalog-view .cv-thumb-img {
+.inv-catalog-view .cv-thumb-img,
+.cpk-list .cv-thumb-img {
   /* Inset 4 px: the thumb's own colour background frames the photo. */
   position: absolute; top: 4px; left: 4px; width: calc(100% - 8px); height: calc(100% - 8px);
   object-fit: cover; display: block; border-radius: 4px;
   opacity: 0;   /* no empty inset box before the bytes arrive (no fade — rebuilds re-load from cache) */
 }
-.inv-catalog-view .cv-thumb-img.img-loaded { opacity: 1; }
+.inv-catalog-view .cv-thumb-img.img-loaded,
+.cpk-list .cv-thumb-img.img-loaded { opacity: 1; }
 
 /* Product card — the shopping button. Plain while the product has no buy link
    (it then opens the Reorder card to create one); Shopify green once it has one,
