@@ -19630,7 +19630,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
 
     if ($("btnChangeContainerCard")) {
-      $("btnChangeContainerCard").addEventListener("click", () => openContainerPicker(r));
+      // A second click closes the picker it opened.
+      $("btnChangeContainerCard").addEventListener("click", () =>
+        $("containerPanel")?.classList.contains("open") ? closeContainerPicker() : openContainerPicker(r));
       // (Both edit buttons are always visible now — no hover reveal to wire.)
     }
 
@@ -20166,12 +20168,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _cpSetKind("");
     $("containerPickerSearch").value = "";
     $("containerPanel").classList.add("open");   // side card to the LEFT of the spool detail
+    $("btnChangeContainerCard")?.classList.add("is-open");
     _syncPanels();                                // place the picker + close tabs
     _cpFadeUpdate?.();                            // list was measured while hidden (height 0)
     setTimeout(() => $("containerPickerSearch").focus(), 120);
   }
   function closeContainerPicker() {
     $("containerPanel").classList.remove("open");
+    $("btnChangeContainerCard")?.classList.remove("is-open");
     _syncPanels();
     _cpRow = null;
     _cpOnly = null; _cpHint = "";
@@ -22496,12 +22500,28 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       </div>` : (state.friendView || r.deleted) ? "" : `
       <div class="panel-section cc-section">
         <div class="panel-label">${esc(t("detContainer"))}</div>
-        <button type="button" class="storage-loc-row storage-loc-row--clickable" id="btnChangeContainerCard">
-          <span class="icon icon-scale icon-14"></span>
-          <span class="storage-loc-rack">${esc(t("containerPickerTitle"))}</span>
-          <span class="storage-loc-locate icon icon-chevron-r icon-13" aria-hidden="true"></span>
+        <button type="button" class="cc-missing${$("containerPanel")?.classList.contains("open") ? " is-open" : ""}" id="btnChangeContainerCard">
+          <span class="icon icon-chevron-l icon-14" aria-hidden="true"></span>
+          <span class="cc-missing-title">${esc(t("containerPickerTitle"))}</span>
+          <span class="cc-missing-dot" aria-hidden="true"></span>
+          <span class="tool-info" data-tip="${esc(t("containerMissingHint"))}" aria-label="${esc(t("containerMissingHint"))}"><span class="icon icon-info icon-13"></span></span>
         </button>
       </div>`;   // no container yet: the only way to set one once the post-create question is gone
+
+    // Colour row: one swatch drawn by colorBg(), so a bi / tricolour or a
+    // rainbow reads as it does everywhere else; on a TigerData the whole row
+    // opens the colour & TD editor (a chip's colour is written on the chip).
+    const colourEditable = r.isCloud && !state.friendView;
+    const colourInner = `
+          <span class="panel-label colour-row-label">${esc(t("detColor"))}</span>
+          <span class="colour-row-swatch" style="background:${colorBg(r)}"></span>
+          ${colourEditable ? '<span class="icon icon-edit icon-13 colour-row-edit" aria-hidden="true"></span>' : ""}`;
+    const colourHtml = `
+      <div class="panel-section colour-section">
+        ${colourEditable
+          ? `<button type="button" class="colour-row colour-row--edit" id="btnEditColor" aria-label="${esc(t("colorEditTitle"))}">${colourInner}</button>`
+          : `<div class="colour-row">${colourInner}</div>`}
+      </div>`;
 
     // aspects + badges — all chips in one wrapping row beside the color circle
     const aspectChips = [r.aspect1, r.aspect2].filter(a => a && a !== "-" && a !== "None");
@@ -22672,15 +22692,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <div class="aspect-col">
             ${aspectHtml}
             ${badgeHtml}
-            ${(r.isCloud && !state.friendView)
-              /* The big colour circle was the only way into the colour editor.
-                 The photo's frame now shows the colour, so the editor gets a
-                 pill of its own, styled like the aspect chips beside it. */
-              ? `<button class="aspect-chip aspect-chip--action" id="btnEditColor" type="button" aria-label="${esc(t("colorEditTitle"))}"><span class="icon icon-palette icon-12"></span>${esc(t("colorEditPill"))}</button>`
-              : ""}
           </div>
         </div>
       </div>
+      ${colourHtml}
       ${containerHtml}
       ${weightHtml}
       ${state.friendView ? "" : '<div id="usbScaleDock" class="usbscale-dock"></div>'}

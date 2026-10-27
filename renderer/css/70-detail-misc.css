@@ -2503,19 +2503,25 @@
   .temp-chip .tc-value { font-size: 15px; font-weight: 600; margin-top: 2px; }
   .aspect-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
   .aspect-chip { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
-  /* The colour editor, now a chip beside the aspects (the big colour circle
-     that used to open it is gone — the photo's frame shows the colour). */
   /* Product card: aspects, refill/recycled/filled and the weight share one chip
      row under the name (no separate Aspect / Weight sections). */
   .pc-ident-chips { margin-top: 10px; }
   .aspect-chip--weight { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
   .aspect-chip--weight .icon { background-color: var(--muted); }
-  .aspect-chip--action {
-    display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 600;
-    cursor: pointer; color: var(--primary); border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-    transition: background .12s;
+  /* Colour row (detail panel): label, one colorBg() swatch, and on a TigerData
+     a pencil — the whole row opens the colour & TD editor. */
+  .colour-row {
+    width: 100%; display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+    padding: 0; border: none; background: none; color: inherit; font: inherit; text-align: left;
   }
-  .aspect-chip--action:hover { background: color-mix(in srgb, var(--primary) 12%, var(--surface-2)); }
+  .colour-row .colour-row-label { margin: 0; }
+  .colour-row-swatch {
+    width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+  }
+  .colour-row-edit { background: var(--muted); transition: background .15s; }
+  .colour-row--edit { cursor: pointer; }
+  .colour-row--edit:hover .colour-row-edit { background: var(--text); }
 
   /* ── Tags / Balises (detail panel) ── */
   .panel-tags .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -3280,6 +3286,30 @@
     pointer-events: auto;
   }
   .cc-edit:hover { color: var(--text); background: var(--surface-2); }
+  /* No container yet: the one call to action of the card — accent outline and
+     a pulsing dot; the ⓘ says why it matters (the scale weighs the empty spool too). */
+  .cc-missing {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer; text-align: left;
+    border: 1.5px solid var(--primary); background: var(--primary-soft); color: var(--primary);
+    transition: background .15s, transform .15s;
+  }
+  .cc-missing:hover { background: color-mix(in srgb, var(--primary) 22%, transparent); }
+  .cc-missing:active { transform: scale(.99); }
+  .cc-missing .icon { background: var(--primary); flex-shrink: 0; }
+  /* The chevron points at the picker while it is closed, back at the card once open. */
+  .cc-missing .icon-chevron-l { transition: transform .2s ease; }
+  .cc-missing.is-open .icon-chevron-l { transform: rotate(180deg); }
+  .cc-missing-title { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; }
+  .cc-missing-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    background: var(--primary); animation: cc-missing-pulse 1.6s ease-out infinite;
+  }
+  @keyframes cc-missing-pulse {
+    0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 60%, transparent); }
+    100% { box-shadow: 0 0 0 8px transparent; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cc-missing-dot { animation: none; } }
   /* change-container ghost trigger in weight section */
   .cp-trigger {
     font-size: 11px; color: var(--muted); gap: 4px;
