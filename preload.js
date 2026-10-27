@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('printerPlugin', {
 contextBridge.exposeInMainWorld('camCapture', {
   saveImage:     (printer, dataUrl)       => ipcRenderer.invoke('cam:save-image', { printer, dataUrl }),
   recUrlStart:   (id, printer, url)       => ipcRenderer.invoke('cam:rec-url-start', { id, printer, url }),
+  recTapStart:   (id, printer, key)       => ipcRenderer.invoke('cam:rec-tap-start', { id, printer, key }),
   recFramesStart:(id, printer)            => ipcRenderer.invoke('cam:rec-frames-start', { id, printer }),
   recPollStart:  (id, printer, url, everyMs) => ipcRenderer.invoke('cam:rec-poll-start', { id, printer, url, everyMs }),
   fetchStill:    (url)                    => ipcRenderer.invoke('cam:fetch-still', { url }),
