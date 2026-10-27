@@ -23,8 +23,10 @@
  * does not serve one, from the JPEG read over and over.
  *
  * VIDEO — always from the SOURCE, never re-encoded from the page:
- *   - the camera's own URL (Bambu RTSPS H.264, an http MJPEG) → ffmpeg in main
- *     copies the stream untouched;
+ *   - the camera's own URL (an http MJPEG, a Bambu RTSPS H.264 that main is not
+ *     already reading) → ffmpeg in main copies the stream untouched;
+ *   - a stream main already reads for the picture (Bambu RTSPS, `liveKey`) → its
+ *     frames are copied into a .mov as they arrive, no second connection;
  *   - a camera that only serves refreshed stills (Snapmaker U1 stock firmware)
  *     → main reads it as fast as it refreshes ("poll:" URL), frames untouched;
  *   - original JPEG frames pushed into an <img> as blob: URLs (FlashForge,
@@ -35,7 +37,8 @@
  *
  *   initCamSnapshot({ t, printerForHost(host) → printer record | null,
  *                     printerInfo(p) → { brand, id, name, model, ip, mac, serial },
- *                     sourceUrl(p, media) → string | null, toast(msg) })
+ *                     sourceUrl(p, media) → string | null,
+ *                     liveKey(p) → main's live-stream key | null, toast(msg) })
  */
 import { showScreenshot } from "../IoT/tigertouch/panel.js";
 import { questBump } from "../quests/index.js";
@@ -139,7 +142,13 @@ async function startRec(host) {
   const stream = host.dataset.camStream;
   const url = m ? _ctx.sourceUrl(p, m)
     : (stream && await probeStream(stream)) ? stream : `poll:${snap}`;
-  if (url?.startsWith("poll:")) {
+  // A stream main already reads for the picture is recorded from there: a second
+  // connection to the same camera is refused or cut by the printer.
+  const liveKey = m && _ctx.liveKey?.(p);
+  const tap = liveKey ? await window.camCapture.recTapStart(id, info, liveKey) : null;
+  if (tap?.ok) {
+    rec.stop = () => window.camCapture.recStop(id);
+  } else if (url?.startsWith("poll:")) {
     const r = await window.camCapture.recPollStart(id, info, url.slice(5), m ? 0 : SNAP_POLL_MS);
     if (!r?.ok) return _ctx.toast?.(_ctx.t("camRecFailed"));
     rec.stop = () => window.camCapture.recStop(id);

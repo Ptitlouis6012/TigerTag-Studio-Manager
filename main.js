@@ -3878,6 +3878,13 @@ function _jpegSplitter(onFrame) {
   };
 }
 
+/* Live camera streams that main reads itself (Bambu RTSPS), by camera key
+   ("bambulab:<id>"). A recording TAPS the stream already open for the picture instead
+   of opening a second connection to the camera: the printer allows one, cut the second
+   after ~10 s and the picture with it (ffmpeg of the live view then sat at 50 % CPU). */
+const _camLive = new Set();   // keys whose ffmpeg is running
+const _camTaps = new Map();   // key → Set of (frame) => void, each one a recording
+
 let _ffmpegBin = null;
 (function _detectFfmpeg() {
   const candidates = [];
@@ -4140,6 +4147,9 @@ let _ffmpegBin = null;
 // Videos are taken from the SOURCE, never from what the page displays:
 //   url    — ffmpeg reads the camera itself and copies its stream untouched
 //            (rtsp/rtsps H.264 → .mp4, http MJPEG → .mov)
+//   tap    — the live stream main already reads for the picture (Bambu RTSPS) is
+//            copied into a .mov as it goes: a camera allows ONE connection, a second
+//            one for the recording was cut by the printer and disturbed the picture
 //   frames — original JPEG frames pushed one by one, muxed untouched at their
 //            real timing (.mov, MJPEG)
 //   blob   — a recording made in the renderer from a MediaStream (WebRTC / FLV)
@@ -4196,6 +4206,30 @@ let _ffmpegBin = null;
     proc.stderr.on('data', d => { err += d; });
     proc.on('error', () => {});
     recs.set(id, { proc, dir, file, err: () => err });
+    return { ok: true };
+  });
+
+  // tap: the live stream main already reads for the picture (Bambu RTSPS). Its frames are
+  // piped into ffmpeg, which copies them into a .mov; no second connection to the camera.
+  ipcMain.handle('cam:rec-tap-start', (_e, { id, printer, key } = {}) => {
+    if (!_ffmpegBin || !_camLive.has(key) || recs.has(id)) return { ok: false, error: 'nostream' };
+    const dir = capDir(printer), file = path.join(sub(dir, 'Videos'), `${stamp()}.mov`);
+    let proc;
+    try {
+      proc = spawn(_ffmpegBin, ['-hide_banner', '-loglevel', 'error', '-use_wallclock_as_timestamps', '1', '-f', 'mjpeg', '-i', 'pipe:0', '-c', 'copy', '-y', file],
+        { stdio: ['pipe', 'ignore', 'pipe'] });
+    } catch (_) { return { ok: false, error: 'ffmpeg' }; }
+    let err = '';
+    proc.stderr.on('data', d => { err += d; });
+    proc.on('error', () => {});
+    proc.stdin.on('error', () => {});
+    // A slow disk drops pictures rather than filling the memory.
+    const tap = frame => { if (proc.stdin.writableLength < 8 * 1024 * 1024) proc.stdin.write(frame); };
+    const taps = _camTaps.get(key) || new Set();
+    taps.add(tap);
+    _camTaps.set(key, taps);
+    proc.on('close', () => { taps.delete(tap); if (!taps.size) _camTaps.delete(key); });
+    recs.set(id, { proc, dir, file, err: () => err, tap: true });
     return { ok: true };
   });
 
@@ -4288,7 +4322,8 @@ let _ffmpegBin = null;
     recs.delete(id);
     if (r.polling) { r.polling = false; await new Promise(res => setTimeout(res, 300)); }
     if (r.proc) {
-      try { r.proc.stdin.write('q'); } catch (_) {}
+      // A tap's stdin carries the pictures: closing it ends the file; for the others 'q' asks ffmpeg to finish.
+      try { r.tap ? r.proc.stdin.end() : r.proc.stdin.write('q'); } catch (_) {}
       await new Promise(res => { const k = setTimeout(() => { try { r.proc.kill('SIGINT'); } catch (_) {} res(); }, 6000); r.proc.on('close', () => { clearTimeout(k); res(); }); });
       const ok = fs.existsSync(r.file) && fs.statSync(r.file).size > 1000;
       if (!ok) { try { fs.unlinkSync(r.file); } catch (_) {} return { ok: false, error: (r.err() || 'empty').slice(0, 200) }; }
@@ -4503,7 +4538,7 @@ let _ffmpegBin = null;
   ipcMain.on('bambulab:cam-start-rtsp', (event, { key, ip, password }) => {
     // Kill any existing process for this key (mark as intentionally stopped)
     const prev = _bambuRtspProcs.get(key);
-    if (prev) { prev._stopped = true; try { prev.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); }
+    if (prev) { prev._stopped = true; try { prev.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); _camLive.delete(key); }
     const gen = _bambuCamNextGen(key);
 
     if (!_ffmpegBin) {
@@ -4562,6 +4597,7 @@ let _ffmpegBin = null;
 
       proc._stopped = false;
       _bambuRtspProcs.set(key, proc);
+      _camLive.add(key);
 
       // Forward ffmpeg errors to the main-process console so we can debug.
       proc.stderr.on('data', chunk => {
@@ -4572,6 +4608,7 @@ let _ffmpegBin = null;
       // Parse raw stdout for JPEG frames: SOI (FF D8) → EOI (FF D9).
       // ffmpeg -f image2pipe -vcodec mjpeg outputs raw JPEG files concatenated.
       proc.stdout.on('data', _jpegSplitter(frame => {
+        _camTaps.get(key)?.forEach(tap => tap(frame));   // the recordings of this camera
         if (!event.sender.isDestroyed())
           event.sender.send('bambulab:cam-frame', key, frame);
         // Forward to detached cam window if open
@@ -4580,7 +4617,7 @@ let _ffmpegBin = null;
       }));
 
       proc.on('close', (code) => {
-        if (_bambuRtspProcs.get(key) === proc) _bambuRtspProcs.delete(key);
+        if (_bambuRtspProcs.get(key) === proc) { _bambuRtspProcs.delete(key); _camLive.delete(key); }
         if (proc._stopped || _bambuCamGen.get(key) !== gen) return; // intentional stop — do not restart
         if (restarts < MAX_RESTARTS) {
           restarts++;
@@ -4594,7 +4631,7 @@ let _ffmpegBin = null;
 
       proc.on('error', (err) => {
         console.error(`[bambu-rtsp:${key}] spawn error:`, err.message);
-        if (_bambuRtspProcs.get(key) === proc) _bambuRtspProcs.delete(key);
+        if (_bambuRtspProcs.get(key) === proc) { _bambuRtspProcs.delete(key); _camLive.delete(key); }
       });
     };
 
@@ -4605,6 +4642,7 @@ let _ffmpegBin = null;
     _bambuCamNextGen(key);   // cancels a retry waiting on its timer
     const p = _bambuRtspProcs.get(key);
     if (p) { p._stopped = true; try { p.kill('SIGTERM'); } catch (_) {} _bambuRtspProcs.delete(key); }
+    _camLive.delete(key);
   });
 
   // ── Prusa Buddy3D camera — plain RTSP on the camera's OWN address ──────────

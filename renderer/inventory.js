@@ -4285,6 +4285,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       mac: p.macAddress || p.discovery?.macAddress || null,
       serial: p.serialNumber || p.sn || p.mainboardId || p.discovery?.serialNumber || p.discovery?.serial || null,
     }),
+    // Bambu RTSPS cameras: main already reads the stream for the picture (one connection
+    // only), so the recording is taken from there instead of opening another.
+    liveKey: p => (p.brand === "bambulab" && findPrinterModel("bambulab", p.printerModelId)?.camera_transport === "rtsp")
+      ? `${p.brand}:${p.id}` : null,
     // The camera's own stream, when ffmpeg can read it directly: Bambu Lab's RTSPS
     // (X1 / X2D / H2 / P2S), or an http MJPEG the page shows as is (Elegoo).
     sourceUrl: (p, media) => {
