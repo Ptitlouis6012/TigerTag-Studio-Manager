@@ -2275,109 +2275,6 @@
     border-bottom: 1px solid var(--border); cursor: pointer;
   }
 
-  /* ── Upgrade to TigerTag+ banner ── */
-  .upgrade-plus-banner {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 7px 14px; background: color-mix(in srgb, var(--violet) 7%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--violet) 15%, transparent); cursor: pointer;
-    transition: background .15s;
-  }
-  .upgrade-plus-banner:hover { background: color-mix(in srgb, var(--violet) 12%, transparent); }
-  .upgrade-plus-banner-left { display: flex; align-items: center; gap: 8px; }
-  .upgrade-plus-badge {
-    font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px;
-    background: var(--violet); color: var(--on-accent); letter-spacing: .03em; flex-shrink: 0;
-  }
-  .upgrade-plus-banner-text { font-size: 12px; font-weight: 600; color: var(--violet); }
-  .upgrade-plus-banner-cta  { font-size: 11px; color: color-mix(in srgb, var(--violet) 70%, transparent); white-space: nowrap; }
-
-  /* Inline form — hidden by default */
-  .upgrade-plus-form {
-    display: none; flex-direction: column; gap: 8px;
-    padding: 10px 14px 12px; background: color-mix(in srgb, var(--violet) 4%, transparent);
-    border-bottom: 1px solid color-mix(in srgb, var(--violet) 15%, transparent);
-  }
-  .upgrade-plus-form.open { display: flex; }
-
-  /* Input row */
-  .upgrade-plus-input-row { display: flex; gap: 6px; }
-  .upgrade-plus-input {
-    flex: 1; height: 30px; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--violet) 35%, transparent);
-    background: var(--surface-2); color: var(--text); padding: 0 10px;
-    font-size: 13px; outline: none; min-width: 0;
-  }
-  .upgrade-plus-input:focus { border-color: var(--violet); box-shadow: 0 0 0 2px color-mix(in srgb, var(--violet) 15%, transparent); }
-  .upgrade-plus-check-btn {
-    height: 30px; padding: 0 14px; border-radius: 8px; font-size: 12px; font-weight: 700;
-    cursor: pointer; white-space: nowrap; border: 1px solid var(--violet);
-    background: var(--violet); color: var(--on-accent); flex-shrink: 0; transition: background .15s;
-  }
-  .upgrade-plus-check-btn:hover:not(:disabled) { background: var(--violet-hover); border-color: var(--violet-hover); }
-  .upgrade-plus-check-btn:disabled { opacity: .45; cursor: not-allowed; }
-
-  /* Helper links row */
-  .upgrade-plus-form-links { display: flex; gap: 12px; }
-  .upgrade-plus-help-link, .upgrade-plus-list-link {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 11px; color: color-mix(in srgb, var(--violet) 75%, transparent); background: none; border: none;
-    cursor: pointer; padding: 0; transition: color .15s;
-  }
-  .upgrade-plus-help-link:hover, .upgrade-plus-list-link:hover { color: var(--violet); }
-
-  /* Tooltip image */
-  /* old inline tooltip — kept but hidden (replaced by #productIdHelpOverlay modal) */
-  .upgrade-plus-tooltip { display: none !important; }
-
-  /* ── Product ID help modal ──────────────────────────────────────── */
-  .pid-help-card {
-    width: min(480px, 92vw);
-    padding: 24px;
-    display: flex; flex-direction: column; gap: 16px;
-  }
-  .pid-help-title {
-    font-size: 15px; font-weight: 600;
-    color: var(--text); margin: 0; padding-right: 24px;
-  }
-  .pid-help-img {
-    width: 100%; border-radius: 8px; display: block;
-    border: 1px solid var(--border);
-  }
-  .pid-help-body {
-    font-size: 13px; color: var(--muted);
-    line-height: 1.55; margin: 0;
-  }
-  .pid-help-list-btn {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    width: 100%;
-    padding: 10px 16px;
-    font-size: 13px; font-weight: 600;
-    color: var(--violet);
-    background: color-mix(in srgb, var(--violet) 8%, transparent);
-    border: 1.5px solid color-mix(in srgb, var(--violet) 25%, transparent);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 150ms, border-color 150ms, color 150ms;
-  }
-  .pid-help-list-btn:hover {
-    background: color-mix(in srgb, var(--violet) 16%, transparent);
-    border-color: color-mix(in srgb, var(--violet) 50%, transparent);
-    color: var(--violet);
-  }
-
-  /* Preview + confirm */
-  .upgrade-plus-preview { min-height: 0; }
-  .upgrade-plus-checking { font-size: 12px; color: var(--muted); }
-  .upgrade-plus-notfound { font-size: 12px; color: var(--danger); }
-  .upgrade-plus-result   { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
-  .upgrade-plus-thumb    { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; border: 1px solid var(--border); }
-  .upgrade-plus-name     { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.4; }
-  .upgrade-plus-confirm-btn {
-    width: 100%; height: 34px; border-radius: 8px; font-size: 13px; font-weight: 700;
-    cursor: pointer; border: 1px solid var(--violet); background: var(--violet); color: var(--on-accent);
-    transition: background .15s;
-  }
-  .upgrade-plus-confirm-btn:hover:not(:disabled) { background: var(--violet-hover); border-color: var(--violet-hover); }
-  .upgrade-plus-confirm-btn:disabled { opacity: .45; cursor: not-allowed; }
   .chip-update-icon {
     display: inline-flex; align-items: center; justify-content: center;
     width: 22px; height: 22px; border-radius: 50%;
@@ -2397,12 +2294,20 @@
     50%       { box-shadow: 0 0 0 6px color-mix(in srgb, var(--violet) 0%, transparent); }
   }
   /* Burning a chipless material is a gain, like linking a third-party Tag
-     (rfid_protocol/linked): the same success green — banner, text and pill. */
-  .cloud-encode-banner.cloud-encode-banner { background: color-mix(in srgb, var(--success) 12%, transparent); }
-  .cloud-encode-banner .cloud-encode-text.cloud-encode-text { color: var(--success); font-weight: 600; }
-  .cloud-encode-banner .chip-encode-btn.chip-encode-btn { color: var(--success); border-color: color-mix(in srgb, var(--success) 55%, transparent); background: transparent; }
-  .cloud-encode-banner .chip-encode-btn.chip-encode-active { background: color-mix(in srgb, var(--success) 16%, transparent); border-color: var(--success); }
-  .cloud-encode-banner .chip-encode-btn.chip-encode-btn:hover { background: var(--success); color: var(--on-accent); border-color: var(--success); }
+     (rfid_protocol/linked): the same success green — banner and text. */
+  .cloud-encode-banner.cloud-encode-banner { --burn: var(--success); background: color-mix(in srgb, var(--burn) 12%, transparent); }
+  /* "Please update NFC": the same held banner in the warning orange — urgent,
+     not a gain. Every colour below follows --burn. */
+  .chip-update-banner--hold.chip-update-banner--hold { --burn: var(--warning); }
+  /* "Upgrade to TigerTag+": the same banner in the TigerTag+ violet. */
+  .chip-update-banner--plus.chip-update-banner--plus { --burn: var(--violet); }
+  /* Erasing a chip (rfid_protocol/eraser): the same banner in red. */
+  .chip-update-banner--danger.chip-update-banner--danger { --burn: var(--danger); }
+  /* A logo in place of the RFID-material picture, white (the text colour: dark in
+     the light theme) — the banner's own colour only glows around it. */
+  .chip-banner-logo.chip-banner-logo { width: 46px; height: 36px; aspect-ratio: auto; border-radius: 0; background-color: var(--text); -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat; }
+  .chip-banner-logo--nfc.chip-banner-logo--nfc { --logo: url('../../assets/svg/icons/icon_rfid.svg'); }
+  .cloud-encode-banner .cloud-encode-text.cloud-encode-text { color: var(--burn); font-weight: 600; }
   /* Reader present: the banner itself is the (held) button, square like the
      panel's other bands, with a green fill. */
   .cloud-encode-banner--hold.cloud-encode-banner--hold { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 58px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; text-align: left; font: inherit; cursor: pointer; }
@@ -2411,13 +2316,13 @@
   /* "Burning" feel: a glint sweeps across the band, the TigerTag logo glows, and
      while held the fill's leading edge burns bright. */
   .cloud-encode-banner--hold .hold-progress {
-    background: linear-gradient(90deg, color-mix(in srgb, var(--success) 18%, transparent), color-mix(in srgb, var(--success) 50%, transparent));
+    background: linear-gradient(90deg, color-mix(in srgb, var(--burn) 18%, transparent), color-mix(in srgb, var(--burn) 50%, transparent));
     opacity: 1;
-    box-shadow: 6px 0 14px color-mix(in srgb, var(--success) 70%, transparent);
+    box-shadow: 6px 0 14px color-mix(in srgb, var(--burn) 70%, transparent);
   }
   .cloud-encode-banner--hold::after {
     content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-    background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--success) 22%, transparent) 50%, transparent 65%);
+    background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--burn) 22%, transparent) 50%, transparent 65%);
     transform: translateX(-100%);
     animation: cloud-burn-sweep 2.6s ease-in-out infinite;
   }
@@ -2426,33 +2331,22 @@
   @keyframes cloud-burn-sweep { 0% { transform: translateX(-100%); } 60%, 100% { transform: translateX(100%); } }
   @keyframes cloud-burn-glow {
     0%, 100% { filter: drop-shadow(0 0 0 transparent); }
-    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--success) 85%, transparent)); }
+    50%      { filter: drop-shadow(0 0 7px color-mix(in srgb, var(--burn) 85%, transparent)); }
   }
   /* While held (and confirming), only the burning fill glows: the sweep and the
      logo pulse stand down. */
   .cloud-encode-banner--hold:is(.is-holding, .is-confirming)::after { animation: none; opacity: 0; }
   .cloud-encode-banner--hold:is(.is-holding, .is-confirming) .rfid-material-icon { animation: none; filter: none; }
+  /* Click-only banner (opens a card): it shines like the others until its card
+     is open (.is-active) — then only the held banner of that card glows. */
+  .cloud-encode-banner--click.is-active::after { display: none; }
+  .cloud-encode-banner--click.is-active .rfid-material-icon.rfid-material-icon { animation: none; }
+  .cloud-encode-banner--click .chip-banner-chev { background: var(--burn); flex-shrink: 0; transition: transform .15s; }
+  .cloud-encode-banner--click .tool-info { margin-left: auto; }
+  .cloud-encode-banner--click:hover .chip-banner-chev { transform: translateX(3px); }
   @media (prefers-reduced-motion: reduce) {
     .cloud-encode-banner--hold::after, .cloud-encode-banner--hold .rfid-material-icon { animation: none; }
   }
-  /* Ghost pill — no reader connected (TigerPOD discovery) */
-  .chip-encode-btn {
-    font-size: 11px; padding: 4px 10px; border-radius: 999px;
-    background: transparent; color: var(--violet);
-    border: 1px solid color-mix(in srgb, var(--violet) 50%, transparent); white-space: nowrap; flex-shrink: 0;
-    cursor: pointer; transition: background .15s, color .15s;
-  }
-  .chip-encode-btn:hover { background: var(--violet); color: var(--on-accent); border-color: var(--violet); }
-  /* Active pill — reader + card present (Encode) */
-  .chip-encode-btn.chip-encode-active {
-    background: var(--primary-soft); color: var(--primary); border-color: var(--primary);
-  }
-  .chip-encode-btn.chip-encode-active:hover { background: var(--primary); color: var(--on-accent); }
-  /* Warning pill — used in physical-spool "Update RFID" banner */
-  .chip-encode-btn.chip-encode-warning {
-    background: var(--warning-soft); color: var(--warning); border-color: var(--warning);
-  }
-  .chip-encode-btn.chip-encode-warning:hover { background: var(--warning); color: var(--on-accent); }
 
   /* ── Chip pending badge (table + grid) ── */
   .chip-badge {
@@ -3511,6 +3405,8 @@
   #toolInfoPop.is-error { background: #e5484d; color: #fff; }
   #toolInfoPop.is-error:not(.pop-below)::after { border-top-color: #e5484d; }
   #toolInfoPop.is-error.pop-below::after { border-bottom-color: #e5484d; }
+  /* Optional picture above the words (the TigerPOD a spool goes on…). */
+  #toolInfoPop .tip-img { display: block; width: 76px; aspect-ratio: 1; object-fit: contain; margin: 2px auto 6px; }
   #toolInfoPop.is-measuring { opacity: 0; }        /* laid out for measuring, still hidden */
   #toolInfoPop.is-open { opacity: 1; animation: ttipPop .16s cubic-bezier(.34,1.45,.5,1); }
   @keyframes ttipPop { from { transform: scale(.82); } to { transform: scale(1); } }

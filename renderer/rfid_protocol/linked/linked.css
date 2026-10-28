@@ -11,7 +11,8 @@
    of its own (id selectors — each card sets these by id). */
 #chipChoicePane > #chipLinkPanel,
 #chipChoicePane > #catalogPickPanel,
-#chipChoicePane > #addProductPanel {
+#chipChoicePane > #addProductPanel,
+#chipChoicePane > #chipEraserPanel {
   position: absolute; inset: 0; right: 0; top: 0; bottom: 0;
   width: 100%; max-width: none; height: 100%;
   transform: none; transition: none; box-shadow: none; border-radius: 0; z-index: 2;
@@ -20,7 +21,8 @@
 /* View switch: the incoming card slides in over the outgoing one. */
 #chipChoicePane > #chipLinkPanel.lc-leaving,
 #chipChoicePane > #catalogPickPanel.lc-leaving,
-#chipChoicePane > #addProductPanel.lc-leaving { z-index: 1; pointer-events: none; }
+#chipChoicePane > #addProductPanel.lc-leaving,
+#chipChoicePane > #chipEraserPanel.lc-leaving { z-index: 1; pointer-events: none; }
 #chipChoicePane > .detail-panel.lc-enter { animation: lc-slide .26s cubic-bezier(.4,0,.2,1) both; box-shadow: -8px 0 24px rgba(0,0,0,.35); }
 #chipChoicePane > .detail-panel.lc-pre { visibility: hidden; }
 @keyframes lc-slide { from { transform: translateX(100%); } to { transform: none; } }
@@ -35,6 +37,9 @@
 .lc-choice.lc-choice { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; width: 100%; height: auto; aspect-ratio: 1; padding: 14px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); text-align: center; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
 .lc-choice.lc-choice:hover { border-color: var(--primary); transform: translateY(-2px); }
 .lc-choice.lc-choice:active { transform: scale(.98); }
+/* "Link" with no chip on the TigerPOD: greyed; a click says why in the red bubble. */
+.lc-choice.lc-choice.is-off { opacity: .45; border-color: var(--border); transform: none; background: var(--surface-2); }
+.lc-choice.lc-choice.is-off .tool-info { opacity: 1; }
 .lc-choice.lc-choice.is-active { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--surface-2)); }
 .lc-choice b { font-size: 13.5px; line-height: 1.3; }
 .lc-choice .tool-info { position: absolute; top: 8px; right: 8px; }

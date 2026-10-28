@@ -64,11 +64,27 @@ the chip is next resolved).
 
    After a link (or a burn) succeeds, every side card closes and the material opens alone.
 
+   While the new-chip card is up, a scan opens nothing and adds nothing (no spool
+   opened, created or updated, no new-chip card reopened on another view): placing
+   or removing a chip only updates the card itself (card-present events).
+
    The same side card opens for a **blank NTAG** (TigerTag Init or an erased / empty-NDEF
    chip, `_chipIsWritableBlank`) with the same three choices: a created spool is
    offered for burning onto that chip, and "Link to my inventory" lists the TigerData /
    TigerData+ spools, whose card then offers the burn. The search bar's "+" opens it
-   too, without the Link choice.
+   too, with the same three choices: linking a TigerData / TigerData+ there means
+   burning it onto a blank NTAG (TigerTag Init or empty NDEF), which turns it into a
+   TigerTag / TigerTag+, so the Link choice stays greyed until a chip sits on the
+   TigerPOD (`refreshChipChoice`). For a blank NTAG and from the "+" (not for a
+   maker's chip) a fourth choice, **NFC tools**, shows `rfid_protocol/eraser` in
+   the pane: while it is up a scan opens nothing; it shows the readers and offers
+   "Format your RFID chip" (→ TigerTag Init, a red chip banner held 1.5 s like the
+   burn, on any NTAG — even one already in that state) and "Write in NDEF", which
+   unfolds a form (link, Wi‑Fi, contact, e‑mail, phone, SMS, encoded by
+   `services/ndef.js`, or "Reset NDEF" — back to a blank NDEF tag) ending in a held
+   "Write to the chip" (red "Recycle to NDEF" for the reset).
+   With no chip a press shows the red TigerPOD bubble. A chip whose `id_tigertag`
+   is not a TigerTag version (such an NDEF tag) is never taken for a spool.
 5. The spool's detail panel lists its **linked chips** (its own and its twin's), each
    with ONE held "Unlink" (1.2 s) that removes every chip of the material together — never one chip on its own.
 

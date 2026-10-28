@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="css/60-modals.css" />
 <link rel="stylesheet" href="rfid_protocol/tigertag/modal.css" />
 <link rel="stylesheet" href="rfid_protocol/linked/linked.css" />
+<link rel="stylesheet" href="rfid_protocol/eraser/eraser.css" />
 <link rel="stylesheet" href="css/70-detail-misc.css" />
 <link rel="stylesheet" href="IoT/tigerscale/tigerscale.css" />
 <link rel="stylesheet" href="IoT/tigerspool/tigerspool.css" />
@@ -2504,20 +2505,6 @@
 </div>
 
 <!-- Diagnostic / error report modal -->
-<!-- ── Product ID help modal ─────────────────────────────────────────────── -->
-<div class="modal-overlay" id="productIdHelpOverlay">
-  <div class="modal-card pid-help-card">
-    <h2 class="pid-help-title" data-i18n="upgradeToPlusHelpTip">How to find the product ID</h2>
-    <img src="../assets/img/helper/helper_found_product_id.png"
-         class="pid-help-img" alt="Product ID helper" />
-    <p class="pid-help-body" data-i18n="upgradeToPlusHelpBody">The product ID is the number shown in the URL of a TigerTag product page. Browse the material list, open any product, and copy the number at the end of the URL.</p>
-    <button class="pid-help-list-btn" id="productIdHelpListBtn">
-      <span class="icon icon-link icon-13"></span>
-      <span data-i18n="upgradeToPlusListTip">Explore the TigerTag+ material list</span>
-    </button>
-  </div>
-</div>
-
 <div class="modal-overlay" id="diagModalOverlay">
   <div class="modal-card diag-card">
     <div class="diag-header">
@@ -2958,6 +2945,24 @@
 
 <!-- Link grid — "Link to my inventory" of the new-chip chooser: the materials
      with no linked chip yet; picking one links the scanned chips to it. -->
+<!-- Chip eraser (rfid_protocol/eraser): the "Erase chips" choice of the
+     new-chip card, shown in its pane. Reads the chips on the TigerPOD and offers
+     Erase → TigerTag Init or Recycle → blank NFC; while it is open a scan opens
+     nothing. -->
+<aside class="detail-panel pba-panel cer-panel" id="chipEraserPanel">
+  <div class="pba-header">
+    <div class="pba-header-text"><div class="pba-title" data-i18n="chipEraserTitle">Erase chips</div></div>
+    <button class="panel-close" id="chipEraserClose">✕</button>
+  </div>
+  <div class="cer-body">
+    <div class="cem-chips cer-chips" id="chipEraserChips"></div>
+    <p class="cer-hint" id="chipEraserHint"></p>
+    <div class="cer-actions" id="chipEraserActions"></div>
+    <div class="nfc-auto-count" id="fmtAutoCount"></div>
+    <div class="nfc-form" id="nfcNdefForm" hidden></div>
+  </div>
+</aside>
+
 <button class="pp-close-tab" id="chipLinkCloseTab" aria-label="Close" hidden>»</button>
 <aside class="detail-panel pba-panel lc-link-panel" id="chipLinkPanel">
   <div class="pba-header">

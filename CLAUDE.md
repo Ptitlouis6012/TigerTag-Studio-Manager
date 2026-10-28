@@ -123,11 +123,13 @@ renderer/
     tigerscale/  tigertouch/  tigerspool/  td1s/  usbscale/
   report/          — in-app reports (target picker, annotator, replies)
   rfid_protocol/tigertag/ — RFID tester modal + chip parser
+  rfid_protocol/linked/   — linked chips + the new-chip chooser side card
+  rfid_protocol/eraser/   — NFC tools view (format to TigerTag Init, recycle to NDEF, write NDEF content)
   printers/        — one folder per brand (PROTOCOL.md + index.js + add-flow.js + probe.js …)
                      plus plugins (klipper/, octoprint/: plugin.js + main.cjs) registered via
                      plugins.js, and shared: registry.js, context.js, cam_manager.js,
                      cam-snapshot.js, modal-helpers.js, model-list.js, scan-pick.js, extra-subnets.js
-services/          — tigertagDbService, MCP server + stdio bridge, NFC process, demo/ (printer simulator)
+services/          — tigertagDbService, MCP server + stdio bridge, NFC process, NDEF encoder (ndef.js), demo/ (printer simulator)
 assets/db/tigertag/ — reference tables id_*.json + id_catalog.json + last_update.json (db_update.py)
 data/              — static assets fetched by the renderer
   container_spool/spools_filament.json, rack-presets.json, printers/ (model catalogues)
@@ -167,6 +169,8 @@ ONE `ip` field, `host` or `host:port` (the form Studio and the Tiger Touch firmw
 | `tigertag.panelWidth.detail` / `.debug` | panel widths in px |
 | `tigertag.sort.inv` / `tigertag.sort.printer` | table sort `{col,dir}` |
 | `tigertag.theme`, `tigertag.catalog` | theme and catalogue view preferences |
+| `tigertag.nfc.lastUrl` | last link written to a chip by the NFC tools, offered again |
+| `tigertag.nfc.contact` | the NFC tools' contact card as last typed `{name, phone, email, org, url}` |
 
 ## Account object shape
 ```js

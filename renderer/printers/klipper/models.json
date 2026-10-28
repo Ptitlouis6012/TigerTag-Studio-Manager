@@ -343,6 +343,27 @@
     "features": []
   },
   {
+    "id": "163",
+    "name": "FlashForge AD5X",
+    "image": "img/flashforge-ad5x.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "164",
+    "name": "FlashForge Creator 5",
+    "image": "img/flashforge-creator-5.png",
+    "tools": 1,
+    "features": []
+  },
+  {
+    "id": "165",
+    "name": "FlashForge Creator 5 Pro",
+    "image": "img/flashforge-creator-5-pro.png",
+    "tools": 1,
+    "features": []
+  },
+  {
     "id": "52",
     "name": "FLSun S1",
     "image": "img/flsun-s1.png",

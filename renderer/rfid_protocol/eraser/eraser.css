@@ -1,0 +1,66 @@
+/* rfid_protocol/eraser — the chip eraser card (#chipEraserPanel), the "Erase
+   chips" view of the new-chip card's pane (linked.css lays it out there). The
+   reader plates reuse the encode window's .cem-chip (60-modals.css). */
+
+#chipEraserPanel { width: 400px; max-width: 95vw; z-index: 101; display: flex; flex-direction: column; }
+.cer-body { flex: 1; overflow-y: auto; padding: 8px 18px 22px; display: flex; flex-direction: column; gap: 14px; }
+
+.cer-chips { gap: 12px; }
+.cer-slot { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: stretch; }
+.cer-slot .cem-chip { flex: none; padding: 18px 12px; }
+.cer-slot .cem-chip-logo { width: 58px; }
+
+.cer-hint { margin: 0; min-height: 18px; text-align: center; font-size: 12.5px; color: var(--muted); }
+.cer-hint--fail { color: var(--danger); font-weight: 600; }
+
+/* The two banners stack as one block with rounded ends. */
+.cer-actions { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; border: 1px solid var(--border); }
+.cer-actions.cer-actions > :last-child { border-bottom: 0; }
+.cer-hint:empty { display: none; }
+
+/* NDEF content form, unfolded by the "Write in NDEF" banner (its chevron turns). */
+#nfcNdefBanner .chip-banner-chev { transition: transform .2s; }
+#nfcNdefBanner.is-active .chip-banner-chev { transform: rotate(90deg); }
+.nfc-form { display: flex; flex-direction: column; gap: 10px; animation: nfc-unfold .22s ease-out; }
+.nfc-form[hidden] { display: none; }
+@keyframes nfc-unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.nfc-types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; } /* two rows */
+/* "Reset NDEF" empties the chip: framed red when chosen. */
+.nfc-type[data-nfc-type="blank"]:hover, .nfc-type[data-nfc-type="blank"].is-selected { border-color: var(--danger); }
+.nfc-type[data-nfc-type="blank"].is-selected { background: color-mix(in srgb, var(--danger) 14%, var(--surface-2)); }
+.nfc-type {
+  aspect-ratio: 1; border-radius: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); background: var(--surface-2);
+  transition: border-color .15s, background .15s;
+}
+/* Square, as wide as the column allows (a global button height would cap it). */
+.nfc-type.nfc-type { height: auto; min-height: 0; padding: 0; }
+.nfc-type .icon { background-color: var(--text); }
+.nfc-type:hover { border-color: var(--success); }
+.nfc-type.is-selected { border-color: var(--success); background: color-mix(in srgb, var(--success) 14%, var(--surface-2)); }
+.nfc-fields { display: flex; flex-direction: column; gap: 8px; }
+.nfc-input {
+  width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  font: inherit; font-size: 13px; outline: none; resize: vertical;
+}
+.nfc-input:focus { border-color: var(--success); }
+.nfc-input.is-invalid, .nfc-input.is-invalid:focus { border-color: var(--danger); }
+.nfc-auth { display: flex; gap: 6px; }
+.nfc-auth-opt {
+  flex: 1; height: 34px; border-radius: 10px; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+  transition: border-color .15s, background .15s, color .15s;
+}
+.nfc-auth-opt.is-selected { border-color: var(--success); color: var(--success); background: color-mix(in srgb, var(--success) 12%, var(--surface-2)); }
+.nfc-size { align-self: flex-end; margin-top: -4px; font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
+/* The Auto switch, inside a held banner (Format, Write) before its ⓘ. */
+.cloud-encode-banner .nfc-auto { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--burn); }
+#chipEraserPanel .cloud-encode-banner .nfc-auto + .tool-info { margin-left: 0; }
+.cloud-encode-banner .nfc-auto .eac-toggle input:checked ~ .eac-toggle-track { background: var(--burn); }
+.nfc-size.is-over { color: var(--danger); font-weight: 700; }
+.nfc-form .cloud-encode-banner--hold.cloud-encode-banner--hold { border: 1px solid var(--border); border-radius: 14px; }
+.nfc-auto-count { text-align: center; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--success); }
+.nfc-auto-count:empty { display: none; }
+#fmtAutoCount { color: var(--warning); }

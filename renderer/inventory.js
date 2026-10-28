@@ -1,7 +1,8 @@
 import { decimalSpoolIdToHex, repairTruncatedNtagUid, isDecimalSpoolId, planTruncatedUidRepair } from './uid-repair.js';
 // ── RFID TigerTag tester modal ────────────────────────────────────────────
 import { initRfidTester } from './rfid_protocol/tigertag/index.js';
-import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice, closeChipLink, wireSearchBox, linkOfferHtml, wireLinkOffer, openAddChooser } from './rfid_protocol/linked/index.js';
+import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice, closeChipLink, wireSearchBox, linkOfferHtml, wireLinkOffer, openAddChooser, refreshChipChoice } from './rfid_protocol/linked/index.js';
+import { initChipEraser, openChipEraser, closeChipEraser, chipEraserOpen, eraserCardPresent, eraserForeignChip, eraserReadersChanged } from './rfid_protocol/eraser/index.js';
 
 // ── Offline timezone → country (telemetry, no IP geolocation) ──────────────
 import { tzToCountry, COUNTRY_CODES } from './tz-country.js';
@@ -3138,7 +3139,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   ];
   function openMaterialSourcePicker() {
     if (!state.activeAccountId) {
-      try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
+      try { _flashMessage(t("invalidKey", { r: "no account" })); } catch (_) {}
       return;
     }
     const list = $("matSourceList");
@@ -3198,7 +3199,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   function openAddProductPanel() {
     if (!state.activeAccountId) {
-      try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
+      try { _flashMessage(t("invalidKey", { r: "no account" })); } catch (_) {}
       return;
     }
 
@@ -3636,7 +3637,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         .set(data);
       bumpStudioCounters({ cloudAddedTotal: 1 });
       closeAddProductPanel();
-      try { toast(t("addProductOk"), "success"); } catch (_) {}
+      try { _flashMessage(t("addProductOk")); } catch (_) {}
       _openCreatedSpool(cloudId);
     } catch (e) {
       console.warn("[addProduct] save failed:", e?.code, e?.message);
@@ -4387,13 +4388,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     groupItems: rows => groupRows(rows, { force: true }), groupCard: g => _groupGridCardInnerHTML(g),
     openGroup: key => { closeDetail(); _openGroupPanel(key); }, setupHoldToConfirm,
     toast: msg => _flashMessage(msg), reportError, onChange: () => { if (state.selected) refreshOpenDetail?.(); },
-    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), syncPanels: () => _syncPanels(), clearSide: () => _clearSideForChip(), closeAllSide: () => _closeAllSidePanels(),
-    showTip: el => _showToolInfoTip(el), hideTip: () => _hideToolInfoTip(),
-    clearCreate: () => { closeCatalogPick(); if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); if ($("addProductPanel")?.classList.contains("open")) _adpCloseAllSheetsAndPanel(); } });
+    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), chipPresent: () => state.nfcCardPresent.size > 0, syncPanels: () => _syncPanels(), clearSide: () => _clearSideForChip(), closeAllSide: () => _closeAllSidePanels(),
+    showTip: el => _showToolInfoTip(el), hideTip: () => _hideToolInfoTip(), errorTip: (el, msg, opts) => _showErrorTip(el, msg, opts),
+    clearCreate: () => { closeCatalogPick(); if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); if ($("addProductPanel")?.classList.contains("open")) _adpCloseAllSheetsAndPanel(); },
+    openEraser: () => openChipEraser(), closeEraser: () => closeChipEraser() });
   $("chipLinkClose")?.addEventListener("click", () => closeChipLink());
   $("chipLinkCloseTab")?.addEventListener("click", () => closeChipLink());
   $("chipChoiceClose")?.addEventListener("click", () => closeChipChoice());
   $("chipChoiceCloseTab")?.addEventListener("click", () => closeChipChoice());
+  // Chip eraser — the new-chip card's "Erase chips" view; while it is up a scan
+  // opens nothing (the NFC routing below hands the chips to it).
+  initChipEraser({ t, esc, state, reportError,
+    syncPanels: () => _syncPanels(), showTip: el => _showToolInfoTip(el), hideTip: () => _hideToolInfoTip(),
+    errorTip: (el, msg, opts) => _showErrorTip(el, msg, opts),
+    chipBanner: (id, title, info, opts) => _chipBannerHTML(id, title, info, opts),
+    wireChipBanner: (el, action, ready) => _wireChipBanner(el, action, "linkedChipLinkNeedPod", ready),
+    toast: msg => _flashMessage(msg), beep: ok => _cemBeep(ok),
+    removeSpool: async id => { if (state.selected === id) closeDetail(); await markSpoolDeleted(id); },
+    onErased: (mode, uids) => {
+      uids.forEach(u => _sendTagAnalytics(mode === "format" ? "reset" : "nfc_init", u));
+      questBump(mode === "format" ? "chipInit" : "chipRecycle", uids.length);
+    } });
 
   initUsbScale({
     state,
@@ -13675,9 +13690,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (_isPrinterMode(state.viewMode)) { openPrinterBrandPicker(); return; }
     if (state.viewMode === "rack")      { openRackEditModal(null);  return; }
     if (!state.activeAccountId) {
-      try { toast(t("invalidKey", { r: "no account" }), "error"); } catch (_) {}
+      try { _flashMessage(t("invalidKey", { r: "no account" })); } catch (_) {}
       return;
     }
+    // A second "+" closes the card it opened.
+    if ($("chipChoicePanel")?.classList.contains("open")) { closeChipChoice(); return; }
     openAddChooser();
   });
   $("searchInv").addEventListener("input", e => {
@@ -13889,7 +13906,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (targets.length === 0) return;   // no matching chip on the POD → nothing to update
 
     // Both buttons that can trigger this action — disable all during write
-    const allBtns = [$("btnBurnRfid"), $("btnChipDone")].filter(Boolean);
+    const allBtns = [$("btnBurnRfid")].filter(Boolean);
     allBtns.forEach(b => { b.disabled = true; });
     // Progress label only applies to the toolbox row (has .toolbox-row-label child)
     const labelEl = $("btnBurnRfid")?.querySelector(".toolbox-row-label");
@@ -13996,7 +14013,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (state.rows.some(x => x.spoolId === spoolId)) openDetail(spoolId); else closeDetail();
   }
 
-  async function _openCreatedSpool(cloudId) {
+  // autoBurn: created from a held "Burn the TigerTag+" banner — the hold was the
+  // confirmation, so the burn starts as soon as the blank chips are checked.
+  async function _openCreatedSpool(cloudId, { autoBurn = false } = {}) {
     closeChipChoice();   // the spool it was opened for now exists
     const t0 = Date.now();
     while (!state.inventory[cloudId] && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
@@ -14006,7 +14025,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // there is nothing to burn.
     if (await linkPendingTo(cloudId)) { _closeAllSidePanels(); openDetail(cloudId); return; }
     openDetail(cloudId);
-    if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row);
+    if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row, { auto: autoBurn });
   }
 
   // Burn offer only — no card change (the caller decides what to reveal).
@@ -14531,7 +14550,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const _rgba = _hexToRgba(api.filament?.color || api.color);
       if (_rgba) { update.color_r = _rgba.r; update.color_g = _rgba.g; update.color_b = _rgba.b; update.color_a = _rgba.a; }
       if (Object.keys(update).length === 0) {
-        if (!silent) toast(t("toolRefreshApiNoChange"), "info");
+        if (!silent) _flashMessage(t("toolRefreshApiNoChange"));
         return;
       }
       // If the refresh changed something the CHIP carries, the tag is now out of
@@ -14553,11 +14572,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const uid = fbAuth().currentUser?.uid;
       if (!uid) return;
       await fbDb().collection("users").doc(uid).collection("inventory").doc(r.spoolId).update(update);
-      if (!silent) toast(t("toolRefreshApiSuccess"), "success");
+      if (!silent) _flashMessage(t("toolRefreshApiSuccess"));
       return true;
     } catch (e) {
       console.error("[refreshApi]", e);
-      if (!silent) toast(t("toolRefreshApiError"), "error");
+      if (!silent) _flashMessage(t("toolRefreshApiError"));
     } finally {
       if (btn) { btn.disabled = false; btn.querySelector(".toolbox-row-label").textContent = t("toolRefreshApi"); }
     }
@@ -14628,82 +14647,84 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
 
   // ── Convert TigerTag → TigerTag+ ─────────────────────────────────────────
-  // Step 1: validate product_id against the catalogue API, show a preview.
-  let _convertApiCache = null; // holds last valid api response for _convertToPlus
-  async function _lookupPlusProduct(r) {
-    const input   = $("upgradePlusInput");
-    const preview = $("upgradePlusPreview");
-    const confirm = $("upgradePlusConfirm");
-    const checkBtn = $("upgradePlusCheck");
-    if (!input || !preview) return;
-    const productId = parseInt(input.value, 10);
-    if (!productId || productId <= 0) return;
-    _convertApiCache = null;
-    confirm.style.display = "none";
-    preview.innerHTML = `<span class="upgrade-plus-checking">${t("upgradeToPlusChecking")}</span>`;
-    if (checkBtn) checkBtn.disabled = true;
-    try {
-      const res = await window.electronAPI.lookupProduct(productId);
-      if (!res.ok || !res.api) {
-        preview.innerHTML = `<span class="upgrade-plus-notfound">${t("upgradeToPlusNotFound")}</span>`;
-        return;
-      }
-      _convertApiCache = { productId, api: res.api };
-      const api   = res.api;
-      const img   = api.images?.main_src || api.images?.thumb_src || "";
-      // Build label: Brand · Series · Name · Weight · [Refill]
-      // Use api.brand directly — more reliable than local id_brand lookup at check time.
-      const brandLbl  = api.brand || brandName(r?.id_brand) || "";
-      const seriesLbl = api.series || "";
-      const nameLbl   = api.name   || `Product #${productId}`;
-      const cap       = r?.capacity || 0;
-      const weightLbl = cap >= 1000
-        ? `${+(cap / 1000).toFixed(2).replace(/\.?0+$/, "")}kg`
-        : cap > 0 ? `${cap}g` : "";
-      const refillLbl = api.filament?.refill ? "Refill" : "";
-      const label = [brandLbl, seriesLbl, nameLbl, weightLbl, refillLbl]
-        .filter(Boolean).join(" ");
-      preview.innerHTML = `
-        <div class="upgrade-plus-result">
-          ${img ? `<img class="upgrade-plus-thumb" src="${esc(img)}" alt="">` : ""}
-          <span class="upgrade-plus-name">${esc(label)}</span>
-        </div>`;
-      confirm.style.display = "";
-    } catch (e) {
-      preview.innerHTML = `<span class="upgrade-plus-notfound">${t("upgradeToPlusNotFound")}</span>`;
-    } finally {
-      if (checkBtn) checkBtn.disabled = false;
-    }
-  }
-
-  // Step 2: apply the validated API data to Firestore — spool becomes TigerTag+.
-  async function _convertToPlus(r) {
-    if (!_convertApiCache) return;
-    const { productId, api } = _convertApiCache;
-    const confirm = $("upgradePlusConfirm");
-    if (confirm) confirm.disabled = true;
+  // The spool card's "Upgrade to TigerTag+" opens the catalogue picker for that
+  // spool (`openCatalogPick({ upgradeFor })`); the product card picked there offers
+  // the held upgrade, which applies the product's data to the spool.
+  async function _convertToPlus(r, productId, api) {
+    if (!r || !productId || !api) return false;
     try {
       const ID_TIGERTAG_PLUS = 0xBC0FCB97; // 3155151767
-      // Note the id_tigertag flip: THIS path produces a real TigerTag+ (the
-      // spool has a chip). The catalogue path deliberately does NOT set it —
-      // a TigerData+ has no chip, so it keeps its chipless nonce.
+      // A spool with a chip (TigerTag) becomes a real TigerTag+: id_tigertag flips.
+      // A chipless TigerData becomes a TigerData+: no chip, so it keeps its chipless
+      // nonce — the real id_product is what makes it "+".
+      // The product's chip identity (brand, material, aspects, colours, data slots,
+      // capacity) — the same mapping "+ Inventory" uses — so a TigerTag+ never
+      // carries another product's data. The spool keeps what is its own: its id,
+      // remaining weight, note and chip timestamp.
+      const cat = _catalogDocFromApi(api, productId, r.spoolId);
+      for (const k of ["uid", "weight_available", "message", "timestamp", "deleted", "deleted_at"]) delete cat[k];
+      // A product with fewer colours clears the slots the old spool used.
+      if (cat.color_r2 == null) Object.assign(cat, { color_r2: 0, color_g2: 0, color_b2: 0 });
+      if (cat.color_r3 == null) Object.assign(cat, { color_r3: 0, color_g3: 0, color_b3: 0 });
       const update = {
+        ...cat,
         id_product: productId,
-        id_tigertag: ID_TIGERTAG_PLUS,
-        ..._productApiFields(api),
+        ...(r.isCloud ? {} : { id_tigertag: ID_TIGERTAG_PLUS, needUpdateAt: Date.now() }),   // the chip must be rewritten
       };
       update.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
       const uid = fbAuth().currentUser?.uid;
-      if (!uid) return;
-      await fbDb().collection("users").doc(uid).collection("inventory").doc(r.spoolId).update(update);
+      if (!uid) return false;
+      // Both halves of a twin pair become the product — one spool, two chips.
+      const inv = fbDb().collection("users").doc(uid).collection("inventory");
+      const batch = fbDb().batch();
+      batch.update(inv.doc(r.spoolId), update);
+      const twin = r.twinUid && state.rows.find(x => x.spoolId !== r.spoolId && String(x.uid) === String(r.twinUid));
+      if (twin) batch.update(inv.doc(twin.spoolId), update);
+      await batch.commit();
       // Conversion to TigerTag+ — classify by the source spool's type.
       bumpStudioCounters(r.isCloud ? { cloudToPlusTotal: 1 } : { tagToPlusTotal: 1 });
-      _convertApiCache = null;
-      toast(t("upgradeToPlusSuccess"), "success");
+      _flashMessage(t("upgradeToPlusSuccess", { tier: _upgradeTier(r) }));
+      return true;
     } catch (e) {
       console.error("[convertToPlus]", e);
-      toast(t("toolRefreshApiError"), "error");
-      if (confirm) confirm.disabled = false;
+      _flashMessage(t("toolRefreshApiError"));
+      return false;
+    }
+  }
+  // What an upgrade turns a spool into: a TigerTag (chip) → TigerTag+, a chipless
+  // TigerData → TigerData+.
+  const _upgradeTier = r => r?.isCloud ? "TigerData+" : "TigerTag+";
+  // A TigerTag → TigerTag+ rewrites the spool's own chip, so that chip (or its
+  // twin) must sit on the TigerPOD; a chipless TigerData needs none.
+  const _spoolChipOnPod = r => {
+    if (r?.isCloud) return true;
+    const uids = [r?.uid, r?.twinUid].filter(Boolean).map(u => String(u).toUpperCase());
+    return [...(state.nfcCardPresent?.values() || [])].some(c => c?.uid && uids.includes(String(c.uid).toUpperCase()));
+  };
+  const _upgradeNeedPod = anchor =>
+    _showErrorTip(anchor, t("upgradeNeedPod"), { img: "../assets/img/tigersquad/loot/tigerpod.webp" });
+  // The held "Upgrade to …+" of a product card opened for a spool: the
+  // product's data land on the spool, then the spool's own card comes back.
+  async function _upgradeSpoolToProduct(spoolId, productId) {
+    const r = state.rows.find(x => x.spoolId === spoolId);
+    if (!r) return;
+    if (!_spoolChipOnPod(r)) { _upgradeNeedPod($("pcBurnBanner") || document.body); return; }
+    let api = _catDetailCache.get(String(productId));
+    if (!api) {
+      const res = await window.electronAPI?.lookupProduct?.(Number(productId));
+      api = res?.ok ? res.api : null;
+    }
+    if (!api) { _flashMessage(t("toolRefreshApiError")); return; }
+    if (!(await _convertToPlus(r, Number(productId), api))) return;
+    _cpkUpgradeFor = null;
+    _closeAllSidePanels();
+    openDetail(spoolId);
+    // The chip still holds the old TigerTag: rewrite it now, it is on the reader.
+    if (!r.isCloud) {
+      const t0 = Date.now();
+      let row = null;
+      while (!(row = state.rows.find(x => x.spoolId === spoolId && x.isPlus)) && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
+      openUpdateModal(row || r);
     }
   }
 
@@ -15232,7 +15253,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      `id_tigertag` deliberately keeps the chipless nonce — this spool has no
      chip, so it must not carry the TigerTag+ id.
   */
-  async function _catalogCreate(productId, { keepLink = false } = {}) {
+  async function _catalogCreate(productId, { keepLink = false, autoBurn = false } = {}) {
     if (_catalogBusy) return;
     const uid = state.activeAccountId;
     if (!uid || state.friendView) return;
@@ -15265,7 +15286,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // The product card has done its job: close it and open the new spool's
       // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
       if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
-      _openCreatedSpool(cloudId);
+      _openCreatedSpool(cloudId, { autoBurn });
     } catch (e) {
       console.error("[catalog] create failed:", e);
       toast(res$, "bad", t("catalogCreateError"));
@@ -15293,6 +15314,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      (`_openCreatedSpool`). */
   const CAT_PICK_MAX = 80;
   let _cpkSelectedId = null;   // the product whose card the pick list opened
+  let _cpkUpgradeFor = null;   // spool id the picker was opened to upgrade (TigerTag → TigerTag+)
+  let _cpkStackT = 0;          // drops the upgrade stacking once the cards have slid out
   // A chip placed on the reader is a new task: it takes the right edge, like
   // "Add product" does, instead of stacking on whatever spool card was open.
   function _clearSideForChip() {
@@ -15307,10 +15330,20 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ($("detailPanel")?.classList.contains("open"))      closeDetail();
     if ($("groupPanel")?.classList.contains("open"))       _closeGroupPanel();
   }
-  function openCatalogPick() {
+  // `upgradeFor`: a TigerTag's spool id — the picked product upgrades that spool to
+  // TigerTag+ (its product card offers it) instead of creating a TigerData+.
+  function openCatalogPick({ upgradeFor = null } = {}) {
     if (!state.activeAccountId || state.friendView) return;
+    _cpkUpgradeFor = upgradeFor;
+    $("upgradePlusBanner")?.classList.toggle("is-active", !!upgradeFor);
+    // Upgrade stack: product card under the picker under the spool card (and their
+    // tabs alike), so closing slides each card out beneath the one to its left.
+    clearTimeout(_cpkStackT);
+    document.body.classList.toggle("cpk-upgrade", !!upgradeFor);
     clearPendingLink();
-    _clearSideForChip();
+    // A new chip takes the right edge; an upgrade keeps the spool's card open and
+    // the picker slides in beside it (_syncPanels).
+    if (!upgradeFor) _clearSideForChip();
     _catalogLoadCacheIfNeeded();
     // Refill only when the sync actually brought a new index — a second build
     // of the list mid-slide made the card jump into place instead of sliding.
@@ -15335,6 +15368,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function closeCatalogPick() {
     if (!$("catalogPickPanel")?.classList.contains("open")) return;
     $("catalogPickPanel").classList.remove("open");
+    _cpkUpgradeFor = null;
+    $("upgradePlusBanner")?.classList.remove("is-active");
+    // Keep the stacking until the cards have slid out (.25 s), then drop it.
+    clearTimeout(_cpkStackT);
+    _cpkStackT = setTimeout(() => { if (!_cpkUpgradeFor) document.body.classList.remove("cpk-upgrade"); }, 350);
     _syncPanels();
   }
   function _catalogPickFill() {
@@ -18039,7 +18077,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // side card (spool detail, container, GROUP deck, reorder) cascades to its LEFT
     // so none is ever hidden behind the printer panel — even when the spool detail
     // itself is closed (its width used to be the only thing offsetting the deck).
-    const baseRight = printerW + configW;
+    // The catalogue picker opened to upgrade a spool (openCatalogPick({ upgradeFor }))
+    // takes the right edge — with the picked product's card at its right — and
+    // pushes the spool card and the rest to their left.
+    const edge = printerW + configW;
+    const ckpUp = $("catalogPickPanel"), pcpUp = $("productCardPanel");
+    const upMode = !!_cpkUpgradeFor && !!ckpUp?.classList.contains("open");
+    const upPickW = upMode ? ckpUp.offsetWidth : 0;
+    const upPcW = upMode && pcpUp?.classList.contains("open") ? pcpUp.offsetWidth : 0;
+    const baseRight = edge + upPcW + upPickW;
     // Spool card keeps its place on the right (left of printer/config if those open).
     const matRight = dOpen ? baseRight : 0;
     if (dp) dp.style.right = matRight ? `${matRight}px` : "";
@@ -18062,8 +18108,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // both are open the Product card sits to the RIGHT of the reorder card.
     const pcp = $("productCardPanel");
     const pcOpen = !!pcp?.classList.contains("open");
-    const pcW = (pcOpen && pcp) ? pcp.offsetWidth : 0;
-    const pcRight = pcOpen ? (baseRight + detailW + cppW + gpW) : 0;
+    // In upgrade mode the product card is already counted in baseRight (rightmost).
+    const pcW = (pcOpen && pcp && !upPcW) ? pcp.offsetWidth : 0;
+    const pcRight = !pcOpen ? 0 : upPcW ? edge : (baseRight + detailW + cppW + gpW);
     if (pcp) pcp.style.right = pcRight ? `${pcRight}px` : "";
     // Reorder card — opens to the LEFT of material / group deck / Product card.
     const rop = $("reorderPanel");
@@ -18095,7 +18142,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const clRight = clOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
     if (clp) clp.style.right = clRight ? `${clRight}px` : "";
     _setTab($("chipLinkCloseTab"), clOpen, clRight + (clOpen ? clp.offsetWidth : 0), clp);
-    const ckRight = ckOpen ? (baseRight + detailW + cppW + gpW + pcW + roW) : 0;
+    const ckRight = !ckOpen ? 0 : upPickW ? (edge + upPcW) : (baseRight + detailW + cppW + gpW + pcW + roW);
     if (ckp) ckp.style.right = ckRight ? `${ckRight}px` : "";
     _setTab($("catalogPickCloseTab"), ckOpen, ckRight + (ckOpen ? ckp.offsetWidth : 0), ckp);
     // New-chip side card (rfid_protocol/linked) — the same slot again. Its pane
@@ -18108,7 +18155,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _setTab($("chipChoiceCloseTab"), ccOpen, ccRight + (ccOpen ? ccp.offsetWidth : 0), ccp);
     // Only the new-chip card's own » shows while it is up.
     if (ccOpen) ["catalogPickCloseTab", "chipLinkCloseTab", "addProductCloseTab"].forEach(id => { if ($(id)) $(id).hidden = true; });
-    _setTab($("productCardCloseTab"), pcOpen, pcRight + pcW, pcp);
+    _setTab($("productCardCloseTab"), pcOpen, pcRight + (pcW || upPcW), pcp);
     _setTab($("reorderCloseTab"), roOpen, roRight + roW, rop);
     _setTab($("detailCloseTab"),     dOpen, matRight + detailW, dp);
     _setTab($("printerCloseTab"),    pOpen, printerW, pp);
@@ -19338,18 +19385,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // color_r/g/b) and can be re-edited freely. A burned TigerTag/TigerTag+ chip
     // keeps its colour read-only here.
     $("btnEditColor")?.addEventListener("click", () => openColorEditModal(r));
-    // Upgrade to TigerTag+ — banner opens inline form
-    $("upgradePlusBanner")?.addEventListener("click", () => {
-      const form = $("upgradePlusForm");
-      if (form) { form.classList.toggle("open"); $("upgradePlusInput")?.focus(); }
+    // Upgrade to TigerTag+ — the banner opens the catalogue picker for this spool;
+    // a second click closes it again (with the product card it opened).
+    $("upgradePlusBanner")?.addEventListener("click", e => {
+      if (e.target.closest(".tool-info")) return;
+      const open = _cpkUpgradeFor === r.spoolId && $("catalogPickPanel")?.classList.contains("open");
+      // A TigerTag can only evolve with its own chip on the TigerPOD: no going further without it.
+      if (!open && !_spoolChipOnPod(r)) { _upgradeNeedPod(e.currentTarget); return; }
+      if (open) {
+        if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
+        closeCatalogPick();
+      } else openCatalogPick({ upgradeFor: r.spoolId });
     });
-    $("upgradePlusCheck")?.addEventListener("click", () => _lookupPlusProduct(r));
-    $("upgradePlusInput")?.addEventListener("keydown", e => { if (e.key === "Enter") _lookupPlusProduct(r); });
-    $("upgradePlusConfirm")?.addEventListener("click", () => _convertToPlus(r));
-    $("upgradePlusListBtn")?.addEventListener("click", () =>
-      window.electronAPI?.openExternal("https://tigersystem.io/fr/catalog"));
-    $("upgradePlusHelpBtn")?.addEventListener("click", () =>
-      $("productIdHelpOverlay")?.classList.add("open"));
 
     // collapsible "Details" section — toggle + persist preference
     const btnToggleDetails = $("btnToggleDetails");
@@ -19711,17 +19758,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // THIS spool's chip(s), verifies the presented UID(s) match, warns on a
     // mismatch, and does the verified surgical re-write. (openUpdateModal falls
     // back to the POD modal itself when no reader is present.)
-    $("chipUpdateBanner")?.addEventListener("click", () => openUpdateModal(r));
     wireLinkOffer($("detailPanel"));
     // Cloud encode banner — open the guided encode modal when a reader is
     // connected (it handles the presence gate itself); otherwise guide to POD.
-    const _ceb = $("cloudEncodeBanner");
-    // The ⓘ explains, it never starts the hold (the bubble itself is the shared
-    // .tool-info hover, which the hold hint already stands aside for).
-    _ceb?.querySelector(".tool-info")?.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); });
-    _ceb?.querySelector(".tool-info")?.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); });
-    if (_ceb?.classList.contains("cloud-encode-banner--hold")) setupHoldToConfirm(_ceb, 1500, () => openEncodeModal(r, { auto: true }), { hint: true });
-    else _ceb?.addEventListener("click", () => openTigerPodModal());
+    _wireChipBanner($("cloudEncodeBanner"), () => openEncodeModal(r, { auto: true }));
+    _wireChipBanner($("chipUpdateBanner"), () => openUpdateModal(r), "chipUpdateNeedPod");
     // Tags — Shopify-style inline editor (input + custom autocomplete dropdown
     // with create + toggles, chips below, pencil → "Add tags" modal). Firestore
     // writes are twin-mirrored; chips update in place. See _wireTagEditor.
@@ -19734,6 +19775,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _scanOpenUid = null;
     // The container picker is anchored to this spool card — close it too.
     if ($("containerPanel")?.classList.contains("open")) closeContainerPicker();
+    // So are the catalogue picker and product card of an upgrade this spool started:
+    // the three cards go together.
+    if (_cpkUpgradeFor && _cpkUpgradeFor === state.selected && $("catalogPickPanel")?.classList.contains("open")) {
+      if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
+      closeCatalogPick();
+    }
     // The Product-info card is per PRODUCT, not this specific detail: keep it open
     // when a group deck is still up (switching decks re-targets it) — only close
     // it when the detail closes with no deck behind it.
@@ -20914,6 +20961,65 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   // Read-only product card — only used in a FRIEND's view now. Everything the
   // owner sees (and edits) lives in the merged "Product info" card (#reorderPanel).
+  // The held chip banner — one component, two colours. "Burn the TigerTag(+)" (green,
+  // a gain): the spool card of a TigerData and the catalogue product card, named after
+  // what it becomes (a TigerData burns to a TigerTag, a TigerData+ / catalogue product
+  // to a TigerTag+). "Please update NFC" (orange, urgent): a chip whose material changed.
+  // The whole banner is the button, held 1.5 s with a fill — the same gesture as
+  // linking a third-party Tag (rfid_protocol/linked); the ⓘ says what it writes.
+  // Tones: green (burn), orange `update`, violet `plus` (upgrade to TigerTag+).
+  // `hold: false` — a plain click (it only opens something, writes nothing): a
+  // chevron says a card opens to the right; once that card is open it stops
+  // shining (`active`) — the held banner of the card it opened is the one that glows.
+  // `logo: "nfc"` draws the NFC logo instead of the RFID-material picture;
+  // `danger`: the red tone (resetting a chip to NDEF).
+  function _chipBannerHTML(id, title, info, { update = false, plus = false, danger = false, hold = true, holdTip = null, holdTier = null, active = false, logo = null } = {}) {
+    const tone = update ? " chip-update-banner--hold" : plus ? " chip-update-banner--plus" : danger ? " chip-update-banner--danger" : "";
+    const tip = holdTip || (update ? "chipUpdateHoldTip" : "cloudEncodeHoldTip");
+    return `
+        <button type="button" class="chip-update-banner cloud-encode-banner cloud-encode-banner--hold${tone}${hold ? "" : " cloud-encode-banner--click"}${active ? " is-active" : ""}" id="${id}"${hold ? ` data-hold-tip="${tip}"` : ""}${hold && holdTier ? ` data-hold-tier="${holdTier}"` : ""}>
+          ${hold ? '<span class="hold-progress" aria-hidden="true"></span>' : ""}
+          ${logo ? `<span class="rfid-material-icon chip-banner-logo chip-banner-logo--${logo}" aria-hidden="true"></span>` : '<img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">'}
+          <span class="chip-update-text cloud-encode-text">${esc(title)}</span>
+          <span class="tool-info" data-tip="${esc(info)}" aria-label="${esc(info)}"><span class="icon icon-info icon-13"></span></span>
+          ${hold ? "" : '<span class="icon icon-chevron-r icon-14 chip-banner-chev" aria-hidden="true"></span>'}
+        </button>`;
+  }
+  // "Upgrade to TigerTag+ / TigerData+" on the spool card: a click opens the
+  // catalogue picker for that spool; it stops shining while that picker is up.
+  const _upgradeBannerHTML = r => {
+    const tier = _upgradeTier(r);
+    return _chipBannerHTML("upgradePlusBanner", t("upgradeToPlusBanner", { tier }), t("upgradeToPlusInfo", { tier }),
+      { plus: true, hold: false, active: _cpkUpgradeFor === r.spoolId });
+  };
+  const _burnBannerHTML = (id, tier) =>
+    _chipBannerHTML(id, t("cloudEncodeTitle", { tier }), t("cloudEncodeInfo", { tier }));
+  // Wires a banner built by _chipBannerHTML: held, it runs `action`; its ⓘ explains
+  // and never starts the hold. `needPodKey: null` — the action needs no chip;
+  // `ready` says whether the chip it needs is on the TigerPOD (any chip by default).
+  function _wireChipBanner(el, action, needPodKey = "linkedChipLinkNeedPod", ready = () => (state.nfcCardPresent?.size ?? 0) > 0) {
+    if (!el) return;
+    const info = el.querySelector(".tool-info");
+    info?.addEventListener("pointerdown", e => { e.stopPropagation(); e.preventDefault(); });
+    info?.addEventListener("click", e => { e.stopPropagation(); e.preventDefault(); });
+    // No chip on a TigerPOD (none plugged in, or an empty one): nothing to write
+    // to — say so, as the greyed "Link to my inventory" does (red bubble, the
+    // TigerPOD pictured), instead of starting the hold. Capture phase on the
+    // banner itself runs before setupHoldToConfirm's own pointerdown and stops it.
+    // `ready` may also return a message (a string): something else is missing —
+    // shown in the same red bubble, without the TigerPOD picture.
+    if (needPodKey) el.addEventListener("pointerdown", e => {
+      // ⓘ, or a control inside the banner (data-no-hold: e.g. the Auto switch).
+      if (e.target.closest(".tool-info, [data-no-hold]")) return;
+      const r = ready();
+      if (r && typeof r !== "string") return;
+      e.stopImmediatePropagation(); e.preventDefault();
+      if (typeof r === "string") _showErrorTip(el, r);
+      else _showErrorTip(el, t(needPodKey), { img: "../assets/img/tigersquad/loot/tigerpod.webp" });
+    }, true);
+    setupHoldToConfirm(el, 1500, action, { hint: true });
+  }
+
   function _renderProductCard(p) {
     const body = $("productCardBody"); if (!body) return;
     const r = _productDisplayRow(p);
@@ -20959,8 +21065,19 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       </div>
       ${owned ? `<div class="pc-owned"><span class="icon icon-package icon-13"></span><span>${esc(t("pcCatOwned", { n: owned }))}</span></div>` : ""}
       <div class="pc-cat-msg" id="pcCatMsg"></div>` : "";
+    // A catalogue product burns straight onto a blank chip: the banner creates its
+    // TigerData+ and opens the burn, so "what do I do with this chip?" has an answer.
+    // Opened from a TigerTag's "Upgrade to TigerTag+": the banner upgrades that spool.
+    const upgradeFor = isCat && _cpkUpgradeFor && $("catalogPickPanel")?.classList.contains("open") ? _cpkUpgradeFor : null;
+    const burnHTML = !isCat ? ""
+      : upgradeFor ? (() => {
+          const tier = _upgradeTier(state.rows.find(x => x.spoolId === upgradeFor));
+          return _chipBannerHTML("pcBurnBanner", t("upgradeToPlusBanner", { tier }), t("upgradeToPlusPickInfo", { tier }), { plus: true, holdTip: "upgradeToPlusHoldTip", holdTier: tier });
+        })()
+      : HAS_NATIVE ? _burnBannerHTML("pcBurnBanner", "TigerTag+") : "";
     body.innerHTML = `
       ${imgSection}
+      ${burnHTML}
       ${isCat ? "" : `<div class="panel-section pi-flags-row"><div class="pi-flags pc-flags">${flagsHTML}</div></div>`}
       <div class="panel-section panel-identity pc-identity">
         <div class="pi-ident-text">
@@ -20992,6 +21109,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </details>
       </div>` : ""}`;
     if (keepImg) body.querySelector(".panel-img-wrap")?.replaceWith(keepImg);
+    // Upgrading a TigerTag needs that spool's own chip on the TigerPOD (a TigerData none).
+    if (upgradeFor) _wireChipBanner($("pcBurnBanner"), () => _upgradeSpoolToProduct(upgradeFor, p.catalogItem.id),
+      "upgradeNeedPod", () => _spoolChipOnPod(state.rows.find(x => x.spoolId === upgradeFor)));
+    else _wireChipBanner($("pcBurnBanner"), () => {
+      if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id), { keepLink: !!$("chipChoicePanel")?.classList.contains("open"), autoBurn: true });
+    });
     // Copy-JSON — same affordance as the material card's raw section. Wired here
     // because the body is rebuilt on every render.
     body.querySelector("#btnCopyPcRaw")?.addEventListener("click", e => {
@@ -22651,37 +22774,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (chipBannerHtml) {
       // (wired by wireLinkOffer after render)
     } else if (r.isCloud) {
-      // Cloud spool — never has a physical chip yet. Show a persistent encode CTA.
-      // When a reader with a card is present: primary "Encode →" button.
-      // Otherwise: ghost "TigerPOD →" button that links to the product page.
-      const hasCard = HAS_NATIVE && (state.nfcCardPresent?.size ?? 0) > 0;
-      // A reader is there: the whole banner is the button, held 1.5 s with a
-      // green fill — the same gesture as linking a third-party Tag
-      // (rfid_protocol/linked). No reader: the TigerPOD discovery pill.
-      // Named after what it becomes: a TigerData burns to a TigerTag, a
-      // TigerData+ to a TigerTag+ — the ⓘ says the data go INTO the chip.
-      const burnTier = r.isCloudPlus ? "TigerTag+" : "TigerTag";
-      const burnInfo = esc(t("cloudEncodeInfo", { tier: burnTier }));
-      const burnInfoHtml = `<span class="tool-info" data-tip="${burnInfo}" aria-label="${burnInfo}"><span class="icon icon-info icon-13"></span></span>`;
-      chipBannerHtml = state.nfcReaderCount > 0 ? `
-        <button type="button" class="chip-update-banner cloud-encode-banner cloud-encode-banner--hold" id="cloudEncodeBanner" data-hold-tip="cloudEncodeHoldTip">
-          <span class="hold-progress" aria-hidden="true"></span>
-          <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
-          <span class="chip-update-text cloud-encode-text">${esc(t("cloudEncodeTitle", { tier: burnTier }))}</span>
-          ${burnInfoHtml}
-        </button>` : `
-        <div class="chip-update-banner cloud-encode-banner" id="cloudEncodeBanner">
-          <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
-          <span class="chip-update-text cloud-encode-text">${esc(t("cloudEncodeTitle", { tier: burnTier }))}</span>
-          <span class="chip-encode-btn ${hasCard ? "chip-encode-active" : ""}">${t("tigerPodDiscover")}</span>
-        </div>`;
+      // Cloud spool — never has a physical chip yet: the persistent burn banner,
+      // and a plain TigerData also offers its upgrade to TigerData+ (catalogue).
+      chipBannerHtml = _burnBannerHTML("cloudEncodeBanner", r.isCloudPlus ? "TigerTag+" : "TigerTag")
+        + (!r.isCloudPlus && !state.friendView && window.electronAPI?.lookupProduct ? _upgradeBannerHTML(r) : "");
     } else if (r.needUpdateAt) {
-      chipBannerHtml = `
-        <div class="chip-update-banner" id="chipUpdateBanner">
-          <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
-          <span class="chip-update-text">${t("chipPendingHint")}</span>
-          <span class="chip-encode-btn chip-encode-warning">${t("btnChipDone")}</span>
-        </div>`;
+      chipBannerHtml = _chipBannerHTML("chipUpdateBanner", t("chipUpdateTitle", { tier: r.isPlus ? "TigerTag+" : "TigerTag" }), t("chipUpdateInfo"), { update: true });
     } else if (r.tagCount >= 2 && !r.hasTwinPair && !state.friendView) {
       // The chip says it is one of n (offset 39, protocol v2.2), but its partner
       // has never been scanned — ask for it. Scanning it pairs the two on their
@@ -22692,38 +22790,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <span class="chip-update-text">${esc(t("twinMissingHint", { i: r.tagIndex ?? "?", n: r.tagCount }))}</span>
         </div>`;
     } else if (!r.isPlus && !state.friendView && window.electronAPI?.lookupProduct) {
-      // Regular TigerTag (Maker) — offer upgrade to TigerTag+
-      chipBannerHtml = `
-        <div class="upgrade-plus-banner" id="upgradePlusBanner">
-          <div class="upgrade-plus-banner-left">
-            <span class="upgrade-plus-badge">TigerTag+</span>
-            <span class="upgrade-plus-banner-text">${t("upgradeToPlusBanner")}</span>
-          </div>
-          <span class="upgrade-plus-banner-cta">${t("upgradeToPlusAction")} →</span>
-        </div>
-        <div class="upgrade-plus-form" id="upgradePlusForm">
-          <div class="upgrade-plus-input-row">
-            <input class="upgrade-plus-input" id="upgradePlusInput" type="number" min="1"
-              placeholder="ID (ex: 60)" />
-            <button class="upgrade-plus-check-btn" id="upgradePlusCheck">${t("upgradeToPlusCheck")}</button>
-          </div>
-          <div class="upgrade-plus-form-links">
-            <button class="upgrade-plus-help-link" id="upgradePlusHelpBtn">
-              <span class="icon icon-info icon-12"></span>${esc(t("upgradeToPlusHelpTip"))}
-            </button>
-            <button class="upgrade-plus-list-link" id="upgradePlusListBtn">
-              <span class="icon icon-link icon-12"></span>${esc(t("upgradeToPlusListTip"))}
-            </button>
-          </div>
-          <div class="upgrade-plus-preview" id="upgradePlusPreview"></div>
-          <button class="upgrade-plus-confirm-btn" id="upgradePlusConfirm" style="display:none">${t("upgradeToPlusConvert")}</button>
-        </div>`;
+      // Regular TigerTag (Maker) — offer the upgrade to TigerTag+: a click opens the
+      // catalogue picker, whose product card then offers the (held) upgrade.
+      chipBannerHtml = _upgradeBannerHTML(r);
     }
 
     return `
       ${imgSection}
-      ${flagsRow}
       ${chipBannerHtml}
+      ${flagsRow}
       ${identityHtml}
       <div class="panel-section">
         <div class="panel-label">${esc(t("sectionAspect"))}</div>
@@ -23439,13 +23514,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("diagModalClose")?.addEventListener("click", closeDiagnosticModal);
   $("diagModalOverlay")?.addEventListener("click", e => { if (e.target === $("diagModalOverlay")) closeDiagnosticModal(); });
 
-  // ── Product ID help modal ──────────────────────────────────────────────────
-  const _closePidHelp = () => $("productIdHelpOverlay")?.classList.remove("open");
-  $("productIdHelpOverlay")?.addEventListener("click", e => { if (e.target === $("productIdHelpOverlay")) _closePidHelp(); });
-  $("productIdHelpListBtn")?.addEventListener("click", () => {
-    window.electronAPI?.openExternal("https://tigersystem.io/fr/catalog");
-    _closePidHelp();
-  });
   $("btnDiagCopy")?.addEventListener("click", async () => {
     const txt = $("diagBody").value;
     try {
@@ -24684,10 +24752,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     document.body.appendChild(tip);
     return tip;
   }
-  function _showToolInfoTip(el, text = el.getAttribute("data-tip")) {
-    if (!text) return;
+  function _showToolInfoTip(el, text = el.getAttribute("data-tip"), { img = null } = {}) {
+    if (!text || _errorTipOpen) return;   // a red help bubble stays until clicked away
     const tip = _ensureToolInfoPop();
+    tip.classList.remove("is-error");     // a hover bubble is never red
     tip.textContent = text;
+    // An optional picture above the words (e.g. the TigerPOD to put the spool on).
+    if (img) { const i = document.createElement("img"); i.className = "tip-img"; i.src = img; i.alt = ""; tip.prepend(i); }
     tip.classList.remove("pop-below");
     tip.classList.add("is-measuring");   // lay out at final width to measure
     const r  = el.getBoundingClientRect();
@@ -24705,9 +24776,25 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     tip.classList.remove("is-measuring");
     tip.classList.add("is-open");
   }
-  function _hideToolInfoTip() {
-    document.getElementById("toolInfoPop")?.classList.remove("is-open");
+  // The red help bubble, the same everywhere: said over the control that cannot
+  // act ("nothing to give", "put the material on the TigerPOD"…). It stays while
+  // the pointer moves — hover bubbles neither replace nor hide it — and goes on
+  // the first press outside it.
+  let _errorTipOpen = false;
+  function _showErrorTip(anchor, msg, { img = null } = {}) {
+    _errorTipOpen = false;
+    _showToolInfoTip(anchor, msg, { img });
+    document.getElementById("toolInfoPop")?.classList.add("is-error");
+    _errorTipOpen = true;
   }
+  function _hideToolInfoTip({ force = false } = {}) {
+    if (_errorTipOpen && !force) return;
+    _errorTipOpen = false;
+    document.getElementById("toolInfoPop")?.classList.remove("is-open", "is-error");
+  }
+  document.addEventListener("pointerdown", e => {
+    if (_errorTipOpen && !e.target.closest?.("#toolInfoPop")) _hideToolInfoTip({ force: true });
+  }, true);
   function _wireToolInfoTips() {
     if (_toolInfoTipsWired) return;
     const body = $("panelBody");
@@ -24736,7 +24823,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       .format((Number(el.dataset.holdMs) || 0) / 1000);
     const hold = t("holdToConfirmTip", { s });
     // Optional lead sentence saying WHAT the button does (data-hold-tip = i18n key).
-    return el.dataset.holdTip ? `${t(el.dataset.holdTip)} ${hold}` : hold;
+    return el.dataset.holdTip ? `${t(el.dataset.holdTip, { tier: el.dataset.holdTier })} ${hold}` : hold;
   }
   function _wireFlagTips() {
     if (_flagTipsWired) return;
@@ -31495,7 +31582,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           const fileName = ffgFilePrint.dataset.ffgFilePrint;
           if (fileName) {
             ffgPrintFile(_activePrinter, fileName).then(resp => {
-              if (resp && resp.code === 0) toast(t("ffgPrintStarted") || "Print started", "success");
+              if (resp && resp.code === 0) _flashMessage(t("ffgPrintStarted") || "Print started");
               else toast((resp && resp.message) || t("ffgErrNetwork"), "error");
             });
           }
@@ -39638,17 +39725,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // From the Friends panel ("Give an envelope"): the oldest gift envelope, the
   // give picker over every friend — or one already picked when `friendUid` is
   // given (functions/tigerCoins.js giveEnvelope; a held button sends).
-  let _giveTipT = 0;
   async function _giveEnvelopeTo(friendUid = null, anchor = null) {
     const uid = state.activeAccountId; if (!uid || !_squadOnly()) return;
     const pool = friendUid ? (state.friends || []).filter(x => x.uid === friendUid) : (state.friends || []);
     // Nothing to give: the app's info bubble over the button says why (a toast when called without one).
     const say = msg => {
       if (!anchor) { _flashMessage(msg); return; }
-      _showToolInfoTip(anchor, msg);
-      const tip = document.getElementById("toolInfoPop"); tip?.classList.add("is-error");
-      clearTimeout(_giveTipT);
-      _giveTipT = setTimeout(() => { _hideToolInfoTip(); tip?.classList.remove("is-error"); }, 3500);
+      _showErrorTip(anchor, msg);
     };
     if (!pool.length) { say(t("envGiveNoFriends")); return; }
     let c;
@@ -41908,6 +41991,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _cemPresenceChanged();   // reader count changed → refresh encode modal if open
       _maybeRefreshPanelForCard(); // reader plug/unplug flips greyed↔functional toolbox tools
       _renderTigerPodDebug();  // live-refresh the debug readout if the modal is open
+      refreshChipChoice();     // an unplugged reader takes its chip with it
+      eraserReadersChanged();
     });
 
     // ── Card present / removed — badge update ───────────────────────────────
@@ -41918,6 +42003,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _cemPresenceChanged();       // live slot status + mid-burn presence watch
       _maybeRefreshPanelForCard(); // reveal/hide chip-dependent toolbox actions live
       _renderTigerPodDebug();      // live-refresh the debug readout (chip present/removed)
+      refreshChipChoice();         // "Link" in the add chooser needs a chip to burn onto
+      eraserCardPresent(readerName, uid); // the chip eraser reads what was placed
       // TigerPOD signal — a SUCCESSFUL read with N readers proves ownership:
       // auto-select hasPod on first read, then record reader count keeping the max
       // (_telRfidMax was seeded from persisted value so we never write a lower count).
@@ -41930,14 +42017,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
     // A chip that is not a TigerTag (Bambu Lab, Creality…): open the spool it is
     // linked to, or offer to link it (rfid_protocol/linked, docs/LINKED-CHIPS.md).
+    // While the new-chip card ("What would you like to do?") is up, a scan opens
+    // nothing and adds nothing: the card is being used — an old spool popping
+    // into the inventory, or the card reopening on another view, would only get
+    // in the way. Placing / removing a chip still updates it (card-present).
+    const _chipCardUp = () => !!$("chipChoicePanel")?.classList.contains("open");
     window.electronAPI.onRfidForeignChip?.(data => {
+      if (chipEraserOpen()) { eraserForeignChip(data); return; }
+      if (_chipCardUp()) return;
       if (_encodeModalOpen() || state.friendView) return;
       onForeignChip(data);
     });
 
     // Legacy uid event — open detail if already in inventory
     window.electronAPI.onRfid((uid) => {
-      if (_encodeModalOpen()) return;   // don't pop a side-card over the encode modal
+      if (_encodeModalOpen() || chipEraserOpen() || _chipCardUp()) return;   // don't pop a side-card over the encode modal
       // A scan always concerns YOUR inventory. Queue the spool to open, then either
       // leave a friend's read-only view (the own snapshot opens it) or open now.
       _scanOpenUid = uid;
@@ -41960,6 +42054,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
 
     window.electronAPI.onRfidTagScanned((tagData) => {
+      // The new-chip card is up (the NFC tools included): nothing opens, nothing
+      // is created or updated from the scan.
+      if (chipEraserOpen() || _chipCardUp()) return;
       // Scanning a spool always acts on the active account → leave any friend's
       // read-only view right away so the user lands back on their own inventory
       // (the write target was already the active account; this fixes the VIEW).
@@ -41980,28 +42077,32 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     async function _processNfcScans(scans) {
       const user = fbAuth().currentUser;
       if (!user) return;
+      // A scan buffered just before the new-chip card opened lands here after it.
+      if (chipEraserOpen() || _chipCardUp()) return;
 
       // Blank chips carry no material/brand yet: a TigerTag Init chip
       // (id_tigertag 0x6C41A2E1, id_product 0) or an erased / empty-NDEF NTAG
       // (_chipIsWritableBlank). Ask what to make of it — catalogue or by hand —
       // instead of silently ignoring the scan (rfid_protocol/linked).
       const allScans   = [...scans.values()];
-      const validScans = allScans.filter(td => td.id_material || td.id_brand);
+      // A spool only from a chip whose version is a TigerTag one (id_version.json,
+      // minus "RFID Empty" and "TigerTag Init"): an NDEF tag written by a phone or
+      // by the NFC tools (a link, Wi-Fi…) parses as noise — material and brand
+      // ids included — and would otherwise come in as a made-up spool.
+      const SPOOL_VERSIONS = new Set((state.db.version || []).map(v => Number(v.id)).filter(id => id && id !== 0x6C41A2E1));
+      const isSpoolChip = td => !SPOOL_VERSIONS.size || SPOOL_VERSIONS.has(Number(td.id_tigertag));
+      const validScans = allScans.filter(td => (td.id_material || td.id_brand) && isSpoolChip(td));
       if (validScans.length === 0) {
         const TIGERTAG_INIT_ID = 0x6C41A2E1; // ID_TIGERTAG_INIT (SDK)
         const isBlank = td => (Number(td.id_product) === 0 && Number(td.id_tigertag) === TIGERTAG_INIT_ID)
           || (td._rawPagesHex != null && _chipIsWritableBlank(td._rawPagesHex));
         const blanks = allScans.filter(isBlank).length;
         // Skip it while the guided Cloud→chip encode modal is up (the user is
-        // presenting a blank chip on purpose) or a creation is already open.
-        // A creation card opened by hand blocks it; one opened by the chooser
-        // (still up beside it) does not — that chooser is simply refreshed.
-        const chooserUp = $("chipChoicePanel")?.classList.contains("open");
+        // presenting a blank chip on purpose) or a creation is already open
+        // (the new-chip card itself never gets here: its scans are dropped).
         if (blanks && !state.friendView && !_encodeModalOpen()
-            && (chooserUp || (!$("addProductPanel")?.classList.contains("open")
-                              && !$("catalogPickPanel")?.classList.contains("open")))) {
-          // An open new-chip card (a maker's chip seen before) is replaced: the
-          // chip on the reader now is this blank one.
+            && !$("addProductPanel")?.classList.contains("open")
+            && !$("catalogPickPanel")?.classList.contains("open")) {
           openBlankChipWindow(blanks);
         }
         return;

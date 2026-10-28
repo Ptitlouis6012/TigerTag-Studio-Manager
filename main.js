@@ -51,9 +51,10 @@ if (_portableDir) {
 
 // ── Persistent logging ─────────────────────────────────────────────────────
 // Writes to:
-//   Windows : %APPDATA%\Tiger Studio Manager\logs\main.log
-//   macOS   : ~/Library/Logs/Tiger Studio Manager/main.log
-//   Linux   : ~/.config/Tiger Studio Manager/logs/main.log
+//   Windows : %APPDATA%\tigertag-inventory\logs\main.log
+//   macOS   : ~/Library/Logs/tigertag-inventory/main.log
+//   Linux   : ~/.config/tigertag-inventory/logs/main.log
+//   (the app name is package.json "name"; productName only names the installer)
 //   Portable: <stick>\TigerStudioData\logs\main.log   (see the block above)
 const log = require('electron-log');
 log.transports.file.maxSize = 5 * 1024 * 1024; // 5 MB max, auto-rotated
@@ -408,6 +409,7 @@ function normalizeUid(raw) {
 // bytes — so it runs strictly offline: no hidden network call, no stray cache.
 process.env.TIGERTAG_OFFLINE = '1';
 const { TigerTag } = require('tigertag');
+const { ndefImage, ndefSize, USER_BYTES: NDEF_USER_BYTES } = require('./services/ndef');
 
 // IPC payload — toRawDict() first, then rawApi() if TigerTag+.
 /* The chip carries ONE unit byte for BOTH of its quantities — a real 1 kg tag
@@ -774,10 +776,12 @@ function initNFC() {
 // node-hid has no hot-plug events, so we poll the device list every 5 s while
 // disconnected and rely on the read-error callback to detect unplug.
 //
-// SLEEP: an M-series powers itself off after a few idle minutes WITHOUT leaving
-// the USB bus on every machine — the handle stays open, no error ever fires, and
-// once the scale is switched back on it talks on a fresh handle we never opened
-// (issues #74 / #76: "unplug and replug to get it back"). So a scale is only
+// SLEEP: an M-series powers itself off after a few idle minutes. On macOS it keeps
+// reporting zero frames while off (measured on an M5, "M25" firmware), so nothing
+// breaks. On some other machines it stays on the USB bus but goes silent — the
+// handle stays open, no error ever fires, and once the scale is switched back on
+// it talks on a fresh handle we never opened (issues #74 / #76: "unplug and
+// replug to get it back"). So a scale is only
 // announced connected on its first REAL frame, and a silence longer than
 // SCALE_SILENCE_MS closes the handle and goes back to polling.
 
@@ -892,13 +896,23 @@ async function _tryOpenScale() {
   // Silence = asleep or replugged elsewhere: drop the handle, poll again.
   clearInterval(_scaleWatchdog);
   _scaleWatchdog = setInterval(() => {
-    if (_scaleDev && Date.now() - _scaleLastFrame > SCALE_SILENCE_MS) _scaleDisconnected();
+    if (_scaleDev && Date.now() - _scaleLastFrame > SCALE_SILENCE_MS) {
+      if (_scaleInfo) console.log(`[Scale] No frame for ${SCALE_SILENCE_MS / 1000} s — closing the handle, scanning again`);
+      _scaleDisconnected();
+    }
   }, 1000);
 }
 
 function initUsbScale() {
   _tryOpenScale();
   if (!_scaleDev && !_scalePollTimer) _scalePollTimer = setInterval(_tryOpenScale, 5000);
+  // COMPUTER sleep (issue #138, Windows): the handle opened before the sleep can
+  // come back dead without an error or a silence the watchdog would see in time.
+  // On wake, drop it and open the scale afresh rather than trust it.
+  require('electron').powerMonitor.on('resume', () => {
+    console.log('[Scale] System resumed — reopening the scale');
+    if (_scaleDev) _scaleDisconnected(); else _tryOpenScale();
+  });
 }
 
 // Renderer seeds its state on startup (events may have fired before it loaded).
@@ -1107,7 +1121,10 @@ async function _writeChipImage(targets, buildImage, logLabel) {
     if (!card) { fail('No card present'); continue; }
     if (uid && normalizeUid(card.uid) !== normalizeUid(uid)) { fail('uid-mismatch'); continue; }
 
-    const newBytes = buildImage(Buffer.from(normalizeUid(card.uid), 'hex')); // 144 bytes
+    // 144 bytes (the TigerTag region) — more for an NDEF message on a NTAG215/216.
+    let newBytes;
+    try { newBytes = await buildImage(Buffer.from(normalizeUid(card.uid), 'hex'), readerName); }
+    catch (e) { fail(e.message); continue; }
 
     // Surgical diff — read current user pages, skip the ones already matching.
     let oldBytes = null;
@@ -1115,7 +1132,7 @@ async function _writeChipImage(targets, buildImage, logLabel) {
     const rRes = await new Promise((resolve) => {
       const to = setTimeout(() => { _nfcReadResolvers.delete(rReq); resolve({ ok: false }); }, 5000);
       _nfcReadResolvers.set(rReq, { resolve, timeout: to });
-      _nfcChild.postMessage({ type: 'read-now', readerName, reqId: rReq });
+      _nfcChild.postMessage({ type: 'read-now', readerName, reqId: rReq, ...(newBytes.length > 144 ? { length: newBytes.length } : {}) });
     });
     if (rRes.ok) oldBytes = Buffer.from(rRes.rawPagesHex, 'hex');
 
@@ -1165,6 +1182,39 @@ ipcMain.handle('rfid:erase', async (_evt, { targets } = {}) => {
     return Buffer.concat([eraseBytes, Buffer.alloc(144 - eraseBytes.length)]);
   }, 'erase');
 });
+
+// The NDEF room of the chip on a reader, from its capability container (page 3,
+// byte 2 × 8): 144 bytes on a NTAG213, 496 on a NTAG215, 872 on a NTAG216. A chip
+// without a valid container (no 0xE1 magic) counts as the 144-byte TigerTag region.
+async function _ndefCapacity(readerName) {
+  if (!_nfcCardPresent.get(readerName)) return NDEF_USER_BYTES;
+  const reqId = Date.now() + Math.random();
+  const res = await new Promise((resolve) => {
+    const to = setTimeout(() => { _nfcReadResolvers.delete(reqId); resolve({ ok: false }); }, 5000);
+    _nfcReadResolvers.set(reqId, { resolve, timeout: to });
+    _nfcChild.postMessage({ type: 'read-now', readerName, reqId, start: 3, length: 4 });
+  });
+  const cc = res.ok ? Buffer.from(res.rawPagesHex, 'hex') : null;
+  return cc && cc[0] === 0xE1 && cc[2] ? cc[2] * 8 : NDEF_USER_BYTES;
+}
+
+// Write an NDEF message (a link, Wi-Fi, a contact, e-mail / phone / SMS) onto one
+// or more NTAGs, the way a phone reads it (services/ndef.js): at least the 144-byte
+// TigerTag region is rewritten, so any TigerTag data on the chip goes; a longer
+// message uses the room a NTAG215/216 has (`_ndefCapacity`), checked per chip.
+// The content itself (a Wi-Fi password…) is never logged.
+//   opts = { targets: [{ readerName, uid }], message: { type, … } }
+//   → { ok, results } — a chip too small fails with 'ndef-too-long'
+ipcMain.handle('rfid:write-ndef', async (_evt, { targets, message } = {}) => {
+  if (!_nfcChild) return { ok: false, error: 'NFC process not running' };
+  try { ndefImage(message, Infinity); }
+  catch (e) { return { ok: false, error: e.message }; }
+  return _writeChipImage(targets, async (_uid, readerName) => ndefImage(message, await _ndefCapacity(readerName)), 'ndef');
+});
+// Bytes an NDEF content takes on the chip (live counter in the NFC tools form).
+ipcMain.handle('rfid:ndef-size', (_evt, message) => ndefSize(message));
+// NDEF room of the chip on a reader, in bytes (the counter's maximum).
+ipcMain.handle('rfid:ndef-capacity', (_evt, readerName) => _nfcChild ? _ndefCapacity(readerName) : NDEF_USER_BYTES);
 
 // Cloud → chip encoding — called when the user wants to program a Cloud spool onto
 // one or two physical RFID chips.

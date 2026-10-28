@@ -145,7 +145,9 @@ process.parentPort.on('message', async (e) => {
 
   // ── rfid:read-now ───────────────────────────────────────────────────────────
   // Triggered when the renderer requests a fresh read of the current card.
-  // msg = { type: 'read-now', readerName, reqId }
+  // msg = { type: 'read-now', readerName, reqId, start?, length? } — by default the
+  // TigerTag region (pages 4–39); `start` / `length` read another one (the
+  // capability container on page 3, a NTAG215/216's larger NDEF area).
   if (msg.type === 'read-now') {
     const reader = readers.get(msg.readerName);
     if (!reader) {
@@ -155,7 +157,7 @@ process.parentPort.on('message', async (e) => {
       return;
     }
     try {
-      const data = await reader.read(READ_START_PAGE, READ_LENGTH, READ_BLOCK_SIZE);
+      const data = await reader.read(msg.start ?? READ_START_PAGE, msg.length ?? READ_LENGTH, READ_BLOCK_SIZE);
       process.parentPort.postMessage({
         type: 'read-result', reqId: msg.reqId, ok: true, rawPagesHex: data.toString('hex'),
       });
@@ -203,7 +205,11 @@ process.parentPort.on('message', async (e) => {
       if (msg.verify) {
         verified = true;
         try {
-          const back = await reader.read(READ_START_PAGE, READ_LENGTH, READ_BLOCK_SIZE);
+          // Re-read the span of the written pages (it may reach past page 39 on
+          // a NTAG215/216), or the TigerTag region when it fits in it.
+          const last = Math.max(...pages.map(p => p.index));
+          const length = Math.max(READ_LENGTH, (last - READ_START_PAGE + 1) * 4);
+          const back = await reader.read(READ_START_PAGE, length, READ_BLOCK_SIZE);
           for (const { index, hexData } of pages) {
             const off = (index - READ_START_PAGE) * 4;
             const got = (off >= 0 && off + 4 <= back.length)

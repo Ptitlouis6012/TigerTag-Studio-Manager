@@ -348,7 +348,7 @@ Accept: */*
 | `code` | `message` | Signification |
 |--------|-----------|---------------|
 | `0` | `"Success"` | OK — parser `detail` |
-| `1` | `"SN is different"` | Mauvais numéro de série |
+| `1` | `"SN is different"` | Mauvais numéro de série — **ou imprimante pas en mode LAN** : sans le mode LAN activé sur l'imprimante, l'API locale renvoie cette erreur quel que soit le SN (vu sur Creator 5 Pro, issue #86). Le mode LAN est obligatoire, y compris avec le firmware Cloud + LAN (qui, lui, ne coupe pas le cloud). |
 | `1` | `"access code is different"` | Mauvais mot de passe |
 | `-1` | `"Invalid JSON"` | Réponse non parsable (généré côté client) |
 | `-2` | `"Network error: ..."` | Erreur réseau (généré côté client) |

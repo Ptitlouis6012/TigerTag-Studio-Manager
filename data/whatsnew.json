@@ -1,4 +1,212 @@
 {
+  "2.46.0": {
+    "date": "2026-10-28",
+    "items": [
+      {
+        "icon": "nfc",
+        "title": {
+          "en": "NFC tools, now in your pocket",
+          "fr": "Les outils NFC, à portée de main",
+          "de": "NFC-Werkzeuge, griffbereit",
+          "es": "Herramientas NFC, a mano",
+          "it": "Strumenti NFC, a portata di mano",
+          "zh": "NFC 工具，随手可用",
+          "pt": "Ferramentas NFC, à mão",
+          "pt-pt": "Ferramentas NFC, à mão",
+          "pl": "Narzędzia NFC pod ręką",
+          "ru": "Инструменты NFC под рукой",
+          "nl": "NFC-tools, binnen handbereik"
+        },
+        "body": {
+          "en": "Hit “+” → NFC tools. Write a link, your Wi‑Fi, a contact, an e‑mail or a phone number on any NFC tag — any phone reads it. Websites, local addresses, even a camera stream.",
+          "fr": "« + » → Outils NFC. Écris un lien, ton Wi‑Fi, un contact, un e‑mail ou un numéro sur n’importe quel tag NFC — tous les téléphones le lisent. Sites, adresses locales, même un flux caméra.",
+          "de": "„+“ → NFC-Werkzeuge. Schreib einen Link, dein WLAN, einen Kontakt, eine E‑Mail oder eine Nummer auf jeden NFC-Tag — jedes Handy liest das. Websites, lokale Adressen, sogar ein Kamerastream.",
+          "es": "“+” → Herramientas NFC. Escribe un enlace, tu Wi‑Fi, un contacto, un e‑mail o un número en cualquier etiqueta NFC — cualquier móvil lo lee. Webs, direcciones locales, hasta un flujo de cámara.",
+          "it": "“+” → Strumenti NFC. Scrivi un link, il tuo Wi‑Fi, un contatto, un’e‑mail o un numero su qualsiasi tag NFC — ogni telefono lo legge. Siti, indirizzi locali, perfino lo stream di una telecamera.",
+          "zh": "点“+”→ NFC 工具。把链接、Wi‑Fi、联系人、邮箱或电话写进任何 NFC 标签——任何手机都能读。网站、局域网地址，甚至摄像头视频流都行。",
+          "pt": "“+” → Ferramentas NFC. Grave um link, seu Wi‑Fi, um contato, um e‑mail ou um número em qualquer tag NFC — qualquer celular lê. Sites, endereços locais, até o stream de uma câmera.",
+          "pt-pt": "“+” → Ferramentas NFC. Escreve um link, o teu Wi‑Fi, um contacto, um e‑mail ou um número em qualquer tag NFC — qualquer telemóvel o lê. Sites, endereços locais, até o stream de uma câmara.",
+          "pl": "„+” → Narzędzia NFC. Zapisz link, swoje Wi‑Fi, kontakt, e‑mail lub numer na dowolnym tagu NFC — każdy telefon to odczyta. Strony, adresy lokalne, nawet strumień z kamery.",
+          "ru": "«+» → Инструменты NFC. Запиши ссылку, свой Wi‑Fi, контакт, e‑mail или номер на любую NFC-метку — её прочитает любой телефон. Сайты, локальные адреса, даже поток с камеры.",
+          "nl": "“+” → NFC-tools. Zet een link, je wifi, een contact, een e‑mail of een nummer op elke NFC-tag — elke telefoon leest het. Websites, lokale adressen, zelfs een camerastream."
+        }
+      },
+      {
+        "icon": "bolt",
+        "title": {
+          "en": "Auto mode: chips on a conveyor belt",
+          "fr": "Mode Auto : les puces à la chaîne",
+          "de": "Auto-Modus: Chips am Fließband",
+          "es": "Modo Auto: chips en cadena",
+          "it": "Modalità Auto: chip in catena di montaggio",
+          "zh": "自动模式：芯片流水线",
+          "pt": "Modo Auto: chips em linha de montagem",
+          "pt-pt": "Modo Auto: chips em linha de montagem",
+          "pl": "Tryb Auto: chipy taśmowo",
+          "ru": "Режим Авто: чипы на конвейере",
+          "nl": "Automodus: chips aan de lopende band"
+        },
+        "body": {
+          "en": "Flip Auto on “Format” or “Write”, then just swap chips. Each one gets done on arrival — beep, next. Your inventory’s spools are left alone.",
+          "fr": "Active Auto sur « Formater » ou « Écrire », puis enchaîne les puces. Chacune est faite dès qu’elle arrive — bip, suivante. Les bobines de ton inventaire, on n’y touche pas.",
+          "de": "Schalt Auto bei „Formatieren“ oder „Schreiben“ ein und wechsle einfach die Chips. Jeder wird beim Auflegen erledigt — piep, nächster. Die Spulen deines Inventars bleiben in Ruhe.",
+          "es": "Activa Auto en “Formatear” o “Escribir” y ve cambiando chips. Cada uno se hace al llegar — bip, siguiente. Las bobinas de tu inventario, ni se tocan.",
+          "it": "Attiva Auto su “Formatta” o “Scrivi” e cambia i chip uno dopo l’altro. Ognuno è fatto appena arriva — bip, il prossimo. Le bobine del tuo inventario restano intatte.",
+          "zh": "在“格式化”或“写入”上打开自动，然后一个个换芯片。放上就搞定——嘀，下一个。库存里的线盘一概不碰。",
+          "pt": "Ligue o Auto em “Formatar” ou “Gravar” e vá trocando os chips. Cada um é feito na hora — bip, próximo. Os carretéis do seu inventário ficam quietos.",
+          "pt-pt": "Liga o Auto em “Formatar” ou “Escrever” e vai trocando os chips. Cada um é feito à chegada — bip, seguinte. As bobinas do teu inventário ficam sossegadas.",
+          "pl": "Włącz Auto przy „Formatuj” lub „Zapisz” i po prostu zmieniaj chipy. Każdy załatwiony od razu — pik, następny. Szpule z inwentarza zostają w spokoju.",
+          "ru": "Включи Авто на «Форматировать» или «Записать» и просто меняй чипы. Каждый готов сразу — пик, следующий. Катушки из инвентаря не трогаем.",
+          "nl": "Zet Auto aan bij “Formatteren” of “Schrijven” en wissel gewoon chips. Elke chip is meteen klaar — piep, volgende. De spoelen uit je inventaris blijven met rust."
+        }
+      },
+      {
+        "icon": "link",
+        "title": {
+          "en": "Every maker chip is welcome",
+          "fr": "Toutes les puces constructeur sont les bienvenues",
+          "de": "Jeder Hersteller-Chip ist willkommen",
+          "es": "Todos los chips de fabricante, bienvenidos",
+          "it": "Tutti i chip dei produttori sono i benvenuti",
+          "zh": "各家厂商芯片，统统欢迎",
+          "pt": "Todo chip de fabricante é bem-vindo",
+          "pt-pt": "Todos os chips de fabricante são bem-vindos",
+          "pl": "Każdy chip producenta mile widziany",
+          "ru": "Любой чип производителя — добро пожаловать",
+          "nl": "Elke fabrikantchip is welkom"
+        },
+        "body": {
+          "en": "Bambu Lab, Creality, Qidi, Anycubic… any spool with a MIFARE 1K chip links to your inventory. Keep the maker chips, add your TigerTags, or both — the spool opens either way.",
+          "fr": "Bambu Lab, Creality, Qidi, Anycubic… toute bobine avec une puce MIFARE 1K se lie à ton inventaire. Garde les puces du fabricant, ajoute tes TigerTag, ou les deux — la bobine s’ouvre quoi qu’il arrive.",
+          "de": "Bambu Lab, Creality, Qidi, Anycubic… jede Spule mit MIFARE-1K-Chip lässt sich mit deinem Inventar verknüpfen. Behalt die Hersteller-Chips, füg deine TigerTags hinzu oder beides — die Spule öffnet sich so oder so.",
+          "es": "Bambu Lab, Creality, Qidi, Anycubic… cualquier bobina con chip MIFARE 1K se vincula a tu inventario. Conserva los chips del fabricante, añade tus TigerTag o ambos: la bobina se abre igual.",
+          "it": "Bambu Lab, Creality, Qidi, Anycubic… ogni bobina con chip MIFARE 1K si collega al tuo inventario. Tieni i chip del produttore, aggiungi i tuoi TigerTag o tutti e due: la bobina si apre comunque.",
+          "zh": "Bambu Lab、Creality、Qidi、Anycubic……任何带 MIFARE 1K 芯片的线盘都能关联到你的库存。保留原厂芯片、加上 TigerTag，或者两者都要——线盘照样一放就开。",
+          "pt": "Bambu Lab, Creality, Qidi, Anycubic… qualquer carretel com chip MIFARE 1K se liga ao seu inventário. Fique com os chips do fabricante, adicione seus TigerTags ou os dois — o carretel abre de qualquer jeito.",
+          "pt-pt": "Bambu Lab, Creality, Qidi, Anycubic… qualquer bobina com chip MIFARE 1K liga-se ao teu inventário. Mantém os chips do fabricante, junta os teus TigerTags ou ambos — a bobina abre na mesma.",
+          "pl": "Bambu Lab, Creality, Qidi, Anycubic… każda szpula z chipem MIFARE 1K łączy się z inwentarzem. Zostaw chipy producenta, dodaj TigerTagi albo jedno i drugie — szpula i tak się otworzy.",
+          "ru": "Bambu Lab, Creality, Qidi, Anycubic… любая катушка с чипом MIFARE 1K привязывается к инвентарю. Оставь чипы производителя, добавь свои TigerTag или и то и другое — катушка откроется в любом случае.",
+          "nl": "Bambu Lab, Creality, Qidi, Anycubic… elke spoel met een MIFARE 1K-chip koppel je aan je inventaris. Hou de fabrikantchips, voeg je TigerTags toe of allebei — de spoel opent hoe dan ook."
+        }
+      },
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Upgrade to TigerTag+ from the catalogue",
+          "fr": "Passe en TigerTag+ depuis le catalogue",
+          "de": "Upgrade auf TigerTag+ aus dem Katalog",
+          "es": "Pasa a TigerTag+ desde el catálogo",
+          "it": "Passa a TigerTag+ dal catalogo",
+          "zh": "从目录升级为 TigerTag+",
+          "pt": "Vire TigerTag+ pelo catálogo",
+          "pt-pt": "Passa a TigerTag+ pelo catálogo",
+          "pl": "Ulepsz do TigerTag+ z katalogu",
+          "ru": "Апгрейд до TigerTag+ из каталога",
+          "nl": "Upgrade naar TigerTag+ vanuit de catalogus"
+        },
+        "body": {
+          "en": "Tap the violet banner on a spool, pick the real product, hold. Brand, colours and temperatures fill themselves in — no product ID to hunt for.",
+          "fr": "Touche le bandeau violet d’une bobine, choisis le vrai produit, maintiens. Marque, couleurs et températures se remplissent toutes seules — plus d’ID produit à chercher.",
+          "de": "Tipp auf das violette Banner einer Spule, wähl das echte Produkt, halte gedrückt. Marke, Farben und Temperaturen füllen sich selbst — keine Produkt-ID mehr suchen.",
+          "es": "Toca el banner violeta de una bobina, elige el producto real y mantén. Marca, colores y temperaturas se rellenan solos: adiós a buscar el ID de producto.",
+          "it": "Tocca il banner viola di una bobina, scegli il prodotto vero, tieni premuto. Marca, colori e temperature si compilano da soli — niente più ID prodotto da cercare.",
+          "zh": "点线盘上的紫色横幅，选中真实产品，长按。品牌、颜色、温度自动填好——再也不用找产品 ID。",
+          "pt": "Toque no banner roxo de um carretel, escolha o produto real e segure. Marca, cores e temperaturas se preenchem sozinhas — nada de caçar ID de produto.",
+          "pt-pt": "Toca no banner roxo de uma bobina, escolhe o produto real e mantém premido. Marca, cores e temperaturas preenchem-se sozinhas — acabou a caça ao ID de produto.",
+          "pl": "Stuknij fioletowy baner szpuli, wybierz prawdziwy produkt, przytrzymaj. Marka, kolory i temperatury wpiszą się same — koniec szukania ID produktu.",
+          "ru": "Нажми фиолетовый баннер катушки, выбери настоящий товар, удерживай. Бренд, цвета и температуры заполнятся сами — никаких поисков ID товара.",
+          "nl": "Tik op de paarse banner van een spoel, kies het echte product, houd vast. Merk, kleuren en temperaturen vullen zichzelf in — geen product-ID meer zoeken."
+        }
+      },
+      {
+        "icon": "scale",
+        "title": {
+          "en": "Typing a weight, without the jump",
+          "fr": "Taper un poids, sans que ça saute",
+          "de": "Gewicht eintippen, ohne Gehopse",
+          "es": "Escribir un peso, sin saltos",
+          "it": "Digitare un peso, senza scatti",
+          "zh": "手动输入重量，界面不再乱跳",
+          "pt": "Digitar um peso, sem pulos",
+          "pt-pt": "Escrever um peso, sem saltos",
+          "pl": "Wpisywanie wagi bez skakania",
+          "ru": "Ввод веса — без прыжков",
+          "nl": "Een gewicht intikken, zonder sprongen"
+        },
+        "body": {
+          "en": "The weight editor now opens right where the number is, and the card stays put. “Balance” is now “On scale”, which is what it meant all along.",
+          "fr": "L’édition du poids s’ouvre pile à la place du chiffre, et la fiche ne bouge plus. « Balance » devient « Sur la balance », ce qu’il voulait dire depuis le début.",
+          "de": "Der Gewichts-Editor öffnet sich genau dort, wo die Zahl steht, und die Karte bleibt stehen. Aus „Balance“ wird „Auf der Waage“ — so war’s immer gemeint.",
+          "es": "El editor de peso se abre justo donde está el número y la ficha ya no se mueve. “Balanza” pasa a ser “En la báscula”, que es lo que quería decir.",
+          "it": "L’editor del peso si apre proprio dove c’è il numero e la scheda resta ferma. “Bilancia” diventa “Sulla bilancia”, che era il senso fin dall’inizio.",
+          "zh": "重量编辑框就在数字原地打开，卡片纹丝不动。“秤”改叫“在秤上”，本来就是这个意思。",
+          "pt": "O editor de peso abre bem no lugar do número e o cartão não se mexe. “Balança” agora é “Na balança”, que era o que queria dizer.",
+          "pt-pt": "O editor de peso abre mesmo no sítio do número e o cartão já não mexe. “Balança” passa a “Na balança”, que era o que queria dizer.",
+          "pl": "Edycja wagi otwiera się dokładnie w miejscu liczby, a karta stoi w miejscu. „Waga” to teraz „Na wadze” — o to chodziło od początku.",
+          "ru": "Редактор веса открывается прямо на месте числа, а карточка больше не прыгает. «Весы» теперь «На весах» — как и задумывалось.",
+          "nl": "De gewichtseditor opent precies waar het getal staat en de kaart blijft liggen. “Weegschaal” heet nu “Op de weegschaal”, zoals altijd bedoeld."
+        }
+      },
+      {
+        "icon": "camera",
+        "title": {
+          "en": "Bambu Lab videos that keep rolling",
+          "fr": "Les vidéos Bambu Lab ne coupent plus",
+          "de": "Bambu-Lab-Videos laufen weiter",
+          "es": "Los vídeos de Bambu Lab ya no se cortan",
+          "it": "I video Bambu Lab non si interrompono più",
+          "zh": "Bambu Lab 录像不再断",
+          "pt": "Vídeos Bambu Lab que não param",
+          "pt-pt": "Vídeos Bambu Lab que já não cortam",
+          "pl": "Nagrania Bambu Lab już się nie urywają",
+          "ru": "Видео с Bambu Lab больше не обрываются",
+          "nl": "Bambu Lab-video’s die blijven draaien"
+        },
+        "body": {
+          "en": "Recording a Bambu Lab camera no longer stops after ten seconds. Thanks to @Ptitlouis6012!",
+          "fr": "Enregistrer la caméra d’une Bambu Lab ne s’arrête plus au bout de dix secondes. Merci @Ptitlouis6012 !",
+          "de": "Die Aufnahme einer Bambu-Lab-Kamera bricht nicht mehr nach zehn Sekunden ab. Danke, @Ptitlouis6012!",
+          "es": "Grabar la cámara de una Bambu Lab ya no se corta a los diez segundos. ¡Gracias, @Ptitlouis6012!",
+          "it": "Registrare la telecamera di una Bambu Lab non si ferma più dopo dieci secondi. Grazie @Ptitlouis6012!",
+          "zh": "录制 Bambu Lab 摄像头不再十秒就断。感谢 @Ptitlouis6012！",
+          "pt": "Gravar a câmera de uma Bambu Lab não para mais depois de dez segundos. Valeu, @Ptitlouis6012!",
+          "pt-pt": "Gravar a câmara de uma Bambu Lab já não pára ao fim de dez segundos. Obrigado, @Ptitlouis6012!",
+          "pl": "Nagrywanie kamery Bambu Lab nie urywa się już po dziesięciu sekundach. Dzięki, @Ptitlouis6012!",
+          "ru": "Запись с камеры Bambu Lab больше не обрывается через десять секунд. Спасибо, @Ptitlouis6012!",
+          "nl": "Opnemen met de camera van een Bambu Lab stopt niet meer na tien seconden. Bedankt, @Ptitlouis6012!"
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "A fresh face in your Dock",
+          "fr": "Une nouvelle tête dans ton Dock",
+          "de": "Ein neues Gesicht im Dock",
+          "es": "Una cara nueva en tu Dock",
+          "it": "Una faccia nuova nel Dock",
+          "zh": "Dock 里换了张新面孔",
+          "pt": "Uma cara nova no seu Dock",
+          "pt-pt": "Uma cara nova na tua Dock",
+          "pl": "Nowa twarz w Docku",
+          "ru": "Новое лицо в Dock",
+          "nl": "Een nieuw gezicht in je Dock"
+        },
+        "body": {
+          "en": "New app icon on macOS, Windows and Linux. Same tiger, sharper suit.",
+          "fr": "Nouvelle icône d’app sur macOS, Windows et Linux. Même tigre, costume plus net.",
+          "de": "Neues App-Icon auf macOS, Windows und Linux. Gleicher Tiger, schärferer Anzug.",
+          "es": "Nuevo icono de la app en macOS, Windows y Linux. Mismo tigre, traje más afilado.",
+          "it": "Nuova icona dell’app su macOS, Windows e Linux. Stessa tigre, abito più nitido.",
+          "zh": "macOS、Windows、Linux 换上新应用图标。还是那只老虎，西装更精神。",
+          "pt": "Novo ícone do app no macOS, Windows e Linux. Mesmo tigre, terno mais alinhado.",
+          "pt-pt": "Novo ícone da app em macOS, Windows e Linux. O mesmo tigre, fato mais aprumado.",
+          "pl": "Nowa ikona aplikacji na macOS, Windows i Linux. Ten sam tygrys, ostrzejszy garnitur.",
+          "ru": "Новая иконка приложения на macOS, Windows и Linux. Тот же тигр, костюм поострее.",
+          "nl": "Nieuw app-icoon op macOS, Windows en Linux. Zelfde tijger, scherper pak."
+        }
+      }
+    ]
+  },
   "2.45.0": {
     "date": "2026-10-27",
     "items": [

@@ -853,6 +853,13 @@
     z-index: 97;
     display: flex; flex-direction: column;
   }
+  /* Upgrade of a spool (openCatalogPick({ upgradeFor })): spool card (101) > picker
+     > product card, each tab just above its own card — so the three slide out
+     one beneath the other when they close together. */
+  body.cpk-upgrade #catalogPickPanel { z-index: 99; }
+  body.cpk-upgrade #catalogPickCloseTab { z-index: 100; }
+  body.cpk-upgrade #productCardPanel { z-index: 97; }
+  body.cpk-upgrade #productCardCloseTab { z-index: 98; }
   /* Search pill then the brand filter on one line — the link grid's layout. */
   .cpk-controls { display: flex; align-items: center; gap: 8px; padding: 6px 22px 12px; }
   .cpk-controls .cpk-search { order: -1; flex: 1; }

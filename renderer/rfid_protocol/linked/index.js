@@ -25,6 +25,7 @@ const buffer = new Map();    // readerName → { uid, chip }
 let bufferTimer = null;
 let pending = null;          // { chips, until } — chips waiting for a spool being created
 let offer = null;            // { chips } — the link grid is up: spool cards offer to link them
+let choiceKind = null;       // kind of the open chooser ("foreign" | "blank" | "add")
 
 const UID_RE = /^[0-9A-F]{8,20}$/;
 const norm = u => String(u || "").replace(/[^0-9a-f]/gi, "").toUpperCase();
@@ -142,7 +143,10 @@ export function openBlankChipWindow(count = 1) {
 
 function openLinkWindow(chips) { openChipWindow(chips, "foreign"); }
 
-/** The "+" of the search bar: the same card, no chip — catalogue / manually. */
+/** The "+" of the search bar: the same card and the same choices as a blank
+ *  chip — catalogue, manually, a TigerData / TigerData+ to burn onto a blank NTAG
+ *  (TigerTag Init or empty NDEF), which turns it into a TigerTag / TigerTag+, or
+ *  the chip eraser (rfid_protocol/eraser), during which a scan opens nothing. */
 export function openAddChooser() {
   if (!accountUid) return;
   openChipWindow([], "add");
@@ -162,24 +166,32 @@ function openChipWindow(chips, kind) {
   const body = el.querySelector("#chipChoiceBody");
   el._lcClick && el.removeEventListener("click", el._lcClick);
   // ⓘ: the same hover bubble as the toolbox and the "+ Material" picker.
-  const tile = (id, icon, label, tip) => `
-    <button type="button" class="lc-choice" data-lc-go="${id}">
+  const tile = (id, icon, label, tip, off = false) => `
+    <button type="button" class="lc-choice${off ? " is-off" : ""}" data-lc-go="${id}"${off ? ' aria-disabled="true"' : ""}>
       <span class="tool-info" data-tip="${esc(tip)}" aria-label="${esc(tip)}"><span class="icon icon-info icon-13"></span></span>
       <span class="lc-choice-ic"><span class="icon icon-${icon} icon-32" aria-hidden="true"></span></span>
       <b>${esc(label)}</b>
     </button>`;
   ctx.hideTip?.();
-  body.innerHTML = `<div class="lc-choices">${tile("catalogue", "search", t("linkedChipAddCatalogue"), t("linkedChipCatalogueTip"))}${tile("manual", "edit", t("linkedChipAddManual"), t("linkedChipManualTip"))}${kind !== "add" ? tile("pick", "link", t("linkedChipExisting"), t(foreign ? "linkedChipLinkTip" : "linkedChipLinkBlankTip")) : ""}</div>`;
+  body.innerHTML = `<div class="lc-choices">${tile("catalogue", "search", t("linkedChipAddCatalogue"), t("linkedChipCatalogueTip"))}${tile("manual", "edit", t("linkedChipAddManual"), t("linkedChipManualTip"))}${tile("pick", "link", t("linkedChipExisting"), _pickTip(kind), _pickOff(kind))}${foreign ? "" : tile("erase", "recycle", t("chipEraserTitle"), t("chipEraserTip"))}</div>`;
+  choiceKind = kind;
   body.classList.remove("lc-in"); void body.offsetWidth; body.classList.add("lc-in");
 
-  const NEXT = { pick: "chipLinkPanel", catalogue: "catalogPickPanel", manual: "addProductPanel" };
+  const NEXT = { pick: "chipLinkPanel", catalogue: "catalogPickPanel", manual: "addProductPanel", erase: "chipEraserPanel" };
   const choose = to => {
     ctx.hideTip?.();
     // Into the pane BEFORE it opens: opened outside it, the card would count as
     // a neighbour for a frame and push the whole card left (_syncPanels).
     adopt(document.getElementById(NEXT[to]));
+    if (to !== "erase") ctx.closeEraser?.();
     if (to === "pick") openChipLink(chips, kind);
-    else {
+    else if (to === "erase") {
+      // Nothing is created here: no chip waits for a spool.
+      closeChipLink();
+      ctx.clearCreate?.();
+      pending = null;
+      ctx.openEraser?.();
+    } else {
       closeChipLink();
       // Opening a creation panel clears any waiting chips, so set them after.
       if (to === "catalogue") ctx.openCatalogue(); else ctx.openManual();
@@ -191,7 +203,16 @@ function openChipWindow(chips, kind) {
   };
   el._lcClick = e => {
     const b = e.target.closest("[data-lc-go]");
-    if (b) choose(b.dataset.lcGo);
+    if (!b) return;
+    // Greyed "Link": say why, in the red bubble, right over its link icon.
+    if (b.getAttribute("aria-disabled") === "true") {
+      ctx.errorTip?.(b.querySelector(".lc-choice-ic") || b, ctx.t("linkedChipLinkNeedPod"), { img: "../assets/img/tigersquad/loot/tigerpod.webp" });
+      return;
+    }
+    // The chosen view is already open: a second tap leaves it as it is (it
+    // would otherwise be rebuilt and slide in again).
+    if (b.classList.contains("is-active") && document.getElementById(NEXT[b.dataset.lcGo])?.classList.contains("open")) return;
+    choose(b.dataset.lcGo);
   };
   el.addEventListener("click", el._lcClick);
   if (!body._lcTips) {
@@ -210,12 +231,35 @@ function openChipWindow(chips, kind) {
   choose("catalogue");
 }
 
+// Linking a TigerData / TigerData+ to a blank NTAG means burning it: without a
+// chip on the TigerPOD there is nothing to burn onto, so "Link" waits, greyed.
+// A maker's chip (foreign) is always there when its window opens.
+function _pickOff(kind) { return kind !== "foreign" && !ctx.chipPresent?.(); }
+function _pickTip(kind) {
+  const { t } = ctx;
+  if (kind === "foreign") return t("linkedChipLinkTip");
+  return t(_pickOff(kind) ? "linkedChipLinkNeedTag" : "linkedChipLinkBlankTip");
+}
+/** A chip was placed on / taken off the TigerPOD: re-grey "Link" in place. */
+export function refreshChipChoice() {
+  const el = document.getElementById("chipChoicePanel");
+  if (!el?.classList.contains("open") || !choiceKind || choiceKind === "foreign") return;
+  const b = el.querySelector('[data-lc-go="pick"]');
+  if (!b) return;
+  const off = _pickOff(choiceKind), tip = _pickTip(choiceKind);
+  b.classList.toggle("is-off", off);
+  if (off) b.setAttribute("aria-disabled", "true"); else b.removeAttribute("aria-disabled");
+  const i = b.querySelector(".tool-info");
+  if (i) { i.dataset.tip = tip; i.setAttribute("aria-label", tip); }
+}
+
 export function closeChipChoice() {
   const el = document.getElementById("chipChoicePanel");
   if (!el?.classList.contains("open")) return;
   ctx.hideTip?.();
   el.classList.remove("open");
   closeChipLink();
+  ctx.closeEraser?.();
   ctx.clearCreate?.();
   // Hand the borrowed cards back once the card has slid out.
   setTimeout(() => { if (!el.classList.contains("open")) unembedAll(); }, 280);

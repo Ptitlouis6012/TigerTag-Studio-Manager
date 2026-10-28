@@ -308,6 +308,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   eraseRfidTag: (opts) =>
     ipcRenderer.invoke('rfid:erase', opts),
 
+  // Write an NDEF message (link, Wi-Fi, contact, e-mail, phone, SMS — services/ndef.js)
+  // onto one or more chips, UID-guarded, read-back verified.
+  //   opts = { targets: [{ readerName, uid }], message: { type, … } }
+  // Returns { ok, results } (a chip too small: 'ndef-too-long' in its result)
+  writeNdefTag: (opts) =>
+    ipcRenderer.invoke('rfid:write-ndef', opts),
+  // Bytes that content takes on the chip: { ok, size } | { ok:false, error }
+  ndefSize: (message) =>
+    ipcRenderer.invoke('rfid:ndef-size', message),
+  // NDEF room of the chip on that reader, in bytes (144 NTAG213, 496 NTAG215, 872 NTAG216).
+  ndefCapacity: (readerName) =>
+    ipcRenderer.invoke('rfid:ndef-capacity', readerName),
+
   // Cloud → chip encoding: program one or two blank RFID chips from a Cloud spool.
   // Same payload (same timestamp) is written to every target reader.
   // opts = { cloudDoc, targets: [{ readerName, uid }] }

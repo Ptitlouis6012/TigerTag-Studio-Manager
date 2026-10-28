@@ -5,6 +5,40 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.46.0 — 2026-10-28
+
+### Added
+- NFC tools (`renderer/rfid_protocol/eraser/`, a fourth choice of the new-chip card `#chipChoicePanel`, opened by the search bar's "+" or a blank chip): while it is up a scan opens nothing (`chipEraserOpen()` in `onRfidTagScanned` / `onRfid` / `onRfidForeignChip`); reader plates by colour only. Held (1.5 s) chip banners: "Format your RFID chip" (orange, `rfid:format` → TigerTag Init) and "Write in NDEF", a form with seven choices — link, Wi‑Fi, contact, e‑mail, phone, SMS and "Reset NDEF" (`rfid:erase`) — ending in "Write to the chip". A spool of the inventory on erased / written chips leaves it, as with the spool card's Erase / Recycle.
+- NDEF encoder `services/ndef.js` + `rfid:write-ndef`, `rfid:ndef-size`, `rfid:ndef-capacity` (preload `writeNdefTag`, `ndefSize`, `ndefCapacity`): one NDEF record in a Type 2 TLV — URI records with the NFC Forum prefix codes, Wi‑Fi Simple Configuration credential (`application/vnd.wfa.wsc`), vCard 3.0 (name, phone, e‑mail, company, website); short / long record and 1- / 3-byte TLV length; sized to the chip from its capability container (page 3 byte 2 × 8: NTAG213 144, NTAG215 496, NTAG216 872 bytes), checked per chip; written through `_writeChipImage` (UID-guarded, surgical, read-back verified, pages past 39 verified — `services/nfc-process.js` `read-now` takes `start` / `length`). The content is never logged.
+- Links in the NDEF form accept any scheme (rtsp://, rtmp://, ws://, mqtt://, smb://, ftp://, app links): no scheme → https://, a bare local address → http://; the host is checked as typed (domain with a 2+ letter TLD or punycode, IPv4 ≤ 255, IPv6, localhost, .local), port ≤ 65535, login allowed; javascript:, data:, file:, vbscript:, about:, blob: refused (`normUrl`, `validHost`, `validUrl`).
+- Auto mode on "Format" and "Write to the chip" (`autoMode`, `addAutoSwitch`, a switch inside the banner, `data-no-hold`): every chip placed is written at once, once per placement, the banner burning on its own (`burnFx`) with a beep and a count under it; a chip of an inventory spool is never written by Auto; one Auto at a time.
+- Last link (`tigertag.nfc.lastUrl`) and the contact card (`tigertag.nfc.contact`) kept in localStorage; a Wi‑Fi password never.
+- "Burn the TigerTag+" held banner on every catalogue product card (`_burnBannerHTML`, `_catalogCreate(…, { autoBurn })`); with no chip on a TigerPOD a press shows the red TigerPOD bubble. The "Build TigerPOD →" pill is gone.
+- FlashForge AD5X, Creator 5 and Creator 5 Pro in the Klipper model list (issue #108, `renderer/printers/klipper/models.json` ids 163–165).
+
+### Changed
+- Linked chips: any MIFARE Classic 1K maker chip (Bambu Lab, Creality, Qidi, Anycubic…) links to a spool, which may carry both its 2 TigerTag chips and its 2 maker chips, or only the maker chip(s).
+- New app icon on macOS, Windows and Linux from the framed TigerSystem tiger (`assets-src/svg/icon.svg`; `icon.png` 1024, `icon.ico` 16–256, `icon.icns` on the Apple grid).
+- "Upgrade to TigerTag+ / TigerData+" goes through the catalogue: the violet banner opens the picker at the right edge (`openCatalogPick({ upgradeFor })`, `_cpkUpgradeFor` in `_syncPanels`), the picked product's card offers a held upgrade; the target follows the spool (`_upgradeTier`), a TigerTag only evolves with its own chip on the TigerPOD (`_spoolChipOnPod`); `_convertToPlus` applies the product's data (`_catalogDocFromApi`) to the spool and its twin in one batch and flags the chip for rewriting (`needUpdateAt`). The product-ID form and its help window are gone.
+- "Please update NFC" is a held orange chip banner (`_chipBannerHTML(…, { update })`, `_wireChipBanner`), the "Updated" pill gone.
+- The search bar's "+" toggles the new-chip card and always offers "Link to my inventory", greyed without a chip on the TigerPOD (red bubble with the TigerPOD on click, `refreshChipChoice`); tapping the view already open does nothing.
+- Shared red help bubble (`_showErrorTip`): stays while the pointer moves, optional picture, closed by a press outside it.
+- Weight manual entry edits in place at the same height (input + ✓ ✕ in the value row, Net / On scale switch with a sliding highlight and its one-line calculation); "Balance" renamed "On scale".
+- "+ Material" is held 1 s on the grouped-spools, spool and product cards.
+- Detail panel: a Color row (one `colorBg()` swatch) replaces the "Change colour" chip.
+- Paxx U1 firmware fallback `v2.0.0-paxx12-24` (issue #142).
+
+### Fixed
+- While the new-chip card is up a scan no longer opens, creates or updates a spool, nor reopens the card on another view (`_chipCardUp`, also at the top of `_processNfcScans`).
+- An NDEF tag (a phone's, the NFC tools') is no longer created as a made-up spool: a chip is a spool only when its `id_tigertag` is a TigerTag version of `id_version.json`.
+- Eleven `toast()` calls with the wrong arguments threw (issue #154's "API refresh failed", the TigerTag+ upgrade stopping after the write); they use `_flashMessage`.
+- A spool with no container shows a "Choose a container" row again (issue #154); the post-create container question waits for the burn window (`_cpAskYieldToBurn`).
+- Bambu RTSPS camera recording taps the live stream instead of a second connection the printer cut after ~10 s; the live view dates pictures on arrival (PR #152 by @Ptitlouis6012, with review fixes).
+- FlashForge "wrong serial number" says to turn on LAN mode first (issue #86).
+- USB scale reopened after a system resume; silence logged (issue #138, Windows, not reproduced on macOS).
+
+---
+
 ## v2.45.0 — 2026-10-27
 
 ### Added
