@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, session, nativeTheme, utilityProcess, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, session, nativeTheme, utilityProcess, Menu, autoUpdater: nativeAutoUpdater } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs   = require('fs');
@@ -2160,6 +2160,9 @@ function writeAutoUpdatePref(enabled) {
 // Lifecycle events are wired ONCE here; the actual check is gated by the
 // stored preference and can be re-triggered manually via 'update:check-now'.
 let _updaterEventsWired = false;
+// macOS: Squirrel.Mac holds the downloaded update (see 'update-downloaded' below).
+let _macSquirrelReady = false;
+let _macReadyInfo = null;
 function wireUpdaterEvents() {
   if (_updaterEventsWired) return;
   _updaterEventsWired = true;
@@ -2182,8 +2185,24 @@ function wireUpdaterEvents() {
     });
   });
   autoUpdater.on('update-downloaded', (info) => {
+    // macOS: electron-updater says "downloaded" as soon as the zip is cached, but
+    // Squirrel.Mac then fetches it again from a local proxy and checks its
+    // signature (~30 s for a 300 MB zip). "Install" is only offered once Squirrel
+    // has it — a quit before that left nothing installed.
+    if (process.platform === 'darwin' && !_macSquirrelReady) {
+      _macReadyInfo = info;
+      mainWindow?.webContents.send('update-status', { status: 'downloading', percent: 100 });
+      return;
+    }
     mainWindow?.webContents.send('update-status', { status: 'ready', version: info?.version });
   });
+  if (process.platform === 'darwin') {
+    nativeAutoUpdater.on('update-downloaded', () => {
+      _macSquirrelReady = true;
+      log.info('[updater] Squirrel.Mac has the update — ready to install');
+      if (_macReadyInfo) mainWindow?.webContents.send('update-status', { status: 'ready', version: _macReadyInfo.version });
+    });
+  }
   autoUpdater.on('error', (err) => {
     mainWindow?.webContents.send('update-status', { status: 'error', error: err?.message || String(err) });
   });
@@ -2253,13 +2272,17 @@ ipcMain.on('install-update', () => {
   /* The installer waits for this process to be gone. A quit that stalls — a
      renderer that never finishes unloading (the window turns black and Windows
      flags it "not responding"), a native handle that will not close — leaves it
-     waiting forever and the update never lands. The installer is already
-     spawned at this point, so a hard exit loses nothing. */
-  setTimeout(() => {
+     waiting forever and the update never lands. On Windows the installer is
+     already spawned at this point, so a hard exit loses nothing. On macOS the
+     fallback is armed only once Squirrel.Mac holds the update: killed before,
+     it installs nothing (v2.46.0 → the update never landed). */
+  const armForcedExit = () => setTimeout(() => {
     log.warn('[updater] quit did not complete in 6 s — forcing exit so the installer can run');
     for (const w of BrowserWindow.getAllWindows()) { try { w.destroy(); } catch (_) {} }
     app.exit(0);
   }, 6000).unref?.();
+  if (process.platform === 'darwin' && !_macSquirrelReady) nativeAutoUpdater.once('update-downloaded', armForcedExit);
+  else armForcedExit();
 });
 
 // IPC: renderer flips the auto-update preference (persisted to disk)

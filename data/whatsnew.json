@@ -1,5 +1,5 @@
 {
-  "2.46.0": {
+  "2.46.1": {
     "date": "2026-10-28",
     "items": [
       {
@@ -174,35 +174,6 @@
           "pl": "Nagrywanie kamery Bambu Lab nie urywa się już po dziesięciu sekundach. Dzięki, @Ptitlouis6012!",
           "ru": "Запись с камеры Bambu Lab больше не обрывается через десять секунд. Спасибо, @Ptitlouis6012!",
           "nl": "Opnemen met de camera van een Bambu Lab stopt niet meer na tien seconden. Bedankt, @Ptitlouis6012!"
-        }
-      },
-      {
-        "icon": "image",
-        "title": {
-          "en": "A fresh face in your Dock",
-          "fr": "Une nouvelle tête dans ton Dock",
-          "de": "Ein neues Gesicht im Dock",
-          "es": "Una cara nueva en tu Dock",
-          "it": "Una faccia nuova nel Dock",
-          "zh": "Dock 里换了张新面孔",
-          "pt": "Uma cara nova no seu Dock",
-          "pt-pt": "Uma cara nova na tua Dock",
-          "pl": "Nowa twarz w Docku",
-          "ru": "Новое лицо в Dock",
-          "nl": "Een nieuw gezicht in je Dock"
-        },
-        "body": {
-          "en": "New app icon on macOS, Windows and Linux. Same tiger, sharper suit.",
-          "fr": "Nouvelle icône d’app sur macOS, Windows et Linux. Même tigre, costume plus net.",
-          "de": "Neues App-Icon auf macOS, Windows und Linux. Gleicher Tiger, schärferer Anzug.",
-          "es": "Nuevo icono de la app en macOS, Windows y Linux. Mismo tigre, traje más afilado.",
-          "it": "Nuova icona dell’app su macOS, Windows e Linux. Stessa tigre, abito più nitido.",
-          "zh": "macOS、Windows、Linux 换上新应用图标。还是那只老虎，西装更精神。",
-          "pt": "Novo ícone do app no macOS, Windows e Linux. Mesmo tigre, terno mais alinhado.",
-          "pt-pt": "Novo ícone da app em macOS, Windows e Linux. O mesmo tigre, fato mais aprumado.",
-          "pl": "Nowa ikona aplikacji na macOS, Windows i Linux. Ten sam tygrys, ostrzejszy garnitur.",
-          "ru": "Новая иконка приложения на macOS, Windows и Linux. Тот же тигр, костюм поострее.",
-          "nl": "Nieuw app-icoon op macOS, Windows en Linux. Zelfde tijger, scherper pak."
         }
       }
     ]
