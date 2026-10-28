@@ -208,11 +208,13 @@ only the analytics bucket key is still `TigerCloud`.
 
 ## Product catalogue — local cache + Catalogue view (v2.15.0, renamed v2.27.0)
 
-The official TigerTag+ product catalogue (13 400+ products, growing daily) is **imported once, in full**, and every
+The official TigerTag+ product catalogue (18 800+ products, growing daily) is **imported once, in full**, and every
 search / filter / sort then runs **in memory** — the network is touched only to rebuild the cache, plus one
-`product/get` per product actually opened (session-cached). Main process: IPC `catalog:fetch-all` (`main.js`) pages
-`POST product/get/all` with `per_page` 1000, following `env.nextPage` until null — the page cap is a runaway guard,
-NOT a catalogue-size limit, so never treat it as one. Renderer: cached in `localStorage` under `tigertag.catalog`,
+`product/get` per product actually opened (session-cached). Main process: IPC `catalog:fetch-all` (`main.js`) reads
+the RFID-Guide snapshot `database/id_catalog.json` (raw.githubusercontent.com, auto-synced from the API several times
+a day; ~1 s, kept on disk with its ETag so an unchanged catalogue is a `304`) since v2.46.2; only when it fails does
+it page `POST product/get/all` with `per_page` 1000, following `env.nextPage` until null (60 s and two retries per
+page) — the page cap is a runaway guard, NOT a catalogue-size limit, so never treat it as one. Renderer: cached in `localStorage` under `tigertag.catalog`,
 self-refreshing past 24 h, force-rebuilt by *Re-sync the catalogue* in Settings → Tools. The cache carries a
 schema version (`v: 2` since v2.17.0) and an older payload is rejected outright rather than migrated — v1 predates
 the endpoint returning `series` / `name` as their own fields, and rejecting it is what allowed the title-splitting

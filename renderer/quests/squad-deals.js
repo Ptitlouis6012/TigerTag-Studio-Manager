@@ -17,7 +17,7 @@
 // The link is in secret/main, which the rules give only to a member whose XP
 // reaches the deal's minXp: below it a live card is locked with the XP to go.
 
-import { celebrateEgg, guardInput, revealPulls, tilt } from './coin-pull.js';
+import { celebrateEgg, guardInput, holdToFire, revealPulls, tilt } from './coin-pull.js';
 import { heroLayersHtml } from './hero-layers.js';
 import { ambientStart, ambientStop, sfx } from './coin-sound.js';
 
@@ -713,7 +713,8 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
   // the prize pops in with the TigerCoin.
   el.innerHTML = `
     <div class="tc-reveal-card tc-code-card tcx tcx--help tc-env-card" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-      <img class="tch-env tc-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true">
+      <span class="tch-env-tilt"><img class="tch-env tc-env" src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true"></span>
+      ${giveOnly && !ctx.eggFound?.("envGive") ? `<span class="tch-glints" aria-hidden="true"><i></i><i></i><i></i><i></i></span>` : ""}
       <div class="tcx-main">
         <div class="tcx-plaque"><h3>${esc(title)}</h3></div>
         <p class="tc-env-msg"${giveOnly ? " hidden" : ""}>${esc(msg || (env.split ? "" : t("envDefaultMsg")))}</p>
@@ -726,6 +727,10 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
   document.body.appendChild(el);
   requestAnimationFrame(() => el.classList.add("is-open"));
   const card = el.querySelector(".tc-env-card"), actions = el.querySelector(".tc-reveal-actions");
+  // The envelope turns toward the mouse — the same envelope as the help window
+  // (openEnvelopeHelp). Giving, it also hides an easter egg (envGive,
+  // .agents/rules/easter-eggs.md): glints until found, three quick clicks.
+  tilt(el, el.querySelector(".tch-env"), 18);
   return new Promise(resolve => {
     let opened = null;
     const finish = how => { el.classList.remove("is-open"); setTimeout(() => el.remove(), 200); resolve(how); };
@@ -757,7 +762,7 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
           ${friends.length ? `<div class="tc-give-list" role="radiogroup" aria-label="${esc(t("envGivePick"))}">${friends.map(f =>
             `<button type="button" role="radio" aria-checked="false" class="tc-give-f" data-give-to="${esc(f.uid)}" data-name="${esc(f.name)}"${left ? "" : " disabled"}><span class="tc-give-av">${f.avatar}<span class="tc-give-check" aria-hidden="true"><span class="icon icon-check icon-11"></span></span></span><span class="tc-give-name">${esc(f.name)}</span></button>`).join("")}</div>`
             : `<p class="tc-give-left">${esc(t("envGiveNoFriends"))}</p>`}
-          ${friends.length && left ? `<button type="button" class="sqd-mark sqd-wide tc-give-go" disabled><span class="hold-progress" aria-hidden="true"></span><span class="icon icon-gift icon-12" aria-hidden="true"></span><span class="tc-give-lbl">${esc(t("envGiveShort"))}</span></button>` : ""}
+          ${friends.length && left ? `<button type="button" class="sqd-open tp-hold tp-ten sqd-wide tc-give-go" disabled><span class="tp-fill" aria-hidden="true"></span><span class="tc-give-lbl">${esc(t("envGiveShort"))}</span></button>` : ""}
         </div>`;
       // Many friends: the search filters the grid by name, in place.
       actions.querySelector("[data-give-q]")?.addEventListener("input", e => {
@@ -769,9 +774,10 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
       // A friend already chosen (from the friends list): picked, the button armed.
       const pre = give.picked && actions.querySelector(`[data-give-to="${CSS.escape(give.picked)}"]`);
       if (pre && !pre.disabled) { pre.setAttribute("aria-checked", "true"); go.disabled = false; go.querySelector(".tc-give-lbl").textContent = t("envGiveShort"); }
-      // The app's hold-to-confirm button (.agents/rules/hold-to-confirm.md): a gift
-      // cannot be taken back, so the binding duration (1500 ms).
-      ctx.hold?.(go, 1500, async () => {
+      // Held like "Open ×10" in the opening stage (coin-pull.js holdToFire, 2 s):
+      // same gradient, the button strains and grows while held, a click alone
+      // shakes "no" with a bubble. A gift cannot be taken back.
+      holdToFire(go, 2000, async () => {
         const pick = actions.querySelector('.tc-give-f[aria-checked="true"]');
         if (!pick || go.disabled) return;
         go.disabled = true;
@@ -787,9 +793,13 @@ export function showEnvelope(ctx, env, { open = null, more = 0, give = null, giv
           er.hidden = false;
           go.disabled = false;
         }
-      }, { hint: true });
+      }, t("pullHoldTen"));
     };
     if (giveOnly && canGive) showGive();
+    if (giveOnly) {
+      const egg = el.querySelector(".tch-env");
+      egg.addEventListener("click", () => tapEgg(egg, "envGive", ctx, el, () => { el.querySelector(".tch-glints")?.remove(); finish("back"); }));
+    }
     // No "Back" button: a click beside the card closes it (not while a reveal is running).
     el.addEventListener("mousedown", e => { if (e.target === el && !card.classList.contains("is-given")) finish("back"); });
     el.addEventListener("click", async e => {

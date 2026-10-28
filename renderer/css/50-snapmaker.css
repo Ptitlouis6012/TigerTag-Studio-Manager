@@ -934,13 +934,15 @@
     border-bottom-left-radius: 14px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity .2s;
+    /* Hidden when closed, not only transparent — see `.modal-overlay` (60-modals.css). */
+    visibility: hidden;
+    transition: opacity .2s, visibility 0s linear .2s;
     /* Must sit ABOVE the printer side-card ladder (101-106 in 70-detail-misc.css)
        — the edit sheet shares the right-edge area, so at 102 it was hidden behind
        the printer panel (105). Modal sheet = top layer when open. */
     z-index: 110;
   }
-  .sfe-backdrop.open { opacity: 1; pointer-events: auto; }
+  .sfe-backdrop.open { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
 
   .sfe-sheet {
     position: fixed;

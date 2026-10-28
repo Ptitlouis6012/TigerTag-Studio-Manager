@@ -1534,6 +1534,7 @@ body.progress-view #gridSortWrap { display: none; }
 .tp-gift-row { display: flex; justify-content: center; margin-top: 10px; }   /* under "Open ×10", on its own line */
 .tc-env-give img { width: 20px; height: 20px; object-fit: contain; }
 .tc-give { width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.tc-reveal-actions:has(> .tc-give) { margin-top: 0; }   /* the search sits right under the title */
 .tc-give-left { margin: 0; font-size: 12.5px; color: var(--tsq-muted); }
 .tc-give-left.is-none { color: #ff8a80; }
 /* The friends as a grid of avatars (name under), the picked one ringed and
@@ -1558,6 +1559,8 @@ body.progress-view #gridSortWrap { display: none; }
 .tc-env-card.is-given .tc-env { animation: tc-give-fly .9s cubic-bezier(.5, 0, .7, .2) forwards; }
 @keyframes tc-give-fly { to { transform: translate(140px, -120px) rotate(18deg) scale(.4); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .tc-env-card.is-given .tc-env { animation: none; opacity: .4; } }
+/* The glints round the envelope go with it once it is opened or given. */
+.tc-env-card.is-opened .tch-glints, .tc-env-card.is-given .tch-glints { display: none; }
 /* The gift envelope (showEnvelope): the gift-code modal's frame (.tcx--help) —
    the illustrated envelope rising from behind the card (.tch-env), the plaque,
    the message, the prize (coin + amount) that pops in once opened, when the

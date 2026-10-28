@@ -612,7 +612,13 @@
     position: fixed; inset: 0; z-index: 9999;
     background: rgba(10,12,24,.55); backdrop-filter: blur(7px);
     display: flex; align-items: center; justify-content: center;
-    opacity: 0; pointer-events: none; transition: opacity .2s;
+    opacity: 0; pointer-events: none;
+    /* Closed = hidden, not just transparent. An `opacity: 0` overlay is still
+       composited, and with `backdrop-filter` each one is a full-window blurred
+       surface at Retina scale: ~40 closed overlays blew the compositor's tile
+       budget ("tile memory limits exceeded") and the app flickered. Visibility
+       flips after the fade-out, and at once on opening. */
+    visibility: hidden; transition: opacity .2s, visibility 0s linear .2s;
   }
   /* No blur AND no dim backdrop for these — the view behind stays fully visible. */
   #whatsNewOverlay, #colorEditModalOverlay, #td1sConnectModalOverlay {
@@ -676,7 +682,7 @@
     .avp-avatar-ph { animation: none; }
     .avp-ring { display: none; }
   }
-  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .modal-overlay.open { opacity: 1; pointer-events: auto; visibility: visible; transition-delay: 0s; }
   .modal-card {
     background: var(--surface); border-radius: 18px;
     border: 1px solid var(--border);

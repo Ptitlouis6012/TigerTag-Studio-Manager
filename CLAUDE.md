@@ -72,6 +72,7 @@ missing from this index, the index cites a missing file, or a cited path does no
 - **Material swatch**: convention owned by TigerSystem-Docs, drawn only through `colorBg()` / `_pieSplit()` → `.agents/rules/material-swatch.md`
 - **MCP**: read-only tools, no credential, decoded values → `.agents/rules/mcp-read-only.md`
 - **Product images**: `cdnImg(url, cssPx)` asks for the rendition that fits → `.agents/rules/product-images.md`
+- **Easter eggs**: a hidden envelope = an id in the backend `EGGS` + `tapEgg` on the spot + glints while `!eggFound`; the ctx must carry `easterEgg` / `eggFound` → `.agents/rules/easter-eggs.md`
 
 ## 📍 Machine-local paths → `CLAUDE.local.md` (gitignored)
 
@@ -192,8 +193,8 @@ repo's `functions/index.js`). Byte figures are JPEG; Chromium is served AVIF, so
 | `thumb` | 32 | 663 B | |
 | `small` | 64 | 1.4 kB | list / table chips (28 px) |
 | `compact` | 128 | 3.4 kB | catalogue + reorder thumbs |
-| `medium` | 256 | 9.7 kB | |
-| `large` | 512 | 33 kB | the default — grid cards |
+| `medium` | 256 | 9.7 kB | grid cards (`GRID_CARD_IMG`) |
+| `large` | 512 | 33 kB | the endpoint default |
 | `master` | 1024 | 101 kB | zoom / lightbox, on demand only |
 
 - `cdnImg(url, cssPx)` picks the first rendition covering the slot (ladder in `_cdnSizeFor`); it

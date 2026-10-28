@@ -694,6 +694,19 @@ Per-protocol implementation:
 - `inventory.js` L6618-6680 — Snapmaker's per-extruder filament grid already iterates extruders 0-3 with click handlers. The tool selection chip strip slots in above it with the same pattern.
 - The current Snapmaker WS subscription already includes `extruder.position` and `print_stats.objects` — no additional subscriptions needed.
 
+##### G7 — Bambu Lab: skip objects on a multi-part plate  ·  **Effort: M**  ·  **Risk: medium**  ·  *issue #156*
+A part fails on a plate of several: today the choice is letting it spoil filament or cancelling the whole print. Bambu Studio and the A1's screen can skip it; the P1S screen cannot — Studio would, for every Bambu printer it drives.
+- **Objects**: from the running job's `.3mf`, already fetched over FTPS for the thumbnail (bambulab `PROTOCOL.md` §11) — `Metadata/slice_info.config` lists each object (`identify_id`, name, already-skipped), `pick_N.png` / `plate_N.json` place them on the plate.
+- **UI**: "Skip objects" on a printing Bambu card opens the plate as a clickable map; pick the parts, confirm with a hold (irreversible, `.agents/rules/hold-to-confirm.md`).
+- **Command**: MQTT `{"print":{"command":"skip_objects","obj_list":[identify_id, …]}}` on `device/{serial}/request`, the one Bambu Studio sends.
+- **To verify first**: which firmware versions accept `skip_objects` per model (P1S / P1P / A1 / X1 / H2D) — test on a real P1S before promising it; hide the button where the firmware refuses it.
+
+##### G8 — Anycubic ACE Pro 2: drying per unit + filament left  ·  **Effort: M**  ·  **Risk: low-medium**  ·  *issue #157*
+Anycubic Slicer Next shows, per ACE unit (ACE1 / ACE2 tabs), the drying state — live temp vs target, humidity, time left, an on/off switch — and roughly how much filament is left on each spool. Studio shows one box temperature and nothing else.
+- **Drying, read** — already on the wire: `multiColorBox` `autoUpdateDryStatus` / `setDry` partial boxes carry `drying_status { status (1 = drying), target_temp, duration, remain_time }` + `temp` (anycubic `PROTOCOL.md` §5). Show it per ACE (tab or block per box id).
+- **Drying, control** — order `MULTI_COLOR_BOX_DRY`, data `{ multi_color_box: [{ id: <box>, drying_status: { status: 1|0, target_temp, duration, remain_time: null } }] }`, `project_id: 0`. Reference: [WaresWichall/hass-anycubic_cloud](https://github.com/WaresWichall/hass-anycubic_cloud) `anycubic_cloud_api/api/functions.py` (`multi_color_box_drying_start` / `_stop`, `_send_order_multi_color_box_dry`) and `data_models/printer_properties.py` (`AnycubicDryingStatus`). Verify the order id and the LAN path (vs cloud) before wiring.
+- **Humidity and filament left** — not in hass-anycubic_cloud: capture what Slicer Next reads on an ACE Pro 2 (likely ACE RFID / consumption data). Studio's own spool weights are a candidate source for "filament left" when the slot's spool is in the inventory.
+
 #### 🐛 Debug surface — Printer control panel
 Printer control is the highest-risk feature surface (a misclick can damage hardware), so the debug interfaces are also the most important. They're not optional polish — they're a precondition for shipping confidently.
 

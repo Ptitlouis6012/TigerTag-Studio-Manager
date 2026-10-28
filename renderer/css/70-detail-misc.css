@@ -1675,6 +1675,12 @@
   .spool-card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm);
     overflow: hidden; cursor: pointer; transition: box-shadow .15s, transform .1s, border-color .15s;
+    /* Off-screen cards are not rendered: a grid holds hundreds of them, and
+       painting them all fed the compositor's tile budget. The card already clips
+       its content (overflow: hidden), so the paint containment this brings changes
+       nothing visible; the 240px height keeps the scrollbar right until a card has
+       been rendered once, then its real height is remembered. */
+    content-visibility: auto; contain-intrinsic-block-size: auto 240px;
   }
   .spool-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-1px); }
   .spool-card.selected { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }

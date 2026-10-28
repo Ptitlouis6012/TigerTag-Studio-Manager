@@ -12290,5 +12290,155 @@
         }
       }
     ]
+  },
+  "2.46.2": {
+    "date": "2026-10-28",
+    "items": [
+      {
+        "icon": "percent",
+        "title": {
+          "en": "Deals, instantly",
+          "fr": "Les bons plans, illico",
+          "de": "Deals, sofort",
+          "es": "Ofertas, al instante",
+          "it": "Offerte, all’istante",
+          "zh": "优惠，秒开",
+          "pt": "Ofertas, na hora",
+          "pt-pt": "Ofertas, num instante",
+          "pl": "Okazje od ręki",
+          "ru": "Скидки — мгновенно",
+          "nl": "Deals, meteen"
+        },
+        "body": {
+          "en": "Switching accounts on the Deals page used to feel like a coffee break. Now it’s about a second.",
+          "fr": "Changer de compte sur les Bons plans, c’était le temps d’un café. Maintenant, une seconde.",
+          "de": "Kontowechsel auf der Deals-Seite dauerte eine Kaffeepause. Jetzt etwa eine Sekunde.",
+          "es": "Cambiar de cuenta en Ofertas daba para un café. Ahora, un segundo.",
+          "it": "Cambiare account nelle Offerte durava quanto un caffè. Ora circa un secondo.",
+          "zh": "在优惠页切换账号，以前够喝杯咖啡。现在大约一秒。",
+          "pt": "Trocar de conta nas Ofertas dava tempo de um café. Agora, um segundo.",
+          "pt-pt": "Mudar de conta nas Ofertas dava para um café. Agora, um segundo.",
+          "pl": "Zmiana konta w Okazjach trwała jak przerwa na kawę. Teraz około sekundy.",
+          "ru": "Смена аккаунта в «Скидках» тянулась как кофе-брейк. Теперь — около секунды.",
+          "nl": "Van account wisselen op Deals duurde een koffiepauze. Nu zo’n seconde."
+        }
+      },
+      {
+        "icon": "refresh",
+        "title": {
+          "en": "Fresh catalogue photos",
+          "fr": "Des photos de catalogue fraîches",
+          "de": "Frische Katalogfotos",
+          "es": "Fotos del catálogo al día",
+          "it": "Foto del catalogo aggiornate",
+          "zh": "目录图片，新鲜到货",
+          "pt": "Fotos do catálogo em dia",
+          "pt-pt": "Fotos do catálogo em dia",
+          "pl": "Świeże zdjęcia w katalogu",
+          "ru": "Свежие фото каталога",
+          "nl": "Verse catalogusfoto’s"
+        },
+        "body": {
+          "en": "The catalogue now syncs in a second, and when a brand changes a product photo, your spools get the new one too.",
+          "fr": "Le catalogue se synchronise en une seconde, et quand une marque change la photo d’un produit, tes bobines suivent.",
+          "de": "Der Katalog synchronisiert in einer Sekunde, und ändert eine Marke ein Produktfoto, bekommen deine Spulen das neue.",
+          "es": "El catálogo se sincroniza en un segundo y, si una marca cambia la foto de un producto, tus bobinas también.",
+          "it": "Il catalogo si sincronizza in un secondo e, se un marchio cambia la foto di un prodotto, le tue bobine la seguono.",
+          "zh": "目录一秒同步；品牌换了产品图，你的线盘也跟着换。",
+          "pt": "O catálogo sincroniza em um segundo e, quando uma marca troca a foto de um produto, seus carretéis acompanham.",
+          "pt-pt": "O catálogo sincroniza num segundo e, quando uma marca muda a foto de um produto, as tuas bobinas acompanham.",
+          "pl": "Katalog synchronizuje się w sekundę, a gdy marka zmieni zdjęcie produktu, twoje szpule też je dostaną.",
+          "ru": "Каталог синхронизируется за секунду, а если бренд меняет фото товара, твои катушки тоже обновятся.",
+          "nl": "De catalogus synchroniseert in een seconde, en verandert een merk een productfoto, dan krijgen je spoelen die ook."
+        }
+      },
+      {
+        "icon": "eye",
+        "title": {
+          "en": "No more flicker on Mac",
+          "fr": "Fini le clignotement sur Mac",
+          "de": "Kein Flackern mehr auf dem Mac",
+          "es": "Adiós al parpadeo en Mac",
+          "it": "Basta sfarfallii su Mac",
+          "zh": "Mac 上不再闪烁",
+          "pt": "Chega de piscar no Mac",
+          "pt-pt": "Acabou o piscar no Mac",
+          "pl": "Koniec migotania na Macu",
+          "ru": "На Mac больше не мерцает",
+          "nl": "Geen geflikker meer op de Mac"
+        },
+        "body": {
+          "en": "On Retina screens, parts of the window could blink or go blank. They’ve stopped.",
+          "fr": "Sur les écrans Retina, des bouts de fenêtre clignotaient ou disparaissaient. C’est terminé.",
+          "de": "Auf Retina-Bildschirmen konnten Teile des Fensters flackern oder leer werden. Vorbei.",
+          "es": "En pantallas Retina, partes de la ventana parpadeaban o se quedaban en blanco. Se acabó.",
+          "it": "Sugli schermi Retina, parti della finestra sfarfallavano o sparivano. Finito.",
+          "zh": "在 Retina 屏上，窗口局部会闪烁或空白。现在不会了。",
+          "pt": "Em telas Retina, partes da janela piscavam ou sumiam. Acabou.",
+          "pt-pt": "Em ecrãs Retina, partes da janela piscavam ou desapareciam. Acabou.",
+          "pl": "Na ekranach Retina fragmenty okna migały lub znikały. Już nie.",
+          "ru": "На экранах Retina части окна мигали или пропадали. Больше нет.",
+          "nl": "Op Retina-schermen konden delen van het venster knipperen of leeg worden. Klaar daarmee."
+        }
+      },
+      {
+        "icon": "image",
+        "title": {
+          "en": "Lighter photos, snappier grids",
+          "fr": "Photos plus légères, grilles plus vives",
+          "de": "Leichtere Fotos, flinkere Raster",
+          "es": "Fotos más ligeras, cuadrículas más ágiles",
+          "it": "Foto più leggere, griglie più scattanti",
+          "zh": "图片更轻，网格更快",
+          "pt": "Fotos mais leves, grades mais ágeis",
+          "pt-pt": "Fotos mais leves, grelhas mais rápidas",
+          "pl": "Lżejsze zdjęcia, szybsze siatki",
+          "ru": "Фото легче — сетки быстрее",
+          "nl": "Lichtere foto’s, vlottere rasters"
+        },
+        "body": {
+          "en": "Each view now loads photos at the size it shows them. The grid appears faster and your computer works less.",
+          "fr": "Chaque vue charge les photos à la taille où elle les affiche. La grille apparaît plus vite et ton ordi souffle.",
+          "de": "Jede Ansicht lädt Fotos in der Größe, in der sie sie zeigt. Das Raster erscheint schneller, dein Rechner atmet auf.",
+          "es": "Cada vista carga las fotos al tamaño en que las muestra. La cuadrícula aparece antes y tu ordenador descansa.",
+          "it": "Ogni vista carica le foto alla dimensione in cui le mostra. La griglia appare prima e il computer respira.",
+          "zh": "每个视图按显示尺寸加载图片。网格出现更快，电脑也轻松。",
+          "pt": "Cada visualização carrega as fotos no tamanho em que as mostra. A grade aparece mais rápido e o computador agradece.",
+          "pt-pt": "Cada vista carrega as fotos ao tamanho em que as mostra. A grelha aparece mais depressa e o computador agradece.",
+          "pl": "Każdy widok ładuje zdjęcia w rozmiarze, w jakim je pokazuje. Siatka pojawia się szybciej, a komputer odpoczywa.",
+          "ru": "Каждый вид грузит фото в том размере, в каком показывает. Сетка появляется быстрее, компьютер отдыхает.",
+          "nl": "Elke weergave laadt foto’s op de maat waarop ze getoond worden. Het raster staat er sneller en je computer zucht van opluchting."
+        }
+      },
+      {
+        "icon": "gift",
+        "title": {
+          "en": "Gifting, with feeling",
+          "fr": "Offrir, avec panache",
+          "de": "Schenken mit Stil",
+          "es": "Regalar, con estilo",
+          "it": "Regalare, con stile",
+          "zh": "送礼，更有仪式感",
+          "pt": "Presentear, com estilo",
+          "pt-pt": "Oferecer, com estilo",
+          "pl": "Prezent z pompą",
+          "ru": "Дарить — с размахом",
+          "nl": "Cadeau geven, met flair"
+        },
+        "body": {
+          "en": "The “Give an envelope” window got a makeover: the envelope follows your mouse, and you hold “Give” to send it.",
+          "fr": "La fenêtre « Offrir une enveloppe » se refait une beauté : l’enveloppe suit ta souris, et on maintient « Offrir » pour l’envoyer.",
+          "de": "Das Fenster „Umschlag verschenken“ hat sich aufgehübscht: Der Umschlag folgt der Maus, „Schenken“ hältst du gedrückt.",
+          "es": "La ventana «Regalar un sobre» se renueva: el sobre sigue tu ratón y mantienes «Regalar» para enviarlo.",
+          "it": "La finestra «Regala una busta» si rifà il look: la busta segue il mouse e tieni premuto «Regala» per inviarla.",
+          "zh": "“赠送红包”窗口焕然一新：红包跟着鼠标转，长按“赠送”即可送出。",
+          "pt": "A janela “Dar um envelope” ganhou visual novo: o envelope segue o mouse e você segura “Dar” para enviar.",
+          "pt-pt": "A janela «Oferecer um envelope» tem novo visual: o envelope segue o rato e manténs «Oferecer» premido para enviar.",
+          "pl": "Okno „Podaruj kopertę” w nowej odsłonie: koperta podąża za myszką, a „Podaruj” przytrzymujesz, by wysłać.",
+          "ru": "Окно «Подарить конверт» обновилось: конверт следит за мышкой, а «Подарить» нужно удерживать.",
+          "nl": "Het venster ‘Envelop geven’ kreeg een opknapbeurt: de envelop volgt je muis, en je houdt ‘Geven’ ingedrukt om te versturen."
+        }
+      }
+    ]
   }
 }

@@ -5420,6 +5420,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // refreshed (at most once a minute). A read refused (not a member) → nothing
   // to show → "coming soon".
   const _deals = { uid: null, at: 0, docs: [], country: null, xp: 0, coins: null };
+  // The last Deals load of each account of this session (switching back is
+  // instant, then refreshed) and the load in flight (one per account at a time).
+  const _dealsByUid = new Map();
+  let _dealsLoading = null;
   const SQUAD_DEAL_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/squadDeal";
   // TigerCoins — balance, envelopes to open, opening (functions/tigerCoins.js).
   const TIGER_COINS_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/tigerCoins";
@@ -5446,6 +5450,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _coinsOf = r => ({ balance: r.balance, earned: r.earned || 0, spent: r.spent || 0, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null, eggs: r.eggs || [] });
   // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
   const _coinsCtx = (uid, after) => ({ t, esc, lang: state.lang, toast: msg => _flashMessage(msg), hold: setupHoldToConfirm,
+    // Easter eggs (.agents/rules/easter-eggs.md) — the give window hides one (envGive).
+    eggFound: egg => (_deals.coins?.eggs || []).includes(egg),
+    easterEgg: async (egg, onFound) => {
+      const r = await _tigerCoins(uid, "easterEgg", { egg });
+      _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
+      onFound?.();
+      after?.();
+      return { ...r, open: () => _openEnvelopesNow() };   // tapEgg opens the pile after the celebration
+    },
     openChest: async id => {
       const r = await _tigerCoins(uid, "openChest", { id });
       _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
@@ -5489,7 +5502,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       run: async () => {
         const env = _deals.coins?.envelopes?.[0], g = _deals.coins?.gifts;
         if (!env || !g) return null;
-        await showEnvelope({ ...ctx, hold: setupHoldToConfirm }, env, { giveOnly: true, give: {   // the Deals ctx has no hold
+        // Over the opening stage: no envGive egg here (finding it would open a second
+        // stage on top of this one) — it lives in the Friends panel's give window.
+        await showEnvelope({ ...ctx, hold: setupHoldToConfirm, easterEgg: null, eggFound: () => true }, env, { giveOnly: true, give: {   // the Deals ctx has no hold
           left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "",
           friends: (state.friends || []).map(f => ({ uid: f.uid, name: f.displayName || "—", avatar: userAvatar(f, "sqb-avatar") })),
           send: async to => { const r = await _tigerCoins(uid, "giveEnvelope", { id: env.id, to }); set(r); return r; },
@@ -5513,7 +5528,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP_${res.status}`);
       _deals.at = 0;   // reload: the claim (code / used), the pool counters and the coins changed
       await _renderDealsView();
-    }, onExpire: () => _renderDealsView(),
+    }, onExpire: () => { host._sqdSig = null; _renderDealsView(); },   // time-based: same data, a different view
     // The partner's site opened from a deal: counted server-side (raw total), never awaited.
     onPartnerClick: async dealId => {
       try {
@@ -5553,7 +5568,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     wireDeals(host, ctx);
     const paint = () => {
       if (state.viewMode !== "squadDeals") return;
-      host.innerHTML = dealsViewHtml({ ...ctx, xp: _deals.uid === uid ? _deals.xp : 0, coins: _deals.uid === uid ? _deals.coins : null, openId: host._sqdOpen, filter: host._sqdFilter, loading: _deals.uid !== uid }, sortDeals(_deals.uid === uid ? _deals.docs : [], _deals.country));
+      const mine = _deals.uid === uid;
+      // Signature guard (.agents/rules/surgical-dom-updates.md): renderInventory
+      // runs this on every snapshot — 3 to 6 times per account switch, measured —
+      // and each identical rebuild recreated every card and reloaded its photo.
+      // Keyed on the DATA, not the HTML: the countdowns in the HTML move every
+      // second (the view's own timer updates them in place).
+      const sig = JSON.stringify([uid, mine, mine && _deals.xp, mine && _deals.coins, mine && _deals.country, mine && _deals.docs, host._sqdOpen, host._sqdFilter, state.lang]);
+      if (sig === host._sqdSig && host.childElementCount) return;
+      host._sqdSig = sig;
+      host.innerHTML = dealsViewHtml({ ...ctx, xp: mine ? _deals.xp : 0, coins: mine ? _deals.coins : null, openId: host._sqdOpen, filter: host._sqdFilter, loading: !mine }, sortDeals(mine ? _deals.docs : [], _deals.country));
       applyDealsFilter(host);       // the filter bar's choice survives a repaint
       _setupCloseTabHold(host);   // the side card's » tab: long press closes every side card
       // "I used it" moves the deal to the history for good: held 1.2 s, not clicked.
@@ -5564,29 +5588,66 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     };
     paint();
     if (_deals.uid === uid && Date.now() - _deals.at < 60e3) return;
-    try {
-      const db = fbDb(uid);
-      const [prof, snap, coins] = await Promise.all([
-        db.collection("userProfiles").doc(uid).get().catch(() => null),
-        db.collection("squadDeals").where("status", "in", ["active", "archived"]).get(),
-        _tigerCoins(uid, "status").catch(() => null),   // no balance → no TigerCoins bar
-      ]);
-      const sq = prof?.get?.("tigerSquad") || {}, cc = sq.country, xp = Number(sq.xp) || 0;
-      const docs = await Promise.all(snap.docs.map(async d => {
-        const deal = { id: d.id, ...d.data() };
-        // Own claim always (accepted deals stay in the history); the link only
-        // when the XP reaches minXp (the rules refuse it below).
-        const [claim, sec] = await Promise.all([d.ref.collection("claims").doc(uid).get(),
-          (deal.minXp || 0) <= xp ? d.ref.collection("secret").doc("main").get() : Promise.resolve(null)].map(p => p.catch(() => null)));
-        deal.claim = claim?.data() || null;
-        deal.secret = sec?.data?.() || null;
-        return deal;
-      }));
-      Object.assign(_deals, { uid, at: Date.now(), docs, xp, country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null,
-        coins: coins ? _coinsOf(coins) : null });
-      _paintDealsBadge(_envCount(_deals.coins));
-    } catch (_) { Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, coins: null, country: state.squadCountry || null }); }
-    paint();
+    // One load per account at a time. renderInventory calls this on every
+    // snapshot of an account switch (inventory, racks, printers…), and each call
+    // used to start its own load — 22 deals × 2 document reads, ~5 s each pass,
+    // several passes at once: about a minute of skeletons. Later calls wait for
+    // the running load, then repaint.
+    if (_dealsLoading?.uid === uid) { await _dealsLoading.promise; paint(); return; }
+    const promise = (async () => {
+      // The whole view in ONE call to the squadDeal function (`list`: the deals,
+      // the member's claim on each, the links their XP opens — the same scope as
+      // the rules). An HTTP call does not queue behind the account's Firestore
+      // listeners, which on a switch held the ~45 reads below for 10-40 s.
+      try {
+        const user = fbAuth(uid).currentUser;
+        const [res, coins] = await Promise.all([
+          fetch(SQUAD_DEAL_URL, { method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${await user.getIdToken()}` },
+            body: JSON.stringify({ action: "list" }) }).then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP_${r.status}`))),
+          _tigerCoins(uid, "status").catch(() => null),   // no balance → no TigerCoins bar
+        ]);
+        const cc = res.country;
+        Object.assign(_deals, { uid, at: Date.now(), docs: res.deals || [], xp: Number(res.xp) || 0,
+          country: /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null, coins: coins ? _coinsOf(coins) : null });
+        _paintDealsBadge(_envCount(_deals.coins));
+        _dealsByUid.set(uid, { ..._deals });   // instant on the way back to this account
+        return;
+      } catch (_) { /* the function unreachable: read Firestore directly, as before */ }
+      try {
+        const db = fbDb(uid);
+        const [prof, snap, coins] = await Promise.all([
+          db.collection("userProfiles").doc(uid).get().catch(() => null),
+          db.collection("squadDeals").where("status", "in", ["active", "archived"]).get(),
+          _tigerCoins(uid, "status").catch(() => null),   // no balance → no TigerCoins bar
+        ]);
+        const sq = prof?.get?.("tigerSquad") || {}, cc = sq.country, xp = Number(sq.xp) || 0;
+        const country = /^[A-Z]{2}$/.test(cc || "") ? cc : state.squadCountry || null;
+        // Paint the deals as soon as the list is in (under a second), the claim and
+        // the link the account had last time kept meanwhile; the per-deal reads
+        // below (the slow part) then fill them in.
+        const before = new Map((_deals.uid === uid ? _deals.docs : []).map(x => [x.id, x]));
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data(), claim: before.get(d.id)?.claim || null, secret: before.get(d.id)?.secret || null }));
+        Object.assign(_deals, { uid, at: 0, docs, xp, country, coins: coins ? _coinsOf(coins) : null });
+        _paintDealsBadge(_envCount(_deals.coins));
+        if (state.activeAccountId === uid) paint();
+        await Promise.all(snap.docs.map(async (d, i) => {
+          // Own claim always (accepted deals stay in the history); the link only
+          // when the XP reaches minXp (the rules refuse it below).
+          const [claim, sec] = await Promise.all([d.ref.collection("claims").doc(uid).get(),
+            (docs[i].minXp || 0) <= xp ? d.ref.collection("secret").doc("main").get() : Promise.resolve(null)].map(p => p.catch(() => null)));
+          docs[i].claim = claim?.data() || null;
+          docs[i].secret = sec?.data?.() || null;
+        }));
+        if (_deals.uid === uid) _deals.at = Date.now();
+      } catch (_) {
+        if (_deals.uid !== uid || !_deals.docs.length) Object.assign(_deals, { uid, at: Date.now(), docs: [], xp: 0, coins: null, country: state.squadCountry || null });
+      }
+      if (_deals.uid === uid) _dealsByUid.set(uid, { ..._deals });   // instant on the way back to this account
+    })();
+    _dealsLoading = { uid, promise };
+    try { await promise; } finally { if (_dealsLoading?.promise === promise) _dealsLoading = null; }
+    if (state.activeAccountId === uid) paint();
   }
   // Community pulse for the Rankings view: the public totals the TigerHub page
   // reads (publicStats/community, recomputed by the communityStats function
@@ -8240,9 +8301,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
     _closeAllSideCards();   // unified: never carry an open spool/group card across views
     _clearSearchFilters();
-    // The Deals cache (coins, envelopes) belongs to the previous account.
-    Object.assign(_deals, { uid: null, at: 0, docs: [], xp: 0, coins: null });
-    _paintDealsBadge(0); closePullStages();
+    // The Deals on screen (deals, coins, envelopes) belong to the previous account.
+    // The next account's last Deals, when this session already loaded them (still
+    // refreshed: `at` 0), else nothing.
+    const _seen = _dealsByUid.get(id);
+    Object.assign(_deals, _seen ? { ..._seen, at: 0 } : { uid: null, at: 0, docs: [], xp: 0, coins: null });
+    _paintDealsBadge(_envCount(_deals.coins)); closePullStages();
     // Check if the target account has an active named Firebase session
     let targetUser = null;
     try { targetUser = firebase.app(id).auth().currentUser; } catch (_) {}
@@ -9700,6 +9764,40 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     } catch {}
   }
 
+  // CDN photos are versioned (`&v=`): once a product's photo is replaced, the
+  // older file is never asked for again, yet the map and the disk kept every
+  // version and every rendition ever fetched (measured: 1 061 entries, 93 MB, for
+  // 630 products). Once per session, after the warm-up, keep only the NEWEST
+  // version of each product × rendition, then let main delete every file the map
+  // no longer points at (`img:prune`). It is a cache: anything dropped by
+  // mistake is fetched again.
+  let _imgCacheTidied = false;
+  function _imgCdnKey(url) {
+    const m = /^https?:\/\/cdn\.tigertag\.io\/img\?(.*)$/i.exec(url || "");
+    if (!m) return null;
+    const q = new URLSearchParams(m[1]);
+    return { key: `${q.get("id")}|${q.get("size") || ""}`, v: Number(q.get("v")) || 0 };
+  }
+  async function _imgCacheTidy() {
+    if (_imgCacheTidied || !window.electronAPI?.imgPrune) return;
+    _imgCacheTidied = true;
+    const newest = new Map();                       // "id|size" → { v, url }
+    for (const url of state.imgCache.keys()) {
+      const k = _imgCdnKey(url);
+      if (!k) continue;
+      const cur = newest.get(k.key);
+      if (!cur || k.v > cur.v) newest.set(k.key, { v: k.v, url });
+    }
+    for (const url of [...state.imgCache.keys()]) {
+      const k = _imgCdnKey(url);
+      if (k && newest.get(k.key).url !== url) state.imgCache.delete(url);
+    }
+    saveImgMap();
+    const keep = [...state.imgCache.values()].filter(Boolean);
+    const res = await window.electronAPI.imgPrune(keep).catch(() => null);
+    if (res?.removed) console.log(`[img-cache] removed ${res.removed} stale file(s), ${Math.round(res.bytes / 1e6)} MB`);
+  }
+
   // Warm the on-disk image cache for any URL we don't already know. Already-
   // known URLs (hydrated from the persisted map) are skipped → no redundant
   // network at boot; the local file is already on disk and immutable for the
@@ -9707,22 +9805,26 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // caller can repaint the delta). NEVER call this on the first-paint path.
   async function preCacheImages(rows) {
     if (!window.electronAPI?.imgGet) return false;
-    const urls = [...new Set(rows.map(r => r.imgUrl).filter(Boolean))];
+    // The GRID's rendition (GRID_CARD_IMG) is what gets warmed: the grid is the
+    // view that paints every product at once, so that is where a local file pays.
+    // It used to be the raw url (`large`, 512 px) for every view; a grid of 512 px
+    // bitmaps cost four times the decode memory of `medium` and helped flood the
+    // compositor's tile budget. Every other view asks for its own size through
+    // resolvedImg(cdnImg(url, size)) and is served by Chromium's HTTP cache (the
+    // CDN answers immutable, max-age 1 y), so a detail panel pays its `large` once
+    // per product, not once per opening. A non-CDN url is not rewritten by
+    // cdnImg, so it is warmed as is.
+    const urls = [...new Set(rows.map(r => r.imgUrl && cdnImg(r.imgUrl, GRID_CARD_IMG)).filter(Boolean))];
     let changed = false;
     await Promise.all(urls.map(async url => {
       if (!state.imgCache.has(url)) {
-        // Deliberately the RAW url — so `large`, the endpoint's default. It is
-        // tempting to warm a smaller rung, but the cache holds ONE rendition per
-        // product and the detail panel reads it too: warming `medium` would save
-        // 23 kB once and then cost 33 kB from the network every time a product's
-        // panel is opened. Fetched once, ever, and free for every view
-        // afterwards is the lowest TOTAL egress, which is what the bill counts.
         const local = await window.electronAPI.imgGet(url).catch(() => null);
         state.imgCache.set(url, local); // null = lien mort sans cache
         if (local) changed = true;
       }
     }));
     if (changed) saveImgMap();
+    _imgCacheTidy();   // once per session, after every write of the warm-up
     return changed;
   }
 
@@ -9888,8 +9990,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
      `_cdnSizeFor` rounds UP to the first rendition that covers the slot at this
      screen's pixel density: an oversized image is invisible, an undersized one
-     is visibly soft. A grid card measures 163 CSS px — 326 device px at 2x — so
-     it still legitimately asks for `large`; the saving is on the thumbnails,
+     is visibly soft. A grid card is the one exception (GRID_CARD_IMG): it
+     measures ~150-163 CSS px, 300-326 device px at 2x, which would round up to
+     `large`, but a grid paints dozens of them at once and a 512 px bitmap decodes
+     to 1 MB against 256 kB for `medium`. The 1.2x upscale is not visible on a
+     photo that size; the decoded-bitmap memory was (with the overlays, it blew
+     the compositor's tile budget and the grid flickered). The rest of the saving
+     is on the thumbnails,
      which is where the waste always was.
 
      Only cdn.tigertag.io/img links are rewritten. A user's own uploaded photo is
@@ -9897,9 +10004,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      is returned untouched, as is a URL that already carries a size. */
   const CDN_SIZES = [[16, "icon"], [32, "thumb"], [64, "small"], [128, "compact"],
                      [256, "medium"], [512, "large"], [1024, "master"]];
+  const GRID_CARD_IMG = "medium";   // fixed rung for grid cards — see the note above
+  // A rendition up to 10 % smaller than the slot still counts as covering it:
+  // that much upscale is invisible, and without the margin a 257 px side card
+  // asked for the 512 px rung for want of one pixel.
   function _cdnSizeFor(cssPx) {
     const need = (cssPx || 0) * (window.devicePixelRatio || 1);
-    return (CDN_SIZES.find(([px]) => need <= px) || CDN_SIZES[CDN_SIZES.length - 1])[1];
+    return (CDN_SIZES.find(([px]) => need <= px * 1.1) || CDN_SIZES[CDN_SIZES.length - 1])[1];
+  }
+  // A side card's photo fills the card's width, and the card is resizable — so
+  // it asks for the rung that covers the photo as it is now: the photo already
+  // on screen when the card re-renders, else the card's inner width (its padding
+  // is not photo), else 300 px when nothing has been laid out yet.
+  function _panelImg(url, panelId) {
+    if (!url) return null;
+    const box = $(panelId);
+    let w = box?.querySelector(".panel-img")?.getBoundingClientRect().width || 0;
+    if (!w && box?.clientWidth) {
+      const cs = getComputedStyle(box);
+      w = box.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    }
+    return resolvedImg(cdnImg(url, w || 300));
   }
   const _CDN_IMG_RE = /^https?:\/\/cdn\.tigertag\.io\/img\b/i;
   // `sizeOrPx` is a slot width in CSS px (the rung is derived from it and this
@@ -9963,7 +10088,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return `<span class="tag-diy${extraClass ? " " + extraClass : ""}">TigerTag</span>`;
   }
   function thumbHTML(row, size = 28, { badges = true, backup = false } = {}) {
-    const src = row.imgUrl ? cdnImg(resolvedImg(row.imgUrl), size) : null;
+    const src = row.imgUrl ? resolvedImg(cdnImg(row.imgUrl, size)) : null;
     // Group header thumbs pass badges:false — a group line represents many
     // spools, so per-spool overlays (twin "linked", TD, pending-chip) are
     // meaningless there.
@@ -9974,11 +10099,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const tdBadge = badges && row.td != null ? `<span class="thumb-td-badge">TD ${row.td}</span>` : "";
     const chipBadge = badges && row.needUpdateAt ? `<span class="chip-badge thumb-chip-badge" title="${t("chipPendingHint")}"><span class="icon icon-refresh icon-9"></span></span>` : "";
     // If `src` is a local /img-cache file that 404s (cache purged since the
-    // map was persisted), fall back ONCE to the remote URL — which also
-    // re-warms the disk cache for next time. No fallback when src already IS
-    // the remote URL (avoids an error loop).
-    const fb = (src && row.imgUrl && src !== row.imgUrl)
-      ? ` data-remote="${esc(row.imgUrl)}" onerror="if(this.dataset.remote){this.src=this.dataset.remote;this.removeAttribute('data-remote')}"`
+    // map was persisted), fall back ONCE to the remote rendition of the same
+    // size. No fallback when src already IS that URL (avoids an error loop).
+    const remote = row.imgUrl ? cdnImg(row.imgUrl, size) : null;
+    const fb = (src && remote && src !== remote)
+      ? ` data-remote="${esc(remote)}" onerror="if(this.dataset.remote){this.src=this.dataset.remote;this.removeAttribute('data-remote')}"`
       : "";
     const inner = src
       ? `<img class="thumb" src="${esc(src)}" width="${size}" height="${size}" loading="lazy"${fb} />`
@@ -9986,7 +10111,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const shopBadge = badges ? _productBadgesHTML(row, { compact: true }) : "";
     // --spool-bg: the spool colour, painted round the photo as a frame (CSS).
     // data-zoom: the sharper rendition the hover preview shows (_wireThumbZoom).
-    const zoom = row.imgUrl ? ` data-zoom="${esc(cdnImg(resolvedImg(row.imgUrl), THUMB_ZOOM_PX))}"` : "";
+    const zoom = row.imgUrl ? ` data-zoom="${esc(resolvedImg(cdnImg(row.imgUrl, THUMB_ZOOM_PX)))}"` : "";
     return `<span class="thumb-wrap" style="--spool-bg:${colorBg(row)}"${zoom}>${inner}${overlay}${tdBadge}${chipBadge}${shopBadge}</span>`;
   }
 
@@ -11348,7 +11473,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // is NOT an RFID chip) and drop the weight bar; `footerHTML` replaces the weight
   // slot (used to show the product price instead of a gram count).
   function _gridCardInnerHTML(r, opts = {}) {
-    const _resolvedCard = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), 163) : null;
+    const _resolvedCard = r.imgUrl ? resolvedImg(cdnImg(r.imgUrl, GRID_CARD_IMG)) : null;
     // Colour-square base layer (logo watermark included), product image stacked
     // on top so a broken/slow image gracefully falls back to the colour square.
     const imgHtml = `<div class="card-img-color-placeholder" style="background:${colorBg(r)}"><img src="${logoSrc(colorBg(r))}" />${
@@ -11417,7 +11542,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const logoImg = placeholder.querySelector(":scope > img:not(.card-img--overlay)");
       if (logoImg && logoImg.getAttribute("src") !== newLogo) logoImg.setAttribute("src", newLogo);
       let overlay = placeholder.querySelector(".card-img--overlay");
-      const _resolved = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), 163) : null;
+      const _resolved = r.imgUrl ? resolvedImg(cdnImg(r.imgUrl, GRID_CARD_IMG)) : null;
       if (_resolved) {
         if (!overlay) {
           overlay = document.createElement("img");
@@ -14509,7 +14634,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (api.sku)                           update.sku                = api.sku;
       if (api.barcode)                       update.barcode            = api.barcode;
       if (api.series)                        update.series             = api.series;
-      if (_isRealProductImg(api.images?.main_src)) update.url_img         = api.images.main_src;
+      // A photo the user set themselves (`url_img_user`) is never replaced by the catalogue's.
+      if (_isRealProductImg(api.images?.main_src) && !rawDoc.url_img_user) update.url_img = api.images.main_src;
       if (api.filament?.color)               update.online_color       = api.filament.color;
       if (api.filament?.color_info?.colors?.length)
                                              update.online_color_list  = api.filament.color_info.colors;
@@ -14905,6 +15031,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
    * that is decided later by `_touchesChipData` — a chipless spool can never ask
    * for a re-burn, so its refresh is always silent.
    */
+  // `updated_at` arrives as an ISO string from `product/get` (an epoch number from
+  // older payloads); Number() on the string is NaN, which read as "never changed".
+  function _catalogTime(v) {
+    if (v == null || v === "") return NaN;
+    return typeof v === "number" ? v : Date.parse(v);
+  }
+
   function _catalogStaleRows() {
     // A friend's shelf is READ-ONLY, always — so we do not even look. Their spools
     // being current or not is their business, not this account's, and scanning them
@@ -14920,7 +15053,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       if (!_hasRealProductId(pid)) return false;          // nothing to reconcile against
       const prod = byId.get(pid);
       if (!prod) return false;                            // withdrawn from the catalogue → leave alone
-      const changed = Number(prod.updated_at);
+      // A new photo is visible in the list itself: `get/all` carries `img_src` but
+      // NOT `updated_at`, so a re-shot product would otherwise never look stale. A
+      // spool showing the user's own photo is not the catalogue's to change.
+      if (!r.userImg && _isRealProductImg(prod.img_src) && r.raw?.url_img !== prod.img_src) return true;
+      const changed = _catalogTime(prod.updated_at);
       if (!Number.isFinite(changed)) return false;        // never changed since creation
       const synced = Number(r.raw?.catalogSyncedAt);
       // No stamp means the spool predates this mechanism, and we genuinely do not
@@ -15384,7 +15521,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       const r = _catViewAsRow(it);
       return `
         <button type="button" class="cpk-row" data-cpk-id="${esc(String(it.id))}">
-          ${_catThumbHTML(r, 44)}
+          ${_catThumbHTML(r, 66, { fill: true })}
           <span class="cpk-row-txt">
             <b>${esc(String(it._name || it.title || "—"))}</b>
             <small>${esc([it.brand, it.material, it.measure].filter(Boolean).join(" · "))}</small>
@@ -15729,12 +15866,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // blank while its photo loads and broken if the CDN link is dead; here the
   // right colour is on screen immediately and simply stays if the photo never
   // arrives (the <img> removes itself on error).
-  function _catThumbHTML(r, size = 50) {
+  // `fill`: the thumb takes its size from CSS (the catalogue pick list's column
+  // flush with the row's left edge); `size` then only picks the rendition.
+  function _catThumbHTML(r, size = 50, { fill = false } = {}) {
     const bg  = colorBg(r);
-    const src = r.imgUrl ? cdnImg(resolvedImg(r.imgUrl), size) : null;
+    const src = r.imgUrl ? resolvedImg(cdnImg(r.imgUrl, size)) : null;
     // data-zoom: the hover preview, as on the inventory table (_showThumbZoom).
-    const zoom = r.imgUrl ? ` data-zoom="${esc(cdnImg(resolvedImg(r.imgUrl), THUMB_ZOOM_PX))}"` : "";
-    return `<span class="cv-thumb" style="width:${size}px;height:${size}px;background:${bg};--spool-bg:${bg}"${zoom}>`
+    const zoom = r.imgUrl ? ` data-zoom="${esc(resolvedImg(cdnImg(r.imgUrl, THUMB_ZOOM_PX)))}"` : "";
+    const dims = fill ? "" : `width:${size}px;height:${size}px;`;
+    return `<span class="cv-thumb${fill ? " cv-thumb--fill" : ""}" style="${dims}background:${bg};--spool-bg:${bg}"${zoom}>`
          + `<img class="cv-thumb-logo" src="${logoSrc(bg)}" alt="" />`
          + (src ? `<img class="cv-thumb-img" data-img-src="${esc(src)}" alt="" />` : "")
          + `</span>`;
@@ -16287,7 +16427,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // A small illustration (product photo, else colour swatch) for a product record.
   function _productThumbHTML(p) {
     const l = p.label || {};
-    const img = cdnImg(resolvedImg(l.imgUrl), 64);
+    const img = resolvedImg(cdnImg(l.imgUrl, 64));
     // The product's real swatch (bi / tri-colour included) when its material
     // snapshot is there — the same colorBg() as every other spool surface —
     // else the label's single colour.
@@ -18622,6 +18762,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
    *   product.updated_at missing              → up to date
    *   product.updated_at <= catalogSyncedAt   → up to date
    *   product.updated_at >  catalogSyncedAt   → stale, refresh it
+   *
+   * `updated_at` is only on `product/get`, not in the `get/all` list the scan reads,
+   * so a changed photo is caught first by comparing the list's `img_src` with the
+   * spool's `url_img` (skipped when the spool shows the user's own photo).
    */
   function _catalogStamp() { return Date.now(); }   // hoisted: callers sit above this block
 
@@ -18983,7 +19127,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _ttagPrevThumb(row) {
     // Scheme-check the image URL even for the preview — the record is from an
     // untrusted file, and a bad-scheme url_img must never reach an <img src>.
-    const img = cdnImg(resolvedImg(_ttagCleanUrl(row.imgUrl) || ""), 48);
+    const img = resolvedImg(cdnImg(_ttagCleanUrl(row.imgUrl) || "", 48));
     if (img) return `<img class="ttag-prev-thumb" src="${esc(img)}" alt="" onerror="this.style.display='none'">`;
     const cols = [row.colorHex, row.colorHex2, row.colorHex3].filter(Boolean);
     const bg = cols.length > 1
@@ -20918,10 +21062,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // What says WHAT the product is — shared by the merged owner card and the
   // read-only friend card: illustration, "Brand · Series · Material", colour name,
   // and the aspect / refill / recycled / filled / weight chips.
-  function _productHeroParts(r, p) {
+  function _productHeroParts(r, p, panelId = "productCardBody") {
     // Illustration — real photo, else the colour placeholder with the RFID logo.
     const imgUrl = r.imgUrl || p.label?.imgUrl || "";
-    const _img = imgUrl ? resolvedImg(imgUrl) : null;
+    const _img = imgUrl ? _panelImg(imgUrl, panelId) : null;
     const onerr = `this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`;
     // Refill pictogram top-right, as on the spool's detail panel — known once the
     // product detail (`product/get` → filament.refill → info1) has arrived.
@@ -21453,7 +21597,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const eanVal  = eanAuto || link.ean || (r.barcode || "");
     const p = _reorderProductFor(r);
     const d = _productDisplayRow(p);
-    const { imgSection, row1Parts, name2, badgeHtml, weightChip } = _productHeroParts(d, p);
+    const { imgSection, row1Parts, name2, badgeHtml, weightChip } = _productHeroParts(d, p, "reorderPanelBody");
     _subscribeImportedProfile(link.importedFrom?.uid || null);   // live pseudo/avatar, friend or not
     const fromHTML = _importedFromHTML(link);
     // ── Layout (founder mockup): hero + two figures, the commerce pair, then four
@@ -22315,7 +22459,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         </button>
       </div>` : "";
     let imgSection = "";
-    const _resolvedPanel = r.imgUrl ? resolvedImg(r.imgUrl) : null;
+    const _resolvedPanel = r.imgUrl ? _panelImg(r.imgUrl, "detailPanel") : null;
     const onerrorScript = canEditImg
       ? `this.closest('.panel-img-wrap').classList.add('img-broken');this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`
       : `this.outerHTML='<div class=\\'panel-img-color-placeholder\\'style=\\'background:${colorBg(r)}\\'><img src=\\'${logoSrc(colorBg(r))}\\'class=\\'panel-img-logo\\'></div>'`;
@@ -34093,7 +34237,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // spools with or without an image.
   function slotPhotoInnerHTML(row) {
     const base = `<div class="rp-fill rp-fill--full" style="background:${colorBg(row)}"></div>`;
-    const src = row.imgUrl ? cdnImg(resolvedImg(row.imgUrl), 128) : null;
+    const src = row.imgUrl ? resolvedImg(cdnImg(row.imgUrl, 128)) : null;
     if (!src) return base;
     const fb = (row.imgUrl && src !== row.imgUrl)
       ? ` data-remote="${esc(row.imgUrl)}" onerror="if(this.dataset.remote){this.src=this.dataset.remote;this.removeAttribute('data-remote')}"`

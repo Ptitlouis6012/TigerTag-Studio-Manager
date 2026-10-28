@@ -30,7 +30,49 @@ let choiceKind = null;       // kind of the open chooser ("foreign" | "blank" | 
 const UID_RE = /^[0-9A-F]{8,20}$/;
 const norm = u => String(u || "").replace(/[^0-9a-f]/gi, "").toUpperCase();
 
-export function initLinkedChips(c) { ctx = c; }
+export function initLinkedChips(c) { ctx = c; wireBrandColumn(); }
+
+// The chooser's decorative brand column (.lc-brands, linked.css): a mouse that
+// only brushes a logo still plays its whole effect — the logo is lit (.is-lit)
+// on enter and goes out LIT_MS after the mouse has left; the column is awake
+// (.is-awake, the tiger grows) the same way. CSS :hover alone dropped the effect
+// the instant a fast sweep moved on.
+const LIT_MS = 900;
+function wireBrandColumn() {
+  const col = document.querySelector("#chipChoicePanel .lc-brands");
+  if (!col) return;
+  const later = (el, cls) => { clearTimeout(el._litT); el._litT = setTimeout(() => el.classList.remove(cls), LIT_MS); };
+  col.addEventListener("pointerover", e => {
+    const b = e.target.closest(".lc-brand");
+    if (b) { clearTimeout(b._litT); b.classList.add("is-lit"); }
+  });
+  col.addEventListener("pointerout", e => {
+    const b = e.target.closest(".lc-brand");
+    if (b && !b.contains(e.relatedTarget)) later(b, "is-lit");
+  });
+  col.addEventListener("pointerenter", () => { clearTimeout(col._litT); col.classList.add("is-awake"); });
+  col.addEventListener("pointerleave", () => later(col, "is-awake"));
+  // Garland: each time the card opens, the makers light up once, one after the
+  // other top to bottom, with the very hover effect (.is-lit for LIT_MS) — one
+  // pass, then it rests until the card is opened again. Skipped with reduced
+  // motion; a logo the mouse is on is simply left lit.
+  const makers = [...col.querySelectorAll('.lc-brand:not([data-brand="tigertag"])')];
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  let k = -1, wasOpen = false;   // k: next logo of the running pass, -1 = no pass
+  const step = () => {
+    const open = !!document.getElementById("chipChoicePanel")?.classList.contains("open");
+    if (open && !wasOpen && !reduced.matches) k = 0;   // just opened: start a pass
+    if (!open) k = -1;
+    wasOpen = open;
+    if (k >= 0) {
+      const b = makers[k];
+      if (!b.classList.contains("is-lit")) { b.classList.add("is-lit"); later(b, "is-lit"); }
+      k = k + 1 < makers.length ? k + 1 : -1;
+    }
+    setTimeout(step, k >= 0 ? 1100 : 400);   // 1.1 s between logos; idle, a cheap check
+  };
+  step();
+}
 
 export function linkedChipsSignIn(uid) {
   linkedChipsSignOut();

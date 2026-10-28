@@ -504,6 +504,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // ── Image cache (main-process side) ─────────────────────────────────────
   imgGet: (url) => ipcRenderer.invoke('img:get', url),
+  imgPrune: (keep) => ipcRenderer.invoke('img:prune', keep),
 
   // ── Local DB (main-process side) ─────────────────────────────────────────
   db: {

@@ -278,7 +278,7 @@ function nudge(btn, text) {
 
 // Press and hold `btn` for `ms` to fire `done` (a click alone does nothing):
 // --hold runs 0 → 1, a rising tone follows it.
-function holdToFire(btn, ms, done, hint = null) {
+export function holdToFire(btn, ms, done, hint = null) {
   let t0 = 0, raf = 0, stopTone = null;
   const stop = () => {
     // Let go too soon (a click): the button shakes "no" and says to hold.

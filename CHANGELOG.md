@@ -5,6 +5,31 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.46.2 — 2026-10-28
+
+### Added
+- Brand column in the new-chip card (`.lc-brands` between the rail and the pane, `renderer/rfid_protocol/linked/linked.css`; card 612 → 664 px), decorative and `aria-hidden`: the app icon's tiger on top, then Bambu Lab, Creality, Anycubic, Snapmaker, Elegoo, Qidi, Prusa, FlashForge, Klipper, OctoPrint, Fluidd, Mainsail as monochrome masks. A periodic sheen; a logo brushed by the mouse lights up in its brand colour, grows and glows, held 900 ms after the pointer leaves (`.is-lit`, `wireBrandColumn` in `renderer/rfid_protocol/linked/index.js`); one top-to-bottom garland of that effect each time the card opens; the tiger grows slowly while the pointer is in the column (`.is-awake`). Growth is a negative inset on the masked element (a transform blurred the mask). Reduced motion: colour only. New `assets/svg/icons/logo_qidi.svg` (Qidi's cube over its wordmark, from QIDIStudio's vector paths) and `logo_mainsail.svg`.
+- `envGive` easter egg in the Friends panel's "Give an envelope" window (`tapEgg`, glints while not found; backend `functions/tigerCoins.js` `EGGS`). `_coinsCtx` carries `easterEgg` / `eggFound`. New rule `.agents/rules/easter-eggs.md`.
+- squadDeal `list` action (backend `functions/squadDeals.js` `listDeals`): the Deals view in one call — active + archived deals, the caller's claim on each, the links their XP opens, same scope as `firestore.rules`, Timestamps as epoch ms.
+
+### Changed
+- Deals view loads through squadDeal `list` (one HTTP call) instead of ~45 Firestore reads, which queue behind every listener an account starts on a switch; the direct reads stay as the fallback. One load per account at a time (`_dealsLoading`), each account's last Deals kept for the session (`_dealsByUid`), and a data signature guard (`host._sqdSig`) so the view is rebuilt only when what it shows changes (countdowns tick in place; an expiry forces a repaint).
+- Catalogue sync reads the RFID-Guide snapshot `database/id_catalog.json` from raw.githubusercontent.com (~1 s, 1.6 MB gzip), kept on disk with its ETag (`userData/catalog-snapshot.json` + `.etag`) so an unchanged catalogue is a `304` (`_fetchCatalogSnapshot`, `main.js`). `product/get/all` is the fallback, its pages with 60 s and two retries (`_fetchCatalogPage`).
+- Product images: grid cards ask the CDN for `medium` (`GRID_CARD_IMG`); every call site resolves the sized URL (`resolvedImg(cdnImg(url, size))`); the local image cache warms the grid rendition; side-card photos ask for the rung covering the photo as laid out (`_panelImg`); `_cdnSizeFor` accepts a rung up to 10 % smaller than the slot. Images are used as the CDN serves them, nothing is resized locally.
+- Image cache hygiene: once per session the map keeps the newest `&v=` of each product × rendition and main deletes unreferenced files (`_imgCacheTidy`, `img:prune`, preload `imgPrune`); `img:get`'s fetch factored into `_fetchImageBuffer` (same per-hop SSRF check).
+- "Give an envelope" window: the envelope turns toward the mouse with glints (`tilt`, `.tch-env-tilt`, `.tch-glints`); the "Give" button is the "Open ×10" button (`.tp-ten`, held 2 s via `holdToFire`, now exported from `coin-pull.js`), text only; the friends search 16 px under the title.
+- `scripts/check-theme-tokens.mjs`: prusa, qidi, klipper, octoprint, fluidd, mainsail exempt as brand colours.
+
+### Fixed
+- Account switch from the Deals view left the cards as skeletons for 10-40 s (measured 12 s Tiger Tag, 42 s OpenMaker) and rebuilt the view 3-18 times; now ~1 s on a first visit, instant on the way back, 1-2 rebuilds.
+- A product photo changed in the catalogue never reached the spools: `get/all` carries no `updated_at` and `product/get` sends it as an ISO string read as NaN. A spool whose `url_img` differs from the list's `img_src` is stale (unless it shows the user's own photo); `updated_at` parsed as ISO or epoch (`_catalogStaleRows`, `_catalogTime`).
+- Catalogue sync never completed past ~2 700 products: 19 pages of ~11 s each, a 20 s per-page abort with no retry threw the whole sync away.
+- A catalogue refresh (`_refreshApiData`) overwrote a photo the user set themselves (`url_img_user`).
+- Retina flicker ("tile memory limits exceeded"): ~40 closed overlays were `opacity: 0` full-window `backdrop-filter` surfaces still composited; closed `.modal-overlay` and `.sfe-backdrop` are now `visibility: hidden` after their fade-out. Grid cards are skipped off screen (`content-visibility: auto`).
+
+### Docs
+- `ROADMAP.md`: G7 Bambu Lab "skip objects" (#156), G8 Anycubic ACE Pro 2 drying + filament left (#157).
+
 ## v2.46.1 — 2026-10-28
 
 ### Added

@@ -1545,6 +1545,7 @@ ipcMain.handle('rfid:lookup-product', async (_evt, productId) => {
 });
 
 // ── Catalogue list — pull the WHOLE TigerTag+ product catalogue ─────────────
+// The FALLBACK source since the snapshot above: used only when GitHub fails.
 // The renderer is a browser context and this is a cross-origin POST, so it has
 // to live here (same reason as `rfid:refresh-api` / `rfid:lookup-product`).
 //
@@ -1554,11 +1555,81 @@ ipcMain.handle('rfid:lookup-product', async (_evt, productId) => {
 // endpoint is only ever hit to (re)build that local cache.
 //
 // `PAGE_CAP` is a runaway guard, not a catalogue limit: at 1000 items a page it
-// allows 100 000 products, far beyond today's ~2 700, and only exists so a
+// allows 100 000 products, far beyond today's ~19 000, and only exists so a
 // server-side paging bug can't spin here forever.
+//
+// Pages are fetched one after the other on purpose: the endpoint serves them one
+// at a time anyway (measured at 18 845 products: ~11 s a page alone, six in
+// parallel all answer after ~64 s), so parallel requests only add load. A page is
+// given 60 s and two retries — at 20 s with none, one slow page out of 19 threw
+// the whole sync away and the stale cache stayed in place.
 // Returns { ok: true, items, itemsTotal } | { ok: false, error }
 const XANO_PRODUCT_ALL_URL = 'https://api.tigertag.io/api:tigertag/product/get/all';
+const PAGE_TIMEOUT_MS = 60000;
+const PAGE_RETRIES = 2;
+async function _fetchCatalogPage(page, perPage) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PAGE_TIMEOUT_MS);
+  try {
+    const resp = await fetch(XANO_PRODUCT_ALL_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ per_page: perPage, page }),
+      signal: controller.signal,
+    });
+    if (!resp.ok) return { httpStatus: resp.status };
+    return await resp.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+// ── Catalogue snapshot — the primary source ─────────────────────────────────
+// The RFID-Guide repo carries the same catalogue as ONE file, re-exported by an
+// auto-sync job several times a day (measured: identical to `get/all`, 1 000 of
+// 1 000 items field for field). Served by GitHub's CDN: 1.6 MB gzip in ~0.2 s
+// against ~3.5 min for the 19 API pages, and no load on Xano at all. The last
+// copy and its ETag are kept on disk, so an unchanged catalogue costs one `304`
+// and no download. Any failure falls through to `get/all` below.
+const CATALOG_SNAPSHOT_URL = 'https://raw.githubusercontent.com/TigerTag-Project/TigerTag-RFID-Guide/refs/heads/main/database/id_catalog.json';
+async function _fetchCatalogSnapshot() {
+  const dir  = app.getPath('userData');
+  const body = path.join(dir, 'catalog-snapshot.json');
+  const meta = path.join(dir, 'catalog-snapshot.etag');
+  let etag = null;
+  try { if (fs.existsSync(body)) etag = fs.readFileSync(meta, 'utf8').trim() || null; } catch {}
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 30000);
+  try {
+    const resp = await fetch(CATALOG_SNAPSHOT_URL, {
+      headers: etag ? { 'If-None-Match': etag } : {},
+      signal: controller.signal,
+    });
+    let text;
+    if (resp.status === 304) text = fs.readFileSync(body, 'utf8');
+    else if (resp.ok) text = await resp.text();
+    else throw new Error(`HTTP ${resp.status}`);
+    const items = JSON.parse(text);
+    // Shape check before trusting it: a list of products with an id each.
+    if (!Array.isArray(items) || !items.length || items[0]?.id == null) throw new Error('bad_snapshot');
+    if (resp.status !== 304) {
+      fs.writeFileSync(body, text);
+      const tag = resp.headers.get('etag');
+      if (tag) fs.writeFileSync(meta, tag); else fs.rmSync(meta, { force: true });
+    }
+    log.info(`[catalog] snapshot ${resp.status === 304 ? 'unchanged (304)' : 'downloaded'}: ${items.length} products`);
+    return items;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 ipcMain.handle('catalog:fetch-all', async () => {
+  try {
+    const items = await _fetchCatalogSnapshot();
+    return { ok: true, items, itemsTotal: items.length };
+  } catch (e) {
+    log.warn(`[catalog] snapshot failed (${e.message}) — falling back to get/all`);
+  }
   const PAGE_CAP = 100;
   const PER_PAGE = 1000;
   try {
@@ -1566,21 +1637,17 @@ ipcMain.handle('catalog:fetch-all', async () => {
     let page = 1;
     let itemsTotal = 0;
     for (let guard = 0; guard < PAGE_CAP; guard++) {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), 20000);
       let env;
-      try {
-        const resp = await fetch(XANO_PRODUCT_ALL_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ per_page: PER_PAGE, page }),
-          signal: controller.signal,
-        });
-        if (!resp.ok) return { ok: false, error: `HTTP ${resp.status}` };
-        env = await resp.json();
-      } finally {
-        clearTimeout(timer);
+      for (let attempt = 0; ; attempt++) {
+        try {
+          env = await _fetchCatalogPage(page, PER_PAGE);
+          break;
+        } catch (e) {
+          if (attempt >= PAGE_RETRIES) throw e;
+          log.warn(`[catalog] page ${page} failed (${e.message}) — retry ${attempt + 1}/${PAGE_RETRIES}`);
+        }
       }
+      if (env.httpStatus) return { ok: false, error: `HTTP ${env.httpStatus}` };
       if (!env || !Array.isArray(env.items)) return { ok: false, error: 'bad_envelope' };
       items.push(...env.items);
       if (Number.isFinite(env.itemsTotal)) itemsTotal = env.itemsTotal;
@@ -3553,6 +3620,31 @@ async function _imgUrlIsFetchable(url) {
   return true;
 }
 
+// Fetch an image's bytes, null when it cannot be had. Redirects are followed by
+// hand so every hop is validated: letting fetch follow them would re-open the
+// hole from the other side — a public URL that 302s to http://127.0.0.1 passes
+// the first check and lands internally anyway. Refusing redirects outright would
+// be safe too, but silently breaks the CDNs and short links real image URLs use.
+async function _fetchImageBuffer(url, timeoutMs = 8000) {
+  const ac  = new AbortController();
+  const ctl = setTimeout(() => ac.abort(), timeoutMs);   // no timeout = a slow host pins the caller
+  try {
+    let resp = null, next = String(url);
+    for (let hop = 0; hop < 4; hop++) {
+      if (!(await _imgUrlIsFetchable(next))) return null;
+      resp = await fetch(next, { signal: ac.signal, redirect: 'manual' });
+      if (resp.status < 300 || resp.status > 399) break;
+      const loc = resp.headers.get('location');
+      if (!loc) return null;
+      try { next = new URL(loc, next).toString(); } catch { return null; }
+      resp = null;                                    // not a final response — keep going
+    }
+    return resp && resp.ok ? Buffer.from(await resp.arrayBuffer()) : null;
+  } finally {
+    clearTimeout(ctl);
+  }
+}
+
 ipcMain.handle('img:get', async (_, url) => {
   if (!url || url === '--') return null;
   const hash     = crypto.createHash('md5').update(url).digest('hex');
@@ -3560,27 +3652,9 @@ ipcMain.handle('img:get', async (_, url) => {
   const filename = `${hash}.${ext}`;
   const file     = path.join(imgCacheDir, filename);
   const httpUrl  = `/img-cache/${filename}`;
-  const ac       = new AbortController();
   try {
-    const ctl = setTimeout(() => ac.abort(), 8000);   // no timeout = a slow host pins this handler
-    // Follow redirects by hand so every hop is validated. Letting fetch follow
-    // them would re-open the hole from the other side: a public URL that 302s to
-    // http://127.0.0.1 passes the first check and lands internally anyway. Refusing
-    // redirects outright would be safe too, but silently breaks the CDNs and short
-    // links that real image URLs use — so re-check instead of refuse.
-    let resp = null, next = String(url);
-    for (let hop = 0; hop < 4; hop++) {
-      if (!(await _imgUrlIsFetchable(next))) { resp = null; break; }
-      resp = await fetch(next, { signal: ac.signal, redirect: 'manual' });
-      if (resp.status < 300 || resp.status > 399) break;
-      const loc = resp.headers.get('location');
-      if (!loc) break;
-      try { next = new URL(loc, next).toString(); } catch { resp = null; break; }
-      resp = null;                                    // not a final response — keep going
-    }
-    clearTimeout(ctl);
-    if (resp && resp.ok) {
-      const buf = Buffer.from(await resp.arrayBuffer());
+    const buf = await _fetchImageBuffer(url);
+    if (buf) {
       fs.writeFileSync(file, buf);
       return httpUrl;
     }
@@ -3590,6 +3664,26 @@ ipcMain.handle('img:get', async (_, url) => {
     if (fs.existsSync(file)) return httpUrl;
     return null;
   }
+});
+
+// Delete every cached image the renderer's map no longer points at (`keep` is
+// its list of `/img-cache/<file>` values). Only names this cache writes
+// (md5.ext) are ever touched.
+ipcMain.handle('img:prune', async (_, keep) => {
+  const keepSet = new Set((Array.isArray(keep) ? keep : []).map(u => String(u).replace(/^\/img-cache\//, '')));
+  if (!keepSet.size) return { removed: 0, bytes: 0 };   // an empty map never empties the disk
+  let removed = 0, bytes = 0;
+  for (const f of fs.readdirSync(imgCacheDir)) {
+    if (!/^[a-f0-9]{32}\.[a-z0-9]+$/i.test(f) || keepSet.has(f)) continue;
+    try {
+      const file = path.join(imgCacheDir, f);
+      bytes += fs.statSync(file).size;
+      fs.unlinkSync(file);
+      removed++;
+    } catch {}
+  }
+  if (removed) log.info(`[img-cache] pruned ${removed} file(s), ${Math.round(bytes / 1e6)} MB`);
+  return { removed, bytes };
 });
 
 // ── Network — list active LAN /24 subnets for printer scanning. ──────────

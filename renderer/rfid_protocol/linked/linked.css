@@ -2,11 +2,85 @@
    new-chip side card (#chipChoicePanel) and the detail panel's section. */
 /* One card: the rail of square choices (212 px) + the pane (400 px) that holds
    the chosen view. z 101: above Add product's click-outside overlay (z 100). */
-#chipChoicePanel { width: 612px; max-width: 98vw; z-index: 101; display: flex; flex-direction: row; }
+#chipChoicePanel { width: 664px; max-width: 98vw; z-index: 101; display: flex; flex-direction: row; }
 .lc-rail { flex: 0 0 212px; min-width: 0; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
 /* clip, not hidden: a hidden overflow is a scroll box, and focusing the incoming
    view's search field scrolled it into place at once, killing the slide. */
 .lc-pane { flex: 1; min-width: 0; position: relative; overflow: clip; }
+/* Decorative column between the rail and the pane: TigerTag first, then the
+   makers whose MIFARE 1K spool chips link to a spool, then the other printers
+   and hosts Studio talks to (Klipper with its Fluidd / Mainsail front ends). Monochrome masks (theme colour), TigerTag at full
+   strength. */
+.lc-brands { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 22px;
+  padding: 22px 0 16px;   /* TigerTag level with the card's title */ border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+.lc-brand { position: relative; width: 28px; aspect-ratio: 1; flex: none; cursor: default; transition: filter .3s; }
+/* The logo itself: a mask filled with the theme colour, and the brand's own
+   colour (--brand) when lit (.is-lit, linked/index.js: hovered and held LIT_MS
+   after, or by the idle garland — the same effect). The glow sits on the wrapper: a filter on
+   the masked element would be cut away by its own mask. */
+/* Growing = a negative inset on the masked <i>, never a transform: a scaled
+   mask is rasterised at its rest size and blurs; a bigger box is re-drawn sharp.
+   The wrapper keeps its size, so the column does not shift. */
+.lc-brand > i { position: absolute; inset: 0; opacity: .38; background-color: var(--text);
+  /* A sheen sweeps left to right through the logo now and then, one logo after
+     the other down the column (--i). */
+  background-image: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, .95) 50%, transparent 60%);
+  background-size: 250% 100%; background-repeat: no-repeat; background-position: 220% 0;
+  transition: opacity .3s, background-color .3s, inset .35s cubic-bezier(.3, 1.6, .5, 1);
+  -webkit-mask: var(--logo) center / contain no-repeat; mask: var(--logo) center / contain no-repeat;
+  animation: lc-brand-sheen 7s ease-in-out infinite; animation-delay: calc(var(--i, 0) * .14s); }
+@keyframes lc-brand-sheen { 0%, 70% { background-position: 220% 0; } 82%, 100% { background-position: -120% 0; } }
+.lc-brand.is-lit > i { inset: -11%; }
+.lc-brand.is-lit { filter: drop-shadow(0 0 4px var(--brand, var(--primary))) drop-shadow(0 0 10px color-mix(in srgb, var(--brand, var(--primary)) 55%, transparent)); }
+.lc-brand.is-lit > i { opacity: 1; background-color: var(--brand, var(--primary));
+  background-image: linear-gradient(110deg, transparent 40%, rgba(255, 255, 255, .7) 50%, transparent 60%);
+  animation: lc-brand-shine .8s ease-out; }
+@keyframes lc-brand-shine { from { background-position: 220% 0; } to { background-position: -120% 0; } }
+/* The mouse anywhere in the column (.is-awake, set by linked/index.js): the tiger on top grows, slowly, and shrinks
+   back as slowly when it leaves — the mouse often just sweeps across, so no pop.
+   It keeps its own colour: no brand colour, no glow, on the column or on itself. */
+.lc-brand.lc-brand[data-brand="tigertag"] > i { transition: opacity .3s, inset .7s cubic-bezier(.4, 0, .2, 1); animation: none; }
+.lc-brands.is-awake .lc-brand[data-brand="tigertag"] > i { inset: -10%; }
+.lc-brands .lc-brand[data-brand="tigertag"].is-lit { filter: none; }
+.lc-brands .lc-brand[data-brand="tigertag"].is-lit > i { inset: -15%; }
+.lc-brand[data-brand="tigertag"].is-lit > i { background-color: var(--text); background-image: none; animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .lc-brand > i, .lc-brand.is-lit > i { animation: none; background-image: none; }
+  .lc-brand > i, .lc-brand.lc-brand[data-brand="tigertag"] > i { transition: opacity .3s, background-color .3s; }
+}
+.lc-brand[data-brand="tigertag"]  { --logo: url('../../../assets/svg/logos/tigersystem-icon-framed-white.svg'); width: 36px; }   /* the app icon's tiger */
+.lc-brand[data-brand="tigertag"] > i { opacity: .9; }
+.lc-brand[data-brand="bambulab"]  { --logo: url('../../../assets/svg/icons/logo_bambulab.svg'); }
+.lc-brand[data-brand="creality"]  { --logo: url('../../../assets/svg/icons/logo_creality.svg'); }
+.lc-brand[data-brand="anycubic"]  { --logo: url('../../../assets/svg/icons/logo_anycubic.svg'); }
+.lc-brand[data-brand="snapmaker"] { --logo: url('../../../assets/svg/icons/logo_snapmaker.svg'); }
+.lc-brand[data-brand="elegoo"]    { --logo: url('../../../assets/svg/icons/logo_elegoo.svg'); }
+.lc-brand[data-brand="qidi"]      { --logo: url('../../../assets/svg/icons/logo_qidi.svg'); width: 34px; }
+.lc-brand[data-brand="prusa"]      { --logo: url('../../../assets/svg/icons/logo_prusa.svg'); }
+.lc-brand[data-brand="flashforge"] { --logo: url('../../../assets/svg/icons/logo_flashforge.svg'); }
+.lc-brand[data-brand="klipper"]    { --logo: url('../../printers/klipper/img/logo.svg'); }
+.lc-brand[data-brand="octoprint"]  { --logo: url('../../printers/octoprint/img/logo.svg'); }
+.lc-brand[data-brand="fluidd"]     { --logo: url('../../../assets/svg/logos/logo_fluidd.svg'); }
+.lc-brand[data-brand="mainsail"]   { --logo: url('../../../assets/svg/icons/logo_mainsail.svg'); }
+/* A short window: the column scrolls out of sight rather than squeezing the logos. */
+.lc-brands { overflow-x: visible; overflow-y: clip; }
+.lc-brand { flex: none; }
+/* Each logo lights up in its brand's colour on hover. */
+.lc-brand[data-brand="bambulab"] { --brand: #00ae42; }
+.lc-brand[data-brand="creality"] { --brand: #2ee65c; }
+.lc-brand[data-brand="anycubic"] { --brand: #00a9e0; }
+.lc-brand[data-brand="snapmaker"] { --brand: var(--text); }
+.lc-brand[data-brand="elegoo"] { --brand: #3b6cff; }
+.lc-brand[data-brand="qidi"] { --brand: #4b5cff; }
+.lc-brand[data-brand="prusa"] { --brand: #fa6831; }
+.lc-brand[data-brand="flashforge"] { --brand: var(--text); }
+.lc-brand[data-brand="klipper"] { --brand: #e5484d; }
+.lc-brand[data-brand="octoprint"] { --brand: #13c100; }
+.lc-brand[data-brand="fluidd"] { --brand: #2196f3; }
+.lc-brand[data-brand="mainsail"] { --brand: #e3242b; }
+/* TigerTag stays on top; the makers sit centred in the height left below it. */
+.lc-brand[data-brand="tigertag"] + .lc-brand { margin-top: auto; }
+.lc-brand:last-child { margin-bottom: auto; }
 /* A borrowed card fills the pane: no fixed position, slide, shadow or corners
    of its own (id selectors — each card sets these by id). */
 #chipChoicePane > #chipLinkPanel,
