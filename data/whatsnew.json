@@ -1,4 +1,154 @@
 {
+  "2.47.0": {
+    "date": "2026-10-29",
+    "items": [
+      {
+        "icon": "link",
+        "title": {
+          "en": "Bambu & Creality chips: linked, not burned",
+          "fr": "Puces Bambu & Creality : liées, pas gravées",
+          "de": "Bambu- & Creality-Chips: verknüpft, nicht gebrannt",
+          "es": "Chips Bambu y Creality: enlazados, no grabados",
+          "it": "Chip Bambu e Creality: collegati, non scritti",
+          "zh": "拓竹和创想三维芯片：关联，不烧录",
+          "pt": "Chips Bambu e Creality: vinculados, não gravados",
+          "pt-pt": "Chips Bambu e Creality: associados, não gravados",
+          "pl": "Chipy Bambu i Creality: powiązane, nie nagrywane",
+          "ru": "Чипы Bambu и Creality: привязываются, а не прошиваются",
+          "nl": "Bambu- en Creality-chips: gekoppeld, niet gebrand"
+        },
+        "body": {
+          "en": "Pop your spool's chips on the TigerPOD and add it — from the catalogue or by hand. The button turns into “Link”: spool created, chips linked, nothing written. Swap in a blank tag and it says “Burn” again.",
+          "fr": "Pose les puces de ta bobine sur le TigerPOD et ajoute-la — depuis le catalogue ou à la main. Le bouton devient « Lier » : bobine créée, puces liées, rien d’écrit. Mets un tag vierge à la place et il redit « Graver ».",
+          "de": "Leg die Chips deiner Spule auf den TigerPOD und füg sie hinzu — aus dem Katalog oder von Hand. Der Knopf wird zu „Verknüpfen“: Spule angelegt, Chips verknüpft, nichts geschrieben. Leg einen leeren Tag drauf und er sagt wieder „Brennen“.",
+          "es": "Pon los chips de tu bobina en el TigerPOD y añádela — desde el catálogo o a mano. El botón pasa a “Enlazar”: bobina creada, chips enlazados, nada escrito. Pon una etiqueta vacía y vuelve a decir “Grabar”.",
+          "it": "Metti i chip della bobina sul TigerPOD e aggiungila — dal catalogo o a mano. Il pulsante diventa “Collega”: bobina creata, chip collegati, niente scritto. Metti un tag vergine e torna a dire “Scrivi”.",
+          "zh": "把料盘的芯片放到 TigerPOD 上再添加——从目录或手动都行。按钮会变成“关联”：料盘建好，芯片关联，什么都不写。换上空白标签，它又会变回“烧录”。",
+          "pt": "Coloque os chips do seu carretel no TigerPOD e adicione — pelo catálogo ou à mão. O botão vira “Vincular”: carretel criado, chips vinculados, nada gravado. Troque por uma tag virgem e ele volta a dizer “Gravar”.",
+          "pt-pt": "Põe os chips da tua bobina no TigerPOD e adiciona-a — pelo catálogo ou à mão. O botão passa a “Associar”: bobina criada, chips associados, nada escrito. Troca por uma tag virgem e volta a dizer “Gravar”.",
+          "pl": "Połóż chipy szpuli na TigerPOD i dodaj ją — z katalogu albo ręcznie. Przycisk zmienia się w „Powiąż”: szpula utworzona, chipy powiązane, nic nie zapisane. Połóż pusty tag, a znów powie „Nagraj”.",
+          "ru": "Положи чипы катушки на TigerPOD и добавь её — из каталога или вручную. Кнопка станет «Привязать»: катушка создана, чипы привязаны, ничего не записано. Положи пустую метку — и снова будет «Прошить».",
+          "nl": "Leg de chips van je spoel op de TigerPOD en voeg hem toe — uit de catalogus of met de hand. De knop wordt “Koppelen”: spoel aangemaakt, chips gekoppeld, niets geschreven. Leg een lege tag neer en hij zegt weer “Branden”."
+        }
+      },
+      {
+        "icon": "search",
+        "title": {
+          "en": "Find a spool by its chip",
+          "fr": "Retrouve une bobine par sa puce",
+          "de": "Finde eine Spule über ihren Chip",
+          "es": "Encuentra una bobina por su chip",
+          "it": "Trova una bobina dal suo chip",
+          "zh": "按芯片找料盘",
+          "pt": "Ache um carretel pelo chip",
+          "pt-pt": "Encontra uma bobina pelo chip",
+          "pl": "Znajdź szpulę po chipie",
+          "ru": "Найди катушку по чипу",
+          "nl": "Vind een spoel via zijn chip"
+        },
+        "body": {
+          "en": "Type a few characters of a linked Bambu or Creality chip's UID in the search: its spool shows up. No more guessing which shelf.",
+          "fr": "Tape quelques caractères de l’UID d’une puce Bambu ou Creality liée dans la recherche : sa bobine apparaît. Fini de chercher sur quelle étagère.",
+          "de": "Tipp ein paar Zeichen der UID eines verknüpften Bambu- oder Creality-Chips in die Suche: seine Spule taucht auf. Schluss mit Regal-Raten.",
+          "es": "Escribe unos caracteres del UID de un chip Bambu o Creality enlazado en la búsqueda: aparece su bobina. Se acabó adivinar en qué estante.",
+          "it": "Scrivi qualche carattere dell’UID di un chip Bambu o Creality collegato nella ricerca: compare la sua bobina. Basta indovinare lo scaffale.",
+          "zh": "在搜索里输入已关联拓竹或创想三维芯片 UID 的几个字符，对应料盘就出来了。不用再猜在哪个架子上。",
+          "pt": "Digite alguns caracteres do UID de um chip Bambu ou Creality vinculado na busca: o carretel aparece. Chega de adivinhar a prateleira.",
+          "pt-pt": "Escreve alguns caracteres do UID de um chip Bambu ou Creality associado na pesquisa: a bobina aparece. Acabou adivinhar a prateleira.",
+          "pl": "Wpisz kilka znaków UID powiązanego chipa Bambu lub Creality w wyszukiwarkę — pojawi się jego szpula. Koniec zgadywania półki.",
+          "ru": "Введи пару символов UID привязанного чипа Bambu или Creality в поиск — его катушка найдётся. Больше не гадаешь, на какой полке.",
+          "nl": "Typ een paar tekens van de UID van een gekoppelde Bambu- of Creality-chip in de zoekbalk: zijn spoel verschijnt. Nooit meer raden welke plank."
+        }
+      },
+      {
+        "icon": "coins",
+        "title": {
+          "en": "Your TigerCoins, always in sight",
+          "fr": "Tes TigerCoins, toujours en vue",
+          "de": "Deine TigerCoins, immer im Blick",
+          "es": "Tus TigerCoins, siempre a la vista",
+          "it": "I tuoi TigerCoins, sempre in vista",
+          "zh": "你的 TigerCoins，随时可见",
+          "pt": "Seus TigerCoins, sempre à vista",
+          "pt-pt": "Os teus TigerCoins, sempre à vista",
+          "pl": "Twoje TigerCoins zawsze na widoku",
+          "ru": "Твои TigerCoins всегда на виду",
+          "nl": "Je TigerCoins, altijd in beeld"
+        },
+        "body": {
+          "en": "Balance, envelopes waiting and the gift-code button now live in the top bar. One click and you're in the Deals with the right window open.",
+          "fr": "Le solde, les enveloppes en attente et le bouton code cadeau sont désormais dans la barre du haut. Un clic et tu es dans les Deals avec la bonne fenêtre ouverte.",
+          "de": "Kontostand, wartende Umschläge und der Geschenkcode-Knopf wohnen jetzt oben in der Leiste. Ein Klick und du bist bei den Deals, das richtige Fenster schon offen.",
+          "es": "Saldo, sobres pendientes y el botón de código regalo ahora viven en la barra de arriba. Un clic y estás en los Deals con la ventana correcta abierta.",
+          "it": "Saldo, buste in attesa e il pulsante del codice regalo ora stanno nella barra in alto. Un clic e sei nei Deals con la finestra giusta aperta.",
+          "zh": "余额、待拆红包和礼品码按钮都搬到了顶栏。点一下就进入优惠页，对应窗口已经打开。",
+          "pt": "Saldo, envelopes esperando e o botão de código presente agora ficam na barra de cima. Um clique e você está nos Deals com a janela certa aberta.",
+          "pt-pt": "Saldo, envelopes à espera e o botão de código de oferta estão agora na barra de cima. Um clique e estás nos Deals com a janela certa aberta.",
+          "pl": "Saldo, czekające koperty i przycisk kodu prezentowego są teraz na górnym pasku. Jedno kliknięcie i jesteś w Deals z właściwym oknem.",
+          "ru": "Баланс, ждущие конверты и кнопка подарочного кода теперь в верхней панели. Один клик — и ты в Deals с нужным окном.",
+          "nl": "Saldo, wachtende enveloppen en de cadeaucodeknop staan nu in de bovenbalk. Eén klik en je zit in de Deals met het juiste venster open."
+        }
+      },
+      {
+        "icon": "gift",
+        "title": {
+          "en": "Who sent what, at a glance",
+          "fr": "Qui a envoyé quoi, d’un coup d’œil",
+          "de": "Wer was geschickt hat, auf einen Blick",
+          "es": "Quién envió qué, de un vistazo",
+          "it": "Chi ha mandato cosa, a colpo d’occhio",
+          "zh": "谁送了什么，一目了然",
+          "pt": "Quem mandou o quê, num relance",
+          "pt-pt": "Quem enviou o quê, num relance",
+          "pl": "Kto co wysłał — od razu widać",
+          "ru": "Кто что прислал — сразу видно",
+          "nl": "Wie wat stuurde, in één oogopslag"
+        },
+        "body": {
+          "en": "The TigerCoins history shows envelopes from friends in green (+1), the ones you gave in red (−1), with their face next to it. And yes, the coin on top spins if you poke it.",
+          "fr": "L’historique des TigerCoins affiche les enveloppes reçues de tes amis en vert (+1), celles que tu as données en rouge (−1), avec leur tête à côté. Et oui, la pièce du haut tourne si tu la titilles.",
+          "de": "Der TigerCoins-Verlauf zeigt Umschläge von Freunden in Grün (+1), verschenkte in Rot (−1), mit ihrem Gesicht daneben. Und ja, die Münze oben dreht sich, wenn du sie anstupst.",
+          "es": "El historial de TigerCoins muestra los sobres de tus amigos en verde (+1) y los que diste en rojo (−1), con su cara al lado. Y sí, la moneda de arriba gira si la tocas.",
+          "it": "La cronologia dei TigerCoins mostra le buste degli amici in verde (+1) e quelle che hai regalato in rosso (−1), con la loro faccia accanto. E sì, la moneta in alto gira se la stuzzichi.",
+          "zh": "TigerCoins 记录里，朋友送的红包是绿色 (+1)，你送出的是红色 (−1)，旁边有他们的头像。对了，戳一下上面的金币，它会转。",
+          "pt": "O histórico de TigerCoins mostra os envelopes dos amigos em verde (+1) e os que você deu em vermelho (−1), com o rosto deles ao lado. E sim, a moeda lá em cima gira se você cutucar.",
+          "pt-pt": "O histórico de TigerCoins mostra os envelopes dos amigos a verde (+1) e os que deste a vermelho (−1), com a cara deles ao lado. E sim, a moeda lá em cima gira se lhe tocares.",
+          "pl": "Historia TigerCoins pokazuje koperty od znajomych na zielono (+1), a te, które dałeś, na czerwono (−1), z ich twarzą obok. I tak, moneta na górze się kręci, jak ją szturchniesz.",
+          "ru": "В истории TigerCoins конверты от друзей — зелёным (+1), отданные тобой — красным (−1), с их аватаром рядом. И да, монетка сверху крутится, если её ткнуть.",
+          "nl": "De TigerCoins-geschiedenis toont enveloppen van vrienden in groen (+1) en die je gaf in rood (−1), met hun gezicht ernaast. En ja, de munt bovenaan draait als je erop tikt."
+        }
+      },
+      {
+        "icon": "palette",
+        "title": {
+          "en": "Pick by colour in the catalogue",
+          "fr": "Choisis par couleur dans le catalogue",
+          "de": "Nach Farbe im Katalog wählen",
+          "es": "Elige por color en el catálogo",
+          "it": "Scegli per colore nel catalogo",
+          "zh": "在目录里按颜色挑",
+          "pt": "Escolha pela cor no catálogo",
+          "pt-pt": "Escolhe pela cor no catálogo",
+          "pl": "Wybieraj po kolorze w katalogu",
+          "ru": "Выбирай по цвету в каталоге",
+          "nl": "Kies op kleur in de catalogus"
+        },
+        "body": {
+          "en": "“Add from the catalogue” has its own little colour bars: slide to the red you want, your inventory's filter stays exactly as it was.",
+          "fr": "« Ajouter depuis le catalogue » a ses propres petites barres de couleur : glisse jusqu’au rouge voulu, le filtre de ton inventaire reste comme il était.",
+          "de": "„Aus dem Katalog hinzufügen“ hat eigene kleine Farbleisten: zum gewünschten Rot schieben, der Filter deines Inventars bleibt, wie er war.",
+          "es": "“Añadir desde el catálogo” tiene sus propias barritas de color: desliza hasta el rojo que quieres, el filtro de tu inventario se queda como estaba.",
+          "it": "“Aggiungi dal catalogo” ha le sue barrette di colore: scorri fino al rosso che vuoi, il filtro del tuo inventario resta com’era.",
+          "zh": "“从目录添加”有自己的小颜色条：滑到想要的红色，库存的筛选完全不受影响。",
+          "pt": "“Adicionar do catálogo” tem suas próprias barrinhas de cor: deslize até o vermelho que quiser, o filtro do inventário fica como estava.",
+          "pt-pt": "“Adicionar do catálogo” tem as suas próprias barrinhas de cor: desliza até ao vermelho que queres, o filtro do inventário fica como estava.",
+          "pl": "„Dodaj z katalogu” ma własne małe paski kolorów: przesuń do wybranej czerwieni, filtr twojego inwentarza zostaje bez zmian.",
+          "ru": "У «Добавить из каталога» свои маленькие цветовые полоски: сдвинь к нужному красному — фильтр инвентаря останется как был.",
+          "nl": "“Toevoegen uit de catalogus” heeft eigen kleurbalkjes: schuif naar het rood dat je wilt, het filter van je voorraad blijft zoals het was."
+        }
+      }
+    ]
+  },
   "2.46.1": {
     "date": "2026-10-28",
     "items": [

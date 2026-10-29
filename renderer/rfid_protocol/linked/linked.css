@@ -12,7 +12,13 @@
    and hosts Studio talks to (Klipper with its Fluidd / Mainsail front ends). Monochrome masks (theme colour), TigerTag at full
    strength. */
 .lc-brands { flex: 0 0 52px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 22px;
-  padding: 22px 0 16px;   /* TigerTag level with the card's title */ border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+  padding: 14px 0 16px; border-right: 1px solid var(--border); background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+/* "Works with" on top: says what the logos are for — the app works with these
+   printers and with their spools' own tags. */
+.lc-brands-cap { max-width: 100%; box-sizing: border-box; margin-bottom: -10px; padding: 0 4px; font-size: 10px; font-weight: 600; line-height: 1.2; text-align: center; color: var(--muted); }
+/* Longer words in some languages: a smaller size so each word stays whole in the 52 px column. */
+:lang(es) .lc-brands-cap, :lang(it) .lc-brands-cap, :lang(pt) .lc-brands-cap, :lang(ru) .lc-brands-cap { font-size: 9px; }
+:lang(fr) .lc-brands-cap { padding: 0 2px; font-size: 8px; }
 .lc-brand { position: relative; width: 28px; aspect-ratio: 1; flex: none; cursor: default; transition: filter .3s; }
 /* The logo itself: a mask filled with the theme colour, and the brand's own
    colour (--brand) when lit (.is-lit, linked/index.js: hovered and held LIT_MS
@@ -150,34 +156,38 @@
 .lc-unlink.lc-unlink { position: relative; overflow: hidden; height: 28px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; }
 .lc-unlink.lc-unlink:hover { border-color: var(--danger); }
 .lc-spool.is-selected { outline: 2px solid var(--primary); outline-offset: -1px; }
-.lc-offer-ic { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; }
+/* The same 52 px box as the burn banner's TigerTag logo (.rfid-material-icon):
+   a Link and a Burn banner swap in place at the same height. */
+.lc-offer-ic { display: grid; place-items: center; height: 52px; aspect-ratio: 1 / 1; flex-shrink: 0; }
 .lc-offer-ic .icon { background: var(--primary); }
 .lc-offer-banner.lc-offer-banner { position: relative; overflow: hidden; width: 100%; height: auto; min-height: 58px; padding: 8px 14px; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; text-align: left; font: inherit; cursor: pointer; }
 .lc-offer-banner > :not(.hold-progress) { position: relative; z-index: 1; }
 /* A link is a gain, not a warning: success green, not the alert amber of the
-   other chip banners, and a green fill instead of the red delete fill. */
-#lcOfferBanner.lc-offer-banner { background: color-mix(in srgb, var(--success) 12%, transparent); }
-#lcOfferBanner .chip-update-text { color: var(--success); font-weight: 600; }
-#lcOfferBanner .lc-offer-ic .icon { background: var(--success); }
+   other chip banners, and a green fill instead of the red delete fill. Every
+   link banner (the grid's offer, the product card's and the spool card's
+   "Link the proprietary third-party Tag") shares it, by class. */
+.lc-offer-banner.lc-offer-banner { background: color-mix(in srgb, var(--success) 12%, transparent); }
+.lc-offer-banner.lc-offer-banner .chip-update-text { color: var(--success); font-weight: 600; }
+.lc-offer-banner.lc-offer-banner .lc-offer-ic .icon { background: var(--success); }
 /* Same "burning" feel as the burn banner (70-detail-misc.css, cloud-burn-*): a
    glint sweeps across, the link icon glows, the held fill's leading edge burns
    bright — and while held only the fill stays lit. */
-#lcOfferBanner .hold-progress {
+.lc-offer-banner.lc-offer-banner .hold-progress {
   background: linear-gradient(90deg, color-mix(in srgb, var(--success) 18%, transparent), color-mix(in srgb, var(--success) 50%, transparent));
   opacity: 1;
   box-shadow: 6px 0 14px color-mix(in srgb, var(--success) 70%, transparent);
 }
-#lcOfferBanner::after {
+.lc-offer-banner.lc-offer-banner::after {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--success) 22%, transparent) 50%, transparent 65%);
   transform: translateX(-100%);
   animation: cloud-burn-sweep 2.6s ease-in-out infinite;
 }
-#lcOfferBanner .lc-offer-ic .icon { animation: cloud-burn-glow 2s ease-in-out infinite; }
-#lcOfferBanner:hover .lc-offer-ic .icon { animation-duration: .9s; }
-#lcOfferBanner:is(.is-holding, .is-confirming)::after { animation: none; opacity: 0; }
-#lcOfferBanner:is(.is-holding, .is-confirming) .lc-offer-ic .icon { animation: none; filter: none; }
+.lc-offer-banner.lc-offer-banner .lc-offer-ic .icon { animation: cloud-burn-glow 2s ease-in-out infinite; }
+.lc-offer-banner.lc-offer-banner:hover .lc-offer-ic .icon { animation-duration: .9s; }
+.lc-offer-banner.lc-offer-banner:is(.is-holding, .is-confirming)::after { animation: none; opacity: 0; }
+.lc-offer-banner.lc-offer-banner:is(.is-holding, .is-confirming) .lc-offer-ic .icon { animation: none; filter: none; }
 @media (prefers-reduced-motion: reduce) {
-  #lcOfferBanner::after, #lcOfferBanner .lc-offer-ic .icon { animation: none; }
+  .lc-offer-banner.lc-offer-banner::after, .lc-offer-banner.lc-offer-banner .lc-offer-ic .icon { animation: none; }
 }
-#lcOfferBanner .tool-info { margin-left: auto; }
+.lc-offer-banner.lc-offer-banner .tool-info { margin-left: auto; }

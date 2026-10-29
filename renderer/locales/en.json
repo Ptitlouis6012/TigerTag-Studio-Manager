@@ -2363,6 +2363,7 @@
   "envGiveNone": "No gifts left today: come back tomorrow.",
   "envGiveNoFriends": "Add a friend to give them an envelope.",
   "envGiveShort": "Give",
+  "envGiveCount": "Sent today: {{sent}} · Left: {{left}}",
   "envGiveSent": "Envelope given to {{name}}!",
   "envGiveNoGift": "You have no envelope to give.",
   "eggFound": "Already found that one. Nice try.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Gift envelope opened",
   "coinLog_gift": "Gift code redeemed",
   "coinLog_spend": "Exchanged for {{deal}}",
-  "coinLog_given": "Envelope given to {{name}}",
-  "coinLog_received": "Envelope from {{name}}",
+  "coinLog_to": "To {{name}}",
+  "coinLog_from": "From {{name}}",
   "coinLog_surprises": "{{n}} surprise envelopes",
   "coinLog_chests": "{{n}} chests",
   "eggFoundTitle": "Secret found!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Linked. Scan it and the material opens.",
   "linkedChipsTitle": "Linked chips",
   "linkedChipUnlink": "Unlink",
-  "linkedChipUnlinkTip": "Hold to unlink the chips from this material."
+  "linkedChipUnlinkTip": "Hold to unlink the chips from this material.",
+  "linkedChipWorksWith": "Works with"
 }

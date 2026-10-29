@@ -3647,6 +3647,14 @@
     flex-shrink: 0;
     background: var(--adp-bg);
   }
+  /* The held Link / Burn banner that replaces Make (_adpRenderFoot). */
+  .adp-foot-banner { flex: 1; min-width: 0; }
+  .adp-foot-banner:empty { display: none; }
+  .adp-foot-banner .chip-update-banner { width: 100%; margin: 0; }
+  .adp-foot .adp-btn--make[hidden] { display: none; }
+  /* With the banner, no separator and no side gutter: it spans the panel. */
+  .adp-panel .adp-foot:has(.adp-foot-banner:not(:empty)) { border-top: 0; padding: 0; }
+  .adp-foot-banner .chip-update-banner.chip-update-banner { border-radius: 0; }
   .adp-btn {
     height: 36px;
     padding: 0 18px;

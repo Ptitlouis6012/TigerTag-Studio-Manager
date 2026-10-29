@@ -2363,6 +2363,7 @@
   "envGiveNone": "No quedan regalos hoy: vuelve mañana.",
   "envGiveNoFriends": "Añade un amigo para regalarle un sobre.",
   "envGiveShort": "Regalar",
+  "envGiveCount": "Enviados hoy: {{sent}} · Restantes: {{left}}",
   "envGiveSent": "¡Sobre regalado a {{name}}!",
   "envGiveNoGift": "No tienes ningún sobre para regalar.",
   "eggFound": "Ya lo encontraste. Buen intento.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Sobre regalo abierto",
   "coinLog_gift": "Código regalo canjeado",
   "coinLog_spend": "Canjeado por {{deal}}",
-  "coinLog_given": "Sobre regalado a {{name}}",
-  "coinLog_received": "Sobre de {{name}}",
+  "coinLog_to": "Para {{name}}",
+  "coinLog_from": "De {{name}}",
   "coinLog_surprises": "{{n}} sobres sorpresa",
   "coinLog_chests": "{{n}} cofres",
   "eggFoundTitle": "¡Secreto encontrado!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Vinculado. Escanéelo y el material se abre.",
   "linkedChipsTitle": "Chips vinculados",
   "linkedChipUnlink": "Desvincular",
-  "linkedChipUnlinkTip": "Mantenga pulsado para desvincular los chips de este material."
+  "linkedChipUnlinkTip": "Mantenga pulsado para desvincular los chips de este material.",
+  "linkedChipWorksWith": "Funciona con"
 }

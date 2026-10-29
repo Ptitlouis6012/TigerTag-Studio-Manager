@@ -2363,6 +2363,7 @@
   "envGiveNone": "Niente più regali oggi: torna domani.",
   "envGiveNoFriends": "Aggiungi un amico per regalargli una busta.",
   "envGiveShort": "Regala",
+  "envGiveCount": "Inviate oggi: {{sent}} · Rimaste: {{left}}",
   "envGiveSent": "Busta regalata a {{name}}!",
   "envGiveNoGift": "Non hai buste da regalare.",
   "eggFound": "Già trovato. Bel tentativo.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Busta regalo aperta",
   "coinLog_gift": "Codice regalo riscattato",
   "coinLog_spend": "Scambiato con {{deal}}",
-  "coinLog_given": "Busta regalata a {{name}}",
-  "coinLog_received": "Busta da {{name}}",
+  "coinLog_to": "A {{name}}",
+  "coinLog_from": "Da {{name}}",
   "coinLog_surprises": "{{n}} buste sorpresa",
   "coinLog_chests": "{{n}} forzieri",
   "eggFoundTitle": "Segreto trovato!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Collegato. Scansionalo e il materiale si apre.",
   "linkedChipsTitle": "Chip collegati",
   "linkedChipUnlink": "Scollega",
-  "linkedChipUnlinkTip": "Tieni premuto per scollegare i chip da questo materiale."
+  "linkedChipUnlinkTip": "Tieni premuto per scollegare i chip da questo materiale.",
+  "linkedChipWorksWith": "Funziona con"
 }

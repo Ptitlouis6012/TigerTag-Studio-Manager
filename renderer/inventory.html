@@ -186,6 +186,16 @@
            title block, giving immediate at-a-glance KPIs. -->
       <div class="sb-stats-wrap top-stats hidden" id="sbStats"></div>
       <div class="top-status-icons">
+        <!-- TigerCoins always in sight (TigerSquad members): the Deals banner's
+             balance card (opens the history), envelope (how many wait; opens
+             them) and gift (a code) — _paintDealsBadge. -->
+        <div class="sqd-coins-acts top-coins" id="topCoins" hidden>
+          <button type="button" class="sqr-card sqd-coins top-coins-bal" id="topCoinsBal" aria-label="" hidden><b class="sqd-coins-bal"><span id="topCoinsBalN">0</span><span class="tcoin tcoin--big" aria-hidden="true"></span></b></button>
+          <div class="top-coins-acts">
+            <button type="button" class="sqd-coins-env is-empty" id="topCoinsEnv" aria-label=""><img src="../assets/img/tigercoins/envelope.webp" alt="" aria-hidden="true"><span id="topCoinsEnvN">0</span></button>
+            <button type="button" class="sqd-coins-gift" id="topCoinsGift" data-i18n-aria="coinsHaveCode" aria-label=""><img src="../assets/img/tigercoins/gift-v2.webp" alt="" aria-hidden="true"></button>
+          </div>
+        </div>
         <div id="rfidReadersBar" class="rfid-readers-bar" data-desktop-only></div>
         <div class="health scale-health" id="scaleHealth"><span class="scale-glyphs"><span class="scale-glyph"><span class="scale-health-icon"></span></span></span></div>
         <div class="health scale-health tsp-health" id="tigerspoolHealth"></div>
@@ -2940,7 +2950,7 @@
     </div>
     <div class="lc-body" id="chipChoiceBody"></div>
   </div>
-  <div class="lc-brands" aria-hidden="true"><span class="lc-brand" data-brand="tigertag" style="--i:0"><i></i></span><span class="lc-brand" data-brand="bambulab" style="--i:1"><i></i></span><span class="lc-brand" data-brand="creality" style="--i:2"><i></i></span><span class="lc-brand" data-brand="anycubic" style="--i:3"><i></i></span><span class="lc-brand" data-brand="snapmaker" style="--i:4"><i></i></span><span class="lc-brand" data-brand="elegoo" style="--i:5"><i></i></span><span class="lc-brand" data-brand="qidi" style="--i:6"><i></i></span><span class="lc-brand" data-brand="prusa" style="--i:7"><i></i></span><span class="lc-brand" data-brand="flashforge" style="--i:8"><i></i></span><span class="lc-brand" data-brand="klipper" style="--i:9"><i></i></span><span class="lc-brand" data-brand="octoprint" style="--i:10"><i></i></span><span class="lc-brand" data-brand="fluidd" style="--i:11"><i></i></span><span class="lc-brand" data-brand="mainsail" style="--i:12"><i></i></span></div>
+  <div class="lc-brands" aria-hidden="true"><span class="lc-brands-cap" data-i18n="linkedChipWorksWith">Works with</span><span class="lc-brand" data-brand="tigertag" style="--i:0"><i></i></span><span class="lc-brand" data-brand="bambulab" style="--i:1"><i></i></span><span class="lc-brand" data-brand="creality" style="--i:2"><i></i></span><span class="lc-brand" data-brand="anycubic" style="--i:3"><i></i></span><span class="lc-brand" data-brand="snapmaker" style="--i:4"><i></i></span><span class="lc-brand" data-brand="elegoo" style="--i:5"><i></i></span><span class="lc-brand" data-brand="qidi" style="--i:6"><i></i></span><span class="lc-brand" data-brand="prusa" style="--i:7"><i></i></span><span class="lc-brand" data-brand="flashforge" style="--i:8"><i></i></span><span class="lc-brand" data-brand="klipper" style="--i:9"><i></i></span><span class="lc-brand" data-brand="octoprint" style="--i:10"><i></i></span><span class="lc-brand" data-brand="fluidd" style="--i:11"><i></i></span><span class="lc-brand" data-brand="mainsail" style="--i:12"><i></i></span></div>
   <div class="lc-pane" id="chipChoicePane"></div>
 </aside>
 
@@ -2988,6 +2998,20 @@
   <div class="cpk-controls">
     <select id="cpkBrand" data-csel-short="thBrand"></select>
     <span class="lc-qbox cpk-search"><input type="text" id="cpkSearch" data-i18n-placeholder="catPickSearch" placeholder="Name, material, colour, SKU, barcode…"><button type="button" class="inv-search-clear" data-lc-qclear hidden aria-label="Clear search" data-i18n-aria="clearSearch"><span class="icon icon-close icon-13" aria-hidden="true"></span></button><span class="icon icon-search icon-13" aria-hidden="true"></span></span>
+  </div>
+  <!-- A mini copy of the colour bars above the views: the SAME colour window
+       (state.hueFilter), so picking a colour here or there means one thing. -->
+  <div class="rv-hue cpk-hue">
+    <div class="rv-hue-bar rv-hue-bar--hue" id="cpkHueBar" role="group" data-i18n-aria="rackHueHues" aria-label="">
+      <div id="cpkHueSegs"></div>
+      <button class="rv-hue-handle" id="cpkHueL" type="button" data-i18n-aria="rackHueEdgeL" aria-label=""></button>
+      <button class="rv-hue-handle" id="cpkHueR" type="button" data-i18n-aria="rackHueEdgeR" aria-label=""></button>
+    </div>
+    <div class="rv-hue-bar rv-hue-bar--lum" id="cpkLumBar" role="group" data-i18n-aria="rackHueNeutrals" aria-label="">
+      <div id="cpkLumSegs"></div>
+      <button class="rv-hue-handle" id="cpkLumL" type="button" data-i18n-aria="rackHueEdgeL" aria-label=""></button>
+      <button class="rv-hue-handle" id="cpkLumR" type="button" data-i18n-aria="rackHueEdgeR" aria-label=""></button>
+    </div>
   </div>
   <div class="cpk-list" id="cpkList"></div>
 </aside>
@@ -3260,6 +3284,9 @@
   <div class="adp-foot">
     <!-- No "Cancel" button — close affordances are: ✕ in the header,
          backdrop click outside the panel, or Escape key. -->
+    <!-- Held banner (Link the maker's chips / Burn the TigerTag) in place of
+         Make, by what sits on the TigerPOD — _adpRenderFoot. -->
+    <div class="adp-foot-banner" id="adpFootBanner"></div>
     <button class="adp-btn adp-btn--make" id="adpSave" type="button" data-i18n="addProductMake">Make</button>
   </div>
 </aside>

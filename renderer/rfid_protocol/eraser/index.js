@@ -158,7 +158,8 @@ function render() {
   if (!el?.classList.contains("open")) return;
   const { t } = ctx;
   const readers = [...ctx.state.nfcReaders];
-  const showNums = readers.length > 1;
+  // The numbered dot shows with ONE reader too, coloured by state like a pair's.
+  const showNums = readers.length > 0;
   $("chipEraserChips").innerHTML = (readers.length ? readers : ["__none__"]).map((name, i) => {
     const s = slots.get(name);
     const st = !s ? "waiting" : s.result === "ok" ? "ok" : s.result === "fail" ? "fail"

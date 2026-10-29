@@ -1,130 +1,190 @@
-# Worklog — v2.46.2 (in progress)
+# Worklog — v2.47.0
 
 ## Added
-- Brand column in the "What would you like to do?" side card (`.lc-brands` in
-  `renderer/inventory.html` between the rail and the pane, styled in
-  `renderer/rfid_protocol/linked/linked.css`; card 612 → 664 px). Decorative,
-  `aria-hidden`, monochrome masks: TigerTag on top, level with the card's title
-  (the app icon's tiger, `tigersystem-icon-framed-white.svg`), the others centred
-  in the height below it — Bambu Lab, Creality, Anycubic, Snapmaker, Elegoo,
-  Qidi, Prusa, FlashForge, Klipper, OctoPrint, Fluidd, Mainsail. Alive:
-  - a sheen sweeps left to right through each logo every 7 s, one after the
-    other (`--i`);
-  - lit (`.is-lit`): the logo takes its brand colour (`--brand`), grows (a
-    negative inset on the masked `<i>` — a transform blurred the mask), glows
-    (drop-shadow on the wrapper, which a mask would cut) and a shine crosses it;
-  - lit by hover, held 900 ms after the mouse has left so a brush plays the whole
-    effect, and by a garland played once each time the card opens — the makers
-    one after the other, top to bottom, 1.1 s apart, then it rests
-    (`wireBrandColumn` in `renderer/rfid_protocol/linked/index.js`);
-  - the mouse in the column grows the tiger slowly (`.is-awake`, 0.7 s in and
-    out, its own colour, no glow).
-  Reduced motion: no garland and no sheen; hover still lights a logo, without transitions.
-  `scripts/check-theme-tokens.mjs` BRAND exemption gains prusa, qidi, klipper,
-  octoprint, fluidd, mainsail.
-  `assets/svg/icons/logo_mainsail.svg`: Mainsail's sail, from
-  mainsail-crew/mainsail `public/img/logo.svg`, recoloured black for the mask.
-- `assets/svg/icons/logo_qidi.svg`: Qidi's cube over the "QiDi" wordmark, built
-  from the vector paths of QIDIStudio's `resources/images/QIDIStudio_p.svg`
-  (QIDITECH/QIDIStudio), stacked instead of side by side.
 
 ## Changed
-- "Give an envelope" modal (`renderer/quests/squad-deals.js` showEnvelope,
-  `renderer/quests/quests.css`): the envelope turns toward the mouse with glints
-  twinkling round it, the same as the envelope help window (`tilt`,
-  `.tch-env-tilt`, `.tch-glints`; the glints go once it is opened or given). The
-  "Give" button is the "Open ×10" button: `.sqd-open.tp-hold.tp-ten` gradient,
-  held 2 s through `holdToFire` (now exported from `coin-pull.js`) — it strains
-  and grows while held, a click alone shakes with the `pullHoldTen` bubble. It
-  reads "Offrir" alone, centred, no icon; the friends search sits 16 px under
-  the title (`.tc-reveal-actions:has(> .tc-give)` drops its 22 px margin).
-- The give window from the Friends panel hides an easter egg, `envGive`: glints
-  while not found, three quick clicks on the envelope (`tapEgg`) → one common
-  envelope. `_coinsCtx` (`renderer/inventory.js`) now carries `easterEgg` /
-  `eggFound` — without them `tapEgg` was a silent no-op. The pile stage's give
-  window passes no egg (it would stack a second opening stage). Needs the
-  backend's `envGive` entry in `EGGS` (TigerTag_Firebase_Backend
-  `functions/tigerCoins.js`, deployed 2026-10-28, not committed yet).
-- New rule `.agents/rules/easter-eggs.md` (indexed in CLAUDE.md): how an egg
-  works end to end, the current ids, how to add one.
-- Grid card photos ask the CDN for `medium` (256 px, ~9.7 kB) instead of `large`
-  (512 px, ~33 kB): `GRID_CARD_IMG` in `renderer/inventory.js`, used by
-  `_gridCardInnerHTML` and its in-place patch. A quarter of the decoded bitmap
-  memory and ~70 % less download per card in the catalogue grid. CLAUDE.md size
-  table updated.
-- Each view loads the rendition it paints: the local image cache now warms the
-  grid's `medium` instead of the raw `large` (`preCacheImages`), and every call
-  site resolves the SIZED url (`resolvedImg(cdnImg(url, size))`), so list thumbs
-  load `small` / `compact` and the side card `large` (285 px slot, 570 device px).
-  The thumb error fallback retries the same size, not the raw `large`.
-- Side-card photos (spool detail panel, product card, reorder panel) ask for the
-  rung that covers the photo as laid out now (`_panelImg`: the photo on screen,
-  else the card's inner width) instead of always the raw `large`: a 257 px
-  product card on a DPR-1 screen loads `medium`. `_cdnSizeFor` accepts a rung up
-  to 10 % smaller than the slot (invisible upscale).
-- Image cache hygiene (`_imgCacheTidy` in `renderer/inventory.js`, new
-  `img:prune` in `main.js`, `imgPrune` in `preload.js`): once per session the map
-  keeps only the newest `&v=` of each product × rendition and main deletes the
-  files it no longer points at. Images are used exactly as the CDN serves them,
-  nothing is resized locally. `img:get`'s fetch is factored into
-  `_fetchImageBuffer` (same per-hop SSRF check).
+- While the NFC tag tester is open, a scan opens no spool, adds none and offers
+  no link — like the "+" card (`_testerUp` next to `_chipCardUp` in
+  `renderer/inventory.js`: onRfidForeignChip, onRfid, onRfidTagScanned,
+  `_processNfcScans`). The tester reads chips on demand (`readRfidNow`), so it is
+  unaffected. Checked with a spool's chip placed twice: nothing opened, 220 → 220
+  inventory docs.
+- With a single RFID reader, the reader plate still shows its numbered dot ("1"),
+  coloured by state as with two readers — in the NFC tools
+  (`renderer/rfid_protocol/eraser/index.js` render) and in the burn window
+  (`renderer/inventory.js` encode modal plates).
+- The "Link to my inventory" grid of the "+" card searches the spools' tags too
+  (`text` in `renderer/rfid_protocol/linked/index.js`): a tag "customer" finds
+  every eligible spool carrying it. Each search reads the live inventory
+  (`eligible()`), so a tag added while the grid is open is found. The grid is
+  updated surgically: each card keyed (`data-lc-key`), a card still found is kept
+  as it is (photo included), the ones gone removed, the new ones inserted in
+  order — typing "testclient" now only removes cards (32 → 15 → 5 → 1), none
+  rebuilt; before, every keystroke rebuilt every card and they all blinked.
+- A maker's chip (Bambu Lab, Creality…) shows a held "Link the proprietary
+  third-party Tag(s)" banner where "Burn the TigerTag+" was: on the catalogue
+  product card while such a chip waits in the "+" card (creates the TigerData+
+  and links it), and on a TigerData / TigerData+ spool's card when an unlinked
+  maker chip sits on the TigerPOD (links it to that spool). `presentMakerChips`,
+  `makerLinkBannerHtml`, `linkMakerChipsTo` in
+  `renderer/rfid_protocol/linked/index.js`; existing `linkedChipOffer*` keys.
+  Every link banner gets the burn banner's shine (green, sweeping glint, glowing
+  link icon, burning hold fill): the styles in
+  `renderer/rfid_protocol/linked/linked.css` moved from `#lcOfferBanner` to the
+  shared `.lc-offer-banner` class.
+- Every envelope can be given to a friend, the chips' included. Backend
+  (TigerTag_Firebase_Backend `functions/tigerCoins.js`, deployed 2026-10-28, not
+  committed): `giveEnvelope` takes `id: "chip"` — the giver's oldest unopened
+  certified chip is marked `givenTo` / `givenAt` (`unopenedChip` now excludes it
+  from `unopened` and from `open`), the friend gets a kind "friend" envelope
+  worth one standard surprise envelope (`surpriseWeights` snapshot, `chipUid`);
+  README updated. Studio (`renderer/inventory.js`): `_giveEnvelopeTo` and the
+  pile's "Give to a friend" offer the gift envelopes first, then the chips'
+  (`{ id: "chip" }`); the pile's count includes `unopened`.
+- The give window always opens for a TigerSquad member, with the day's count
+  ("Sent today · Left", new key `envGiveCount`, `.tc-give-count` in
+  `renderer/quests/quests.css`); with nothing left to give it says why
+  (`envGiveNoGift`) and the friends are greyed (`give.none` in
+  `renderer/quests/squad-deals.js` showGive).
+
+- The inventory search finds a spool by the UID of a maker chip linked to it
+  (Bambu Lab, Creality…), whole or partial, any case (`_rowChipUids` in
+  `renderer/inventory.js`, used by `_rowIsExactCode` and `_rowMatchesSearch`;
+  read live, outside the cached haystack, since a link changes without the row).
+
+- A TigerData / TigerData+ spool whose maker chips are linked no longer offers
+  "Burn the TigerTag+" on its card (nothing to burn: its chips are a maker's);
+  a plain TigerData still offers its upgrade (`renderer/inventory.js` detail
+  chip banner, `linkedChipsOf`).
+- "+" with unlinked maker chips already on the TigerPOD opens the maker-chip
+  choices, as when a chip is placed while the card is up: the catalogue then
+  offers "Link", not the burn (`openAddChooser` in
+  `renderer/rfid_protocol/linked/index.js`).
+
+- "Add product" (manual) says what Make will do with the TigerPOD: unlinked
+  maker chips on it → the held "Link the proprietary third-party Tag(s)" banner
+  (creates the TigerData, then links them; never burned); a reader plugged in →
+  the held "Burn the TigerTag" banner (creates, then burns); no reader → the
+  plain Make. Re-drawn as chips come and go (`_adpRenderFoot`, `#adpFootBanner`
+  in `renderer/inventory.html`, `.adp-foot-banner` in
+  `renderer/css/60-modals.css`; `saveAddProduct` / `_openCreatedSpool` /
+  `_catalogCreate` take `linkMakers`). The catalogue product card offers "Link"
+  as well when the maker chips simply sit on the TigerPOD
+  (`pendingMakerChips() || presentMakerChips()`). Before, chips placed while
+  "Add product" was open were ignored and Make went on to the burn.
+
+- The held Link / Burn banners follow what sits on the TigerPOD NOW: chips
+  swapped while the new-chip card is up replace the earlier ones, they are not
+  added to them, and the open view stays as it is (no jump back to the
+  catalogue). A maker's chip → "Link", a blank NTAG → "Burn", on the spool card
+  (its banner slot `.dp-chip-banner` swapped alone), the catalogue product card
+  and "Add product" (`_refreshChipBanners` in `renderer/inventory.js`, called on
+  card-present / foreign-chip, `ctx.chipsChanged` from
+  `renderer/rfid_protocol/linked/index.js`). `pending` / `offer` no longer store
+  a chip list: the link takes `presentMakerChips()` at the moment of the hold.
+  A Link and a Burn banner are the same height (69 px): the link icon sits in
+  the burn logo's 52 px box (`.lc-offer-ic` in
+  `renderer/rfid_protocol/linked/linked.css`).
+
+- While the new-chip card ("What would you like to do?") is up, a spool card
+  offers no "Upgrade to TigerData+ / TigerTag+": there it is being linked or
+  burned (`offerUpgrade` in the detail chip banner, `renderer/inventory.js`);
+  closing the card gives the offer back (`closeChipChoice` → `chipsChanged`),
+  and it opens the catalogue at once: its click is wired with the other chip
+  banners (`_wireDetailChipBanner`), so a banner swapped in place works too.
+
+- The catalogue pick card ("Add from the catalogue") has a mini copy of the
+  colour bars under its search, with its OWN colour window
+  (`state.cpkHueFilter`, `_cpkHueFilter`): it filters the pick list only, the
+  views' bars filter the views only. Drag, wheel, double-click work the same:
+  `wireRangeBar` now takes a group (`hueGroup`: one window, its bars, what to
+  refresh), and `_hueFilterOn` / `_colorsMatchHue` / `_catalogFilter` take the
+  window to test. Markup
+  `.cpk-hue` in `renderer/inventory.html`, 14 px bars in
+  `renderer/css/40-printers.css`.
+
+- The TigerCoins envelope (how many wait) and gift sit in the header, always in
+  sight for a TigerSquad member — the Deals banner's pair, smaller: the
+  envelope opens the pile (Deals view + opening stage) or, at 0, the "how to
+  get envelopes" help; the gift opens the gift-code window (`#topCoins` in
+  `renderer/inventory.html`, painted by `_paintDealsBadge`, `_topCoinsCtx` in
+  `renderer/inventory.js`; `openEnvelopeHelp` / `openCoinsCodeModal` exported
+  from `renderer/quests/squad-deals.js`; `.top-coins` in
+  `renderer/quests/quests.css`). The balance card (opens the TigerCoins
+  history, `openCoinsHistory` exported) sits on top, envelope + gift under it,
+  stacked like the Deals banner (`#topCoinsBal`, `.top-coins-acts`). In the
+  header they are toned down to one flat card like the stat cards (no glow,
+  no animation); the Deals banner keeps its animated pair. Each of the three
+  switches to the Deals view, then opens its window there (`_toDeals`).
+- The header's stat cards are taller (68 px, `--top-card-h`, centred content —
+  `.top-stats .sb-stat` in `renderer/css/00-base.css`), the TigerCoins card
+  the same height, its content centred (the gift button pinned to 22 px).
+- New easter egg `codeEnvelope`: three quick clicks on the red envelope beside
+  the tiger in the "Gift code" window (`tapEgg` + glints in
+  `renderer/quests/squad-deals.js` openCoinsCodeModal, `.tcx-pile-env` in
+  `renderer/quests/quests.css`); backend `EGGS.codeEnvelope`
+  (TigerTag_Firebase_Backend `functions/tigerCoins.js`, deployed 2026-10-29,
+  not committed);
+  listed in `.agents/rules/easter-eggs.md`.
+
+- Opening a deal closes every other side card first (settings, notifications,
+  spool card…), so its own card shows alone; a deal opening over another still
+  slides over it (`ctx.closeOtherSides` → `_closeAllSidePanels({ keepDeals })`
+  in `renderer/inventory.js`, called from the deal click in
+  `renderer/quests/squad-deals.js`).
+
+- A click on the coin above the TigerCoins history flips it (three turns,
+  1.1 s) to the sound of a spinning coin — a metallic ping, then ticks
+  slowing down (`sfx.coinFlip` in `renderer/quests/coin-sound.js`,
+  synthesised, muted with the other TigerCoins sounds) — and throws nine
+  little gold stars around it
+  (`.tch-coin` / `tch-coin-flip`, `.tch-coin-star` in `renderer/quests/quests.css`,
+  `openCoinsHistory` in `renderer/quests/squad-deals.js`).
+
+- The decorative brand column of the "+" card says what it is for: a small
+  "Works with" caption on top (the app works with these printers and their
+  spools' own tags) — `.lc-brands-cap` in `renderer/inventory.html` and
+  `renderer/rfid_protocol/linked/linked.css`; a smaller size for the
+  languages with longer words (`:lang(fr|es|it|pt|ru)`) so every word fits the
+  52 px column whole.
 
 ## Fixed
-- Switching accounts from the Deals view no longer leaves the cards as skeletons
-  for 10-40 s. The view read Firestore directly (the deals, then each deal's
-  claim and link: ~45 reads) and, on a switch, those reads queued behind every
-  listener the new account starts (measured 12 s for Tiger Tag, 42 s for
-  OpenMaker, even from the local cache). It now asks the squadDeal function's new
-  `list` action — one HTTP call, ~1 s on a first visit (`_renderDealsView` in
-  `renderer/inventory.js`); the direct Firestore reads stay as the fallback. One
-  load per account at a time (`_dealsLoading`: renderInventory runs it on every
-  snapshot of a switch), the claims filled in after the list on the fallback
-  path, and each account's last Deals kept for the session (`_dealsByUid`):
-  switching back is instant, then refreshed. Backend: TigerTag_Firebase_Backend
-  `functions/squadDeals.js` `listDeals` (same scope as firestore.rules, Timestamps
-  as epoch ms) + README row, deployed 2026-10-28, not committed yet. Checked
-  against direct reads on two accounts: same deals, claims, links and dates.
-  The view also stopped rebuilding itself on every snapshot (3 to 18 identical
-  rebuilds per switch, each reloading every card's photo): a signature guard on
-  the data it shows (`host._sqdSig`; the countdowns tick in place, an expiry
-  forces a repaint) — 1 or 2 rebuilds per switch, measured.
-- A product photo changed in the catalogue now reaches the spools linked to it
-  (`renderer/inventory.js`, `_catalogStaleRows` + new `_catalogTime`). The stale
-  scan never fired: `product/get/all` carries no `updated_at`, and `product/get`
-  sends it as an ISO string that `Number()` read as NaN ("never changed"). A spool
-  whose `url_img` differs from the list's `img_src` is now stale (unless it shows
-  the user's own photo), and `updated_at` is parsed as ISO or epoch. The new URL
-  is a new image-cache key, so the photo downloads on the next catalogue sync.
-- The catalogue sync completes again, in ~1 s (`main.js`, `catalog:fetch-all`).
-  The primary source is now the RFID-Guide snapshot
-  (`database/id_catalog.json` on raw.githubusercontent.com, auto-synced several
-  times a day, identical to `get/all` field for field): 1.6 MB gzip, kept on disk
-  with its ETag (`userData/catalog-snapshot.json` + `.etag`) so an unchanged
-  catalogue is a `304` with no download (`_fetchCatalogSnapshot`). `get/all` is
-  the fallback only: 18 845 products are 19 pages of ~11 s served one at a time,
-  and the 20 s per-page abort with no retry threw the whole sync away, so the old
-  cache (old photo URLs) stayed; pages now get 60 s and two retries
-  (`_fetchCatalogPage`).
-- Screen flicker on Retina Macs ("tile memory limits exceeded" in the console,
-  thousands per session despite `force-gpu-mem-available-mb=1024`). ~40 closed
-  overlays were only `opacity: 0`, each a full-window `backdrop-filter` surface
-  still composited. Closed `.modal-overlay` (`renderer/css/60-modals.css`) and
-  `.sfe-backdrop` (`renderer/css/50-snapmaker.css`) are now `visibility: hidden`
-  once their fade-out ends (open = visible at once).
-- Grid cards (`.spool-card`, `renderer/css/70-detail-misc.css`) are skipped when
-  off screen (`content-visibility: auto`, 240 px placeholder height).
-- A catalogue refresh (`_refreshApiData`) no longer overwrites a photo the user
-  set themselves (`url_img_user`).
-
-## Docs
-- `ROADMAP.md`: G7 under the printer control panel — Bambu Lab "skip objects" on
-  a multi-part plate (issue #156): objects from the running job's `.3mf`, plate
-  map + hold to confirm, MQTT `skip_objects`; firmware support to verify on a
-  real P1S first.
-- `ROADMAP.md`: G8 — Anycubic ACE Pro 2 drying per unit (read: `drying_status`
-  already on the wire; control: `MULTI_COLOR_BOX_DRY`, payload from
-  hass-anycubic_cloud) + humidity / filament left to capture (issue #157).
+- The TigerCoins history says which way each line went, after a mockup made
+  with ChatGPT (`assets-src/img/tigercoins/coin-history-mockup.png`): an
+  envelope received gets a green bar, an arrow into the envelope, the friend's
+  avatar, "From {name}" and "+1" with an envelope; one given a red bar, an
+  arrow out, "To {name}" and "−1"; coins earned a gold bar and "+53" with a
+  coin; coins spent a red bar (`openCoinsHistory` in
+  `renderer/quests/squad-deals.js`, `ctx.friendAvatar` in `renderer/inventory.js`,
+  `.tch-row--in/out/coin` in `renderer/quests/quests.css`; the friend drawn
+  by `userAvatar(f, "sqb-avatar")` as in the League ranking — the row's icon
+  rule narrowed to `.tch-row > img`, it had blown the badge up to 30 px). Before,
+  both envelope lines read "—".
+- The TigerCoins history window opens at its final size: its list has a fixed
+  height, the app's loading animation centred in it (`loadingHTML` now on the
+  header's ctx too, `_topCoinsCtx` — it showed "…"), instead of growing once the log arrives
+  (`.tch-log` in `renderer/quests/quests.css`).
+- The TigerCoins history shows "0", not "−0" / "+0", when nothing was spent or
+  earned (`openCoinsHistory` in `renderer/quests/squad-deals.js`).
+- Deleting a spool now deletes its maker chips' links too (`markSpoolDeleted`,
+  same batch, `linkedChipsOf` covers the twin); a link left behind pointed at a
+  missing spool and kept the chip "already linked". A link to a spool that no
+  longer exists no longer blocks the chip from being linked again
+  (`presentMakerChips`).
+- A maker's chip (Bambu Lab, Creality… MIFARE 1K) placed while the "+" card is
+  up is no longer ignored: the card switches to the maker-chip choices and the
+  chip waits there, so "+ Inventory" creates the TigerData+ and links it — nothing
+  opens, nothing is added, nothing is written (`holdForeignChip`,
+  `pendingMakerChips` in `renderer/rfid_protocol/linked/index.js`; called from
+  `onRfidForeignChip` in `renderer/inventory.js`). A chip already linked to a
+  spool is left alone there. While such a chip waits, the catalogue product card
+  offers no "Burn the TigerTag+" (a maker's chip is linked, never written).
+  Checked with a Bambu Lab spool: both MIFARE chips linked to the new TigerData+.
 
 ## Removed
 
 ## i18n
+- `envGiveCount` (11 locales).
+- `linkedChipWorksWith` (11 locales).
+- `coinLog_to`, `coinLog_from` added; `coinLog_given`, `coinLog_received`
+  removed (11 locales).

@@ -29,7 +29,8 @@ the wiring is spread over two repos and was re-discovered from scratch more than
 envelope in the Deals banner), `wsTigerScale` / `wsTigerSpool` / `wsTigerTouch` / `wsTigerPod`
 (Workshop banner, owners only), `leagueTrophy` (League banner cup), `envGive` (envelope of the
 Friends panel's "Give an envelope" window — not on the pile stage's give window, where finding it
-would stack a second opening stage).
+would stack a second opening stage),
+`codeEnvelope` (red envelope beside the tiger in the "Gift code" window).
 
 **Adding one.** 1) add the id to `EGGS` (backend), deploy `tigerCoins` on an explicit go
 (`.agents/rules/irreversible-actions.md`), commit; 2) wire the spot with `tapEgg` + glints, check

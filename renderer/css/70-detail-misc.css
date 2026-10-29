@@ -2275,6 +2275,9 @@
   }
 
   /* ── Chip pending banner (detail panel) ── */
+  /* The detail card's banner slot (swapped alone when the TigerPOD's chips
+     change — _refreshChipBanners); it adds no box of its own. */
+  .dp-chip-banner { display: contents; }
   .chip-update-banner {
     display: flex; align-items: center; gap: 8px;
     padding: 8px 14px; background: var(--warning-soft);

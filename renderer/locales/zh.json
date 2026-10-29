@@ -2363,6 +2363,7 @@
   "envGiveNone": "今天的赠送次数已用完，明天再来吧。",
   "envGiveNoFriends": "添加好友后才能送红包。",
   "envGiveShort": "赠送",
+  "envGiveCount": "今天已送：{{sent}} · 剩余：{{left}}",
   "envGiveSent": "红包已送给 {{name}}！",
   "envGiveNoGift": "你没有可赠送的红包。",
   "eggFound": "这个你已经找到过了。试得不错。",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "已打开礼物红包",
   "coinLog_gift": "已兑换礼物码",
   "coinLog_spend": "兑换了 {{deal}}",
-  "coinLog_given": "送给 {{name}} 的红包",
-  "coinLog_received": "来自 {{name}} 的红包",
+  "coinLog_to": "给 {{name}}",
+  "coinLog_from": "来自 {{name}}",
   "coinLog_surprises": "{{n}} 个惊喜红包",
   "coinLog_chests": "{{n}} 个宝箱",
   "eggFoundTitle": "发现秘密！",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "已关联。扫描即可打开该材料。",
   "linkedChipsTitle": "关联芯片",
   "linkedChipUnlink": "解除关联",
-  "linkedChipUnlinkTip": "长按以解除芯片与此材料的关联。"
+  "linkedChipUnlinkTip": "长按以解除芯片与此材料的关联。",
+  "linkedChipWorksWith": "兼容"
 }

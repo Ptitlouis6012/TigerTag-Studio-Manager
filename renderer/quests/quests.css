@@ -1463,6 +1463,26 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-coins-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .sqd-coins-wrap > .sqr-card.sqd-coins { top: 0; }
 .sqd-coins-acts { display: flex; align-items: center; gap: 10px; }
+/* The same three in the header (#topCoins), toned down to sit in the bar like
+   the stat cards: one flat card, the balance on top, the envelope count and
+   the gift under it — no glow, no animation (the Deals banner keeps those). */
+.top-coins.top-coins { flex-direction: column; align-items: stretch; justify-content: center; gap: 4px;
+  box-sizing: border-box; height: var(--top-card-h, 68px); padding: 0 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.top-coins.top-coins[hidden] { display: none; }
+.top-coins-acts { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.top-coins .top-coins-bal.top-coins-bal { all: unset; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.top-coins .top-coins-bal[hidden] { display: none; }
+.top-coins .sqd-coins-bal { margin: 0; gap: 5px; font: 700 15px var(--qw-mono, monospace); color: var(--text); text-shadow: none; }
+.top-coins .tcoin--big { width: 16px; height: 16px; filter: none; }
+.top-coins .sqd-coins-env.sqd-coins-env { height: 22px; padding: 0 6px 0 2px; gap: 4px; border-radius: 6px; background: none; box-shadow: none;
+  color: var(--text); font: 700 13px var(--qw-mono, monospace); animation: none; transition: background .15s; }
+.top-coins .sqd-coins-env.sqd-coins-env::after { display: none; }
+.top-coins .sqd-coins-env.sqd-coins-env:hover { transform: none; box-shadow: none; background: color-mix(in srgb, var(--text) 8%, transparent); }
+.top-coins .sqd-coins-env.is-empty { color: var(--muted); }
+.top-coins .sqd-coins-env img { width: 14px; height: 18px; animation: none; filter: none; }
+.top-coins .sqd-coins-gift { width: 22px; height: 22px; min-height: 0; }
+.top-coins .sqd-coins-gift img { width: 20px; height: 20px; filter: none; }
+.top-coins .sqd-coins-gift:hover img { transform: none; }
 /* The code's gift: no frame, the illustrated gift box, which hops on hover. */
 .sqd-coins-gift { display: grid; place-items: center; width: 36px; aspect-ratio: 1; padding: 0; border: 0; background: none; cursor: pointer;
   color: var(--tsq-muted); transition: color .15s, transform .15s; }
@@ -1536,6 +1556,7 @@ body.progress-view #gridSortWrap { display: none; }
 .tc-give { width: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
 .tc-reveal-actions:has(> .tc-give) { margin-top: 0; }   /* the search sits right under the title */
 .tc-give-left { margin: 0; font-size: 12.5px; color: var(--tsq-muted); }
+.tc-give-count { margin: 0; font-size: 12.5px; font-weight: 700; color: #ffd75e; text-align: center; }   /* the day's gifts: sent · left */
 .tc-give-left.is-none { color: #ff8a80; }
 /* The friends as a grid of avatars (name under), the picked one ringed and
    checked; scrolls without a visible scrollbar. */
@@ -1986,6 +2007,11 @@ body.progress-view #gridSortWrap { display: none; }
 .tcx-pile img:nth-child(1) { left: 0; bottom: 18px; width: 72px; rotate: -14deg; }
 .tcx-pile img:nth-child(2) { left: 52px; bottom: 0; width: 96px; animation: tcx-coin 2.6s ease-in-out infinite; }
 .tcx-pile img:nth-child(3) { left: 118px; bottom: 6px; width: 52px; animation: tcx-coin 2.6s ease-in-out .8s infinite; }
+/* The envelope hides an easter egg (codeEnvelope): it takes clicks, the rest
+   of the pile does not; its glints sit around it. */
+.tcx-pile .tcx-pile-env { pointer-events: auto; }
+.tcx-pile .tcx-pile-env.is-tapped { animation: tch-tap .35s ease; }
+.tcx-pile .tch-glints { left: 40px; top: -26px; z-index: 1; translate: -50% 0; width: 120px; height: 110px; }
 @keyframes tcx-coin { 50% { transform: translateY(-5px) rotate(6deg); } }
 /* Where codes come from. */
 .tcx-srcs { position: relative; z-index: 2; display: grid; grid-template-columns: repeat(4, 1fr); margin: 0; padding: 0; list-style: none;
@@ -2072,6 +2098,24 @@ body.progress-view #gridSortWrap { display: none; }
 .sqd-coins.sqd-coins:hover { border-color: var(--sqr-gold, #ffc53d); transform: translateY(-1px); }
 .tc-code-card.tcx.tcx--hist { width: min(620px, 94vw); }
 .tcx--hist .tch-env { width: 110px; top: -96px; }
+/* A click flips the coin: three turns on its vertical axis, landing face up. */
+.tcx--hist .tch-coin { cursor: pointer; }
+.tcx--hist .tch-coin.is-flipping { animation: tch-coin-flip 1.1s cubic-bezier(.2, .7, .25, 1); }
+@keyframes tch-coin-flip {
+  from { transform: perspective(600px) rotateY(0); }
+  to { transform: perspective(600px) rotateY(1080deg); }
+}
+/* The stars it throws: the glints' four-point star, flying out and fading. */
+.tch-coin-star { position: absolute; z-index: 2; width: 22px; aspect-ratio: 1; margin: -11px 0 0 -11px; pointer-events: none;
+  background: radial-gradient(circle, #fff3a8 0 18%, #ffc93d 50%, #ff9f1a);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); opacity: 0;
+  animation: tch-coin-star .9s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes tch-coin-star {
+  0% { opacity: 0; transform: translate(0, 0) scale(.2) rotate(0); }
+  20%, 65% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(var(--s)) rotate(180deg); }
+}
+@media (prefers-reduced-motion: reduce) { .tcx--hist .tch-coin.is-flipping, .tch-coin-star { animation: none; } .tch-coin-star { display: none; } }
 .tch-sum { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .tch-sum > span { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px; border-radius: 12px; background: rgba(11, 14, 28, .6); border: 1px solid rgba(255, 207, 61, .22); }
 .tch-sum small { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #9aa3c2; }
@@ -2081,12 +2125,32 @@ body.progress-view #gridSortWrap { display: none; }
 .tch-tabs { display: flex; gap: 6px; width: 100%; }
 .tch-tab.tch-tab { flex: 1; height: 32px; border-radius: 9px; border: 1px solid rgba(255, 207, 61, .22); background: rgba(11, 14, 28, .5); color: #c9d0e6; font-size: 12.5px; font-weight: 700; cursor: pointer; }
 .tch-tab.tch-tab.is-on { background: #ffcf3d; border-color: #ffcf3d; color: #1a1205; }
-.tch-log { width: 100%; max-height: min(46vh, 380px); overflow: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+/* A fixed height, not a max: the window opens at its final size while the log
+   loads, instead of growing once it arrives. The loader / an empty or error
+   message sits in the middle. */
+.tch-log { width: 100%; height: min(46vh, 380px); overflow: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 6px; text-align: left; }
 .tch-log::-webkit-scrollbar { display: none; }
+.tch-log > :only-child:not(.tch-row) { margin: auto; }
 .tch-day { margin: 6px 2px 0; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #ffcf3d; }
 .tch-row { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: rgba(11, 14, 28, .6); border: 1px solid rgba(255, 207, 61, .14); }
-.tch-row img { width: 30px; height: 30px; object-fit: contain; }
+/* The row's own icon only — `.tch-row img` also reached the avatar's badge. */
+.tch-row > img { width: 30px; height: 30px; object-fit: contain; }
 .tch-row b { display: block; font-size: 13px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tch-row small { font-size: 11.5px; color: #9aa3c2; }
 .tch-amt { font: 800 14px var(--qw-mono, ui-monospace, monospace); color: #9aa3c2; }
+.tch-row .tch-amt { display: inline-flex; align-items: center; gap: 7px; overflow: visible; font-size: 17px; }
+.tch-amt.is-gold { color: #ffd75e; }
+.tch-row .tch-amt .tch-amt-ic { width: 16px; height: 20px; }
+.tch-row .tch-amt .tcoin { width: 20px; height: 20px; vertical-align: 0; }
+/* Which way it went, at a glance (assets-src/img/tigercoins/coin-history-mockup.png):
+   a coloured bar on the left — green in, red out, gold coins earned — and on an
+   envelope row an arrow (into / out of the envelope) and the friend's avatar. */
+.tch-row--in, .tch-row--out, .tch-row--coin { box-shadow: inset 4px 0 0 var(--tch-acc); }
+.tch-row--in { --tch-acc: #3ddc84; }
+.tch-row--out { --tch-acc: #ff5a4e; }
+.tch-row--coin { --tch-acc: #ffc53d; }
+.tch-row:has(.tch-dir) { grid-template-columns: 32px 18px 34px minmax(0, 1fr) auto; }
+.tch-dir { display: grid; place-items: center; }
+.tch-dir .icon { background: var(--tch-acc); }
+.tch-row--in .tch-dir .icon { transform: scaleX(-1); }   /* pointing into the envelope */
 .tch-empty { margin: 16px 0; text-align: center; color: #9aa3c2; }

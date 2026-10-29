@@ -2363,6 +2363,7 @@
   "envGiveNone": "Vandaag geen cadeaus meer: kom morgen terug.",
   "envGiveNoFriends": "Voeg een vriend toe om hem een envelop te geven.",
   "envGiveShort": "Geven",
+  "envGiveCount": "Vandaag verstuurd: {{sent}} · Over: {{left}}",
   "envGiveSent": "Envelop gegeven aan {{name}}!",
   "envGiveNoGift": "Je hebt geen envelop om te geven.",
   "eggFound": "Die heb je al gevonden. Goed geprobeerd.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Cadeau-envelop geopend",
   "coinLog_gift": "Cadeaucode ingewisseld",
   "coinLog_spend": "Ingeruild voor {{deal}}",
-  "coinLog_given": "Envelop gegeven aan {{name}}",
-  "coinLog_received": "Envelop van {{name}}",
+  "coinLog_to": "Aan {{name}}",
+  "coinLog_from": "Van {{name}}",
   "coinLog_surprises": "{{n}} verrassingsenveloppen",
   "coinLog_chests": "{{n}} kisten",
   "eggFoundTitle": "Geheim gevonden!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Gekoppeld. Scan en het materiaal opent.",
   "linkedChipsTitle": "Gekoppelde chips",
   "linkedChipUnlink": "Ontkoppelen",
-  "linkedChipUnlinkTip": "Houd ingedrukt om de chips los te koppelen van dit materiaal."
+  "linkedChipUnlinkTip": "Houd ingedrukt om de chips los te koppelen van dit materiaal.",
+  "linkedChipWorksWith": "Werkt met"
 }

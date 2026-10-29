@@ -2363,6 +2363,7 @@
   "envGiveNone": "Dziś już nic nie wyślesz: wróć jutro.",
   "envGiveNoFriends": "Dodaj znajomego, aby podarować mu kopertę.",
   "envGiveShort": "Podaruj",
+  "envGiveCount": "Wysłane dziś: {{sent}} · Zostało: {{left}}",
   "envGiveSent": "Koperta podarowana {{name}}!",
   "envGiveNoGift": "Nie masz koperty do podarowania.",
   "eggFound": "To już znalezione. Niezła próba.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Otwarta koperta prezentowa",
   "coinLog_gift": "Wykorzystano kod prezentowy",
   "coinLog_spend": "Wymieniono na {{deal}}",
-  "coinLog_given": "Koperta dla {{name}}",
-  "coinLog_received": "Koperta od {{name}}",
+  "coinLog_to": "Do {{name}}",
+  "coinLog_from": "Od {{name}}",
   "coinLog_surprises": "{{n}} kopert-niespodzianek",
   "coinLog_chests": "Skrzynie: {{n}}",
   "eggFoundTitle": "Sekret znaleziony!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Powiązano. Zeskanuj, a materiał się otworzy.",
   "linkedChipsTitle": "Połączone chipy",
   "linkedChipUnlink": "Odłącz",
-  "linkedChipUnlinkTip": "Przytrzymaj, aby odłączyć chipy od tego materiału."
+  "linkedChipUnlinkTip": "Przytrzymaj, aby odłączyć chipy od tego materiału.",
+  "linkedChipWorksWith": "Działa z"
 }

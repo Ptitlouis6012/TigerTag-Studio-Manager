@@ -1,5 +1,5 @@
 // TigerCoins pull sounds — synthesised with the Web Audio API (no audio file):
-// hold beeps (faster and higher, with an echo), seal crack, flap, card reveal, one jingle per rarity, coin ticks,
+// hold beeps (faster and higher, with an echo), seal crack, flap, card reveal, one jingle per rarity, coin ticks, a coin flip,
 // and the stage's background music (ambientStart / ambientStop).
 // One AudioContext, created on the first sound (a user gesture has happened by
 // then), a master gain at a modest level behind a compressor. Muted state in
@@ -182,6 +182,13 @@ export const sfx = {
     noise(0.7 + k * 0.5, { at: at + 0.05, vol: 0.06 + k * 0.05, from: 7000, to: 10000, type: "highpass" });
   },
   coin(i = 0) { tone("sine", 880, 1320, 0.075, { at: i * 0.045, vol: 0.18 }); },
+  // A coin flicked into a spin (the history's coin, ~1.1 s): a bright metallic
+  // ping (inharmonic partials), then quick ticks slowing down as it turns.
+  coinFlip() {
+    [2093, 3135, 4700].forEach((f, i) => tone("sine", f, f * 0.998, 0.5 - i * 0.12, { vol: 0.14 - i * 0.03 }));
+    let at = 0.08;
+    for (let k = 0; k < 9; k++) { tone("triangle", 3400, 3200, 0.03, { at, vol: 0.06 }); at += 0.05 + k * 0.016; }
+  },
   rarity(r) {
     const notes = (fs, step, type = "triangle", vol = 0.35, len = 0.18, at = 0) => fs.forEach((f, i) => tone(type, f, f, len, { at: at + i * step, vol }));
     const chord = (fs, at, len, vol, type = "triangle") => fs.forEach(f => { tone(type, f, f, len, { at, vol, attack: 0.02 }); tone("sine", f * 2.003, f * 2.003, len * 0.8, { at, vol: vol * 0.35, attack: 0.02 }); });

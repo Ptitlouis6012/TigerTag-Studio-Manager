@@ -674,6 +674,10 @@
   .top-stats .sb-stat {
     flex: 1 1 0;
     min-width: fit-content;
+    /* Height shared with the header's TigerCoins card (#topCoins, quests.css). */
+    box-sizing: border-box;
+    height: var(--top-card-h, 68px);
+    justify-content: center;
     padding: 8px 14px;
     background: var(--surface-2);
     border: 1px solid var(--border);

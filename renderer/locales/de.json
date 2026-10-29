@@ -2363,6 +2363,7 @@
   "envGiveNone": "Heute keine Geschenke mehr: komm morgen wieder.",
   "envGiveNoFriends": "Füge einen Freund hinzu, um ihm einen Umschlag zu schenken.",
   "envGiveShort": "Schenken",
+  "envGiveCount": "Heute gesendet: {{sent}} · Übrig: {{left}}",
   "envGiveSent": "Umschlag an {{name}} verschenkt!",
   "envGiveNoGift": "Du hast keinen Umschlag zum Verschenken.",
   "eggFound": "Schon gefunden. Netter Versuch.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Geschenkumschlag geöffnet",
   "coinLog_gift": "Geschenkcode eingelöst",
   "coinLog_spend": "Eingetauscht gegen {{deal}}",
-  "coinLog_given": "Umschlag an {{name}} verschenkt",
-  "coinLog_received": "Umschlag von {{name}}",
+  "coinLog_to": "An {{name}}",
+  "coinLog_from": "Von {{name}}",
   "coinLog_surprises": "{{n}} Überraschungsumschläge",
   "coinLog_chests": "{{n}} Truhen",
   "eggFoundTitle": "Geheimnis gefunden!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Verknüpft. Scannen, und das Material öffnet sich.",
   "linkedChipsTitle": "Verknüpfte Chips",
   "linkedChipUnlink": "Lösen",
-  "linkedChipUnlinkTip": "Gedrückt halten, um die Chips von diesem Material zu lösen."
+  "linkedChipUnlinkTip": "Gedrückt halten, um die Chips von diesem Material zu lösen.",
+  "linkedChipWorksWith": "Läuft mit"
 }

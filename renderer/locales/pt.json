@@ -2363,6 +2363,7 @@
   "envGiveNone": "Sem envios hoje: volte amanhã.",
   "envGiveNoFriends": "Adicione um amigo para lhe dar um envelope.",
   "envGiveShort": "Dar",
+  "envGiveCount": "Enviados hoje: {{sent}} · Restantes: {{left}}",
   "envGiveSent": "Envelope dado a {{name}}!",
   "envGiveNoGift": "Você não tem envelope para dar.",
   "eggFound": "Esse você já achou. Boa tentativa.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Envelope de presente aberto",
   "coinLog_gift": "Código de presente resgatado",
   "coinLog_spend": "Trocado por {{deal}}",
-  "coinLog_given": "Envelope dado a {{name}}",
-  "coinLog_received": "Envelope de {{name}}",
+  "coinLog_to": "Para {{name}}",
+  "coinLog_from": "De {{name}}",
   "coinLog_surprises": "{{n}} envelopes surpresa",
   "coinLog_chests": "{{n}} baús",
   "eggFoundTitle": "Segredo encontrado!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Vinculado. Leia e o material abre.",
   "linkedChipsTitle": "Chips vinculados",
   "linkedChipUnlink": "Desvincular",
-  "linkedChipUnlinkTip": "Segure para desvincular os chips deste material."
+  "linkedChipUnlinkTip": "Segure para desvincular os chips deste material.",
+  "linkedChipWorksWith": "Funciona com"
 }

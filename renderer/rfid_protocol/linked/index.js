@@ -23,8 +23,8 @@ let unsub = null;
 const aliases = new Map();   // UID_HEX → { spoolId, chip, vendor }
 const buffer = new Map();    // readerName → { uid, chip }
 let bufferTimer = null;
-let pending = null;          // { chips, until } — chips waiting for a spool being created
-let offer = null;            // { chips } — the link grid is up: spool cards offer to link them
+let pending = null;          // { until } — the spool being created links the maker chips on the TigerPOD
+let offer = null;            // {} — the link grid is up: spool cards offer to link the maker chips on the TigerPOD
 let choiceKind = null;       // kind of the open chooser ("foreign" | "blank" | "add")
 
 const UID_RE = /^[0-9A-F]{8,20}$/;
@@ -122,21 +122,74 @@ export function linkedChipsOf(row) {
   return [...aliases].filter(([, a]) => ids.has(a.spoolId)).map(([uid, a]) => ({ uid, ...a }));
 }
 
-export function onForeignChip({ readerName, uid, chip }) {
+// Every maker's chip seen this session (uid → chip type): with the chips on the
+// TigerPOD (ctx.state.nfcCardPresent) it says which maker chips sit there now.
+const makerUids = new Map();
+
+export function onForeignChip({ readerName, uid, chip }, { held = false } = {}) {
   const u = norm(uid);
+  if (UID_RE.test(u)) makerUids.set(u, chip || "unknown");
   if (!accountUid || !UID_RE.test(u)) return;
   buffer.set(readerName || "reader", { uid: u, chip: chip || "unknown" });
+  bufferHeld = held;
   clearTimeout(bufferTimer);
   bufferTimer = setTimeout(flush, 1500);   // the TigerPOD's two readers see both flanges' chips together
+}
+let bufferHeld = false;
+
+/** A maker's chip placed while the new-chip card is up (opened by "+"): nothing
+ *  opens and nothing is added — the card switches to the maker-chip choices and
+ *  the chip waits there, so what the card then creates is linked to it. A chip
+ *  already linked to a spool is left alone. */
+export function holdForeignChip(data) { onForeignChip(data, { held: true }); }
+
+/** Maker chips waiting for the spool being created (the product card offers no
+ *  burn while there are: such a chip is linked, never written). What counts is
+ *  what sits on the TigerPOD NOW: chips swapped while the card is up replace the
+ *  earlier ones, they are not added to them. */
+export function pendingMakerChips() { return pending && Date.now() <= pending.until ? presentMakerChips().length : 0; }
+
+/** The maker chips on the TigerPOD right now that no spool is linked to yet. */
+export function presentMakerChips() {
+  const on = [...(ctx.state?.nfcCardPresent?.values() || [])].map(c => norm(c?.uid));
+  // A link to a spool that no longer exists (deleted before links went with
+  // their spool) does not count: that chip is free again.
+  const linked = u => aliases.has(u) && !!rowById(aliases.get(u).spoolId);
+  return [...new Set(on)].filter(u => makerUids.has(u) && !linked(u)).map(u => ({ uid: u, chip: makerUids.get(u) }));
+}
+
+/** "Link the proprietary third-party Tag(s)" — the held banner shown instead of a
+ *  burn when maker chips are there (a maker's chip is linked, never written). */
+export function makerLinkBannerHtml(id, n) {
+  const { t, esc } = ctx;
+  return `
+    <button type="button" class="chip-update-banner lc-offer-banner" id="${esc(id)}" data-hold-tip="linkedChipOfferTip">
+      <span class="hold-progress" aria-hidden="true"></span>
+      <span class="lc-offer-ic"><span class="icon icon-link icon-18" aria-hidden="true"></span></span>
+      <span class="chip-update-text">${esc(n > 1 ? t("linkedChipOfferMany", { n }) : t("linkedChipOffer"))}</span>
+      <span class="tool-info" data-tip="${esc(t("linkedChipOfferInfo"))}" aria-label="${esc(t("linkedChipOfferInfo"))}"><span class="icon icon-info icon-13"></span></span>
+    </button>`;
+}
+
+/** Links the maker chips on the TigerPOD (unlinked ones) to an existing spool. */
+export async function linkMakerChipsTo(spoolId) {
+  const chips = presentMakerChips(), row = rowById(spoolId);
+  if (!chips.length || !row) return false;
+  try { await link(chips, row); ctx.toast?.(ctx.t("linkedChipDone")); return true; }
+  catch (e) { ctx.reportError?.("linkedChips.linkMaker", e); ctx.toast?.(ctx.t("squadDealsErr")); return false; }
 }
 
 async function flush() {
   const chips = [...new Map([...buffer.values()].map(c => [c.uid, c])).values()];
-  buffer.clear();
+  const held = bufferHeld;
+  buffer.clear(); bufferHeld = false;
   if (!chips.length) return;
+  // The card is up: the view the user is in stays as it is — its banners follow
+  // what now sits on the TigerPOD (Link for a maker's chip, Burn for a blank).
+  if (held) { ctx.chipsChanged?.(); return; }
   for (const c of chips) {
     const row = await resolve(c.uid);
-    if (row) { ctx.openDetail(row.spoolId, { animateSwap: true }); return; }
+    if (row) { if (!held) ctx.openDetail(row.spoolId, { animateSwap: true }); return; }
   }
   openLinkWindow(chips);
 }
@@ -169,9 +222,9 @@ export async function linkPendingTo(spoolId) {
   const p = pending;
   pending = null;
   if (!p || Date.now() > p.until || !accountUid) return false;
-  const row = rowById(spoolId);
-  if (!row) return false;
-  try { await link(p.chips, row); closeChipChoice(); ctx.toast?.(ctx.t("linkedChipDone")); return true; }
+  const row = rowById(spoolId), chips = presentMakerChips();
+  if (!row || !chips.length) return false;
+  try { await link(chips, row); closeChipChoice(); ctx.toast?.(ctx.t("linkedChipDone")); return true; }
   catch (e) { ctx.reportError?.("linkedChips.linkPending", e); return false; }
 }
 /** A creation started anywhere else must not pick up chips left waiting. */
@@ -191,7 +244,11 @@ function openLinkWindow(chips) { openChipWindow(chips, "foreign"); }
  *  the chip eraser (rfid_protocol/eraser), during which a scan opens nothing. */
 export function openAddChooser() {
   if (!accountUid) return;
-  openChipWindow([], "add");
+  // Maker chips already on the TigerPOD and linked to nothing: the same choices
+  // as one placed while the card is up, so what it creates is linked, not burned.
+  const makers = presentMakerChips();
+  if (makers.length) openChipWindow(makers, "foreign");
+  else openChipWindow([], "add");
 }
 
 function openChipWindow(chips, kind) {
@@ -237,7 +294,7 @@ function openChipWindow(chips, kind) {
       closeChipLink();
       // Opening a creation panel clears any waiting chips, so set them after.
       if (to === "catalogue") ctx.openCatalogue(); else ctx.openManual();
-      pending = foreign ? { chips, until: Date.now() + 15 * 60e3 } : null;
+      pending = foreign ? { until: Date.now() + 15 * 60e3 } : null;
     }
     embed(document.getElementById(NEXT[to]));
     // Last: closing the previous view clears the selected look.
@@ -306,6 +363,7 @@ export function closeChipChoice() {
   // Hand the borrowed cards back once the card has slid out.
   setTimeout(() => { if (!el.classList.contains("open")) unembedAll(); }, 280);
   ctx.syncPanels?.();
+  ctx.chipsChanged?.();   // the spool card left open gets back its upgrade offer
 }
 
 // ── The pane: the chosen card, borrowed ─────────────────────────────────────
@@ -377,14 +435,21 @@ function openChipLink(chips, kind = "foreign") {
       <select data-lc-brand data-csel-short="thBrand"></select>
     </div>
     <div class="lc-grid" data-lc-list></div>`;
-  const seen = new Set();
-  const spools = (ctx.state.rows || []).filter(r => !r.deleted && !r.isFriend).filter(r => {
-    const tw = twinOf(r);
-    const key = tw ? [r.spoolId, tw.spoolId].sort().join("|") : r.spoolId;
-    if (seen.has(key)) return false;
-    seen.add(key); return kind === "foreign" ? !linkedChipsOf(r).length : !!r.isCloud;
-  });
-  const text = r => [r.brand, r.material, r.colorName].filter(s => s && s !== "-").join(" ").toLowerCase();
+  // Read from the live inventory on every search: a tag (or anything else)
+  // edited while the grid is open is found at the next keystroke.
+  const eligible = () => {
+    const seen = new Set();
+    return (ctx.state.rows || []).filter(r => !r.deleted && !r.isFriend).filter(r => {
+      const tw = twinOf(r);
+      const key = tw ? [r.spoolId, tw.spoolId].sort().join("|") : r.spoolId;
+      if (seen.has(key)) return false;
+      seen.add(key); return kind === "foreign" ? !linkedChipsOf(r).length : !!r.isCloud;
+    });
+  };
+  const spools = eligible();
+  // Searched: brand, material, colour name and the spool's own tags (a tag
+  // "customer" finds every spool carrying it).
+  const text = r => [r.brand, r.material, r.colorName, ...(r.tags || [])].filter(s => s && s !== "-").join(" ").toLowerCase();
   const list = body.querySelector("[data-lc-list]");
   // Brand filter: the brands of these materials, with their counts.
   const brandSel = body.querySelector("[data-lc-brand]");
@@ -397,14 +462,31 @@ function openChipLink(chips, kind = "foreign") {
   const paint = () => {
     const words = qInput.value.toLowerCase().split(/\s+/).filter(Boolean);
     const brand = brandSel.value;
-    const rows = spools.filter(r => (!brand || r.brand === brand) && words.every(w => text(r).includes(w))).slice(0, 200);
+    const rows = eligible().filter(r => (!brand || r.brand === brand) && words.every(w => text(r).includes(w))).slice(0, 200);
     // The inventory grid's own cards (ctx.gridCard / ctx.groupCard), grouped the
     // same way: identical copies are ONE deck card, as in the inventory.
     const items = ctx.groupItems ? ctx.groupItems(rows) : rows.map(row => ({ type: "single", row }));
-    list.innerHTML = items.map(it => it.type === "group"
-      ? `<div class="spool-card group-card lc-spool" role="button" tabindex="0" data-lc-group="${esc(it.key)}">${ctx.groupCard(it)}</div>`
-      : `<div class="spool-card lc-spool" role="button" tabindex="0" data-lc-spool="${esc(it.row.spoolId)}">${ctx.gridCard(it.row)}</div>`).join("")
-      + (rows.length ? "" : `<p class="lc-grid-empty">${esc(t("linkedChipNone"))}</p>`);
+    // Surgical (.agents/rules/surgical-dom-updates.md): each card is keyed; a card
+    // still found is KEPT as it is (no rebuild, its photo stays), the ones gone
+    // are removed and the new ones inserted, in the result's order. A keystroke
+    // that finds the same spools touches nothing; one that narrows the list only
+    // removes cards — the full rebuild used to make every card blink.
+    const keyOf = it => it.type === "group" ? `g:${it.key}:${it.members?.length ?? ""}` : `s:${it.row.spoolId}`;
+    const cardHtml = it => it.type === "group"
+      ? `<div class="spool-card group-card lc-spool" role="button" tabindex="0" data-lc-key="${esc(keyOf(it))}" data-lc-group="${esc(it.key)}">${ctx.groupCard(it)}</div>`
+      : `<div class="spool-card lc-spool" role="button" tabindex="0" data-lc-key="${esc(keyOf(it))}" data-lc-spool="${esc(it.row.spoolId)}">${ctx.gridCard(it.row)}</div>`;
+    const have = new Map([...list.querySelectorAll(":scope > .lc-spool")].map(el => [el.dataset.lcKey, el]));
+    list.querySelector(":scope > .lc-grid-empty")?.remove();
+    const next = items.map(it => {
+      const k = keyOf(it), kept = have.get(k);
+      if (kept) { have.delete(k); return kept; }
+      const tpl = document.createElement("template");
+      tpl.innerHTML = cardHtml(it).trim();
+      return tpl.content.firstElementChild;
+    });
+    have.forEach(el => el.remove());
+    next.forEach((el, i) => { if (list.children[i] !== el) list.insertBefore(el, list.children[i] || null); });
+    if (!rows.length) list.insertAdjacentHTML("beforeend", `<p class="lc-grid-empty">${esc(t("linkedChipNone"))}</p>`);
   };
   paint();
   qInput.addEventListener("input", paint);
@@ -423,7 +505,7 @@ function openChipLink(chips, kind = "foreign") {
     if (b.dataset.lcGroup) ctx.openGroup?.(b.dataset.lcGroup);
     else ctx.openSpool?.(b.dataset.lcSpool);
   });
-  offer = kind === "foreign" ? { chips } : null;
+  offer = kind === "foreign" ? {} : null;
   el.classList.add("open");
   ctx.syncPanels?.();
   setTimeout(() => body.querySelector("[data-lc-q]")?.focus(), 80);
@@ -447,13 +529,16 @@ export function wireSearchBox(root) {
  *  linked chips): the whole banner is the button — held 1.5 s, with the
  *  .hold-progress fill, it links the detected chips to this material. */
 export function linkOfferHtml(row) {
-  if (!offer || !row || row.deleted || row.isFriend || linkedChipsOf(row).length) return "";
+  // The maker chips on the TigerPOD now — none (a blank NTAG put there instead):
+  // no Link offer, the card falls back to its own banner (the burn).
+  const n = offer ? presentMakerChips().length : 0;
+  if (!n || !row || row.deleted || row.isFriend || linkedChipsOf(row).length) return "";
   const { t, esc } = ctx;
   return `
     <button type="button" class="chip-update-banner lc-offer-banner" id="lcOfferBanner" data-lc-offer="${esc(row.spoolId)}" data-hold-tip="linkedChipOfferTip">
       <span class="hold-progress" aria-hidden="true"></span>
       <span class="lc-offer-ic"><span class="icon icon-link icon-18" aria-hidden="true"></span></span>
-      <span class="chip-update-text">${esc(offer.chips.length > 1 ? t("linkedChipOfferMany", { n: offer.chips.length }) : t("linkedChipOffer"))}</span>
+      <span class="chip-update-text">${esc(n > 1 ? t("linkedChipOfferMany", { n }) : t("linkedChipOffer"))}</span>
       <span class="tool-info" data-tip="${esc(t("linkedChipOfferInfo"))}" aria-label="${esc(t("linkedChipOfferInfo"))}"><span class="icon icon-info icon-13"></span></span>
     </button>`;
 }
@@ -469,10 +554,10 @@ export function wireLinkOffer(root) {
     for (const ev of ["pointerdown", "mousedown", "touchstart", "click"]) info.addEventListener(ev, e => { e.stopPropagation(); e.preventDefault(); });
   }
   ctx.setupHoldToConfirm(btn, 1500, async () => {
-    const row = rowById(btn.dataset.lcOffer);
-    if (!offer || !row) return;
+    const row = rowById(btn.dataset.lcOffer), chips = presentMakerChips();
+    if (!offer || !row || !chips.length) return;
     try {
-      await link(offer.chips, row);
+      await link(chips, row);
       // Done: every side card closes, then the linked material's card opens alone.
       closeChipChoice();
       ctx.closeAllSide?.();

@@ -2363,6 +2363,7 @@
   "envGiveNone": "На сегодня подарки закончились — возвращайся завтра.",
   "envGiveNoFriends": "Добавь друга, чтобы подарить ему конверт.",
   "envGiveShort": "Подарить",
+  "envGiveCount": "Отправлено сегодня: {{sent}} · Осталось: {{left}}",
   "envGiveSent": "Конверт подарен {{name}}!",
   "envGiveNoGift": "У тебя нет конверта, чтобы подарить.",
   "eggFound": "Это уже найдено. Хорошая попытка.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Подарочный конверт открыт",
   "coinLog_gift": "Подарочный код активирован",
   "coinLog_spend": "Обменяно на {{deal}}",
-  "coinLog_given": "Конверт подарен {{name}}",
-  "coinLog_received": "Конверт от {{name}}",
+  "coinLog_to": "Для {{name}}",
+  "coinLog_from": "От {{name}}",
   "coinLog_surprises": "Конвертов-сюрпризов: {{n}}",
   "coinLog_chests": "Сундуков: {{n}}",
   "eggFoundTitle": "Секрет найден!",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Связано. Отсканируйте — и материал откроется.",
   "linkedChipsTitle": "Привязанные чипы",
   "linkedChipUnlink": "Отвязать",
-  "linkedChipUnlinkTip": "Удерживайте, чтобы отвязать чипы от этого материала."
+  "linkedChipUnlinkTip": "Удерживайте, чтобы отвязать чипы от этого материала.",
+  "linkedChipWorksWith": "Работает с"
 }

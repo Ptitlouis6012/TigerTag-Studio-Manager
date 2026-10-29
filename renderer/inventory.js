@@ -1,7 +1,7 @@
 import { decimalSpoolIdToHex, repairTruncatedNtagUid, isDecimalSpoolId, planTruncatedUidRepair } from './uid-repair.js';
 // ── RFID TigerTag tester modal ────────────────────────────────────────────
 import { initRfidTester } from './rfid_protocol/tigertag/index.js';
-import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, onForeignChip, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice, closeChipLink, wireSearchBox, linkOfferHtml, wireLinkOffer, openAddChooser, refreshChipChoice } from './rfid_protocol/linked/index.js';
+import { initLinkedChips, linkedChipsSignIn, linkedChipsSignOut, linkedChipsOf, onForeignChip, holdForeignChip, pendingMakerChips, presentMakerChips, makerLinkBannerHtml, linkMakerChipsTo, linkedChipsHtml, wireLinkedChips, linkPendingTo, clearPendingLink, openBlankChipWindow, closeChipChoice, closeChipLink, wireSearchBox, linkOfferHtml, wireLinkOffer, openAddChooser, refreshChipChoice } from './rfid_protocol/linked/index.js';
 import { initChipEraser, openChipEraser, closeChipEraser, chipEraserOpen, eraserCardPresent, eraserForeignChip, eraserReadersChanged } from './rfid_protocol/eraser/index.js';
 
 // ── Offline timezone → country (telemetry, no IP geolocation) ──────────────
@@ -21,7 +21,7 @@ import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTi
 import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
-import { applyDealsFilter, dealsViewHtml, openChests, showEnvelope, showEnvelopeGift, sortDeals, tapEgg, wireDeals } from './quests/squad-deals.js';
+import { applyDealsFilter, dealsViewHtml, openChests, openCoinsCodeModal, openCoinsHistory, openEnvelopeHelp, showEnvelope, showEnvelopeGift, sortDeals, tapEgg, wireDeals } from './quests/squad-deals.js';
 import { closePullStages, openPullStage } from './quests/coin-pull.js';
 import { squadHeroHtml, squadItemsHeroHtml, squadRankingsHtml, pulseHtml as squadPulseHtml, toggleLeague, leagueRows, setLeagueRows, rankNo } from './quests/squad-rankings.js';
 import { initQuests, questsSignIn, questsSignOut, questBump, questGauge, questPillLabel, questDailyProgress, questCurrentLevel, openQuests, renderQuestsView, questLootHtml } from './quests/index.js';
@@ -3394,7 +3394,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // » close tab at the panel's left edge, like every other side card.
     _setTab($("addProductCloseTab"), true, $("addProductPanel")?.offsetWidth || 0, $("addProductPanel"));
     _syncPanels();   // the new-chip chooser, when up, tucks to its left
+    _adpRenderFoot();
     setTimeout(() => $("adpBrand")?.focus(), 80);
+  }
+
+  // The foot says what "Make" will do with the chips on the TigerPOD: maker chips
+  // (Bambu Lab, Creality…) linked to nothing → the held "Link the proprietary
+  // Tag(s)" banner (creates the TigerData, then links them — never burned); a
+  // reader plugged in → the held "Burn the TigerTag" banner (creates, then
+  // burns); no reader → the plain Make button. Re-run when chips come and go.
+  function _adpRenderFoot() {
+    const slot = $("adpFootBanner"), btn = $("adpSave");
+    if (!slot || !btn) return;
+    const makers = HAS_NATIVE ? presentMakerChips().length : 0;
+    const mode = makers ? `link:${makers}` : HAS_NATIVE && state.nfcReaderCount > 0 ? "burn" : "";
+    if (slot.dataset.mode === mode) return;
+    slot.dataset.mode = mode;
+    slot.innerHTML = makers ? makerLinkBannerHtml("adpLinkBanner", makers)
+      : mode === "burn" ? _burnBannerHTML("adpBurnBanner", "TigerTag") : "";
+    btn.hidden = !!mode;
+    _wireChipBanner($("adpLinkBanner"), () => saveAddProduct({ linkMakers: true }), null);
+    _wireChipBanner($("adpBurnBanner"), () => saveAddProduct({ autoBurn: true }));
   }
 
   function closeAddProductPanel() {
@@ -3434,7 +3454,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     });
   }
 
-  async function saveAddProduct() {
+  async function saveAddProduct({ autoBurn = false, linkMakers = false } = {}) {
     const errEl = $("adpError");
     const showErr = msg => { if (errEl) { errEl.textContent = msg; errEl.hidden = false; } };
     if (errEl) errEl.hidden = true;
@@ -3638,7 +3658,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       bumpStudioCounters({ cloudAddedTotal: 1 });
       closeAddProductPanel();
       try { _flashMessage(t("addProductOk")); } catch (_) {}
-      _openCreatedSpool(cloudId);
+      _openCreatedSpool(cloudId, { autoBurn, linkMakers });
     } catch (e) {
       console.warn("[addProduct] save failed:", e?.code, e?.message);
       showErr(`${t("addProductErrSave")} ${e?.message || ""}`.trim());
@@ -4388,7 +4408,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     groupItems: rows => groupRows(rows, { force: true }), groupCard: g => _groupGridCardInnerHTML(g),
     openGroup: key => { closeDetail(); _openGroupPanel(key); }, setupHoldToConfirm,
     toast: msg => _flashMessage(msg), reportError, onChange: () => { if (state.selected) refreshOpenDetail?.(); },
-    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), chipPresent: () => state.nfcCardPresent.size > 0, syncPanels: () => _syncPanels(), clearSide: () => _clearSideForChip(), closeAllSide: () => _closeAllSidePanels(),
+    openCatalogue: () => openCatalogPick(), openManual: () => openAddProductPanel(), chipPresent: () => state.nfcCardPresent.size > 0, chipsChanged: () => _refreshChipBanners(), syncPanels: () => _syncPanels(), clearSide: () => _clearSideForChip(), closeAllSide: () => _closeAllSidePanels(),
     showTip: el => _showToolInfoTip(el), hideTip: () => _hideToolInfoTip(), errorTip: (el, msg, opts) => _showErrorTip(el, msg, opts),
     clearCreate: () => { closeCatalogPick(); if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); if ($("addProductPanel")?.classList.contains("open")) _adpCloseAllSheetsAndPanel(); },
     openEraser: () => openChipEraser(), closeEraser: () => closeChipEraser() });
@@ -5440,12 +5460,63 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   // opened (the chips', the gifts, the chests) — like the Lists pills. Never
   // opens anything: the member opens them when they like, all at once if so.
   const _envCount = c => c ? (c.unopened || 0) + (c.envelopes?.length || 0) + (c.chests?.length || 0) : 0;
-  function _paintDealsBadge(n) {
+  // `coins`: the status just read (else the Deals' copy, when it is this account's).
+  function _paintDealsBadge(n, coins = _deals.uid === state.activeAccountId ? _deals.coins : null) {
     const el = $("viewDealsBadge");
-    if (!el) return;
-    el.textContent = n > 99 ? "99+" : String(n);
-    el.hidden = !n;
+    if (el) { el.textContent = n > 99 ? "99+" : String(n); el.hidden = !n; }
+    // The header's envelope + gift (TigerSquad members): the same count, always in sight.
+    const top = $("topCoins"), env = $("topCoinsEnv");
+    if (!top || !env) return;
+    top.hidden = !state.supportPublicly;
+    $("topCoinsEnvN").textContent = n > 99 ? "99+" : String(n);
+    env.classList.toggle("is-empty", !n);
+    env.setAttribute("aria-label", n ? `${t("coinsOpen")} — ${t("coinsPile", { n })}` : t("envHelpTitle"));
+    const bal = $("topCoinsBal");
+    if (bal) {
+      bal.hidden = coins?.balance == null;
+      if (!bal.hidden) {
+        const v = coins.balance.toLocaleString(state.lang);
+        $("topCoinsBalN").textContent = v;
+        bal.setAttribute("aria-label", `${t("coinHistTitle")} — ${t("coinsBalance", { n: v })}`);
+      }
+    }
   }
+  // Header envelope: opens the pile (Deals view + opening stage), or at 0 says
+  // how to get some. Header gift: the gift-code window; balance: the history.
+  // Same as on the banner, opened over the Deals view.
+  function _topCoinsCtx(uid) {
+    const after = () => { if (state.viewMode === "squadDeals") _renderDealsView(); };
+    return { ..._coinsCtx(uid, after),
+      // The history window (the balance card): the same reads as the Deals',
+      // and the same loading animation while the log arrives.
+      getCoins: () => _deals.coins,
+      loadingHTML: () => _loadingHTML(),
+      coinHistory: async () => (await fbDb(uid).collection("users").doc(uid).collection("coinLog").orderBy("at", "desc").limit(300).get())
+        .docs.map(d => ({ ...d.data(), at: d.get("at")?.toMillis?.() || 0 })),
+      friendName: fuid => (state.friends || []).find(f => f.uid === fuid)?.displayName || "",
+    // The friend's avatar on an envelope row (history): the Tiger Squad views' sqb-avatar, as is.
+    friendAvatar: fuid => { const f = (state.friends || []).find(x => x.uid === fuid); return f ? userAvatar(f, "sqb-avatar") : ""; },
+      dealTitle: id => { const d = (_deals.docs || []).find(x => x.id === id); const tt = d?.title; return !tt ? "" : typeof tt === "string" ? tt : tt[state.lang] || tt.en || Object.values(tt)[0] || ""; },
+      onRedeemCode: async code => {
+      const r = await _tigerCoins(uid, "redeem", { code });
+      _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins));
+      after();
+      return r;
+    } };
+  }
+  // Each one takes you to the Deals view first, then opens its window there.
+  const _toDeals = () => { if (state.viewMode !== "squadDeals") setViewMode("squadDeals"); };
+  $("topCoinsEnv")?.addEventListener("click", () => {
+    const uid = state.activeAccountId; if (!uid) return;
+    if ($("topCoinsEnv").classList.contains("is-empty")) { _toDeals(); openEnvelopeHelp(_topCoinsCtx(uid)); }
+    else _openEnvelopesNow();   // switches to the Deals view itself
+  });
+  $("topCoinsBal")?.addEventListener("click", () => {
+    const uid = state.activeAccountId; if (uid) { _toDeals(); openCoinsHistory(_topCoinsCtx(uid)); }
+  });
+  $("topCoinsGift")?.addEventListener("click", () => {
+    const uid = state.activeAccountId; if (uid) { _toDeals(); openCoinsCodeModal(_topCoinsCtx(uid)); }
+  });
   // `gifts` = today's allowance of envelopes to give friends ({ left, max, tier }).
   const _coinsOf = r => ({ balance: r.balance, earned: r.earned || 0, spent: r.spent || 0, unopened: r.unopened, envelopes: r.envelopes || [], chests: r.chests || [], gifts: r.gifts || null, eggs: r.eggs || [] });
   // The ctx bits every opening needs: open a chest (its envelopes drawn server-side).
@@ -5498,9 +5569,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       return { opened, unopened: _pileSize() };
     };
     const gift = {
-      count: () => (_deals.coins?.gifts?.max ? _deals.coins?.envelopes?.length || 0 : 0),
+      // Every envelope of the pile can be given — the chips' too (`id: "chip"`).
+      count: () => (_deals.coins?.gifts?.max ? (_deals.coins?.envelopes?.length || 0) + (_deals.coins?.unopened || 0) : 0),
       run: async () => {
-        const env = _deals.coins?.envelopes?.[0], g = _deals.coins?.gifts;
+        const c = _deals.coins, g = c?.gifts;
+        const env = c?.envelopes?.[0] || (c?.unopened ? { id: "chip", kind: "chip" } : null);
         if (!env || !g) return null;
         // Over the opening stage: no envGive egg here (finding it would open a second
         // stage on top of this one) — it lives in the Friends panel's give window.
@@ -5539,12 +5612,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       } catch (_) {}
     },
     onOpenEnvelopes: () => _openAllEnvelopes(uid, ctx, paint),
+    // A deal's side card opens alone: every other side card closes first.
+    closeOtherSides: () => _closeAllSidePanels({ keepDeals: true }),
     eggFound: egg => (_deals.coins?.eggs || []).includes(egg),
     getCoins: () => _deals.coins,   // the latest balance (earned / spent / balance) for the history's summary
     // TigerCoins history (squad-deals.js openCoinsHistory): the account's coinLog, newest first.
     coinHistory: async () => (await fbDb(uid).collection("users").doc(uid).collection("coinLog").orderBy("at", "desc").limit(300).get())
       .docs.map(d => ({ ...d.data(), at: d.get("at")?.toMillis?.() || 0 })),
     friendName: fuid => (state.friends || []).find(f => f.uid === fuid)?.displayName || "",
+    // The friend's avatar on an envelope row (history): the Tiger Squad views' sqb-avatar, as is.
+    friendAvatar: fuid => { const f = (state.friends || []).find(x => x.uid === fuid); return f ? userAvatar(f, "sqb-avatar") : ""; },
     dealTitle: id => { const d = (_deals.docs || []).find(x => x.id === id); const tt = d?.title; return !tt ? "" : typeof tt === "string" ? tt : tt[state.lang] || tt.en || Object.values(tt)[0] || ""; },
     loadingHTML: () => _loadingHTML(),
     // An easter egg found (squad-deals.js openEnvelopeHelp): the server adds its
@@ -8017,7 +8094,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _paintDealsBadge(0);
     setTimeout(() => {
       if (uid !== state.activeAccountId) return;
-      _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) _paintDealsBadge(_envCount(_coinsOf(r))); }).catch(() => {});
+      _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) { const c = _coinsOf(r); _paintDealsBadge(_envCount(c), c); } }).catch(() => {});
     }, 6000);
     loadBlacklist();    // populate state.blacklist for the Friends panel
     subscribeRacks(uid);// live-sync the user's storage racks
@@ -8771,8 +8848,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _rowIsExactCode(r, q) {
     return String(r.sku || "").toLowerCase() === q
         || String(r.barcode || "").toLowerCase() === q
-        || String(r.uid || "").toLowerCase() === q;
+        || String(r.uid || "").toLowerCase() === q
+        || _rowChipUids(r).includes(q);
   }
+  // The UIDs of the maker chips (Bambu Lab, Creality…) linked to a spool: read
+  // live, not cached in the haystack, since a link changes without the row.
+  function _rowChipUids(r) { return linkedChipsOf(r).map(l => l.uid.toLowerCase()); }
 
   /* ONE search, the same everywhere (inventory, products, catalogue): the query
      is split into words and EVERY word must appear somewhere in the item —
@@ -8782,7 +8863,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _searchTokens(q) { return String(q || "").trim().toLowerCase().split(/\s+/).filter(Boolean); }
   function _hayHasAll(hay, toks) { for (const tk of toks) if (!hay.includes(tk)) return false; return true; }
   // A spool's haystack: everything a human types to find it — brand, series,
-  // product name, material, aspects, colour, the note, codes, tags, capacity.
+  // product name, material, aspects, colour, the note, codes, tags, capacity
+  // (plus its linked chips' UIDs, added in _rowMatchesSearch).
   const _rowHay = new WeakMap();
   function _rowSearchHay(r) {
     let hay = _rowHay.get(r);
@@ -8797,7 +8879,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   }
   function _rowMatchesSearch(r, q) {
     if (_searchHasExactCode(q)) return _rowIsExactCode(r, q);
-    return _hayHasAll(_rowSearchHay(r), _searchTokens(q));
+    const toks = _searchTokens(q);
+    if (_hayHasAll(_rowSearchHay(r), toks)) return true;
+    const chips = _rowChipUids(r);
+    return chips.length > 0 && _hayHasAll(_rowSearchHay(r) + " " + chips.join(" "), toks);
   }
 
   // NOTE: unused — the live filter is applyInventoryFilter(), which shows/hides
@@ -14140,7 +14225,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   // autoBurn: created from a held "Burn the TigerTag+" banner — the hold was the
   // confirmation, so the burn starts as soon as the blank chips are checked.
-  async function _openCreatedSpool(cloudId, { autoBurn = false } = {}) {
+  // linkMakers: created from a held "Link the proprietary Tag(s)" banner — the
+  // maker chips on the TigerPOD get linked to it, and nothing is burned.
+  async function _openCreatedSpool(cloudId, { autoBurn = false, linkMakers = false } = {}) {
     closeChipChoice();   // the spool it was opened for now exists
     const t0 = Date.now();
     while (!state.inventory[cloudId] && Date.now() - t0 < 4000) await new Promise(res => setTimeout(res, 100));
@@ -14149,6 +14236,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Created from the linked-chips window: the maker's chips get linked and
     // there is nothing to burn.
     if (await linkPendingTo(cloudId)) { _closeAllSidePanels(); openDetail(cloudId); return; }
+    if (linkMakers) {
+      if (await linkMakerChipsTo(cloudId)) _closeAllSidePanels();
+      openDetail(cloudId);
+      return;
+    }
     openDetail(cloudId);
     if (HAS_NATIVE && state.nfcReaderCount > 0 && row.isCloud && !_encodeModalOpen()) openEncodeModal(row, { auto: autoBurn });
   }
@@ -14279,7 +14371,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Chip cards — one per connected reader. State is conveyed entirely by
     // COLOUR (grey=waiting · blue=ready/writing · green=done · red=failed):
     // no per-chip text, no per-chip bar. Slot number shown only with 2 readers.
-    const showNums = readers.length > 1;
+    const showNums = readers.length > 0;   // the numbered dot with one reader too, like a pair's
     const cards = (readers.length ? readers : ["__none__"]).map((name, i) => {
       const hasReader = name !== "__none__";
       const card  = hasReader && state.nfcCardPresent.get(name);
@@ -15155,14 +15247,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const list = it?.color_info?.colors;
     return Array.isArray(list) && list.length ? list : [it?.color];
   }
-  function _catalogFilter(query, fBrand = "", fMat = "") {
+  function _catalogFilter(query, fBrand = "", fMat = "", hue = _hueFilter()) {
     const raw  = String(query || "").trim().toLowerCase();
     const toks = _searchTokens(raw);   // same words as the inventory search
     /* The colour window narrows the catalogue too — an entry carries a single
        hex, and one that has none simply cannot answer a colour question, so it
        drops out rather than slipping through. */
     const pass = e => (!fBrand || e.it.brand === fBrand) && (!fMat || e.it.material === fMat)
-      && (!_hueFilterOn() || _colorsMatchHue(_catColors(e.it)));
+      && (!_hueFilterOn(hue) || _colorsMatchHue(_catColors(e.it), hue));
 
     // A scanned barcode is the whole query and it means ONE product. Match it
     // exactly first and return only that — a barcode gun fires the digits and an
@@ -15390,7 +15482,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
      `id_tigertag` deliberately keeps the chipless nonce — this spool has no
      chip, so it must not carry the TigerTag+ id.
   */
-  async function _catalogCreate(productId, { keepLink = false, autoBurn = false } = {}) {
+  async function _catalogCreate(productId, { keepLink = false, autoBurn = false, linkMakers = false } = {}) {
     if (_catalogBusy) return;
     const uid = state.activeAccountId;
     if (!uid || state.friendView) return;
@@ -15423,7 +15515,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // The product card has done its job: close it and open the new spool's
       // own card from the inventory (and, reader plugged in, its TigerTag+ burn).
       if ($("productCardPanel")?.classList.contains("open")) closeProductCard(); else closeReorderPanel();
-      _openCreatedSpool(cloudId, { autoBurn });
+      _openCreatedSpool(cloudId, { autoBurn, linkMakers });
     } catch (e) {
       console.error("[catalog] create failed:", e);
       toast(res$, "bad", t("catalogCreateError"));
@@ -15515,7 +15607,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   function _catalogPickFill() {
     const list = $("cpkList");
     if (!list) return;
-    const hits = _catalogFilter($("cpkSearch")?.value, $("cpkBrand")?.value || "", "")
+    const hits = _catalogFilter($("cpkSearch")?.value, $("cpkBrand")?.value || "", "", _cpkHueFilter())
       .filter(_catIsCreatable).slice(0, CAT_PICK_MAX);
     list.innerHTML = hits.length ? hits.map(it => {
       const r = _catViewAsRow(it);
@@ -19529,18 +19621,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // color_r/g/b) and can be re-edited freely. A burned TigerTag/TigerTag+ chip
     // keeps its colour read-only here.
     $("btnEditColor")?.addEventListener("click", () => openColorEditModal(r));
-    // Upgrade to TigerTag+ — the banner opens the catalogue picker for this spool;
-    // a second click closes it again (with the product card it opened).
-    $("upgradePlusBanner")?.addEventListener("click", e => {
-      if (e.target.closest(".tool-info")) return;
-      const open = _cpkUpgradeFor === r.spoolId && $("catalogPickPanel")?.classList.contains("open");
-      // A TigerTag can only evolve with its own chip on the TigerPOD: no going further without it.
-      if (!open && !_spoolChipOnPod(r)) { _upgradeNeedPod(e.currentTarget); return; }
-      if (open) {
-        if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
-        closeCatalogPick();
-      } else openCatalogPick({ upgradeFor: r.spoolId });
-    });
 
     // collapsible "Details" section — toggle + persist preference
     const btnToggleDetails = $("btnToggleDetails");
@@ -19902,16 +19982,49 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // THIS spool's chip(s), verifies the presented UID(s) match, warns on a
     // mismatch, and does the verified surgical re-write. (openUpdateModal falls
     // back to the POD modal itself when no reader is present.)
-    wireLinkOffer($("detailPanel"));
-    // Cloud encode banner — open the guided encode modal when a reader is
-    // connected (it handles the presence gate itself); otherwise guide to POD.
-    _wireChipBanner($("cloudEncodeBanner"), () => openEncodeModal(r, { auto: true }));
-    _wireChipBanner($("chipUpdateBanner"), () => openUpdateModal(r), "chipUpdateNeedPod");
+    _wireDetailChipBanner(r);
     // Tags — Shopify-style inline editor (input + custom autocomplete dropdown
     // with create + toggles, chips below, pencil → "Add tags" modal). Firestore
     // writes are twin-mirrored; chips update in place. See _wireTagEditor.
     _wireTagEditor(_spoolTagCtx(r));
   }
+  function _wireDetailChipBanner(r) {
+    wireLinkOffer($("detailPanel"));
+    // Cloud encode banner — open the guided encode modal when a reader is
+    // connected (it handles the presence gate itself); otherwise guide to POD.
+    _wireChipBanner($("cloudEncodeBanner"), () => openEncodeModal(r, { auto: true }));
+    _wireChipBanner($("makerLinkBanner"), async () => { if (await linkMakerChipsTo(r.spoolId)) openDetail(r.spoolId); }, null);
+    _wireChipBanner($("chipUpdateBanner"), () => openUpdateModal(r), "chipUpdateNeedPod");
+    // Upgrade to TigerTag+ — the banner opens the catalogue picker for this spool;
+    // a second click closes it again (with the product card it opened).
+    $("upgradePlusBanner")?.addEventListener("click", e => {
+      if (e.target.closest(".tool-info")) return;
+      const open = _cpkUpgradeFor === r.spoolId && $("catalogPickPanel")?.classList.contains("open");
+      // A TigerTag can only evolve with its own chip on the TigerPOD: no going further without it.
+      if (!open && !_spoolChipOnPod(r)) { _upgradeNeedPod(e.currentTarget); return; }
+      if (open) {
+        if ($("productCardPanel")?.classList.contains("open")) closeProductCard();
+        closeCatalogPick();
+      } else openCatalogPick({ upgradeFor: r.spoolId });
+    });
+  }
+  // The chips on the TigerPOD changed: every held Link / Burn banner follows
+  // what sits there NOW (a maker's chip → Link, a blank NTAG → Burn) — the
+  // open views stay as they are. Detail card: only its banner slot is swapped.
+  function _refreshChipBanners() {
+    _adpRenderFoot();
+    if ($("productCardPanel")?.classList.contains("open") && _productCardData) _renderProductCard(_productCardData);
+    const slot = $("detailPanel")?.classList.contains("open") ? $("panelBody")?.querySelector(".dp-chip-banner") : null;
+    const r = slot && state.rows.find(x => x.spoolId === state.selected);
+    if (!r) return;
+    const tmp = document.createElement("div");
+    tmp.innerHTML = buildPanelHTML(r);
+    const next = tmp.querySelector(".dp-chip-banner");
+    if (!next || next.innerHTML === slot.innerHTML) return;
+    slot.innerHTML = next.innerHTML;
+    _wireDetailChipBanner(r);
+  }
+
   function closeDetail() {
     // Cancel any pending scan-open: a twin spool's second chip can leave a queued
     // _scanOpenUid that would otherwise pop the card again the moment we close it
@@ -21213,11 +21326,16 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // TigerData+ and opens the burn, so "what do I do with this chip?" has an answer.
     // Opened from a TigerTag's "Upgrade to TigerTag+": the banner upgrades that spool.
     const upgradeFor = isCat && _cpkUpgradeFor && $("catalogPickPanel")?.classList.contains("open") ? _cpkUpgradeFor : null;
+    // Waiting in the new-chip card, or simply on the TigerPOD and linked to nothing.
+    const makerN = HAS_NATIVE ? pendingMakerChips() || presentMakerChips().length : 0;
     const burnHTML = !isCat ? ""
       : upgradeFor ? (() => {
           const tier = _upgradeTier(state.rows.find(x => x.spoolId === upgradeFor));
           return _chipBannerHTML("pcBurnBanner", t("upgradeToPlusBanner", { tier }), t("upgradeToPlusPickInfo", { tier }), { plus: true, holdTip: "upgradeToPlusHoldTip", holdTier: tier });
         })()
+      // A maker's chip waits on the TigerPOD (Bambu Lab, Creality…): it is linked,
+      // never written — "Link" (creates the TigerData+ and links it) instead of the burn.
+      : makerN ? makerLinkBannerHtml("pcLinkBanner", makerN)
       : HAS_NATIVE ? _burnBannerHTML("pcBurnBanner", "TigerTag+") : "";
     body.innerHTML = `
       ${imgSection}
@@ -21256,7 +21374,10 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // Upgrading a TigerTag needs that spool's own chip on the TigerPOD (a TigerData none).
     if (upgradeFor) _wireChipBanner($("pcBurnBanner"), () => _upgradeSpoolToProduct(upgradeFor, p.catalogItem.id),
       "upgradeNeedPod", () => _spoolChipOnPod(state.rows.find(x => x.spoolId === upgradeFor)));
-    else _wireChipBanner($("pcBurnBanner"), () => {
+    _wireChipBanner($("pcLinkBanner"), () => {
+      if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id), { keepLink: true, linkMakers: true });
+    }, null);
+    if (!upgradeFor) _wireChipBanner($("pcBurnBanner"), () => {
       if (!_catalogBusy) _catalogCreate(Number(p.catalogItem.id), { keepLink: !!$("chipChoicePanel")?.classList.contains("open"), autoBurn: true });
     });
     // Copy-JSON — same affordance as the material card's raw section. Wired here
@@ -22915,13 +23036,26 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // While the new-chip card's link grid is up, the spool card offers to link
     // the detected chips (rfid_protocol/linked) — ahead of every other banner.
     let chipBannerHtml = linkOfferHtml(r);
+    // The upgrade to TigerData+ / TigerTag+ is offered on its own, never while
+    // the new-chip card ("What would you like to do?") is up: there the spool is
+    // being linked or burned, not upgraded.
+    const offerUpgrade = !r.isCloudPlus && !state.friendView && !!window.electronAPI?.lookupProduct
+      && !$("chipChoicePanel")?.classList.contains("open");
     if (chipBannerHtml) {
       // (wired by wireLinkOffer after render)
+    } else if (r.isCloud && !state.friendView && presentMakerChips().length) {
+      // A maker's chip (Bambu Lab, Creality…) not linked yet sits on the TigerPOD:
+      // link it to this spool — such a chip is never burned.
+      chipBannerHtml = makerLinkBannerHtml("makerLinkBanner", presentMakerChips().length);
+    } else if (r.isCloud && linkedChipsOf(r).length) {
+      // Its chips are a maker's, already linked: nothing to burn. A plain
+      // TigerData still offers its upgrade to TigerData+ (catalogue).
+      chipBannerHtml = offerUpgrade ? _upgradeBannerHTML(r) : "";
     } else if (r.isCloud) {
       // Cloud spool — never has a physical chip yet: the persistent burn banner,
       // and a plain TigerData also offers its upgrade to TigerData+ (catalogue).
       chipBannerHtml = _burnBannerHTML("cloudEncodeBanner", r.isCloudPlus ? "TigerTag+" : "TigerTag")
-        + (!r.isCloudPlus && !state.friendView && window.electronAPI?.lookupProduct ? _upgradeBannerHTML(r) : "");
+        + (offerUpgrade ? _upgradeBannerHTML(r) : "");
     } else if (r.needUpdateAt) {
       chipBannerHtml = _chipBannerHTML("chipUpdateBanner", t("chipUpdateTitle", { tier: r.isPlus ? "TigerTag+" : "TigerTag" }), t("chipUpdateInfo"), { update: true });
     } else if (r.tagCount >= 2 && !r.hasTwinPair && !state.friendView) {
@@ -22933,7 +23067,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           <img class="rfid-material-icon" src="../assets/img/TigerTag_RFID_Material.png" alt="RFID">
           <span class="chip-update-text">${esc(t("twinMissingHint", { i: r.tagIndex ?? "?", n: r.tagCount }))}</span>
         </div>`;
-    } else if (!r.isPlus && !state.friendView && window.electronAPI?.lookupProduct) {
+    } else if (!r.isPlus && offerUpgrade) {
       // Regular TigerTag (Maker) — offer the upgrade to TigerTag+: a click opens the
       // catalogue picker, whose product card then offers the (held) upgrade.
       chipBannerHtml = _upgradeBannerHTML(r);
@@ -22941,7 +23075,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
     return `
       ${imgSection}
-      ${chipBannerHtml}
+      <div class="dp-chip-banner">${chipBannerHtml}</div>
       ${flagsRow}
       ${identityHtml}
       <div class="panel-section">
@@ -23495,7 +23629,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   })();
 
   // Close every open side card (spool / group / printer / settings) in one go.
-  function _closeAllSidePanels() {
+  // keepDeals: leave the Deals side card alone (a deal opening over another).
+  function _closeAllSidePanels({ keepDeals = false } = {}) {
     if ($("notifPanel")?.classList.contains("open"))      closeNotifs();
     if ($("matSourcePanel")?.classList.contains("open"))  closeMaterialSourcePicker();
     closeCatalogPick();
@@ -23511,7 +23646,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if ($("fseRawPanel")?.classList.contains("open"))      closeFsRaw();
     if ($("fseExplorerPanel")?.classList.contains("open")) closeFsExplorer();
     if ($("settingsPanel")?.classList.contains("open"))   closeSettings();
-    $("invDealsView")?._sqdSetOpen?.(null);              // the Deals side card (quests/squad-deals.js)
+    if (!keepDeals) $("invDealsView")?._sqdSetOpen?.(null);   // the Deals side card (quests/squad-deals.js)
     _closeAddPrinterFlow();
   }
   // Each `»` close tab: a quick click closes its own panel (existing handlers);
@@ -23808,8 +23943,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       );
       if (twin) batch.delete(invRef.doc(twin.spoolId));
     }
+    // Its maker chips' links go with it (linkedChipsOf covers the twin too):
+    // left behind, a link points at a spool that no longer exists and keeps the
+    // chip "already linked", so it could never be linked to another spool.
+    const links = linkedChipsOf(r);
+    const aliasRef = fbDb().collection("users").doc(user.uid).collection("rfidAliases");
+    for (const l of links) batch.delete(aliasRef.doc(l.uid));
     await batch.commit();
-    console.log(`[markSpoolDeleted] hard-deleted ${spoolId}${r.twinUid ? " (+ twin)" : ""}`);
+    console.log(`[markSpoolDeleted] hard-deleted ${spoolId}${r.twinUid ? " (+ twin)" : ""}${links.length ? ` and ${links.length} chip link(s)` : ""}`);
   }
 
   /* One-time migration: scan the current Firestore snapshot for any legacy
@@ -34826,9 +34967,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     if (!state.hueFilter) state.hueFilter = { axis: "hue", hue: { ...HUE_DEFAULT }, lum: { ...LUM_DEFAULT } };
     return state.hueFilter;
   }
-  function _hueFilterOn() {
-    const f = _hueFilter();
+  function _hueFilterOn(f = _hueFilter()) {
     return f.hue.active || f.lum.active;
+  }
+  // The catalogue pick card's own colour window (its mini bars), independent of
+  // the views' one.
+  function _cpkHueFilter() {
+    if (!state.cpkHueFilter) state.cpkHueFilter = { axis: "hue", hue: { ...HUE_DEFAULT }, lum: { ...LUM_DEFAULT } };
+    return state.cpkHueFilter;
   }
   // Stored as origin + width so a wrapping window stays ONE range instead of
   // splitting into two disjoint halves at the seam.
@@ -34874,9 +35020,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   /* The window tested against a plain list of colours. Spools carry up to three
      slots; a product identity or a catalogue entry carries one — same rule
      either way, so the colour you picked means the same thing in every view. */
-  function _colorsMatchHue(colors) {
-    const f = _hueFilter();
-    if (!_hueFilterOn()) return true;
+  function _colorsMatchHue(colors, f = _hueFilter()) {
+    if (!_hueFilterOn(f)) return true;
     for (const c of colors) {
       const hsl = _hexToHsl(_normHex(c));
       if (!hsl) continue;
@@ -34960,25 +35105,33 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
          sleep — a spool cannot be "that orange AND that grey", so letting both
          run would mean the union of two unrelated searches, which reads as a
          filter that stopped working. */
-      const bars = [];
-      const soloise = name => {
-        f.axis = name;
-        bars.forEach(b => { if (b.name !== name) b.win.active = false; });
-        bars.forEach(b => b.redraw());
+      /* A GROUP is one pair of bars over one colour window: the views' pair
+         (state.hueFilter) and the catalogue pick card's mini pair
+         (state.cpkHueFilter) are two groups, independent of each other. */
+      const hueGroup = (fl, onChange) => {
+        const g = { fl, bars: [], onChange };
+        g.redraw = () => g.bars.forEach(b => b.redraw());
+        g.solo = name => {
+          fl.axis = name;
+          g.bars.forEach(b => { if (b.name !== name) b.win.active = false; });
+          g.redraw();
+        };
+        return g;
       };
+      const views = hueGroup(f, () => _onFilterChange());
 
       /* One selector, driven twice. `win` is the {lo,width,active} it owns and
          `axis` says how wide the scale is, how thin the window may get, and
          whether the two ends are neighbours (hues wrap at red; light and dark
          do not). */
-      const wireRangeBar = (name, bar, segsId, lId, rId, win, axis) => {
+      const wireRangeBar = (name, bar, segsId, lId, rId, win, axis, group = views) => {
         const redraw = () => {
           /* The selector is drawn only where it is actually doing something: on
              the bar that holds it, and only while a filter is on. After "Show
              all" the spectrums are bare — a marker sitting on a bar that filters
              nothing reads as a filter you cannot turn off. Clicking anywhere on
              a bar starts a selection there. */
-          const owns = f.axis === name && win.active;
+          const owns = group.fl.axis === name && win.active;
           bar.classList.toggle("rv-hue-bar--off", !owns);
           /* Shown and hidden INLINE, not through the class. Twice today a
              stylesheet rule lost to an inline style written elsewhere, and this
@@ -35036,7 +35189,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           $(rId).style.left = `${pct(axis.wrap ? hiRaw % axis.span : Math.min(hiRaw, axis.span))}%`;
           bar.classList.toggle("is-idle", !win.active);
         };
-        const apply = () => { redraw(); _onFilterChange(); };
+        const apply = () => { redraw(); group.onChange(); };
 
         const at = clientX => {
           const b = bar.getBoundingClientRect();
@@ -35080,13 +35233,13 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           // click landed rather than wherever it happened to be left.
           // Nothing on show — on this bar or at all — means the click starts a
           // selection where it landed, not a grab at an invisible window.
-          if (f.axis !== name || !win.active) { move(v - win.width / 2); win.active = true; soloise(name); }
+          if (group.fl.axis !== name || !win.active) { move(v - win.width / 2); win.active = true; group.solo(name); }
           if (e.target.id === lId) drag = { mode: "left" };
           else if (e.target.id === rId) drag = { mode: "right" };
           else if (_inRange(win, v, axis)) drag = { mode: "move", grab: axis.wrap ? (v - win.lo + axis.span) % axis.span : v - win.lo };
           else { move(v - win.width / 2); drag = { mode: "move", grab: win.width / 2 }; }
           win.active = true;
-          soloise(name);
+          group.solo(name);
           try { bar.setPointerCapture(e.pointerId); } catch (_) {}
           clearTimeout(bar._easeT); bar.classList.remove("rv-hue-bar--eased");
           /* The hand closes ON THE PRESS, not on the first move after it. The
@@ -35179,15 +35332,21 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
             if (!dir) return;
             if (mode === "left") dragLeft(win.lo + dir * step);
             else dragRight(win.lo + win.width + dir * step);
-            win.active = true; soloise(name); e.preventDefault(); apply();
+            win.active = true; group.solo(name); e.preventDefault(); apply();
           });
         }
-        bars.push({ name, win, redraw });
+        group.bars.push({ name, win, redraw });
         return redraw;
       };
 
-      const redrawHue = wireRangeBar("hue", _hueBar, "rvHueSegs", "rvHueL", "rvHueR", f.hue, HUE_AXIS);
-      const redrawLum = wireRangeBar("lum", _lumBar, "rvLumSegs", "rvLumL", "rvLumR", f.lum, LUM_AXIS);
+      wireRangeBar("hue", _hueBar, "rvHueSegs", "rvHueL", "rvHueR", f.hue, HUE_AXIS);
+      wireRangeBar("lum", _lumBar, "rvLumSegs", "rvLumL", "rvLumR", f.lum, LUM_AXIS);
+      if ($("cpkHueBar") && $("cpkLumBar")) {
+        const cf = _cpkHueFilter(), pick = hueGroup(cf, () => _catalogPickFill());
+        wireRangeBar("hue", $("cpkHueBar"), "cpkHueSegs", "cpkHueL", "cpkHueR", cf.hue, HUE_AXIS, pick);
+        wireRangeBar("lum", $("cpkLumBar"), "cpkLumSegs", "cpkLumL", "cpkLumR", cf.lum, LUM_AXIS, pick);
+        pick.redraw();
+      }
       /* Puts back EVERYTHING, not just the colour window: the search box, the
          brand / material / aspect / type / tag selectors, the ❤ ★ flags and, in
          the Search views, the catalogue's own selectors. The button sits at the
@@ -35218,9 +35377,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
           const sel = $(id);
           if (sel) { sel.value = ""; sel.classList.remove("is-active"); sel._cselRefresh?.(); }
         });
-        redrawHue(); redrawLum(); _onFilterChange();
+        views.redraw(); _onFilterChange();
       });
-      redrawHue(); redrawLum();
+      views.redraw();
     }
   }
 
@@ -39304,7 +39463,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     const todo = (state.notifications || []).filter(n => n.type === "envelope_gift" && !n.read && !shown.includes(n.id));
     if (!todo.length) return;
     _envGiftBusy = true;
-    _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) _paintDealsBadge(_envCount(_coinsOf(r))); }).catch(() => {});
+    _tigerCoins(uid, "status").then(r => { if (uid === state.activeAccountId) { const c = _coinsOf(r); _paintDealsBadge(_envCount(c), c); } }).catch(() => {});
     try {
       for (const n of todo.reverse()) {   // oldest first
         if (uid !== state.activeAccountId) break;
@@ -39881,10 +40040,14 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     let c;
     try { c = _coinsOf(await _tigerCoins(uid, "status")); } catch (_) { _flashMessage(t("squadDealsErr")); return; }
     _deals.coins = c; _paintDealsBadge(_envCount(c));
-    const env = c.envelopes?.[0], g = c.gifts;
-    if (!env || !g?.max) { say(t("envGiveNoGift")); return; }
-    await showEnvelope(_coinsCtx(uid), env, { giveOnly: true, give: {
-      left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "", picked: friendUid,
+    // Every envelope can be given: the gift envelopes first, then one of the
+    // chips' (`id: "chip"`, functions/tigerCoins.js giveEnvelope).
+    const env = c.envelopes?.[0] || (c.unopened ? { id: "chip", kind: "chip" } : null), g = c.gifts;
+    // Not a TigerSquad member: no allowance at all. Otherwise the window always
+    // opens — with the day's count, even when nothing is left to give.
+    if (!g?.max) { say(t("envGiveNoGift")); return; }
+    await showEnvelope(_coinsCtx(uid), env || { id: null }, { giveOnly: true, give: {
+      none: !env, left: g.left, max: g.max, tierLabel: g.tier ? squadTierLabel(g.tier) : "", picked: friendUid,
       friends: pool.map(f => ({ uid: f.uid, name: _shortName(f.displayName, f.uid), avatar: userAvatar(f, "sqb-avatar") })),
       send: async to => { const r = await _tigerCoins(uid, "giveEnvelope", { id: env.id, to }); _deals.coins = _coinsOf(r); _paintDealsBadge(_envCount(_deals.coins)); return r; },
     } });
@@ -42148,6 +42311,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _maybeRefreshPanelForCard(); // reveal/hide chip-dependent toolbox actions live
       _renderTigerPodDebug();      // live-refresh the debug readout (chip present/removed)
       refreshChipChoice();         // "Link" in the add chooser needs a chip to burn onto
+      _refreshChipBanners();       // Link / Burn banners follow what sits on the TigerPOD
       eraserCardPresent(readerName, uid); // the chip eraser reads what was placed
       // TigerPOD signal — a SUCCESSFUL read with N readers proves ownership:
       // auto-select hasPod on first read, then record reader count keeping the max
@@ -42166,16 +42330,27 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // into the inventory, or the card reopening on another view, would only get
     // in the way. Placing / removing a chip still updates it (card-present).
     const _chipCardUp = () => !!$("chipChoicePanel")?.classList.contains("open");
+    // The NFC tag tester is up: chips are placed to be TESTED — a scan opens no
+    // spool, adds none and offers no link (the tester reads them on demand).
+    const _testerUp = () => !!$("rfidTestOverlay")?.classList.contains("open");
     window.electronAPI.onRfidForeignChip?.(data => {
       if (chipEraserOpen()) { eraserForeignChip(data); return; }
-      if (_chipCardUp()) return;
+      if (_testerUp()) return;
+      // The new-chip card is up: the maker's chip waits there to be linked to what
+      // the card creates — it opens and adds nothing (linked/index.js holdForeignChip).
+      if (_chipCardUp()) {
+        if (!_encodeModalOpen() && !state.friendView) holdForeignChip(data);
+        _refreshChipBanners();   // a maker's chip turns Burn into "Link"
+        return;
+      }
       if (_encodeModalOpen() || state.friendView) return;
       onForeignChip(data);
+      _refreshChipBanners();
     });
 
     // Legacy uid event — open detail if already in inventory
     window.electronAPI.onRfid((uid) => {
-      if (_encodeModalOpen() || chipEraserOpen() || _chipCardUp()) return;   // don't pop a side-card over the encode modal
+      if (_encodeModalOpen() || chipEraserOpen() || _chipCardUp() || _testerUp()) return;   // don't pop a side-card over the encode modal
       // A scan always concerns YOUR inventory. Queue the spool to open, then either
       // leave a friend's read-only view (the own snapshot opens it) or open now.
       _scanOpenUid = uid;
@@ -42198,9 +42373,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
 
     window.electronAPI.onRfidTagScanned((tagData) => {
-      // The new-chip card is up (the NFC tools included): nothing opens, nothing
-      // is created or updated from the scan.
-      if (chipEraserOpen() || _chipCardUp()) return;
+      // The new-chip card is up (the NFC tools included), or the NFC tag tester:
+      // nothing opens, nothing is created or updated from the scan.
+      if (chipEraserOpen() || _chipCardUp() || _testerUp()) return;
       // Scanning a spool always acts on the active account → leave any friend's
       // read-only view right away so the user lands back on their own inventory
       // (the write target was already the active account; this fixes the VIEW).
@@ -42221,8 +42396,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     async function _processNfcScans(scans) {
       const user = fbAuth().currentUser;
       if (!user) return;
-      // A scan buffered just before the new-chip card opened lands here after it.
-      if (chipEraserOpen() || _chipCardUp()) return;
+      // A scan buffered just before the new-chip card (or the tester) opened lands here after it.
+      if (chipEraserOpen() || _chipCardUp() || _testerUp()) return;
 
       // Blank chips carry no material/brand yet: a TigerTag Init chip
       // (id_tigertag 0x6C41A2E1, id_product 0) or an erased / empty-NDEF NTAG

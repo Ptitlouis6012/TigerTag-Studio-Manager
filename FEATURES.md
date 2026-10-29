@@ -1,6 +1,6 @@
 # Tiger Studio Manager — Feature Catalogue
 
-Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.46.1**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
+Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem: a filament-inventory manager built around RFID/NFC-tagged spools ("TigerTag" chips), a fully-digital "TigerData" tier (and its catalogue-identified "TigerData+" rung), live 3D-printer integration across seven brands plus Klipper and OctoPrint, physical storage/rack management, a Firebase-backed social layer (friends, shareable wishlists, public profiles), and companion hardware (TD1S color sensor, TigerScale, TigerSpool printer reader, TigerPOD dual-reader stand). This document catalogues every **shipped** feature, grouped by domain, current as of **v2.47.0**. Per-version release detail lives in `CHANGELOG.md`; forward-looking / in-progress work lives in `ROADMAP.md`.
 
 ---
 
@@ -9,7 +9,7 @@ Tiger Studio Manager is the Electron desktop companion to the TigerTag ecosystem
 - **Refill tag** — refill spools (`info1`) wear a green Refill pill on cards, thumbnails, the spool detail and the catalogue product card (v2.37.0).
 - Real-time Firestore sync of the inventory — table view + grid view, column sort, full-text search (v1.0+).
 - **Remaining filament length** next to a spool's weight ("353 g ≈ 141 m"), from the weight, the density and the diameter — filament only (v2.42.0).
-- **Colour range filter** — a rainbow bar plus a white-to-black bar for neutrals, with a draggable window that dims what falls outside it. Shared by Inventory, Favorites, the order list, the Catalogue and Storage, and it keeps its selection across views (v2.21.0).
+- **Colour range filter** — a rainbow bar plus a white-to-black bar for neutrals, with a draggable window that dims what falls outside it. Shared by Inventory, Favorites, the order list, the Catalogue and Storage, and it keeps its selection across views (v2.21.0). The catalogue picker of "+" has its own mini pair, independent of the views' (v2.47.0).
 - Type-to-filter inside the Brand / Material / Aspect / Type / Tag dropdowns, matching anywhere in the name and ignoring case and accents (v2.21.0).
 - One add button, inside the search field, dispatching by view — material sources, printer brands or a new rack (v2.21.0).
 - One reset that clears the search, every filter and the colour window at once (v2.21.0).
@@ -273,6 +273,8 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **Every MIFARE Classic 1K maker chip** links to a spool — Bambu Lab, Creality, Qidi, Anycubic… — and a spool may carry its 2 TigerTag chips and its 2 maker chips, or only the maker chips (v2.46.1).
 - **Upgrade to TigerTag+ / TigerData+ from the catalogue** — the spool card's banner opens the catalogue beside it; the picked product's held banner applies its data to the spool and its twin, a TigerTag only with its own chips on the TigerPOD, rewritten right after (v2.46.1).
 - **Burn a TigerTag+ from any catalogue product card** — held "Burn the TigerTag+" banner (v2.46.1).
+- **Maker chips linked from every way of adding a spool** — with Bambu Lab / Creality chips on the TigerPOD, the catalogue product card and "Add product" offer a held "Link the proprietary third-party Tag(s)" instead of a burn (spool created, chips linked, nothing written); the Link / Burn banners follow what sits on the TigerPOD live (v2.47.0).
+- **Search by chip UID** — the inventory search finds a spool by a linked maker chip's UID, whole or partial (v2.47.0).
 
 ## TigerSquad, XP & support
 
@@ -291,6 +293,7 @@ Live integrations across seven brands, each with real-time temperatures, per-slo
 - **TigerCoins and envelopes** — a surprise envelope per TigerTag+ Certified chip, gift envelopes (campaigns, milestones, gift codes, shared red envelopes) and chests, all opened in one animated stage (×1 / ×10, five rarities); coins traded in the Exchange tab; envelopes given to friends with a daily allowance by TigerSquad level; hidden easter-egg envelopes in the banners (v2.44.0).
 - **Maker's Workshop** — the Items view redrawn: illustrated loot (legendary relics, gear, chips) and feats rows, a banner with the four legendary devices lit once owned (v2.44.0).
 - **XP history scopes** — your curve, your country's league or the top leagues side by side (v2.44.0).
+- **TigerCoins in the top bar** — balance (history), envelopes waiting and the gift-code button always in sight for members, each opening its window over the Deals; the history shows envelopes received (green, +1) and given (red, −1) with the friend's avatar (v2.47.0).
 
 ## Feedback & requests
 

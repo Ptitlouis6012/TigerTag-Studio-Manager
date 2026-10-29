@@ -2363,6 +2363,7 @@
   "envGiveNone": "Plus d’envoi possible aujourd’hui : revenez demain.",
   "envGiveNoFriends": "Ajoutez un ami pour lui offrir une enveloppe.",
   "envGiveShort": "Offrir",
+  "envGiveCount": "Envoyées aujourd’hui : {{sent}} · Restantes : {{left}}",
   "envGiveSent": "Enveloppe offerte à {{name}} !",
   "envGiveNoGift": "Tu n’as pas d’enveloppe à offrir.",
   "eggFound": "Déjà trouvé. Bien essayé.",
@@ -2416,8 +2417,8 @@
   "coinLog_envelope": "Enveloppe cadeau ouverte",
   "coinLog_gift": "Code cadeau utilisé",
   "coinLog_spend": "Échangé contre {{deal}}",
-  "coinLog_given": "Enveloppe offerte à {{name}}",
-  "coinLog_received": "Enveloppe de {{name}}",
+  "coinLog_to": "À {{name}}",
+  "coinLog_from": "De {{name}}",
   "coinLog_surprises": "{{n}} enveloppes surprises",
   "coinLog_chests": "{{n}} coffres",
   "eggFoundTitle": "Secret trouvé !",
@@ -2481,5 +2482,6 @@
   "linkedChipDone": "Liée. Scannez-la et le matériau s’ouvre.",
   "linkedChipsTitle": "Puces liées",
   "linkedChipUnlink": "Délier",
-  "linkedChipUnlinkTip": "Maintenez pour délier les puces de ce matériau."
+  "linkedChipUnlinkTip": "Maintenez pour délier les puces de ce matériau.",
+  "linkedChipWorksWith": "Compatible avec"
 }

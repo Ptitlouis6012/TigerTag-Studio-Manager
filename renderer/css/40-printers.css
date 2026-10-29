@@ -864,6 +864,9 @@
   .cpk-controls { display: flex; align-items: center; gap: 8px; padding: 6px 22px 12px; }
   .cpk-controls .cpk-search { order: -1; flex: 1; }
   .cpk-controls .csel { flex: 0 0 auto; max-width: 45%; }
+  /* The mini colour bars (the views' .rv-hue, thinner): under the search row. */
+  .cat-pick-panel .cpk-hue.cpk-hue { display: flex; gap: 8px; padding: 2px 22px 12px; }
+  .cpk-hue .rv-hue-bar { --rv-bar-h: 14px; min-width: 0; border-radius: 6px; }
   .cpk-list {
     flex: 1; min-height: 0; overflow: auto; scrollbar-width: none;
     display: flex; flex-direction: column; gap: 6px; padding: 2px 22px 18px;

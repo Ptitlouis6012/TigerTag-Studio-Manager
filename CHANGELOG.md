@@ -5,6 +5,39 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.47.0 — 2026-10-29
+
+### Added
+- Maker chips (Bambu Lab, Creality… MIFARE 1K) are linked, never burned, on every creation path. "Add product" (manual) draws a held banner in place of Make by what sits on the TigerPOD (`_adpRenderFoot`, `#adpFootBanner`): unlinked maker chips → "Link the proprietary third-party Tag(s)" (creates the TigerData, then links them); a reader → "Burn the TigerTag"; no reader → plain Make. `saveAddProduct` / `_catalogCreate` / `_openCreatedSpool` take `linkMakers`. The catalogue product card offers "Link" when maker chips simply sit on the TigerPOD (`pendingMakerChips() || presentMakerChips()`); "+" with unlinked maker chips already present opens the maker-chip choices (`openAddChooser`).
+- Live chip banners: Link / Burn follow what sits on the TigerPOD now — chips swapped while the new-chip card is up replace the earlier ones, the open view stays put (`_refreshChipBanners` on card-present / foreign-chip, `ctx.chipsChanged`; the held flush no longer reopens the chooser). The spool card's banner slot `.dp-chip-banner` is swapped alone (`_wireDetailChipBanner`). `pending` / `offer` store no chip list: a link takes `presentMakerChips()` at the hold. Link and Burn banners share one height (`.lc-offer-ic` in the burn logo's 52 px box).
+- Inventory search matches a linked maker chip's UID, whole or partial, any case (`_rowChipUids`, read live outside the cached haystack; exact-code match too).
+- TigerCoins in the header for TigerSquad members (`#topCoins`, painted by `_paintDealsBadge(n, coins)`): one flat card like the stat cards — balance (opens the history), envelopes waiting (opens the pile, or the "how to get envelopes" help at 0), gift (gift-code window); each switches to the Deals view first. `openEnvelopeHelp`, `openCoinsCodeModal`, `openCoinsHistory` exported from `squad-deals.js`; `_topCoinsCtx`.
+- Mini colour bars in the catalogue pick card (`.cpk-hue`) with their own window (`state.cpkHueFilter`): `wireRangeBar` takes a group (`hueGroup`), `_hueFilterOn` / `_colorsMatchHue` / `_catalogFilter` take the window to test.
+- Easter egg `codeEnvelope` (red envelope beside the tiger in the "Gift code" window; backend `EGGS.codeEnvelope`, deployed).
+- TigerCoins history coin flips on a click (three turns, nine gold stars, `sfx.coinFlip` synthesised in `coin-sound.js`).
+- "Works with" caption over the new-chip card's brand column (`.lc-brands-cap`, smaller for fr / es / it / pt / ru).
+
+### Changed
+- TigerCoins history rows say which way they went: envelope received green bar + arrow in + friend avatar (`userAvatar(f, "sqb-avatar")`, `ctx.friendAvatar`) + "From {name}" + "+1"; given red bar + arrow out + "To {name}" + "−1"; coins earned gold, spent red (`.tch-row--in/out/coin`). The list has a fixed height with the loading animation centred (`loadingHTML` on the header ctx), totals show "0" without a sign.
+- Every envelope can be given to a friend, the chips' included (`giveEnvelope` `id: "chip"`, backend); the give window always opens with the day's count (`envGiveCount`) and says why when nothing is left.
+- Header stat cards are 68 px tall (`--top-card-h`), content centred.
+- Opening a deal closes every other side card first (`ctx.closeOtherSides` → `_closeAllSidePanels({ keepDeals })`).
+- While the new-chip card is up, a spool card offers no upgrade to TigerData+ / TigerTag+; closing the card gives it back.
+- The link grid of the "+" card searches tags, reads the live inventory and updates keyed cards in place (`data-lc-key`).
+- NFC tag tester open → scans open, add and offer nothing (`_testerUp`).
+- A single RFID reader still shows its numbered dot (NFC tools, burn window).
+
+### Fixed
+- Deleting a spool deletes its maker chips' links (`markSpoolDeleted`, same batch); a link to a missing spool no longer blocks relinking (`presentMakerChips`).
+- A maker chip placed while the "+" card is up was ignored; it now waits in the card (`holdForeignChip`) and the product card offers no burn.
+- A maker chip placed while "Add product" was open was ignored and Make went on to the burn.
+- A TigerData spool with linked maker chips offered "Burn the TigerTag+".
+- "Upgrade to TigerData+" swapped in after closing the new-chip card did not open the catalogue (its click is now wired with the other chip banners).
+- The TigerCoins history opened small and grew when the log arrived; its row icon rule blew the friend's TigerSquad badge up to 30 px (`.tch-row > img`).
+
+### i18n
+- Added `envGiveCount`, `linkedChipWorksWith`, `coinLog_to`, `coinLog_from`; removed `coinLog_given`, `coinLog_received`.
+
 ## v2.46.2 — 2026-10-28
 
 ### Added
