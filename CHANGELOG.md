@@ -5,6 +5,37 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.48.0 — 2026-10-30
+
+### Added
+- Signed in with no spool, "Where do we start?" (`_paintInvStart`, `_onInvStartClick`): kicker "Welcome to your workshop 2.0", three cards opening the flow behind each first win — Add a spool (`openAddChooser`), Plug in my TigerPOD (the card turns green with "Your TigerPOD is ready · Waiting for a scan…" while a reader is plugged in, else the TigerPOD sheet — `_paintInvStartPod`) and Choose my printer (Printers view + `openPrinterBrandPicker`; TigerPOD and printer cards desktop-only) — and a Tiger NFC Connect line. Each card carries its picture top right (`.inv-start-art`): the spool, the TigerPOD, and a printer drawn at random from every brand catalogue, swapped every 2 s in two beats (old out, then new in — `_cycleInvStartPrinter`, held while the window is hidden). The search row and colour bars stay. The Printers view with no printer shows the same screen instead of its empty card. First spool → "One less spool to look for." toast.
+- "Going further (optional)" strip above the spool list once that screen has been seen: TigerPOD and real printer steps, each with "I don't have one", ticked when done, gone when both are done/skipped or closed (`_renderFirstSteps`, `tigertag.firstSteps.<uid>` = on / closed / done + `.skip`, `#firstSteps`).
+- One ecosystem window for the six products (`ECO_SHEETS`, `_renderEcoSheet`, `openEcoSheet`, `#ecoModalOverlay`, `.eco-*`): fixed 840 × 760 grid (840 × 552 two-column under 800 px of height), six equal text tabs (TigerPOD · TigerScale · TigerSpool · Tiger Touch · TigerNFC · TigerTag; ← → / Home / End), a scan bay (device on a tech grid, NFC waves, scan beam, prev / next), name + promise, a reserved live-state line (green only when plugged in / online), three benefits, the data path with light packets, "How to get one" in three steps, footer with the main action, "See the guide" (wiki) and an "Other links" menu. Autoplay carousel: a progress bar fills the open tab (4.5 s, `animationend` of `.eco-tab-prog`), held on hover, focus inside or menu open; switch = 160 ms fade-out then a two-beat ease-in. Opened by the reader icon, the first-steps cards, and the TigerScale / TigerSpool / Tiger Touch header icons while the account has none. The TigerPOD sheet presents the TigerPOD Mini only (one printed part + two ACR122U slid in).
+- Account emails from TigerSystem: sign-up check, resend and password reset go through the backend's `authMail` (branded, in the app's language, from noreply@tigersystem.io, `tigersystem.io/auth/<token>` link), falling back to Firebase's mail in the app's language (`_authMail`, `_sendVerification`, `_setAuthLang`; zh → zh-CN, pt → pt-BR, pt-pt → pt-PT).
+- "Check your inbox" step after an email sign-up or an unconfirmed sign-in: animated envelope, the address, "I've confirmed, sign in", "Send the email again" (once per 30 s), "Use another address" (`showCheckMail` / `hideCheckMail`, `#lmCheck`, `.lm-check*`).
+- Product mockups in `assets/img/mockups/` (masters in `assets-src/img/mockups/`): `tigerpod-mini`, `tigerscale`, `tigerspool`, `tigertouch-tour`, `tigertag-spool`, `imac-frame` / `imac-studio`, `iphone-frame` / `iphone-connect`, `studio-screen`, `hero-ecosystem` (+ `-transparent`); flanges translucent, the three readers carrying the same spool.
+
+### Changed
+- Shown as **Tiger Studio Manager 2** (window title in `main.js` and `inventory.html`, sidebar "Studio Manager 2"); `productName`, update feed and user-data folder unchanged.
+- Signed-out welcome redone as its own page (`.signin-ph-*`, `_syncSignedOutLook`): top bar with the name and a language select (`#signinLangs`, `_paintSigninLangs`), headline, four benefits (scan any RFID chip, printers, sharing, maker deals), "Create my account" (`openAddAccountModal(mode)`) / "I already have an account", "No TigerPOD needed"; an animated ecosystem scene (`_fillHeroScenes`, `[data-hero-scene]`): floating iMac, iPhone and Tiger Touch, the TigerPOD ⇄ TigerScale ⇄ TigerSpool flip around a shared spool hub; "Works with" + printer brand logos lit one after another (`_signinGarland`); header and view bar hidden while signed out (`body.signed-out`), sidebar too with no remembered account (`body.no-accounts`). The same scene in the sign-in dialog and the account setup's first step; paused while the window is hidden (`body.anim-paused`), still with reduced motion.
+- First launch uses the system language when shipped (`_systemLang`: first OS match, pt-BR / pt → `pt`, other pt-XX → `pt-pt`, zh-* → `zh`), else English.
+- `icon_printer.svg` is a real 3D printer.
+- The TigerSpool and Tiger Touch discovery windows and the old TigerPOD window are replaced by the ecosystem sheets (`openTigerSpool` / `openTigerTouch` / `openTigerPodModal` route there; `spoolConnState`, `touchConnState`, `isScaleOnline`, `onScalesChanged` / `onSpoolsChanged` / `onTouchsChanged` feed the live line).
+- "Get the app" for Tiger NFC Connect opens tigersystem.io's download page in the app's language (`_downloadPageUrl`, shared with the sidebar Downloads button).
+- Add-product side card: no rule under the header nor above Make.
+
+### Fixed
+- Issue 161: adding a spool by hand with a reader plugged in offered only "Burn the TigerTag" (Make hidden since v2.47.0), and unplugging the reader left Burn banners up. `_adpRenderFoot`: no reader → Make; reader without chip → Make above the Burn banner; chip on it → Burn (or Link for maker chips) alone. `onRfidReaderUpdate` now calls `_refreshChipBanners`; the catalogue card's "Burn the TigerTag+" needs a reader (`state.nfcReaderCount > 0`).
+- "From the catalogue" rebuilt every row per keystroke, reloading and flickering photos: rows keyed by product id, kept rows moved, only new ones built; a synced index rebuilds (`_catalogPickFill`, `_cpkFilledIndex`).
+- A TigerData / TigerData+ with linked maker chips offered no "Burn the TigerTag(+)"; it now does (unlinked maker chips on the TigerPOD still turn it into "Link").
+- The password-field eye toggled `-webkit-text-security`, ignored by `type="password"`; it now switches `password` / `text` (`makeEyeToggle`).
+- Klipper logo was a letter K; now Klipper's own mark (`renderer/printers/klipper/img/logo.svg`).
+
+### Removed
+- `printersEmptyTitle`, `printersEmptyBullet1`–`3`, `.printers-empty-bullets` / `-cta`; `#tigerspoolDiscoverOverlay`, `#tigertouchDiscoverOverlay` and the old TigerPOD modal with their keys (`tigerPod*`, `tigerspoolCta*`, `tigertouchCtaCode*`, `tigertouchInstall*`); `invWelcome*`, `invQrScanHint`; `signinTagline`, `signinFeat*`; `loginEmailNotVerified`, `loginResendVerif`, `loginVerifyEmailSent`.
+
+---
+
 ## v2.47.0 — 2026-10-29
 
 ### Added

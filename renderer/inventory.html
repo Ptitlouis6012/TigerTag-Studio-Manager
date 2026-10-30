@@ -8,7 +8,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Tiger Studio Manager</title>
+<title>Tiger Studio Manager 2</title>
 <link rel="stylesheet" href="css/00-base.css" />
 <link rel="stylesheet" href="css/10-settings.css" />
 <link rel="stylesheet" href="css/20-friends.css" />
@@ -45,7 +45,7 @@
     <div class="sb-header">
       <div class="sb-brand">
         <div class="sb-brand-dot">T</div>
-        <span class="sb-brand-name">Studio Manager</span>
+        <span class="sb-brand-name">Studio Manager 2</span>
       </div>
       <button id="btnSidebarToggle" class="sb-toggle" title="Toggle sidebar"><span class="icon icon-chevron-l icon-14 sb-chevron"></span></button>
     </div>
@@ -208,28 +208,56 @@
 
     <!-- sign-in placeholder (visible when no account is active) -->
     <div id="signInPlaceholder" class="signin-placeholder">
-      <img class="signin-ph-hero" src="../assets/img/Hero-TigerSystem-ecosystem.png" alt="" aria-hidden="true" />
-      <div class="signin-ph-title">Tiger Studio Manager</div>
-      <div class="signin-ph-sub" data-i18n="signinTagline">Every spool you own, weighed, sorted and impossible to lose.</div>
-      <button class="primary signin-ph-btn" id="btnSignInPlaceholder">
-        <span data-i18n="btnSignIn">Sign in</span>
-      </button>
-      <ul class="signin-ph-feats">
-        <li><span class="icon icon-nfc icon-16" aria-hidden="true"></span><span data-i18n="signinFeatScan">Tap a tag, the spool files itself</span></li>
-        <li><span class="icon icon-printer icon-16" aria-hidden="true"></span><span data-i18n="signinFeatPrinters">Your printers report in, live</span></li>
-        <li><span class="icon icon-gift icon-16" aria-hidden="true"></span><span data-i18n="signinFeatShare">Share your stock and wishlists with friends</span></li>
-      </ul>
-      <div class="signin-ph-links">
-        <button class="signin-ph-link" id="btnSignInPlaceholderGh">
-          <span class="icon icon-github icon-14"></span>
-          <span data-i18n="githubBtn">GitHub</span>
-        </button>
-        <button class="signin-ph-link" id="btnSignInPlaceholderDiscord">
-          <span class="icon icon-discord icon-14"></span>
-          <span data-i18n="discordBtn">Discord</span>
-        </button>
+      <!-- Its own top bar: the sidebar and the app header are hidden while
+           signed out (body.signed-out), so the name and the language live here. -->
+      <div class="signin-ph-top">
+        <div class="signin-ph-brand">
+          <div class="sb-brand-dot">T</div>
+          <span>Tiger Studio Manager <b class="signin-ph-two">2</b></span>
+        </div>
+        <label class="signin-ph-lang">
+          <span class="icon icon-globe icon-14" aria-hidden="true"></span>
+          <!-- The 11 languages, each written in its own language (_paintSigninLangs in inventory.js). -->
+          <select id="signinLangs" aria-label="Language">
+            <option value="en">English</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="es">Español</option><option value="it">Italiano</option><option value="pt">Português (BR)</option><option value="pt-pt">Português (PT)</option><option value="pl">Polski</option><option value="nl">Nederlands</option><option value="ru">Русский</option><option value="zh">中文</option>
+          </select>
+          <span class="icon icon-chevron-r icon-10" aria-hidden="true"></span>
+        </label>
       </div>
-      <img class="signin-ph-lineup" src="../assets/img/hero-TigerPOD-Banner-Lineup-Rainbow-9.png" alt="" aria-hidden="true" />
+      <div class="signin-ph-body">
+        <div class="signin-ph-copy">
+          <span class="signin-ph-badge"><span class="icon icon-sparkle icon-12" aria-hidden="true"></span><span data-i18n="signinNewGen">New generation</span></span>
+          <h1 class="signin-ph-title" data-i18n="signinHeadline">Welcome to your workshop 2.0.</h1>
+          <p class="signin-ph-sub" data-i18n="signinSubline">The workshop of the future: RFID chips, weighing, printers live and shared stock, all in one place.</p>
+          <ul class="signin-ph-feats">
+            <li><span class="icon icon-nfc icon-16" aria-hidden="true"></span><span><b data-i18n="signinBenScanTitle">The right spool, no digging.</b> <span data-i18n="signinBenScanText">Scan any RFID chip — TigerTag, Bambu Lab, Creality… — and its whole card shows up.</span></span></li>
+            <li><span class="icon icon-printer icon-16" aria-hidden="true"></span><span><b data-i18n="signinBenPrintTitle">News from your printers.</b> <span data-i18n="signinBenPrintText">Status and progress of every print, live.</span></span></li>
+            <li><span class="icon icon-gift icon-16" aria-hidden="true"></span><span><b data-i18n="signinBenShareTitle">Stock gets shared. So does PLA.</b> <span data-i18n="signinBenShareText">Share your inventory and wishlists with friends.</span></span></li>
+            <li><span class="icon icon-percent icon-16" aria-hidden="true"></span><span><b data-i18n="signinBenDealsTitle">Maker deals. Real savings.</b> <span data-i18n="signinBenDealsText">Filament, parts and gear at TigerSquad prices, plus vouchers earned with your TigerCoins.</span></span></li>
+          </ul>
+          <div class="signin-ph-actions">
+            <button class="primary signin-ph-btn" id="btnSignUpPlaceholder"><span data-i18n="signinCreate">Create my account</span></button>
+            <button class="signin-ph-btn2" id="btnSignInPlaceholder"><span data-i18n="signinHaveAccount">I already have an account</span></button>
+          </div>
+          <p class="signin-ph-note"><span class="icon icon-check icon-12" aria-hidden="true"></span><span data-i18n="signinNoHardware">No TigerPOD needed to get started.</span></p>
+        </div>
+        <div class="signin-ph-visual">
+          <!-- Ecosystem hero: three separate layers on a stage laid out like
+               hero-ecosystem.webp: the iMac and the iPhone float above their floor
+               shadow, the TigerPOD stands and flips into a TigerScale, then a TigerSpool. -->
+          <div class="signin-ph-hero hero-scene" aria-hidden="true" data-hero-scene></div>
+          <!-- The printers Studio talks to: the chip chooser's logos (.lc-brand, linked.css), lit one after the other (_signinGarland). -->
+          <div class="signin-ph-brands">
+            <span data-i18n="signinWorksWith">Works with</span>
+            <div class="signin-ph-brand-row"><span class="lc-brand" data-brand="bambulab" role="img" aria-label="Bambu Lab"><i></i></span><span class="lc-brand" data-brand="creality" role="img" aria-label="Creality"><i></i></span><span class="lc-brand" data-brand="prusa" role="img" aria-label="Prusa"><i></i></span><span class="lc-brand" data-brand="elegoo" role="img" aria-label="Elegoo"><i></i></span><span class="lc-brand" data-brand="anycubic" role="img" aria-label="Anycubic"><i></i></span><span class="lc-brand" data-brand="flashforge" role="img" aria-label="FlashForge"><i></i></span><span class="lc-brand" data-brand="snapmaker" role="img" aria-label="Snapmaker"><i></i></span><span class="lc-brand" data-brand="klipper" role="img" aria-label="Klipper"><i></i></span><span class="lc-brand" data-brand="octoprint" role="img" aria-label="OctoPrint"><i></i></span></div>
+          </div>
+        </div>
+      </div>
+      <div class="signin-ph-foot">
+        <span data-i18n="signinFreeOss">Free · Open source</span>
+        <button class="signin-ph-link" id="btnSignInPlaceholderGh" aria-label="GitHub"><span class="icon icon-github icon-14" aria-hidden="true"></span></button>
+        <button class="signin-ph-link" id="btnSignInPlaceholderDiscord"><span class="icon icon-discord icon-14" aria-hidden="true"></span><span data-i18n="signinNeedPaw">Need a paw?</span></button>
+      </div>
     </div>
 
     <!-- empty / loading state — shown instead of the inventory card -->
@@ -436,6 +464,8 @@
       </div>
     </div>
       <div id="mainResult"></div>
+      <!-- "Next up": the first steps left after the first spool (_renderFirstSteps). -->
+      <div id="firstSteps" class="first-steps hidden"></div>
       <div id="invEmpty" class="empty hidden"></div>
 
       <!-- table view -->
@@ -726,17 +756,6 @@
   <div class="panel-body" id="tigerspoolPanelBody"></div>
 </div>
 
-<!-- TigerSpool discovery modal — opened by the glyph while the account has no box -->
-<div class="modal-overlay" id="tigerspoolDiscoverOverlay">
-  <div class="modal-card tsp-discover-card">
-    <div class="modal-header">
-      <span class="modal-title">TigerSpool</span>
-      <button class="panel-close" id="tigerspoolDiscoverClose">✕</button>
-    </div>
-    <div class="tsp-discover-body" id="tigerspoolDiscoverBody"></div>
-  </div>
-</div>
-
 <!-- Tiger Touch side card (header glyph → users/{uid}/tigertouchs) — IoT/tigertouch/panel.js -->
 <div class="panel-overlay" id="tigertouchOverlay"></div>
 <div class="detail-panel scales-panel ttc-panel" id="tigertouchPanel">
@@ -745,17 +764,6 @@
     <button class="panel-close" id="tigertouchPanelClose">✕</button>
   </div>
   <div class="panel-body" id="tigertouchPanelBody"></div>
-</div>
-
-<!-- Tiger Touch discovery modal — opened by the glyph while the account has no screen -->
-<div class="modal-overlay" id="tigertouchDiscoverOverlay">
-  <div class="modal-card tsp-discover-card">
-    <div class="modal-header">
-      <span class="modal-title">Tiger Touch</span>
-      <button class="panel-close" id="tigertouchDiscoverClose">✕</button>
-    </div>
-    <div class="tsp-discover-body" id="tigertouchDiscoverBody"></div>
-  </div>
 </div>
 
 <!-- Tiger Touch live view — drawn by Studio from the screen's frames (panel.js) -->
@@ -2454,7 +2462,23 @@
   <div class="modal-card lm-card">
     <button class="modal-close lm-close" id="addModalClose">✕</button>
 
-    <img class="lm-hero-art" src="../assets/img/Hero-TigerSystem-ecosystem.png" alt="" aria-hidden="true" />
+    <div class="lm-hero-art hero-scene" aria-hidden="true" data-hero-scene></div>
+
+    <!-- After sign-up (or a sign-in with an unconfirmed address): one clear
+         "check your inbox" step replaces the form (.lm-card.is-check). -->
+    <div class="lm-check" id="lmCheck" hidden>
+      <div class="lm-check-env" aria-hidden="true"><span class="icon icon-mail icon-32"></span></div>
+      <h2 class="lm-check-title" data-i18n="loginCheckTitle">Check your inbox</h2>
+      <p class="lm-check-sent"><span data-i18n="loginCheckSent">We sent a confirmation link to</span><b id="lmCheckEmail"></b></p>
+      <p class="lm-check-hint" data-i18n="loginCheckHint">Click the button in that email, then come back here to sign in.</p>
+      <button class="primary lm-submit-btn" id="btnCheckDone" type="button"><span class="label" data-i18n="loginCheckDone">I've confirmed, sign in</span></button>
+      <div class="lm-check-links">
+        <button class="lm-mode-btn" id="btnCheckResend" type="button" data-i18n="loginCheckResend">Send the email again</button>
+        <span aria-hidden="true">·</span>
+        <button class="lm-mode-btn" id="btnCheckChange" type="button" data-i18n="loginCheckChange">Use another address</button>
+      </div>
+      <p class="lm-check-note" id="lmCheckNote" aria-live="polite"></p>
+    </div>
 
     <!-- Google sign-in -->
     <button class="lm-google-btn" id="btnGoogleSignIn">
@@ -3284,8 +3308,8 @@
   <div class="adp-foot">
     <!-- No "Cancel" button — close affordances are: ✕ in the header,
          backdrop click outside the panel, or Escape key. -->
-    <!-- Held banner (Link the maker's chips / Burn the TigerTag) in place of
-         Make, by what sits on the TigerPOD — _adpRenderFoot. -->
+    <!-- Held banner (Link the maker's chips / Burn the TigerTag) under Make, or
+         alone when a chip sits on the TigerPOD — _adpRenderFoot. -->
     <div class="adp-foot-banner" id="adpFootBanner"></div>
     <button class="adp-btn adp-btn--make" id="adpSave" type="button" data-i18n="addProductMake">Make</button>
   </div>
@@ -3421,9 +3445,9 @@
     <div class="dns-steps">
       <div class="dns-track" id="dnsTrack">
         <section class="dns-step" id="dnsStep1">
-          <h2 class="dns-step-title" data-i18n="setupWelcomeTitle">Welcome to your workshop</h2>
+          <h2 class="dns-step-title" data-i18n="setupWelcomeTitle">Welcome to your workshop 2.0</h2>
           <p class="dns-step-sub" data-i18n="setupLangSub">In under 20 seconds, your workshop is ready.</p>
-          <img class="dns-step-art" src="../assets/img/Hero-TigerSystem-ecosystem.png" alt="" aria-hidden="true" />
+          <div class="dns-step-art hero-scene" aria-hidden="true" data-hero-scene></div>
           <label class="dns-label" for="dnsLangSelect" data-i18n="setupLangLabel">Your language</label>
           <select id="dnsLangSelect" class="dns-lang-select" aria-describedby="dnsLangHelper"></select>
           <p class="dns-helper" id="dnsLangHelper" data-i18n="setupLangHelper">You can change this later.</p>
@@ -3521,99 +3545,39 @@
 
 <!-- Scan Panel — slides in when "+ Scan" is armed; shows waiting state then tag data + raw JSON -->
 
-<!-- RFID scan notification — appears bottom-right after auto-add -->
-<div id="rfidScanNotif" class="rfid-scan-notif" aria-hidden="true" aria-live="polite">
-  <div class="rsn-swatch" id="rfidScanNotifSwatch"></div>
-  <div class="rsn-info">
-    <div class="rsn-title" id="rfidScanNotifTitle"></div>
-    <div class="rsn-sub"   id="rfidScanNotifSub"></div>
-  </div>
-  <button class="rsn-close" id="rfidScanNotifClose" aria-label="Close">✕</button>
-  <div class="rsn-bar" id="rfidScanNotifBar"></div>
-</div>
-<!-- ── TigerPOD discovery modal ─────────────────────────────────────────── -->
-<div class="modal-overlay" id="tigerPodModalOverlay">
-  <div class="modal-card tigerpod-card">
-    <button class="panel-close tigerpod-close-btn" id="tigerPodClose">✕</button>
-
-    <!-- Hero — purple gradient + pulsing NFC rings + product identity -->
-    <div class="tigerpod-hero">
-      <div class="tigerpod-hero-rings">
-        <div class="tpr tpr1"></div>
-        <div class="tpr tpr2"></div>
-        <div class="tpr tpr3"></div>
-      </div>
-      <div class="tigerpod-hero-name">
-        <span class="tigerpod-hero-product">Tiger POD Free STL</span>
-      </div>
-      <video class="tigerpod-hero-video" id="tigerPodVideo"
-             src="../assets/video/tiger_pod/helper_tiger_pod_movies.mp4"
-             autoplay muted loop playsinline preload="auto">
-      </video>
-      <!-- CTA bar -->
-      <div class="tigerpod-stats">
-        <span class="tigerpod-cta" data-i18n="tigerPodCta">Please Boost &amp; Like</span>
-      </div>
-    </div>
-
-    <!-- Body -->
-    <div class="tigerpod-body">
-      <h2 class="tigerpod-title" data-i18n="tigerPodModalTitle">Print your TigerPOD Now !</h2>
-      <!-- Colour-variants banner: it's a free STL, so showing it printed in nine
-           filament colours sells the "print it in YOUR colour" idea. Cut-out
-           artwork with alpha, so it blends on any surface (no white box). -->
-      <img class="tigerpod-shot" src="../assets/img/hero-TigerPOD-Banner-Lineup-Rainbow-9.png" alt="" aria-hidden="true" />
-      <p class="tigerpod-desc" data-i18n="tigerPodModalDesc">A 3D-printable stand to Burn TigerTag NFC chips directly on your filament spools.</p>
-
-      <!-- Key features 2×2 grid -->
-      <div class="tigerpod-features">
-        <div class="tigerpod-feat">
-          <span class="tigerpod-feat-num">1</span>
-          <div class="tigerpod-feat-text">
-            <strong data-i18n="tigerPodFeat1Title">Dual NFC Reader</strong>
-            <span data-i18n="tigerPodFeat1Desc">1 or 2 Reader ACR122U</span>
-          </div>
+<!-- Ecosystem window — ONE window for every device and app of the TigerSystem,
+     on a fixed grid (ECO_SHEETS / _renderEcoSheet in inventory.js): the zones
+     below keep their size from one device to the next, the sheet only fills
+     them. The debug-only reader readout floats over the TigerPOD's bay. -->
+<div class="modal-overlay" id="ecoModalOverlay">
+  <div class="modal-card eco-card" role="dialog" aria-modal="true" aria-labelledby="ecoName">
+    <header class="eco-nav">
+      <div class="eco-tabs" id="ecoRail" role="tablist" aria-label="TigerSystem"></div>
+      <button class="modal-close eco-close" id="ecoClose" data-i18n-aria="tutoClose" aria-label="Close">✕</button>
+    </header>
+    <section class="eco-panel" role="tabpanel" aria-labelledby="ecoName">
+      <div class="eco-overview">
+        <div class="eco-bay">
+          <span class="eco-cat eco-fade" id="ecoCat"></span>
+          <div class="eco-shot" id="ecoShot"></div>
+          <span class="eco-beam" aria-hidden="true"></span>
+          <button type="button" class="eco-step eco-step--prev" data-eco-step="-1" data-i18n-aria="ecoPrev" aria-label="Previous"><span class="icon icon-chevron-l icon-16" aria-hidden="true"></span></button>
+          <button type="button" class="eco-step eco-step--next" data-eco-step="1" data-i18n-aria="ecoNext" aria-label="Next"><span class="icon icon-chevron-r icon-16" aria-hidden="true"></span></button>
+          <div class="tigerpod-debug" id="tigerPodDebug" hidden></div>
         </div>
-        <div class="tigerpod-feat">
-          <span class="tigerpod-feat-num">2</span>
-          <div class="tigerpod-feat-text">
-            <strong data-i18n="tigerPodFeat2Title">Dual Link</strong>
-            <span data-i18n="tigerPodFeat2Desc">2 TigerTag in same time</span>
-          </div>
-        </div>
-        <div class="tigerpod-feat">
-          <span class="tigerpod-feat-num">3</span>
-          <div class="tigerpod-feat-text">
-            <strong data-i18n="tigerPodFeat3Title">Print in Place</strong>
-            <span data-i18n="tigerPodFeat3Desc">No support optimisation</span>
-          </div>
-        </div>
-        <div class="tigerpod-feat">
-          <span class="tigerpod-feat-num">4</span>
-          <div class="tigerpod-feat-text">
-            <strong data-i18n="tigerPodFeat4Title">1kg Standard spool</strong>
-            <span data-i18n="tigerPodFeat4Desc">Boosted fit for 99% of Spools</span>
-          </div>
+        <div class="eco-info">
+          <div class="eco-promise eco-fade"><p class="eco-name" id="ecoName"></p><h2 id="ecoPromise"></h2></div>
+          <div class="eco-status" id="ecoStatus" role="status"></div>
+          <ul class="eco-benefits eco-fade" id="ecoBenefits"></ul>
         </div>
       </div>
-
-      <!-- CTA — two Pod models (same reader, only the 3D model to print differs) -->
-      <div class="tigerpod-print-cta" data-i18n="tigerPodPrintCta">Print the TigerPOD</div>
-      <div class="tigerpod-print-row">
-        <a class="btn primary tigerpod-print-btn" id="tigerPodMakerWorldBtn">
-          <span data-i18n="tigerPodPrintNormalBtn">Standard</span>
-        </a>
-        <a class="btn primary tigerpod-print-btn" id="tigerPodMakerWorldMiniBtn">
-          <span data-i18n="tigerPodPrintMiniBtn">Mini</span>
-        </a>
-      </div>
-      <!-- Debug-only reader readout. Replaces the old "I own a TigerPOD" toggle,
-           which was redundant: `hasPod` is telemetry-only and auto-set on the
-           first successful scan, so a manual toggle changed nothing the next scan
-           wouldn't re-set. Populated + revealed by openTigerPodModal ONLY when
-           state.debugEnabled; stays hidden for everyone else. -->
-      <div class="tigerpod-debug" id="tigerPodDebug" hidden></div>
-    </div>
+      <div class="eco-flow eco-fade" id="ecoFlow" aria-hidden="true"></div>
+      <section class="eco-acq">
+        <h3 class="eco-sec-title" data-i18n="ecoGetTitle">How to get one</h3>
+        <ol class="eco-get eco-fade" id="ecoSteps"></ol>
+      </section>
+    </section>
+    <footer class="eco-foot" id="ecoFoot"></footer>
   </div>
 </div>
 

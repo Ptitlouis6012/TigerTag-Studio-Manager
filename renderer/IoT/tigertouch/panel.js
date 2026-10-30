@@ -4,7 +4,7 @@
  *   • at least one screen → the side card: each screen (status, Wi-Fi, battery
  *     fitted, firmware, address), its LAN mode (Live view, Screenshot) and the printers it follows — the TigerSpool card's printer rows, with
  *     the dot the SCREEN sees (`printers_online`), never Studio's own link.
- *   • none yet → the discovery modal.
+ *   • none yet → the Tiger Touch sheet.
  *
  * Screenshot: main.js `tigertouch:screenshot` fetches /screen.bmp?c=CODE from the
  * main process (the screen sends no CORS header, so the renderer cannot), turns
@@ -17,8 +17,6 @@
 
 import { W, H, screenBase, fetchRaw, waitChange, touch as sendTouch, decodeRle565, grabScreen } from "./screen.js";
 
-const GITHUB = "https://github.com/TigerTag-Project/Tiger-Touch";
-const INSTALLER = "https://tigertag-project.github.io/Tiger-Touch/";   // web flasher (USB, from the browser)
 const PHOTO_CARD = "../assets/img/TigerTouch_card.png";
 
 const BRAND_LABEL = {
@@ -36,16 +34,6 @@ export function initTigerTouchPanel(ctx, helpers) {
   const $ = id => document.getElementById(id);
   $("tigertouchPanelClose")?.addEventListener("click", closeTigerTouchPanel);
   $("tigertouchOverlay")?.addEventListener("click", closeTigerTouchPanel);
-  $("tigertouchDiscoverClose")?.addEventListener("click", closeTigerTouchDiscover);
-  $("tigertouchDiscoverOverlay")?.addEventListener("click", e => {
-    if (e.target.id === "tigertouchDiscoverOverlay") closeTigerTouchDiscover();
-  });
-  $("tigertouchDiscoverBody")?.addEventListener("click", e => {
-    const a = e.target.closest("[data-ttc-link]");
-    if (!a) return;
-    e.preventDefault();
-    window.electronAPI?.openExternal?.(a.dataset.ttcLink);
-  });
   $("tigertouchShotClose")?.addEventListener("click", closeShot);
   $("tigertouchShotOverlay")?.addEventListener("click", e => {
     if (e.target.id === "tigertouchShotOverlay") closeShot();
@@ -95,10 +83,11 @@ function onPanelClick(e) {
   _ctx.openPrinterDetail?.(row.dataset.brand, row.dataset.ttcPrinter);
 }
 
-/** The glyph's click: the side card when there is a screen, the modal otherwise. */
+/** The glyph's click: the side card when there is a screen, else the Tiger
+ *  Touch sheet of the ecosystem window (what it is, how to install it). */
 export function openTigerTouch() {
   if (_ctx.state.tigertouchs.length) openTigerTouchPanel();
-  else openTigerTouchDiscover();
+  else _ctx.openEcoSheet?.("touch");
 }
 
 // ── Side card ──────────────────────────────────────────────────────────────
@@ -571,42 +560,3 @@ function closeShot() {
   document.getElementById("tigertouchShotOverlay")?.classList.remove("open");
 }
 
-// ── Discovery modal ────────────────────────────────────────────────────────
-
-export function openTigerTouchDiscover() {
-  const body = document.getElementById("tigertouchDiscoverBody");
-  if (!body) return;
-  const { t, esc } = _ctx;
-  const badges = [["printer", "tigertouchPointBrands"], ["eye-on", "tigertouchPointGlance"], ["wrench", "tigertouchPointOpen"]]
-    .map(([ico, k]) => `<span class="tsp-badge"><span class="icon icon-${ico} icon-13" aria-hidden="true"></span>${esc(t(k))}</span>`).join("");
-  body.innerHTML = `
-    <div class="tsp-hero ttc-hero">
-      <span class="tsp-eyebrow">${esc(t("tigertouchEyebrow"))}</span>
-      <img class="ttc-hero-photo" src="${PHOTO_CARD}" alt="" draggable="false" />
-    </div>
-    <div class="tsp-discover-text">
-      <h2 class="tsp-discover-lead">${esc(t("tigertouchPitch"))}</h2>
-      <p class="tsp-discover-sub">${esc(t("tigertouchSub"))}</p>
-      <div class="tsp-badges">${badges}</div>
-    </div>
-    <div class="ttc-install-wrap">
-      <a class="ttc-install" href="${esc(INSTALLER)}" data-ttc-link="${esc(INSTALLER)}">
-        <span class="icon icon-download icon-18" aria-hidden="true"></span>
-        <span>${esc(t("tigertouchInstall"))}</span>
-      </a>
-      <p class="ttc-install-sub">${esc(t("tigertouchInstallSub"))}</p>
-    </div>
-    <div class="tsp-tiles ttc-tiles">
-      <a class="tsp-tile" href="${esc(GITHUB)}" data-ttc-link="${esc(GITHUB)}">
-        <span class="tsp-tile-ico"><span class="icon icon-github icon-20" aria-hidden="true"></span></span>
-        <span class="tsp-tile-title">${esc(t("tigertouchCtaCode"))}</span>
-        <span class="tsp-tile-sub">${esc(t("tigertouchCtaCodeSub"))}</span>
-        <span class="tsp-tile-go"><span class="icon icon-arrow-r icon-13" aria-hidden="true"></span></span>
-      </a>
-    </div>`;
-  document.getElementById("tigertouchDiscoverOverlay")?.classList.add("open");
-}
-
-export function closeTigerTouchDiscover() {
-  document.getElementById("tigertouchDiscoverOverlay")?.classList.remove("open");
-}

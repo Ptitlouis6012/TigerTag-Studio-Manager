@@ -14,11 +14,13 @@ import {
   unsubscribeScales,
   renderScalesPanel,
   renderScaleHealth,
+  openScalesPanel,
+  isScaleOnline,
 } from './IoT/tigerscale/index.js';
 
 // ── TigerSpool presence (header glyph only) ───────────────────────────────
-import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth } from './IoT/tigerspool/index.js';
-import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth } from './IoT/tigertouch/index.js';
+import { initTigerSpool, subscribeTigerSpools, unsubscribeTigerSpools, refreshTigerSpoolPanel, renderTigerSpoolHealth, spoolConnState, openTigerSpool } from './IoT/tigerspool/index.js';
+import { initTigerTouch, subscribeTigerTouchs, unsubscribeTigerTouchs, refreshTigerTouchPanel, renderTigerTouchHealth, connState as touchConnState, openTigerTouch } from './IoT/tigertouch/index.js';
 import { initCamSnapshot } from './printers/cam-snapshot.js';
 import { pageHtml as xpPageHtml, chartTipHtml as xpChartTipHtml, leagueSeries as xpLeagueSeries } from './quests/xp-history.js';
 import { applyDealsFilter, dealsViewHtml, openChests, openCoinsCodeModal, openCoinsHistory, openEnvelopeHelp, showEnvelope, showEnvelopeGift, sortDeals, tapEgg, wireDeals } from './quests/squad-deals.js';
@@ -715,6 +717,18 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   const _printerSort = _loadSort("tigertag.sort.printer", "status", "desc");
   const _favesSort   = _loadSort("tigertag.sort.faves", "brand", "asc");
 
+  // First launch (no tigertag.lang yet): the system's language when it is one
+  // of the 11 we ship — first match in the OS preference order — else English.
+  // pt-BR / bare pt → "pt" (Brazilian), any other pt-XX → "pt-pt", zh-* → "zh".
+  function _systemLang() {
+    const SHIPPED = ["en", "fr", "de", "es", "it", "pt", "pt-pt", "pl", "nl", "ru", "zh"];
+    for (const tag of (navigator.languages?.length ? navigator.languages : [navigator.language || ""])) {
+      const [base, region] = tag.toLowerCase().split("-");
+      const code = base === "pt" ? (region && region !== "br" ? "pt-pt" : "pt") : base;
+      if (SHIPPED.includes(code)) return code;
+    }
+    return "en";
+  }
   const state = {
     inventory: null,
     rows: [],
@@ -737,7 +751,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // View-only grouping of identical spools (Table + Grid). Default ON. The
     // group structure is derived at render time — never persisted to Firestore.
     groupInv: localStorage.getItem("tigertag.inv.group") !== "false",
-    lang: localStorage.getItem("tigertag.lang") || "en",
+    lang: localStorage.getItem("tigertag.lang") || _systemLang(),
     theme: localStorage.getItem("tigertag.theme") || "dark",
     sortCol: _invSort.col,       // persisted; default "brand"
     sortDir: _invSort.dir,       // persisted; default "asc"
@@ -3398,21 +3412,24 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     setTimeout(() => $("adpBrand")?.focus(), 80);
   }
 
-  // The foot says what "Make" will do with the chips on the TigerPOD: maker chips
-  // (Bambu Lab, Creality…) linked to nothing → the held "Link the proprietary
-  // Tag(s)" banner (creates the TigerData, then links them — never burned); a
-  // reader plugged in → the held "Burn the TigerTag" banner (creates, then
-  // burns); no reader → the plain Make button. Re-run when chips come and go.
+  // The foot follows the TigerPOD: maker chips (Bambu Lab, Creality…) linked to
+  // nothing → the held "Link the proprietary Tag(s)" banner alone (creates the
+  // TigerData, then links them — never burned); a blank chip on a reader → the held
+  // "Burn the TigerTag" banner alone (creates, then burns); a reader with no chip →
+  // the plain Make (create only) above that Burn banner, both ways offered; no
+  // reader → Make alone. Re-run when readers and chips come and go.
   function _adpRenderFoot() {
     const slot = $("adpFootBanner"), btn = $("adpSave");
     if (!slot || !btn) return;
     const makers = HAS_NATIVE ? presentMakerChips().length : 0;
-    const mode = makers ? `link:${makers}` : HAS_NATIVE && state.nfcReaderCount > 0 ? "burn" : "";
+    const burn = !makers && HAS_NATIVE && state.nfcReaderCount > 0;
+    const chip = burn && state.nfcCardPresent.size > 0;
+    const mode = makers ? `link:${makers}` : chip ? "burn:chip" : burn ? "burn" : "";
     if (slot.dataset.mode === mode) return;
     slot.dataset.mode = mode;
     slot.innerHTML = makers ? makerLinkBannerHtml("adpLinkBanner", makers)
-      : mode === "burn" ? _burnBannerHTML("adpBurnBanner", "TigerTag") : "";
-    btn.hidden = !!mode;
+      : burn ? _burnBannerHTML("adpBurnBanner", "TigerTag") : "";
+    btn.hidden = !!makers || chip;   // a chip on the TigerPOD: only what it is for
     _wireChipBanner($("adpLinkBanner"), () => saveAddProduct({ linkMakers: true }), null);
     _wireChipBanner($("adpBurnBanner"), () => saveAddProduct({ autoBurn: true }));
   }
@@ -4280,6 +4297,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     state,
     t,
     esc,
+    openEcoSheet: id => openEcoSheet(id),
+    onScalesChanged: () => _refreshScaleSheet(),
     highlight,
     $,
     reportError,
@@ -4293,8 +4312,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
 
   // ── TigerSpool presence (header glyph + hover) ─────────────────────────
   // Printer renames/removals reach the side card through its 10 s tick.
-  initTigerSpool({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError });
-  initTigerTouch({ state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError, openReport });
+  initTigerSpool({ openEcoSheet: id => openEcoSheet(id), onSpoolsChanged: () => { if (_ecoOpen === "spool") _renderEcoSheet(); }, state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError });
+  initTigerTouch({ openEcoSheet: id => openEcoSheet(id), onTouchsChanged: () => { if (_ecoOpen === "touch") _renderEcoSheet(); }, state, t, esc, highlight, fbDb, openPrinterDetail, printerImageUrlFor, printerModelName, isPrinterOnline: p => _isPrinterOnline(p), setupHoldToConfirm, reportError, openReport });
   // Photo + source-quality video on every printer camera, filed per printer by its
   // hardware id (MAC, else serial) — printers/cam-snapshot.js, main.js "Camera captures".
   initCamSnapshot({
@@ -4606,8 +4625,15 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     btn.addEventListener("click", () => {
       const reveal = !field.classList.contains("revealed");
       field.classList.toggle("revealed", reveal);
-      // style direct = repaint immédiat (quirk Chromium avec valeurs définies programmatiquement)
-      field.style.webkitTextSecurity = reveal ? "none" : "disc";
+      // A real type="password" field (the password manager's autofill needs it)
+      // ignores -webkit-text-security: the type itself is what shows the text.
+      // The style stays for the masked type="text" fields.
+      if (field.type === "password" || field.dataset.pwField) {
+        field.dataset.pwField = "1";
+        field.type = reveal ? "text" : "password";
+      } else {
+        field.style.webkitTextSecurity = reveal ? "none" : "disc";
+      }
       btn.innerHTML = reveal ? SVG_EYE_ON : SVG_EYE_OFF;
     });
   }
@@ -6785,17 +6811,17 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     $("addModalResult").innerHTML = "";
   }
 
-  function openAddAccountModal() {
+  function openAddAccountModal(mode) {
     $("stgEmail").value = "";
     $("stgPassword").value = "";
     $("stgConfirmPassword").value = "";
-    $("stgPassword").classList.remove("revealed");
-    $("stgConfirmPassword").classList.remove("revealed");
+    for (const id of ["stgPassword", "stgConfirmPassword"]) { $(id).classList.remove("revealed"); $(id).type = "password"; }
+    hideCheckMail();
     $("btnToggleStgPassword").innerHTML = SVG_EYE_OFF;
     $("btnToggleConfirmPassword").innerHTML = SVG_EYE_OFF;
     $("addModalResult").innerHTML = "";
     $("stgRememberMe").checked = true;
-    lmSetMode("signin");
+    lmSetMode(mode === "create" ? "create" : "signin");
     $("addAccountModalOverlay").classList.add("open");
     setTimeout(() => $("stgEmail").focus(), 180);
   }
@@ -6817,13 +6843,46 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     lmSetMode(_lmMode === "signin" ? "create" : "signin");
   });
 
+  // Account emails (address check, password reset) are TigerSystem's own:
+  // the backend's `authMail` function sends a branded mail in the app's
+  // language with a short tigersystem.io/auth/<token> link (Brevo, from
+  // noreply@tigersystem.io). When it cannot send — network, provider down, an
+  // answer with `fallback: true` — Firebase's default email goes out instead,
+  // in the app's language too (the auth instance's languageCode; zh / pt / pt-pt
+  // mapped to its regional codes), so the user always gets one.
+  const AUTH_MAIL_URL = "https://us-central1-tigertag-connect.cloudfunctions.net/authMail";
+  const _AUTH_LANG = { zh: "zh-CN", pt: "pt-BR", "pt-pt": "pt-PT" };
+  function _setAuthLang(...auths) {
+    const code = _AUTH_LANG[state.lang] || state.lang || "en";
+    for (const a of auths) if (a) a.languageCode = code;
+  }
+  /** true when authMail sent it; false → the caller sends Firebase's default. */
+  async function _authMail(action, { user = null, email = "" } = {}) {
+    try {
+      const headers = { "Content-Type": "application/json" };
+      if (user) headers["X-Firebase-Id-Token"] = await user.getIdToken();
+      const r = await fetch(AUTH_MAIL_URL, { method: "POST", headers, body: JSON.stringify({ action, email, lang: state.lang }) });
+      if (r.status === 429) return true;   // too many requests: a mail already went out, don't add Firebase's on top
+      const j = await r.json().catch(() => ({}));
+      return r.ok && j.ok && !j.fallback;
+    } catch (_) { return false; }
+  }
+  async function _sendVerification(user, auth) {
+    if (await _authMail("verify", { user })) return;
+    _setAuthLang(auth);
+    await user.sendEmailVerification();
+  }
+
   // Forgot password
   $("btnForgotPassword").addEventListener("click", async () => {
     const email = $("stgEmail").value.trim();
     if (!email) { $("stgEmail").focus(); return; }
     $("addModalResult").innerHTML = "";
     try {
-      await fbAuth().sendPasswordResetEmail(email);
+      if (!(await _authMail("reset", { email }))) {
+        _setAuthLang(fbAuth());
+        await fbAuth().sendPasswordResetEmail(email);
+      }
       toast($("addModalResult"), "ok", t("loginResetSent"));
     } catch (err) {
       reportError("auth.resetPassword", err);
@@ -6901,36 +6960,53 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     } finally { setLoading($("btnGoogleSignIn"), false); }
   });
 
-  // Shown when a verified-email account tries to sign in but hasn't clicked the
-  // link yet. Renders the blocking message + an inline "resend" action that
-  // re-authenticates (using the just-typed credentials) only long enough to
-  // fire a fresh verification email, then signs back out.
-  function showVerifyBlocked(email, password) {
-    const el = $("addModalResult");
-    el.innerHTML = "";
-    const div = document.createElement("div");
-    div.className = "alert bad";
-    div.textContent = t("loginEmailNotVerified");
-    const sep = document.createElement("span");
-    sep.textContent = " — "; sep.style.opacity = ".7";
-    const link = document.createElement("button");
-    link.type = "button"; link.className = "alert-link";
-    link.textContent = t("loginResendVerif");
-    link.addEventListener("click", async () => {
-      link.disabled = true;
-      try {
-        const r = await firebase.auth().signInWithEmailAndPassword(email, password);
-        await r.user.sendEmailVerification();
-        await firebase.auth().signOut();
-        toast(el, "ok", t("loginVerifyEmailSent", { email }));
-      } catch (err) {
-        reportError("auth.resendVerif", err);
-        toast(el, "bad", err.message || t("networkError"), { err, context: "auth.resendVerif" });
-      }
-    });
-    div.appendChild(sep); div.appendChild(link);
-    el.appendChild(div);
+  // "Check your inbox": after a sign-up, or a sign-in whose address isn't
+  // confirmed yet, the form steps aside for one clear step — the address, what
+  // to do, "I've confirmed, sign in", resend, another address. The password is
+  // kept in memory only while this step is up (resend needs to sign in briefly).
+  let _checkCreds = null;
+  function showCheckMail(email, password) {
+    _checkCreds = { email, password };
+    $("lmCheckEmail").textContent = email;
+    $("lmCheckNote").textContent = "";
+    $("addModalResult").innerHTML = "";
+    $("lmCheck").hidden = false;
+    document.querySelector("#addAccountModalOverlay .lm-card").classList.add("is-check");
   }
+  function hideCheckMail() {
+    _checkCreds = null;
+    $("lmCheck").hidden = true;
+    document.querySelector("#addAccountModalOverlay .lm-card").classList.remove("is-check");
+  }
+  $("btnCheckDone").addEventListener("click", () => {
+    const email = _checkCreds?.email || "";
+    hideCheckMail();
+    lmSetMode("signin");
+    $("stgEmail").value = email;
+    setTimeout(() => $("stgPassword").focus(), 50);
+  });
+  $("btnCheckChange").addEventListener("click", () => {
+    hideCheckMail();
+    lmSetMode("create");
+    $("stgEmail").value = "";
+    setTimeout(() => $("stgEmail").focus(), 50);
+  });
+  $("btnCheckResend").addEventListener("click", async () => {
+    const btn = $("btnCheckResend"), c = _checkCreds;
+    if (!c || btn.disabled) return;
+    btn.disabled = true;
+    try {
+      const r = await firebase.auth().signInWithEmailAndPassword(c.email, c.password);
+      await _sendVerification(r.user, firebase.auth());
+      await firebase.auth().signOut();
+      $("lmCheckNote").textContent = t("loginCheckResent");
+    } catch (err) {
+      reportError("auth.resendVerif", err);
+      $("lmCheckNote").textContent = t("networkError");
+    } finally {
+      setTimeout(() => { btn.disabled = false; }, 30000);   // one resend per 30 s
+    }
+  });
 
   // Email/password sign-in or create account
   $("btnStgSave").addEventListener("click", async () => {
@@ -6961,15 +7037,12 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // link — so a mistyped / non-existent address can never enter the app.
         // (Google sign-in is exempt: those addresses are already verified.)
         const result = await firebase.auth().createUserWithEmailAndPassword(email, password);
-        await result.user.sendEmailVerification();
+        await _sendVerification(result.user, firebase.auth());
         await firebase.auth().signOut();
-        // Drop back to the sign-in form, pre-fill the email, and tell them to
-        // check their inbox before logging in.
-        lmSetMode("signin");
-        $("stgEmail").value = email;
+        // The form steps aside: "check your inbox" (showCheckMail).
         $("stgPassword").value = "";
         $("stgConfirmPassword").value = "";
-        toast($("addModalResult"), "ok", t("loginVerifyEmailSent", { email }));
+        showCheckMail(email, password);
       } else {
         // Sign in on DEFAULT, transfer to named instance, register listener,
         // then call handleSignedIn EXPLICITLY for guaranteed UI refresh.
@@ -6978,7 +7051,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
         // (emailVerified is always true for Google sign-in, so it never lands here.)
         if (!result.user.emailVerified) {
           await firebase.auth().signOut();
-          showVerifyBlocked(email, password);
+          showCheckMail(email, password);
           setLoading($("btnStgSave"), false);
           return;
         }
@@ -9224,7 +9297,136 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     return sortRows(deduplicateTwins(rows));
   }
 
+  // ── First steps ("Where do we start?") ────────────────────────────────────
+  // Shown by renderInventory() while the account has no spool. One delegated
+  // listener on #mainResult survives its re-renders.
+  let _invStartShown = false;   // the screen was on — the next spool gets a word
+  function _paintInvStartPod() {
+    const c = document.querySelector('.inv-start-card[data-start="pod"]');
+    if (c) c.classList.toggle("is-ready", state.nfcReaders.size > 0);
+  }
+  // The printer card's picture: a random model from every brand's catalogue,
+  // cross-faded to another one every 2 s while the card is on screen (held when
+  // the window is hidden). Two beats: the old picture fades out, THEN the new one
+  // fades in — the PNGs are transparent, so two at once would show through.
+  let _invStartPrinterTimer = 0;
+  function _cycleInvStartPrinter() {
+    clearInterval(_invStartPrinterTimer);
+    const art = document.querySelector('.inv-start-card[data-start="printer"] .inv-start-art');
+    if (!art) return;
+    const pool = Object.values(state.db.printerModels || {}).flat()
+      .filter(m => String(m.id) !== "0").map(printerImageUrl).filter(Boolean);
+    if (!pool.length) return;
+    let last = "";
+    const pick = () => { let u; do u = pool[Math.floor(Math.random() * pool.length)]; while (pool.length > 1 && u === last); return (last = u); };
+    const show = () => {
+      const img = document.createElement("img");
+      img.alt = ""; img.decoding = "async"; img.src = pick();
+      img.onload = () => {
+        if (!art.isConnected) return;
+        const old = [...art.children];
+        old.forEach(o => o.classList.remove("is-on"));
+        setTimeout(() => {
+          old.forEach(o => o.remove());
+          if (!art.isConnected) return;
+          art.appendChild(img);
+          void img.offsetWidth;            // start from the faded-out style
+          img.classList.add("is-on");
+        }, old.length ? 320 : 0);
+      };
+    };
+    show();
+    _invStartPrinterTimer = setInterval(() => {
+      if (!art.isConnected) { clearInterval(_invStartPrinterTimer); return; }
+      if (!document.hidden) show();
+    }, 2000);
+  }
+  // "Going further" — once "Where do we start?" has been on screen for an
+  // account (tigertag.firstSteps.<uid> = "on"), the spool list carries a slim
+  // strip of the OPTIONAL hardware steps (the first spool already is the win):
+  // the TigerPOD (a reader plugged in or a chip ever read) and a real printer,
+  // each with "I don't have one" (tigertag.firstSteps.<uid>.skip). It goes
+  // quietly when both are done or skipped ("done"), or when closed ("closed").
+  const _fsKey = () => `tigertag.firstSteps.${state.activeAccountId}`;
+  const _fsGet = (sfx = "") => { try { return localStorage.getItem(_fsKey() + sfx); } catch (_) { return null; } };
+  const _fsSet = (v, sfx = "") => { try { localStorage.setItem(_fsKey() + sfx, v); } catch (_) {} };
+  function _renderFirstSteps() {
+    const el = $("firstSteps");
+    if (!el) return;
+    const show = HAS_NATIVE && state.activeAccountId && !state.friendView && _fsGet() === "on"
+      && (state.viewMode === "table" || state.viewMode === "grid") && state.rows.length > 0;
+    if (!show) { el.classList.add("hidden"); return; }
+    const skipped = (_fsGet(".skip") || "").split(",");
+    const steps = [
+      { id: "pod",     done: state.hasPod || state.nfcReaders.size > 0,         label: t("invStartPodTitle"),     skip: t("firstStepsNotMine") },
+      { id: "printer", done: (state.printers || []).some(p => p.demo !== true), label: t("invStartPrinterTitle"), skip: t("firstStepsNotMine") },
+    ].filter(x => !skipped.includes(x.id));
+    if (steps.every(x => x.done)) { _fsSet("done"); el.classList.add("hidden"); return; }
+    el.innerHTML = `
+      <span class="first-steps-title">${t("firstStepsTitle")}</span>
+      ${steps.map(x => x.done
+        ? `<span class="first-steps-step is-done"><span class="icon icon-check icon-12" aria-hidden="true"></span>${esc(x.label)}</span>`
+        : `<span class="first-steps-item"><button type="button" class="first-steps-step" data-fs="${x.id}"><span class="icon icon-circle icon-12" aria-hidden="true"></span>${esc(x.label)}</button><button type="button" class="first-steps-skip" data-fs-skip="${x.id}">${esc(x.skip)}</button></span>`).join("")}
+      <button type="button" class="first-steps-close" data-fs="close" aria-label="${esc(t("firstStepsHide"))}"><span class="icon icon-close icon-12" aria-hidden="true"></span></button>`;
+    el.classList.remove("hidden");
+  }
+  $("firstSteps")?.addEventListener("click", e => {
+    const sk = e.target.closest?.("[data-fs-skip]");
+    if (sk) {
+      const list = new Set((_fsGet(".skip") || "").split(",").filter(Boolean));
+      list.add(sk.dataset.fsSkip); _fsSet([...list].join(","), ".skip");
+      return _renderFirstSteps();
+    }
+    const b = e.target.closest?.("[data-fs]");
+    if (!b) return;
+    const go = b.dataset.fs;
+    if (go === "close") { _fsSet("closed"); $("firstSteps").classList.add("hidden"); }
+    else if (go === "pod") openTigerPodModal();
+    else if (go === "printer") { setViewMode("printer"); openPrinterBrandPicker(); }
+  });
+  // "Where do we start?" — painted in the spool list with no spool, and in the
+  // Printers view with no printer. Clicks are handled on the host (_onInvStartClick).
+  function _paintInvStart(host) {
+    if (!host) return;
+    // Each card carries its picture at the top right: the spool, the TigerPOD,
+    // a printer (one model after another — _cycleInvStartPrinter).
+    const card = (go, icon, title, text, cta, ready = "", art = "") => `
+          <button type="button" class="inv-start-card" data-start="${go}">
+            <span class="inv-start-art" aria-hidden="true">${art ? `<img class="is-on" src="${art}" alt="" decoding="async">` : ""}</span>
+            <span class="inv-start-tile"><span class="icon icon-${icon} icon-22" aria-hidden="true"></span></span>
+            <span class="inv-start-title"><span class="when-idle">${t(title)}</span>${ready ? `<span class="when-ready">${t(ready + "Title")}</span>` : ""}</span>
+            <span class="inv-start-text"><span class="when-idle">${t(text)}</span>${ready ? `<span class="when-ready">${t(ready + "Text")}</span>` : ""}</span>
+            ${ready ? `<span class="inv-start-status" aria-live="polite">${t(ready + "Wait")}</span>` : ""}
+            <span class="inv-start-go">${t(cta)}<span class="icon icon-arrow-r icon-12" aria-hidden="true"></span></span>
+          </button>`;
+    host.innerHTML = `
+      <div class="inv-start">
+        <p class="inv-start-kicker">${t("invStartKicker")}</p>
+        <h1 class="inv-start-h1">${t("invStartTitle")}</h1>
+        <p class="inv-start-sub">${t("invStartSub")}</p>
+        <div class="inv-start-grid">
+          ${card("spool", "plus-circle", "invStartSpoolTitle", "invStartSpoolText", "invStartGoSpool", "", "../assets/img/mockups/tigertag-spool.webp")}
+          ${HAS_NATIVE ? card("pod", "nfc", "invStartPodTitle", "invStartPodText", "invStartGoPod", "invStartPodReady", "../assets/img/mockups/tigerpod-mini.webp") : ""}
+          ${HAS_NATIVE ? card("printer", "printer", "invStartPrinterTitle", "invStartPrinterText", "invStartGoPrinter") : ""}
+        </div>
+        <p class="inv-start-phone"><span class="icon icon-mobile-app icon-14" aria-hidden="true"></span>${t("invStartPhone")} <button type="button" class="inv-start-app" data-start-app>Tiger NFC Connect</button></p>
+      </div>`;
+    _paintInvStartPod();
+    _cycleInvStartPrinter();
+  }
+  function _onInvStartClick(e) {
+    if (e.target.closest?.("[data-start-app]")) return openEcoSheet("app");   // the phone app's sheet
+    const c = e.target.closest?.(".inv-start-card");
+    if (!c) return;
+    const go = c.dataset.start;
+    if (go === "spool") openAddChooser();
+    else if (go === "pod") { if (state.nfcReaders.size === 0) openTigerPodModal(); }
+    else if (go === "printer") { setViewMode("printer"); openPrinterBrandPicker(); }
+  }
+  $("mainResult")?.addEventListener("click", _onInvStartClick);
+
   function renderInventory() {
+    $("firstSteps")?.classList.add("hidden");   // shown again below, in the spool list only
     // Put the view-selector bubble on the active button. It lives here rather than
     // only at boot because the selector sits inside `#card-inv`, which is
     // `display: none` until sign-in completes: at boot every button measures 0 px,
@@ -9443,74 +9645,25 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       $("invPrinterView")?.classList.add("hidden");
 
       if (state.invLoading) {
+        _invStartShown = false;   // an account loading is not a first spool landing
         _showLoading($("mainResult"));
       } else {
-        // Connected + 0 spools → Apple-style welcome with 2 QR cards
-        const qrUniversal  = _makeQrDataUrl("https://taap.it/DF1Aqt", { size: 300, margin: 3, fg: "#1d1d1f", bg: "#ffffff", logo: false });
-        // Universal beta link — routes to the iOS (TestFlight) or Android beta
-        // automatically based on the scanning phone.
-        const qrBeta = _makeQrDataUrl("https://taap.it/nX7QSrz", { size: 300, margin: 3, fg: "#1d1d1f", bg: "#ffffff", logo: false });
-        $("mainResult").innerHTML = `
-          <div class="inv-welcome">
-            <div class="inv-welcome-hero">
-              <h1 class="inv-welcome-h1">${t("invWelcomeTitle")}</h1>
-              <div class="inv-welcome-logo inv-welcome-logo--mockup">
-                <img src="../assets/img/Hero-TigerSystem-ecosystem.png" alt="Tiger Studio + TigerTag RFID" />
-              </div>
-              <p class="inv-welcome-p">${t("invWelcomeSub")}</p>
-            </div>
-            <div class="inv-welcome-grid">
-              <!-- Card 1 : App Store + Google Play (lien universel taap.it) -->
-              <div class="inv-qr-card">
-                <div class="inv-qr-card-head inv-qr-card-head--dark">
-                  <span class="icon icon-apple icon-13"></span>
-                  <span class="icon icon-android icon-13"></span>
-                  App Store &amp; Google Play
-                </div>
-                <div class="inv-qr-card-body">
-                  <img class="inv-qr-img" src="${qrUniversal}" alt="QR" onerror="this.style.opacity='.15'" />
-                  <div class="inv-qr-store-row">
-                    <a class="inv-qr-store-pill" href="https://taap.it/DF1Aqt" target="_blank" rel="noopener">
-                      <span class="icon icon-apple icon-12"></span> App Store
-                    </a>
-                    <a class="inv-qr-store-pill" href="https://taap.it/DF1Aqt" target="_blank" rel="noopener">
-                      <span class="icon icon-android icon-12"></span> Google Play
-                    </a>
-                  </div>
-                </div>
-                <div class="inv-qr-card-foot">${t("invQrScanHint")}</div>
-              </div>
-              <!-- Card 2 : Beta — mirrors the store card; universal beta link (iOS TestFlight / Android beta) -->
-              <div class="inv-qr-card">
-                <div class="inv-qr-card-head inv-qr-card-head--orange">
-                  <span class="icon icon-apple icon-13"></span>
-                  <span class="icon icon-android icon-13"></span>
-                  App Store &amp; Google Play
-                  <span class="inv-qr-beta-badge">BETA</span>
-                </div>
-                <div class="inv-qr-card-body">
-                  <img class="inv-qr-img" src="${qrBeta}" alt="QR" onerror="this.style.opacity='.15'" />
-                  <div class="inv-qr-store-row">
-                    <a class="inv-qr-store-pill" href="https://taap.it/nX7QSrz" target="_blank" rel="noopener">
-                      <span class="icon icon-apple icon-12"></span> App Store
-                    </a>
-                    <a class="inv-qr-store-pill" href="https://taap.it/nX7QSrz" target="_blank" rel="noopener">
-                      <span class="icon icon-android icon-12"></span> Google Play
-                    </a>
-                  </div>
-                </div>
-                <div class="inv-qr-card-foot">${t("invQrScanHint")}</div>
-              </div>
-            </div>
-          </div>`;
+        // Connected + 0 spools → "Where do we start?": three ways to a first
+        // win, each card opening the flow that does it (_wireInvStart).
+        _invStartShown = true;
+        if (!_fsGet()) _fsSet("on");   // from now on, "Next up" follows this account's first steps
+        _paintInvStart($("mainResult"));
       }
       return;
     }
 
     // ── Has spools → inventory card ───────────────────────────────────────────
+    // The first spool just landed while "Where do we start?" was on screen.
+    if (_invStartShown && !state.friendView) { _invStartShown = false; _flashMessage(t("invStartFirstSpool")); }
     $("card-welcome").classList.add("hidden");
     $("card-inv").classList.remove("hidden");
     $("mainResult").innerHTML = "";  // clear any spinner left by friendView loading
+    _renderFirstSteps();
 
     // Rack view bypasses the rows-empty short-circuit (a rack can be useful even with 0 spools).
     // In friend view this renders read-only — no edit / drag / drop / kebab.
@@ -15604,22 +15757,39 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     _cpkStackT = setTimeout(() => { if (!_cpkUpgradeFor) document.body.classList.remove("cpk-upgrade"); }, 350);
     _syncPanels();
   }
+  let _cpkFilledIndex = null;   // the catalogue index the rows on screen came from
   function _catalogPickFill() {
     const list = $("cpkList");
     if (!list) return;
+    // A synced catalogue (new photos, names) rebuilds the rows instead of keeping them.
+    if (_cpkFilledIndex !== _catalogIndex) { list.innerHTML = ""; _cpkFilledIndex = _catalogIndex; }
     const hits = _catalogFilter($("cpkSearch")?.value, $("cpkBrand")?.value || "", "", _cpkHueFilter())
       .filter(_catIsCreatable).slice(0, CAT_PICK_MAX);
-    list.innerHTML = hits.length ? hits.map(it => {
-      const r = _catViewAsRow(it);
-      return `
-        <button type="button" class="cpk-row" data-cpk-id="${esc(String(it.id))}">
-          ${_catThumbHTML(r, 66, { fill: true })}
+    if (!hits.length) { list.innerHTML = `<p class="cpk-empty">${esc(t("catEmptyTitle"))}</p>`; return; }
+    // Keyed by product id: a row already on screen is kept (moved into place,
+    // never rebuilt), so typing a letter only adds and drops rows — the photos
+    // that stay put do not reload and flicker on every keystroke.
+    list.querySelector(".cpk-empty")?.remove();
+    const have = new Map([...list.querySelectorAll(".cpk-row")].map(b => [b.dataset.cpkId, b]));
+    const tpl = document.createElement("template");
+    hits.forEach((it, i) => {
+      const id = String(it.id);
+      let row = have.get(id);
+      if (row) have.delete(id);
+      else {
+        tpl.innerHTML = `
+        <button type="button" class="cpk-row${id === _cpkSelectedId ? " is-selected" : ""}" data-cpk-id="${esc(id)}">
+          ${_catThumbHTML(_catViewAsRow(it), 66, { fill: true })}
           <span class="cpk-row-txt">
             <b>${esc(String(it._name || it.title || "—"))}</b>
             <small>${esc([it.brand, it.material, it.measure].filter(Boolean).join(" · "))}</small>
           </span>
-        </button>`;
-    }).join("") : `<p class="cpk-empty">${esc(t("catEmptyTitle"))}</p>`;
+        </button>`.trim();
+        row = tpl.content.firstElementChild;
+      }
+      if (list.children[i] !== row) list.insertBefore(row, list.children[i] || null);
+    });
+    have.forEach(row => row.remove());
   }
   $("cpkSearch")?.addEventListener("input", () => _catalogPickFill());
   if ($("catalogPickPanel")) wireSearchBox($("catalogPickPanel"));
@@ -20445,26 +20615,221 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
   });
 
-  /* ── TigerPOD discovery modal ── */
-  const TIGERPOD_MAKERWORLD_URL = "https://makerworld.com/fr/models/1289152-tigertag-io-open-spool-pod-for-rfid-filament";
+  /* ── Ecosystem window ───────────────────────────────────────────────────────
+     ONE window for every device and app of the TigerSystem (#ecoModalOverlay).
+     The window owns the layout, the sheets fill it: a fixed grid of zones of
+     constant size (tabs · scan bay · name + promise · live state · three
+     benefits · data path · three steps · footer), so nothing moves or resizes
+     from one device to the next — only the picture slides and the words fade.
+     Each sheet is written to fit its zones (promise ≤ 2 lines, benefit ≤ 1 line,
+     step ≤ 3 lines); details live in the guide. The device is a scanner and
+     never moves, so the light does: NFC waves leave its reader (`nfc`, x/y in %
+     of the picture) and a beam sweeps it; light packets run along the path. */
   const TIGERPOD_MINI_MAKERWORLD_URL = "https://makerworld.com/fr/models/3190348-tigerpod-mini-for-openspool-tigertag-rfid-filament";
-
-  function openTigerPodModal() {
-    $("tigerPodModalOverlay").classList.add("open");
-    _renderTigerPodDebug();
-    const v = $("tigerPodVideo"); if (v) { v.currentTime = 0; v.play().catch(() => {}); }
+  const TIGERSCALE_PARTS_URL   = "https://github.com/TigerTag-Project/Tiger-Scale-V3#hardware";
+  const TIGERSCALE_CASE_URL    = "https://makerworld.com/en/models/3161869-tigerscale-v3-best-smart-filament-scale-with-nfc#profileId-3573543";
+  const TIGERSCALE_INSTALL_URL = "https://tigertag-project.github.io/Tiger-Scale-V3/";
+  const TIGERSPOOL_BUILD_URL   = "https://github.com/TigerTag-Project/TigerSpool-RFID#build-it-yourself";
+  const TIGERSPOOL_LEFT_URL    = "https://makerworld.com/models/3360492-tigerspool-desktop-stand-spool-on-the-left";
+  const TIGERSPOOL_RIGHT_URL   = "https://makerworld.com/models/3360619-tigerspool-desktop-stand-spool-on-the-right";
+  const TIGERSPOOL_INSTALL_URL = "https://tigertag-project.github.io/TigerSpool-RFID/";
+  const TIGERTOUCH_INSTALL_URL = "https://tigertag-project.github.io/Tiger-Touch/";
+  const TIGERTOUCH_CODE_URL    = "https://github.com/TigerTag-Project/Tiger-Touch";
+  // tigersystem.io's downloads page (Studio, Tiger NFC Connect…) in these
+  // languages; others → English.
+  function _downloadPageUrl() {
+    const site = ["fr", "en", "de", "es", "it", "zh", "pt", "pl"];
+    const l = state.lang === "pt-pt" ? "pt" : state.lang;
+    return `https://tigersystem.io/${site.includes(l) ? l : "en"}/download`;
   }
-  // Debug-only readout in the TigerPOD modal: what the app currently treats as an
-  // active reader (name + whether a chip is on it), and the account's TigerPOD
-  // telemetry — the reader count that drives the ownership signal. Admin/debug
-  // only; hidden and emptied for everyone else. Replaces the removed ownership
-  // toggle (hasPod is telemetry-only, auto-set on the first successful scan).
-  function _renderTigerPodDebug() {
+  const CONNECT_BETA_URL  = "https://taap.it/nX7QSrz";
+  const _ecoWiki = slug => `https://wiki.tigersystem.io${state.lang === "fr" ? "/fr" : ""}/products/${slug}/`;
+  const _ecoOnline = (list, connOf) => (list || []).filter(x => connOf(x) !== "offline").length;
+  // In tab order. tab = short label; cat = what it is, factual; promise; three
+  // benefits [icon, key]; the path (start defaults to the spool's chip); the
+  // live state ({ title, text } once the device is there, else null); three
+  // steps; primary(on) = the main action; more = the "Other links" menu.
+  const ECO_SHEETS = {
+    // TigerPOD Mini: one printed part + two ACR122U readers slid into it. The
+    // original, bigger TigerPOD is no longer offered.
+    pod: {
+      tab: "TigerPOD", name: "TigerPOD", img: "../assets/img/mockups/tigerpod-mini.webp", nfc: [74, 66],
+      cat: "ecoPodCat", promise: "ecoPodPromise", guide: "tigerpod",
+      benefits: [["nfc", "ecoPodBadge1"], ["link", "ecoPodBadge2"], ["edit", "ecoPodBadge3"]],
+      flowEnd: ["list", "ecoPodFlowEnd"],
+      state: () => { const n = state.nfcReaders.size; return n ? { title: t("ecoPodOnTitle"), text: t("ecoPodOnText", { n }) } : null; },
+      steps: ["ecoPodStep1", "ecoPodStep2", "ecoPodStep3"],
+      primary: on => on ? { label: "ecoPodScan", close: true } : { label: "ecoPodFile", url: TIGERPOD_MINI_MAKERWORLD_URL },
+      more: [],
+    },
+    // TigerScale V3: printed case + touchscreen board, 2 NFC readers, load
+    // cell; firmware flashed from the browser. Online = a recent heartbeat.
+    scale: {
+      tab: "TigerScale", name: "TigerScale", img: "../assets/img/mockups/tigerscale.webp", nfc: [73, 58],
+      cat: "ecoCatBuild", promise: "ecoScalePromise", guide: "tigerscale",
+      benefits: [["nfc", "ecoScaleBadge1"], ["scale", "ecoScaleBadge2"], ["refresh", "ecoScaleBadge3"]],
+      flowEnd: ["scale", "ecoScaleFlowEnd"],
+      state: () => { const n = (state.scales || []).filter(isScaleOnline).length; return n ? { title: t("ecoScaleOnTitle"), text: t("ecoScaleOnText", { n }) } : null; },
+      steps: ["ecoScaleStep1", "ecoScaleStep2", "ecoScaleStep3"],
+      primary: () => (state.scales || []).length
+        ? { label: "ecoScaleMine", run: () => { closeEcoSheet(); openScalesPanel(); } }
+        : { label: "ecoScaleBuild", url: TIGERSCALE_PARTS_URL },
+      more: [{ label: "ecoScaleCase", url: TIGERSCALE_CASE_URL }, { label: "ecoInstall", url: TIGERSCALE_INSTALL_URL }],
+    },
+    // TigerSpool: a 2" touchscreen box with an NFC reader beside the printer;
+    // it reads the account's printers and writes the spool into a slot.
+    spool: {
+      tab: "TigerSpool", name: "TigerSpool", img: "../assets/img/mockups/tigerspool.webp", nfc: [68, 72],
+      cat: "ecoCatBuild", promise: "ecoSpoolPromise", guide: "tigerspool",
+      benefits: [["printer", "tigerspoolPointBrands"], ["coins", "tigerspoolPointCheap"], ["wrench", "tigerspoolPointEasy"]],
+      flowEnd: ["printer", "tigerspoolFlowSlot"],
+      state: () => { const n = _ecoOnline(state.tigerspools, spoolConnState); return n ? { title: t("ecoSpoolOnTitle"), text: t("ecoSpoolOnText", { n }) } : null; },
+      steps: ["ecoSpoolStep1", "ecoSpoolStep2", "ecoSpoolStep3"],
+      primary: () => (state.tigerspools || []).length
+        ? { label: "ecoSpoolMine", run: () => { closeEcoSheet(); openTigerSpool(); } }
+        : { label: "ecoSpoolBuild", url: TIGERSPOOL_BUILD_URL },
+      more: [{ label: "tigerspoolSpoolLeft", url: TIGERSPOOL_LEFT_URL }, { label: "tigerspoolSpoolRight", url: TIGERSPOOL_RIGHT_URL }, { label: "ecoInstall", url: TIGERSPOOL_INSTALL_URL }],
+    },
+    // Tiger Touch: a firmware for the BIGTREETECH Panda Touch / K-Touch screen,
+    // flashed over USB from the browser; it finds the account's printers. It
+    // reads no chip — the waves are its link to the printers.
+    touch: {
+      tab: "Tiger Touch", name: "Tiger Touch", img: "../assets/img/mockups/tigertouch-tour.webp", nfc: [48, 38],
+      cat: "ecoTouchCat", promise: "ecoTouchPromise", guide: "tigertouch",
+      benefits: [["printer", "tigertouchPointBrands"], ["eye-on", "tigertouchPointGlance"], ["github", "tigertouchPointOpen"]],
+      flowStart: ["printer", "ecoTouchFlowStart"], flowEnd: ["eye-on", "ecoTouchFlowEnd"],
+      state: () => { const n = _ecoOnline(state.tigertouchs, touchConnState); return n ? { title: t("ecoTouchOnTitle"), text: t("ecoTouchOnText", { n }) } : null; },
+      steps: ["ecoTouchStep1", "ecoTouchStep2", "ecoTouchStep3"],
+      primary: () => (state.tigertouchs || []).length
+        ? { label: "ecoTouchMine", run: () => { closeEcoSheet(); openTigerTouch(); } }
+        : { label: "ecoTouchInstall", url: TIGERTOUCH_INSTALL_URL },
+      more: [{ label: "ecoTouchCode", url: TIGERTOUCH_CODE_URL }],
+    },
+    // Tiger NFC Connect: the phone app (iOS / Android) reads and writes the
+    // chips. Studio cannot see a phone, so it has no live state.
+    app: {
+      tab: "TigerNFC", name: "TigerNFC", img: "../assets/img/mockups/iphone-connect.webp", nfc: [50, 16],
+      cat: "ecoAppCat", promise: "ecoAppPromise", guide: "tigertag-connect",
+      benefits: [["nfc", "ecoAppBadge1"], ["mobile-app", "ecoAppBadge2"], ["refresh", "ecoAppBadge3"]],
+      flowEnd: ["refresh", "ecoAppFlowEnd"],
+      state: () => null,
+      steps: ["ecoAppStep1", "ecoAppStep2", "ecoAppStep3"],
+      primary: () => ({ label: "ecoAppGet", url: _downloadPageUrl() }),
+      more: [{ label: "ecoAppBeta", url: CONNECT_BETA_URL }],
+    },
+    // TigerTag: the chip itself, stuck on the spool — the open standard every
+    // device above reads.
+    tag: {
+      tab: "TigerTag", name: "TigerTag", img: "../assets/img/mockups/tigertag-spool.webp", nfc: [67, 16],
+      cat: "ecoTagCat", promise: "ecoTagPromise", guide: "tigertag",
+      benefits: [["shield-check", "ecoTagBadge1"], ["link", "ecoTagBadge2"], ["package", "ecoTagBadge3"]],
+      flowStart: ["package", "ecoTagFlowStart"], flowEnd: ["list", "ecoTagFlowEnd"],
+      state: () => null,
+      steps: ["ecoTagStep1", "ecoTagStep2", "ecoTagStep3"],
+      primary: () => ({ label: "ecoTagSee", url: `https://tigersystem.io/${state.lang === "fr" ? "fr" : "en"}/tigertag` }),
+      more: [],
+    },
+  };
+  const ECO_ORDER = Object.keys(ECO_SHEETS);
+  let _ecoOpen = null;    // id of the sheet on screen
+  let _ecoActs = [];      // footer actions of that sheet, by index
+  let _ecoT = null;       // pending transition clean-up
+  const _ecoGo = (a) => {
+    if (!a) return;
+    if (a.url) window.electronAPI?.openExternal ? window.electronAPI.openExternal(a.url) : window.open(a.url);
+    else if (a.run) a.run();
+    else closeEcoSheet();
+  };
+  // dir: +1 / -1 when moving through the sheets — the picture slides in from
+  // that side, the words follow; the frame, tabs, arrows and footer never move.
+  // A move to another device: the current sheet fades out towards the far side
+  // (160 ms), then the next one is drawn and eases in (_renderEcoSheet).
+  let _ecoOutT = null;
+  function _ecoSwitch(dir) {
+    const card = $("ecoModalOverlay").querySelector(".eco-card");
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return _renderEcoSheet();
+    clearTimeout(_ecoOutT);
+    card.classList.remove("eco-in", "eco-in-l", "eco-in-r", "eco-out-l", "eco-out-r");
+    void card.offsetWidth;
+    card.classList.add(dir > 0 ? "eco-out-l" : "eco-out-r");
+    _ecoOutT = setTimeout(() => { card.classList.remove("eco-out-l", "eco-out-r"); _renderEcoSheet(dir); }, 160);
+  }
+  function _renderEcoSheet(dir = 0) {
+    const sh = ECO_SHEETS[_ecoOpen];
+    if (!sh) return;
+    const st = sh.state?.();
+    const prim = sh.primary(!!st);
+    const tile = name => `<span class="eco-tile"><span class="icon icon-${name} icon-18" aria-hidden="true"></span></span>`;
+    const fs = sh.flowStart || ["nfc", "tigerspoolFlowChip"];
+    $("ecoRail").innerHTML = ECO_ORDER.map(id => `
+      <button type="button" role="tab" class="eco-tab${id === _ecoOpen ? " is-on" : ""}" data-eco-go="${id}" aria-selected="${id === _ecoOpen}" tabindex="${id === _ecoOpen ? 0 : -1}">${esc(ECO_SHEETS[id].tab)}${id === _ecoOpen ? `<span class="eco-tab-prog" aria-hidden="true"></span>` : ""}</button>`).join("");
+    $("ecoShot").innerHTML = `<img src="${sh.img}" alt="" />
+      <span class="eco-waves" style="--x:${sh.nfc[0]}%;--y:${sh.nfc[1]}%" aria-hidden="true"><i></i><i></i><i></i></span>`;
+    $("ecoCat").textContent = t(sh.cat);
+    $("ecoName").textContent = sh.name;
+    $("ecoPromise").textContent = t(sh.promise);
+    $("ecoStatus").innerHTML = st ? `<span class="eco-dot" aria-hidden="true"></span><b>${st.title}</b><span>${st.text}</span>` : "";
+    $("ecoStatus").classList.toggle("is-on", !!st);
+    $("ecoBenefits").innerHTML = sh.benefits.map(([ic, k]) => `<li><span class="icon icon-${ic} icon-14" aria-hidden="true"></span><span>${t(k)}</span></li>`).join("");
+    $("ecoFlow").innerHTML = `
+      <span class="eco-node">${tile(fs[0])}<span>${t(fs[1])}</span></span>
+      <span class="eco-wire"><i></i><i></i></span>
+      <span class="eco-node eco-node--hub"><img src="${sh.img}" alt="" /></span>
+      <span class="eco-wire"><i></i><i></i></span>
+      <span class="eco-node">${tile(sh.flowEnd[0])}<span>${t(sh.flowEnd[1])}</span></span>`;
+    $("ecoSteps").innerHTML = sh.steps.map((k, i) => `<li><span class="eco-num">${i + 1}</span><span>${t(k)}</span></li>`).join("");
+    _ecoActs = [prim, { label: "ecoGuide", url: _ecoWiki(sh.guide) }, ...sh.more];
+    $("ecoFoot").innerHTML = `
+      <button type="button" class="primary eco-btn" data-eco-act="0">${t(prim.label)}</button>
+      <button type="button" class="eco-btn2" data-eco-act="1">${t("ecoGuide")}</button>
+      ${sh.more.length ? `<div class="eco-more">
+        <button type="button" class="eco-btn3" data-eco-more aria-haspopup="menu" aria-expanded="false">${t("ecoMoreLinks")}<span class="icon icon-chevron-r icon-12" aria-hidden="true"></span></button>
+        <div class="eco-menu" role="menu" hidden>${sh.more.map((a, i) => `<button type="button" role="menuitem" data-eco-act="${i + 2}">${t(a.label)}${/↗/.test(t(a.label)) ? "" : " ↗"}</button>`).join("")}</div>
+      </div>` : ""}`;
+    $("ecoModalOverlay").querySelector(".eco-card").dataset.eco = _ecoOpen;
+    // Transition: only the picture and the words move.
+    const card = $("ecoModalOverlay").querySelector(".eco-card");
+    card.classList.remove("eco-in-l", "eco-in-r", "eco-in");
+    clearTimeout(_ecoT);
+    if (dir) {
+      void card.offsetWidth;
+      card.classList.add("eco-in", dir > 0 ? "eco-in-l" : "eco-in-r");
+      _ecoT = setTimeout(() => card.classList.remove("eco-in", "eco-in-l", "eco-in-r"), 520);
+    }
+    $("tigerPodDebug").hidden = true;
+    if (_ecoOpen === "pod") _paintPodDebug();
+  }
+  function openEcoSheet(id) {
+    if (!ECO_SHEETS[id]) return;
+    _ecoOpen = id;
+    _renderEcoSheet();
+    $("ecoModalOverlay").classList.add("open");
+    // Focus the card itself (keyboard users land in the window) — not a button,
+    // which would hold the autoplay from the start.
+    setTimeout(() => { const c = $("ecoModalOverlay").querySelector(".eco-card"); c.tabIndex = -1; c.focus({ preventScroll: true }); }, 60);
+  }
+  // Move through the sheets (wraps around).
+  function _ecoStep(dir) {
+    const i = ECO_ORDER.indexOf(_ecoOpen);
+    _ecoOpen = ECO_ORDER[(i + dir + ECO_ORDER.length) % ECO_ORDER.length];
+    _ecoSwitch(dir);
+  }
+  function closeEcoSheet() {
+    $("ecoModalOverlay").classList.remove("open");
+    _ecoOpen = null;
+  }
+  function openTigerPodModal() { openEcoSheet("pod"); }
+  // Called live from the reader plug/unplug + chip handlers: the open TigerPOD
+  // sheet follows the readers (state, main action, debug readout).
+  function _renderTigerPodDebug() { if (_ecoOpen === "pod") _renderEcoSheet(); }
+  // The TigerScale sheet follows the account's scales the same way.
+  function _refreshScaleSheet() { if (_ecoOpen === "scale") _renderEcoSheet(); }
+  // Debug-only readout under the TigerPOD sheet: what the app currently treats
+  // as an active reader (name + whether a chip is on it) and the account's
+  // TigerPOD telemetry. Admin/debug only; hidden and emptied for everyone else.
+  function _paintPodDebug() {
     const box = $("tigerPodDebug");
     if (!box) return;
-    // Called live from the reader plug/unplug + card handlers, so bail cheaply
-    // when the modal is closed — nothing to repaint then.
-    if (!$("tigerPodModalOverlay")?.classList.contains("open")) return;
     if (!state.debugEnabled) { box.hidden = true; box.innerHTML = ""; return; }
     const readers = [...state.nfcReaders];
     const rows = readers.length
@@ -20479,10 +20844,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       rows +
       `<div class="tpd-meta">current: <b>${readers.length}</b> · max: <b>${_telRfidMax}</b> · hasPod: <b>${state.hasPod ? "true" : "false"}</b></div>`;
     box.hidden = false;
-  }
-  function closeTigerPodModal() {
-    $("tigerPodModalOverlay").classList.remove("open");
-    const v = $("tigerPodVideo"); if (v) v.pause();
   }
 
   /* ── container picker ── */
@@ -21336,7 +21697,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // A maker's chip waits on the TigerPOD (Bambu Lab, Creality…): it is linked,
       // never written — "Link" (creates the TigerData+ and links it) instead of the burn.
       : makerN ? makerLinkBannerHtml("pcLinkBanner", makerN)
-      : HAS_NATIVE ? _burnBannerHTML("pcBurnBanner", "TigerTag+") : "";
+      // No reader plugged in, nothing to burn with: the CTAs below stay alone.
+      : HAS_NATIVE && state.nfcReaderCount > 0 ? _burnBannerHTML("pcBurnBanner", "TigerTag+") : "";
     body.innerHTML = `
       ${imgSection}
       ${burnHTML}
@@ -22395,11 +22757,59 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     window.electronAPI?.openExternal(url);
   });
 
-  // TigerPOD modal events
-  $("tigerPodClose").addEventListener("click", closeTigerPodModal);
-  $("tigerPodModalOverlay").addEventListener("click", e => { if (e.target === $("tigerPodModalOverlay")) closeTigerPodModal(); });
-  $("tigerPodMakerWorldBtn").addEventListener("click", () => window.electronAPI?.openExternal(TIGERPOD_MAKERWORLD_URL));
-  $("tigerPodMakerWorldMiniBtn")?.addEventListener("click", () => window.electronAPI?.openExternal(TIGERPOD_MINI_MAKERWORLD_URL));
+  // Ecosystem window events
+  $("ecoClose").addEventListener("click", closeEcoSheet);
+  // Autoplay, like a website carousel: the open tab's progress bar fills up
+  // and, when it ends, the next device comes in. Held (bar and timer frozen
+  // together, .is-held) while the mouse is on the card, keyboard focus is inside
+  // or the "Other links" menu is open (a mouse click's focus does not hold it); no autoplay with reduced motion (the bar
+  // does not run), and paused with the window hidden (body.anim-paused).
+  const _ecoCard = $("ecoModalOverlay").querySelector(".eco-card");
+  const _ecoHold = () => _ecoCard.classList.toggle("is-held",
+    _ecoCard.matches(":hover")
+    || _ecoCard.contains(document.activeElement) && document.activeElement !== _ecoCard && document.activeElement.matches(":focus-visible")
+    || !!$("ecoFoot").querySelector(".eco-menu:not([hidden])"));
+  ["mouseenter", "mouseleave", "focusin", "focusout"].forEach(ev => _ecoCard.addEventListener(ev, () => setTimeout(_ecoHold, 0)));
+  $("ecoRail").addEventListener("animationend", e => {
+    // Only the bar's own end (its ::after fill ends too, on the same element).
+    if (e.animationName === "ecoProgEnd" && !e.pseudoElement && _ecoOpen) _ecoStep(1);
+  });
+  const _ecoMenu = open => {
+    const m = $("ecoFoot").querySelector(".eco-menu"), b = $("ecoFoot").querySelector("[data-eco-more]");
+    if (!m) return;
+    m.hidden = !open; b.setAttribute("aria-expanded", String(open));
+    _ecoHold();
+  };
+  $("ecoModalOverlay").addEventListener("click", e => {
+    if (e.target === $("ecoModalOverlay")) return closeEcoSheet();
+    if (e.target.closest?.("[data-eco-more]")) return _ecoMenu($("ecoFoot").querySelector(".eco-menu")?.hidden);
+    if (!e.target.closest?.(".eco-menu")) _ecoMenu(false);
+    const go = e.target.closest?.("[data-eco-go]");
+    if (go) {
+      const from = ECO_ORDER.indexOf(_ecoOpen), to = ECO_ORDER.indexOf(go.dataset.ecoGo);
+      if (to !== from) { _ecoOpen = go.dataset.ecoGo; _ecoSwitch(to > from ? 1 : -1); }
+      return;
+    }
+    const nav = e.target.closest?.("[data-eco-step]");
+    if (nav) return _ecoStep(Number(nav.dataset.ecoStep));
+    const b = e.target.closest?.("[data-eco-act]");
+    if (b) { _ecoMenu(false); _ecoGo(_ecoActs[Number(b.dataset.ecoAct)]); }
+  });
+  // Tabs: ← → / Home / End move between devices when the focus is on the
+  // tabs (the arrows are not taken from a field or a menu); Escape closes.
+  $("ecoRail").addEventListener("keydown", e => {
+    const k = e.key, i = ECO_ORDER.indexOf(_ecoOpen);
+    const to = k === "ArrowRight" ? i + 1 : k === "ArrowLeft" ? i - 1 : k === "Home" ? 0 : k === "End" ? ECO_ORDER.length - 1 : null;
+    if (to === null) return;
+    e.preventDefault();
+    const n = (to + ECO_ORDER.length) % ECO_ORDER.length;
+    if (n !== i) { _ecoOpen = ECO_ORDER[n]; _ecoSwitch(n > i ? 1 : -1); }
+    setTimeout(() => $("ecoRail").querySelector(".is-on")?.focus(), 170);
+  });
+  document.addEventListener("keydown", e => {
+    if (!_ecoOpen) return;
+    if (e.key === "Escape") { if ($("ecoFoot").querySelector(".eco-menu:not([hidden])")) _ecoMenu(false); else closeEcoSheet(); }
+  });
 
   // Cloud → chip encode modal events (wired once)
   $("cemClose")?.addEventListener("click", closeEncodeModal);
@@ -23047,10 +23457,6 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       // A maker's chip (Bambu Lab, Creality…) not linked yet sits on the TigerPOD:
       // link it to this spool — such a chip is never burned.
       chipBannerHtml = makerLinkBannerHtml("makerLinkBanner", presentMakerChips().length);
-    } else if (r.isCloud && linkedChipsOf(r).length) {
-      // Its chips are a maker's, already linked: nothing to burn. A plain
-      // TigerData still offers its upgrade to TigerData+ (catalogue).
-      chipBannerHtml = offerUpgrade ? _upgradeBannerHTML(r) : "";
     } else if (r.isCloud) {
       // Cloud spool — never has a physical chip yet: the persistent burn banner,
       // and a plain TigerData also offers its upgrade to TigerData+ (catalogue).
@@ -24525,12 +24931,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       });
     }
   }
-  // tigersystem.io serves the downloads page in these languages; others → English.
-  $("sbDownloadBtn")?.addEventListener("click", () => {
-    const site = ["fr", "en", "de", "es", "it", "zh", "pt", "pl"];
-    const l = state.lang === "pt-pt" ? "pt" : state.lang;
-    window.electronAPI?.openExternal(`https://tigersystem.io/${site.includes(l) ? l : "en"}/download`);
-  });
+  $("sbDownloadBtn")?.addEventListener("click", () => window.electronAPI?.openExternal(_downloadPageUrl()));
   $("sbGithubBtn").addEventListener("click", () => _clickCommunityBtn("github"));
   $("sbMakerWorldBtn").addEventListener("click", () => _clickCommunityBtn("makerworld"));
   $("sbDiscordBtn").addEventListener("click", () => _clickCommunityBtn("discord"));
@@ -24610,7 +25011,8 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
   $("whatsNewCoffee")?.addEventListener("click", _openCoffee);
 
   // Sign-in placeholder buttons
-  $("btnSignInPlaceholder").addEventListener("click", openAddAccountModal);
+  $("btnSignInPlaceholder").addEventListener("click", () => openAddAccountModal("signin"));
+  $("btnSignUpPlaceholder").addEventListener("click", () => openAddAccountModal("create"));
   $("btnSignInPlaceholderGh").addEventListener("click", () => window.open("https://github.com/TigerTag-Project/TigerTag-Studio-Manager/"));
   $("btnSignInPlaceholderDiscord").addEventListener("click", () => window.open("https://discord.gg/3Qv5TSqnJH"));
 
@@ -24776,7 +25178,7 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     mainResult:       { name: "Inventory view",              fn: "renderInventory" },
     createListOverlay:{ name: "Create-list modal",           fn: "openCreateListModal" },
     editAccountModalOverlay: { name: "Edit-account modal",   fn: "openEditAccountModal" },
-    tigerPodModalOverlay:    { name: "TigerPOD modal",       fn: "openTigerPodModal" },
+    ecoModalOverlay:         { name: "Ecosystem sheet (TigerPOD…)", fn: "openEcoSheet → _renderEcoSheet" },
     whatsNewOverlay:  { name: "What's New modal",            fn: "openWhatsNew" },
     printerBrandPickerPanel: { name: "Add printer — brand picker side-card", fn: "openPrinterBrandPicker" },
     printerAddPanel:  { name: "Add printer — form side-card", fn: "openPrinterAddForm" },
@@ -27020,26 +27422,11 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     }
 
     if (!state.printers.length) {
-      // Empty state — title + sub + 3 bullets explaining what printers
-      // are for. Plus the same "Add a printer" call-to-action that
-      // appears on the grid view, so a brand-new user has a one-click
-      // path to their first printer right from the empty card.
-      host.innerHTML = `
-        <div class="printers-empty-card">
-          ${_printersLineupHTML()}
-          <div class="printers-empty-title">${esc(t("printersEmptyTitle"))}</div>
-          <ul class="printers-empty-bullets">
-            <li>${esc(t("printersEmptyBullet1"))}</li>
-            <li>${esc(t("printersEmptyBullet2"))}</li>
-            <li>${esc(t("printersEmptyBullet3"))}</li>
-          </ul>
-          <button type="button" class="adf-btn adf-btn--primary printers-empty-cta" id="printersEmptyAddBtn">
-            <span class="icon icon-plus icon-13"></span>
-            <span>${esc(t("printerAddTitle"))}</span>
-          </button>
-        </div>`;
-      // Wire the CTA → same handler as the grid's "+" card.
-      $("printersEmptyAddBtn")?.addEventListener("click", openPrinterBrandPicker);
+      // No printer yet → the same "Where do we start?" as an empty spool list,
+      // its printer card opening the brand picker. (The same listener added
+      // again on each render is a no-op.)
+      _paintInvStart(host);
+      host.addEventListener("click", _onInvStartClick);
       return;
     }
 
@@ -42178,6 +42565,79 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
     // stuck in whatever language was active when the panel was last (re)built.
     if ($("scalesPanel")?.classList.contains("open")) renderScalesPanel();
   }
+  // Signed out: the language sits in the welcome page's top bar (a compact
+  // select). Kept on this machine (tigertag.lang); the account picks it up
+  // once signed in (saveAccountLang is a no-op without one).
+  function _paintSigninLangs() {
+    const sel = $("signinLangs");
+    if (sel) sel.value = state.lang;
+  }
+  // The signed-out look (no app header, language select set) follows the
+  // welcome screen itself, however it was reached — a sign-out, or a first
+  // launch. The sidebar goes too when no account is remembered on this
+  // machine; otherwise it stays, to switch back to one.
+  function _syncSignedOutLook() {
+    const out = !$("signInPlaceholder").classList.contains("hidden");
+    document.body.classList.toggle("signed-out", out);
+    document.body.classList.toggle("no-accounts", out && !getAccounts().length);
+    if (out) _paintSigninLangs();
+  }
+  // Every scene (and its float / flip) stops while the window is hidden.
+  document.addEventListener("visibilitychange", () => document.body.classList.toggle("anim-paused", document.hidden));
+  // The ecosystem scene (iMac, TigerPOD ⇄ TigerScale ⇄ TigerSpool, Tiger Touch,
+  // iPhone — each its own layer, .sph-* in 70-detail-misc.css) drawn into every
+  // [data-hero-scene]: the welcome page, the sign-in dialog, the account setup.
+  (function _fillHeroScenes() {
+    const M = "../assets/img/mockups/";
+    const html = `
+      <div class="sph-item sph-imac"><img src="${M}imac-studio.webp" alt="" /></div>
+      <div class="sph-item sph-pod"><div class="sph-flip">
+        <img class="sph-face sph-face--pod" src="${M}tigerpod-mini.webp" alt="" />
+        <img class="sph-face sph-face--scale" src="${M}tigerscale.webp" alt="" />
+        <img class="sph-face sph-face--spool" src="${M}tigerspool.webp" alt="" />
+      </div></div>
+      <div class="sph-item sph-touch"><img src="${M}tigertouch-tour.webp" alt="" /></div>
+      <div class="sph-item sph-phone"><img src="${M}iphone-connect.webp" alt="" /></div>`;
+    document.querySelectorAll("[data-hero-scene]").forEach(el => { el.innerHTML = html; });
+  })();
+  // Welcome page brands: lit under the mouse, and like a garland — one logo
+  // after the other, then a rest, again — while the page is shown. Same
+  // .is-lit effect and timings as the chip chooser's column (linked/index.js).
+  (function _signinGarland() {
+    const LIT_MS = 900;
+    const row = document.querySelector(".signin-ph-brand-row");
+    if (!row) return;
+    const logos = [...row.querySelectorAll(".lc-brand")];
+    logos.forEach((b, i) => b.style.setProperty("--i", i));
+    const unlight = b => { clearTimeout(b._litT); b._litT = setTimeout(() => b.classList.remove("is-lit"), LIT_MS); };
+    row.addEventListener("pointerover", e => {
+      const b = e.target.closest(".lc-brand");
+      if (b) { clearTimeout(b._litT); b.classList.add("is-lit"); }
+    });
+    row.addEventListener("pointerout", e => {
+      const b = e.target.closest(".lc-brand");
+      if (b && !b.contains(e.relatedTarget)) unlight(b);
+    });
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    let k = 0;
+    const step = () => {
+      if (!document.body.classList.contains("signed-out") || document.hidden || reduced.matches) { k = 0; return setTimeout(step, 1000); }
+      const b = logos[k];
+      if (!b.matches(":hover")) { b.classList.add("is-lit"); unlight(b); }
+      k = (k + 1) % logos.length;
+      setTimeout(step, k ? 700 : 2500);   // 0.7 s between logos, a rest after the last
+    };
+    step();
+  })();
+  new MutationObserver(_syncSignedOutLook)
+    .observe($("signInPlaceholder"), { attributes: true, attributeFilter: ["class"] });
+  _syncSignedOutLook();
+  $("signinLangs")?.addEventListener("change", e => {
+    const lang = e.target.value;
+    localStorage.setItem("tigertag.lang", lang);
+    applyLang(lang);
+    if ($("langSelect")) $("langSelect").value = lang;
+  });
   $("langSelect").addEventListener("change", () => {
     const lang = $("langSelect").value;
     saveAccountLang(lang);
@@ -42299,6 +42759,9 @@ import { initReport, toggleReport, openReport, isReportOpen, reportDropFiles, re
       _maybeRefreshPanelForCard(); // reader plug/unplug flips greyed↔functional toolbox tools
       _renderTigerPodDebug();  // live-refresh the debug readout if the modal is open
       refreshChipChoice();     // an unplugged reader takes its chip with it
+      _refreshChipBanners();   // no reader left → Burn banners give way to Make / Add
+      _paintInvStartPod();     // the first-steps TigerPOD card follows the reader
+      if (!$("firstSteps")?.classList.contains("hidden")) _renderFirstSteps();
       eraserReadersChanged();
     });
 

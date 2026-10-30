@@ -26,6 +26,7 @@
  */
 
 import { initTigerTouchPanel, openTigerTouch, renderTigerTouchPanel, isTigerTouchPanelOpen } from "./panel.js";
+export { openTigerTouch };
 
 let _ctx = null;
 
@@ -53,6 +54,7 @@ export function initTigerTouch(ctx) {
 function refresh() {
   renderTigerTouchHealth();
   if (isTigerTouchPanelOpen()) renderTigerTouchPanel();
+  _ctx?.onTouchsChanged?.();   // e.g. the open Tiger Touch sheet follows its live state
 }
 
 // ── Firestore subscription ─────────────────────────────────────────────────
@@ -88,7 +90,7 @@ function tsToMs(ts) {
 }
 
 /** "active" (online, screen on) · "standby" (online, screen asleep) · "offline". */
-function connState(s) {
+export function connState(s) {
   const gap = Date.now() - tsToMs(s?.last_heartbeat_at);
   const standby = s?.power_state === "screen_off";
   if (gap >= (standby ? ONLINE_STANDBY_MS : ONLINE_ACTIVE_MS)) return "offline";

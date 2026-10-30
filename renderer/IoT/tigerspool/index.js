@@ -25,6 +25,7 @@
  */
 
 import { initTigerSpoolPanel, openTigerSpool, renderTigerSpoolPanel, isTigerSpoolPanelOpen } from "./panel.js";
+export { openTigerSpool };
 
 /** Re-draw the side card now if it is open (e.g. debug mode was just toggled). */
 export function refreshTigerSpoolPanel() {
@@ -53,6 +54,7 @@ export function initTigerSpool(ctx) {
 function refresh() {
   renderTigerSpoolHealth();
   if (isTigerSpoolPanelOpen()) renderTigerSpoolPanel();
+  _ctx?.onSpoolsChanged?.();   // e.g. the open TigerSpool sheet follows its live state
 }
 
 
@@ -89,7 +91,7 @@ function tsToMs(ts) {
 }
 
 /** "active" (online, screen on) · "standby" (online, screen off) · "offline". */
-function spoolConnState(s) {
+export function spoolConnState(s) {
   const gap = Date.now() - tsToMs(s?.last_heartbeat_at);
   const standby = s?.power_state === "screen_off";
   if (gap >= (standby ? SPOOL_ONLINE_STANDBY_MS : SPOOL_ONLINE_ACTIVE_MS)) return "offline";

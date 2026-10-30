@@ -661,25 +661,6 @@
     font-size: 13px; color: var(--muted);
     line-height: 1.5;
   }
-  .printers-empty-bullets {
-    list-style: none; padding: 0; margin: 12px 0 0;
-    text-align: left;
-    width: 100%;
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  .printers-empty-bullets li {
-    position: relative;
-    padding-left: 18px;
-    font-size: 12px; color: var(--muted);
-    line-height: 1.5;
-  }
-  .printers-empty-bullets li::before {
-    content: "•";
-    position: absolute; left: 4px; top: 0;
-    color: var(--primary);
-    font-weight: 700;
-  }
-
   /* Void-drop (drag a spool onto empty rack-view space → un-rack it) is still
      wired, but its whole-view amber glow was REMOVED by request: it fired on
      every dragover of empty space — i.e. constantly while moving a spool from
@@ -693,17 +674,6 @@
      for the source slot and flags the spool with `--just-placed` so
      it bounces in at its new home in the unranked panel, matching
      the existing auto-fill / empty-rack visual language.) */
-  /* Primary call-to-action inside the empty card — same brand picker
-     as the grid's "+" card, just placed where a brand-new user is
-     actually looking. Margin-top separates it from the bullets list. */
-  .printers-empty-cta {
-    margin-top: 18px;
-    align-self: center;
-    height: 38px;
-    padding: 0 18px;
-  }
-  .printers-empty-cta .icon { background: var(--on-accent); }
-
   .printer-card { cursor: pointer; }
 
   /* Online / offline indicator — used in both the printer grid card and

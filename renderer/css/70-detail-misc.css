@@ -219,81 +219,199 @@
   .table-wrap { overflow: auto; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-top: var(--view-gap); scrollbar-width: none; }
   .table-wrap::-webkit-scrollbar { width: 0; height: 0; }
   /* ── sign-in placeholder ── */
+  /* First launch / signed out: a welcome page of its own — top bar (name +
+     language), copy and actions on the left, the ecosystem hero on the right,
+     a quiet footer. The sidebar and the app header are hidden meanwhile. */
   .signin-placeholder {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    gap: 12px; text-align: center; padding: 40px;
+    flex: 1; min-height: 0; display: flex; flex-direction: column;
+    padding: 18px 40px 16px; overflow: auto; scrollbar-width: thin;
   }
-  /* Ecosystem hero — the emotional anchor of the signed-out screen. Capped by
-     BOTH width and viewport height so it never pushes the sign-in button off a
-     short window (the button is the whole point of this view). */
-  .signin-ph-hero {
-    width: min(440px, 62vw);
-    max-height: 38vh;
-    height: auto;
-    object-fit: contain;
-    margin-bottom: 2px;
-    user-select: none; -webkit-user-drag: none;
+  .signin-ph-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .signin-ph-brand { display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+  .signin-ph-two { color: var(--primary); font-weight: 800; }
+  .signin-ph-lang {
+    position: relative; display: flex; align-items: center; gap: 6px;
+    height: 32px; padding: 0 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--muted);
+    transition: color .15s, border-color .15s;
   }
+  .signin-ph-lang:hover, .signin-ph-lang:focus-within { color: var(--text); border-color: var(--muted); }
+  .signin-ph-lang .icon { background-color: currentColor; }
+  .signin-ph-lang .icon-chevron-r { transform: rotate(90deg); pointer-events: none; }
+  .signin-ph-lang select {
+    appearance: none; border: 0; background: transparent; color: inherit;
+    font: 600 12.5px/1 inherit; padding: 0 2px; cursor: pointer; outline: none;
+  }
+  .signin-ph-body {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    gap: clamp(24px, 5vw, 72px); padding: 24px 0;
+  }
+  .signin-ph-copy { flex: 0 0 min(430px, 50%); display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+  .signin-ph-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .signin-ph-badge .icon { background-color: currentColor; }
   .signin-ph-title {
-    font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -.02em;
+    margin: 0; font-size: clamp(26px, 3.2vw, 36px); line-height: 1.12;
+    font-weight: 800; color: var(--text); letter-spacing: -.025em;
   }
-  .signin-ph-sub {
-    font-size: 15px; color: var(--muted); max-width: 360px; line-height: 1.55; margin-bottom: 8px;
-  }
+  .signin-ph-sub { margin: 0; font-size: 15px; color: var(--muted); line-height: 1.55; }
+  /* Benefits — a bold claim, then the plain fact behind it. */
+  .signin-ph-feats { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .signin-ph-feats li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; line-height: 1.45; color: var(--muted); }
+  .signin-ph-feats b { color: var(--text); font-weight: 600; }
+  .signin-ph-feats .icon { background-color: var(--primary); flex: none; margin-top: 1px; }
+  .signin-ph-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; }
   .signin-ph-btn {
-    height: 46px; padding: 0 36px; border-radius: 12px;
+    height: 46px; padding: 0 28px; border-radius: 12px;
     font-size: 15px; font-weight: 600;
     box-shadow: 0 6px 20px color-mix(in srgb, var(--primary) 28%, transparent);
     transition: transform .12s, box-shadow .12s;
   }
   .signin-ph-btn:hover  { transform: translateY(-1px); box-shadow: 0 9px 26px color-mix(in srgb, var(--primary) 34%, transparent); }
   .signin-ph-btn:active { transform: translateY(0); box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 28%, transparent); }
-
-  /* What you actually get — three plain claims, each with a real icon. Placed
-     UNDER the call to action so the button stays the first thing reachable. */
-  .signin-ph-feats {
-    list-style: none; margin: 14px 0 0; padding: 0;
-    display: flex; flex-direction: column; gap: 9px;
-    text-align: left;
+  .signin-ph-btn2 {
+    height: 46px; padding: 0 20px; border-radius: 12px;
+    font-size: 14px; font-weight: 600; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border);
+    transition: border-color .12s, transform .12s;
   }
-  .signin-ph-feats li {
-    display: flex; align-items: center; gap: 10px;
-    font-size: 13.5px; color: var(--muted);
+  .signin-ph-btn2:hover { border-color: var(--muted); transform: translateY(-1px); }
+  .signin-ph-btn2:active { transform: translateY(0); }
+  .signin-ph-note { margin: 0; display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+  .signin-ph-note .icon { background-color: var(--primary); }
+  /* Ecosystem hero — a stage with the 1120×580 proportions of hero-ecosystem.webp
+     (same true relative scale: one px/cm), capped by width and height so the
+     actions never leave a short window; the first thing to shrink. Each device
+     is its own layer and floats on its own rhythm; its floor shadow stays put
+     and tightens as it rises. */
+  .signin-ph-visual { flex: 0 1 780px; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 18px; }
+  /* The stage of the ecosystem scene, wherever it is drawn (.hero-scene: the
+     welcome page, the sign-in dialog, the account setup). */
+  .hero-scene { position: relative; width: 100%; aspect-ratio: 1120 / 580; user-select: none; pointer-events: none; }
+  .signin-ph-hero { max-width: calc(58vh * 1120 / 580); }
+  /* "Works with" + the printer brands — the chip chooser's logos (.lc-brand in
+     linked.css): theme-coloured at rest, lit in their own colour one after the
+     other like a garland (_signinGarland), or under the mouse. */
+  .signin-ph-brands { display: flex; flex-direction: column; align-items: center; gap: 12px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .signin-ph-brand-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px clamp(8px, 1.2vw, 22px); }
+  .signin-ph-brand-row .lc-brand { width: clamp(26px, 2.6vw, 40px); }
+  .sph-item { position: absolute; }
+  .sph-item img { display: block; width: 100%; height: auto; -webkit-user-drag: none; }
+  .sph-item > img, .sph-flip { position: relative; z-index: 1; }
+  .sph-item::after {
+    content: ""; position: absolute; left: 8%; right: 8%; bottom: -3%; height: 7%;
+    background: radial-gradient(closest-side, var(--scrim), transparent);
   }
-  .signin-ph-feats .icon { background-color: var(--primary); flex: none; }
-
-  /* Community links are secondary — set apart and visually quiet so they never
-     compete with Sign in. (No `margin-top:auto` here: an auto margin outranks the
-     container's `justify-content:center` and would break the centred composition.) */
-  .signin-ph-links {
-    display: flex; gap: 8px;
-    margin-top: 26px; opacity: .75;
-    transition: opacity .15s;
-  }
-  .signin-ph-links:hover { opacity: 1; }
-  /* TigerPOD line-up closing the screen — decorative, so it is the first thing to
-     give way: it shrinks with the viewport and disappears entirely on a short
-     window rather than pushing the Sign-in button out of reach. */
-  .signin-ph-lineup {
-    width: min(620px, 78%);
-    max-height: 16vh;
-    height: auto;
-    object-fit: contain;
-    margin-top: 30px;
-    user-select: none; -webkit-user-drag: none;
-  }
-  @media (max-height: 760px) {
-    .signin-ph-lineup { display: none; }
-  }
+  .sph-imac  { left: 23%;    top: 9.66%;  width: 53.91%; }
+  .sph-imac::after { left: 22%; right: 22%; bottom: -1%; height: 5%; }
+  .sph-pod   { left: 12.93%; top: 50.5%;  width: 16.27%; z-index: 2; }
+  .sph-phone { left: 72.1%;  top: 58.55%; width: 9.61%;  z-index: 2; }
+  /* Tiger Touch (a Panda Touch, ~13.5 cm wide at the stage's 13.1 px/cm), its
+     screen animated (start-up, list, cards — from the TigerTouch repo's media kit). */
+  .sph-touch { left: 52.5%;  top: 72%;    width: 15.8%;  z-index: 2; --rise: -7%; }   /* a short device: a bigger share of its height, so it rises as far as the others */
+  .sph-touch::after { left: 14%; right: 14%; bottom: 1%; height: 6%; }
+  /* The photograph's two stand feet are cut away along the case's bottom edge
+     (measured on the 1000×733 frame: left foot x 186–248, right foot x 684–750). */
+  .sph-touch > img { clip-path: polygon(0 0, 100% 0, 100% 100%, 75% 100%, 75% 91.13%, 68.4% 90.86%, 68.4% 100%,
+    24.8% 100%, 24.8% 82.67%, 18.6% 80.49%, 18.6% 100%, 0 100%); }
+  @keyframes sphFloat  { from { transform: translateY(0); } to { transform: translateY(var(--rise, -2.2%)); } }
+  @keyframes sphShadow { from { transform: scaleX(1); opacity: 1; } to { transform: scaleX(.86); opacity: .7; } }
+  .sph-item > img, .sph-flip { animation: sphFloat 3.6s ease-in-out infinite alternate; }
+  .sph-item::after { animation: sphShadow 3.6s ease-in-out infinite alternate; }
+  .sph-imac > img,  .sph-imac::after  { animation-duration: 4.4s; }
+  /* The TigerPOD / TigerScale stands on the desk: no float, no floor shadow — it flips. */
+  .sph-pod .sph-flip { animation: none; }
+  .sph-pod::after { display: none; }
+  .sph-phone > img, .sph-phone::after { animation-duration: 3.9s; animation-delay: -2.3s; }
+  .sph-touch > img, .sph-touch::after { animation-duration: 4.1s; animation-delay: -0.8s; }
+  /* The reader turns over, one device after the other, each held ~4 s:
+     TigerPOD Mini → TigerScale → TigerSpool → TigerPOD Mini (18 s round, ~6 s each).
+     The three images are laid so their spools coincide (matched on the red
+     filament, against the POD: TigerScale 106.8 % wide and 4.67 % to the left,
+     TigerSpool 107.9 % wide, 1.78 % to the right, 0.75 % up) and each turns
+     around the spool's hub. A face is hidden (opacity 0) while it waits, so
+     the jump from 180° back to -180° never shows. */
+  .sph-face { display: block; width: 100%; height: auto; transform-origin: 66.7% 50%;
+    backface-visibility: hidden; animation: sphFace1 18s ease-in-out infinite; }
+  .sph-face.sph-face--scale { position: absolute; left: -4.67%; top: 0; width: 106.8%; animation-name: sphFace2;
+    transform: perspective(900px) rotateY(-180deg); opacity: 0; }
+  .sph-face.sph-face--spool { position: absolute; left: 1.78%; top: -0.75%; width: 107.9%; animation-name: sphFace3;
+    transform-origin: 60.2% 50%; transform: perspective(900px) rotateY(-180deg); opacity: 0; }
+  @keyframes sphFace1 {
+    0%, 29.2% { transform: perspective(900px) rotateY(0); opacity: 1; }
+    33.3% { transform: perspective(900px) rotateY(180deg); opacity: 1; }
+    33.31%, 95.79% { transform: perspective(900px) rotateY(-180deg); opacity: 0; }
+    95.8% { transform: perspective(900px) rotateY(-180deg); opacity: 1; }
+    100% { transform: perspective(900px) rotateY(0); opacity: 1; } }
+  @keyframes sphFace2 {
+    0%, 29.19% { transform: perspective(900px) rotateY(-180deg); opacity: 0; }
+    29.2% { transform: perspective(900px) rotateY(-180deg); opacity: 1; }
+    33.3%, 62.5% { transform: perspective(900px) rotateY(0); opacity: 1; }
+    66.7% { transform: perspective(900px) rotateY(180deg); opacity: 1; }
+    66.71%, 100% { transform: perspective(900px) rotateY(-180deg); opacity: 0; } }
+  @keyframes sphFace3 {
+    0%, 62.49% { transform: perspective(900px) rotateY(-180deg); opacity: 0; }
+    62.5% { transform: perspective(900px) rotateY(-180deg); opacity: 1; }
+    66.7%, 95.8% { transform: perspective(900px) rotateY(0); opacity: 1; }
+    100% { transform: perspective(900px) rotateY(180deg); opacity: 1; } }
+  /* Calm where the user is busy or away: the account setup shows the scene
+     still (the POD at rest), and every scene stops while the window is hidden. */
+  .dns-step-art .sph-item > img, .dns-step-art .sph-flip, .dns-step-art .sph-face, .dns-step-art .sph-item::after { animation: none; }
+  body.anim-paused .hero-scene *, body.anim-paused .hero-scene *::after { animation-play-state: paused; }
+  .signin-ph-foot { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 12px; color: var(--muted); }
   .signin-ph-link {
     display: flex; align-items: center; gap: 6px;
-    height: 32px; padding: 0 14px; border-radius: 8px;
-    font-size: 12.5px; color: var(--muted);
-    border: 1px solid var(--border); background: var(--surface);
+    height: 28px; padding: 0 10px; border-radius: 8px;
+    font-size: 12px; color: var(--muted);
+    border: 1px solid transparent; background: transparent;
     transition: color .15s, border-color .15s;
   }
-  .signin-ph-link:hover { color: var(--text); border-color: var(--muted); background: var(--surface); }
+  .signin-ph-link .icon { background-color: currentColor; }
+  .signin-ph-link:hover { color: var(--text); border-color: var(--border); background: var(--surface); }
+  /* Entrance: copy first, the hero 80 ms after — under half a second, and the
+     buttons work from the first frame. */
+  @keyframes signinRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  body.signed-out .signin-ph-copy > * { animation: signinRise .22s ease-out both; }
+  body.signed-out .signin-ph-copy > :nth-child(2) { animation-delay: .03s; }
+  body.signed-out .signin-ph-copy > :nth-child(3) { animation-delay: .06s; }
+  body.signed-out .signin-ph-copy > :nth-child(n+4) { animation-delay: .09s; }
+  body.signed-out .signin-ph-hero { animation: signinRise .3s ease-out .08s both; }
+  @media (prefers-reduced-motion: reduce) {
+    body.signed-out .signin-ph-copy > *, body.signed-out .signin-ph-hero,
+    .sph-item > img, .sph-flip, .sph-face, .sph-item::after { animation: none; }
+    .sph-face.sph-face--scale, .sph-face.sph-face--spool { display: none; }
+  }
+  /* Short window (down to the 900×600 minimum): tighter rhythm, so the copy,
+     the actions and the footer all fit without scrolling. */
+  @media (max-height: 720px) {
+    .signin-ph-body { padding: 12px 0; }
+    .signin-ph-copy { gap: 10px; }
+    .signin-ph-title { font-size: 26px; }
+    .signin-ph-sub { font-size: 14px; }
+    .signin-ph-feats { gap: 7px; }
+    .signin-ph-actions { margin-top: 4px; }
+  }
+  /* Very short window (the 900×600 minimum): each benefit keeps its bold claim only. */
+  @media (max-height: 660px) {
+    .signin-ph-feats li > span > span { display: none; }
+  }
+  /* Narrow window (below the app's own minimum, e.g. a split screen): the
+     hero goes under the copy, smaller. */
+  @media (max-width: 760px) {
+    .signin-ph-body { flex-direction: column-reverse; gap: 18px; }
+    .signin-ph-copy { flex: none; }
+    .signin-ph-visual { flex: none; width: min(420px, 80%); }
+    .signin-ph-hero { max-width: calc(28vh * 1120 / 580); }
+  }
+  /* Signed out: no app header (TigerCoins, devices, stats, the last account's
+     colour glow), no inventory view bar, and no sidebar while no account is
+     remembered on this machine — the welcome page stands alone. */
+  body.signed-out header.top, body.signed-out #card-inv, body.signed-out.no-accounts #sidebar { display: none; }
 
   #card-inv { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
   /* No frame around the main view: the content sits straight on the app
@@ -358,95 +476,104 @@
   .printers-loading {
     min-height: 240px;
   }
-  /* ── Welcome screen ─────────────────────────────────────────────────────── */
-  .inv-welcome {
-    display: flex; flex-direction: column; align-items: center;
-    gap: 28px; padding: 16px 32px 44px; max-width: 640px; margin: 0 auto; text-align: center;
+  /* ── First steps (signed in, no spool yet) ─────────────────────────────────
+     "Where do we start?" — three ways to a first win (a spool, the TigerPOD, a
+     printer), each a card opening the flow that does it; the TigerPOD card
+     follows the reader live. The phone app as one quiet line under them. */
+  .inv-start {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 32px 24px; text-align: center; min-height: min(560px, 62vh);
   }
-  /* hero */
-  .inv-welcome-hero { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  .inv-welcome-logo {
-    width: 56px; height: 56px; border-radius: 14px;
-    background: var(--surface-2); border: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  .inv-start-kicker { margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--primary); }
+  .inv-start-h1 { margin: 0; font-size: clamp(24px, 2.6vw, 32px); font-weight: 800; letter-spacing: -.02em; color: var(--text); }
+  .inv-start-sub { margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+  .inv-start-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; width: min(860px, 100%); }
+  .inv-start-card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 8px; text-align: left;
+    padding: 18px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); cursor: pointer; font: inherit; height: auto;   /* not the 40 px of a plain button */
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+    animation: invStartRise .24s ease-out both;
   }
-  .inv-welcome-logo img { width: 36px; height: 36px; object-fit: contain; }
-
-  /* Product mockup (laptop + phone) — wide image, no frame, ratio preserved */
-  .inv-welcome-logo--mockup {
-    width: auto; height: auto;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-    margin: 0;
+  .inv-start-card { position: relative; }
+  /* The card's picture, top right beside the icon tile (spool, TigerPOD, a
+     printer cross-fading from one model to the next). */
+  .inv-start-art {
+    position: absolute; top: 10px; right: 14px; width: 80px; height: 56px; pointer-events: none;
   }
-  .inv-welcome-logo--mockup img {
-    width: min(460px, 72vw); height: auto;
-    /* Same reason as .dns-step-art: the taller ecosystem artwork would push the
-       QR cards down on short windows — cap it and let `contain` letterbox. */
-    max-height: 300px;
-    object-fit: contain;
+  .inv-start-art img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain;
+    opacity: 0; transition: opacity .3s ease, transform .3s ease; transform: scale(.94);
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.35));
   }
-
-  .inv-welcome-h1 {
-    font-size: 26px; font-weight: 700; letter-spacing: -.03em;
-    color: var(--text); line-height: 1.2; margin: 0;
+  .inv-start-art img.is-on { opacity: 1; transform: none; }
+  .inv-start-card:hover .inv-start-art img.is-on { transform: translateY(-2px) scale(1.04); }
+  @media (prefers-reduced-motion: reduce) { .inv-start-art img { transition: none; } }
+  .inv-start-card:nth-child(2) { animation-delay: .04s; }
+  .inv-start-card:nth-child(3) { animation-delay: .08s; }
+  .inv-start-card:hover { border-color: var(--primary); transform: translateY(-2px);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 14%, transparent); }
+  .inv-start-card:active { transform: translateY(0); }
+  .inv-start-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+  .inv-start-tile {
+    width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+    background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary);
   }
-  .inv-welcome-p { font-size: 14px; color: var(--muted); line-height: 1.65; max-width: 400px; margin: 0; }
-  /* QR grid */
-  .inv-welcome-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%;
+  .inv-start-tile .icon { background-color: currentColor; }
+  .inv-start-title { font-size: 15px; font-weight: 700; }
+  .inv-start-text { font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .inv-start-go { margin-top: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--primary); }
+  .inv-start-go .icon { background-color: currentColor; transition: transform .15s; }
+  .inv-start-card:hover .inv-start-go .icon { transform: translateX(2px); }
+  /* TigerPOD card, reader plugged in: the status turns green and says so. */
+  .inv-start-status { display: none; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--success); }
+  .inv-start-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 22%, transparent); }
+  .inv-start-card .when-ready { display: none; }
+  .inv-start-card.is-ready .when-ready { display: inline; }
+  .inv-start-card.is-ready .when-idle { display: none; }
+  .inv-start-card.is-ready { border-color: color-mix(in srgb, var(--success) 55%, var(--border)); cursor: default; }
+  .inv-start-card.is-ready:hover { transform: none; box-shadow: none; border-color: color-mix(in srgb, var(--success) 55%, var(--border)); }
+  .inv-start-card.is-ready .inv-start-tile { background: color-mix(in srgb, var(--success) 16%, transparent); color: var(--success); }
+  .inv-start-card.is-ready .inv-start-status { display: inline-flex; }
+  .inv-start-card.is-ready .inv-start-go { display: none; }
+  .inv-start-phone { margin-top: 12px; display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .inv-start-phone .inv-start-app { height: auto; padding: 0; border: 0; background: none; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; }
+  .inv-start-phone .inv-start-app:hover { color: var(--primary); }
+  .inv-start-phone .icon { background-color: currentColor; }
+  /* "Next up" strip — above the spool list until the three first steps are done. */
+  .first-steps {
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    margin-top: var(--view-gap); padding: 8px 10px 8px 14px; border-radius: 12px;
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border));
+    background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+    animation: invStartRise .24s ease-out both;
   }
-  .inv-qr-card {
-    display: flex; flex-direction: column;
-    border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
-    background: var(--surface);
-    box-shadow: 0 1px 4px rgba(0,0,0,.06);
-    transition: transform .15s, box-shadow .15s;
+  .first-steps-title { font-size: 12.5px; font-weight: 700; color: var(--text); margin-right: 4px; }
+  .first-steps-count { font-weight: 600; color: var(--muted); }
+  .first-steps .first-steps-step {
+    height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 999px; font-size: 12px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    transition: border-color .15s, color .15s;
   }
-  .inv-qr-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
-  .inv-qr-card-head {
-    display: flex; align-items: center; gap: 7px;
-    padding: 13px 16px; color: var(--on-accent);
-    font-size: 12px; font-weight: 600; letter-spacing: .01em;
+  .first-steps .first-steps-step:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+  .first-steps .first-steps-step .icon { background-color: currentColor; }
+  .first-steps .first-steps-step.is-done { color: var(--success); border-color: transparent; background: transparent; cursor: default; opacity: 1; }
+  .first-steps-item { display: inline-flex; align-items: center; gap: 2px; }
+  .first-steps .first-steps-skip {
+    height: 28px; padding: 0 8px; border: 0; background: transparent;
+    font-size: 11.5px; color: var(--muted); text-decoration: underline; text-underline-offset: 2px;
   }
-  .inv-qr-card-head .icon { color: var(--ink-85); flex-shrink: 0; }
-  .inv-qr-card-head--dark    { background: #1d1d1f; }
-  .inv-qr-card-head--orange  { background: linear-gradient(90deg, var(--primary), var(--primary)); }
-  .inv-qr-beta-badge {
-    margin-left: auto; background: var(--ink-20);
-    border-radius: 20px; padding: 2px 8px;
-    font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  .first-steps .first-steps-skip:hover { color: var(--text); }
+  .first-steps .first-steps-close {
+    margin-left: auto; width: 26px; height: 26px; padding: 0; display: grid; place-items: center;
+    border-radius: 50%; border: 0; background: transparent; color: var(--muted);
   }
-  .inv-qr-card-body {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 22px 20px 16px; gap: 10px;
-    background: var(--surface);
-  }
-  .inv-qr-img {
-    width: 148px; height: 148px; border-radius: 10px;
-    border: 1px solid var(--border); display: block;
-  }
-  .inv-qr-store-row {
-    display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center;
-  }
-  .inv-qr-store-pill {
-    display: flex; align-items: center; gap: 5px;
-    padding: 5px 10px; border-radius: 20px;
-    background: var(--surface-2); border: 1px solid var(--border);
-    font-size: 11px; font-weight: 600; color: var(--text);
-    text-decoration: none; transition: background .12s;
-  }
-  .inv-qr-store-pill:hover { background: var(--border); }
-  .inv-qr-store-pill .icon { color: var(--muted); }
-  .inv-qr-card-foot {
-    padding: 9px 16px; border-top: 1px solid var(--border);
-    font-size: 11px; color: var(--muted); background: var(--surface-2);
-    text-align: center; line-height: 1.4;
-  }
+  .first-steps .first-steps-close:hover { color: var(--text); background: var(--surface-2); }
+  .first-steps .first-steps-close .icon { background-color: currentColor; }
+  @keyframes invStartRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { .inv-start-card { animation: none; } }
   #invTableWrap { flex: 1; min-height: 0; }
   #invGrid { flex: 1; min-height: 0; overflow-y: auto; margin-top: var(--view-gap); scrollbar-width: none; }
   #invGrid::-webkit-scrollbar { width: 0; height: 0; }   /* hide the scrollbar (still scrolls) */
@@ -4196,10 +4323,7 @@
   /* Hero illustration. The ecosystem artwork is taller (ratio ~1.41) than the
      old mockup (~1.82), so cap the height and `contain` it — the card keeps its
      size instead of growing ~70 px and risking an overflow on short screens. */
-  .dns-step-art {
-    width: 100%; height: auto; max-height: 270px; object-fit: contain;
-    display: block; margin: 4px 0 6px; pointer-events: none;
-  }
+  .dns-step-art { max-width: calc(270px * 1120 / 580); margin: 4px auto 6px; }
   .dns-label {
     font-size: 10.5px; font-weight: 700; color: var(--muted);
     text-transform: uppercase; letter-spacing: .07em;

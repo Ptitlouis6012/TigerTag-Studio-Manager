@@ -124,6 +124,7 @@ export function subscribeScales(uid) {
       }
       renderScaleHealth();
       renderScalesPanel();
+      _ctx.onScalesChanged?.();   // e.g. the open TigerScale sheet follows its live state
       if (state.debugEnabled) {
         const dt = ((typeof performance !== "undefined") ? performance.now() : 0) - t0;
         console.log(`[tigerscale] snapshot→render ${dt.toFixed(1)} ms (${state.scales.length} scale(s))`);
@@ -145,7 +146,10 @@ export function unsubscribeScales() {
 
 function _wirePanelHandlers() {
   const { $ } = _ctx;
-  $("scaleHealth")?.addEventListener("click", openScalesPanel);
+  // No scale on the account yet: the header icon opens the TigerScale sheet
+  // (what it is, how to build one) instead of an empty panel.
+  $("scaleHealth")?.addEventListener("click", () =>
+    _ctx.state.scales.length || !_ctx.openEcoSheet ? openScalesPanel() : _ctx.openEcoSheet("scale"));
   // Live view / Screenshot — delegated on the panel, so a surgical card refresh
   // swapping the buttons underneath needs no re-wiring.
   $("scalesPanel")?.addEventListener("click", e => {
@@ -160,7 +164,7 @@ function _wirePanelHandlers() {
   $("scalesOverlay")?.addEventListener("click", closeScalesPanel);
 }
 
-function openScalesPanel() {
+export function openScalesPanel() {
   renderScalesPanel();
   _ctx.$("scalesPanel").classList.add("open");
   _ctx.$("scalesOverlay").classList.add("open");
@@ -1122,7 +1126,7 @@ function scaleBatteryPresent(s)   { return s?.battery_present     ?? null; }
 // Online = heartbeat seen within the regime's window. Standby (screen_off) beats
 // only every 5 min, so it gets the longer grace — otherwise a fully-awake scale
 // with its backlight off would be wrongly shown as disconnected after 90 s.
-function isScaleOnline(s) {
+export function isScaleOnline(s) {
   const gap = Date.now() - scaleTsToMs(scaleHeartbeatAt(s));
   const standby = scalePowerState(s) === "screen_off";
   return gap < (standby ? SCALE_ONLINE_STANDBY_MS : SCALE_ONLINE_ACTIVE_MS);

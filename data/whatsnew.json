@@ -1,4 +1,154 @@
 {
+  "2.48.0": {
+    "date": "2026-10-30",
+    "items": [
+      {
+        "icon": "sparkle",
+        "title": {
+          "en": "Tiger Studio Manager 2 has entered the chat",
+          "fr": "Tiger Studio Manager 2 a rejoint le chat",
+          "de": "Tiger Studio Manager 2 ist im Chat",
+          "es": "Tiger Studio Manager 2 ha entrado al chat",
+          "it": "Tiger Studio Manager 2 è entrato in chat",
+          "zh": "Tiger Studio Manager 2 已上线",
+          "pt": "Tiger Studio Manager 2 entrou no chat",
+          "pt-pt": "O Tiger Studio Manager 2 entrou no chat",
+          "pl": "Tiger Studio Manager 2 dołączył do czatu",
+          "ru": "Tiger Studio Manager 2 в чате",
+          "nl": "Tiger Studio Manager 2 is de chat binnengekomen"
+        },
+        "body": {
+          "en": "New face, same tiger. The welcome page now shows the whole gang floating around, the printer brands it talks to, and it speaks your language from the very first launch.",
+          "fr": "Nouvelle tête, même tigre. La page d’accueil montre toute la bande qui flotte, les marques d’imprimantes avec qui ça parle, et elle parle ta langue dès le premier lancement.",
+          "de": "Neues Gesicht, gleicher Tiger. Die Startseite zeigt die ganze Truppe schwebend, die Druckermarken, mit denen sie spricht, und sie spricht ab dem ersten Start deine Sprache.",
+          "es": "Cara nueva, mismo tigre. La página de bienvenida muestra a toda la pandilla flotando, las marcas de impresoras con las que habla y habla tu idioma desde el primer arranque.",
+          "it": "Faccia nuova, stessa tigre. La pagina di benvenuto mostra tutta la banda che fluttua, le marche di stampanti con cui parla, e parla la tua lingua dal primo avvio.",
+          "zh": "新面孔，还是那只老虎。欢迎页上整套设备悬浮登场，列出能对话的打印机品牌，首次启动就说你的语言。",
+          "pt": "Cara nova, mesmo tigre. A página de boas-vindas mostra a turma toda flutuando, as marcas de impressoras com quem ela conversa, e fala o seu idioma desde a primeira abertura.",
+          "pt-pt": "Cara nova, o mesmo tigre. A página de boas-vindas mostra o grupo todo a flutuar, as marcas de impressoras com quem fala, e fala a tua língua logo no primeiro arranque.",
+          "pl": "Nowa twarz, ten sam tygrys. Strona powitalna pokazuje całą ekipę w powietrzu, marki drukarek, z którymi gada, i mówi w twoim języku od pierwszego uruchomienia.",
+          "ru": "Новое лицо, тот же тигр. Стартовая страница показывает всю парящую команду, бренды принтеров, с которыми она дружит, и говорит на вашем языке с первого запуска.",
+          "nl": "Nieuw gezicht, dezelfde tijger. De welkomstpagina toont de hele bende zwevend, de printermerken waarmee hij praat, en spreekt jouw taal vanaf de allereerste start."
+        }
+      },
+      {
+        "icon": "compass",
+        "title": {
+          "en": "Where do we start?",
+          "fr": "On commence par quoi ?",
+          "de": "Womit fangen wir an?",
+          "es": "¿Por dónde empezamos?",
+          "it": "Da dove cominciamo?",
+          "zh": "从哪儿开始？",
+          "pt": "Por onde começamos?",
+          "pt-pt": "Por onde começamos?",
+          "pl": "Od czego zaczynamy?",
+          "ru": "С чего начнём?",
+          "nl": "Waar beginnen we?"
+        },
+        "body": {
+          "en": "Empty workshop? Three cards, three first wins: add a spool, plug in your TigerPOD, connect a printer. Pick one. The rest follows, at its own pace.",
+          "fr": "Atelier vide ? Trois cartes, trois premières victoires : ajouter une bobine, brancher ton TigerPOD, connecter une imprimante. Choisis-en une. Le reste suivra, à son rythme.",
+          "de": "Werkstatt leer? Drei Karten, drei erste Erfolge: eine Spule hinzufügen, deinen TigerPOD anschließen, einen Drucker verbinden. Such dir einen aus. Der Rest kommt von selbst.",
+          "es": "¿Taller vacío? Tres tarjetas, tres primeras victorias: añadir una bobina, conectar tu TigerPOD, conectar una impresora. Elige una. Lo demás llegará a su ritmo.",
+          "it": "Laboratorio vuoto? Tre schede, tre prime vittorie: aggiungi una bobina, collega il tuo TigerPOD, connetti una stampante. Scegline una. Il resto arriva con calma.",
+          "zh": "工作室空空的？三张卡片，三个开门红：添加料盘、插上 TigerPOD、连接打印机。挑一个就行，其他的慢慢来。",
+          "pt": "Oficina vazia? Três cartões, três primeiras vitórias: adicionar um carretel, ligar o seu TigerPOD, conectar uma impressora. Escolha um. O resto vem no seu ritmo.",
+          "pt-pt": "Oficina vazia? Três cartões, três primeiras vitórias: adicionar uma bobina, ligar o teu TigerPOD, ligar uma impressora. Escolhe um. O resto vem ao seu ritmo.",
+          "pl": "Pusty warsztat? Trzy karty, trzy pierwsze sukcesy: dodaj szpulę, podłącz TigerPOD, połącz drukarkę. Wybierz jedną. Reszta przyjdzie sama.",
+          "ru": "Мастерская пуста? Три карточки, три первые победы: добавить катушку, подключить TigerPOD, подключить принтер. Выберите одну. Остальное подтянется.",
+          "nl": "Lege werkplaats? Drie kaarten, drie eerste overwinningen: een spoel toevoegen, je TigerPOD aansluiten, een printer koppelen. Kies er één. De rest volgt vanzelf."
+        }
+      },
+      {
+        "icon": "rfid",
+        "title": {
+          "en": "Meet the whole family",
+          "fr": "Toute la famille, enfin présentée",
+          "de": "Die ganze Familie, endlich vorgestellt",
+          "es": "Toda la familia, por fin presentada",
+          "it": "Tutta la famiglia, finalmente presentata",
+          "zh": "全家福，终于到齐",
+          "pt": "A família toda, enfim apresentada",
+          "pt-pt": "A família toda, finalmente apresentada",
+          "pl": "Cała rodzina, wreszcie w komplecie",
+          "ru": "Вся семья, наконец, в сборе",
+          "nl": "De hele familie, eindelijk voorgesteld"
+        },
+        "body": {
+          "en": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: one window, one sheet each — what it does, what you need, how to get one. It flips through them on its own; park your mouse to stay.",
+          "fr": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag : une fenêtre, une fiche chacun — ce que ça fait, ce qu’il te faut, comment l’avoir. Ça défile tout seul ; pose ta souris pour rester.",
+          "de": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: ein Fenster, je ein Steckbrief — was es kann, was du brauchst, wie du drankommst. Blättert von selbst; Maus drauf, und es bleibt stehen.",
+          "es": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: una ventana, una ficha cada uno — qué hace, qué necesitas, cómo conseguirlo. Pasa solo; deja el ratón encima para quedarte.",
+          "it": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: una finestra, una scheda ciascuno — cosa fa, cosa ti serve, come averlo. Scorre da sola; tieni il mouse sopra per fermarla.",
+          "zh": "TigerPOD、TigerScale、TigerSpool、Tiger Touch、TigerNFC、TigerTag：一个窗口，一人一页——能做什么、需要什么、怎么入手。会自己翻页，鼠标停上去就不动。",
+          "pt": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: uma janela, uma ficha para cada — o que faz, do que você precisa, como conseguir. Passa sozinha; deixe o mouse em cima para ficar.",
+          "pt-pt": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: uma janela, uma ficha para cada — o que faz, o que precisas, como o arranjar. Passa sozinha; deixa o rato em cima para ficar.",
+          "pl": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: jedno okno, każdy ma swoją kartę — co robi, czego potrzebujesz, jak go zdobyć. Przewija się samo; zostaw kursor, żeby zostać.",
+          "ru": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: одно окно, по карточке на каждого — что умеет, что нужно, где взять. Листается само; наведите мышь, чтобы остановить.",
+          "nl": "TigerPOD, TigerScale, TigerSpool, Tiger Touch, TigerNFC, TigerTag: één venster, elk een eigen kaart — wat het doet, wat je nodig hebt, hoe je eraan komt. Bladert vanzelf; muis erop en het blijft staan."
+        }
+      },
+      {
+        "icon": "mail",
+        "title": {
+          "en": "Your mail, from us, in your language",
+          "fr": "Tes mails, de chez nous, dans ta langue",
+          "de": "Deine Mails, von uns, in deiner Sprache",
+          "es": "Tus correos, de nuestra parte, en tu idioma",
+          "it": "Le tue email, da noi, nella tua lingua",
+          "zh": "邮件来自我们，说你的语言",
+          "pt": "Seus e-mails, da nossa parte, no seu idioma",
+          "pt-pt": "Os teus e-mails, da nossa parte, na tua língua",
+          "pl": "Twoje maile, od nas, w twoim języku",
+          "ru": "Письма от нас, на вашем языке",
+          "nl": "Je mails, van ons, in jouw taal"
+        },
+        "body": {
+          "en": "Confirming your address or resetting a password now gets a proper TigerSystem email in your language. And after signing up, a clear “check your inbox” step — resend or switch address in one click.",
+          "fr": "Confirmer ton adresse ou réinitialiser un mot de passe, c’est maintenant un vrai mail TigerSystem dans ta langue. Et après l’inscription, une étape « va voir ta boîte mail » claire — renvoyer ou changer d’adresse en un clic.",
+          "de": "Adresse bestätigen oder Passwort zurücksetzen gibt jetzt eine echte TigerSystem-Mail in deiner Sprache. Und nach der Anmeldung ein klarer „Schau ins Postfach“-Schritt — erneut senden oder Adresse wechseln mit einem Klick.",
+          "es": "Confirmar tu dirección o restablecer la contraseña ahora trae un correo TigerSystem de verdad en tu idioma. Y tras registrarte, un paso claro de “mira tu bandeja” — reenviar o cambiar de dirección en un clic.",
+          "it": "Confermare l’indirizzo o reimpostare la password ora porta una vera email TigerSystem nella tua lingua. E dopo l’iscrizione, un passaggio chiaro “controlla la posta” — reinvia o cambia indirizzo con un clic.",
+          "zh": "确认邮箱或重置密码，现在会收到 TigerSystem 正式邮件，用你的语言。注册后还有清楚的“去看邮箱”一步——一键重发或换地址。",
+          "pt": "Confirmar seu endereço ou redefinir a senha agora traz um e-mail TigerSystem de verdade no seu idioma. E depois do cadastro, uma etapa clara de “confira sua caixa” — reenviar ou trocar de endereço em um clique.",
+          "pt-pt": "Confirmar o endereço ou repor a palavra-passe agora traz um e-mail TigerSystem a sério na tua língua. E depois do registo, um passo claro de “vê a tua caixa” — reenviar ou mudar de endereço num clique.",
+          "pl": "Potwierdzenie adresu czy reset hasła to teraz porządny mail od TigerSystem w twoim języku. A po rejestracji jasny krok „zajrzyj do skrzynki” — wyślij ponownie albo zmień adres jednym kliknięciem.",
+          "ru": "Подтверждение адреса и сброс пароля теперь приходят настоящим письмом TigerSystem на вашем языке. А после регистрации — понятный шаг «загляните в почту»: отправить снова или сменить адрес в один клик.",
+          "nl": "Je adres bevestigen of je wachtwoord resetten levert nu een echte TigerSystem-mail op in jouw taal. En na het aanmelden een duidelijke stap “check je inbox” — opnieuw sturen of ander adres in één klik."
+        }
+      },
+      {
+        "icon": "plus-circle",
+        "title": {
+          "en": "“Create” is back where it belongs",
+          "fr": "« Créer » est de retour",
+          "de": "„Erstellen“ ist zurück",
+          "es": "“Crear” ha vuelto",
+          "it": "“Crea” è tornato",
+          "zh": "“创建”回来了",
+          "pt": "“Criar” está de volta",
+          "pt-pt": "“Criar” está de volta",
+          "pl": "„Utwórz” wrócił",
+          "ru": "«Создать» вернулась",
+          "nl": "“Aanmaken” is terug"
+        },
+        "body": {
+          "en": "Adding a spool by hand with the TigerPOD plugged in? You get both: create it as is, or burn a TigerTag on the way. A chip already on the reader? Straight to the point.",
+          "fr": "Tu ajoutes une bobine à la main avec le TigerPOD branché ? Tu as les deux : la créer telle quelle, ou graver un TigerTag au passage. Une puce déjà sur le lecteur ? Droit au but.",
+          "de": "Spule von Hand hinzufügen, TigerPOD eingesteckt? Du bekommst beides: einfach anlegen oder unterwegs ein TigerTag brennen. Schon ein Chip auf dem Leser? Direkt zur Sache.",
+          "es": "¿Añades una bobina a mano con el TigerPOD conectado? Tienes las dos: crearla tal cual o grabar un TigerTag de paso. ¿Ya hay un chip en el lector? Directo al grano.",
+          "it": "Aggiungi una bobina a mano con il TigerPOD collegato? Hai entrambe: crearla così com’è o scrivere un TigerTag al volo. Un chip già sul lettore? Dritto al punto.",
+          "zh": "插着 TigerPOD 手动添加料盘？两个都给你：直接创建，或顺手烧录一枚 TigerTag。读卡器上已经有芯片？直奔主题。",
+          "pt": "Adicionando um carretel à mão com o TigerPOD ligado? Você tem os dois: criar como está ou gravar uma TigerTag de passagem. Já tem um chip no leitor? Direto ao ponto.",
+          "pt-pt": "A adicionar uma bobina à mão com o TigerPOD ligado? Tens os dois: criá-la tal como está ou gravar uma TigerTag de caminho. Já há um chip no leitor? Direto ao assunto.",
+          "pl": "Dodajesz szpulę ręcznie z podłączonym TigerPOD? Masz oba: utwórz ją po prostu albo przy okazji nagraj TigerTag. Chip już leży na czytniku? Od razu do rzeczy.",
+          "ru": "Добавляете катушку вручную с подключённым TigerPOD? Есть оба варианта: просто создать или заодно прошить TigerTag. Чип уже на считывателе? Сразу к делу.",
+          "nl": "Een spoel met de hand toevoegen terwijl de TigerPOD erin zit? Je krijgt allebei: gewoon aanmaken of meteen een TigerTag branden. Ligt er al een chip op de lezer? Recht op het doel af."
+        }
+      }
+    ]
+  },
   "2.47.0": {
     "date": "2026-10-29",
     "items": [

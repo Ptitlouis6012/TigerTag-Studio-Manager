@@ -2128,15 +2128,10 @@
      onboarding. Capped by viewport height too so the modal keeps the sign-in form
      reachable on a short window. */
   #addAccountModalOverlay .lm-hero-art {
-    display: block;
-    width: 100%;
-    max-height: 26vh;
-    height: auto;
-    object-fit: contain;
+    max-width: calc(26vh * 1120 / 580);
     /* The card's own 32px top padding already clears the top edge; the close
        button sits above on z-index 2. */
-    margin: 0 0 18px;
-    user-select: none; -webkit-user-drag: none;
+    margin: 0 auto 18px;
   }
   #addAccountModalOverlay .lm-google-btn {
     width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
@@ -2195,6 +2190,31 @@
   #addAccountModalOverlay .lm-eye:hover { color: var(--text); }
   /* No :active transform hack needed — global press feedback is now
      `filter: brightness` (70-detail-misc.css); the eye stays centered. */
+  /* "Check your inbox" step (after sign-up): the form steps aside */
+  #addAccountModalOverlay .lm-card.is-check > :not(.lm-close):not(.lm-hero-art):not(.lm-check):not(.lm-report-link) { display: none; }
+  #addAccountModalOverlay .lm-check[hidden] { display: none; }
+  #addAccountModalOverlay .lm-check { text-align: center; animation: lm-check-in .35s ease both; }
+  #addAccountModalOverlay .lm-check-env {
+    position: relative; width: 72px; aspect-ratio: 1; margin: 4px auto 16px; border-radius: 50%;
+    display: grid; place-items: center; background: color-mix(in srgb, var(--primary) 16%, transparent);
+    animation: lm-env-hop 2.4s ease-in-out infinite;
+  }
+  #addAccountModalOverlay .lm-check-env::after {
+    content: ""; position: absolute; inset: -6px; border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--primary) 45%, transparent); animation: lm-env-ring 2.4s ease-out infinite;
+  }
+  #addAccountModalOverlay .lm-check-env .icon { background: var(--primary); }
+  #addAccountModalOverlay .lm-check-title { margin: 0 0 8px; font-size: 22px; font-weight: 700; color: var(--text); }
+  #addAccountModalOverlay .lm-check-sent { margin: 0; font-size: 14px; color: var(--muted); }
+  #addAccountModalOverlay .lm-check-sent b { display: block; margin-top: 4px; font-size: 15px; color: var(--text); word-break: break-all; }
+  #addAccountModalOverlay .lm-check-hint { margin: 14px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+  #addAccountModalOverlay .lm-check .lm-submit-btn { margin-top: 20px; }
+  #addAccountModalOverlay .lm-check-links { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 14px; color: var(--muted); font-size: 13px; }
+  #addAccountModalOverlay .lm-check-note { min-height: 18px; margin: 10px 0 0; font-size: 13px; color: var(--success); }
+  @keyframes lm-check-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes lm-env-hop { 0%, 100% { transform: translateY(0); } 12% { transform: translateY(-6px) rotate(-6deg); } 24% { transform: translateY(0) rotate(0); } }
+  @keyframes lm-env-ring { 0% { opacity: .9; transform: scale(.9); } 70%, 100% { opacity: 0; transform: scale(1.25); } }
+  @media (prefers-reduced-motion: reduce) { #addAccountModalOverlay .lm-check, #addAccountModalOverlay .lm-check-env, #addAccountModalOverlay .lm-check-env::after { animation: none; } }
   /* remember me + forgot password */
   #addAccountModalOverlay .lm-row {
     display: flex; align-items: center; justify-content: space-between;
@@ -2542,9 +2562,7 @@
     width: 400px; /* wider than the spool detail panel (300px) — more breathing room */
   }
   .adp-panel.detail-panel .panel-body { background: var(--adp-bg); }
-  .adp-panel .panel-header {
-    border-bottom-color: var(--adp-border-soft);
-  }
+  .adp-panel .panel-header { border-bottom: 0; }   /* no rule above the colour picker */
   .adp-panel .panel-title { color: var(--adp-text); }
   .adp-panel .modal-close {
     color: var(--adp-muted);
@@ -3640,20 +3658,23 @@
      primary CTA of the whole panel. */
   .adp-foot {
     padding: 12px 20px 16px;
-    border-top: 1px solid var(--adp-border-soft);
     display: flex;
     justify-content: center;
     gap: 8px;
     flex-shrink: 0;
     background: var(--adp-bg);
   }
-  /* The held Link / Burn banner that replaces Make (_adpRenderFoot). */
-  .adp-foot-banner { flex: 1; min-width: 0; }
+  /* The held Link / Burn banner (_adpRenderFoot): under Make when a reader waits
+     with no chip (both ways stacked, create only on top), alone with a chip on it. */
+  .adp-foot-banner { min-width: 0; }
   .adp-foot-banner:empty { display: none; }
   .adp-foot-banner .chip-update-banner { width: 100%; margin: 0; }
   .adp-foot .adp-btn--make[hidden] { display: none; }
-  /* With the banner, no separator and no side gutter: it spans the panel. */
-  .adp-panel .adp-foot:has(.adp-foot-banner:not(:empty)) { border-top: 0; padding: 0; }
+  /* With the banner, no side gutter under Make: the banner spans the panel. */
+  .adp-panel .adp-foot:has(.adp-foot-banner:not(:empty)) {
+    flex-direction: column; align-items: stretch; gap: 0; padding: 0;
+  }
+  .adp-foot:has(.adp-foot-banner:not(:empty)) .adp-btn--make { order: -1; align-self: center; margin: 12px 0; }
   .adp-foot-banner .chip-update-banner.chip-update-banner { border-radius: 0; }
   .adp-btn {
     height: 36px;
@@ -3987,196 +4008,199 @@
   border: 1px solid var(--border);
 }
 
-/* ── TigerPOD discovery modal ──────────────────────────────────────────── */
-.tigerpod-card {
-  width: 400px; padding: 0; overflow: hidden; position: relative;
+/* ── Ecosystem window (#ecoModalOverlay) ───────────────────────────────────
+   A fixed grid: every zone keeps its size from one device to the next, so the
+   window never jumps. 840 × 760 on a tall screen; 840 × 552 below 800 px of
+   height (900 × 600 window), where the bay goes left and the words right. */
+.eco-card.eco-card {   /* doubled: wins over the generic .modal-card box */
+  width: min(840px, calc(100vw - 32px)); height: min(760px, calc(100vh - 32px)); max-height: none;
+  padding: 24px; box-sizing: border-box; overflow: hidden; position: relative;
+  display: grid; grid-template-rows: 48px minmax(0, 1fr) 76px; gap: 12px;
 }
-.tigerpod-close-btn {
-  position: absolute; top: 12px; right: 12px; z-index: 2;
-  color: var(--ink-70); background: rgba(0,0,0,.25);
-  border-radius: 50%; width: 28px; height: 28px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; line-height: 1;
+.eco-card * { box-sizing: border-box; }
+.eco-nav { display: grid; grid-template-columns: minmax(0, 1fr) 32px; align-items: center; gap: 12px; }
+.eco-tabs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; min-width: 0; }
+.eco-tab {
+  height: 40px; padding: 0 6px; border-radius: 10px; min-width: 0;
+  border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+  font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color .15s, border-color .15s, background .15s;
 }
-.tigerpod-close-btn:hover { color: var(--text); background: rgba(0,0,0,.45); }
+.eco-tab:hover { color: var(--text); }
+.eco-tab.is-on { color: var(--text); border-color: var(--primary); background: color-mix(in srgb, var(--primary) 10%, var(--surface)); }
+/* Autoplay progress: a thin bar fills the open tab; when it ends the next
+   device comes in (animationend). Frozen while the card is held. */
+.eco-tab { position: relative; }
+.eco-tab-prog { position: absolute; left: 10px; right: 10px; bottom: 5px; height: 2px; border-radius: 2px; overflow: hidden;
+  background: color-mix(in srgb, var(--primary) 18%, transparent); }
+.eco-tab-prog::after { content: ""; position: absolute; inset: 0; transform-origin: left; background: var(--primary);
+  animation: ecoProg 4.5s linear forwards; }
+.eco-tab-prog { animation: ecoProgEnd 4.5s linear forwards; }   /* the element whose end advances the carousel */
+@keyframes ecoProg { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ecoProgEnd { from { opacity: 1; } to { opacity: 1; } }
+.eco-card.is-held .eco-tab-prog, .eco-card.is-held .eco-tab-prog::after { animation-play-state: paused; }
+.eco-card:focus { outline: none; }
+.eco-card .eco-close.eco-close { position: static; width: 32px; height: 32px; }
+.eco-panel { min-height: 0; display: grid; grid-template-rows: 374px 64px 100px; gap: 12px; }
+.eco-overview { display: grid; grid-template-rows: 210px 152px; gap: 12px; min-width: 0; }
+.eco-info { display: grid; grid-template-rows: 88px 32px 32px; min-width: 0; justify-items: center; text-align: center; }
 
-/* ── Hero — purple gradient + pulsing rings + product identity ── */
-.tigerpod-hero {
-  position: relative; height: 240px; overflow: hidden;
-  background: linear-gradient(135deg, #3a1590 0%, #6b3de8 55%, #9a6fff 100%);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px;
-  padding-top: 16px;
-  padding-bottom: 36px; /* leave room for stats bar */
+/* Scan bay — the device glowing on a faint tech grid. It is a scanner and never
+   moves, so the light does: NFC waves leave its reader (--x/--y, % of the
+   picture) and a scan beam sweeps it, like data being read and written. */
+.eco-bay {
+  position: relative; border-radius: 16px; overflow: hidden; display: grid; place-items: center; min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--border));
+  background:
+    radial-gradient(ellipse 55% 70% at 50% 62%, color-mix(in srgb, var(--primary) 24%, transparent), transparent 70%),
+    linear-gradient(color-mix(in srgb, var(--primary) 9%, transparent) 1px, transparent 1px) 0 0 / 22px 22px,
+    linear-gradient(90deg, color-mix(in srgb, var(--primary) 9%, transparent) 1px, transparent 1px) 0 0 / 22px 22px,
+    var(--surface-2);
 }
-/* Concentric pulsing rings */
-.tigerpod-hero-rings { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-.tpr {
-  position: absolute; border-radius: 50%;
-  border: 1.5px solid var(--ink-20);
-  animation: tpr-pulse 2.8s ease-out infinite;
+.eco-cat {
+  position: absolute; top: 12px; left: 50%; translate: -50% 0; z-index: 2; white-space: nowrap; max-width: calc(100% - 100px);
+  overflow: hidden; text-overflow: ellipsis; padding: 4px 11px; border-radius: 999px;
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--primary); background: color-mix(in srgb, var(--surface) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--border));
 }
-.tpr1 { width: 70px;  height: 70px;  animation-delay: 0s; }
-.tpr2 { width: 120px; height: 120px; animation-delay: .7s; }
-.tpr3 { width: 180px; height: 180px; animation-delay: 1.4s; }
-@keyframes tpr-pulse {
-  0%   { opacity: .55; transform: scale(.85); }
-  60%  { opacity: .12; }
-  100% { opacity: 0;   transform: scale(1.15); }
+.eco-shot { position: relative; height: 160px; margin-top: 24px; }
+.eco-shot img { height: 100%; width: auto; display: block; -webkit-user-drag: none; filter: drop-shadow(0 14px 22px rgba(0,0,0,.45)); }
+.eco-card[data-eco="touch"] .eco-shot { height: 124px; margin-top: 34px; }   /* a wide device: as big as the others */
+.eco-waves { position: absolute; left: var(--x); top: var(--y); width: 0; height: 0; pointer-events: none; }
+.eco-waves i {
+  position: absolute; left: -40px; top: -40px; width: 80px; height: 80px; border-radius: 50%;
+  border: 2px solid var(--primary); box-shadow: 0 0 14px var(--primary), inset 0 0 10px color-mix(in srgb, var(--primary) 50%, transparent);
+  opacity: 0; animation: ecoWave 2.4s cubic-bezier(.2, .6, .3, 1) infinite;
 }
-/* Helper video */
-.tigerpod-hero-video {
-  position: relative; z-index: 1;
-  height: 156px; width: auto;
-  border-radius: 10px;
-  box-shadow: 0 4px 24px rgba(0,0,0,.45);
-  object-fit: cover;
+.eco-waves i:nth-child(2) { animation-delay: .8s; }
+.eco-waves i:nth-child(3) { animation-delay: 1.6s; }
+@keyframes ecoWave { 0% { transform: scale(.15); opacity: .95; } 100% { transform: scale(1.9); opacity: 0; } }
+.eco-beam {
+  position: absolute; left: 0; right: 0; height: 18%; top: 0; pointer-events: none; mix-blend-mode: screen;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--primary) 40%, transparent) 50%, transparent);
+  animation: ecoBeam 3.6s ease-in-out infinite;
 }
-/* Product name block */
-.tigerpod-hero-name {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
+@keyframes ecoBeam { 0%, 100% { top: -18%; opacity: 0; } 15% { opacity: 1; } 50% { top: 100%; opacity: .9; } 60% { opacity: 0; } }
+.eco-step {
+  position: absolute; top: 50%; translate: 0 -50%; z-index: 3; width: 34px; height: 34px; padding: 0;
+  display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent); color: var(--muted); transition: color .15s, border-color .15s;
 }
-.tigerpod-hero-brand {
-  font-size: 10px; font-weight: 700; letter-spacing: .1em;
-  color: var(--ink-60); text-transform: uppercase;
-}
-.tigerpod-hero-product {
-  font-size: 18px; font-weight: 800; letter-spacing: .02em;
-  color: var(--text);
-}
-/* Stats bar — bottom strip inside hero */
-.tigerpod-stats {
-  position: absolute; bottom: 0; left: 0; right: 0; z-index: 1;
-  height: 32px; background: rgba(0,0,0,.25);
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-}
-.tigerpod-stat {
-  font-size: 12px; color: var(--ink-85);
-}
-.tigerpod-stat strong { color: var(--text); font-weight: 700; }
-.tigerpod-stat-sep { color: var(--ink-30); font-size: 11px; }
-.tigerpod-stat-free {
-  background: var(--ink-15); border-radius: 4px;
-  padding: 1px 6px; font-weight: 700; color: var(--ink-85);
-  font-size: 11px; letter-spacing: .04em;
-}
-.tigerpod-cta {
-  font-size: 12px; font-weight: 600;
-  color: var(--ink-85); letter-spacing: .03em;
-}
+.eco-step:hover { color: var(--text); border-color: var(--muted); }
+.eco-step .icon { background-color: currentColor; }
+.eco-step--prev { left: 12px; }
+.eco-step--next { right: 12px; }
+.tigerpod-debug.tigerpod-debug { position: absolute; left: 12px; bottom: 12px; z-index: 4; max-width: 260px; margin: 0; }
 
-/* ── Body ── */
-.tigerpod-body {
-  padding: 28px 26px 28px;
-  display: flex; flex-direction: column; gap: 18px;
-}
-.tigerpod-title {
-  font-size: 16px; font-weight: 700; color: var(--text); margin: 0; text-align: center;
-}
-/* Colour-variants banner under the title. Cut-out artwork WITH alpha, so it
-   needs no background of its own — pulled slightly wider than the text column
-   so the outer PODs reach the card edges. Ratio ~3:1, so it renders ~122 px
-   tall in the 400 px card; the max-height is just a guard. */
-.tigerpod-shot {
-  display: block; width: calc(100% + 16px); margin: 0 -8px;
-  height: auto; max-height: 150px; object-fit: contain;
-  pointer-events: none; user-select: none;
-}
-.tigerpod-desc {
-  font-size: 13px; color: var(--muted); margin: 0; line-height: 1.5; text-align: center;
-}
+/* Name + promise (two lines max), live state (reserved, filled only once the
+   device is there), three benefits on one line. */
+.eco-promise { min-height: 0; overflow: hidden; }
+.eco-name { margin: 0 0 8px; font-size: 12px; line-height: 16px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--primary); }
+.eco-promise h2 { margin: 0; font-size: 25px; line-height: 30px; max-height: 60px; overflow: hidden; font-weight: 800; letter-spacing: -.02em; color: var(--text); text-wrap: balance; }
+.eco-status { display: flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+.eco-status b { color: var(--success); font-weight: 700; }
+.eco-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--success);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success) 22%, transparent); }
+.eco-benefits { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: center; min-width: 0; width: 100%; }
+.eco-benefits li { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; font-size: 13px; font-weight: 600; color: var(--text); }
+.eco-benefits li span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.eco-benefits .icon { flex: none; background-color: var(--primary); }
 
-/* ── Features 2×2 grid ── */
-.tigerpod-features {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+/* Data path: the spool's chip → the device → what you get. Light packets run
+   along each wire, the device in the middle glows as they arrive. */
+.eco-flow { display: grid; grid-template-columns: 170px minmax(0, 1fr) 46px minmax(0, 1fr) 170px; align-items: center; gap: 10px; min-height: 0; }
+.eco-node { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; min-width: 0;
+  font-size: 11.5px; font-weight: 600; line-height: 14px; color: var(--muted); }
+.eco-node > span:last-child { max-height: 28px; overflow: hidden; }
+.eco-tile, .eco-node > img {
+  width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; object-fit: contain;
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, var(--border)); background: var(--surface-2);
 }
-.tigerpod-feat {
-  display: flex; align-items: flex-start; gap: 9px;
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: 9px; padding: 10px 11px;
-}
-.tigerpod-feat-icon {
-  flex-shrink: 0; height: 16px; aspect-ratio: 1/1; margin-top: 1px;
-  background-color: var(--primary);
-  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
-}
-.tpfi-rfid    { -webkit-mask-image: url('../../assets/svg/icons/icon_rfid.svg');    aspect-ratio: 48/32; height: 14px; margin-top: 2px; }
-.tpfi-bolt    { -webkit-mask-image: url('../../assets/svg/icons/icon_bolt.svg');    }
-.tpfi-check   { -webkit-mask-image: url('../../assets/svg/icons/icon_check.svg');   }
-.tpfi-package { -webkit-mask-image: url('../../assets/svg/icons/icon_package.svg'); }
-/* Numbered feature badge */
-.tigerpod-feat-num {
-  flex-shrink: 0;
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary), var(--primary-hi));
-  color: var(--text);
-  font-size: 11px; font-weight: 800;
-  display: flex; align-items: center; justify-content: center;
-  margin-top: 1px;
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--primary) 40%, transparent);
-}
-.tigerpod-feat-text {
-  display: flex; flex-direction: column; gap: 1px; min-width: 0;
-}
-.tigerpod-feat-text strong {
-  font-size: 12px; font-weight: 700; color: var(--text); white-space: nowrap;
-}
-.tigerpod-feat-text span {
-  font-size: 11px; color: var(--muted); line-height: 1.4;
-}
+.eco-tile .icon { background-color: var(--primary); }
+.eco-node--hub > img { width: 46px; height: 46px; padding: 3px; border-color: var(--primary); animation: ecoHub 1.8s ease-out .9s infinite; }
+@keyframes ecoHub { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 60%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+.eco-wire { position: relative; height: 2px; border-radius: 2px; background: color-mix(in srgb, var(--primary) 22%, var(--border)); }
+.eco-wire i { position: absolute; top: -3px; left: 0; width: 18px; height: 8px; border-radius: 6px; opacity: 0;
+  background: linear-gradient(90deg, transparent, var(--primary)); box-shadow: 0 0 10px var(--primary);
+  animation: ecoPacket 1.8s linear infinite; }
+.eco-wire i:nth-child(2) { animation-delay: .9s; }
+.eco-flow .eco-wire:nth-of-type(4) i { animation-delay: .9s; }
+.eco-flow .eco-wire:nth-of-type(4) i:nth-child(2) { animation-delay: 1.8s; }
+@keyframes ecoPacket { 0% { left: 0; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: calc(100% - 18px); opacity: 0; } }
 
-/* ── Print spec strip ── */
-.tigerpod-print-spec {
-  display: flex; align-items: center; justify-content: center; gap: 7px;
-  background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 12px;
-  font-size: 12px; color: var(--muted);
-}
-.tigerpod-spec-printer-icon {
-  flex-shrink: 0; height: 14px; aspect-ratio: 1/1;
-  background-color: var(--muted);
-  -webkit-mask-image: url('../../assets/svg/icons/icon_printer.svg');
-  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
-}
+/* How to get one: three short steps, side by side. */
+.eco-acq { display: grid; grid-template-rows: 16px minmax(0, 1fr); gap: 8px; min-height: 0; }
+.eco-sec-title { margin: 0; font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.eco-get { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-height: 0; }
+.eco-get li { display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
+  font-size: 13px; line-height: 18px; color: var(--text); overflow: hidden; min-height: 0; }
+.eco-num { flex: none; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center;
+  font-size: 11px; font-weight: 800; color: var(--on-accent); background: var(--primary); }
 
-/* ── CTA button ── */
-.tigerpod-print-btn {
-  width: 100%; height: 44px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 14px; font-weight: 700; text-decoration: none; cursor: pointer;
-  background: var(--primary); color: var(--on-accent); border: 1px solid var(--primary);
-  box-shadow: 0 2px 10px color-mix(in srgb, var(--primary) 35%, transparent);
-}
-.tigerpod-print-btn:hover {
-  background: var(--primary-hover); border-color: var(--primary-hover);
-  box-shadow: 0 3px 14px color-mix(in srgb, var(--primary) 45%, transparent);
-}
-/* Two Pod models: a small caption above a row of two equal buttons (Standard / Mini). */
-.tigerpod-print-cta {
-  text-align: center; font-size: 13px; font-weight: 600;
-  color: var(--muted); margin: 2px 0 8px;
-}
-.tigerpod-print-row { display: flex; gap: 10px; }
-.tigerpod-print-row .tigerpod-print-btn { flex: 1; }
+/* Footer — always the same places: the main action, the guide, other links. */
+.eco-foot { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--border); padding-top: 12px; min-width: 0; }
+.eco-foot .eco-btn { height: 44px; padding: 0 22px; border-radius: 12px; font-size: 14.5px; font-weight: 600; white-space: nowrap; }
+.eco-foot .eco-btn2, .eco-foot .eco-btn3 { height: 44px; padding: 0 16px; border-radius: 12px; font-size: 14px; font-weight: 600; white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.eco-foot .eco-btn3 { display: inline-flex; align-items: center; gap: 6px; border-color: transparent; color: var(--muted); }
+.eco-foot .eco-btn3 .icon { background-color: currentColor; transform: rotate(-90deg); }
+.eco-foot .eco-btn2:hover, .eco-foot .eco-btn3:hover { border-color: var(--muted); color: var(--text); }
+.eco-more { position: relative; margin-left: auto; }
+.eco-menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 5; min-width: 230px; padding: 6px;
+  display: flex; flex-direction: column; gap: 2px; border-radius: 12px; border: 1px solid var(--border);
+  background: var(--surface); box-shadow: var(--shadow-lg); }
+.eco-menu[hidden] { display: none; }
+.eco-menu button { height: 36px; padding: 0 12px; border: 0; border-radius: 8px; background: transparent; color: var(--text);
+  text-align: left; font-size: 13.5px; font-weight: 600; justify-content: flex-start; }
+.eco-menu button:hover { background: var(--surface-2); }
 
-/* Light-theme contrast fix. The hero sits on a FIXED purple gradient in both
-   themes, so its text must stay light — the theme ink vars (var(--text)/--ink-*)
-   turn dark in light mode and become unreadable on the purple. Force light here. */
-.tigerpod-hero-product { color: #fff; }
-.tigerpod-hero-brand,
-.tigerpod-cta,
-.tigerpod-stat { color: rgba(255,255,255,.85); }
-.tigerpod-stat strong { color: #fff; }
-.tigerpod-stat-sep { color: rgba(255,255,255,.45); }
-.tigerpod-stat-free { color: rgba(255,255,255,.9); background: rgba(255,255,255,.18); }
-.tigerpod-close-btn { color: rgba(255,255,255,.85); }
-.tigerpod-close-btn:hover { color: #fff; }
-/* Numbered feature badges: white numeral on the orange circle (was var(--text)). */
-.tigerpod-feat-num { color: #fff; }
-/* Debug-only reader readout (replaces the removed ownership toggle). Only ever
-   visible in debug mode; mono, compact, unobtrusive — it's a diagnostic, not UI. */
+/* Moving from one device to the next, in two soft beats: the sheet fades out
+   towards the far side (160 ms), then the next eases in — the picture first
+   (32 px, 380 ms), the words a beat later (8 px). Nothing resizes. */
+@keyframes ecoShotL { from { opacity: 0; transform: translateX(32px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes ecoShotR { from { opacity: 0; transform: translateX(-32px) scale(.98); } to { opacity: 1; transform: none; } }
+@keyframes ecoFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.eco-shot, .eco-fade, .eco-foot > * { transition: opacity .16s ease-in, transform .16s ease-in; }
+.eco-card.eco-out-l .eco-shot { opacity: 0; transform: translateX(-24px); }
+.eco-card.eco-out-r .eco-shot { opacity: 0; transform: translateX(24px); }
+.eco-card.eco-out-l .eco-fade, .eco-card.eco-out-r .eco-fade, .eco-card.eco-out-l .eco-foot > *, .eco-card.eco-out-r .eco-foot > * { opacity: 0; transform: translateY(-4px); }
+.eco-card.eco-in-l .eco-shot { animation: ecoShotL .38s cubic-bezier(.22, .61, .36, 1) both; }
+.eco-card.eco-in-r .eco-shot { animation: ecoShotR .38s cubic-bezier(.22, .61, .36, 1) both; }
+.eco-card.eco-in .eco-fade, .eco-card.eco-in .eco-foot > * { animation: ecoFadeIn .34s cubic-bezier(.22, .61, .36, 1) .06s both; }
+
+/* Short window (900 × 600): 840 × 552, the bay left, the words right. */
+@media (max-height: 799px), (max-width: 959px) {
+  .eco-card.eco-card { height: min(552px, calc(100vh - 32px)); padding: 16px; grid-template-rows: 44px minmax(0, 1fr) 70px; }
+  .eco-tab { height: 36px; font-size: 12.5px; }
+  .eco-panel { grid-template-rows: 200px 44px 104px; }
+  .eco-overview { grid-template-columns: 300px minmax(0, 1fr); grid-template-rows: 200px; gap: 20px; }
+  .eco-info { grid-template-rows: 88px 32px 72px; gap: 4px; justify-items: start; text-align: left; align-content: center; }
+  .eco-promise h2 { font-size: 22px; line-height: 28px; max-height: 56px; }
+  .eco-status { justify-content: flex-start; }
+  .eco-benefits { grid-template-columns: 1fr; grid-template-rows: repeat(3, 24px); gap: 0; }
+  .eco-benefits li { justify-content: flex-start; }
+  .eco-cat { font-size: 10px; max-width: calc(100% - 24px); }
+  .eco-shot { height: 128px; margin-top: 28px; }
+  .eco-card[data-eco="touch"] .eco-shot { height: 98px; margin-top: 36px; }
+  .eco-step { top: auto; bottom: 10px; translate: none; width: 30px; height: 30px; }
+  .eco-flow { grid-template-columns: 200px minmax(0, 1fr) 40px minmax(0, 1fr) 200px; }
+  .eco-node { flex-direction: row; text-align: left; gap: 8px; }
+  .eco-node > span:last-child { max-height: 28px; }
+  .eco-tile { width: 32px; height: 32px; flex: none; }
+  .eco-node--hub > img { width: 40px; height: 40px; }
+  .eco-get li { font-size: 12.5px; line-height: 17px; padding: 9px 10px; }
+  .eco-foot { padding-top: 10px; }
+  .eco-foot .eco-btn, .eco-foot .eco-btn2, .eco-foot .eco-btn3 { height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eco-tab-prog { display: none; }
+  .eco-waves i, .eco-beam, .eco-wire i, .eco-node--hub > img,
+  .eco-card.eco-in-l .eco-shot, .eco-card.eco-in-r .eco-shot, .eco-card.eco-in .eco-fade, .eco-card.eco-in .eco-foot > * { animation: none; }
+  .eco-shot, .eco-fade, .eco-foot > * { transition: none; }
+  .eco-waves i:first-child { opacity: .6; transform: scale(1); }
+}
+body.anim-paused #ecoModalOverlay * { animation-play-state: paused; }
 .tigerpod-debug {
   margin-top: 14px;
   padding: 10px 12px;
@@ -4194,12 +4218,6 @@
 .tigerpod-debug .tpd-chip { flex: none; }
 .tigerpod-debug .tpd-empty { opacity: .7; }
 .tigerpod-debug .tpd-meta { margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
-.tigerpod-btn-icon {
-  flex-shrink: 0; height: 16px; aspect-ratio: 1/1;
-  background-color: var(--surface);
-  -webkit-mask-image: url('../../assets/svg/icons/icon_printer.svg');
-  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
-}
 
 /* ── Cloud → chip encode modal (guided dual-chip burn) ───────────────────── */
 #cloudEncodeOverlay .cem-card {
